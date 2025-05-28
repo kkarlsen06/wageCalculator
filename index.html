@@ -758,6 +758,20 @@
     }
   </style>
 
+  <!-- Login / registrer -->
+  <div id="auth-box" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+    <div class="login-card">
+      <h2 style="margin-bottom: 20px;">Logg inn / Registrer</h2>
+      <input id="email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 12px;" />
+      <input id="password" type="password" placeholder="Passord" required class="form-control" style="margin-bottom: 18px;" />
+      <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+        <button id="login-btn" class="btn btn-primary" style="flex:1;">Logg inn</button>
+        <button id="signup-btn" class="btn btn-secondary" style="flex:1;">Registrer</button>
+      </div>
+      <p id="auth-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+    </div>
+  </div>
+
   <!-- Hoved-appen skjules til bruker er innlogget -->
   <div id="app" style="display:none">
     <!-- Flytt hele app-container, modals og footer hit -->
@@ -1169,6 +1183,135 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Innstillinger</h2>
+                <span class="modal-close" onclick="app.closeSettings()">
+                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </span>
+            </div>
+            
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="app.switchSettingsTab('general')">Generelt</button>
+                <button class="tab-btn" onclick="app.switchSettingsTab('wage')">Lønn</button>
+                <button class="tab-btn" onclick="app.switchSettingsTab('data')">Data</button>
+            </div>
+
+            <div id="generalTab" class="tab-content active">
+                <div class="form-group">
+                    <label>Måned</label>
+                    <select class="form-control" id="monthSelect">
+                        <option value="1">Januar</option>
+                        <option value="2">Februar</option>
+                        <option value="3">Mars</option>
+                        <option value="4">April</option>
+                        <option value="5" selected>Mai</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Pausetrekk</label>
+                    <div class="switch-group">
+                        <span class="text-secondary">Automatisk trekk for pauser over 5,5 timer</span>
+                        <label class="switch">
+                            <input type="checkbox" id="pauseDeductionToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="wageTab" class="tab-content">
+                <div class="form-group">
+                    <div class="flex justify-between align-center mb-10">
+                        <label>Lønnstype</label>
+                        <span id="presetBadge" class="preset-badge" style="display: none;">Virke-tariff</span>
+                    </div>
+                    <div class="switch-group">
+                        <span>Bruk forhåndsinnstilt tariff</span>
+                        <label class="switch">
+                            <input type="checkbox" id="usePresetToggle" checked onchange="app.togglePreset()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="presetWageSection">
+                    <div class="form-group">
+                        <label>Lønnstrinn (Virke-tariff 2025)</label>
+                        <select class="form-control" id="wageSelect">
+                            <option value="1" selected>Trinn 1 (184,54 kr/t)</option>
+                            <option value="2">Trinn 2 (185,38 kr/t)</option>
+                            <option value="3">Trinn 3 (187,46 kr/t)</option>
+                            <option value="4">Trinn 4 (193,05 kr/t)</option>
+                            <option value="5">Trinn 5 (210,81 kr/t)</option>
+                            <option value="6">Trinn 6 (256,14 kr/t)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="customWageSection" style="display: none;">
+                    <div class="form-group">
+                        <label>Timelønn (kr)</label>
+                        <input type="number" class="form-control" id="customWageInput" placeholder="200" step="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tillegg for ukedag (mandag-fredag)</label>
+                        <div class="bonus-slots" id="weekdayBonusSlots">
+                            <!-- Dynamisk innhold -->
+                        </div>
+                        <button class="btn btn-secondary" onclick="app.addBonusSlot('weekday')">+ Legg til tidsperiode</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tillegg for lørdag</label>
+                        <div class="bonus-slots" id="saturdayBonusSlots">
+                            <!-- Dynamisk innhold -->
+                        </div>
+                        <button class="btn btn-secondary" onclick="app.addBonusSlot('saturday')">+ Legg til tidsperiode</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tillegg for søndag/helligdag</label>
+                        <div class="bonus-slots" id="sundayBonusSlots">
+                            <!-- Dynamisk innhold -->
+                        </div>
+                        <button class="btn btn-secondary" onclick="app.addBonusSlot('sunday')">+ Legg til tidsperiode</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dataTab" class="tab-content">
+                <div class="form-group">
+                    <label>Eksporter/Importer data</label>
+                    <div class="flex gap-10">
+                        <button class="btn btn-secondary" onclick="app.exportData()">Eksporter</button>
+                        <input type="file" id="importFile" style="display: none;" onchange="app.handleImport(event)">
+                        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Importer</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Slett alle data</label>
+                    <button class="btn btn-danger" onclick="app.clearAllData()">Slett alt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Breakdown Modal -->
     <div id="breakdownModal" class="modal">
         <div class="modal-content">
@@ -1190,10 +1333,10 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    // 1. Init
+    // 1. Init - bruk hardkodede verdier for testing
     const supa = createClient(
-      import.meta.env.PUBLIC_SUPABASE_URL,
-      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+      "https://your-project.supabase.co", // Erstatt med din faktiske URL
+      "your-anon-key" // Erstatt med din faktiske anon key
     );
 
     // 2. Element-referanser
@@ -1202,28 +1345,36 @@
     const passInp  = document.getElementById("password");
     const loginBtn = document.getElementById("login-btn");
     const signupBtn= document.getElementById("signup-btn");
-    const logoutBtn= document.getElementById("logout-btn");
     const authBox  = document.getElementById("auth-box");
     const appBox   = document.getElementById("app");
 
     // 3. Auth-handlinger ----------------------------------------------------
     loginBtn.onclick  = () => signIn(emailInp.value, passInp.value);
     signupBtn.onclick = () => signUp(emailInp.value, passInp.value);
-    logoutBtn.onclick = () => supa.auth.signOut();
 
     async function signIn(email, password) {
-      const { error } = await supa.auth.signInWithPassword({ email, password });
-      authMsg.textContent = error ? error.message : "";
+      try {
+        const { error } = await supa.auth.signInWithPassword({ email, password });
+        authMsg.textContent = error ? error.message : "";
+      } catch (err) {
+        console.error("Supabase error:", err);
+        authMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
+      }
     }
 
     async function signUp(email, password) {
-      const { error, data } = await supa.auth.signUp({ email, password });
-      if (error) return authMsg.textContent = error.message;
+      try {
+        const { error, data } = await supa.auth.signUp({ email, password });
+        if (error) return authMsg.textContent = error.message;
 
-      // (valgfritt) opprett profil-rad med alias-brukernavn lik e-post før @
-      const alias = email.split("@")[0];
-      await supa.from("profiles").insert({ id: data.user.id, username: alias });
-      authMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
+        // (valgfritt) opprett profil-rad med alias-brukernavn lik e-post før @
+        const alias = email.split("@")[0];
+        await supa.from("profiles").insert({ id: data.user.id, username: alias });
+        authMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
+      } catch (err) {
+        console.error("Supabase error:", err);
+        authMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
+      }
     }
 
     // 4. Vis skjerm basert på innlogget status ------------------------------
@@ -1233,13 +1384,20 @@
       appBox.style.display  = loggedIn ? "block" : "none";
       
       // Initialiser appen hvis innlogget
-      if (loggedIn) {
+      if (loggedIn && typeof app !== 'undefined') {
         app.init();
       }
     }
 
     // 5. Start: hvis bruker allerede har sesjon (cookie)
-    toggleUI(!!(await supa.auth.getSession()).data.session);
+    try {
+      const session = await supa.auth.getSession();
+      toggleUI(!!(session?.data?.session));
+    } catch (err) {
+      console.error("Session check error:", err);
+      // Vis login-siden hvis det er problemer med Supabase
+      toggleUI(false);
+    }
   </script>
   <script>
     const app = {
