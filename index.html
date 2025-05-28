@@ -864,7 +864,7 @@
                         <label>Arbeidstid</label>
                         <div class="form-row">
                             <select class="form-control" id="startHour">
-                                <option value="">Fra time</option>
+                                <option value="">Fra hour</option>
                             </select>
                             <select class="form-control" id="startMinute">
                                 <option value="">Fra minutt</option>
@@ -872,7 +872,7 @@
                         </div>
                         <div class="form-row">
                             <select class="form-control" id="endHour">
-                                <option value="">Til time</option>
+                                <option value="">Til hour</option>
                             </select>
                             <select class="form-control" id="endMinute">
                                 <option value="">Til minutt</option>
@@ -1339,6 +1339,9 @@
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NTIxNDAsImV4cCI6MjA2NDAyODE0MH0.iSjbvGVpM3zOWCGpg5HrQp37PjJCmiHIwVQLgc2LgcE"
     );
 
+    // Make supabase available globally for the app
+    window.supabase = supa;
+
     // 2. Element-referanser
     const authMsg  = document.getElementById("auth-msg");
     const emailInp = document.getElementById("email");
@@ -1442,10 +1445,15 @@
         customBonuses: null,
         pauseDeduction: true,
         selectedDate: null,
+        currentUser: null,
 
         // Initialize
-        init() {
-            this.loadFromLocalStorage();
+        async init() {
+            // Get current user
+            const { data: { user } } = await window.supabase.auth.getUser();
+            this.currentUser = user;
+
+            await this.loadFromSupabase();
             this.populateTimeSelects();
             this.populateDateGrid();
             
@@ -1459,35 +1467,153 @@
             document.getElementById('customWageInput').addEventListener('input', (e) => {
                 this.customWage = parseFloat(e.target.value) || 0;
                 this.updateDisplay();
+                this.saveToSupabase();
             });
             
             document.getElementById('wageSelect').addEventListener('change', (e) => {
                 this.currentWageLevel = parseInt(e.target.value);
                 this.updateDisplay();
+                this.saveToSupabase();
             });
             
             document.getElementById('monthSelect').addEventListener('change', (e) => {
                 this.currentMonth = parseInt(e.target.value);
                 this.updateDisplay();
                 this.populateDateGrid();
+                this.saveToSupabase();
             });
 
             document.getElementById('pauseDeductionToggle').addEventListener('change', (e) => {
                 this.pauseDeduction = e.target.checked;
                 this.updateDisplay();
-                this.saveToLocalStorage();
+                this.saveToSupabase();
             });
             
             this.updateDisplay();
         },
 
-        switchSettingsTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById(`${tab}Tab`).classList.add('active');
+        // Supabase functions
+        async saveToSupabase() {
+            if (!this.currentUser) return;
+
+            try {
+                // Save settings
+                const settings = {
+                    user_id: this.currentUser.id,
+                    use_preset: this.usePreset,
+                    custom_wage: this.customWage,
+                    current_wage_level: this.currentWageLevel,
+                    custom_bonuses: this.customBonuses,
+                    current_month: this.currentMonth,
+                    pause_deduction: this.pauseDeduction
+                };
+
+                await window.supabase
+                    .from('user_settings')
+                    .upsert(settings, { onConflict: 'user_id' });
+
+                console.log('Settings saved to Supabase');
+            } catch (error) {
+                console.error('Error saving to Supabase:', error);
+            }
         },
+
+        async loadFromSupabase() {
+            if (!this.currentUser) return;
+
+            try {
+                // Load settings
+                const { data: settings, error: settingsError } = await window.supabase
+                    .from('user_settings')
+                    .select('*')
+                    .eq('user_id', this.currentUser.id)
+                    .single();
+
+                if (settings && !settingsError) {
+                    this.usePreset = settings.use_preset !== undefined ? settings.use_preset : true;
+                    this.customWage = settings.custom_wage || 200;
+                    this.currentWageLevel = settings.current_wage_level || 1;
+                    this.customBonuses = settings.custom_bonuses;
+                    this.currentMonth = settings.current_month || 5;
+                    this.pauseDeduction = settings.pause_deduction !== undefined ? settings.pause_deduction : true;
+                }
+
+                // Load shifts
+                const { data: shifts, error: shiftsError } = await window.supabase
+                    .from('user_shifts')
+                    .select('*')
+                    .eq('user_id', this.currentUser.id)
+                    .order('shift_date', { ascending: false });
+
+                if (shifts && !shiftsError) {
+                    this.shifts = shifts.map(shift => ({
+                        date: new Date(shift.shift_date),
+                        startTime: shift.start_time,
+                        endTime: shift.end_time,
+                        type: shift.shift_type,
+                        id: shift.id
+                    }));
+                }
+
+                // Update UI elements
+                document.getElementById('monthSelect').value = this.currentMonth;
+                document.getElementById('wageSelect').value = this.currentWageLevel;
+                document.getElementById('customWageInput').value = this.customWage;
+                document.getElementById('usePresetToggle').checked = this.usePreset;
+                document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+
+                console.log('Data loaded from Supabase');
+            } catch (error) {
+                console.error('Error loading from Supabase:', error);
+                // Fallback to localStorage if Supabase fails
+                this.loadFromLocalStorage();
+            }
+        },
+
+        async saveShiftToSupabase(shift) {
+            if (!this.currentUser) return;
+
+            try {
+                const shiftData = {
+                    user_id: this.currentUser.id,
+                    shift_date: shift.date.toISOString().split('T')[0],
+                    start_time: shift.startTime,
+                    end_time: shift.endTime,
+                    shift_type: shift.type
+                };
+
+                const { data, error } = await window.supabase
+                    .from('user_shifts')
+                    .insert([shiftData])
+                    .select()
+                    .single();
+
+                if (data && !error) {
+                    // Update the shift with the database ID
+                    shift.id = data.id;
+                    console.log('Shift saved to Supabase');
+                }
+            } catch (error) {
+                console.error('Error saving shift to Supabase:', error);
+            }
+        },
+
+        async deleteShiftFromSupabase(shiftId) {
+            if (!this.currentUser || !shiftId) return;
+
+            try {
+                await window.supabase
+                    .from('user_shifts')
+                    .delete()
+                    .eq('id', shiftId);
+
+                console.log('Shift deleted from Supabase');
+            } catch (error) {
+                console.error('Error deleting shift from Supabase:', error);
+            }
+        },
+
+        // ...existing code...
 
         togglePreset() {
             this.usePreset = document.getElementById('usePresetToggle').checked;
@@ -1502,7 +1628,7 @@
                 // Fyll ut bonus-slottene hvis de ikke finnes
                 this.populateCustomBonusSlots();
             }
-            this.saveToLocalStorage();
+            this.saveToSupabase();
             this.updateDisplay();
         },
 
@@ -1535,7 +1661,9 @@
         },
 
         // Shift Management
-        addShift() {
+        async addShift() {
+            console.log('Selected date:', this.selectedDate); // Debug log
+            
             if (!this.selectedDate) {
                 alert('Vennligst velg en dato');
                 return;
@@ -1554,15 +1682,20 @@
             const dayOfWeek = this.selectedDate.getDay();
             const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
             
-            this.shifts.push({
+            const newShift = {
                 date: new Date(this.selectedDate),
                 startTime: `${startHour}:${startMinute}`,
                 endTime: `${endHour}:${endMinute}`,
                 type: type
-            });
+            };
+
+            this.shifts.push(newShift);
+            
+            // Save to Supabase
+            await this.saveShiftToSupabase(newShift);
             
             this.updateDisplay();
-            this.saveToLocalStorage();
+            this.saveToLocalStorage(); // Keep as backup
             
             // Reset form
             document.getElementById('shiftForm').reset();
@@ -1572,11 +1705,18 @@
             });
         },
 
-        deleteShift(index) {
+        async deleteShift(index) {
             if (confirm('Er du sikker på at du vil slette denne vakten?')) {
+                const shift = this.shifts[index];
+                
+                // Delete from Supabase if it has an ID
+                if (shift.id) {
+                    await this.deleteShiftFromSupabase(shift.id);
+                }
+                
                 this.shifts.splice(index, 1);
                 this.updateDisplay();
-                this.saveToLocalStorage();
+                this.saveToLocalStorage(); // Keep as backup
             }
         },
 
@@ -1708,7 +1848,7 @@
             monthShifts.forEach(shift => {
                 const calc = this.calculateShift(shift);
                 totalHours += calc.hours;
-                totalBase += calc.baseWage;
+                               totalBase += calc.baseWage;
                 totalBonus += calc.bonus;
             });
 
@@ -1824,9 +1964,110 @@
             }
             
             document.getElementById('settingsModal').classList.remove('active');
-            this.saveToLocalStorage();
+            this.saveToSupabase();
+            this.saveToLocalStorage(); // Keep as backup
             this.updateDisplay();
         },
+
+        // ...existing code...
+
+        populateDateGrid() {
+            const dateGrid = document.getElementById('dateGrid');
+            const year = this.YEAR;
+            const month = this.currentMonth - 1; // JavaScript months are 0-indexed
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
+
+            dateGrid.innerHTML = '';
+
+            // Add day headers
+            ['S', 'M', 'T', 'O', 'T', 'F', 'L'].forEach(day => {
+                const header = document.createElement('div');
+                header.textContent = day;
+                header.style.fontWeight = '600';
+                header.style.fontSize = '12px';
+                header.style.color = 'var(--text-secondary)';
+                header.style.textAlign = 'center';
+                header.style.padding = '8px';
+                dateGrid.appendChild(header);
+            });
+
+            // Add date cells
+            for (let i = 0; i < 42; i++) { // 6 weeks
+                const cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + i);
+                
+                const cell = document.createElement('div');
+                cell.className = 'date-cell';
+                cell.textContent = cellDate.getDate();
+                
+                if (cellDate.getMonth() !== month) {
+                    cell.classList.add('disabled');
+                } else {
+                    cell.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        document.querySelectorAll('.date-cell:not(.disabled)').forEach(c => c.classList.remove('selected'));
+                        cell.classList.add('selected');
+                        this.selectedDate = new Date(cellDate);
+                        console.log('Date selected:', this.selectedDate); // Debug log
+                    });
+                }
+                
+                dateGrid.appendChild(cell);
+            }
+        },
+
+        // ...existing code...
+
+        async clearAllData() {
+            if (confirm('Er du sikker på at du vil slette alle data? Dette kan ikke angres.')) {
+                // Clear from Supabase
+                if (this.currentUser) {
+                    try {
+                        await window.supabase
+                            .from('user_shifts')
+                            .delete()
+                            .eq('user_id', this.currentUser.id);
+
+                        await window.supabase
+                            .from('user_settings')
+                            .delete()
+                            .eq('user_id', this.currentUser.id);
+                    } catch (error) {
+                        console.error('Error clearing Supabase data:', error);
+                    }
+                }
+
+                localStorage.removeItem('lønnsberegnerData');
+                this.shifts = [];
+                this.currentMonth = 5;
+                this.currentWageLevel = 1;
+                this.usePreset = true;
+                this.customWage = 200;
+                this.customBonuses = null;
+                this.pauseDeduction = true;
+                this.selectedDate = null;
+                
+                // Reset UI
+                document.getElementById('monthSelect').value = this.currentMonth;
+                document.getElementById('wageSelect').value = this.currentWageLevel;
+                document.getElementById('customWageInput').value = this.customWage;
+                document.getElementById('usePresetToggle').checked = this.usePreset;
+                document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                
+                this.updateDisplay();
+                this.populateDateGrid();
+                this.togglePreset();
+                alert('Alle data er slettet.');
+            }
+        },
+
+        // ...existing code...
 
         saveToLocalStorage() {
             const data = {
@@ -1869,245 +2110,8 @@
             }
         },
 
-        populateTimeSelects() {
-            const startHour = document.getElementById('startHour');
-            const endHour = document.getElementById('endHour');
-            const startMinute = document.getElementById('startMinute');
-            const endMinute = document.getElementById('endMinute');
-
-            // Populate hours (06-24)
-            for (let hour = 6; hour <= 24; hour++) {
-                const hourStr = hour.toString().padStart(2, '0');
-                startHour.innerHTML += `<option value="${hourStr}">${hourStr}</option>`;
-                endHour.innerHTML += `<option value="${hourStr}">${hourStr}</option>`;
-            }
-
-            // Populate minutes (0, 15, 30, 45) with 0 pre-selected
-            [0, 15, 30, 45].forEach((minute, index) => {
-                const minuteStr = minute.toString().padStart(2, '0');
-                const selectedAttr = index === 0 ? ' selected' : '';
-                startMinute.innerHTML += `<option value="${minuteStr}"${selectedAttr}>${minuteStr}</option>`;
-                endMinute.innerHTML += `<option value="${minuteStr}"${selectedAttr}>${minuteStr}</option>`;
-            });
-        },
-
-        populateDateGrid() {
-            const dateGrid = document.getElementById('dateGrid');
-            const year = this.YEAR;
-            const month = this.currentMonth - 1; // JavaScript months are 0-indexed
-            
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
-
-            dateGrid.innerHTML = '';
-
-            // Add day headers
-            ['S', 'M', 'T', 'O', 'T', 'F', 'L'].forEach(day => {
-                const header = document.createElement('div');
-                header.textContent = day;
-                header.style.fontWeight = '600';
-                header.style.fontSize = '12px';
-                header.style.color = 'var(--text-secondary)';
-                header.style.textAlign = 'center';
-                header.style.padding = '8px';
-                dateGrid.appendChild(header);
-            });
-
-            // Add date cells
-            for (let i = 0; i < 42; i++) { // 6 weeks
-                const cellDate = new Date(startDate);
-                cellDate.setDate(startDate.getDate() + i);
-                
-                const cell = document.createElement('div');
-                cell.className = 'date-cell';
-                cell.textContent = cellDate.getDate();
-                
-                if (cellDate.getMonth() !== month) {
-                    cell.classList.add('disabled');
-                } else {
-                    cell.addEventListener('click', () => {
-                        document.querySelectorAll('.date-cell').forEach(c => c.classList.remove('selected'));
-                        cell.classList.add('selected');
-                        this.selectedDate = new Date(cellDate);
-                    });
-                }
-                
-                dateGrid.appendChild(cell);
-            }
-        },
-
-        showBreakdown(type) {
-            const modal = document.getElementById('breakdownModal');
-            const title = document.getElementById('breakdownTitle');
-            const list = document.getElementById('breakdownList');
-            
-            const monthShifts = this.shifts.filter(shift => 
-                shift.date.getMonth() === this.currentMonth - 1 && 
-                shift.date.getFullYear() === this.YEAR
-            );
-
-            let content = '';
-            
-            if (type === 'hours') {
-                title.textContent = 'Timer per vakt';
-                content = monthShifts.map(shift => {
-                    const calc = this.calculateShift(shift);
-                    const day = shift.date.getDate();
-                    return `
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
-                            <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
-                            <span>${this.formatHours(calc.hours)}</span>
-                        </div>
-                    `;
-                }).join('');
-            } else if (type === 'base') {
-                title.textContent = 'Grunnlønn per vakt';
-                content = monthShifts.map(shift => {
-                    const calc = this.calculateShift(shift);
-                    const day = shift.date.getDate();
-                    return `
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
-                            <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
-                            <span>${this.formatCurrency(calc.baseWage)}</span>
-                        </div>
-                    `;
-                }).join('');
-            } else if (type === 'bonus') {
-                title.textContent = 'Tillegg per vakt';
-                content = monthShifts.map(shift => {
-                    const calc = this.calculateShift(shift);
-                    const day = shift.date.getDate();
-                    return `
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
-                            <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
-                            <span>${this.formatCurrency(calc.bonus)}</span>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            list.innerHTML = content || '<p style="text-align: center; color: var(--text-secondary);">Ingen data tilgjengelig</p>';
-            modal.classList.add('active');
-        },
-
-        closeBreakdown() {
-                       document.getElementById('breakdownModal').classList.remove('active');
-        },
-
-        exportData() {
-            const data = {
-                shifts: this.shifts,
-                settings: {
-                    usePreset: this.usePreset,
-                    customWage: this.customWage,
-                    currentWageLevel: this.currentWageLevel,
-                    customBonuses: this.customBonuses,
-                    pauseDeduction: this.pauseDeduction
-                },
-                exportDate: new Date().toISOString()
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `vaktberegner_export_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        },
-
-        handleImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    
-                    if (data.shifts) {
-                        this.shifts = data.shifts.map(shift => ({
-                            ...shift,
-                            date: new Date(shift.date)
-                        }));
-                    }
-                    
-                    if (data.settings) {
-                        this.usePreset = data.settings.usePreset !== undefined ? data.settings.usePreset : true;
-                        this.customWage = data.settings.customWage || 200;
-                        this.currentWageLevel = data.settings.currentWageLevel || 1;
-                        this.customBonuses = data.settings.customBonuses;
-                        this.pauseDeduction = data.settings.pauseDeduction !== undefined ? data.settings.pauseDeduction : true;
-                        
-                        // Update UI elements
-                        document.getElementById('wageSelect').value = this.currentWageLevel;
-                        document.getElementById('customWageInput').value = this.customWage;
-                        document.getElementById('usePresetToggle').checked = this.usePreset;
-                        document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
-                    }
-                    
-                    this.saveToLocalStorage();
-                    this.updateDisplay();
-                    this.togglePreset();
-                    alert('Data importert!');
-                } catch (error) {
-                    console.error('Import error:', error);
-                    alert('Feil ved import av data. Kontroller at filen er gyldig.');
-                }
-            };
-            reader.readAsText(file);
-            
-            // Reset file input
-            event.target.value = '';
-        },
-
-        clearAllData() {
-            if (confirm('Er du sikker på at du vil slette alle data? Dette kan ikke angres.')) {
-                localStorage.removeItem('lønnsberegnerData');
-                this.shifts = [];
-                this.currentMonth = 5;
-                this.currentWageLevel = 1;
-                this.usePreset = true;
-                this.customWage = 200;
-                this.customBonuses = null;
-                this.pauseDeduction = true;
-                this.selectedDate = null;
-                
-                // Reset UI
-                document.getElementById('monthSelect').value = this.currentMonth;
-                document.getElementById('wageSelect').value = this.currentWageLevel;
-                document.getElementById('customWageInput').value = this.customWage;
-                document.getElementById('usePresetToggle').checked = this.usePreset;
-                document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
-                
-                this.updateDisplay();
-                this.populateDateGrid();
-                this.togglePreset();
-                alert('Alle data er slettet.');
-            }
-        },
-        addBonusSlot(type) {
-            const container = document.getElementById(`${type}BonusSlots`);
-            const slot = document.createElement('div');
-            slot.className = 'bonus-slot';
-            slot.innerHTML = `
-                <input type="time" class="form-control" value="18:00">
-                <input type="time" class="form-control" value="21:00">
-                <input type="number" class="form-control" placeholder="kr/t" value="0">
-                <button class="btn btn-icon btn-danger" onclick="app.removeBonusSlot(this)">×</button>
-            `;
-            container.appendChild(slot);
-        },
-        removeBonusSlot(btn) {
-            btn.parentElement.remove();
-        },
+        // ...existing code...
     };
-
-    app.init();
   </script>
 </body>
 </html>
