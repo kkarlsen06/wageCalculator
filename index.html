@@ -1451,27 +1451,36 @@
 
         // Initialize
         async init() {
-            await this.loadFromSupabase();
+            /* Vis UI‑elementene først – selv om databasen skulle feile     */
             this.populateTimeSelects();
             this.populateDateGrid();
-            
+
+            /* Hent backend‑data (fortsetter stille hvis noe går galt)      */
+            try {
+                await this.loadFromSupabase();
+            } catch (err) {
+                console.error("loadFromSupabase feilet:", err);
+                /* Fallback til lokal lagring for at appen ikke stopper     */
+                this.loadFromLocalStorage();
+            }
+
             // Add form submission handler
             document.getElementById('shiftForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.addShift();
             });
-            
+
             // Add event listeners for settings changes
             document.getElementById('customWageInput').addEventListener('input', (e) => {
                 this.customWage = parseFloat(e.target.value) || 0;
                 this.updateDisplay();
             });
-            
+
             document.getElementById('wageSelect').addEventListener('change', (e) => {
                 this.currentWageLevel = parseInt(e.target.value);
                 this.updateDisplay();
             });
-            
+
             document.getElementById('monthSelect').addEventListener('change', (e) => {
                 this.currentMonth = parseInt(e.target.value);
                 this.updateDisplay();
@@ -1483,7 +1492,7 @@
                 this.updateDisplay();
                 this.saveToLocalStorage();
             });
-            
+
             this.updateDisplay();
         },
 
@@ -1536,6 +1545,15 @@
         toggleAddShift() {
             const card = document.querySelector('.add-shift-card');
             const icon = document.getElementById('toggleIcon');
+            // Oppdater dropdowns hvis brukeren åpner kortet før init var ferdig
+            const startHour = document.getElementById('startHour');
+            const dateGrid = document.getElementById('dateGrid');
+            if (!startHour.options.length) {
+                this.populateTimeSelects();
+            }
+            if (!dateGrid.childElementCount) {
+                this.populateDateGrid();
+            }
             card.classList.toggle('active');
             icon.style.transform = card.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
         },
