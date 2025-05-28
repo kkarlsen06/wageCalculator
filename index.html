@@ -1319,9 +1319,17 @@
               type
             };
 
-            // Lagre til Supabase
+            // Hent innlogget bruker
+            const { data: { user } } = await supa.auth.getUser();
+            if (!user) {
+              alert("Du er ikke innlogget");
+              return;
+            }
+
+            // Lagre til Supabase – inkluder user_id for å passere RLS
             const { data: saved, error } = await supa.from("user_shifts")
               .insert({
+                user_id:   user.id,
                 shift_date: newShift.date.toISOString().split("T")[0],
                 start_time: newShift.startTime,
                 end_time:   newShift.endTime,
