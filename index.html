@@ -117,6 +117,72 @@
             gap: 5px;
         }
 
+        /* Month Dropdown */
+        .month-selector {
+            position: relative;
+            display: inline-block;
+        }
+
+        .month-button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all var(--speed-normal) var(--ease-default);
+            font-size: 14px;
+        }
+
+        .month-button:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .month-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.3);
+            z-index: 200;
+            min-width: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .month-dropdown.active {
+            display: block;
+        }
+
+        .month-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background var(--speed-fast);
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .month-option:last-child {
+            border-bottom: none;
+        }
+
+        .month-option:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .month-option.current {
+            background: var(--accent);
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
         /* Icons */
         .icon {
             width: 20px;
@@ -796,7 +862,17 @@
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
-                    <span id="currentMonth">Mai 2025</span>
+                    <div class="month-selector">
+                        <button class="month-button" onclick="app.toggleMonthDropdown()">
+                            <span id="currentMonth">Mai 2025</span>
+                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="month-dropdown" id="monthDropdown">
+                            <!-- Dynamisk innhold genereres av JavaScript -->
+                        </div>
+                    </div>
                 </span>
                 <span>
                     <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1191,6 +1267,7 @@
             /* Vis UI‑elementene først – selv om databasen skulle feile     */
             this.populateTimeSelects();
             this.populateDateGrid();
+            this.populateMonthDropdown();
 
             /* Hent backend‑data (fortsetter stille hvis noe går galt)      */
             try {
@@ -1228,6 +1305,14 @@
                 this.pauseDeduction = e.target.checked;
                 this.updateDisplay();
                 this.saveToLocalStorage();
+            });
+
+            // Close month dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                const monthSelector = document.querySelector('.month-selector');
+                if (!monthSelector.contains(e.target)) {
+                    this.closeMonthDropdown();
+                }
             });
 
             this.updateDisplay();
@@ -1736,6 +1821,50 @@
                 
                 dateGrid.appendChild(cell);
             }
+        },
+
+        populateMonthDropdown() {
+            const dropdown = document.getElementById('monthDropdown');
+            dropdown.innerHTML = '';
+            
+            this.MONTHS.forEach((month, index) => {
+                const option = document.createElement('div');
+                option.className = 'month-option';
+                option.textContent = `${month} ${this.YEAR}`;
+                
+                if (index + 1 === this.currentMonth) {
+                    option.classList.add('current');
+                }
+                
+                option.addEventListener('click', () => {
+                    this.changeMonth(index + 1);
+                    this.closeMonthDropdown();
+                });
+                
+                dropdown.appendChild(option);
+            });
+        },
+
+        toggleMonthDropdown() {
+            const dropdown = document.getElementById('monthDropdown');
+            dropdown.classList.toggle('active');
+            
+            if (dropdown.classList.contains('active')) {
+                this.populateMonthDropdown();
+            }
+        },
+
+        closeMonthDropdown() {
+            const dropdown = document.getElementById('monthDropdown');
+            dropdown.classList.remove('active');
+        },
+
+        changeMonth(month) {
+            this.currentMonth = month;
+            document.getElementById('monthSelect').value = month;
+            this.updateDisplay();
+            this.populateDateGrid();
+            this.saveToLocalStorage();
         },
 
         showBreakdown(type) {
