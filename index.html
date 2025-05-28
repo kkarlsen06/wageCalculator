@@ -690,18 +690,73 @@
                 grid-column: span 2;
             }
         }
-    </style>
-</head>
-<body>
-  <!-- Login / registrer -->
-  <div id="auth-box">
-    <h2>Logg inn / Registrer</h2>
-    <input id="email" type="email" placeholder="E-post" required />
-    <input id="password" type="password" placeholder="Passord" required />
-    <button id="login-btn">Logg inn</button>
-    <button id="signup-btn">Registrer ny bruker</button>
-    <p id="auth-msg"></p>
-  </div>
+
+        /* Login card styling */
+    .login-card {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px -8px rgba(126, 249, 192, 0.10);
+      padding: 32px 28px 24px 28px;
+      max-width: 350px;
+      width: 100%;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      margin: 40px 0;
+    }
+    .login-card h2 {
+      color: var(--text-primary);
+      font-size: 22px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .login-card input.form-control {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--text-primary);
+      font-size: 16px;
+      width: 100%;
+      transition: all var(--speed-normal) var(--ease-default);
+      margin-bottom: 0;
+    }
+    .login-card input.form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .login-card .btn {
+      font-size: 16px;
+      font-weight: 500;
+      border-radius: 8px;
+      padding: 12px 0;
+      width: 100%;
+      cursor: pointer;
+      transition: all var(--speed-normal) var(--ease-default);
+      border: none;
+    }
+    .login-card .btn-primary {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+    .login-card .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .login-card .btn-primary:hover, .login-card .btn-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px -8px rgba(126, 249, 192, 0.25);
+      border-color: var(--accent);
+    }
+    @media (max-width: 600px) {
+      .login-card {
+        padding: 18px 8px 16px 8px;
+        max-width: 98vw;
+      }
+    }
+  </style>
 
   <!-- Hoved-appen skjules til bruker er innlogget -->
   <div id="app" style="display:none">
@@ -1780,7 +1835,7 @@
         },
 
         closeBreakdown() {
-            document.getElementById('breakdownModal').classList.remove('active');
+                       document.getElementById('breakdownModal').classList.remove('active');
         },
 
         exportData() {
