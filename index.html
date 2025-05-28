@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaktberegner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root {
+            --bg-primary: #0b1a23;
+            --bg-secondary: #142c3e;
+            --bg-tertiary: #1e3a4c;
+            --text-primary: #eaf6fb;
+            --text-secondary: #b6c9d6;
+            --accent: #7ef9c0;
+            --accent2: #a084ee;
+            --accent3: #5ecbfa;
+            --accent4: #ffb6d5;
+            --success: #7ef9c0;
+            --warning: #ffb86b;
+            --danger: #ff6b81;
+            --border: #2a4456;
+            --speed-fast: 0.15s;
+            --speed-normal: 0.25s;
+            --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes gradientSlide {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            flex: 1;
+            padding-bottom: 60px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .settings-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all var(--speed-normal) var(--ease-default);
+        }
+
+        .settings-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -8px rgba(126, 249, 192, 0.25);
+            border-color: var(--accent);
+        }
+
+        .settings-btn:hover svg {
+            animation: spin 2s linear infinite;
+        }
+
+        .header-info {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .header-info span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Icons */
+        .icon {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .icon-sm { width: 16px; height: 16px; }
+        .icon-lg { width: 24px; height: 24px; }
+
+        /* Content */
+        .content {
+            padding: 20px;
+        }
+
+        /* Overview Tab */
+        .total-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .total-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .total-amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .breakdown-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .breakdown-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all var(--speed-normal) var(--ease-default);
+        }
+
+        .breakdown-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -8px rgba(126, 249, 192, 0.25);
+            border-color: var(--accent);
+        }
+
+        .breakdown-icon {
+            margin-bottom: 10px;
+            opacity: 0.8;
+            transition: color var(--speed-normal);
+        }
+
+        .breakdown-card:hover .breakdown-icon {
+            color: var(--accent);
+        }
+
+        .breakdown-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .breakdown-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Forms */
+        .add-shift-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            display: none;
+        }
+
+        .add-shift-card.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            width: 100%;
+            transition: all var(--speed-normal) var(--ease-default);
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        select.form-control {
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b6c9d6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Date Grid */
+        .date-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .date-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all var(--speed-normal) var(--ease-default);
+        }
+
+        .date-cell:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px -4px rgba(126, 249, 192, 0.25);
+            border-color: var(--accent);
+        }
+
+        .date-cell.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        .date-cell.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--speed-normal) var(--ease-default);
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -8px rgba(126, 249, 192, 0.25);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+            width: 100%;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        /* Shift List */
+        .shift-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .shift-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all var(--speed-normal) var(--ease-default);
+        }
+
+        .shift-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -8px rgba(126, 249, 192, 0.25);
+            border-color: var(--accent);
+        }
+
+        .shift-info {
+            flex: 1;
+        }
+
+        .shift-date {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .shift-details {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .shift-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .shift-type.saturday {
+            background: var(--warning);
+            color: var(--bg-primary);
+        }
+
+        .shift-type.sunday {
+            background: var(--accent2);
+            color: white;
+        }
+
+        .shift-amount {
+            text-align: right;
+        }
+
+        .shift-total {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .shift-breakdown {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .shift-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 15px;
+        }
+
+        .add-shift-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all var(--speed-normal) var(--ease-default);
+        }
+
+        .add-shift-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -8px rgba(126, 249, 192, 0.25);
+            border-color: var(--accent);
+        }
+
+        .add-shift-toggle h2 {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            transition: all var(--speed-normal) var(--ease-default);
+        }
+
+        .modal-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px -4px rgba(126, 249, 192, 0.25);
+            border-color: var(--accent);
+        }
+
+        /* Bonus Time Slots */
+        .bonus-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .bonus-slot {
+            display: grid;
+            grid-template-columns: 1fr 1fr 80px 40px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .bonus-slot input {
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .bonus-slot .btn-icon {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Tabs */
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--bg-tertiary);
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all var(--speed-normal);
+        }
+
+        .tab-btn.active {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Preset Badge */
+        .preset-badge {
+            display: inline-block;
+            background: var(--accent3);
+            color: var(--bg-primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .switch-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Utilities */
+        .mb-10 { margin-bottom: 10px; }
+        .mb-20 { margin-bottom: 20px; }
+        .mt-10 { margin-top: 10px; }
+        .flex { display: flex; }
+        .justify-between { justify-content: space-between; }
+        .align-center { align-items: center; }
+        .gap-10 { gap: 10px; }
+
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 0 10px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .total-amount {
+                font-size: 36px;
+            }
+
+            .shift-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .shift-actions {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+
+            .bonus-slot {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .bonus-slot input:nth-child(3),
+            .bonus-slot button {
+                grid-column: span 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="header-content">
+                <h1>Vaktberegner</h1>
+                <button class="settings-btn" onclick="app.openSettings()">
+                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span>Innstillinger</span>
+                </button>
+            </div>
+            <div class="header-info">
+                <span>
+                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span id="currentMonth">Mai 2025</span>
+                </span>
+                <span>
+                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                    </svg>
+                    <span id="currentWage">184,54 kr/t</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="total-card">
+                <div class="total-label">Total lønn denne måneden</div>
+                <div class="total-amount" id="totalAmount">0 kr</div>
+            </div>
+
+            <div class="breakdown-cards">
+                <div class="breakdown-card" onclick="app.showBreakdown('hours')">
+                    <div class="breakdown-icon">
+                        <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div class="breakdown-value" id="totalHours">0</div>
+                    <div class="breakdown-label">Timer (<span id="shiftCount">0</span> vakter)</div>
+                </div>
+                <div class="breakdown-card" onclick="app.showBreakdown('base')">
+                    <div class="breakdown-icon">
+                        <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div class="breakdown-value" id="baseAmount">0</div>
+                    <div class="breakdown-label">Grunnlønn</div>
+                </div>
+                <div class="breakdown-card" onclick="app.showBreakdown('bonus')">
+                    <div class="breakdown-icon">
+                        <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </div>
+                    <div class="breakdown-value" id="bonusAmount">0</div>
+                    <div class="breakdown-label">Tillegg</div>
+                </div>
+            </div>
+
+            <div class="add-shift-toggle" onclick="app.toggleAddShift()">
+                <h2>Legg til vakt</h2>
+                <svg class="icon" id="toggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </div>
+
+            <div class="add-shift-card">
+                <form id="shiftForm">
+                    <div class="form-group">
+                        <label>Velg dato</label>
+                        <div class="date-grid" id="dateGrid"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Arbeidstid</label>
+                        <div class="form-row">
+                            <select class="form-control" id="startHour">
+                                <option value="">Fra time</option>
+                            </select>
+                            <select class="form-control" id="startMinute">
+                                <option value="">Fra minutt</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <select class="form-control" id="endHour">
+                                <option value="">Til time</option>
+                            </select>
+                            <select class="form-control" id="endMinute">
+                                <option value="">Til minutt</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                        Legg til vakt
+                    </button>
+                </form>
+            </div>
+
+            <div class="shift-list" id="shiftList">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <p>Ingen vakter registrert ennå</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Innstillinger</h2>
+                <span class="modal-close" onclick="app.closeSettings()">
+                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </span>
+            </div>
+            
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="app.switchSettingsTab('general')">Generelt</button>
+                <button class="tab-btn" onclick="app.switchSettingsTab('wage')">Lønn</button>
+                <button class="tab-btn" onclick="app.switchSettingsTab('data')">Data</button>
+            </div>
+
+            <div id="generalTab" class="tab-content active">
+                <div class="form-group">
+                    <label>Måned</label>
+                    <select class="form-control" id="monthSelect">
+                        <option value="1">Januar</option>
+                        <option value="2">Februar</option>
+                        <option value="3">Mars</option>
+                        <option value="4">April</option>
+                        <option value="5" selected>Mai</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Pausetrekk</label>
+                    <div class="switch-group">
+                        <span class="text-secondary">Automatisk trekk for pauser over 5,5 timer</span>
+                        <label class="switch">
+                            <input type="checkbox" id="pauseDeductionToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="wageTab" class="tab-content">
+                <div class="form-group">
+                    <div class="flex justify-between align-center mb-10">
+                        <label>Lønnstype</label>
+                        <span id="presetBadge" class="preset-badge" style="display: none;">Virke-tariff</span>
+                    </div>
+                    <div class="switch-group">
+                        <span>Bruk forhåndsinnstilt tariff</span>
+                        <label class="switch">
+                            <input type="checkbox" id="usePresetToggle" checked onchange="app.togglePreset()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="presetWageSection">
+                    <div class="form-group">
+                        <label>Lønnstrinn (Virke-tariff 2025)</label>
+                        <select class="form-control" id="wageSelect">
+                            <option value="1" selected>Trinn 1 (184,54 kr/t)</option>
+                            <option value="2">Trinn 2 (185,38 kr/t)</option>
+                            <option value="3">Trinn 3 (187,46 kr/t)</option>
+                            <option value="4">Trinn 4 (193,05 kr/t)</option>
+                            <option value="5">Trinn 5 (210,81 kr/t)</option>
+                            <option value="6">Trinn 6 (256,14 kr/t)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="customWageSection" style="display: none;">
+                    <div class="form-group">
+                        <label>Timelønn (kr)</label>
+                        <input type="number" class="form-control" id="customWageInput" placeholder="200" step="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tillegg for ukedag (mandag-fredag)</label>
+                        <div class="bonus-slots" id="weekdayBonusSlots">
+                            <!-- Dynamisk innhold -->
+                        </div>
+                        <button class="btn btn-secondary" onclick="app.addBonusSlot('weekday')">+ Legg til tidsperiode</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tillegg for lørdag</label>
+                        <div class="bonus-slots" id="saturdayBonusSlots">
+                            <!-- Dynamisk innhold -->
+                        </div>
+                        <button class="btn btn-secondary" onclick="app.addBonusSlot('saturday')">+ Legg til tidsperiode</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tillegg for søndag/helligdag</label>
+                        <div class="bonus-slots" id="sundayBonusSlots">
+                            <!-- Dynamisk innhold -->
+                        </div>
+                        <button class="btn btn-secondary" onclick="app.addBonusSlot('sunday')">+ Legg til tidsperiode</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dataTab" class="tab-content">
+                <div class="form-group">
+                    <label>Eksporter/Importer data</label>
+                    <div class="flex gap-10">
+                        <button class="btn btn-secondary" onclick="app.exportData()">Eksporter</button>
+                        <input type="file" id="importFile" style="display: none;" onchange="app.handleImport(event)">
+                        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Importer</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Slett alle data</label>
+                    <button class="btn btn-danger" onclick="app.clearAllData()">Slett alt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakdown Modal -->
+    <div id="breakdownModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="breakdownTitle">Detaljer</h2>
+                <span class="modal-close" onclick="app.closeBreakdown()">
+                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </span>
+            </div>
+            <div class="breakdown-list" id="breakdownList"></div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            // Constants
+            YEAR: 2025,
+            PAUSE_THRESHOLD: 5.5,
+            PAUSE_DEDUCTION: 0.5,
+            MONTHS: ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni',
+                     'Juli', 'August', 'September', 'Oktober', 'November', 'Desember'],
+            WEEKDAYS: ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'],
+            
+            PRESET_WAGE_RATES: {
+                1: 184.54,
+                2: 185.38,
+                3: 187.46,
+                4: 193.05,
+                5: 210.81,
+                6: 256.14
+            },
+            
+            PRESET_BONUSES: {
+                weekday: [
+                    { from: "18:00", to: "21:00", rate: 22 },
+                    { from: "21:00", to: "23:59", rate: 45 }
+                ],
+                saturday: [
+                    { from: "13:00", to: "15:00", rate: 45 },
+                    { from: "15:00", to: "18:00", rate: 55 },
+                    { from: "18:00", to: "23:59", rate: 110 }
+                ],
+                sunday: [
+                    { from: "00:00", to: "23:59", rate: 100 }
+                ]
+            },
+
+            // State
+            shifts: [],
+            currentMonth: 5,
+            currentWageLevel: 1,
+            usePreset: true,
+            customWage: 200,
+            customBonuses: null,
+            pauseDeduction: true,
+            selectedDate: null,
+
+            // Initialize
+            init() {
+                this.loadFromLocalStorage();
+                this.populateTimeSelects();
+                this.populateDateGrid();
+                
+                // Add form submission handler
+                document.getElementById('shiftForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addShift();
+                });
+                
+                // Add event listeners for settings changes
+                document.getElementById('customWageInput').addEventListener('input', (e) => {
+                    this.customWage = parseFloat(e.target.value) || 0;
+                    this.updateDisplay();
+                });
+                
+                document.getElementById('wageSelect').addEventListener('change', (e) => {
+                    this.currentWageLevel = parseInt(e.target.value);
+                    this.updateDisplay();
+                });
+                
+                document.getElementById('monthSelect').addEventListener('change', (e) => {
+                    this.currentMonth = parseInt(e.target.value);
+                    this.updateDisplay();
+                    this.populateDateGrid();
+                });
+
+                document.getElementById('pauseDeductionToggle').addEventListener('change', (e) => {
+                    this.pauseDeduction = e.target.checked;
+                    this.updateDisplay();
+                    this.saveToLocalStorage();
+                });
+                
+                this.updateDisplay();
+            },
+
+            switchSettingsTab(tab) {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                event.target.classList.add('active');
+                document.getElementById(`${tab}Tab`).classList.add('active');
+            },
+
+            togglePreset() {
+                this.usePreset = document.getElementById('usePresetToggle').checked;
+                const presetSection = document.getElementById('presetWageSection');
+                const customSection = document.getElementById('customWageSection');
+                if (this.usePreset) {
+                    presetSection.style.display = 'block';
+                    customSection.style.display = 'none';
+                } else {
+                    presetSection.style.display = 'none';
+                    customSection.style.display = 'block';
+                    // Fyll ut bonus-slottene hvis de ikke finnes
+                    this.populateCustomBonusSlots();
+                }
+                this.saveToLocalStorage();
+                this.updateDisplay();
+            },
+
+            populateCustomBonusSlots() {
+                // Fyll ut bonus-slottene for hver dagstype
+                const types = ['weekday', 'saturday', 'sunday'];
+                types.forEach(type => {
+                    const container = document.getElementById(`${type}BonusSlots`);
+                    container.innerHTML = '';
+                    const bonuses = (this.customBonuses && this.customBonuses[type]) || [];
+                    bonuses.forEach(bonus => {
+                        const slot = document.createElement('div');
+                        slot.className = 'bonus-slot';
+                        slot.innerHTML = `
+                            <input type="time" class="form-control" value="${bonus.from}">
+                            <input type="time" class="form-control" value="${bonus.to}">
+                            <input type="number" class="form-control" placeholder="kr/t" value="${bonus.rate}">
+                            <button class="btn btn-icon btn-danger" onclick="app.removeBonusSlot(this)">×</button>
+                        `;
+                        container.appendChild(slot);
+                    });
+                });
+            },
+
+            toggleAddShift() {
+                const card = document.querySelector('.add-shift-card');
+                const icon = document.getElementById('toggleIcon');
+                card.classList.toggle('active');
+                icon.style.transform = card.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
+            },
+
+            // Shift Management
+            addShift() {
+                if (!this.selectedDate) {
+                    alert('Vennligst velg en dato');
+                    return;
+                }
+                
+                const startHour = document.getElementById('startHour').value;
+                const startMinute = document.getElementById('startMinute').value || '00';
+                const endHour = document.getElementById('endHour').value;
+                const endMinute = document.getElementById('endMinute').value || '00';
+                
+                if (!startHour || !endHour) {
+                    alert('Vennligst fyll ut arbeidstid');
+                    return;
+                }
+                
+                const dayOfWeek = this.selectedDate.getDay();
+                const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
+                
+                this.shifts.push({
+                    date: new Date(this.selectedDate),
+                    startTime: `${startHour}:${startMinute}`,
+                    endTime: `${endHour}:${endMinute}`,
+                    type: type
+                });
+                
+                this.updateDisplay();
+                this.saveToLocalStorage();
+                
+                // Reset form
+                document.getElementById('shiftForm').reset();
+                this.selectedDate = null;
+                document.querySelectorAll('.date-cell').forEach(cell => {
+                    cell.classList.remove('selected');
+                });
+            },
+
+            deleteShift(index) {
+                if (confirm('Er du sikker på at du vil slette denne vakten?')) {
+                    this.shifts.splice(index, 1);
+                    this.updateDisplay();
+                    this.saveToLocalStorage();
+                }
+            },
+
+            // Calculations
+            getCurrentWageRate() {
+                return this.usePreset ? this.PRESET_WAGE_RATES[this.currentWageLevel] : this.customWage;
+            },
+
+            getCurrentBonuses() {
+                return this.usePreset ? this.PRESET_BONUSES : (this.customBonuses || this.readCustomBonusesFromUI());
+            },
+
+            readCustomBonusesFromUI() {
+                const bonuses = {
+                    weekday: [],
+                    saturday: [],
+                    sunday: []
+                };
+
+                try {
+                    const types = ['weekday', 'saturday', 'sunday'];
+                    types.forEach(type => {
+                        const container = document.getElementById(`${type}BonusSlots`);
+                        if (!container) return;
+                        const slots = container.getElementsByClassName('bonus-slot');
+                        for (const slot of slots) {
+                            const inputs = slot.getElementsByTagName('input');
+                            const from = inputs[0].value;
+                            const to = inputs[1].value;
+                            const rate = parseFloat(inputs[2].value);
+                            if (!from || !to || isNaN(rate)) {
+                                throw new Error(`Manglende verdier i ${type} tillegg`);
+                            }
+                            bonuses[type].push({ from, to, rate });
+                        }
+                    });
+                    return bonuses;
+                } catch (error) {
+                    console.error('Feil ved lesing av tillegg:', error);
+                    alert(error.message);
+                    return null;
+                }
+            },
+
+            calculateShift(shift) {
+                const startMinutes = this.timeToMinutes(shift.startTime);
+                let endMinutes = this.timeToMinutes(shift.endTime);
+                const durationHours = (endMinutes - startMinutes) / 60;
+
+                let paidHours = durationHours;
+                if (this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD) {
+                    paidHours -= this.PAUSE_DEDUCTION;
+                    endMinutes -= this.PAUSE_DEDUCTION * 60;
+                }
+
+                const wageRate = this.getCurrentWageRate();
+                const baseWage = paidHours * wageRate;
+                
+                const bonuses = this.getCurrentBonuses();
+                const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
+                const bonusSegments = bonuses[bonusType] || [];
+                
+                const bonus = this.calculateBonus(shift.startTime, 
+                    `${Math.floor(endMinutes/60).toString().padStart(2, '0')}:${(endMinutes%60).toString().padStart(2, '0')}`, 
+                    bonusSegments);
+
+                return {
+                    hours: parseFloat(paidHours.toFixed(2)),
+                    baseWage: baseWage,
+                    bonus: bonus,
+                    total: baseWage + bonus
+                };
+            },
+
+            timeToMinutes(timeStr) {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            },
+
+            calculateBonus(startTime, endTime, bonusSegments) {
+                let totalBonus = 0;
+                const startMinutes = this.timeToMinutes(startTime);
+                const endMinutes = this.timeToMinutes(endTime);
+
+                for (const segment of bonusSegments) {
+                    const segStart = this.timeToMinutes(segment.from);
+                    let segEnd = this.timeToMinutes(segment.to);
+                    
+                    if (segEnd <= segStart) {
+                        segEnd += 24 * 60;
+                    }
+
+                    const overlap = this.calculateOverlap(startMinutes, endMinutes, segStart, segEnd);
+                    totalBonus += (overlap / 60) * segment.rate;
+                }
+
+                return totalBonus;
+            },
+
+            calculateOverlap(startA, endA, startB, endB) {
+                const start = Math.max(startA, startB);
+                const end = Math.min(endA, endB);
+                return Math.max(0, end - start);
+            },
+
+            // Display Updates
+            updateDisplay() {
+                this.updateHeader();
+                this.updateStats();
+                this.updateShiftList();
+            },
+
+            updateHeader() {
+                document.getElementById('currentMonth').textContent = `${this.MONTHS[this.currentMonth - 1]} ${this.YEAR}`;
+                const wage = this.getCurrentWageRate();
+                document.getElementById('currentWage').textContent = `${wage.toFixed(2).replace('.', ',')} kr/t`;
+            },
+
+            updateStats() {
+                let totalHours = 0;
+                let totalBase = 0;
+                let totalBonus = 0;
+
+                const monthShifts = this.shifts.filter(shift => 
+                    shift.date.getMonth() === this.currentMonth - 1 && 
+                    shift.date.getFullYear() === this.YEAR
+                );
+
+                monthShifts.forEach(shift => {
+                    const calc = this.calculateShift(shift);
+                    totalHours += calc.hours;
+                    totalBase += calc.baseWage;
+                    totalBonus += calc.bonus;
+                });
+
+                document.getElementById('totalAmount').textContent = this.formatCurrency(totalBase + totalBonus);
+                document.getElementById('totalHours').textContent = this.formatHours(totalHours);
+                document.getElementById('baseAmount').textContent = this.formatCurrencyShort(totalBase);
+                document.getElementById('bonusAmount').textContent = this.formatCurrencyShort(totalBonus);
+                document.getElementById('shiftCount').textContent = monthShifts.length;
+            },
+
+            updateShiftList() {
+                const shiftList = document.getElementById('shiftList');
+                const monthShifts = this.shifts.filter(shift => 
+                    shift.date.getMonth() === this.currentMonth - 1 && 
+                    shift.date.getFullYear() === this.YEAR
+                );
+
+                if (monthShifts.length === 0) {
+                    shiftList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                            </div>
+                            <p>Ingen vakter registrert ennå</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const sortedShifts = monthShifts.sort((a, b) => b.date - a.date);
+                
+                shiftList.innerHTML = sortedShifts.map((shift) => {
+                    const calc = this.calculateShift(shift);
+                    const day = shift.date.getDate();
+                    const weekday = this.WEEKDAYS[shift.date.getDay()];
+                    const typeClass = shift.type === 1 ? 'saturday' : (shift.type === 2 ? 'sunday' : '');
+                    const typeLabel = shift.type === 0 ? 'Ukedag' : (shift.type === 1 ? 'Lørdag' : 'Søndag');
+                    const originalIndex = this.shifts.indexOf(shift);
+                    
+                    return `
+                        <div class="shift-item">
+                            <div class="shift-info">
+                                <div class="shift-date">${day}. ${this.MONTHS[shift.date.getMonth()]} (${weekday})</div>
+                                <div class="shift-details">
+                                    <span>
+                                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                        ${shift.startTime} - ${shift.endTime}
+                                    </span>
+                                    <span class="shift-type ${typeClass}">${typeLabel}</span>
+                                    <span>${this.formatHours(calc.hours)}</span>
+                                </div>
+                            </div>
+                            <div class="shift-amount">
+                                <div class="shift-total">${this.formatCurrency(calc.total)}</div>
+                                <div class="shift-breakdown">
+                                    ${this.formatCurrencyShort(calc.baseWage)} + ${this.formatCurrencyShort(calc.bonus)}
+                                </div>
+                            </div>
+                            <div class="shift-actions">
+                                <button class="btn btn-icon btn-danger" onclick="app.deleteShift(${originalIndex})">
+                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            // Formatting
+            formatCurrency(amount) {
+                return Math.round(amount).toLocaleString('nb-NO') + ' kr';
+            },
+
+            formatCurrencyShort(amount) {
+                return Math.round(amount).toLocaleString('nb-NO');
+            },
+
+            formatHours(hours) {
+                return hours.toFixed(2).replace('.', ',') + ' t';
+            },
+
+            // Modals
+            openSettings() {
+                document.getElementById('settingsModal').classList.add('active');
+                this.togglePreset();
+                if (!this.usePreset) {
+                    this.populateCustomBonusSlots();
+                }
+            },
+
+            closeSettings() {
+                if (!this.usePreset) {
+                    // Read and validate custom bonuses
+                    const newBonuses = this.readCustomBonusesFromUI();
+                    if (newBonuses) {
+                        this.customBonuses = newBonuses;
+                    } else {
+                        alert('Ugyldig format på tillegg. Vennligst sjekk input-feltene.');
+                        return;
+                    }
+                }
+                
+                document.getElementById('settingsModal').classList.remove('active');
+                this.saveToLocalStorage();
+                this.updateDisplay();
+            },
+
+            saveToLocalStorage() {
+                const data = {
+                    shifts: this.shifts,
+                    usePreset: this.usePreset,
+                    customWage: this.customWage,
+                    currentWageLevel: this.currentWageLevel,
+                    customBonuses: this.customBonuses,
+                    currentMonth: this.currentMonth,
+                    pauseDeduction: this.pauseDeduction
+                };
+                localStorage.setItem('lønnsberegnerData', JSON.stringify(data));
+            },
+
+            loadFromLocalStorage() {
+                const saved = localStorage.getItem('lønnsberegnerData');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        this.shifts = (data.shifts || []).map(shift => ({
+                            ...shift,
+                            date: new Date(shift.date)
+                        }));
+                        this.usePreset = data.usePreset !== undefined ? data.usePreset : true;
+                        this.customWage = data.customWage || 200;
+                        this.currentWageLevel = data.currentWageLevel || 1;
+                        this.customBonuses = data.customBonuses;
+                        this.currentMonth = data.currentMonth || 5;
+                        this.pauseDeduction = data.pauseDeduction !== undefined ? data.pauseDeduction : true;
+                        
+                        // Update UI elements
+                        document.getElementById('monthSelect').value = this.currentMonth;
+                        document.getElementById('wageSelect').value = this.currentWageLevel;
+                        document.getElementById('customWageInput').value = this.customWage;
+                        document.getElementById('usePresetToggle').checked = this.usePreset;
+                        document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                    } catch (error) {
+                        console.error('Error loading from localStorage:', error);
+                    }
+                }
+            },
+
+            populateTimeSelects() {
+                const startHour = document.getElementById('startHour');
+                const endHour = document.getElementById('endHour');
+                const startMinute = document.getElementById('startMinute');
+                const endMinute = document.getElementById('endMinute');
+
+                // Populate hours (06-24)
+                for (let hour = 6; hour <= 24; hour++) {
+                    const hourStr = hour.toString().padStart(2, '0');
+                    startHour.innerHTML += `<option value="${hourStr}">${hourStr}</option>`;
+                    endHour.innerHTML += `<option value="${hourStr}">${hourStr}</option>`;
+                }
+
+                // Populate minutes (0, 15, 30, 45) with 0 pre-selected
+                [0, 15, 30, 45].forEach((minute, index) => {
+                    const minuteStr = minute.toString().padStart(2, '0');
+                    const selectedAttr = index === 0 ? ' selected' : '';
+                    startMinute.innerHTML += `<option value="${minuteStr}"${selectedAttr}>${minuteStr}</option>`;
+                    endMinute.innerHTML += `<option value="${minuteStr}"${selectedAttr}>${minuteStr}</option>`;
+                });
+            },
+
+            populateDateGrid() {
+                const dateGrid = document.getElementById('dateGrid');
+                const year = this.YEAR;
+                const month = this.currentMonth - 1; // JavaScript months are 0-indexed
+                
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const startDate = new Date(firstDay);
+                startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
+
+                dateGrid.innerHTML = '';
+
+                // Add day headers
+                ['S', 'M', 'T', 'O', 'T', 'F', 'L'].forEach(day => {
+                    const header = document.createElement('div');
+                    header.textContent = day;
+                    header.style.fontWeight = '600';
+                    header.style.fontSize = '12px';
+                    header.style.color = 'var(--text-secondary)';
+                    header.style.textAlign = 'center';
+                    header.style.padding = '8px';
+                    dateGrid.appendChild(header);
+                });
+
+                // Add date cells
+                for (let i = 0; i < 42; i++) { // 6 weeks
+                    const cellDate = new Date(startDate);
+                    cellDate.setDate(startDate.getDate() + i);
+                    
+                    const cell = document.createElement('div');
+                    cell.className = 'date-cell';
+                    cell.textContent = cellDate.getDate();
+                    
+                    if (cellDate.getMonth() !== month) {
+                        cell.classList.add('disabled');
+                    } else {
+                        cell.addEventListener('click', () => {
+                            document.querySelectorAll('.date-cell').forEach(c => c.classList.remove('selected'));
+                            cell.classList.add('selected');
+                            this.selectedDate = new Date(cellDate);
+                        });
+                    }
+                    
+                    dateGrid.appendChild(cell);
+                }
+            },
+
+            showBreakdown(type) {
+                const modal = document.getElementById('breakdownModal');
+                const title = document.getElementById('breakdownTitle');
+                const list = document.getElementById('breakdownList');
+                
+                const monthShifts = this.shifts.filter(shift => 
+                    shift.date.getMonth() === this.currentMonth - 1 && 
+                    shift.date.getFullYear() === this.YEAR
+                );
+
+                let content = '';
+                
+                if (type === 'hours') {
+                    title.textContent = 'Timer per vakt';
+                    content = monthShifts.map(shift => {
+                        const calc = this.calculateShift(shift);
+                        const day = shift.date.getDate();
+                        return `
+                            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                                <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
+                                <span>${this.formatHours(calc.hours)}</span>
+                            </div>
+                        `;
+                    }).join('');
+                } else if (type === 'base') {
+                    title.textContent = 'Grunnlønn per vakt';
+                    content = monthShifts.map(shift => {
+                        const calc = this.calculateShift(shift);
+                        const day = shift.date.getDate();
+                        return `
+                            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                                <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
+                                <span>${this.formatCurrency(calc.baseWage)}</span>
+                            </div>
+                        `;
+                    }).join('');
+                } else if (type === 'bonus') {
+                    title.textContent = 'Tillegg per vakt';
+                    content = monthShifts.map(shift => {
+                        const calc = this.calculateShift(shift);
+                        const day = shift.date.getDate();
+                        return `
+                            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                                <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
+                                <span>${this.formatCurrency(calc.bonus)}</span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                list.innerHTML = content || '<p style="text-align: center; color: var(--text-secondary);">Ingen data tilgjengelig</p>';
+                modal.classList.add('active');
+            },
+
+            closeBreakdown() {
+                document.getElementById('breakdownModal').classList.remove('active');
+            },
+
+            exportData() {
+                const data = {
+                    shifts: this.shifts,
+                    settings: {
+                        usePreset: this.usePreset,
+                        customWage: this.customWage,
+                        currentWageLevel: this.currentWageLevel,
+                        customBonuses: this.customBonuses,
+                        pauseDeduction: this.pauseDeduction
+                    },
+                    exportDate: new Date().toISOString()
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vaktberegner_export_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
+
+            handleImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        if (data.shifts) {
+                            this.shifts = data.shifts.map(shift => ({
+                                ...shift,
+                                date: new Date(shift.date)
+                            }));
+                        }
+                        
+                        if (data.settings) {
+                            this.usePreset = data.settings.usePreset !== undefined ? data.settings.usePreset : true;
+                            this.customWage = data.settings.customWage || 200;
+                            this.currentWageLevel = data.settings.currentWageLevel || 1;
+                            this.customBonuses = data.settings.customBonuses;
+                            this.pauseDeduction = data.settings.pauseDeduction !== undefined ? data.settings.pauseDeduction : true;
+                            
+                            // Update UI elements
+                            document.getElementById('wageSelect').value = this.currentWageLevel;
+                            document.getElementById('customWageInput').value = this.customWage;
+                            document.getElementById('usePresetToggle').checked = this.usePreset;
+                            document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                        }
+                        
+                        this.saveToLocalStorage();
+                        this.updateDisplay();
+                        this.togglePreset();
+                        alert('Data importert!');
+                    } catch (error) {
+                        console.error('Import error:', error);
+                        alert('Feil ved import av data. Kontroller at filen er gyldig.');
+                    }
+                };
+                reader.readAsText(file);
+                
+                // Reset file input
+                event.target.value = '';
+            },
+
+            clearAllData() {
+                if (confirm('Er du sikker på at du vil slette alle data? Dette kan ikke angres.')) {
+                    localStorage.removeItem('lønnsberegnerData');
+                    this.shifts = [];
+                    this.currentMonth = 5;
+                    this.currentWageLevel = 1;
+                    this.usePreset = true;
+                    this.customWage = 200;
+                    this.customBonuses = null;
+                    this.pauseDeduction = true;
+                    this.selectedDate = null;
+                    
+                    // Reset UI
+                    document.getElementById('monthSelect').value = this.currentMonth;
+                    document.getElementById('wageSelect').value = this.currentWageLevel;
+                    document.getElementById('customWageInput').value = this.customWage;
+                    document.getElementById('usePresetToggle').checked = this.usePreset;
+                    document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                    
+                    this.updateDisplay();
+                    this.populateDateGrid();
+                    this.togglePreset();
+                    alert('Alle data er slettet.');
+                }
+            },
+            addBonusSlot(type) {
+                const container = document.getElementById(`${type}BonusSlots`);
+                const slot = document.createElement('div');
+                slot.className = 'bonus-slot';
+                slot.innerHTML = `
+                    <input type="time" class="form-control" value="18:00">
+                    <input type="time" class="form-control" value="21:00">
+                    <input type="number" class="form-control" placeholder="kr/t" value="0">
+                    <button class="btn btn-icon btn-danger" onclick="app.removeBonusSlot(this)">×</button>
+                `;
+                container.appendChild(slot);
+            },
+            removeBonusSlot(btn) {
+                btn.parentElement.remove();
+            },
+        };
+
+        app.init();
+    </script>
+</body>
+</html>
