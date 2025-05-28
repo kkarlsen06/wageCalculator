@@ -1023,21 +1023,14 @@
 
             <div id="generalTab" class="tab-content active">
                 <div class="form-group">
-                    <label>Måned</label>
-                    <select class="form-control" id="monthSelect">
-                        <option value="1">Januar</option>
-                        <option value="2">Februar</option>
-                        <option value="3">Mars</option>
-                        <option value="4">April</option>
-                        <option value="5" selected>Mai</option>
-                        <option value="6">Juni</option>
-                        <option value="7">Juli</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">Oktober</option>
-                        <option value="11">November</option>
-                        <option value="12">Desember</option>
-                    </select>
+                    <label>Demo-data</label>
+                    <div class="switch-group">
+                        <span class="text-secondary">Vis demo-vakter for mai 2025</span>
+                        <label class="switch">
+                            <input type="checkbox" id="demoDataToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -1261,6 +1254,23 @@
         customBonuses: null,
         pauseDeduction: true,
         selectedDate: null,
+        demoMode: false,
+        userShifts: [], // Store user's own shifts when demo is active
+
+        // Demo data from vakter_mai_2025.json
+        DEMO_SHIFTS: [
+            { "date": "2025-05-03T00:00:00.000Z", "startTime": "15:00", "endTime": "23:15", "type": 1 },
+            { "date": "2025-05-10T00:00:00.000Z", "startTime": "15:00", "endTime": "23:15", "type": 1 },
+            { "date": "2025-05-12T00:00:00.000Z", "startTime": "17:00", "endTime": "23:15", "type": 0 },
+            { "date": "2025-05-15T00:00:00.000Z", "startTime": "17:00", "endTime": "22:00", "type": 0 },
+            { "date": "2025-05-19T00:00:00.000Z", "startTime": "17:00", "endTime": "21:00", "type": 0 },
+            { "date": "2025-05-21T00:00:00.000Z", "startTime": "16:00", "endTime": "23:15", "type": 0 },
+            { "date": "2025-05-22T00:00:00.000Z", "startTime": "17:00", "endTime": "23:15", "type": 0 },
+            { "date": "2025-05-23T00:00:00.000Z", "startTime": "16:00", "endTime": "23:15", "type": 0 },
+            { "date": "2025-05-24T00:00:00.000Z", "startTime": "13:00", "endTime": "18:00", "type": 1 },
+            { "date": "2025-05-26T00:00:00.000Z", "startTime": "17:00", "endTime": "23:15", "type": 0 },
+            { "date": "2025-05-30T00:00:00.000Z", "startTime": "15:45", "endTime": "23:15", "type": 0 }
+        ],
 
         // Initialize
         async init() {
@@ -1295,10 +1305,8 @@
                 this.updateDisplay();
             });
 
-            document.getElementById('monthSelect').addEventListener('change', (e) => {
-                this.currentMonth = parseInt(e.target.value);
-                this.updateDisplay();
-                this.populateDateGrid();
+            document.getElementById('demoDataToggle').addEventListener('change', (e) => {
+                this.toggleDemoMode(e.target.checked);
             });
 
             document.getElementById('pauseDeductionToggle').addEventListener('change', (e) => {
@@ -1396,6 +1404,16 @@
                 alert('Vennligst fyll ut arbeidstid');
                 return;
             }
+
+            // If in demo mode, ask user if they want to switch to their own data
+            if (this.demoMode) {
+                if (confirm('Du er i demo-modus. Vil du bytte til dine egne vakter for å legge til denne vakten?')) {
+                    this.toggleDemoMode(false);
+                    document.getElementById('demoDataToggle').checked = false;
+                } else {
+                    return;
+                }
+            }
             
             const dayOfWeek = this.selectedDate.getDay();
             const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
@@ -1449,6 +1467,12 @@
         },
 
         async deleteShift(index) {
+            // Prevent deletion in demo mode
+            if (this.demoMode) {
+                alert('Du kan ikke slette demo-vakter. Skru av demo-modus for å redigere dine egne vakter.');
+                return;
+            }
+
             if (confirm('Er du sikker på at du vil slette denne vakten?')) {
                 await window.supa.from("user_shifts")
                           .delete()
@@ -1605,8 +1629,22 @@
                 shift.date.getFullYear() === this.YEAR
             );
 
+            // Demo mode banner
+            let demoBannerHtml = '';
+            if (this.demoMode) {
+                demoBannerHtml = `
+                    <div style="background: linear-gradient(135deg, #ffd700, #ffed4e); color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #ffc107; text-align: center; font-weight: 500;">
+                        <svg style="width: 16px; height: 16px; margin-right: 8px; vertical-align: text-top;" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        Du viser demo-data for mai 2025
+                    </div>
+                `;
+            }
+
             if (monthShifts.length === 0) {
                 shiftList.innerHTML = `
+                    ${demoBannerHtml}
                     <div class="empty-state">
                         <div class="empty-icon">
                             <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1625,13 +1663,25 @@
 
             const sortedShifts = monthShifts.sort((a, b) => b.date - a.date);
             
-            shiftList.innerHTML = sortedShifts.map((shift) => {
+            const shiftsHtml = sortedShifts.map((shift) => {
                 const calc = this.calculateShift(shift);
                 const day = shift.date.getDate();
                 const weekday = this.WEEKDAYS[shift.date.getDay()];
                 const typeClass = shift.type === 1 ? 'saturday' : (shift.type === 2 ? 'sunday' : '');
                 const typeLabel = shift.type === 0 ? 'Ukedag' : (shift.type === 1 ? 'Lørdag' : 'Søndag');
                 const originalIndex = this.shifts.indexOf(shift);
+                
+                // Hide delete button in demo mode
+                const deleteButtonHtml = this.demoMode ? '' : `
+                    <div class="shift-actions">
+                        <button class="btn btn-icon btn-danger" onclick="app.deleteShift(${originalIndex})">
+                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
                 
                 return `
                     <div class="shift-item">
@@ -1655,17 +1705,12 @@
                                 ${this.formatCurrencyShort(calc.baseWage)} + ${this.formatCurrencyShort(calc.bonus)}
                             </div>
                         </div>
-                        <div class="shift-actions">
-                            <button class="btn btn-icon btn-danger" onclick="app.deleteShift(${originalIndex})">
-                                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                            </button>
-                        </div>
+                        ${deleteButtonHtml}
                     </div>
                 `;
             }).join('');
+
+            shiftList.innerHTML = demoBannerHtml + shiftsHtml;
         },
 
         // Formatting
@@ -1715,7 +1760,9 @@
                 currentWageLevel: this.currentWageLevel,
                 customBonuses: this.customBonuses,
                 currentMonth: this.currentMonth,
-                pauseDeduction: this.pauseDeduction
+                pauseDeduction: this.pauseDeduction,
+                demoMode: this.demoMode,
+                userShifts: this.userShifts
             };
             localStorage.setItem('lønnsberegnerData', JSON.stringify(data));
             this.saveSettingsToSupabase(data);
@@ -1736,13 +1783,18 @@
                     this.customBonuses = data.customBonuses;
                     this.currentMonth = data.currentMonth || 5;
                     this.pauseDeduction = data.pauseDeduction !== undefined ? data.pauseDeduction : true;
+                    this.demoMode = data.demoMode || false;
+                    this.userShifts = (data.userShifts || []).map(shift => ({
+                        ...shift,
+                        date: new Date(shift.date)
+                    }));
                     
                     // Update UI elements
-                    document.getElementById('monthSelect').value = this.currentMonth;
                     document.getElementById('wageSelect').value = this.currentWageLevel;
                     document.getElementById('customWageInput').value = this.customWage;
                     document.getElementById('usePresetToggle').checked = this.usePreset;
                     document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                    document.getElementById('demoDataToggle').checked = this.demoMode;
                 } catch (error) {
                     console.error('Error loading from localStorage:', error);
                 }
@@ -1861,7 +1913,29 @@
 
         changeMonth(month) {
             this.currentMonth = month;
-            document.getElementById('monthSelect').value = month;
+            this.updateDisplay();
+            this.populateDateGrid();
+            this.saveToLocalStorage();
+        },
+
+        toggleDemoMode(enabled) {
+            this.demoMode = enabled;
+            
+            if (enabled) {
+                // Store current user shifts and switch to demo data
+                this.userShifts = [...this.shifts];
+                this.shifts = this.DEMO_SHIFTS.map(shift => ({
+                    ...shift,
+                    date: new Date(shift.date)
+                }));
+                // Set month to May for demo
+                this.currentMonth = 5;
+            } else {
+                // Restore user's own shifts
+                this.shifts = [...this.userShifts];
+                this.userShifts = [];
+            }
+            
             this.updateDisplay();
             this.populateDateGrid();
             this.saveToLocalStorage();
@@ -1971,6 +2045,7 @@
                         this.currentWageLevel = data.settings.currentWageLevel || 1;
                         this.customBonuses = data.settings.customBonuses;
                         this.pauseDeduction = data.settings.pauseDeduction !== undefined ? data.settings.pauseDeduction : true;
+                        this.demoMode = data.settings.demoMode || false;
                         
                         // Update UI elements
                         document.getElementById('wageSelect').value = this.currentWageLevel;
@@ -2005,13 +2080,15 @@
                 this.customBonuses = null;
                 this.pauseDeduction = true;
                 this.selectedDate = null;
+                this.demoMode = false;
+                this.userShifts = [];
                 
                 // Reset UI
-                document.getElementById('monthSelect').value = this.currentMonth;
                 document.getElementById('wageSelect').value = this.currentWageLevel;
                 document.getElementById('customWageInput').value = this.customWage;
                 document.getElementById('usePresetToggle').checked = this.usePreset;
                 document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                document.getElementById('demoDataToggle').checked = this.demoMode;
                 
                 this.updateDisplay();
                 this.populateDateGrid();
@@ -2075,13 +2152,18 @@
                     this.customBonuses = settings.custom_bonuses;
                     this.currentMonth = settings.current_month || 5;
                     this.pauseDeduction = settings.pause_deduction !== undefined ? settings.pause_deduction : true;
+                    this.demoMode = settings.demo_mode || false;
+                    this.userShifts = (settings.user_shifts || []).map(shift => ({
+                        ...shift,
+                        date: new Date(shift.date)
+                    }));
 
                     // Oppdater UI
-                    document.getElementById('monthSelect').value = this.currentMonth;
                     document.getElementById('wageSelect').value = this.currentWageLevel;
                     document.getElementById('customWageInput').value = this.customWage;
                     document.getElementById('usePresetToggle').checked = this.usePreset;
                     document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                    document.getElementById('demoDataToggle').checked = this.demoMode;
                 }
             } catch (error) {
                 console.error("Feil ved loading fra Supabase:", error);
@@ -2103,7 +2185,9 @@
                         wage_level: data.currentWageLevel,
                         custom_bonuses: data.customBonuses,
                         current_month: data.currentMonth,
-                        pause_deduction: data.pauseDeduction
+                        pause_deduction: data.pauseDeduction,
+                        demo_mode: data.demoMode,
+                        user_shifts: data.userShifts
                     });
             } catch (error) {
                 console.error("Feil ved lagring til Supabase:", error);
