@@ -1330,10 +1330,12 @@
             }
 
             // Lagre til Supabase – inkluder user_id for å passere RLS
+            // Bruk YYYY-MM-DD format direkte fra den valgte datoen for å unngå tidszone-problemer
+            const dateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
             const { data: saved, error } = await window.supa.from("user_shifts")
               .insert({
                 user_id:   user.id,
-                shift_date: newShift.date.toISOString().split("T")[0],
+                shift_date: dateStr,
                 start_time: newShift.startTime,
                 end_time:   newShift.endTime,
                 shift_type: newShift.type
@@ -1924,7 +1926,7 @@
                 // Konverter til app-format
                 this.shifts = (shifts || []).map(shift => ({
                     id: shift.id,
-                    date: new Date(shift.shift_date),
+                    date: new Date(shift.shift_date + 'T00:00:00'), // Legg til tid for å unngå tidszone-problemer
                     startTime: shift.start_time,
                     endTime: shift.end_time,
                     type: shift.shift_type
