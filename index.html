@@ -816,16 +816,26 @@
       box-shadow: 0 8px 24px -8px rgba(126, 249, 192, 0.25);
       border-color: var(--accent);
     }
-    @media (max-width: 600px) {
-      .login-card {
-        padding: 18px 8px 16px 8px;
-        max-width: 98vw;
-      }
+
+    .auth-center {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 0 20px;
+      min-height: unset;
+      box-sizing: border-box;
     }
   </style>
 
   <!-- Login / registrer -->
-  <div id="auth-box" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 0 20px;">
+  <div id="auth-box" class="auth-center">
     <div class="login-card">
       <h2 style="margin-bottom: 20px;">Logg inn / Registrer</h2>
       <input id="email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 12px;" />
