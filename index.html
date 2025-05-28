@@ -1129,6 +1129,9 @@
     window.logout = () => {
         supa.auth.signOut();
     };
+    
+    // Eksponer supa-klienten globalt så den kan brukes av app-objektet
+    window.supa = supa;
     // 5. Start: hvis bruker allerede har sesjon (cookie)
     try {
       const session = await supa.auth.getSession();
@@ -1320,14 +1323,14 @@
             };
 
             // Hent innlogget bruker
-            const { data: { user } } = await supa.auth.getUser();
+            const { data: { user } } = await window.supa.auth.getUser();
             if (!user) {
               alert("Du er ikke innlogget");
               return;
             }
 
             // Lagre til Supabase – inkluder user_id for å passere RLS
-            const { data: saved, error } = await supa.from("user_shifts")
+            const { data: saved, error } = await window.supa.from("user_shifts")
               .insert({
                 user_id:   user.id,
                 shift_date: newShift.date.toISOString().split("T")[0],
@@ -1360,7 +1363,7 @@
 
         async deleteShift(index) {
             if (confirm('Er du sikker på at du vil slette denne vakten?')) {
-                await supa.from("user_shifts")
+                await window.supa.from("user_shifts")
                           .delete()
                           .eq("id", this.shifts[index].id);
                 this.shifts.splice(index, 1);
@@ -1899,6 +1902,81 @@
         },
         removeBonusSlot(btn) {
             btn.parentElement.remove();
+        },
+
+        // Supabase functions
+        async loadFromSupabase() {
+            try {
+                const { data: { user } } = await window.supa.auth.getUser();
+                if (!user) return;
+
+                // Hent vakter
+                const { data: shifts, error: shiftsError } = await window.supa
+                    .from("user_shifts")
+                    .select("*")
+                    .eq("user_id", user.id);
+
+                if (shiftsError) {
+                    console.error("Feil ved henting av vakter:", shiftsError);
+                    return;
+                }
+
+                // Konverter til app-format
+                this.shifts = (shifts || []).map(shift => ({
+                    id: shift.id,
+                    date: new Date(shift.shift_date),
+                    startTime: shift.start_time,
+                    endTime: shift.end_time,
+                    type: shift.shift_type
+                }));
+
+                // Hent brukerinnstillinger
+                const { data: settings } = await window.supa
+                    .from("user_settings")
+                    .select("*")
+                    .eq("user_id", user.id)
+                    .single();
+
+                if (settings) {
+                    this.usePreset = settings.use_preset !== undefined ? settings.use_preset : true;
+                    this.customWage = settings.custom_wage || 200;
+                    this.currentWageLevel = settings.wage_level || 1;
+                    this.customBonuses = settings.custom_bonuses;
+                    this.currentMonth = settings.current_month || 5;
+                    this.pauseDeduction = settings.pause_deduction !== undefined ? settings.pause_deduction : true;
+
+                    // Oppdater UI
+                    document.getElementById('monthSelect').value = this.currentMonth;
+                    document.getElementById('wageSelect').value = this.currentWageLevel;
+                    document.getElementById('customWageInput').value = this.customWage;
+                    document.getElementById('usePresetToggle').checked = this.usePreset;
+                    document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                }
+            } catch (error) {
+                console.error("Feil ved loading fra Supabase:", error);
+                throw error;
+            }
+        },
+
+        async saveSettingsToSupabase(data) {
+            try {
+                const { data: { user } } = await window.supa.auth.getUser();
+                if (!user) return;
+
+                await window.supa
+                    .from("user_settings")
+                    .upsert({
+                        user_id: user.id,
+                        use_preset: data.usePreset,
+                        custom_wage: data.customWage,
+                        wage_level: data.currentWageLevel,
+                        custom_bonuses: data.customBonuses,
+                        current_month: data.currentMonth,
+                        pause_deduction: data.pauseDeduction
+                    });
+            } catch (error) {
+                console.error("Feil ved lagring til Supabase:", error);
+            }
         },
     };
 
