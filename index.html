@@ -1836,12 +1836,15 @@
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
+            // Start from Monday: getDay() returns 0 for Sunday, 1 for Monday, etc.
+            // We want Monday (1) to be 0, Tuesday (2) to be 1, etc., and Sunday (0) to be 6
+            const mondayOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            startDate.setDate(startDate.getDate() - mondayOffset);
 
             dateGrid.innerHTML = '';
 
-            // Add day headers
-            ['S', 'M', 'T', 'O', 'T', 'F', 'L'].forEach(day => {
+            // Add day headers - Monday first
+            ['M', 'T', 'O', 'T', 'F', 'L', 'S'].forEach(day => {
                 const header = document.createElement('div');
                 header.textContent = day;
                 header.style.fontWeight = '600';
