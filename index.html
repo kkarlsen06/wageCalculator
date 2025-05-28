@@ -1698,5 +1698,43 @@
 
         app.init();
     </script>
+
+    <script type="module">
+      // 1. Init
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      const supa = createClient(
+        import.meta.env.PUBLIC_SUPABASE_URL,
+        import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+      );
+
+      // 2. Enkel registrering / innlogging
+      async function signUpOrIn(email, pass) {
+        let { error } = await supa.auth.signInWithPassword({ email, password: pass });
+        if (error && error.message.includes("Invalid login")) {
+          ({ error } = await supa.auth.signUp({ email, password: pass }));
+        }
+        if (error) return alert(error.message);
+        renderApp();
+      }
+
+      // 3. Lagre vakt
+      async function saveShift(start, end, note) {
+        const { error } = await supa.from("shifts")
+          .insert({ start_time: start, end_time: end, note });
+        if (error) alert(error.message);
+        else alert("Vakt lagret!");
+      }
+
+      // 4. Hent vakter
+      async function loadShifts() {
+        const { data, error } = await supa.from("shifts").select().order("start_time");
+        if (error) return alert(error.message);
+        // …render data til skjermen…
+      }
+
+      // 5. Kjør når siden lastes
+      supa.auth.onAuthStateChange((_e, s) => s && renderApp());
+      function renderApp() { loadShifts(); /* vis app-UI */ }
+    </script>
 </body>
 </html>
