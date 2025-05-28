@@ -693,6 +693,73 @@
     </style>
 </head>
 <body>
+  <!-- Login / registrer -->
+  <div id="auth-box">
+    <h2>Logg inn / Registrer</h2>
+    <input id="email" type="email" placeholder="E-post" required />
+    <input id="password" type="password" placeholder="Passord" required />
+    <button id="login-btn">Logg inn</button>
+    <button id="signup-btn">Registrer ny bruker</button>
+    <p id="auth-msg"></p>
+  </div>
+
+  <!-- Hoved-appen skjules til bruker er innlogget -->
+  <div id="app" style="display:none">
+    <h1>Vakt-appen</h1>
+    <!-- resten av siden din -->
+    <button id="logout-btn">Logg ut</button>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    // 1. Init
+    const supa = createClient(
+      import.meta.env.PUBLIC_SUPABASE_URL,
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    // 2. Element-referanser
+    const authMsg  = document.getElementById("auth-msg");
+    const emailInp = document.getElementById("email");
+    const passInp  = document.getElementById("password");
+    const loginBtn = document.getElementById("login-btn");
+    const signupBtn= document.getElementById("signup-btn");
+    const logoutBtn= document.getElementById("logout-btn");
+    const authBox  = document.getElementById("auth-box");
+    const appBox   = document.getElementById("app");
+
+    // 3. Auth-handlinger ----------------------------------------------------
+    loginBtn.onclick  = () => signIn(emailInp.value, passInp.value);
+    signupBtn.onclick = () => signUp(emailInp.value, passInp.value);
+    logoutBtn.onclick = () => supa.auth.signOut();
+
+    async function signIn(email, password) {
+      const { error } = await supa.auth.signInWithPassword({ email, password });
+      authMsg.textContent = error ? error.message : "";
+    }
+
+    async function signUp(email, password) {
+      const { error, data } = await supa.auth.signUp({ email, password });
+      if (error) return authMsg.textContent = error.message;
+
+      // (valgfritt) opprett profil-rad med alias-brukernavn lik e-post før @
+      const alias = email.split("@")[0];
+      await supa.from("profiles").insert({ id: data.user.id, username: alias });
+      authMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
+    }
+
+    // 4. Vis skjerm basert på innlogget status ------------------------------
+    supa.auth.onAuthStateChange((_event, session) => toggleUI(!!session));
+    function toggleUI(loggedIn) {
+      authBox.style.display = loggedIn ? "none" : "block";
+      appBox.style.display  = loggedIn ? "block" : "none";
+    }
+
+    // 5. Start: hvis bruker allerede har sesjon (cookie)
+    toggleUI(!!(await supa.auth.getSession()).data.session);
+  </script>
+
     <div class="app-container">
         <div class="header">
             <div class="header-content">
@@ -1697,44 +1764,6 @@
         };
 
         app.init();
-    </script>
-
-    <script type="module">
-      // 1. Init
-      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-      const supa = createClient(
-        import.meta.env.PUBLIC_SUPABASE_URL,
-        import.meta.env.PUBLIC_SUPABASE_ANON_KEY
-      );
-
-      // 2. Enkel registrering / innlogging
-      async function signUpOrIn(email, pass) {
-        let { error } = await supa.auth.signInWithPassword({ email, password: pass });
-        if (error && error.message.includes("Invalid login")) {
-          ({ error } = await supa.auth.signUp({ email, password: pass }));
-        }
-        if (error) return alert(error.message);
-        renderApp();
-      }
-
-      // 3. Lagre vakt
-      async function saveShift(start, end, note) {
-        const { error } = await supa.from("shifts")
-          .insert({ start_time: start, end_time: end, note });
-        if (error) alert(error.message);
-        else alert("Vakt lagret!");
-      }
-
-      // 4. Hent vakter
-      async function loadShifts() {
-        const { data, error } = await supa.from("shifts").select().order("start_time");
-        if (error) return alert(error.message);
-        // …render data til skjermen…
-      }
-
-      // 5. Kjør når siden lastes
-      supa.auth.onAuthStateChange((_e, s) => s && renderApp());
-      function renderApp() { loadShifts(); /* vis app-UI */ }
     </script>
 </body>
 </html>
