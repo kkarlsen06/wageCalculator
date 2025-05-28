@@ -1391,10 +1391,10 @@
     }
 
     // Logg ut og send brukeren tilbake til innloggingsskjerm
-    function logout() {
-      supa.auth.signOut();
-    }
-
+    // Eksponer logg-ut globalt – nødvendig fordi scriptet er et ES-modul
+    window.logout = () => {
+        supa.auth.signOut();
+    };
     // 5. Start: hvis bruker allerede har sesjon (cookie)
     try {
       const session = await supa.auth.getSession();
@@ -2141,58 +2141,3 @@
   </script>
 </body>
 </html>
-        /** Henter brukerens data fra Supabase og fyller state */
-        async loadFromSupabase() {
-          const { data: { user } } = await supa.auth.getUser();
-          if (!user) {                      // fallback om ikke innlogget
-            this.loadFromLocalStorage();
-            return;
-          }
-
-          // ‑‑ Settings -----------------------------------------------------------
-          const { data: settings } = await supa
-                .from("user_settings")
-                .select("*")
-                .eq("user_id", user.id)
-                .single();
-
-          if (settings) {
-            this.usePreset       = settings.use_preset;
-            this.customWage      = Number(settings.custom_wage);
-            this.currentWageLevel= settings.current_wage_level;
-            this.customBonuses   = settings.custom_bonuses;
-            this.currentMonth    = settings.current_month;
-            this.pauseDeduction  = settings.pause_deduction;
-          }
-
-          // ‑‑ Shifts -------------------------------------------------------------
-          const { data: shifts } = await supa
-                .from("user_shifts")
-                .select("*")
-                .order("shift_date",{ ascending:false });
-
-          this.shifts = (shifts || []).map(s => ({
-            id: s.id,
-            date: new Date(s.shift_date),
-            startTime: s.start_time,
-            endTime: s.end_time,
-            type: s.shift_type
-          }));
-          this.updateDisplay();
-        },
-
-        /** Lagrer innstillinger til Supabase hver gang brukeren lagrer lokalt */
-        async saveSettingsToSupabase(data) {
-          const { data: { user } } = await supa.auth.getUser();
-          if (!user) return;
-          await supa.from("user_settings").upsert({
-            user_id:           user.id,
-            use_preset:        data.usePreset,
-            custom_wage:       data.customWage,
-            current_wage_level:data.currentWageLevel,
-            custom_bonuses:    data.customBonuses,
-            current_month:     data.currentMonth,
-            pause_deduction:   data.pauseDeduction,
-            updated_at:        new Date().toISOString()
-          });
-        },
