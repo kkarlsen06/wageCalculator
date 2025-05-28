@@ -779,13 +779,23 @@
         <div class="header">
             <div class="header-content">
                 <h1>Vaktberegner</h1>
-                <button class="settings-btn" onclick="app.openSettings()">
-                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
-                    <span>Innstillinger</span>
-                </button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="settings-btn" onclick="app.openSettings()">
+                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                        <span>Innstillinger</span>
+                    </button>
+                    <button class="settings-btn" onclick="app.logout()" style="background: var(--danger); border-color: var(--danger);">
+                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span>Logg ut</span>
+                    </button>
+                </div>
             </div>
             <div class="header-info">
                 <span>
@@ -909,18 +919,18 @@
     </div> <!-- slutt på .app-container -->
 
     <footer style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
         background: var(--bg-secondary);
         color: var(--text-secondary);
         text-align: center;
-        padding: 18px 10px 18px 10px;
+        padding: 12px 10px;
         font-size: 14px;
         border-top: 1px solid var(--border);
-        border-radius: 16px 16px 0 0;
-        /* Ikke sticky/fixed lenger */
-        max-width: 600px;
-        margin: 0 auto;
-        right: 0;
+        z-index: 50;
     ">
         Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2024
     </footer>
@@ -1969,148 +1979,157 @@
             this.updateDisplay();
         },
 
-        // ...existing code...
-
-        populateDateGrid() {
-            const dateGrid = document.getElementById('dateGrid');
-            const year = this.YEAR;
-            const month = this.currentMonth - 1; // JavaScript months are 0-indexed
+        switchSettingsTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
-
-            dateGrid.innerHTML = '';
-
-            // Add day headers
-            ['S', 'M', 'T', 'O', 'T', 'F', 'L'].forEach(day => {
-                const header = document.createElement('div');
-                header.textContent = day;
-                header.style.fontWeight = '600';
-                header.style.fontSize = '12px';
-                header.style.color = 'var(--text-secondary)';
-                header.style.textAlign = 'center';
-                header.style.padding = '8px';
-                dateGrid.appendChild(header);
-            });
-
-            // Add date cells
-            for (let i = 0; i < 42; i++) { // 6 weeks
-                const cellDate = new Date(startDate);
-                cellDate.setDate(startDate.getDate() + i);
-                
-                const cell = document.createElement('div');
-                cell.className = 'date-cell';
-                cell.textContent = cellDate.getDate();
-                
-                if (cellDate.getMonth() !== month) {
-                    cell.classList.add('disabled');
-                } else {
-                    cell.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        document.querySelectorAll('.date-cell:not(.disabled)').forEach(c => c.classList.remove('selected'));
-                        cell.classList.add('selected');
-                        this.selectedDate = new Date(cellDate);
-                        console.log('Date selected:', this.selectedDate); // Debug log
-                    });
-                }
-                
-                dateGrid.appendChild(cell);
-            }
+            event.target.classList.add('active');
+            document.getElementById(`${tab}Tab`).classList.add('active');
         },
 
-        // ...existing code...
+        showBreakdown(type) {
+            const modal = document.getElementById('breakdownModal');
+            const title = document.getElementById('breakdownTitle');
+            const list = document.getElementById('breakdownList');
+            
+            const monthShifts = this.shifts.filter(shift => 
+                shift.date.getMonth() === this.currentMonth - 1 && 
+                shift.date.getFullYear() === this.YEAR
+            );
 
-        async clearAllData() {
-            if (confirm('Er du sikker på at du vil slette alle data? Dette kan ikke angres.')) {
-                // Clear from Supabase
-                if (this.currentUser) {
-                    try {
-                        await window.supabase
-                            .from('user_shifts')
-                            .delete()
-                            .eq('user_id', this.currentUser.id);
-
-                        await window.supabase
-                            .from('user_settings')
-                            .delete()
-                            .eq('user_id', this.currentUser.id);
-                    } catch (error) {
-                        console.error('Error clearing Supabase data:', error);
-                    }
-                }
-
-                localStorage.removeItem('lønnsberegnerData');
-                this.shifts = [];
-                this.currentMonth = 5;
-                this.currentWageLevel = 1;
-                this.usePreset = true;
-                this.customWage = 200;
-                this.customBonuses = null;
-                this.pauseDeduction = true;
-                this.selectedDate = null;
-                
-                // Reset UI
-                document.getElementById('monthSelect').value = this.currentMonth;
-                document.getElementById('wageSelect').value = this.currentWageLevel;
-                document.getElementById('customWageInput').value = this.customWage;
-                document.getElementById('usePresetToggle').checked = this.usePreset;
-                document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
-                
-                this.updateDisplay();
-                this.populateDateGrid();
-                this.togglePreset();
-                alert('Alle data er slettet.');
+            let content = '';
+            
+            if (type === 'hours') {
+                title.textContent = 'Timer per vakt';
+                content = monthShifts.map(shift => {
+                    const calc = this.calculateShift(shift);
+                    const day = shift.date.getDate();
+                    return `
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                            <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
+                            <span>${this.formatHours(calc.hours)}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else if (type === 'base') {
+                title.textContent = 'Grunnlønn per vakt';
+                content = monthShifts.map(shift => {
+                    const calc = this.calculateShift(shift);
+                    const day = shift.date.getDate();
+                    return `
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                            <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
+                            <span>${this.formatCurrency(calc.baseWage)}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else if (type === 'bonus') {
+                title.textContent = 'Tillegg per vakt';
+                content = monthShifts.map(shift => {
+                    const calc = this.calculateShift(shift);
+                    const day = shift.date.getDate();
+                    return `
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                            <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
+                            <span>${this.formatCurrency(calc.bonus)}</span>
+                        </div>
+                    `;
+                }).join('');
             }
+            
+            list.innerHTML = content || '<p style="text-align: center; color: var(--text-secondary);">Ingen data tilgjengelig</p>';
+            modal.classList.add('active');
         },
 
-        // ...existing code...
+        closeBreakdown() {
+            document.getElementById('breakdownModal').classList.remove('active');
+        },
 
-        saveToLocalStorage() {
+        exportData() {
             const data = {
                 shifts: this.shifts,
-                usePreset: this.usePreset,
-                customWage: this.customWage,
-                currentWageLevel: this.currentWageLevel,
-                customBonuses: this.customBonuses,
-                currentMonth: this.currentMonth,
-                pauseDeduction: this.pauseDeduction
+                settings: {
+                    usePreset: this.usePreset,
+                    customWage: this.customWage,
+                    currentWageLevel: this.currentWageLevel,
+                    customBonuses: this.customBonuses,
+                    pauseDeduction: this.pauseDeduction
+                },
+                exportDate: new Date().toISOString()
             };
-            localStorage.setItem('lønnsberegnerData', JSON.stringify(data));
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vaktberegner_export_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         },
 
-        loadFromLocalStorage() {
-            const saved = localStorage.getItem('lønnsberegnerData');
-            if (saved) {
+        handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
                 try {
-                    const data = JSON.parse(saved);
-                    this.shifts = (data.shifts || []).map(shift => ({
-                        ...shift,
-                        date: new Date(shift.date)
-                    }));
-                    this.usePreset = data.usePreset !== undefined ? data.usePreset : true;
-                    this.customWage = data.customWage || 200;
-                    this.currentWageLevel = data.currentWageLevel || 1;
-                    this.customBonuses = data.customBonuses;
-                    this.currentMonth = data.currentMonth || 5;
-                    this.pauseDeduction = data.pauseDeduction !== undefined ? data.pauseDeduction : true;
+                    const data = JSON.parse(e.target.result);
                     
-                    // Update UI elements
-                    document.getElementById('monthSelect').value = this.currentMonth;
-                    document.getElementById('wageSelect').value = this.currentWageLevel;
-                    document.getElementById('customWageInput').value = this.customWage;
-                    document.getElementById('usePresetToggle').checked = this.usePreset;
-                    document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                    if (data.shifts) {
+                        this.shifts = data.shifts.map(shift => ({
+                            ...shift,
+                            date: new Date(shift.date)
+                        }));
+                    }
+                    
+                    if (data.settings) {
+                        this.usePreset = data.settings.usePreset !== undefined ? data.settings.usePreset : true;
+                        this.customWage = data.settings.customWage || 200;
+                        this.currentWageLevel = data.settings.currentWageLevel || 1;
+                        this.customBonuses = data.settings.customBonuses;
+                        this.pauseDeduction = data.settings.pauseDeduction !== undefined ? data.settings.pauseDeduction : true;
+                        
+                        // Update UI elements
+                        document.getElementById('wageSelect').value = this.currentWageLevel;
+                        document.getElementById('customWageInput').value = this.customWage;
+                        document.getElementById('usePresetToggle').checked = this.usePreset;
+                        document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
+                    }
+                    
+                    this.saveToLocalStorage();
+                    this.updateDisplay();
+                    this.togglePreset();
+                    alert('Data importert!');
                 } catch (error) {
-                    console.error('Error loading from localStorage:', error);
+                    console.error('Import error:', error);
+                    alert('Feil ved import av data. Kontroller at filen er gyldig.');
                 }
-            }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
         },
 
-        // ...existing code...
+        addBonusSlot(type) {
+            const container = document.getElementById(`${type}BonusSlots`);
+            const slot = document.createElement('div');
+            slot.className = 'bonus-slot';
+            slot.innerHTML = `
+                <input type="time" class="form-control" value="18:00">
+                <input type="time" class="form-control" value="21:00">
+                <input type="number" class="form-control" placeholder="kr/t" value="0">
+                <button class="btn btn-icon btn-danger" onclick="app.removeBonusSlot(this)">×</button>
+            `;
+            container.appendChild(slot);
+        },
+
+        removeBonusSlot(btn) {
+            btn.parentElement.remove();
+        },
     };
   </script>
 </body>
