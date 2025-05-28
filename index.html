@@ -881,7 +881,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">
+                    <button type="button" class="btn btn-primary" onclick="app.addShift()">
                         <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="8" x2="12" y2="16"></line>
@@ -1038,15 +1038,6 @@
             </div>
 
             <div id="dataTab" class="tab-content">
-                <div class="form-group">
-                    <label>Eksporter/Importer data</label>
-                    <div class="flex gap-10">
-                        <button class="btn btn-secondary" onclick="app.exportData()">Eksporter</button>
-                        <input type="file" id="importFile" style="display: none;" onchange="app.handleImport(event)">
-                        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Importer</button>
-                    </div>
-                </div>
-                
                 <div class="form-group">
                     <label>Slett alle data</label>
                     <button class="btn btn-danger" onclick="app.clearAllData()">Slett alt</button>
@@ -1918,24 +1909,29 @@
         },
 
         populateTimeSelects() {
-            const startHour = document.getElementById('startHour');
-            const endHour = document.getElementById('endHour');
+            const startHour   = document.getElementById('startHour');
+            const endHour     = document.getElementById('endHour');
             const startMinute = document.getElementById('startMinute');
-            const endMinute = document.getElementById('endMinute');
+            const endMinute   = document.getElementById('endMinute');
 
-            // Populate hours (06-24)
+            /* Tøm dropdown‑ene hver gang for å unngå duplikater */
+            startHour.innerHTML   = '<option value="">Fra time</option>';
+            endHour.innerHTML     = '<option value="">Til time</option>';
+            startMinute.innerHTML = '<option value="">Fra minutt</option>';
+            endMinute.innerHTML   = '<option value="">Til minutt</option>';
+
+            /* Timer: 06–24 */
             for (let hour = 6; hour <= 24; hour++) {
-                const hourStr = hour.toString().padStart(2, '0');
-                startHour.innerHTML += `<option value="${hourStr}">${hourStr}</option>`;
-                endHour.innerHTML += `<option value="${hourStr}">${hourStr}</option>`;
+                const h = hour.toString().padStart(2, '0');
+                startHour.innerHTML += `<option value="${h}">${h}</option>`;
+                endHour.innerHTML   += `<option value="${h}">${h}</option>`;
             }
 
-            // Populate minutes (0, 15, 30, 45) with 0 pre-selected
-            [0, 15, 30, 45].forEach((minute, index) => {
-                const minuteStr = minute.toString().padStart(2, '0');
-                const selectedAttr = index === 0 ? ' selected' : '';
-                startMinute.innerHTML += `<option value="${minuteStr}"${selectedAttr}>${minuteStr}</option>`;
-                endMinute.innerHTML += `<option value="${minuteStr}"${selectedAttr}>${minuteStr}</option>`;
+            /* Minutter: kun 00, 15, 30, 45 – 00 forhåndsvalg */
+            ['00', '15', '30', '45'].forEach((m, idx) => {
+                const selected = idx === 0 ? ' selected' : '';
+                startMinute.innerHTML += `<option value="${m}"${selected}>${m}</option>`;
+                endMinute.innerHTML   += `<option value="${m}"${selected}>${m}</option>`;
             });
         },
 
