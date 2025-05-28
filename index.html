@@ -782,10 +782,11 @@
                 <button class="settings-btn" onclick="app.openSettings()">
                     <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1-2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                     </svg>
                     <span>Innstillinger</span>
                 </button>
+                <button class="settings-btn" onclick="logout()">Logg&nbsp;ut</button>
             </div>
             <div class="header-info">
                 <span>
@@ -1389,6 +1390,11 @@
       }
     }
 
+    // Logg ut og send brukeren tilbake til innloggingsskjerm
+    function logout() {
+      supa.auth.signOut();
+    }
+
     // 5. Start: hvis bruker allerede har sesjon (cookie)
     try {
       const session = await supa.auth.getSession();
@@ -1444,8 +1450,8 @@
         selectedDate: null,
 
         // Initialize
-        init() {
-            this.loadFromLocalStorage();
+        async init() {
+            await this.loadFromSupabase();
             this.populateTimeSelects();
             this.populateDateGrid();
             
@@ -1535,7 +1541,7 @@
         },
 
         // Shift Management
-        addShift() {
+        async addShift() {
             if (!this.selectedDate) {
                 alert('Vennligst velg en dato');
                 return;
@@ -1554,12 +1560,32 @@
             const dayOfWeek = this.selectedDate.getDay();
             const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
             
-            this.shifts.push({
-                date: new Date(this.selectedDate),
-                startTime: `${startHour}:${startMinute}`,
-                endTime: `${endHour}:${endMinute}`,
-                type: type
-            });
+            const newShift = {
+              date: new Date(this.selectedDate),
+              startTime: `${startHour}:${startMinute}`,
+              endTime:   `${endHour}:${endMinute}`,
+              type
+            };
+
+            // Lagre til Supabase
+            const { data: saved, error } = await supa.from("user_shifts")
+              .insert({
+                shift_date: newShift.date.toISOString().split("T")[0],
+                start_time: newShift.startTime,
+                end_time:   newShift.endTime,
+                shift_type: newShift.type
+              })
+              .select()
+              .single();
+
+            if (error) {
+              alert("Kunne ikke lagre vakt i databasen");
+              console.error(error);
+              return;
+            }
+
+            newShift.id = saved.id;
+            this.shifts.push(newShift);
             
             this.updateDisplay();
             this.saveToLocalStorage();
@@ -1572,8 +1598,11 @@
             });
         },
 
-        deleteShift(index) {
+        async deleteShift(index) {
             if (confirm('Er du sikker på at du vil slette denne vakten?')) {
+                await supa.from("user_shifts")
+                          .delete()
+                          .eq("id", this.shifts[index].id);
                 this.shifts.splice(index, 1);
                 this.updateDisplay();
                 this.saveToLocalStorage();
@@ -1839,6 +1868,7 @@
                 pauseDeduction: this.pauseDeduction
             };
             localStorage.setItem('lønnsberegnerData', JSON.stringify(data));
+            this.saveSettingsToSupabase(data);
         },
 
         loadFromLocalStorage() {
@@ -2111,3 +2141,58 @@
   </script>
 </body>
 </html>
+        /** Henter brukerens data fra Supabase og fyller state */
+        async loadFromSupabase() {
+          const { data: { user } } = await supa.auth.getUser();
+          if (!user) {                      // fallback om ikke innlogget
+            this.loadFromLocalStorage();
+            return;
+          }
+
+          // ‑‑ Settings -----------------------------------------------------------
+          const { data: settings } = await supa
+                .from("user_settings")
+                .select("*")
+                .eq("user_id", user.id)
+                .single();
+
+          if (settings) {
+            this.usePreset       = settings.use_preset;
+            this.customWage      = Number(settings.custom_wage);
+            this.currentWageLevel= settings.current_wage_level;
+            this.customBonuses   = settings.custom_bonuses;
+            this.currentMonth    = settings.current_month;
+            this.pauseDeduction  = settings.pause_deduction;
+          }
+
+          // ‑‑ Shifts -------------------------------------------------------------
+          const { data: shifts } = await supa
+                .from("user_shifts")
+                .select("*")
+                .order("shift_date",{ ascending:false });
+
+          this.shifts = (shifts || []).map(s => ({
+            id: s.id,
+            date: new Date(s.shift_date),
+            startTime: s.start_time,
+            endTime: s.end_time,
+            type: s.shift_type
+          }));
+          this.updateDisplay();
+        },
+
+        /** Lagrer innstillinger til Supabase hver gang brukeren lagrer lokalt */
+        async saveSettingsToSupabase(data) {
+          const { data: { user } } = await supa.auth.getUser();
+          if (!user) return;
+          await supa.from("user_settings").upsert({
+            user_id:           user.id,
+            use_preset:        data.usePreset,
+            custom_wage:       data.customWage,
+            current_wage_level:data.currentWageLevel,
+            custom_bonuses:    data.customBonuses,
+            current_month:     data.currentMonth,
+            pause_deduction:   data.pauseDeduction,
+            updated_at:        new Date().toISOString()
+          });
+        },
