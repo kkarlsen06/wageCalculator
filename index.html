@@ -866,6 +866,18 @@
     </div>
   </div>
 
+  <!-- Password Recovery Card -->
+  <div id="recovery-card" class="auth-center" style="display:none;">
+    <div class="login-card">
+      <h2 style="margin-bottom: 20px;">Nytt passord</h2>
+      <input id="new-password" type="password" placeholder="Nytt passord" required class="form-control" style="margin-bottom: 12px;" minlength="6" />
+      <input id="confirm-password" type="password" placeholder="Bekreft nytt passord" required class="form-control" style="margin-bottom: 18px;" minlength="6" />
+      <button id="update-password-btn" class="btn btn-primary" style="margin-bottom: 12px;">Oppdater passord</button>
+      <button id="cancel-recovery-btn" class="btn btn-secondary">Avbryt</button>
+      <p id="recovery-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+    </div>
+  </div>
+
   <!-- Hoved-appen skjules til bruker er innlogget -->
   <div id="app" style="display:none">
     <!-- Flytt hele app-container, modals og footer hit -->
@@ -1188,9 +1200,38 @@
     const backLoginBtn   = document.getElementById("back-login-btn");
     const forgotMsg      = document.getElementById("forgot-msg");
 
+    // Password recovery elementer
+    const recoveryCard       = document.getElementById("recovery-card");
+    const newPasswordInp     = document.getElementById("new-password");
+    const confirmPasswordInp = document.getElementById("confirm-password");
+    const updatePasswordBtn  = document.getElementById("update-password-btn");
+    const cancelRecoveryBtn  = document.getElementById("cancel-recovery-btn");
+    const recoveryMsg        = document.getElementById("recovery-msg");
+
     // 3. Auth-handlinger ----------------------------------------------------
     loginBtn.onclick  = () => signIn(emailInp.value, passInp.value);
     signupBtn.onclick = () => signUp(emailInp.value, passInp.value);
+
+    // Keyboard event handlers
+    emailInp.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') passInp.focus();
+    });
+    
+    passInp.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') signIn(emailInp.value, passInp.value);
+    });
+
+    forgotEmailInp.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendResetLink(forgotEmailInp.value);
+    });
+
+    newPasswordInp.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') confirmPasswordInp.focus();
+    });
+
+    confirmPasswordInp.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') updatePassword();
+    });
 
     async function signIn(email, password) {
       try {
@@ -1222,43 +1263,172 @@
     backLoginBtn.onclick = () => toggleForgot(false);
     sendResetBtn.onclick = () => sendResetLink(forgotEmailInp.value);
 
+    // ---------- Password recovery ----------
+    updatePasswordBtn.onclick = () => updatePassword();
+    cancelRecoveryBtn.onclick = () => showLogin();
+
     function toggleForgot(show) {
-      forgotCard.style.display = show ? "flex" : "none";
-      authBox.style.display    = show ? "none" : "flex";
+      forgotCard.style.display = show ? "block" : "none";
+      authBox.style.display    = show ? "none" : "block";
       forgotMsg.textContent    = "";
+      if (show) {
+        forgotEmailInp.focus();
+      } else {
+        emailInp.focus();
+      }
+    }
+
+    function showLogin() {
+      authBox.style.display = "block";
+      forgotCard.style.display = "none";
+      recoveryCard.style.display = "none";
+      authMsg.textContent = "";
+      forgotMsg.textContent = "";
+      recoveryMsg.textContent = "";
+    }
+
+    function showPasswordRecovery() {
+      authBox.style.display = "none";
+      forgotCard.style.display = "none";
+      recoveryCard.style.display = "block";
+      recoveryMsg.textContent = "";
+      newPasswordInp.focus();
+    }
+
+    async function updatePassword() {
+      const newPassword = newPasswordInp.value.trim();
+      const confirmPassword = confirmPasswordInp.value.trim();
+
+      if (!newPassword || !confirmPassword) {
+        recoveryMsg.style.color = "var(--danger)";
+        recoveryMsg.textContent = "Vennligst fyll inn begge passordfeltene";
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        recoveryMsg.style.color = "var(--danger)";
+        recoveryMsg.textContent = "Passord må være minst 6 tegn";
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        recoveryMsg.style.color = "var(--danger)";
+        recoveryMsg.textContent = "Passordene stemmer ikke overens";
+        return;
+      }
+
+      updatePasswordBtn.disabled = true;
+      updatePasswordBtn.textContent = "Oppdaterer...";
+
+      try {
+        const { error } = await supa.auth.updateUser({ password: newPassword });
+        
+        if (error) {
+          recoveryMsg.style.color = "var(--danger)";
+          recoveryMsg.textContent = error.message;
+        } else {
+          recoveryMsg.style.color = "var(--success)";
+          recoveryMsg.textContent = "Passord oppdatert! Logger deg inn...";
+          
+          // Clear form
+          newPasswordInp.value = "";
+          confirmPasswordInp.value = "";
+          
+          // Auto-hide recovery card after successful update
+          setTimeout(() => {
+            showLogin();
+          }, 2000);
+        }
+      } catch (err) {
+        recoveryMsg.style.color = "var(--danger)";
+        recoveryMsg.textContent = "Kunne ikke oppdatere passord. Prøv igjen.";
+        console.error("Password update error:", err);
+      } finally {
+        updatePasswordBtn.disabled = false;
+        updatePasswordBtn.textContent = "Oppdater passord";
+      }
+    }
+
+    function toggleForgot(show) {
+      forgotCard.style.display = show ? "block" : "none";
+      authBox.style.display    = show ? "none" : "block";
+      forgotMsg.textContent    = "";
+      if (show) {
+        forgotEmailInp.focus();
+      } else {
+        emailInp.focus();
+      }
     }
 
     async function sendResetLink(email) {
+      if (!email || !email.trim()) {
+        forgotMsg.style.color = "var(--danger)";
+        forgotMsg.textContent = "Vennligst fyll inn e-postadresse";
+        return;
+      }
+
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        forgotMsg.style.color = "var(--danger)";
+        forgotMsg.textContent = "Vennligst fyll inn en gyldig e-postadresse";
+        return;
+      }
+
+      sendResetBtn.disabled = true;
+      sendResetBtn.textContent = "Sender...";
+
       try {
-        const { error } = await supa.auth.resetPasswordForEmail(email, {
-          // Send the user right back to this site.
-          // "#recover" is optional, but nice if you later want to show a custom UI.
-          redirectTo: `${window.location.origin}/#recover`
+        const { error } = await supa.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}${window.location.pathname}#password-recovery`
         });
-        forgotMsg.style.color = error ? "var(--danger)" : "var(--success)";
-        forgotMsg.textContent = error ? error.message : "Sjekk e‑posten din for lenke!";
+        
+        if (error) {
+          forgotMsg.style.color = "var(--danger)";
+          forgotMsg.textContent = error.message;
+        } else {
+          forgotMsg.style.color = "var(--success)";
+          forgotMsg.textContent = "Sjekk e-posten din for tilbakestillingslenke!";
+          forgotEmailInp.value = "";
+        }
       } catch (err) {
         forgotMsg.style.color = "var(--danger)";
-        forgotMsg.textContent = "Kunne ikke sende e‑post";
+        forgotMsg.textContent = "Kunne ikke sende e-post. Prøv igjen senere.";
         console.error("Supabase reset error:", err);
+      } finally {
+        sendResetBtn.disabled = false;
+        sendResetBtn.textContent = "Send tilbakestillings‑link";
       }
     }
 
     // 4. Vis skjerm basert på innlogget status ------------------------------
     supa.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change:", event, session);
+      
       if (event === "PASSWORD_RECOVERY") {
-        // Brukeren kommer via lenken – spør om nytt passord
-        const newPass = prompt("Skriv inn nytt passord:");
-        if (newPass) {
-          const { error } = await supa.auth.updateUser({ password: newPass });
-          alert(error ? "Feil: " + error.message : "Passord oppdatert! Logg inn med nytt passord.");
-        }
+        // Show the password recovery form instead of using prompt
+        showPasswordRecovery();
+        return;
       }
+      
+      // Check if URL has password recovery hash
+      if (window.location.hash === "#password-recovery" && session) {
+        showPasswordRecovery();
+        return;
+      }
+      
       toggleUI(!!session);
     });
     function toggleUI(loggedIn) {
       authBox.style.display = loggedIn ? "none" : "block";
+      forgotCard.style.display = "none";
+      recoveryCard.style.display = "none";
       appBox.style.display  = loggedIn ? "block" : "none";
+      
+      // Clear messages when switching UI
+      authMsg.textContent = "";
+      forgotMsg.textContent = "";
+      recoveryMsg.textContent = "";
       
       // Initialiser appen hvis innlogget
       if (loggedIn && typeof app !== 'undefined') {
@@ -1277,6 +1447,25 @@
     // 5. Start: hvis bruker allerede har sesjon (cookie)
     try {
       const session = await supa.auth.getSession();
+      
+      // Check if this is a password recovery redirect
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const type = urlParams.get('type');
+      
+      if (type === 'recovery' && accessToken && refreshToken) {
+        // This is a password recovery redirect
+        await supa.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+        showPasswordRecovery();
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+      
       toggleUI(!!(session?.data?.session));
     } catch (err) {
       console.error("Session check error:", err);
