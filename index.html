@@ -497,14 +497,19 @@
         .add-shift-toggle {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 16px 16px 0 0;
+            border-radius: 16px;
             padding: 15px;
-            margin: 0;
+            margin: 0 0 20px 0;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
             transition: all var(--speed-normal) var(--ease-default);
+        }
+
+        .add-shift-toggle.active {
+            border-radius: 16px 16px 0 0;
+            margin-bottom: 0;
         }
 
         .add-shift-toggle:hover {
@@ -1442,6 +1447,7 @@
 
         toggleAddShift() {
             const card = document.querySelector('.add-shift-card');
+            const toggle = document.querySelector('.add-shift-toggle');
             const icon = document.getElementById('toggleIcon');
             // Oppdater dropdowns hvis brukeren åpner kortet før init var ferdig
             const startHour = document.getElementById('startHour');
@@ -1453,6 +1459,7 @@
                 this.populateDateGrid();
             }
             card.classList.toggle('active');
+            toggle.classList.toggle('active');
             icon.style.transform = card.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
         },
 
