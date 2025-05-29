@@ -1235,7 +1235,9 @@
 
     async function signIn(email, password) {
       try {
+        console.log("Attempting to sign in with email:", email);
         const { error } = await supa.auth.signInWithPassword({ email, password });
+        console.log("Sign-in response:", error);
         authMsg.textContent = error ? error.message : "";
       } catch (err) {
         console.error("Supabase error:", err);
@@ -1245,10 +1247,11 @@
 
     async function signUp(email, password) {
       try {
+        console.log("Attempting to sign up with email:", email);
         const { error, data } = await supa.auth.signUp({ email, password });
+        console.log("Sign-up response:", error, data);
         if (error) return authMsg.textContent = error.message;
 
-        // (valgfritt) opprett profil-rad med alias-brukernavn lik e-post før @
         const alias = email.split("@")[0];
         await supa.from("profiles").insert({ id: data.user.id, username: alias });
         authMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
