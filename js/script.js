@@ -4,7 +4,7 @@ const { createClient } = window.supabase;
 
 const supabase = createClient(
   'https://iuwjdacxbirhmsglcbxp.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NzAzOTcsImV4cCI6MjA1MTA0NjM5N30.FHBz9tRiWKrQlFn8csMzwP6lZDRhf2fhOJ9GU6JnCJE'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NTIxNDAsImV4cCI6MjA2NDAyODE0MH0.iSjbvGVpM3zOWCGpg5HrQp37PjJCmiHIwVQLgc2LgcE'
 );
 
 // Get the login form
