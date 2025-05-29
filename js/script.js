@@ -1,39 +1,44 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+// js/script.js
+// Supabase is loaded globally from CDN, access it via window.supabase
+const { createClient } = window.supabase;
 
-// Init Supabase client
-const supa = createClient('https://iuwjdacxbirhmsglcbxp.supabase.co','<your_anon_key>');
+const supabase = createClient(
+  'https://iuwjdacxbirhmsglcbxp.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NzAzOTcsImV4cCI6MjA1MTA0NjM5N30.FHBz9tRiWKrQlFn8csMzwP6lZDRhf2fhOJ9GU6JnCJE'
+);
 
-// Element references
-const authMsg  = document.getElementById('auth-msg');
-const emailInp = document.getElementById('email');
-const passInp  = document.getElementById('password');
-const loginBtn = document.getElementById('login-btn');
-const signupBtn= document.getElementById('signup-btn');
-const authBox  = document.getElementById('auth-box');
-const appBox   = document.getElementById('app');
-// Forgot-password
-const forgotBtn      = document.getElementById('forgot-btn');
-const forgotCard     = document.getElementById('forgot-card');
-const forgotEmailInp = document.getElementById('forgot-email');
-const sendResetBtn   = document.getElementById('send-reset-btn');
-const backLoginBtn   = document.getElementById('back-login-btn');
-const forgotMsg      = document.getElementById('forgot-msg');
-// Recovery
-const recoveryCard       = document.getElementById('recovery-card');
-const newPasswordInp     = document.getElementById('new-password');
-const confirmPasswordInp = document.getElementById('confirm-password');
-const updatePasswordBtn  = document.getElementById('update-password-btn');
-const cancelRecoveryBtn  = document.getElementById('cancel-recovery-btn');
-const recoveryMsg        = document.getElementById('recovery-msg');
+// Get the login form
+const form = document.querySelector('#loginForm');
 
-// Auth actions
-loginBtn.onclick  = () => signIn(emailInp.value, passInp.value);
-signupBtn.onclick = () => signUp(emailInp.value, passInp.value);
-// ...existing JS (sendResetLink, updatePassword, toggleUI, auth state change, etc.)...
+if (form) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.querySelector('#email').value;
+    const password = document.querySelector('#password').value;
 
-// Expose logout and app on window
-window.logout = () => supa.auth.signOut();
-window.supa   = supa;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
+      
+      if (error) {
+        alert('Login feil: ' + error.message);
+        return;
+      }
+      
+      // Login successful, redirect or show app
+      console.log('Innlogget:', data);
+      // You can redirect to another page or show the app section
+      // window.location.href = '/app.html';
+      
+    } catch (err) {
+      console.error('Login error:', err);
+      alert('En feil oppstod under innlogging');
+    }
+  });
+}
 
-// Initialize app
-// ...existing app.init() call...
+// Expose logout and supabase on window for other parts of the app
+window.logout = () => supabase.auth.signOut();
+window.supabase = supabase;

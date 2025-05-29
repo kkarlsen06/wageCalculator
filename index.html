@@ -5,34 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vaktberegner</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" type="module"></script>
 </head>
 <body>
+  <form id="loginForm" class="login-card">
+    <h1>Logg inn</h1>
+    <label for="email">E-post</label>
+    <input id="email" type="email" required>
+
+    <label for="password">Passord</label>
+    <input id="password" type="password" required>
+
+    <button type="submit">Logg inn</button>
+  </form>
+
   <header>
-    <div id="auth-box" class="auth-center">
-      <div class="login-card">
-        <h2 style="margin-bottom: 20px;">Logg inn / Registrer</h2>
-        <input id="email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 12px;" />
-        <input id="password" type="password" placeholder="Passord" required class="form-control" style="margin-bottom: 18px;" />
-        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-          <button id="login-btn" class="btn btn-primary" style="flex:1;">Logg inn</button>
-          <button id="signup-btn" class="btn btn-secondary" style="flex:1;">Registrer</button>
-        </div>
-        <button id="forgot-btn" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;margin-top:4px;">Glemt passord?</button>
-        <p id="auth-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
-      </div>
-    </div>
-
-    <!-- Forgot password card -->
-    <div id="forgot-card" class="auth-center" style="display:none;">
-      <div class="login-card">
-        <h2 style="margin-bottom: 20px;">Tilbakestill passord</h2>
-        <input id="forgot-email" type="email" placeholder="E‑post" required class="form-control" style="margin-bottom: 18px;" />
-        <button id="send-reset-btn" class="btn btn-primary" style="margin-bottom: 12px;">Send tilbakestillings‑link</button>
-        <button id="back-login-btn" class="btn btn-secondary">Tilbake</button>
-        <p id="forgot-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
-      </div>
-    </div>
-
     <!-- Hoved-appen skjules til bruker er innlogget -->
     <div id="app" style="display:none">
       <!-- Flytt hele app-container, modals og footer hit -->
@@ -348,6 +336,6 @@
         Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
     </footer>
   </footer>
-  <script type="module" src="js/script.js"></script>
+  <script src="js/script.js" defer></script>
 </body>
 </html>
