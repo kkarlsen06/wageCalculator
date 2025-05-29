@@ -1225,7 +1225,9 @@
     async function sendResetLink(email) {
       try {
         const { error } = await supa.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin
+          // Send the user right back to this site.
+          // "#recover" is optional, but nice if you later want to show a custom UI.
+          redirectTo: `${window.location.origin}/#recover`
         });
         forgotMsg.style.color = error ? "var(--danger)" : "var(--success)";
         forgotMsg.textContent = error ? error.message : "Sjekk e‑posten din for lenke!";
