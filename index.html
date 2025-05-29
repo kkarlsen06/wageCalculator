@@ -844,6 +844,7 @@
   <div id="auth-box" class="auth-center">
     <div class="login-card">
       <h2 style="margin-bottom: 20px;">Logg inn / Registrer</h2>
+      <input id="name" type="text" placeholder="Navn (kun for registrering)" class="form-control" style="margin-bottom: 12px; display: none;" />
       <input id="email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 12px;" />
       <input id="password" type="password" placeholder="Passord" required class="form-control" style="margin-bottom: 18px;" />
       <div style="display: flex; gap: 10px; margin-bottom: 12px;">
@@ -872,7 +873,7 @@
     <div class="app-container">
         <div class="header">
             <div class="header-content">
-                <h1>Vaktberegner</h1>
+                <h1 id="headerTitle">Vaktberegner</h1>
                 <button class="settings-btn" onclick="app.openSettings()">
                     <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -1044,12 +1045,29 @@
             </div>
             
             <div class="tab-nav">
-                <button class="tab-btn active" onclick="app.switchSettingsTab('general')">Generelt</button>
+                <button class="tab-btn active" onclick="app.switchSettingsTab('profile')">Profil</button>
+                <button class="tab-btn" onclick="app.switchSettingsTab('general')">Generelt</button>
                 <button class="tab-btn" onclick="app.switchSettingsTab('wage')">Lønn</button>
                 <button class="tab-btn" onclick="app.switchSettingsTab('data')">Data</button>
             </div>
 
-            <div id="generalTab" class="tab-content active">
+            <div id="profileTab" class="tab-content active">
+                <div class="form-group">
+                    <label>Navn</label>
+                    <input type="text" id="profileName" class="form-control" placeholder="Ditt navn">
+                </div>
+                
+                <div class="form-group">
+                    <label>E-post</label>
+                    <input type="email" id="profileEmail" class="form-control" placeholder="Din e-post" readonly style="opacity: 0.7;">
+                </div>
+                
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="app.updateProfile()">Lagre profil</button>
+                </div>
+            </div>
+
+            <div id="generalTab" class="tab-content">
                 <div class="form-group">
                     <label>Demo-data</label>
                     <div class="switch-group">
@@ -1173,6 +1191,7 @@
 
     // 2. Element-referanser
     const authMsg  = document.getElementById("auth-msg");
+    const nameInp  = document.getElementById("name");
     const emailInp = document.getElementById("email");
     const passInp  = document.getElementById("password");
     const loginBtn = document.getElementById("login-btn");
@@ -1188,9 +1207,36 @@
     const backLoginBtn   = document.getElementById("back-login-btn");
     const forgotMsg      = document.getElementById("forgot-msg");
 
+    // Toggle name field visibility based on registration mode
+    let isRegistrationMode = false;
+    
+    signupBtn.addEventListener('click', () => {
+        if (!isRegistrationMode) {
+            isRegistrationMode = true;
+            nameInp.style.display = 'block';
+            nameInp.required = true;
+            signupBtn.textContent = 'Opprett bruker';
+            loginBtn.textContent = 'Har allerede bruker?';
+        } else {
+            signUp(emailInp.value, passInp.value, nameInp.value);
+        }
+    });
+    
+    loginBtn.addEventListener('click', () => {
+        if (isRegistrationMode) {
+            isRegistrationMode = false;
+            nameInp.style.display = 'none';
+            nameInp.required = false;
+            nameInp.value = '';
+            signupBtn.textContent = 'Registrer';
+            loginBtn.textContent = 'Logg inn';
+        } else {
+            signIn(emailInp.value, passInp.value);
+        }
+    });
+
     // 3. Auth-handlinger ----------------------------------------------------
-    loginBtn.onclick  = () => signIn(emailInp.value, passInp.value);
-    signupBtn.onclick = () => signUp(emailInp.value, passInp.value);
+    // Note: Event listeners are now added above
 
     async function signIn(email, password) {
       try {
@@ -1202,14 +1248,19 @@
       }
     }
 
-    async function signUp(email, password) {
+    async function signUp(email, password, name) {
       try {
         const { error, data } = await supa.auth.signUp({ email, password });
         if (error) return authMsg.textContent = error.message;
 
-        // (valgfritt) opprett profil-rad med alias-brukernavn lik e-post før @
-        const alias = email.split("@")[0];
-        await supa.from("profiles").insert({ id: data.user.id, username: alias });
+        // Create profile with the provided name
+        const profileData = { 
+            id: data.user.id, 
+            username: name || email.split("@")[0],
+            email: email,
+            full_name: name || ''
+        };
+        await supa.from("profiles").insert(profileData);
         authMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
       } catch (err) {
         console.error("Supabase error:", err);
@@ -1329,6 +1380,10 @@
         selectedDate: null,
         demoMode: false,
         userShifts: [], // Store user's own shifts when demo is active
+        userProfile: {
+            name: '',
+            email: ''
+        },
 
         // Demo data from vakter_mai_2025.json
         DEMO_SHIFTS: [
@@ -1803,11 +1858,9 @@
 
         // Modals
         openSettings() {
+            // Load profile data when opening settings
+            this.populateProfileFields();
             document.getElementById('settingsModal').classList.add('active');
-            this.togglePreset();
-            if (!this.usePreset) {
-                this.populateCustomBonusSlots();
-            }
         },
 
         closeSettings() {
@@ -1827,374 +1880,14 @@
             this.updateDisplay();
         },
 
-        saveToLocalStorage() {
-            const data = {
-                shifts: this.shifts,
-                usePreset: this.usePreset,
-                customWage: this.customWage,
-                currentWageLevel: this.currentWageLevel,
-                customBonuses: this.customBonuses,
-                currentMonth: this.currentMonth,
-                pauseDeduction: this.pauseDeduction,
-                demoMode: this.demoMode,
-                userShifts: this.userShifts
-            };
-            localStorage.setItem('lønnsberegnerData', JSON.stringify(data));
-            this.saveSettingsToSupabase(data);
-        },
-
-        loadFromLocalStorage() {
-            const saved = localStorage.getItem('lønnsberegnerData');
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    this.shifts = (data.shifts || []).map(shift => ({
-                        ...shift,
-                        date: new Date(shift.date)
-                    }));
-                    this.usePreset = data.usePreset !== undefined ? data.usePreset : true;
-                    this.customWage = data.customWage || 200;
-                    this.currentWageLevel = data.currentWageLevel || 1;
-                    this.customBonuses = data.customBonuses;
-                    this.currentMonth = data.currentMonth || 5;
-                    this.pauseDeduction = data.pauseDeduction !== undefined ? data.pauseDeduction : true;
-                    this.demoMode = data.demoMode || false;
-                    this.userShifts = (data.userShifts || []).map(shift => ({
-                        ...shift,
-                        date: new Date(shift.date)
-                    }));
-                    
-                    // Update UI elements
-                    document.getElementById('wageSelect').value = this.currentWageLevel;
-                    document.getElementById('customWageInput').value = this.customWage;
-                    document.getElementById('usePresetToggle').checked = this.usePreset;
-                    document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
-                    document.getElementById('demoDataToggle').checked = this.demoMode;
-                } catch (error) {
-                    console.error('Error loading from localStorage:', error);
-                }
-            }
-        },
-
-        populateTimeSelects() {
-            const startHour   = document.getElementById('startHour');
-            const endHour     = document.getElementById('endHour');
-            const startMinute = document.getElementById('startMinute');
-            const endMinute   = document.getElementById('endMinute');
-
-            /* Tøm dropdown‑ene hver gang for å unngå duplikater */
-            startHour.innerHTML   = '<option value="">Fra time</option>';
-            endHour.innerHTML     = '<option value="">Til time</option>';
-            startMinute.innerHTML = '<option value="">Fra minutt</option>';
-            endMinute.innerHTML   = '<option value="">Til minutt</option>';
-
-            /* Timer: 06–24 */
-            for (let hour = 6; hour <= 24; hour++) {
-                const h = hour.toString().padStart(2, '0');
-                startHour.innerHTML += `<option value="${h}">${h}</option>`;
-                endHour.innerHTML   += `<option value="${h}">${h}</option>`;
-            }
-
-            /* Minutter: kun 00, 15, 30, 45 – 00 forhåndsvalg */
-            ['00', '15', '30', '45'].forEach((m, idx) => {
-                const selected = idx === 0 ? ' selected' : '';
-                startMinute.innerHTML += `<option value="${m}"${selected}>${m}</option>`;
-                endMinute.innerHTML   += `<option value="${m}"${selected}>${m}</option>`;
-            });
-        },
-
-        populateDateGrid() {
-            const dateGrid = document.getElementById('dateGrid');
-            const year = this.YEAR;
-            const month = this.currentMonth - 1; // JavaScript months are 0-indexed
-            
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDate = new Date(firstDay);
-            // Start from Monday: getDay() returns 0 for Sunday, 1 for Monday, etc.
-            // We want Monday (1) to be 0, Tuesday (2) to be 1, etc., and Sunday (0) to be 6
-            const mondayOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-            startDate.setDate(startDate.getDate() - mondayOffset);
-
-            dateGrid.innerHTML = '';
-
-            // Add day headers - Monday first
-            ['M', 'T', 'O', 'T', 'F', 'L', 'S'].forEach(day => {
-                const header = document.createElement('div');
-                header.textContent = day;
-                header.style.fontWeight = '600';
-                header.style.fontSize = '12px';
-                header.style.color = 'var(--text-secondary)';
-                header.style.textAlign = 'center';
-                header.style.padding = '8px';
-                dateGrid.appendChild(header);
-            });
-
-            // Add date cells
-            for (let i = 0; i < 42; i++) { // 6 weeks
-                const cellDate = new Date(startDate);
-                cellDate.setDate(startDate.getDate() + i);
-                
-                const cell = document.createElement('div');
-                cell.className = 'date-cell';
-                cell.textContent = cellDate.getDate();
-                
-                if (cellDate.getMonth() !== month) {
-                    cell.classList.add('disabled');
-                } else {
-                    cell.addEventListener('click', () => {
-                        document.querySelectorAll('.date-cell').forEach(c => c.classList.remove('selected'));
-                        cell.classList.add('selected');
-                        this.selectedDate = new Date(cellDate);
-                    });
-                }
-                
-                dateGrid.appendChild(cell);
-            }
-        },
-
-        populateMonthDropdown() {
-            const dropdown = document.getElementById('monthDropdown');
-            dropdown.innerHTML = '';
-            
-            this.MONTHS.forEach((month, index) => {
-                const option = document.createElement('div');
-                option.className = 'month-option';
-                option.textContent = `${month} ${this.YEAR}`;
-                
-                if (index + 1 === this.currentMonth) {
-                    option.classList.add('current');
-                }
-                
-                option.addEventListener('click', () => {
-                    this.changeMonth(index + 1);
-                    this.closeMonthDropdown();
-                });
-                
-                dropdown.appendChild(option);
-            });
-        },
-
-        toggleMonthDropdown() {
-            const dropdown = document.getElementById('monthDropdown');
-            dropdown.classList.toggle('active');
-            
-            if (dropdown.classList.contains('active')) {
-                this.populateMonthDropdown();
-            }
-        },
-
-        closeMonthDropdown() {
-            const dropdown = document.getElementById('monthDropdown');
-            dropdown.classList.remove('active');
-        },
-
-        changeMonth(month) {
-            this.currentMonth = month;
-            this.updateDisplay();
-            this.populateDateGrid();
-            this.saveToLocalStorage();
-        },
-
-        toggleDemoMode(enabled) {
-            this.demoMode = enabled;
-            
-            if (enabled) {
-                // Store current user shifts and switch to demo data
-                this.userShifts = [...this.shifts];
-                this.shifts = this.DEMO_SHIFTS.map(shift => ({
-                    ...shift,
-                    date: new Date(shift.date)
-                }));
-                // Set month to May for demo
-                this.currentMonth = 5;
-            } else {
-                // Restore user's own shifts
-                this.shifts = [...this.userShifts];
-                this.userShifts = [];
-            }
-            
-            this.updateDisplay();
-            this.populateDateGrid();
-            this.saveToLocalStorage();
-        },
-
-        showBreakdown(type) {
-            const modal = document.getElementById('breakdownModal');
-            const title = document.getElementById('breakdownTitle');
-            const list = document.getElementById('breakdownList');
-            
-            const monthShifts = this.shifts.filter(shift => 
-                shift.date.getMonth() === this.currentMonth - 1 && 
-                shift.date.getFullYear() === this.YEAR
-            );
-
-            let content = '';
-            
-            if (type === 'hours') {
-                title.textContent = 'Timer per vakt';
-                content = monthShifts.map(shift => {
-                    const calc = this.calculateShift(shift);
-                    const day = shift.date.getDate();
-                    return `
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
-                            <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
-                            <span>${this.formatHours(calc.hours)}</span>
-                        </div>
-                    `;
-                }).join('');
-            } else if (type === 'base') {
-                title.textContent = 'Grunnlønn per vakt';
-                content = monthShifts.map(shift => {
-                    const calc = this.calculateShift(shift);
-                    const day = shift.date.getDate();
-                    return `
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
-                            <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
-                            <span>${this.formatCurrency(calc.baseWage)}</span>
-                        </div>
-                    `;
-                }).join('');
-            } else if (type === 'bonus') {
-                title.textContent = 'Tillegg per vakt';
-                content = monthShifts.map(shift => {
-                    const calc = this.calculateShift(shift);
-                    const day = shift.date.getDate();
-                    return `
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
-                            <span>${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
-                            <span>${this.formatCurrency(calc.bonus)}</span>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            list.innerHTML = content || '<p style="text-align: center; color: var(--text-secondary);">Ingen data tilgjengelig</p>';
-            modal.classList.add('active');
-        },
-
-        closeBreakdown() {
-                       document.getElementById('breakdownModal').classList.remove('active');
-        },
-
-        exportData() {
-            const data = {
-                shifts: this.shifts,
-                settings: {
-                    usePreset: this.usePreset,
-                    customWage: this.customWage,
-                    currentWageLevel: this.currentWageLevel,
-                    customBonuses: this.customBonuses,
-                    pauseDeduction: this.pauseDeduction
-                },
-                exportDate: new Date().toISOString()
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `vaktberegner_export_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        },
-
-        handleImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    
-                    if (data.shifts) {
-                        this.shifts = data.shifts.map(shift => ({
-                            ...shift,
-                            date: new Date(shift.date)
-                        }));
-                    }
-                    
-                    if (data.settings) {
-                        this.usePreset = data.settings.usePreset !== undefined ? data.settings.usePreset : true;
-                        this.customWage = data.settings.customWage || 200;
-                        this.currentWageLevel = data.settings.currentWageLevel || 1;
-                        this.customBonuses = data.settings.customBonuses;
-                        this.pauseDeduction = data.settings.pauseDeduction !== undefined ? data.settings.pauseDeduction : true;
-                        this.demoMode = data.settings.demoMode || false;
-                        
-                        // Update UI elements
-                        document.getElementById('wageSelect').value = this.currentWageLevel;
-                        document.getElementById('customWageInput').value = this.customWage;
-                        document.getElementById('usePresetToggle').checked = this.usePreset;
-                        document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
-                    }
-                    
-                    this.saveToLocalStorage();
-                    this.updateDisplay();
-                    this.togglePreset();
-                    alert('Data importert!');
-                } catch (error) {
-                    console.error('Import error:', error);
-                    alert('Feil ved import av data. Kontroller at filen er gyldig.');
-                }
-            };
-            reader.readAsText(file);
-            
-            // Reset file input
-            event.target.value = '';
-        },
-
-        clearAllData() {
-            if (confirm('Er du sikker på at du vil slette alle data? Dette kan ikke angres.')) {
-                localStorage.removeItem('lønnsberegnerData');
-                this.shifts = [];
-                this.currentMonth = 5;
-                this.currentWageLevel = 1;
-                this.usePreset = true;
-                this.customWage = 200;
-                this.customBonuses = null;
-                this.pauseDeduction = true;
-                this.selectedDate = null;
-                this.demoMode = false;
-                this.userShifts = [];
-                
-                // Reset UI
-                document.getElementById('wageSelect').value = this.currentWageLevel;
-                document.getElementById('customWageInput').value = this.customWage;
-                document.getElementById('usePresetToggle').checked = this.usePreset;
-                document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
-                document.getElementById('demoDataToggle').checked = this.demoMode;
-                
-                this.updateDisplay();
-                this.populateDateGrid();
-                this.togglePreset();
-                alert('Alle data er slettet.');
-            }
-        },
-        addBonusSlot(type) {
-            const container = document.getElementById(`${type}BonusSlots`);
-            const slot = document.createElement('div');
-            slot.className = 'bonus-slot';
-            slot.innerHTML = `
-                <input type="time" class="form-control" value="18:00">
-                <input type="time" class="form-control" value="21:00">
-                <input type="number" class="form-control" placeholder="kr/t" value="0">
-                <button class="btn btn-icon btn-danger" onclick="app.removeBonusSlot(this)">×</button>
-            `;
-            container.appendChild(slot);
-        },
-        removeBonusSlot(btn) {
-            btn.parentElement.remove();
-        },
-
         // Supabase functions
         async loadFromSupabase() {
             try {
                 const { data: { user } } = await window.supa.auth.getUser();
                 if (!user) return;
+
+                // Load user profile
+                await this.loadUserProfile();
 
                 // Hent vakter
                 const { data: shifts, error: shiftsError } = await window.supa
@@ -2243,32 +1936,107 @@
                     document.getElementById('pauseDeductionToggle').checked = this.pauseDeduction;
                     document.getElementById('demoDataToggle').checked = this.demoMode;
                 }
+
+                // Update personalized greeting
+                this.updatePersonalizedGreeting();
             } catch (error) {
                 console.error("Feil ved loading fra Supabase:", error);
                 throw error;
             }
         },
 
-        async saveSettingsToSupabase(data) {
+        async loadUserProfile() {
             try {
                 const { data: { user } } = await window.supa.auth.getUser();
                 if (!user) return;
 
-                await window.supa
-                    .from("user_settings")
-                    .upsert({
-                        user_id: user.id,
-                        use_preset: data.usePreset,
-                        custom_wage: data.customWage,
-                        wage_level: data.currentWageLevel,
-                        custom_bonuses: data.customBonuses,
-                        current_month: data.currentMonth,
-                        pause_deduction: data.pauseDeduction,
-                        demo_mode: data.demoMode,
-                        user_shifts: data.userShifts
-                    });
+                // Load profile from Supabase
+                const { data: profile, error } = await window.supa
+                    .from("profiles")
+                    .select("full_name, email")
+                    .eq("id", user.id)
+                    .single();
+
+                if (!error && profile) {
+                    this.userProfile.name = profile.full_name || '';
+                    this.userProfile.email = profile.email || '';
+                } else {
+                    // Fallback to user email if profile not found
+                    this.userProfile.email = user.email || '';
+                }
+
+                // Populate profile fields in settings modal
+                this.populateProfileFields();
             } catch (error) {
-                console.error("Feil ved lagring til Supabase:", error);
+                console.error("Feil ved loading av profil:", error);
+            }
+        },
+
+        populateProfileFields() {
+            const nameField = document.getElementById('profileName');
+            const emailField = document.getElementById('profileEmail');
+            
+            if (nameField) nameField.value = this.userProfile.name;
+            if (emailField) emailField.value = this.userProfile.email;
+        },
+
+        async updateProfile() {
+            try {
+                const { data: { user } } = await window.supa.auth.getUser();
+                if (!user) {
+                    alert('Du er ikke innlogget');
+                    return;
+                }
+
+                const nameField = document.getElementById('profileName');
+                const newName = nameField ? nameField.value.trim() : '';
+
+                // Update profile in Supabase
+                const { error } = await window.supa
+                    .from("profiles")
+                    .update({ full_name: newName })
+                    .eq("id", user.id);
+
+                if (error) {
+                    console.error("Feil ved oppdatering av profil:", error);
+                    alert('Kunne ikke oppdatere profil. Prøv igjen.');
+                    return;
+                }
+
+                // Update local state
+                this.userProfile.name = newName;
+                
+                // Update personalized greeting
+                this.updatePersonalizedGreeting();
+                
+                alert('Profil oppdatert!');
+            } catch (error) {
+                console.error("Feil ved oppdatering av profil:", error);
+                alert('Kunne ikke oppdatere profil. Prøv igjen.');
+            }
+        },
+
+        updatePersonalizedGreeting() {
+            const headerTitle = document.getElementById('headerTitle');
+            if (!headerTitle) return;
+
+            if (this.userProfile.name && this.userProfile.name.trim() !== '') {
+                const now = new Date();
+                const hour = now.getHours();
+                
+                // Determine greeting based on time of day
+                let greeting;
+                if (hour >= 5 && hour < 12) {
+                    greeting = 'God morgen';
+                } else if (hour >= 12 && hour < 18) {
+                    greeting = 'God dag';
+                } else {
+                    greeting = 'God kveld';
+                }
+                
+                headerTitle.textContent = `${greeting}, ${this.userProfile.name}`;
+            } else {
+                headerTitle.textContent = 'Vaktberegner';
             }
         },
     };
