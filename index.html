@@ -1235,9 +1235,7 @@
 
     async function signIn(email, password) {
       try {
-        console.log("Attempting to sign in with email:", email);
         const { error } = await supa.auth.signInWithPassword({ email, password });
-        console.log("Sign-in response:", error);
         authMsg.textContent = error ? error.message : "";
       } catch (err) {
         console.error("Supabase error:", err);
@@ -1247,11 +1245,10 @@
 
     async function signUp(email, password) {
       try {
-        console.log("Attempting to sign up with email:", email);
         const { error, data } = await supa.auth.signUp({ email, password });
-        console.log("Sign-up response:", error, data);
         if (error) return authMsg.textContent = error.message;
 
+        // (valgfritt) opprett profil-rad med alias-brukernavn lik e-post før @
         const alias = email.split("@")[0];
         await supa.from("profiles").insert({ id: data.user.id, username: alias });
         authMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
@@ -1475,9 +1472,8 @@
       // Vis login-siden hvis det er problemer med Supabase
       toggleUI(false);
     }
-  </script>
-  <script>
-    const app = {
+
+    window.app = {
         // Constants
         YEAR: 2025,
         PAUSE_THRESHOLD: 5.5,
@@ -2312,7 +2308,7 @@
                     if (data.settings) {
                         this.usePreset = data.settings.usePreset !== undefined ? data.settings.usePreset : true;
                         this.customWage = data.settings.customWage || 200;
-                        this.currentWageLevel = data.settings.currentWageLevel || 1;
+                        this.currentWageLevel = data.settings.wageLevel || 1;
                         this.customBonuses = data.settings.customBonuses;
                         this.pauseDeduction = data.settings.pauseDeduction !== undefined ? data.settings.pauseDeduction : true;
                         this.demoMode = data.settings.demoMode || false;
