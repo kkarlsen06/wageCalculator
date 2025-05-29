@@ -844,7 +844,18 @@
         <button id="login-btn" class="btn btn-primary" style="flex:1;">Logg inn</button>
         <button id="signup-btn" class="btn btn-secondary" style="flex:1;">Registrer</button>
       </div>
+      <button id="forgot-btn" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;margin-top:4px;">Glemt passord?</button>
       <p id="auth-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+  <!-- Forgot password card -->
+  <div id="forgot-card" class="auth-center" style="display:none;">
+    <div class="login-card">
+      <h2 style="margin-bottom: 20px;">Tilbakestill passord</h2>
+      <input id="forgot-email" type="email" placeholder="E‑post" required class="form-control" style="margin-bottom: 18px;" />
+      <button id="send-reset-btn" class="btn btn-primary" style="margin-bottom: 12px;">Send tilbakestillings‑link</button>
+      <button id="back-login-btn" class="btn btn-secondary">Tilbake</button>
+      <p id="forgot-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+    </div>
+  </div>
     </div>
   </div>
 
@@ -1162,6 +1173,14 @@
     const authBox  = document.getElementById("auth-box");
     const appBox   = document.getElementById("app");
 
+    // Forgot‑passord elementer
+    const forgotBtn      = document.getElementById("forgot-btn");
+    const forgotCard     = document.getElementById("forgot-card");
+    const forgotEmailInp = document.getElementById("forgot-email");
+    const sendResetBtn   = document.getElementById("send-reset-btn");
+    const backLoginBtn   = document.getElementById("back-login-btn");
+    const forgotMsg      = document.getElementById("forgot-msg");
+
     // 3. Auth-handlinger ----------------------------------------------------
     loginBtn.onclick  = () => signIn(emailInp.value, passInp.value);
     signupBtn.onclick = () => signUp(emailInp.value, passInp.value);
@@ -1191,8 +1210,43 @@
       }
     }
 
+    // ---------- Glemt passord ----------
+    forgotBtn.onclick = () => toggleForgot(true);
+    backLoginBtn.onclick = () => toggleForgot(false);
+    sendResetBtn.onclick = () => sendResetLink(forgotEmailInp.value);
+
+    function toggleForgot(show) {
+      forgotCard.style.display = show ? "flex" : "none";
+      authBox.style.display    = show ? "none" : "flex";
+      forgotMsg.textContent    = "";
+    }
+
+    async function sendResetLink(email) {
+      try {
+        const { error } = await supa.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin
+        });
+        forgotMsg.style.color = error ? "var(--danger)" : "var(--success)";
+        forgotMsg.textContent = error ? error.message : "Sjekk e‑posten din for lenke!";
+      } catch (err) {
+        forgotMsg.style.color = "var(--danger)";
+        forgotMsg.textContent = "Kunne ikke sende e‑post";
+        console.error("Supabase reset error:", err);
+      }
+    }
+
     // 4. Vis skjerm basert på innlogget status ------------------------------
-    supa.auth.onAuthStateChange((_event, session) => toggleUI(!!session));
+    supa.auth.onAuthStateChange(async (event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        // Brukeren kommer via lenken – spør om nytt passord
+        const newPass = prompt("Skriv inn nytt passord:");
+        if (newPass) {
+          const { error } = await supa.auth.updateUser({ password: newPass });
+          alert(error ? "Feil: " + error.message : "Passord oppdatert! Logg inn med nytt passord.");
+        }
+      }
+      toggleUI(!!session);
+    });
     function toggleUI(loggedIn) {
       authBox.style.display = loggedIn ? "none" : "block";
       appBox.style.display  = loggedIn ? "block" : "none";
