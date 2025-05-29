@@ -27,10 +27,14 @@ if (form) {
         return;
       }
       
-      // Login successful, redirect or show app
+      // Login successful, hide login form and show app
       console.log('Innlogget:', data);
-      // You can redirect to another page or show the app section
-      // window.location.href = '/app.html';
+      
+      // Hide login form
+      document.querySelector('#loginForm').style.display = 'none';
+      
+      // Show the app
+      document.querySelector('#app').style.display = 'block';
       
     } catch (err) {
       console.error('Login error:', err);
@@ -40,5 +44,31 @@ if (form) {
 }
 
 // Expose logout and supabase on window for other parts of the app
-window.logout = () => supabase.auth.signOut();
+window.logout = () => {
+  supabase.auth.signOut().then(() => {
+    // Show login form again
+    document.querySelector('#loginForm').style.display = 'block';
+    // Hide the app
+    document.querySelector('#app').style.display = 'none';
+  });
+};
 window.supabase = supabase;
+
+// Check if user is already logged in when page loads
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    // User is logged in, hide login form and show app
+    document.querySelector('#loginForm').style.display = 'none';
+    document.querySelector('#app').style.display = 'block';
+  }
+});
+
+// Listen for auth state changes
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT') {
+    // Show login form
+    document.querySelector('#loginForm').style.display = 'block';
+    // Hide the app
+    document.querySelector('#app').style.display = 'none';
+  }
+});
