@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logg inn / Registrer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Tilbake til hovedside knapp -->
+  <div style="position: absolute; top: 20px; left: 20px; z-index: 1000;">
+    <a href="/" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 19-7-7 7-7"/>
+        <path d="M19 12H5"/>
+      </svg>
+      Tilbake til hovedside
+    </a>
+  </div>
+
+  <div id="auth-box" class="auth-center">
+    <div class="login-card">
+      <h2 style="margin-bottom: 20px;">Logg inn / Registrer</h2>
+      <input id="email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 12px;" />
+      <input id="password" type="password" placeholder="Passord" required class="form-control" style="margin-bottom: 18px;" />
+      <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+        <button id="login-btn" class="btn btn-primary" style="flex:1;">Logg inn</button>
+        <button id="signup-btn" class="btn btn-secondary" style="flex:1;">Registrer</button>
+      </div>
+      <button id="forgot-btn" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;margin-top:4px;">Glemt passord?</button>
+      <p id="auth-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+    </div>
+  </div>
+
+  <div id="forgot-card" class="auth-center" style="display:none;">
+    <div class="login-card">
+      <h2 style="margin-bottom: 20px;">Tilbakestill passord</h2>
+      <input id="forgot-email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 18px;" />
+      <button id="send-reset-btn" class="btn btn-primary" style="margin-bottom: 12px;">Send tilbakestillings-link</button>
+      <button id="back-login-btn" class="btn btn-secondary">Tilbake</button>
+      <p id="forgot-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+    </div>
+  </div>
+
+  <script type="module" src="js/auth.js"></script>
+</body>
+</html>

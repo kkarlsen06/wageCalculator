@@ -3,351 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vaktberegner</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>Hjalmar Samuel Kristensen-Karlsen</title>
+    <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-  <header>
-    <div id="auth-box" class="auth-center">
-      <div class="login-card">
-        <h2 style="margin-bottom: 20px;">Logg inn / Registrer</h2>
-        <input id="email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 12px;" />
-        <input id="password" type="password" placeholder="Passord" required class="form-control" style="margin-bottom: 18px;" />
-        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-          <button id="login-btn" class="btn btn-primary" style="flex:1;">Logg inn</button>
-          <button id="signup-btn" class="btn btn-secondary" style="flex:1;">Registrer</button>
-        </div>
-        <button id="forgot-btn" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;margin-top:4px;">Glemt passord?</button>
-        <p id="auth-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
-      </div>
-    </div>
+    <header>
+        <h1>Hjalmar Samuel Kristensen-Karlsen</h1>
+        <p>Utvikler og student</p>
+    </header>
+    
+    <main>
+        <section class="about">
+            <h2>Om meg</h2>
+            <p><span class="highlight-name">Jeg heter Hjalmar</span>, er 18 år og jobber på Coop Extra Gakori i Alta. Jeg lagde denne lønnskalkulatoren fordi jeg ble lei av å regne ut lønna mi for hånd hver måned. Nå slipper både jeg og du å sitte med kalkulator og frustrasjon – bare legg inn vaktene dine, så fikser nettsida resten.</p>
+        </section>
+        
+        <section class="projects">
+            <h2>Prosjekter</h2>
+            <div class="project-card">
+                <h3>Lønnskalkulator</h3>
+                <p>En webapplikasjon for å regne ut månedslønn basert på vakter, arbeidstid og tariffbasert timelønn.</p>
+                <a href="/kalkulator" class="btn">Åpne kalkulator</a>
+            </div>
+        </section>
 
-    <!-- Forgot password card -->
-    <div id="forgot-card" class="auth-center" style="display:none;">
-      <div class="login-card">
-        <h2 style="margin-bottom: 20px;">Tilbakestill passord</h2>
-        <input id="forgot-email" type="email" placeholder="E‑post" required class="form-control" style="margin-bottom: 18px;" />
-        <button id="send-reset-btn" class="btn btn-primary" style="margin-bottom: 12px;">Send tilbakestillings‑link</button>
-        <button id="back-login-btn" class="btn btn-secondary">Tilbake</button>
-        <p id="forgot-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
-      </div>
-    </div>
+        <section class="bugs">
+            <h2>Kjente bugs</h2>
+            <div class="bug-list">
+                <div class="bug-card">
+                    <h4>To faktor autentisering</h4>
+                    <p>Du får lagt til en epost ved registrering og må bekrefte denne, men du kan ikke bruke denne til MFA senere. Jobber med å implementere dette.</p>
+                </div>
 
-    <!-- Hoved-appen skjules til bruker er innlogget -->
-    <div id="app" style="display:none">
-      <!-- Flytt hele app-container, modals og footer hit -->
-      <div class="app-container">
-          <div class="header">
-              <div class="header-content">
-                  <h1>Vaktberegner</h1>
-                  <button class="settings-btn" onclick="app.openSettings()">
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <circle cx="12" cy="12" r="3"></circle>
-                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1-2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                      </svg>
-                      <span>Innstillinger</span>
-                  </button>
-                  <button class="settings-btn" onclick="logout()">Logg&nbsp;ut</button>
-              </div>
-              <div class="header-info">
-                  <span>
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
-                          <line x1="3" y1="10" x2="21" y2="10"></line>
-                      </svg>
-                      <div class="month-selector">
-                          <button class="month-button" onclick="app.toggleMonthDropdown()">
-                              <span id="currentMonth">Mai 2025</span>
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="6 9 12 15 18 9"></polyline>
-                              </svg>
-                          </button>
-                          <div class="month-dropdown" id="monthDropdown">
-                              <!-- Dynamisk innhold genereres av JavaScript -->
-                          </div>
-                      </div>
-                  </span>
-                  <span>
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <path d="M12 6v6l4 2"></path>
-                      </svg>
-                      <span id="currentWage">184,54 kr/t</span>
-                  </span>
-              </div>
-          </div>
-
-          <div class="content">
-              <div class="total-card">
-                  <div class="total-label">Total lønn denne måneden</div>
-                  <div class="total-amount" id="totalAmount">0 kr</div>
-              </div>
-
-              <div class="breakdown-cards">
-                  <div class="breakdown-card" onclick="app.showBreakdown('hours')">
-                      <div class="breakdown-icon">
-                          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <polyline points="12 6 12 12 16 14"></polyline>
-                          </svg>
-                      </div>
-                      <div class="breakdown-value" id="totalHours">0</div>
-                      <div class="breakdown-label">Timer (<span id="shiftCount">0</span> vakter)</div>
-                  </div>
-                  <div class="breakdown-card" onclick="app.showBreakdown('base')">
-                      <div class="breakdown-icon">
-                          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                              <line x1="12" y1="8" x2="12" y2="16"></line>
-                              <line x1="8" y1="12" x2="16" y2="12"></line>
-                          </svg>
-                      </div>
-                      <div class="breakdown-value" id="baseAmount">0</div>
-                      <div class="breakdown-label">Grunnlønn</div>
-                  </div>
-                  <div class="breakdown-card" onclick="app.showBreakdown('bonus')">
-                      <div class="breakdown-icon">
-                          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                          </svg>
-                      </div>
-                      <div class="breakdown-value" id="bonusAmount">0</div>
-                      <div class="breakdown-label">Tillegg</div>
-                  </div>
-              </div>
-
-              <div class="add-shift-toggle" onclick="app.toggleAddShift()">
-                  <h2>Legg til vakt</h2>
-                  <svg class="icon" id="toggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-              </div>
-
-              <div class="add-shift-card">
-                  <form id="shiftForm">
-                      <div class="form-group">
-                          <label>Velg dato</label>
-                          <div class="date-grid" id="dateGrid"></div>
-                      </div>
-
-                      <div class="form-group">
-                          <label>Arbeidstid</label>
-                          <div class="form-row">
-                              <select class="form-control" id="startHour">
-                                  <option value="">Fra time</option>
-                              </select>
-                              <select class="form-control" id="startMinute">
-                                  <option value="">Fra minutt</option>
-                              </select>
-                          </div>
-                          <div class="form-row">
-                              <select class="form-control" id="endHour">
-                                  <option value="">Til time</option>
-                              </select>
-                              <select class="form-control" id="endMinute">
-                                  <option value="">Til minutt</option>
-                              </select>
-                          </div>
-                      </div>
-
-                      <button type="button" class="btn btn-primary" onclick="app.addShift()">
-                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <line x1="12" y1="8" x2="12" y2="16"></line>
-                              <line x1="8" y1="12" x2="16" y2="12"></line>
-                          </svg>
-                          Legg til vakt
-                      </button>
-                  </form>
-              </div>
-
-              <div class="shift-list" id="shiftList">
-                  <div class="empty-state">
-                      <div class="empty-icon">
-                          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                              <polyline points="14 2 14 8 20 8"></polyline>
-                              <line x1="16" y1="13" x2="8" y2="13"></line>
-                              <line x1="16" y1="17" x2="8" y2="17"></line>
-                              <polyline points="10 9 9 9 8 9"></polyline>
-                          </svg>
-                      </div>
-                      <p>Ingen vakter registrert ennå</p>
-                  </div>
-              </div>
-          </div>
-      </div> <!-- slutt på .app-container -->
-
-      <footer style="
-          width: 100%;
-          background: var(--bg-secondary);
-          color: var(--text-secondary);
-          text-align: center;
-          padding: 18px 10px 18px 10px;
-          font-size: 14px;
-          border-top: 1px solid var(--border);
-          border-radius: 16px 16px 0 0;
-          /* Ikke sticky/fixed lenger */
-          max-width: 600px;
-          margin: 0 auto;
-          right: 0;
-      ">
-          Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
-      </footer>
-
-      <!-- Settings Modal -->
-      <div id="settingsModal" class="modal">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <h2 class="modal-title">Innstillinger</h2>
-                  <span class="modal-close" onclick="app.closeSettings()">
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                  </span>
-              </div>
-              
-              <div class="tab-nav">
-                  <button class="tab-btn active" onclick="app.switchSettingsTab('general')">Generelt</button>
-                  <button class="tab-btn" onclick="app.switchSettingsTab('wage')">Lønn</button>
-                  <button class="tab-btn" onclick="app.switchSettingsTab('data')">Data</button>
-              </div>
-
-              <div id="generalTab" class="tab-content active">
-                  <div class="form-group">
-                      <label>Demo-data</label>
-                      <div class="switch-group">
-                          <span class="text-secondary">Vis demo-vakter for mai 2025</span>
-                          <label class="switch">
-                              <input type="checkbox" id="demoDataToggle">
-                              <span class="slider"></span>
-                          </label>
-                      </div>
-                  </div>
-                  
-                  <div class="form-group">
-                      <label>Pausetrekk</label>
-                      <div class="switch-group">
-                          <span class="text-secondary">Automatisk trekk for pauser over 5,5 timer</span>
-                          <label class="switch">
-                              <input type="checkbox" id="pauseDeductionToggle" checked>
-                              <span class="slider"></span>
-                          </label>
-                      </div>
-                  </div>
-              </div>
-
-              <div id="wageTab" class="tab-content">
-                  <div class="form-group">
-                      <div class="flex justify-between align-center mb-10">
-                          <label>Lønnstype</label>
-                          <span id="presetBadge" class="preset-badge" style="display: none;">Virke-tariff</span>
-                      </div>
-                      <div class="switch-group">
-                          <span>Bruk forhåndsinnstilt tariff</span>
-                          <label class="switch">
-                              <input type="checkbox" id="usePresetToggle" checked onchange="app.togglePreset()">
-                              <span class="slider"></span>
-                          </label>
-                      </div>
-                  </div>
-
-                  <div id="presetWageSection">
-                      <div class="form-group">
-                          <label>Lønnstrinn (Virke-tariff 2025)</label>
-                          <select class="form-control" id="wageSelect">
-                              <option value="1" selected>Trinn 1 (184,54 kr/t)</option>
-                              <option value="2">Trinn 2 (185,38 kr/t)</option>
-                              <option value="3">Trinn 3 (187,46 kr/t)</option>
-                              <option value="4">Trinn 4 (193,05 kr/t)</option>
-                              <option value="5">Trinn 5 (210,81 kr/t)</option>
-                              <option value="6">Trinn 6 (256,14 kr/t)</option>
-                          </select>
-                      </div>
-                  </div>
-
-                  <div id="customWageSection" style="display: none;">
-                      <div class="form-group">
-                          <label>Timelønn (kr)</label>
-                          <input type="number" class="form-control" id="customWageInput" placeholder="200" step="0.01">
-                      </div>
-
-                      <div class="form-group">
-                          <label>Tillegg for ukedag (mandag-fredag)</label>
-                          <div class="bonus-slots" id="weekdayBonusSlots">
-                              <!-- Dynamisk innhold -->
-                          </div>
-                          <button class="btn btn-secondary" onclick="app.addBonusSlot('weekday')">+ Legg til tidsperiode</button>
-                      </div>
-
-                      <div class="form-group">
-                          <label>Tillegg for lørdag</label>
-                          <div class="bonus-slots" id="saturdayBonusSlots">
-                              <!-- Dynamisk innhold -->
-                          </div>
-                          <button class="btn btn-secondary" onclick="app.addBonusSlot('saturday')">+ Legg til tidsperiode</button>
-                      </div>
-
-                      <div class="form-group">
-                          <label>Tillegg for søndag/helligdag</label>
-                          <div class="bonus-slots" id="sundayBonusSlots">
-                              <!-- Dynamisk innhold -->
-                          </div>
-                          <button class="btn btn-secondary" onclick="app.addBonusSlot('sunday')">+ Legg til tidsperiode</button>
-                      </div>
-                  </div>
-              </div>
-
-              <div id="dataTab" class="tab-content">
-                  <div class="form-group">
-                      <label>Slett alle data</label>
-                      <button class="btn btn-danger" onclick="app.clearAllData()">Slett alt</button>
-                  </div>
-              </div>
-          </div>
-      </div>
-
-   
-      <!-- Breakdown Modal -->
-      <div id="breakdownModal" class="modal">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <h2 class="modal-title" id="breakdownTitle">Detaljer</h2>
-                  <span class="modal-close" onclick="app.closeBreakdown()">
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                  </span>
-              </div>
-              <div class="breakdown-list" id="breakdownList"></div>
-          </div>
-      </div>
-    </div>
-  </header>
-  <main>
-  </main>
-  <footer>
-    <footer style="
-        width: 100%;
-        background: var(--bg-secondary);
-        color: var(--text-secondary);
-        text-align: center;
-        padding: 18px 10px 18px 10px;
-        font-size: 14px;
-        border-top: 1px solid var(--border);
-        border-radius: 16px 16px 0 0;
-        /* Ikke sticky/fixed lenger */
-        max-width: 600px;
-        margin: 0 auto;
-        right: 0;
-    ">
-        Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 Hjalmar Samuel Kristensen-Karlsen</p>
     </footer>
-  </footer>
-  <script type="module" src="js/script.js"></script>
 </body>
 </html>
