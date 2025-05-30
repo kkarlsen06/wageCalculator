@@ -75,20 +75,13 @@
               <div class="total-card">
                   <div class="total-label">Total lønn denne måneden</div>
                   <div class="total-amount" id="totalAmount">0 kr</div>
+                  <div class="total-hours">
+                      <span id="totalHours">0</span> timer (<span id="shiftCount">0</span> vakter)
+                  </div>
               </div>
 
               <div class="breakdown-cards">
-                  <div class="breakdown-card" onclick="app.showBreakdown('hours')">
-                      <div class="breakdown-icon">
-                          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <polyline points="12 6 12 12 16 14"></polyline>
-                          </svg>
-                      </div>
-                      <div class="breakdown-value" id="totalHours">0</div>
-                      <div class="breakdown-label">Timer (<span id="shiftCount">0</span> vakter)</div>
-                  </div>
-                  <div class="breakdown-card" onclick="app.showBreakdown('base')">
+                  <div class="breakdown-card" data-type="base" onclick="app.showBreakdown('base')">
                       <div class="breakdown-icon">
                           <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -99,7 +92,7 @@
                       <div class="breakdown-value" id="baseAmount">0</div>
                       <div class="breakdown-label">Grunnlønn</div>
                   </div>
-                  <div class="breakdown-card" onclick="app.showBreakdown('bonus')">
+                  <div class="breakdown-card" data-type="bonus" onclick="app.showBreakdown('bonus')">
                       <div class="breakdown-icon">
                           <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
@@ -212,7 +205,7 @@
                   <div class="form-group">
                       <label>Demo-data</label>
                       <div class="switch-group">
-                          <span class="text-secondary">Vis demo-vakter for mai 2025</span>
+                          <span class="text-secondary">Vis demo-vakter (mai 2025)</span>
                           <label class="switch">
                               <input type="checkbox" id="demoDataToggle">
                               <span class="slider"></span>
@@ -223,7 +216,7 @@
                   <div class="form-group">
                       <label>Pausetrekk</label>
                       <div class="switch-group">
-                          <span class="text-secondary">Automatisk pausetrekk når vakt <br> er over 5,5 timer</span>
+                          <span class="text-secondary">Automatisk pausetrekk (over 5,5t)</span>
                           <label class="switch">
                               <input type="checkbox" id="pauseDeductionToggle" checked>
                               <span class="slider"></span>
@@ -249,7 +242,7 @@
 
                   <div id="presetWageSection">
                       <div class="form-group">
-                          <label>Lønnstrinn (Virke-tariff 2025)</label>
+                          <label>Lønnstrinn (Virke 2025)</label>
                           <select class="form-control" id="wageSelect" onchange="app.updateWageLevel(this.value)">
                               <option value="1" selected>Trinn 1 (184,54 kr/t)</option>
                               <option value="2">Trinn 2 (185,38 kr/t)</option>
@@ -275,7 +268,7 @@
                       </div>
 
                       <div class="form-group">
-                          <label>Tillegg for ukedag (mandag-fredag)</label>
+                          <label>Ukedag-tillegg (man-fre)</label>
                           <div class="bonus-slots" id="weekdayBonusSlots">
                               <!-- Dynamisk innhold -->
                           </div>
@@ -283,7 +276,7 @@
                       </div>
 
                       <div class="form-group">
-                          <label>Tillegg for lørdag</label>
+                          <label>Lørdag-tillegg</label>
                           <div class="bonus-slots" id="saturdayBonusSlots">
                               <!-- Dynamisk innhold -->
                           </div>
@@ -291,7 +284,7 @@
                       </div>
 
                       <div class="form-group">
-                          <label>Tillegg for søndag/helligdag</label>
+                          <label>Søndag/helligdag-tillegg</label>
                           <div class="bonus-slots" id="sundayBonusSlots">
                               <!-- Dynamisk innhold -->
                           </div>

@@ -92,6 +92,13 @@ export const app = {
             if (!monthSelector.contains(e.target)) this.closeMonthDropdown();
         });
         
+        // Close breakdown on Escape key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                this.closeBreakdown();
+            }
+        });
+        
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
         
@@ -804,17 +811,29 @@ export const app = {
         }
     },
     
-    openSettings() {
-        const modal = document.getElementById('settingsModal');
-        modal.classList.add('active');
-        this.switchSettingsTab('general');
+    async openSettings() {
+        // Close any existing expanded views
+        this.closeBreakdown();
+        this.closeShiftDetails();
         
-        // Ensure custom bonus slots are populated if custom mode is active
-        if (!this.usePreset) {
-            setTimeout(() => {
-                console.log('Populating custom bonus slots in openSettings');
-                this.populateCustomBonusSlots();
-            }, 200);
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            // Update UI to match current state
+            this.updateSettingsUI();
+            
+            // Set active tab to general
+            this.switchSettingsTabSync('general');
+            
+            // Show the modal
+            modal.style.display = 'flex';
+            
+            // Ensure custom bonus slots are populated if custom mode is active
+            if (!this.usePreset) {
+                setTimeout(() => {
+                    console.log('Populating custom bonus slots in openSettings');
+                    this.populateCustomBonusSlots();
+                }, 100);
+            }
         }
     },
     async closeSettings() {
@@ -824,7 +843,11 @@ export const app = {
             await this.saveCustomBonusesSilent();
         }
         
-        document.getElementById('settingsModal').classList.remove('active');
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
         // Save settings when closing modal
         this.saveSettingsToSupabase();
     },
@@ -937,7 +960,7 @@ export const app = {
             const typeClass = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
             const originalIndex = this.shifts.indexOf(shift);
             const deleteButtonHtml = this.demoMode ? '' : `
-                <button class="btn btn-icon btn-danger" onclick="app.deleteShift(${originalIndex})">
+                <button class="btn btn-icon btn-danger" onclick="event.stopPropagation(); app.deleteShift(${originalIndex})">
                     <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -945,7 +968,7 @@ export const app = {
                 </button>
             `;
             return `
-                <div class="shift-item ${typeClass}">
+                <div class="shift-item ${typeClass}" onclick="app.showShiftDetails(${shift.id})" style="cursor: pointer;">
                     <div class="shift-info">
                         <div class="shift-date">
                             <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
@@ -978,6 +1001,428 @@ export const app = {
         }).join('');
         shiftList.innerHTML = demoBannerHtml + shiftsHtml;
     },
+        // Toggle breakdown card expansion and show details
+    showBreakdown(type) {
+        // Check if the same card is already expanded
+        const existingExpanded = document.querySelector('.breakdown-card.expanded');
+        const card = document.querySelector(`.breakdown-card[data-type="${type}"]`);
+        
+        if (existingExpanded && existingExpanded === card) {
+            // If clicking the same expanded card, collapse it
+            this.closeBreakdown();
+            return;
+        }
+        
+        // Close any existing breakdown first
+        this.closeBreakdown();
+        
+        if (!card) return;
+        
+        // Hide header with smooth animation
+        const header = document.querySelector('.header');
+        if (header) {
+            header.classList.add('hidden');
+        }
+        
+        // Get original position and size before transformation
+        const originalRect = card.getBoundingClientRect();
+        
+        // Store original styles
+        card.dataset.originalPosition = JSON.stringify({
+            position: card.style.position || 'static',
+            top: card.style.top || 'auto',
+            left: card.style.left || 'auto',
+            width: card.style.width || 'auto',
+            height: card.style.height || 'auto',
+            transform: card.style.transform || 'none'
+        });
+        
+        // Create backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'backdrop-blur';
+        backdrop.onclick = () => this.closeBreakdown();
+        document.body.appendChild(backdrop);
+        
+        // Add keyboard support for closing
+        const keydownHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeBreakdown();
+            }
+        };
+        document.addEventListener('keydown', keydownHandler);
+        backdrop.dataset.keydownHandler = 'attached';
+        
+        // Force reflow then activate backdrop
+        backdrop.offsetHeight;
+        backdrop.classList.add('active');
+        
+        // Calculate target position (center of viewport)
+        const targetWidth = Math.min(window.innerWidth * 0.9, 500);
+        const targetHeight = Math.min(window.innerHeight * 0.8, 600);
+        const targetLeft = (window.innerWidth - targetWidth) / 2;
+        const targetTop = (window.innerHeight - targetHeight) / 2;
+        
+        // First, make card fixed positioned at its current location
+        card.style.position = 'fixed';
+        card.style.top = `${originalRect.top}px`;
+        card.style.left = `${originalRect.left}px`;
+        card.style.width = `${originalRect.width}px`;
+        card.style.height = `${originalRect.height}px`;
+        card.style.margin = '0';
+        card.style.zIndex = '20';
+        
+        // Add expanding class for initial scale effect
+        card.classList.add('expanding');
+        
+        // After a small delay, animate to final position
+        setTimeout(() => {
+            card.classList.remove('expanding');
+            card.classList.add('expanded');
+            
+            // Animate to target position and size with smoother timing
+            card.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            card.style.top = `${targetTop}px`;
+            card.style.left = `${targetLeft}px`;
+            card.style.width = `${targetWidth}px`;
+            card.style.height = `${targetHeight}px`;
+            card.style.borderRadius = '20px';
+            
+        }, 80);
+        
+        // Create title header (with delay to appear after morph)
+        setTimeout(() => {
+            // Create title with icon
+            const titleContainer = document.createElement('div');
+            titleContainer.className = 'breakdown-title-container';
+            titleContainer.style.cssText = `
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                margin-bottom: 20px;
+                opacity: 0;
+                animation: fadeIn 0.4s var(--ease-default) forwards;
+            `;
+            
+            const icon = document.createElement('div');
+            icon.className = 'breakdown-title-icon';
+            icon.style.cssText = `
+                color: var(--accent);
+                opacity: 0.8;
+            `;
+            
+            // Add appropriate icon based on type
+            if (type === 'base') {
+                icon.innerHTML = `
+                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                `;
+            } else {
+                icon.innerHTML = `
+                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 6.26 22 7.27 17 12.14 18.18 19.02 12 15.77 5.82 19.02 7 12.14 2 7.27 8.91 6.26 12 2"></polygon>
+                    </svg>
+                `;
+            }
+            
+            const title = document.createElement('h3');
+            title.className = 'breakdown-title';
+            title.textContent = type === 'base' ? 'Grunnlønn' : 'Tillegg';
+            title.style.cssText = `
+                color: var(--accent);
+                margin: 0;
+                font-size: 24px;
+                font-weight: 600;
+            `;
+            
+            titleContainer.appendChild(icon);
+            titleContainer.appendChild(title);
+            
+            // Insert title container as first child
+            card.insertBefore(titleContainer, card.firstChild);
+            
+            // Create close button
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'close-btn';
+            closeBtn.innerHTML = '×';
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.closeBreakdown();
+            };
+            card.appendChild(closeBtn);
+        
+        // Build details list
+        const details = document.createElement('ul');
+        details.className = 'details';
+        card.appendChild(details);
+        
+        // Process shifts and populate list
+        const shifts = this.shifts.filter(s => 
+            s.date.getMonth() === this.currentMonth - 1 && 
+            s.date.getFullYear() === this.YEAR
+        );
+        
+        shifts.sort((a, b) => b.date - a.date).forEach((shift, index) => {
+            const calc = this.calculateShift(shift);
+            const day = shift.date.getDate();
+            const monthName = this.MONTHS[shift.date.getMonth()];
+            const amount = type === 'base' ? calc.baseWage : calc.bonus;                if (amount > 0) { // Only show shifts with actual amounts
+                    const li = document.createElement('li');
+                    // Staggered animation with more natural delay
+                    li.style.animationDelay = `${0.3 + (index * 0.08)}s`;
+                    li.style.cursor = 'pointer';
+                    li.onclick = (e) => {
+                        e.stopPropagation();
+                        this.showShiftDetails(shift.id);
+                    };
+                    
+                    li.innerHTML = `
+                        <span class="date">${day}. ${monthName}</span>
+                        <span class="amount">${this.formatCurrency(amount)}</span>
+                    `;
+                    details.appendChild(li);
+                }
+        });
+        
+        if (details.children.length === 0) {
+            const li = document.createElement('li');
+            li.style.animationDelay = '0.3s';
+            li.innerHTML = `
+                <span class="date">Ingen vakter funnet</span>
+                <span class="amount">-</span>
+            `;
+            details.appendChild(li);
+        }
+        
+        }, 300); // Delay for morph animation to complete
+    },
+    
+    // Close breakdown card
+    closeBreakdown() {
+        const backdrop = document.querySelector('.backdrop-blur');
+        const expandedCard = document.querySelector('.breakdown-card.expanded');
+        const header = document.querySelector('.header');
+        
+        // Show header again
+        if (header) {
+            header.classList.remove('hidden');
+        }
+        
+        if (backdrop) {
+            backdrop.classList.remove('active');
+            
+            // Remove keyboard event listener
+            if (backdrop.dataset.keydownHandler) {
+                document.removeEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeBreakdown();
+                    }
+                });
+            }
+            
+            setTimeout(() => backdrop.remove(), 300);
+        }
+        
+        if (expandedCard) {
+            // Remove expanded class and details
+            expandedCard.classList.remove('expanded');
+            
+            // Restore original styles
+            const originalData = expandedCard.dataset.originalPosition;
+            if (originalData) {
+                const original = JSON.parse(originalData);
+                expandedCard.style.position = original.position;
+                expandedCard.style.top = original.top;
+                expandedCard.style.left = original.left;
+                expandedCard.style.width = original.width;
+                expandedCard.style.height = original.height;
+                expandedCard.style.transform = original.transform;
+                expandedCard.style.margin = '';
+                expandedCard.style.zIndex = '';
+                expandedCard.style.transition = '';
+                expandedCard.style.borderRadius = '';
+                delete expandedCard.dataset.originalPosition;
+            }
+            
+            // Remove all added elements
+            const closeBtn = expandedCard.querySelector('.close-btn');
+            const details = expandedCard.querySelector('.details');
+            const titleContainer = expandedCard.querySelector('.breakdown-title-container');
+            const title = expandedCard.querySelector('.breakdown-title'); // fallback for old structure
+            if (closeBtn) closeBtn.remove();
+            if (details) details.remove();
+            if (titleContainer) titleContainer.remove();
+            if (title) title.remove(); // fallback cleanup
+            
+            // Restore original content visibility
+            const icon = expandedCard.querySelector('.breakdown-icon');
+            const value = expandedCard.querySelector('.breakdown-value');
+            const label = expandedCard.querySelector('.breakdown-label');
+            if (icon) icon.style.display = '';
+            if (value) value.style.display = '';
+            if (label) label.style.display = '';
+        }
+    },
+    // Show detailed shift information in expanded view
+    showShiftDetails(shiftId) {
+        // Find the shift by ID
+        const shift = this.shifts.find(s => s.id === shiftId);
+        if (!shift) return;
+        
+        // Close any existing expanded views
+        this.closeBreakdown();
+        this.closeSettings();
+        
+        // Hide header
+        const header = document.querySelector('.header');
+        if (header) {
+            header.classList.add('hidden');
+        }
+        
+        // Create backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'backdrop-blur';
+        backdrop.onclick = () => this.closeShiftDetails();
+        document.body.appendChild(backdrop);
+        
+        // Add keyboard support
+        const keydownHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeShiftDetails();
+            }
+        };
+        document.addEventListener('keydown', keydownHandler);
+        backdrop.dataset.keydownHandler = 'attached';
+        
+        // Force reflow then activate backdrop
+        backdrop.offsetHeight;
+        backdrop.classList.add('active');
+        
+        // Create shift detail card
+        const detailCard = document.createElement('div');
+        detailCard.className = 'shift-detail-card';
+        detailCard.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: min(90vw, 500px);
+            max-height: 80vh;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 24px;
+            z-index: 25;
+            opacity: 0;
+            box-shadow: 
+                0 32px 64px rgba(0, 255, 136, 0.2),
+                0 16px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            overflow-y: auto;
+            animation: shiftDetailEnter 0.4s var(--ease-default) forwards;
+        `;
+        
+        // Calculate shift details
+        const calc = this.calculateShift(shift);
+        const dayName = this.DAYS[shift.date.getDay()];
+        const monthName = this.MONTHS[shift.date.getMonth()];
+        const formattedDate = `${dayName} ${shift.date.getDate()}. ${monthName} ${shift.date.getFullYear()}`;
+        
+        // Create content
+        detailCard.innerHTML = `
+            <div class="shift-detail-header">
+                <div class="shift-detail-icon">
+                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                    </svg>
+                </div>
+                <h3 class="shift-detail-title">Vaktdetaljer</h3>
+            </div>
+            
+            <div class="shift-detail-content">
+                <div class="detail-section">
+                    <div class="detail-label">Dato</div>
+                    <div class="detail-value">${formattedDate}</div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Arbeidstid</div>
+                    <div class="detail-value">${shift.startTime} - ${shift.endTime}</div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Total varighet</div>
+                    <div class="detail-value">${calc.totalHours.toFixed(2)} timer</div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Betalt tid</div>
+                    <div class="detail-value">${calc.paidHours.toFixed(2)} timer</div>
+                </div>
+                
+                ${calc.pauseDeducted ? `
+                <div class="detail-section">
+                    <div class="detail-label">Pausetrekk</div>
+                    <div class="detail-value">30 minutter</div>
+                </div>
+                ` : ''}
+                
+                <div class="detail-section">
+                    <div class="detail-label">Grunnlønn</div>
+                    <div class="detail-value accent">${this.formatCurrency(calc.baseWage)}</div>
+                </div>
+                
+                ${calc.bonus > 0 ? `
+                <div class="detail-section">
+                    <div class="detail-label">Tillegg</div>
+                    <div class="detail-value accent">${this.formatCurrency(calc.bonus)}</div>
+                </div>
+                ` : ''}
+                
+                <div class="detail-section total">
+                    <div class="detail-label">Total lønn</div>
+                    <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
+                </div>
+            </div>
+            
+            <button class="close-btn" onclick="app.closeShiftDetails()">×</button>
+        `;
+        
+        document.body.appendChild(detailCard);
+    },
+    
+    // Close shift details view
+    closeShiftDetails() {
+        const backdrop = document.querySelector('.backdrop-blur');
+        const detailCard = document.querySelector('.shift-detail-card');
+        const header = document.querySelector('.header');
+        
+        // Show header again
+        if (header) {
+            header.classList.remove('hidden');
+        }
+        
+        if (backdrop) {
+            backdrop.classList.remove('active');
+            setTimeout(() => backdrop.remove(), 300);
+        }
+        
+        if (detailCard) {
+            detailCard.style.animation = 'shiftDetailExit 0.3s var(--ease-default) forwards';
+            setTimeout(() => detailCard.remove(), 300);
+        }
+        
+        // Remove keyboard listener
+        const keydownHandler = document.querySelector('.backdrop-blur')?.dataset.keydownHandler;
+        if (keydownHandler) {
+            document.removeEventListener('keydown', keydownHandler);
+        }
+    },
+
+    // ...existing code...
     calculateShift(shift) {
         const startMinutes = this.timeToMinutes(shift.startTime);
         let endMinutes = this.timeToMinutes(shift.endTime);
@@ -1058,6 +1503,46 @@ export const app = {
         this.customWage = parseFloat(wage) || 200;
         this.updateDisplay();
         this.saveSettingsToSupabase();
+    },
+    
+    // Capture custom bonuses from UI form elements
+    captureCustomBonusesFromUI() {
+        console.log('=== captureCustomBonusesFromUI called ===');
+        const capturedBonuses = {};
+        const types = ['weekday', 'saturday', 'sunday'];
+        
+        types.forEach(type => {
+            capturedBonuses[type] = [];
+            const container = document.getElementById(`${type}BonusSlots`);
+            
+            if (container) {
+                const slots = container.querySelectorAll('.bonus-slot');
+                console.log(`Processing ${slots.length} slots for ${type}`);
+                
+                slots.forEach((slot, index) => {
+                    const inputs = slot.querySelectorAll('input');
+                    if (inputs.length >= 3) {
+                        const from = inputs[0].value;
+                        const to = inputs[1].value;
+                        const rate = inputs[2].value;
+                        
+                        console.log(`${type} slot ${index}: from=${from}, to=${to}, rate=${rate}`);
+                        
+                        // Capture all slots, even if partially filled (validation happens later)
+                        capturedBonuses[type].push({
+                            from: from,
+                            to: to,
+                            rate: parseFloat(rate) || 0
+                        });
+                    }
+                });
+            } else {
+                console.log(`Container ${type}BonusSlots not found`);
+            }
+        });
+        
+        console.log('Captured bonuses from UI:', capturedBonuses);
+        return capturedBonuses;
     },
     
     async saveCustomBonuses() {
@@ -1679,267 +2164,41 @@ export const app = {
         
         console.log('Auto-save test completed!');
     },
-    
-    // Helper function to show save status to user (disabled to reduce annoyance)
-    showSaveStatus(message) {
-        // Disabled to reduce interruptions - only log to console
-        console.log('Save status:', message);
-        return; // Early return to disable visual feedback
-        
-        // Create or update save status indicator
-        let statusDiv = document.getElementById('saveStatus');
-        if (!statusDiv) {
-            statusDiv = document.createElement('div');
-            statusDiv.id = 'saveStatus';
-            statusDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: var(--success, #10b981);
-                color: white;
-                padding: 8px 16px;
-                border-radius: 6px;
-                font-size: 14px;
-                z-index: 1000;
-                transition: opacity 0.3s ease;
-            `;
-            document.body.appendChild(statusDiv);
-        }
-        
-        statusDiv.textContent = message;
-        statusDiv.style.opacity = '1';
-        
-        // Auto-hide after 2 seconds
-        setTimeout(() => {
-            statusDiv.style.opacity = '0';
-        }, 2000);
-    },
 
-    // Simple test to verify bonus input capture
-    testBonusCapture() {
-        console.log('=== TESTING BONUS INPUT CAPTURE ===');
+    // Test function to verify simplified settings modal works correctly
+    testSettingsModal() {
+        console.log('=== TESTING SIMPLIFIED SETTINGS MODAL ===');
         
-        // Check if we're in custom mode
-        console.log('usePreset:', this.usePreset);
-        
-        // Check what's in customBonuses
-        console.log('Current customBonuses:', this.customBonuses);
-        
-        // Check DOM containers
-        const types = ['weekday', 'saturday', 'sunday'];
-        types.forEach(type => {
-            const container = document.getElementById(`${type}BonusSlots`);
-            console.log(`Container ${type}:`, container);
-            if (container) {
-                const slots = container.querySelectorAll('.bonus-slot');
-                console.log(`${type} slots found:`, slots.length);
-                
-                slots.forEach((slot, index) => {
-                    const inputs = slot.querySelectorAll('input');
-                    console.log(`Slot ${index} inputs:`, inputs.length);
-                    if (inputs.length >= 3) {
-                        console.log(`Slot ${index} values:`, {
-                            from: inputs[0].value,
-                            to: inputs[1].value,
-                            rate: inputs[2].value
-                        });
-                    }
-                });
-            }
-        });
-        
-        // Manually trigger saveCustomBonuses
-        console.log('Manually triggering saveCustomBonuses...');
-        this.saveCustomBonuses();
-    },
-    
-    // COMPREHENSIVE UI INPUT TESTING
-    async testCompleteUIFlow() {
-        console.log('=== COMPLETE UI FLOW TEST ===');
-        
-        // Step 1: Switch to custom mode
-        console.log('Step 1: Switching to custom mode');
-        this.usePreset = false;
-        this.togglePreset();
-        
-        // Step 2: Open settings and switch to bonus tab
-        console.log('Step 2: Opening settings and switching to bonus tab');
+        console.log('Step 1: Opening settings modal');
         this.openSettings();
-        await this.switchSettingsTab('bonuses');
         
-        // Step 3: Clear existing bonuses and add test data
-        console.log('Step 3: Clearing existing bonuses');
-        this.customBonuses = { weekday: [], saturday: [], sunday: [] };
-        this.populateCustomBonusSlots();
-        
-        // Step 4: Add a bonus slot for each type
-        console.log('Step 4: Adding bonus slots');
-        this.addBonusSlot('weekday');
-        this.addBonusSlot('saturday');
-        this.addBonusSlot('sunday');
-        
-        // Step 5: Programmatically fill the inputs with test data
-        console.log('Step 5: Filling inputs with test data');
         setTimeout(() => {
-            const testData = [
-                { type: 'weekday', from: '18:00', to: '22:00', rate: 50 },
-                { type: 'saturday', from: '12:00', to: '20:00', rate: 75 },
-                { type: 'sunday', from: '10:00', to: '18:00', rate: 100 }
-            ];
+            const modal = document.getElementById('settingsModal');
+            const isVisible = modal && modal.style.display === 'flex';
             
-            testData.forEach(data => {
-                const container = document.getElementById(`${data.type}BonusSlots`);
-                if (container) {
-                    const slots = container.querySelectorAll('.bonus-slot');
-                    if (slots.length > 0) {
-                        const inputs = slots[0].querySelectorAll('input');
-                        if (inputs.length >= 3) {
-                            inputs[0].value = data.from;
-                            inputs[1].value = data.to;
-                            inputs[2].value = data.rate;
-                            
-                            // Trigger change events
-                            inputs[0].dispatchEvent(new Event('change'));
-                            inputs[1].dispatchEvent(new Event('change'));
-                            inputs[2].dispatchEvent(new Event('change'));
-                            
-                            console.log(`Filled ${data.type} inputs:`, {
-                                from: inputs[0].value,
-                                to: inputs[1].value,
-                                rate: inputs[2].value
-                            });
-                        }
-                    }
-                }
-            });
-            
-            // Step 6: Test immediate capture
-            console.log('Step 6: Testing immediate bonus capture');
-            setTimeout(() => {
-                this.debugBonusCapture();
+            if (isVisible) {
+                console.log('✅ Modal opened successfully');
                 
-                // Step 7: Save and test
-                console.log('Step 7: Saving bonuses');
-                this.saveCustomBonuses();
-            }, 1000);
-        }, 500);
-    },
-    
-    // NEW IMPROVED BONUS CAPTURE SYSTEM
-    captureCustomBonusesFromUI() {
-        console.log('=== CAPTURING BONUSES FROM UI ===');
-        const types = ['weekday', 'saturday', 'sunday'];
-        const capturedBonuses = {};
-        
-        types.forEach(type => {
-            capturedBonuses[type] = [];
-            const container = document.getElementById(`${type}BonusSlots`);
-            
-            if (!container) {
-                console.error(`Container ${type}BonusSlots not found!`);
-                return;
-            }
-            
-            console.log(`Processing container for ${type}`);
-            console.log(`Container innerHTML:`, container.innerHTML);
-            
-            const slots = container.querySelectorAll('.bonus-slot');
-            console.log(`Found ${slots.length} bonus slots for ${type}`);
-            
-            slots.forEach((slot, slotIndex) => {
-                console.log(`Processing slot ${slotIndex} for ${type}`);
+                console.log('Step 2: Testing tab switching');
+                this.switchSettingsTabSync('bonuses');
                 
-                const inputs = slot.querySelectorAll('input');
-                console.log(`Found ${inputs.length} inputs in slot ${slotIndex}`);
-                
-                if (inputs.length >= 3) {
-                    const fromInput = inputs[0];
-                    const toInput = inputs[1];
-                    const rateInput = inputs[2];
-                    
-                    const from = fromInput.value;
-                    const to = toInput.value;
-                    const rate = parseFloat(rateInput.value);
-                    
-                    console.log(`Slot ${slotIndex} values:`, {
-                        from: from,
-                        to: to,
-                        rate: rate,
-                        fromElement: fromInput,
-                        toElement: toInput,
-                        rateElement: rateInput
-                    });
-                    
-                    // More lenient validation - capture even if some fields are empty for debugging
-                    if (from || to || (rateInput.value && !isNaN(rate))) {
-                        const bonusEntry = { from, to, rate: rate || 0 };
-                        capturedBonuses[type].push(bonusEntry);
-                        console.log(`Captured bonus for ${type}:`, bonusEntry);
-                    } else {
-                        console.log(`Skipped slot ${slotIndex} for ${type} - all fields empty`);
-                    }
-                } else {
-                    console.log(`Skipped slot ${slotIndex} for ${type} - insufficient inputs (${inputs.length})`);
-                }
-            });
-            
-            console.log(`Final captured bonuses for ${type}:`, capturedBonuses[type]);
-        });
-        
-        console.log('All captured bonuses:', capturedBonuses);
-        return capturedBonuses;
-    },
-    
-    // Quick test function that can be called from browser console
-    async debugBonusCapture() {
-        console.log('=== DEBUGGING BONUS CAPTURE ===');
-        console.log('1. Current app.customBonuses:', this.customBonuses);
-        console.log('2. Current usePreset:', this.usePreset);
-        
-        // Test the new capture function
-        const captured = this.captureCustomBonusesFromUI();
-        console.log('3. Captured from UI:', captured);
-        
-        // Show DOM state
-        console.log('4. DOM State:');
-        this.debugBonusSlots();
-        
-        return captured;
-    },
-    
-    // Emergency reset function
-    async resetAndTest() {
-        console.log('=== EMERGENCY RESET AND TEST ===');
-        
-        // Reset to custom mode
-        this.usePreset = false;
-        document.getElementById('usePresetToggle').checked = false;
-        this.togglePresetSections();
-        
-        // Clear current bonuses
-        this.customBonuses = { weekday: [], saturday: [], sunday: [] };
-        
-        // Populate empty slots
-        this.populateCustomBonusSlots();
-        
-        // Add test data
-        this.addBonusSlot('weekday');
-        setTimeout(() => {
-            const container = document.getElementById('weekdayBonusSlots');
-            const slots = container.querySelectorAll('.bonus-slot');
-            if (slots.length > 0) {
-                const inputs = slots[0].querySelectorAll('input');
-                inputs[0].value = '18:00';
-                inputs[1].value = '22:00';
-                inputs[2].value = '25';
-                
-                console.log('Added test data to weekday slot');
-                
-                // Test capture
                 setTimeout(() => {
-                    this.debugBonusCapture();
-                }, 500);
+                    console.log('Step 3: Closing settings modal');
+                    this.closeSettings();
+                    
+                    setTimeout(() => {
+                        const isClosed = modal && modal.style.display === 'none';
+                        if (isClosed) {
+                            console.log('✅ Modal closed successfully');
+                            console.log('✅ Settings modal test completed successfully!');
+                        } else {
+                            console.log('❌ Modal did not close properly');
+                        }
+                    }, 100);
+                }, 100);
+            } else {
+                console.log('❌ Modal did not open properly');
             }
-        }, 500);
+        }, 100);
     }
-};
+}
