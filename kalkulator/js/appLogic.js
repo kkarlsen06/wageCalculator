@@ -1326,7 +1326,7 @@ export const app = {
         
         // Calculate shift details
         const calc = this.calculateShift(shift);
-        const dayName = this.DAYS[shift.date.getDay()];
+        const dayName = this.WEEKDAYS[shift.date.getDay()];
         const monthName = this.MONTHS[shift.date.getMonth()];
         const formattedDate = `${dayName} ${shift.date.getDate()}. ${monthName} ${shift.date.getFullYear()}`;
         
@@ -1415,11 +1415,12 @@ export const app = {
             setTimeout(() => detailCard.remove(), 300);
         }
         
-        // Remove keyboard listener
-        const keydownHandler = document.querySelector('.backdrop-blur')?.dataset.keydownHandler;
-        if (keydownHandler) {
-            document.removeEventListener('keydown', keydownHandler);
-        }
+        // Remove keyboard listener - fix: remove the actual function reference
+        document.removeEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeShiftDetails();
+            }
+        });
     },
 
     // ...existing code...
@@ -1453,6 +1454,9 @@ export const app = {
         );
         return {
             hours: parseFloat(paidHours.toFixed(2)),
+            totalHours: parseFloat(durationHours.toFixed(2)),
+            paidHours: parseFloat(paidHours.toFixed(2)),
+            pauseDeducted: this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD,
             baseWage: baseWage,
             bonus: bonus,
             total: baseWage + bonus

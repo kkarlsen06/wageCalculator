@@ -5,6 +5,10 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 :root {
   --bg-primary: #0d1117;
   --bg-secondary: #161b22;
@@ -40,6 +44,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .app-container {
@@ -48,6 +53,7 @@ body {
   max-width: 600px;
   margin: 0 auto;
   width: 100%;
+  overflow-x: hidden;
 }
 
 .header {
@@ -1154,7 +1160,7 @@ input:checked + .slider:before {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   background: rgba(13, 17, 23, 0.7);
   backdrop-filter: blur(8px);
@@ -1197,7 +1203,7 @@ input:checked + .slider:before {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   background: linear-gradient(
     135deg,
@@ -1492,8 +1498,10 @@ input:checked + .slider:before {
   }
   
   .breakdown-card .details li .amount {
-    align-self: flex-end;
+    align-self: flex-start;
     font-size: 15px;
+    width: 100%;
+    text-align: right;
   }
   
   .breakdown-card .breakdown-title {
@@ -1709,7 +1717,7 @@ input:checked + .slider:before {
 @media (max-width: 480px) {
   .shift-detail-card {
     margin: 20px;
-    width: calc(100vw - 40px);
+    width: calc(100% - 40px);
     padding: 20px;
   }
   
