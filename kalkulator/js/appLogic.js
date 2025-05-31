@@ -99,6 +99,9 @@ export const app = {
             }
         });
         
+        // Setup mobile email slide-out functionality
+        this.setupMobileEmailSlideOut();
+        
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
         
@@ -129,6 +132,62 @@ export const app = {
             }
         }
     },
+
+    setupMobileEmailSlideOut() {
+        const userEmailDisplay = document.getElementById('userEmailDisplay');
+        const headerInfo = document.querySelector('.header-info');
+        
+        if (!userEmailDisplay || !headerInfo) return;
+        
+        // Create mobile email overlay
+        const mobileEmailOverlay = document.createElement('div');
+        mobileEmailOverlay.className = 'mobile-email-overlay';
+        headerInfo.appendChild(mobileEmailOverlay);
+        
+        let isShowing = false;
+        let hideTimeout;
+        
+        userEmailDisplay.addEventListener('click', (e) => {
+            // Only trigger on mobile screens
+            if (window.innerWidth > 480) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (isShowing) return;
+            
+            // Get user email
+            const userEmail = document.getElementById('userEmail');
+            if (!userEmail || !userEmail.textContent) return;
+            
+            // Set email text in overlay
+            mobileEmailOverlay.textContent = userEmail.textContent;
+            
+            // Show animation
+            isShowing = true;
+            headerInfo.classList.add('email-showing');
+            mobileEmailOverlay.classList.add('show');
+            
+            // Hide after 2 seconds
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                mobileEmailOverlay.classList.remove('show');
+                headerInfo.classList.remove('email-showing');
+                isShowing = false;
+            }, 2000);
+        });
+        
+        // Reset on window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 480 && isShowing) {
+                clearTimeout(hideTimeout);
+                mobileEmailOverlay.classList.remove('show');
+                headerInfo.classList.remove('email-showing');
+                isShowing = false;
+            }
+        });
+    },
+
     populateTimeSelects() {
         const startHour = document.getElementById('startHour');
         const endHour = document.getElementById('endHour');
