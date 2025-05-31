@@ -82,6 +82,7 @@ body {
   z-index: 100;
   border-radius: 0 0 16px 16px;
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
+  overflow: visible;
 }
 
 .header.hidden {
@@ -1651,18 +1652,19 @@ input:checked + .slider:before {
   /* Mobile email slide-out container */
   .header-info {
     position: relative;
+    overflow: visible;
   }
   
   .mobile-email-overlay {
     position: absolute;
-    top: 0;
+    top: 50%;
     right: 0;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 8px 12px;
-    transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 10px 14px;
+    transform: translateX(100%) translateY(-50%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 200;
     white-space: nowrap;
     font-size: 13px;
@@ -1670,10 +1672,11 @@ input:checked + .slider:before {
     opacity: 0;
     pointer-events: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: max-content;
   }
   
   .mobile-email-overlay.show {
-    transform: translateX(0);
+    transform: translateX(-10px) translateY(-50%);
     opacity: 1;
     pointer-events: auto;
   }

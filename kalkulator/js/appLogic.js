@@ -139,10 +139,13 @@ export const app = {
         
         if (!userEmailDisplay || !headerInfo) return;
         
-        // Create mobile email overlay
-        const mobileEmailOverlay = document.createElement('div');
-        mobileEmailOverlay.className = 'mobile-email-overlay';
-        headerInfo.appendChild(mobileEmailOverlay);
+        // Create mobile email overlay if it doesn't exist
+        let mobileEmailOverlay = headerInfo.querySelector('.mobile-email-overlay');
+        if (!mobileEmailOverlay) {
+            mobileEmailOverlay = document.createElement('div');
+            mobileEmailOverlay.className = 'mobile-email-overlay';
+            headerInfo.appendChild(mobileEmailOverlay);
+        }
         
         let isShowing = false;
         let hideTimeout;
@@ -166,14 +169,22 @@ export const app = {
             // Show animation
             isShowing = true;
             headerInfo.classList.add('email-showing');
-            mobileEmailOverlay.classList.add('show');
             
-            // Hide after 2 seconds
+            // Use requestAnimationFrame for smooth animation
+            requestAnimationFrame(() => {
+                mobileEmailOverlay.classList.add('show');
+            });
+            
+            // Hide after 2 seconds with smooth transition
             clearTimeout(hideTimeout);
             hideTimeout = setTimeout(() => {
                 mobileEmailOverlay.classList.remove('show');
-                headerInfo.classList.remove('email-showing');
-                isShowing = false;
+                
+                // Wait for animation to complete before hiding container
+                setTimeout(() => {
+                    headerInfo.classList.remove('email-showing');
+                    isShowing = false;
+                }, 300); // Match CSS transition duration
             }, 2000);
         });
         
