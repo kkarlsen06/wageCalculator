@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logg inn</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>body{visibility:hidden;}</style>
 </head>
 <body style="padding-bottom: 80px;">
   <!-- Tilbake til hovedside knapp -->
@@ -35,9 +36,7 @@
       <h2 style="margin-bottom: 20px;">Opprett ny konto</h2>
       <input id="signup-email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 12px;" />
       <input id="signup-password" type="password" placeholder="Passord" required class="form-control" style="margin-bottom: 12px;" />
-      <input id="signup-name" type="text" placeholder="Fullt navn" required class="form-control" style="margin-bottom: 12px;" />
-      <input id="signup-company" type="text" placeholder="Arbeidsgiver (valgfritt)" class="form-control" style="margin-bottom: 12px;" />
-      <input id="signup-position" type="text" placeholder="Stilling (valgfritt)" class="form-control" style="margin-bottom: 18px;" />
+      <input id="signup-name" type="text" placeholder="Fornavn" required class="form-control" style="margin-bottom: 18px;" />
       <button id="create-account-btn" class="btn btn-primary" style="margin-bottom: 12px;">Opprett konto</button>
       <button id="back-login-signup-btn" class="btn btn-secondary">Tilbake til innlogging</button>
       <p id="signup-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
@@ -58,11 +57,9 @@
     <div class="login-card">
       <h2 style="margin-bottom: 20px;">Fullfør profilen din</h2>
       <p style="margin-bottom: 20px; color: var(--text-secondary); text-align: center;">
-        Vi har oppgradert vårt system! Vennligst fyll ut litt mer informasjon for å fullføre profilen din.
+        Vennligst oppgi ditt fornavn for å fullføre profilen din.
       </p>
-      <input id="complete-name" type="text" placeholder="Fullt navn" required class="form-control" style="margin-bottom: 12px;" />
-      <input id="complete-company" type="text" placeholder="Arbeidsgiver (valgfritt)" class="form-control" style="margin-bottom: 12px;" />
-      <input id="complete-position" type="text" placeholder="Stilling (valgfritt)" class="form-control" style="margin-bottom: 18px;" />
+      <input id="complete-name" type="text" placeholder="Fornavn" required class="form-control" style="margin-bottom: 18px;" />
       <button id="complete-profile-btn" class="btn btn-primary" style="margin-bottom: 12px;">Fullfør profil</button>
       <button id="skip-profile-btn" class="btn btn-secondary">Hopp over (kan gjøres senere)</button>
       <p id="complete-profile-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>

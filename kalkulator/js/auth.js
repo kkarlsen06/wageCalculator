@@ -2,7 +2,7 @@
 let supa;
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   // Initialize Supabase client using global supabase object
   supa = window.supabase.createClient(
     "https://iuwjdacxbirhmsglcbxp.supabase.co",
@@ -12,6 +12,18 @@ document.addEventListener('DOMContentLoaded', function() {
   // Make supa available globally
   window.supa = supa;
   
+  // Immediate redirect if already authenticated
+  try {
+    const { data: { session } } = await supa.auth.getSession();
+    if (session && !isInRecoveryMode() && !isInPasswordRecovery) {
+      console.log('Immediate redirect: existing session, redirecting to app.html');
+      window.location.replace('app.html');
+      return;
+    }
+  } catch (e) {
+    console.error('Error checking session for immediate redirect:', e);
+  }
+
   // Set up event listeners now that elements are available
   setupEventListeners();
   
@@ -36,8 +48,6 @@ function setupEventListeners() {
   const signupEmail = document.getElementById("signup-email");
   const signupPassword = document.getElementById("signup-password");
   const signupName = document.getElementById("signup-name");
-  const signupCompany = document.getElementById("signup-company");
-  const signupPosition = document.getElementById("signup-position");
   const createAccountBtn = document.getElementById("create-account-btn");
   const backLoginSignupBtn = document.getElementById("back-login-signup-btn");
   const signupMsg = document.getElementById("signup-msg");
@@ -45,8 +55,6 @@ function setupEventListeners() {
   // Profile completion form elements
   const completeProfileCard = document.getElementById("complete-profile-card");
   const completeName = document.getElementById("complete-name");
-  const completeCompany = document.getElementById("complete-company");
-  const completePosition = document.getElementById("complete-position");
   const completeProfileBtn = document.getElementById("complete-profile-btn");
   const skipProfileBtn = document.getElementById("skip-profile-btn");
   const completeProfileMsg = document.getElementById("complete-profile-msg");
@@ -60,9 +68,9 @@ function setupEventListeners() {
   // Store references globally for other functions to use
   window.authElements = {
     authMsg, emailInp, passInp, loginBtn, signupBtn, authBox,
-    signupCard, signupEmail, signupPassword, signupName, signupCompany, signupPosition, 
+    signupCard, signupEmail, signupPassword, signupName, 
     createAccountBtn, backLoginSignupBtn, signupMsg,
-    completeProfileCard, completeName, completeCompany, completePosition, 
+    completeProfileCard, completeName, 
     completeProfileBtn, skipProfileBtn, completeProfileMsg,
     forgotBtn, forgotCard, forgotEmailInp, sendResetBtn, backLoginBtn
   };
@@ -102,8 +110,8 @@ function setupEventListeners() {
   }
 
   // Enter key support for signup form
-  if (signupPosition && createAccountBtn) {
-    signupPosition.addEventListener('keypress', function(event) {
+  if (signupName && createAccountBtn) {
+    signupName.addEventListener('keypress', function(event) {
       if (event.key === 'Enter') {
         event.preventDefault();
         createAccountBtn.click();
@@ -112,8 +120,8 @@ function setupEventListeners() {
   }
 
   // Enter key support for profile completion form
-  if (completePosition && completeProfileBtn) {
-    completePosition.addEventListener('keypress', function(event) {
+  if (completeName && completeProfileBtn) {
+    completeName.addEventListener('keypress', function(event) {
       if (event.key === 'Enter') {
         event.preventDefault();
         completeProfileBtn.click();
@@ -135,10 +143,7 @@ async function signIn(email, password) {
   try {
     const { error } = await supa.auth.signInWithPassword({ email, password });
     window.authElements.authMsg.textContent = error ? error.message : "";
-    if (!error) {
-      // Check if user needs to complete profile
-      await checkAndShowProfileCompletion();
-    }
+    // Don't call checkAndShowProfileCompletion here - let auth state change handle it
   } catch (err) {
     console.error("Supabase error:", err);
     window.authElements.authMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
@@ -161,32 +166,28 @@ function showLoginForm() {
 async function signUpWithDetails() {
   const email = window.authElements.signupEmail.value;
   const password = window.authElements.signupPassword.value;
-  const name = window.authElements.signupName.value;
-  const company = window.authElements.signupCompany.value;
-  const position = window.authElements.signupPosition.value;
+  const firstName = window.authElements.signupName.value;
 
-  if (!email || !password || !name) {
+  if (!email || !password || !firstName) {
     window.authElements.signupMsg.textContent = "Vennligst fyll ut alle påkrevde felt";
     return;
   }
 
   try {
-    const { error, data } = await supa.auth.signUp({ email, password });
+    const { error, data } = await supa.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        data: {
+          first_name: firstName.trim()
+        }
+      }
+    });
+    
     if (error) {
       window.authElements.signupMsg.textContent = error.message;
       return;
     }
-
-    // Create extended profile
-    const alias = email.split("@")[0];
-    await supa.from("profiles").insert({ 
-      id: data.user.id, 
-      username: alias,
-      full_name: name,
-      company: company || null,
-      position: position || null,
-      profile_completed: true
-    });
 
     window.authElements.signupMsg.style.color = "var(--success)";
     window.authElements.signupMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
@@ -196,49 +197,93 @@ async function signUpWithDetails() {
   }
 }
 
+// Add a flag to prevent multiple simultaneous redirects
+let isRedirecting = false;
+
 async function checkAndShowProfileCompletion() {
+  // Add a safety timeout
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("checkAndShowProfileCompletion timeout")), 10000);
+  });
+  
+  const mainPromise = async () => {
+    try {
+      if (isRedirecting) {
+        console.log("Already redirecting, skipping...");
+        return;
+      }
+      
+      console.log("Starting checkAndShowProfileCompletion...");
+      
+      let user = null;
+      try {
+        console.log("Attempting to get user...");
+        const { data: { user: userData }, error } = await supa.auth.getUser();
+        console.log("getUser result - user:", userData ? userData.email : "null", "error:", error);
+        user = userData;
+        
+        if (error) {
+          console.error("Error getting user:", error);
+          throw error;
+        }
+      } catch (getUserError) {
+        console.error("Exception while getting user:", getUserError);
+        // Try to get user from session instead
+        try {
+          console.log("Trying to get user from session...");
+          const { data: { session } } = await supa.auth.getSession();
+          user = session?.user || null;
+          console.log("Got user from session:", user ? user.email : "null");
+        } catch (sessionError) {
+          console.error("Error getting session:", sessionError);
+        }
+      }
+      
+      if (!user) {
+        console.log("No user found after all attempts, returning");
+        return;
+      }
+
+      console.log("Checking profile completion for user:", user.email);
+      console.log("User metadata:", user.user_metadata);
+
+      // For existing users or users without first_name, just redirect to app
+      // The simplified profile system doesn't require mandatory completion
+      console.log("About to redirect to app.html...");
+      
+      isRedirecting = true;
+      
+      // Small delay to ensure auth state is properly set
+      setTimeout(() => {
+        console.log("Redirecting to app.html...");
+        window.location.replace("app.html");
+      }, 150);
+      
+    } catch (err) {
+      console.error("Error checking profile completion:", err);
+      // If there's an error, just redirect to app
+      console.log("Error occurred, attempting redirect anyway...");
+      
+      if (!isRedirecting) {
+        isRedirecting = true;
+        setTimeout(() => {
+          console.log("Executing error fallback redirect...");
+          window.location.replace("app.html");
+        }, 100);
+      }
+    }
+  };
+  
   try {
-    const { data: { user } } = await supa.auth.getUser();
-    if (!user) return;
-
-    // Check if profile exists and is complete
-    const { data: profile, error } = await supa
-      .from("profiles")
-      .select("profile_completed, full_name")
-      .eq("id", user.id)
-      .single();
-
-    // If profile doesn't exist or has error, we might need to create it
-    if (error && error.code === 'PGRST116') {
-      // No profile found, this shouldn't happen but let's handle it
-      console.log("No profile found, creating basic profile");
-      const alias = user.email.split("@")[0];
-      await supa.from("profiles").insert({ 
-        id: user.id, 
-        username: alias,
-        profile_completed: false
-      });
-      // Show profile completion form
-      showProfileCompletionForm();
-      return;
-    } else if (error) {
-      console.error("Error fetching profile:", error);
-      // If there's an unexpected error, just redirect to app
-      window.location.href = "app.html";
-      return;
+    await Promise.race([mainPromise(), timeoutPromise]);
+  } catch (timeoutError) {
+    console.error("checkAndShowProfileCompletion timed out:", timeoutError);
+    // Force redirect on timeout
+    if (!isRedirecting) {
+      isRedirecting = true;
+      console.log("Forcing redirect due to timeout...");
+      window.location.replace("app.html");
     }
-
-    if (!profile || !profile.profile_completed || !profile.full_name) {
-      // Show profile completion form
-      showProfileCompletionForm();
-    } else {
-      // Profile is complete, redirect to app
-      window.location.href = "app.html";
-    }
-  } catch (err) {
-    console.error("Error checking profile completion:", err);
-    // If there's an error, just redirect to app
-    window.location.href = "app.html";
   }
 }
 
@@ -250,28 +295,19 @@ function showProfileCompletionForm() {
 }
 
 async function completeProfile() {
-  const name = window.authElements.completeName.value;
-  const company = window.authElements.completeCompany.value;
-  const position = window.authElements.completePosition.value;
+  const firstName = window.authElements.completeName.value;
 
-  if (!name) {
-    window.authElements.completeProfileMsg.textContent = "Vennligst fyll ut navn";
+  if (!firstName) {
+    window.authElements.completeProfileMsg.textContent = "Vennligst fyll ut fornavn";
     return;
   }
 
   try {
-    const { data: { user } } = await supa.auth.getUser();
-    if (!user) return;
-
-    const { error } = await supa
-      .from("profiles")
-      .update({ 
-        full_name: name,
-        company: company || null,
-        position: position || null,
-        profile_completed: true
-      })
-      .eq("id", user.id);
+    const { error } = await supa.auth.updateUser({
+      data: { 
+        first_name: firstName.trim()
+      }
+    });
 
     if (error) {
       window.authElements.completeProfileMsg.textContent = "Feil ved oppdatering av profil";
@@ -287,28 +323,15 @@ async function completeProfile() {
 }
 
 async function skipProfileCompletion() {
-  try {
-    const { data: { user } } = await supa.auth.getUser();
-    if (user) {
-      // Mark as completed but without full details
-      await supa
-        .from("profiles")
-        .update({ profile_completed: true })
-        .eq("id", user.id);
-    }
-    window.location.href = "app.html";
-  } catch (err) {
-    console.error("Error skipping profile:", err);
-    window.location.href = "app.html";
-  }
+  // Just redirect to app without requiring profile completion
+  window.location.href = "app.html";
 }
 
+// Legacy function - no longer used since we have signUpWithDetails
 async function signUp(email, password) {
   try {
     const { error, data } = await supa.auth.signUp({ email, password });
     if (error) return window.authElements.authMsg.textContent = error.message;
-    const alias = email.split("@")[0];
-    await supa.from("profiles").insert({ id: data.user.id, username: alias });
     window.authElements.authMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
   } catch (err) {
     console.error("Supabase error:", err);

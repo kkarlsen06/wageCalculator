@@ -945,7 +945,15 @@ input:checked + .slider:before {
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.1), transparent);
-  animation: shimmer-once 2s ease-in-out 0.5s forwards;
+  /* Replaced: animation: shimmer-once 0.8s linear 0.5s forwards; */
+  animation-name: shimmer-once;
+  animation-duration: 0.8s;
+  animation-timing-function: linear;
+  animation-delay: 0.5s;
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1; /* Explicitly setting default */
+  animation-direction: normal; /* Explicitly setting default */
+  animation-play-state: running; /* Explicitly setting default */
 }
 
 @keyframes shimmer-once {
@@ -1067,20 +1075,25 @@ input:checked + .slider:before {
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.08), transparent);
-  animation: shimmer-once 2s ease-in-out 1s forwards;
+  /* Replaced: animation: shimmer-once 0.8s linear forwards; */
+  animation-name: shimmer-once;
+  animation-duration: 0.8s;
+  animation-timing-function: linear;
+  /* animation-delay is set by more specific rules like .breakdown-card[data-type="base"]::before */
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1; /* Explicitly setting default */
+  animation-direction: normal; /* Explicitly setting default */
+  animation-play-state: running; /* Explicitly setting default */
 }
 
-.breakdown-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 36px -8px rgba(0, 255, 136, 0.3);
+/* Delay for the first breakdown card (data-type="base") */
+.breakdown-card[data-type="base"]::before {
+  animation-delay: 1.3s; 
 }
 
-.breakdown-card:nth-child(2)::before {
-  animation-delay: 1.2s;
-}
-
-.breakdown-card:nth-child(3)::before {
-  animation-delay: 1.4s;
+/* Delay for the second breakdown card (data-type="bonus") */
+.breakdown-card[data-type="bonus"]::before {
+  animation-delay: 2.1s; 
 }
 
 .breakdown-icon {
@@ -1490,6 +1503,11 @@ input:checked + .slider:before {
   }
 }
 
+@keyframes text-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
 /* Responsive adjustments for expanded cards */
 @media (max-width: 768px) {  
   .breakdown-card .details li {
@@ -1584,415 +1602,74 @@ input:checked + .slider:before {
   }
 }
 
-/* User email display styling */
-#userEmailDisplay {
-  color: var(--text-secondary);
-  opacity: 0.7;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-left: auto;
-  position: relative;
-}
-
-#userEmailDisplay svg {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-}
-
-#userEmail {
-  font-style: italic;
-  white-space: nowrap;
-}
-
-/* Responsive adjustments for user email */
-@media (max-width: 768px) {
-  #userEmailDisplay {
-    font-size: 12px;
-  }
-  
-  #userEmail {
-    max-width: 140px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
-@media (max-width: 600px) {
-  #userEmail {
-    max-width: 100px;
-  }
-}
-
-@media (max-width: 480px) {
-  /* Skjul e-post-teksten helt på små skjermer, men behold ikonet */
-  #userEmail {
-    display: none;
-  }
-  
-  /* Gjør ikonet litt større og mer synlig som indikator */
-  #userEmailDisplay svg {
-    width: 14px;
-    height: 14px;
-    opacity: 1;
-  }
-  
-  /* Legg til hover-effekt for å vise at det er klikkbart */
-  #userEmailDisplay {
-    cursor: pointer;
-    transition: opacity 0.2s ease;
-  }
-  
-  #userEmailDisplay:hover {
-    opacity: 1;
-  }
-  
-  /* Mobile email slide-out container */
-  .header-info {
-    position: relative;
-    overflow: visible;
-  }
-  
-  .mobile-email-overlay {
-    position: fixed;
-    top: 80px;
-    right: 10px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    transform: translateX(calc(100% + 20px));
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 200;
-    white-space: nowrap;
-    font-size: 13px;
-    color: var(--text-primary);
-    opacity: 0;
-    pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    min-width: max-content;
-    max-width: calc(100vw - 20px);
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .mobile-email-overlay.show {
-    transform: translateX(-100%);
-    opacity: 1;
-    pointer-events: auto;
-  }
-  
-  /* Hide other elements when email is showing */
-  .header-info.email-showing > span:not(#userEmailDisplay) {
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
-  }
-}
-
-/* Extra small screens - only wrap if absolutely necessary */
-@media (max-width: 400px) {
-  .shift-item {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-  
-  .shift-details {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  
-  .shift-details .time-info {
-    justify-content: flex-start;
-  }
-  
-  .shift-details .type-and-hours {
-    margin-left: 0;
-    justify-content: flex-start;
-  }
-  
-  .shift-amount-wrapper {
-    text-align: left;
-    align-items: flex-start;
-  }
-}
-
-/* Additional responsive styles for tablets */
-@media (max-width: 768px) and (min-width: 401px) {
-  .shift-details .type-and-hours {
-    gap: 10px;
-  }
-}
-
-/* Shift detail card styling */
-.shift-detail-card {
+/* Welcome screen overlay */
+#welcomeScreen {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 25;
-  background: var(--bg-secondary);
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 
-    0 32px 64px rgba(0, 255, 136, 0.2),
-    0 16px 32px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(0, 255, 136, 0.3);
-  width: min(90vw, 500px);
-  max-height: 80vh;
-  overflow-y: auto;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary, #1e90ff);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+#welcomeScreen h1 {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--accent); /* Bruker solid grønnfarge */
+  text-align: center;
+  white-space: nowrap;
+  /* Fjernet gradient-stiler */
+  transform-origin: center center;
 }
 
-/* Close button for shift detail card */
-.shift-detail-card .close-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(255, 102, 153, 0.1);
-  border: 1px solid rgba(255, 102, 153, 0.3);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--danger);
-  transition: all 0.2s var(--ease-default);
-  z-index: 21;
+.letter {
+  display: inline-block;
   opacity: 0;
-  transform: scale(0.8);
-  animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
-  font-size: 18px;
-  font-weight: bold;
-  border: none;
+  transform-origin: center center;
+  font-weight: 700; /* Matcher h1 */
+  /* Fjernet gradient-stiler for .letter */
+  /* color: transparent; Fjernet slik at den arver fra h1 */
+  /* Ingen background, -webkit-background-clip, background-clip, -webkit-text-fill-color her */
 }
-
-.shift-detail-card .close-btn:hover {
-  background: rgba(255, 102, 153, 0.2);
-  border-color: rgba(255, 102, 153, 0.5);
-  transform: scale(1.1);
-  color: #ff6699;
-}
-
-.shift-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  position: relative; /* For proper close button positioning */
-}
-
-.shift-detail-icon {
-  color: var(--accent);
-  opacity: 0.8;
-  animation: fadeIn 0.6s var(--ease-default) 0.1s forwards, iconPulse 2s ease-in-out 0.8s infinite;
-}
-
-.shift-detail-title {
-  color: var(--accent);
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.shift-detail-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.detail-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: rgba(0, 255, 136, 0.05);
-  border: 1px solid rgba(0, 255, 136, 0.1);
-  border-radius: 12px;
-  transition: all 0.3s var(--ease-default);
-}
-
-.detail-section:hover {
-  background: rgba(0, 255, 136, 0.08);
-  border-color: rgba(0, 255, 136, 0.15);
-}
-
-.detail-section.total {
-  background: rgba(0, 255, 136, 0.1);
-  border-color: rgba(0, 255, 136, 0.2);
-  margin-top: 8px;
-}
-
-.detail-label {
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.detail-value {
-  color: var(--text-primary);
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.detail-value.accent {
-  color: var(--accent);
-}
-
-.detail-value.large {
-  font-size: 20px;
-}
-
-/* Animations for shift detail card */
-@keyframes shiftDetailEnter {
+@keyframes letter-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: translateX(100%);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(0);
   }
 }
-
-@keyframes shiftDetailExit {
+@keyframes letter-out {
   from {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
   }
   to {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: scale(20);
+  }
+}
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Responsive adjustments for shift details */
-@media (max-width: 480px) {
-  .shift-detail-card {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    margin: 0;
-    width: calc(100vw - 40px);
-    max-width: none;
-    padding: 20px;
-    padding-top: 50px; /* Extra space for close button */
-    max-height: calc(100vh - 40px);
-  }
-  
-  .shift-detail-card .close-btn {
-    top: 12px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    font-size: 16px;
-  }
-  
-  .shift-detail-header {
-    margin-bottom: 20px;
-    text-align: center;
-  }
-  
-  .shift-detail-title {
-    font-size: 20px;
-  }
-  
-  .detail-section {
-    padding: 14px 16px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    text-align: left;
-  }
-  
-  .detail-value {
-    align-self: flex-end;
-    font-size: 15px;
-  }
-  
-  .detail-value.large {
-    font-size: 18px;
-  }
-  
-  .detail-label {
-    font-size: 13px;
-  }
+@keyframes text-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
-/* Extra small screens for shift details */
-@media (max-width: 360px) {
-  .shift-detail-card {
-    width: calc(100vw - 20px);
-    padding: 16px;
-    padding-top: 45px;
-    max-height: calc(100vh - 20px);
-  }
-  
-  .shift-detail-card .close-btn {
-    top: 8px;
-    right: 8px;
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
-  }
-  
-  .shift-detail-title {
-    font-size: 18px;
-  }
-  
-  .detail-section {
-    padding: 12px 14px;
-    gap: 4px;
-  }
-  
-  .detail-value {
-    font-size: 14px;
-  }
-  
-  .detail-value.large {
-    font-size: 16px;
-  }
-  
-  .detail-label {
-    font-size: 12px;
-  }
-}
-
-/* Settings modal morphed styles */
-.settings-modal-morphed .slider:before {
-  position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-.settings-modal-morphed input:checked + .slider {
-  background-color: var(--accent);
-}
-
-.settings-modal-morphed input:checked + .slider:before {
-  transform: translateX(20px);
-}
-
-.settings-modal-morphed .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--accent);
-}
-
-.settings-modal-morphed .tab-btn:hover {
-  background: var(--bg-tertiary) !important;
-  color: var(--text-primary) !important;
+#userEmailDisplay {
+  margin-left: auto;
 }

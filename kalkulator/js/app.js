@@ -6,22 +6,100 @@ document.addEventListener('DOMContentLoaded', async () => {
   );
   window.supa = supa;
 
-  // Authentication guard
-  const { data: { session } } = await supa.auth.getSession();
-  if (!session) {
-    window.location.href = './';
-    return;
+  // Enhanced authentication guard with retry logic
+  let session = null;
+  let retryCount = 0;
+  const maxRetries = 5;
+
+  // Create and show welcome screen
+  async function showWelcomeScreen() {
+    // Fetch user for name
+    const { data: { user } } = await supa.auth.getUser();
+    const firstName = user?.user_metadata?.first_name || '';
+    const welcomeTextStr = `Hei, ${firstName}`;
+
+    // Create overlay
+    const welcomeScreen = document.createElement('div');
+    welcomeScreen.id = 'welcomeScreen';
+    const h1 = document.createElement('h1');
+    h1.id = 'welcomeText';
+    welcomeScreen.appendChild(h1);
+    document.body.appendChild(welcomeScreen);
+
+    // Populate letters
+    h1.innerHTML = '';
+    const letters = [...welcomeTextStr].map((char, i) => {
+      const span = document.createElement('span');
+      span.className = 'letter';
+      // Render normal spaces as non-breaking spaces
+      span.textContent = char === ' ' ? '\u00A0' : char;
+      h1.appendChild(span);
+      return span;
+    });
+
+    // Animate letters in
+    letters.forEach((span, i) => {
+      span.style.animation = `letter-in 0.5s forwards ${i * 0.1}s`;
+    });
+    const inDuration = 500 + letters.length * 100; // ms
+    await new Promise(res => setTimeout(res, inDuration + 300));
+
+    // Animate whole text out
+    h1.style.transformOrigin = 'center center';
+    h1.style.animation = `text-out 0.5s forwards`;
+    await new Promise(res => setTimeout(res, 800));  // 0.5s animation + buffer
+
+    // Remove welcome overlay
+    welcomeScreen.remove();
+  }
+
+  // Animate main app elements
+  function animateAppEntries() {
+    const container = document.querySelector('.app-container');
+    if (!container) return;
+    const children = Array.from(container.children);
+    children.forEach((el, idx) => {
+      el.style.opacity = '0';
+      el.style.animation = `fadeInDown 0.6s forwards ${idx * 0.1}s`;
+    });
+  }
+
+  while (!session && retryCount < maxRetries) {
+    console.log(`App.html: Checking session (attempt ${retryCount + 1}/${maxRetries})`);
+    const { data: { session: currentSession } } = await supa.auth.getSession();
+    session = currentSession;
+    
+    if (!session) {
+      retryCount++;
+      if (retryCount < maxRetries) {
+        console.log(`App.html: No session found, waiting 200ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } else {
+        console.log(`App.html: No session after ${maxRetries} attempts, redirecting to login`);
+        window.location.href = './';
+        return;
+      }
+    } else {
+      console.log(`App.html: Session found for user:`, session.user.email);
+    }
   }
 
   // Expose logout
   window.logout = async () => { await supa.auth.signOut(); window.location.href = './'; };
 
-  // Import and start the app logic
+  // After ensuring session, show welcome, init app, and display
   const { app } = await import('./appLogic.js?v=5');
   window.app = app;
+
+  await showWelcomeScreen();
   await app.init();
-  // Display the app container
-  document.getElementById('app').style.display = 'block';
+
+  // Display the app container and animate entries
+  const appEl = document.getElementById('app');
+  if (appEl) {
+    appEl.style.display = 'block';
+    animateAppEntries();
+  }
 
   // Etter init og visning av app
   // Legg til event listeners for alle knapper
