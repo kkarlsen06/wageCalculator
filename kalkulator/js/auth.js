@@ -273,3 +273,26 @@ function cancelPasswordReset() {
     // Clear any messages
     authMsg.textContent = '';
 }
+
+window.addEventListener("DOMContentLoaded", async () => {
+  if (window.location.hash === "#recover") {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get("type");
+    const accessToken = params.get("access_token");
+
+    if (type === "recovery" && accessToken) {
+      const { error } = await supa.auth.setSession({
+        access_token: accessToken,
+        refresh_token: "" // tom i recovery mode
+      });
+
+      if (error) {
+        alert("Kunne ikke logge inn med reset-lenken.");
+        return;
+      }
+
+      // Logikken etter brukeren er "logget inn via recovery"
+      document.getElementById("recover-form").style.display = "block";
+    }
+  }
+});

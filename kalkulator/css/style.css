@@ -1657,13 +1657,13 @@ input:checked + .slider:before {
   
   .mobile-email-overlay {
     position: fixed;
-    top: 50%;
+    top: 80px;
     right: 10px;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 10px 14px;
-    transform: translateX(calc(100% + 20px)) translateY(-50%);
+    transform: translateX(calc(100% + 20px));
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 200;
     white-space: nowrap;
@@ -1679,7 +1679,7 @@ input:checked + .slider:before {
   }
   
   .mobile-email-overlay.show {
-    transform: translateX(-100%) translateY(-50%);
+    transform: translateX(-100%);
     opacity: 1;
     pointer-events: auto;
   }
