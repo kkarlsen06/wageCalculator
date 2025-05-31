@@ -1658,7 +1658,7 @@ input:checked + .slider:before {
   .mobile-email-overlay {
     position: absolute;
     top: 50%;
-    right: 0;
+    right: 100%;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -1673,10 +1673,11 @@ input:checked + .slider:before {
     pointer-events: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     min-width: max-content;
+    margin-right: 10px;
   }
   
   .mobile-email-overlay.show {
-    transform: translateX(-10px) translateY(-50%);
+    transform: translateX(0) translateY(-50%);
     opacity: 1;
     pointer-events: auto;
   }
