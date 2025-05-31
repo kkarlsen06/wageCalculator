@@ -275,24 +275,37 @@ function cancelPasswordReset() {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-  if (window.location.hash === "#recover") {
-    const params = new URLSearchParams(window.location.search);
-    const type = params.get("type");
-    const accessToken = params.get("access_token");
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const type = hashParams.get("type");
+  const accessToken = hashParams.get("access_token");
 
-    if (type === "recovery" && accessToken) {
-      const { error } = await supa.auth.setSession({
-        access_token: accessToken,
-        refresh_token: "" // tom i recovery mode
-      });
+  if (type === "recovery" && accessToken) {
+    const { error } = await supa.auth.setSession({
+      access_token: accessToken,
+      refresh_token: hashParams.get("refresh_token") ?? ""
+    });
 
-      if (error) {
-        alert("Kunne ikke logge inn med reset-lenken.");
-        return;
-      }
-
-      // Logikken etter brukeren er "logget inn via recovery"
-      document.getElementById("recover-form").style.display = "block";
+    if (error) {
+      alert("Kunne ikke logge inn med reset-lenken.");
+      return;
     }
+
+    document.getElementById("recover-form")?.style.setProperty("display", "block");
+  }
+});
+
+document.getElementById("recover-form")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const newPassword = document.getElementById("new-password").value;
+
+  const { error } = await supa.auth.updateUser({
+    password: newPassword
+  });
+
+  if (error) {
+    alert("Kunne ikke oppdatere passord: " + error.message);
+  } else {
+    alert("Passordet er oppdatert! Du er nå logget inn.");
+    window.location.href = "/kalkulator/index.html"; // redirect etterpå
   }
 });
