@@ -41,17 +41,17 @@ export const app = {
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
     DEMO_SHIFTS: [
-        { date: "2025-05-03T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
-        { date: "2025-05-10T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
-        { date: "2025-05-12T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { date: "2025-05-15T00:00:00.000Z", startTime: "17:00", endTime: "22:00", type: 0 },
-        { date: "2025-05-19T00:00:00.000Z", startTime: "17:00", endTime: "21:00", type: 0 },
-        { date: "2025-05-21T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
-        { date: "2025-05-22T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { date: "2025-05-23T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
-        { date: "2025-05-24T00:00:00.000Z", startTime: "13:00", endTime: "18:00", type: 1 },
-        { date: "2025-05-26T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { date: "2025-05-30T00:00:00.000Z", startTime: "15:45", endTime: "23:15", type: 0 }
+        { id: 'demo-1', date: "2025-05-03T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
+        { id: 'demo-2', date: "2025-05-10T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
+        { id: 'demo-3', date: "2025-05-12T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
+        { id: 'demo-4', date: "2025-05-15T00:00:00.000Z", startTime: "17:00", endTime: "22:00", type: 0 },
+        { id: 'demo-5', date: "2025-05-19T00:00:00.000Z", startTime: "17:00", endTime: "21:00", type: 0 },
+        { id: 'demo-6', date: "2025-05-21T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
+        { id: 'demo-7', date: "2025-05-22T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
+        { id: 'demo-8', date: "2025-05-23T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
+        { id: 'demo-9', date: "2025-05-24T00:00:00.000Z", startTime: "13:00", endTime: "18:00", type: 1 },
+        { id: 'demo-10', date: "2025-05-26T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
+        { id: 'demo-11', date: "2025-05-30T00:00:00.000Z", startTime: "15:45", endTime: "23:15", type: 0 }
     ].map(shift => ({
         ...shift,
         date: new Date(shift.date)
@@ -339,14 +339,32 @@ export const app = {
             dd.appendChild(opt);
         });
     },
+    
     toggleMonthDropdown() {
-        const dd=document.getElementById('monthDropdown');
-        dd.classList.toggle('active');
-        if(dd.classList.contains('active')) this.populateMonthDropdown();
+        const dd = document.getElementById('monthDropdown');
+        const isActive = dd.classList.contains('active');
+        
+        // Close any other open modals first
+        this.closeBreakdown();
+        this.closeSettings();
+        
+        if (isActive) {
+            dd.classList.remove('active');
+        } else {
+            dd.classList.add('active');
+            this.populateMonthDropdown();
+            
+            // Ensure dropdown is visible by fixing any z-index issues
+            dd.style.zIndex = '2000';
+        }
     },
+    
     closeMonthDropdown() {
-        document.getElementById('monthDropdown').classList.remove('active');
+        const dd = document.getElementById('monthDropdown');
+        dd.classList.remove('active');
+        dd.style.zIndex = ''; // Reset z-index
     },
+    
     changeMonth(month) {
         this.currentMonth = month;
         this.saveFormState(); // Save when month changes
@@ -1096,14 +1114,20 @@ export const app = {
         // Get original position and size before transformation
         const originalRect = card.getBoundingClientRect();
         
-        // Store original styles
+        // Store original styles and DOM position info more reliably
+        const originalParent = card.parentElement;
+        const originalNextSibling = card.nextElementSibling;
+        
         card.dataset.originalPosition = JSON.stringify({
             position: card.style.position || 'static',
             top: card.style.top || 'auto',
             left: card.style.left || 'auto',
             width: card.style.width || 'auto',
             height: card.style.height || 'auto',
-            transform: card.style.transform || 'none'
+            transform: card.style.transform || 'none',
+            parentClass: originalParent ? originalParent.className : null,
+            nextSiblingDataType: originalNextSibling ? originalNextSibling.getAttribute('data-type') : null,
+            cardDataType: card.getAttribute('data-type')
         });
         
         // Create backdrop
@@ -1125,20 +1149,33 @@ export const app = {
         backdrop.offsetHeight;
         backdrop.classList.add('active');
         
-        // Calculate target position (center of viewport)
-        const targetWidth = Math.min(window.innerWidth * 0.9, 500);
-        const targetHeight = Math.min(window.innerHeight * 0.8, 600);
-        const targetLeft = (window.innerWidth - targetWidth) / 2;
-        const targetTop = (window.innerHeight - targetHeight) / 2;
+        // Calculate target position (center of viewport with better mobile handling)
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
         
-        // First, make card fixed positioned at its current location
+        // Responsive sizing - more space on mobile
+        const targetWidth = viewportWidth <= 480 ? 
+            Math.min(viewportWidth * 0.95, 400) : 
+            Math.min(viewportWidth * 0.9, 500);
+            
+        const targetHeight = viewportHeight <= 768 ? 
+            Math.min(viewportHeight * 0.85, 600) : 
+            Math.min(viewportHeight * 0.8, 600);
+            
+        const targetLeft = (viewportWidth - targetWidth) / 2;
+        const targetTop = Math.max(20, (viewportHeight - targetHeight) / 2); // Ensure top padding
+        
+        // Move card to document.body to escape any stacking context issues
+        document.body.appendChild(card);
+        
+        // Set card position to fixed at exact current location
         card.style.position = 'fixed';
         card.style.top = `${originalRect.top}px`;
         card.style.left = `${originalRect.left}px`;
         card.style.width = `${originalRect.width}px`;
         card.style.height = `${originalRect.height}px`;
         card.style.margin = '0';
-        card.style.zIndex = '20';
+        card.style.zIndex = '1500'; // Ensure it's above backdrop (999)
         
         // Add expanding class for initial scale effect
         card.classList.add('expanding');
@@ -1155,6 +1192,7 @@ export const app = {
             card.style.width = `${targetWidth}px`;
             card.style.height = `${targetHeight}px`;
             card.style.borderRadius = '20px';
+            card.style.zIndex = '1500'; // Maintain high z-index
             
         }, 80);
         
@@ -1296,13 +1334,16 @@ export const app = {
         }
         
         if (expandedCard) {
-            // Remove expanded class and details
-            expandedCard.classList.remove('expanded');
+            // Remove expanded class first to stop animations
+            expandedCard.classList.remove('expanded', 'expanding');
             
             // Restore original styles
             const originalData = expandedCard.dataset.originalPosition;
             if (originalData) {
                 const original = JSON.parse(originalData);
+                
+                // Reset all positioning styles with smooth transition
+                expandedCard.style.transition = 'all 0.4s var(--ease-default)';
                 expandedCard.style.position = original.position;
                 expandedCard.style.top = original.top;
                 expandedCard.style.left = original.left;
@@ -1311,8 +1352,35 @@ export const app = {
                 expandedCard.style.transform = original.transform;
                 expandedCard.style.margin = '';
                 expandedCard.style.zIndex = '';
-                expandedCard.style.transition = '';
                 expandedCard.style.borderRadius = '';
+                
+                // Move card back to its original parent
+                const originalParent = document.querySelector('.breakdown-cards');
+                if (originalParent) {
+                    // Determine correct position based on card type
+                    const cardType = original.cardDataType;
+                    if (cardType === 'base') {
+                        // Base card should be first
+                        originalParent.insertBefore(expandedCard, originalParent.firstChild);
+                    } else if (cardType === 'bonus') {
+                        // Bonus card should be second (after base)
+                        const baseCard = originalParent.querySelector('[data-type="base"]');
+                        if (baseCard && baseCard.nextSibling) {
+                            originalParent.insertBefore(expandedCard, baseCard.nextSibling);
+                        } else {
+                            originalParent.appendChild(expandedCard);
+                        }
+                    } else {
+                        // Any other cards go at the end
+                        originalParent.appendChild(expandedCard);
+                    }
+                }
+                
+                // Clear transition after restoration
+                setTimeout(() => {
+                    expandedCard.style.transition = '';
+                }, 400);
+                
                 delete expandedCard.dataset.originalPosition;
             }
             
@@ -1330,9 +1398,18 @@ export const app = {
             const icon = expandedCard.querySelector('.breakdown-icon');
             const value = expandedCard.querySelector('.breakdown-value');
             const label = expandedCard.querySelector('.breakdown-label');
-            if (icon) icon.style.display = '';
-            if (value) value.style.display = '';
-            if (label) label.style.display = '';
+            if (icon) {
+                icon.style.display = '';
+                icon.style.opacity = '1';
+            }
+            if (value) {
+                value.style.display = '';
+                value.style.opacity = '1';
+            }
+            if (label) {
+                label.style.display = '';
+                label.style.opacity = '1';
+            }
         }
     },
     // Show detailed shift information in expanded view
@@ -1383,14 +1460,14 @@ export const app = {
             background: var(--bg-secondary);
             border-radius: 20px;
             padding: 24px;
-            z-index: 25;
+            z-index: 1200;
             opacity: 0;
             box-shadow: 
                 0 32px 64px rgba(0, 255, 136, 0.2),
                 0 16px 32px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(0, 255, 136, 0.3);
             overflow-y: auto;
-            animation: shiftDetailEnter 0.4s var(--ease-default) forwards;
+            transition: all 0.4s var(--ease-default);
         `;
         
         // Calculate shift details
@@ -1446,7 +1523,7 @@ export const app = {
                 </div>
                 
                 ${calc.bonus > 0 ? `
-                <div class="detail-section">
+                <div class="detail-section bonus-section">
                     <div class="detail-label">Tillegg</div>
                     <div class="detail-value accent">${this.formatCurrency(calc.bonus)}</div>
                 </div>
@@ -1458,8 +1535,8 @@ export const app = {
                 </div>
                 
                 ${!this.demoMode ? `
-                <div class="detail-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                    <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="width: 100%; gap: 8px;">
+                <div class="detail-section delete-section">
+                    <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="gap: 8px;">
                         <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1474,6 +1551,12 @@ export const app = {
         `;
         
         document.body.appendChild(detailCard);
+        
+        // Trigger animation after DOM insertion
+        setTimeout(() => {
+            detailCard.style.opacity = '1';
+            detailCard.style.transform = 'translate(-50%, -50%) scale(1)';
+        }, 10);
     },
     
     // Close shift details view

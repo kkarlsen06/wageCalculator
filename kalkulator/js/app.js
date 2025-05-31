@@ -155,35 +155,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Add event listeners for elements with class-based selectors
+  // Add event listeners for elements with class-based selectors (using event delegation)
+  let eventListenersAdded = false;
   function addEventListeners() {
-    // Handle shift items
-    document.querySelectorAll('[data-shift-id]').forEach(el => {
-      el.addEventListener('click', (event) => {
-        if (!event.target.closest('.delete-shift-btn')) {
-          const shiftId = el.getAttribute('data-shift-id');
-          app.showShiftDetails(shiftId);
-        }
-      });
+    if (eventListenersAdded) return; // Prevent duplicate listeners
+    
+    // Use event delegation for shift items to handle dynamically generated content
+    document.body.addEventListener('click', (event) => {
+      const shiftItem = event.target.closest('[data-shift-id]');
+      if (shiftItem && !event.target.closest('.delete-shift-btn')) {
+        const shiftId = shiftItem.getAttribute('data-shift-id');
+        console.log('Shift clicked, ID:', shiftId); // Debug log
+        app.showShiftDetails(shiftId);
+      }
     });
 
-    // Handle delete shift buttons
-    document.querySelectorAll('.delete-shift-btn').forEach(el => {
-      el.addEventListener('click', (event) => {
+    // Use event delegation for delete shift buttons
+    document.body.addEventListener('click', (event) => {
+      const deleteBtn = event.target.closest('.delete-shift-btn');
+      if (deleteBtn) {
         event.stopPropagation();
-        const shiftIndex = parseInt(el.getAttribute('data-shift-index'));
+        const shiftIndex = parseInt(deleteBtn.getAttribute('data-shift-index'));
         app.deleteShift(shiftIndex).then(() => {
           // Close the shift details modal if it's open
           app.closeShiftDetails();
         });
-      });
+      }
     });
+    
+    eventListenersAdded = true;
 
-    // Handle close shift details button
-    document.querySelectorAll('.close-shift-details').forEach(el => {
-      el.addEventListener('click', () => {
+    // Use event delegation for close shift details button
+    document.body.addEventListener('click', (event) => {
+      const closeBtn = event.target.closest('.close-shift-details');
+      if (closeBtn) {
+        event.stopPropagation();
         app.closeShiftDetails();
-      });
+      }
     });
 
     // Handle remove bonus slot buttons
@@ -194,12 +202,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Call addEventListeners initially and after DOM updates
+  // Call addEventListeners once - event delegation handles dynamic content
   addEventListeners();
-
-  // Re-add event listeners after DOM updates
-  const observer = new MutationObserver(() => {
-    addEventListeners();
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
 });

@@ -81,6 +81,7 @@ function setupEventListeners() {
   const forgotCard     = document.getElementById("forgot-card");
   const forgotEmailInp = document.getElementById("forgot-email");
   const sendResetBtn   = document.getElementById("send-reset-btn");
+  const sendMagicLinkBtn = document.getElementById("send-magic-link-btn"); // New button
   const backLoginBtn   = document.getElementById("back-login-btn");
 
   // Store references globally for other functions to use
@@ -90,7 +91,7 @@ function setupEventListeners() {
     createAccountBtn, backLoginSignupBtn, signupMsg,
     completeProfileCard, completeName, 
     completeProfileBtn, skipProfileBtn, completeProfileMsg,
-    forgotBtn, forgotCard, forgotEmailInp, sendResetBtn, backLoginBtn
+    forgotBtn, forgotCard, forgotEmailInp, sendResetBtn, sendMagicLinkBtn, backLoginBtn // Added sendMagicLinkBtn
   };
 
   // Auth actions
@@ -107,6 +108,7 @@ function setupEventListeners() {
   if (forgotBtn) forgotBtn.onclick = () => toggleForgot(true);
   if (backLoginBtn) backLoginBtn.onclick = () => toggleForgot(false);
   if (sendResetBtn) sendResetBtn.onclick = () => sendResetLink(forgotEmailInp.value);
+  if (sendMagicLinkBtn) sendMagicLinkBtn.onclick = () => sendMagicLink(forgotEmailInp.value); // New event listener
 
   // Add enter key functionality
   if (passInp && loginBtn) {
@@ -381,6 +383,31 @@ async function sendResetLink(email) {
     msg.style.color = "var(--danger)";
     msg.textContent = "Kunne ikke sende e-post";
     console.error("Supabase reset error:", err);
+  }
+}
+
+async function sendMagicLink(email) {
+  try {
+    // Use the current domain to ensure consistency
+    const currentDomain = window.location.origin;
+    const redirectUrl = `${currentDomain}/kalkulator/index.html`; // Or app.html if you want to redirect there after magic link login
+    
+    console.log('Sending magic link with redirect URL:', redirectUrl);
+    
+    const { error } = await supa.auth.signInWithOtp({
+      email: email,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+    const msg = document.getElementById("forgot-msg");
+    msg.style.color = error ? "var(--danger)" : "var(--success)";
+    msg.textContent = error ? error.message : "Magisk lenke sendt! Sjekk e-posten din.";
+  } catch (err) {
+    const msg = document.getElementById("forgot-msg");
+    msg.style.color = "var(--danger)";
+    msg.textContent = "Kunne ikke sende magisk lenke";
+    console.error("Supabase magic link error:", err);
   }
 }
 
