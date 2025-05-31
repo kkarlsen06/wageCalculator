@@ -276,17 +276,19 @@ function cancelPasswordReset() {
 
 window.addEventListener("DOMContentLoaded", async () => {
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const type = hashParams.get("type");
   const accessToken = hashParams.get("access_token");
+  const refreshToken = hashParams.get("refresh_token");
+  const type = hashParams.get("type");
 
   if (type === "recovery" && accessToken) {
     const { error } = await supa.auth.setSession({
       access_token: accessToken,
-      refresh_token: hashParams.get("refresh_token") ?? ""
+      refresh_token: refreshToken ?? ""
     });
 
     if (error) {
-      alert("Kunne ikke logge inn med reset-lenken.");
+      console.error("Kunne ikke sette session:", error.message);
+      alert("Kunne ikke logge inn via lenken.");
       return;
     }
 
