@@ -30,8 +30,100 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('[onclick]').forEach(el => {
     const onClick = el.getAttribute('onclick');
     if (onClick) {
-      el.addEventListener('click', () => eval(onClick));
+      el.addEventListener('click', (event) => {
+        try {
+          // Parse and execute the onclick handler safely
+          if (onClick.includes('app.')) {
+            // Extract function name and parameters
+            const match = onClick.match(/app\.(\w+)\((.*?)\)/);
+            if (match) {
+              const [, functionName, params] = match;
+              
+              // Handle different parameter types
+              let parsedParams = [];
+              if (params.trim()) {
+                // Simple parameter parsing for common cases
+                if (params.includes("'") || params.includes('"')) {
+                  // String parameters
+                  parsedParams = [params.replace(/['"]/g, '')];
+                } else if (params.includes('event.stopPropagation()')) {
+                  // Handle event.stopPropagation(); app.deleteShift(index)
+                  event.stopPropagation();
+                  const indexMatch = onClick.match(/app\.deleteShift\((\d+)\)/);
+                  if (indexMatch) {
+                    app.deleteShift(parseInt(indexMatch[1]));
+                    return;
+                  }
+                } else if (params.includes('this')) {
+                  // Handle 'this' parameter
+                  parsedParams = [el];
+                } else if (params.match(/^\d+$/)) {
+                  // Numeric parameter
+                  parsedParams = [parseInt(params)];
+                }
+              }
+              
+              // Execute the function
+              if (app[functionName]) {
+                app[functionName](...parsedParams);
+              }
+            }
+          } else if (onClick.includes('logout()')) {
+            logout();
+          }
+        } catch (error) {
+          console.error('Error executing onclick handler:', error, 'Original onclick:', onClick);
+        }
+      });
       el.removeAttribute('onclick');
     }
   });
+
+  // Add event listeners for elements with class-based selectors
+  function addEventListeners() {
+    // Handle shift items
+    document.querySelectorAll('[data-shift-id]').forEach(el => {
+      el.addEventListener('click', (event) => {
+        if (!event.target.closest('.delete-shift-btn')) {
+          const shiftId = el.getAttribute('data-shift-id');
+          app.showShiftDetails(shiftId);
+        }
+      });
+    });
+
+    // Handle delete shift buttons
+    document.querySelectorAll('.delete-shift-btn').forEach(el => {
+      el.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const shiftIndex = parseInt(el.getAttribute('data-shift-index'));
+        app.deleteShift(shiftIndex).then(() => {
+          // Close the shift details modal if it's open
+          app.closeShiftDetails();
+        });
+      });
+    });
+
+    // Handle close shift details button
+    document.querySelectorAll('.close-shift-details').forEach(el => {
+      el.addEventListener('click', () => {
+        app.closeShiftDetails();
+      });
+    });
+
+    // Handle remove bonus slot buttons
+    document.querySelectorAll('.remove-bonus').forEach(el => {
+      el.addEventListener('click', () => {
+        app.removeBonusSlot(el);
+      });
+    });
+  }
+
+  // Call addEventListeners initially and after DOM updates
+  addEventListeners();
+
+  // Re-add event listeners after DOM updates
+  const observer = new MutationObserver(() => {
+    addEventListeners();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 });

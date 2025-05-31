@@ -50,7 +50,9 @@ body {
 .app-container {
   flex: 1;
   padding-bottom: 60px;
-  max-width: 600px;
+  padding-left: 20px;
+  padding-right: 20px;
+  max-width: 640px;
   margin: 0 auto;
   width: 100%;
   overflow-x: hidden;
@@ -803,18 +805,14 @@ input:checked + .slider:before {
   margin-left: 15px;
   flex-shrink: 0;
 }
-.shift-amount-actions {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-shrink: 0;
-}
 .shift-amount-wrapper {
   text-align: right;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
+  margin-left: 15px;
+  flex-shrink: 0;
 }
 .shift-total { 
   font-size: 18px; 
@@ -1577,11 +1575,13 @@ input:checked + .slider:before {
   align-items: center;
   gap: 5px;
   margin-left: auto;
+  position: relative;
 }
 
 #userEmailDisplay svg {
   width: 12px;
   height: 12px;
+  flex-shrink: 0;
 }
 
 #userEmail {
@@ -1591,20 +1591,44 @@ input:checked + .slider:before {
 
 /* Responsive adjustments for user email */
 @media (max-width: 768px) {
+  #userEmailDisplay {
+    font-size: 12px;
+  }
+  
   #userEmail {
-    max-width: 120px;
+    max-width: 140px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
-  #userEmailDisplay {
-    font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  #userEmail {
+    max-width: 100px;
   }
 }
 
 @media (max-width: 480px) {
+  /* Skjul e-post-teksten helt på små skjermer, men behold ikonet */
   #userEmail {
-    max-width: 80px;
+    display: none;
+  }
+  
+  /* Gjør ikonet litt større og mer synlig som indikator */
+  #userEmailDisplay svg {
+    width: 14px;
+    height: 14px;
+    opacity: 1;
+  }
+  
+  /* Legg til hover-effekt for å vise at det er klikkbart */
+  #userEmailDisplay {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  
+  #userEmailDisplay:hover {
+    opacity: 1;
   }
 }
 
@@ -1631,12 +1655,6 @@ input:checked + .slider:before {
     justify-content: flex-start;
   }
   
-  .shift-amount-actions {
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-  }
-  
   .shift-amount-wrapper {
     text-align: left;
     align-items: flex-start;
@@ -1647,10 +1665,6 @@ input:checked + .slider:before {
 @media (max-width: 768px) and (min-width: 401px) {
   .shift-details .type-and-hours {
     gap: 10px;
-  }
-  
-  .shift-amount-actions {
-    gap: 12px;
   }
 }
 

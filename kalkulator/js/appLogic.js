@@ -730,7 +730,7 @@ export const app = {
                     <input type="time" class="form-control" value="${bonus.from}">
                     <input type="time" class="form-control" value="${bonus.to}">
                     <input type="number" class="form-control" placeholder="kr/t" value="${bonus.rate}">
-                    <button class="btn btn-icon btn-danger remove-bonus" onclick="app.removeBonusSlot(this)">×</button>
+                    <button class="btn btn-icon btn-danger remove-bonus">×</button>
                 `;
                 
                 // Add auto-save event listeners to the inputs (only on change, not blur)
@@ -769,7 +769,7 @@ export const app = {
             <div class="rate-input-group">
                 <input type="number" class="form-control" placeholder="kr/t" title="Angi tilleggssats i kroner per time">
             </div>
-            <button class="btn btn-icon btn-danger remove-bonus" onclick="app.removeBonusSlot(this)" title="Fjern dette tillegget">×</button>
+            <button class="btn btn-icon btn-danger remove-bonus" title="Fjern dette tillegget">×</button>
         `;
         
         // Add auto-save event listeners to the inputs (only on change, not blur)
@@ -958,17 +958,9 @@ export const app = {
             const day = shift.date.getDate();
             const weekday = this.WEEKDAYS[shift.date.getDay()];
             const typeClass = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-            const originalIndex = this.shifts.indexOf(shift);
-            const deleteButtonHtml = this.demoMode ? '' : `
-                <button class="btn btn-icon btn-danger" onclick="event.stopPropagation(); app.deleteShift(${originalIndex})">
-                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
-            `;
+            
             return `
-                <div class="shift-item ${typeClass}" onclick="app.showShiftDetails(${shift.id})" style="cursor: pointer;">
+                <div class="shift-item ${typeClass}" data-shift-id="${shift.id}" style="cursor: pointer;">
                     <div class="shift-info">
                         <div class="shift-date">
                             <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
@@ -987,14 +979,11 @@ export const app = {
                             </div>
                         </div>
                     </div>
-                    <div class="shift-amount-actions">
-                        <div class="shift-amount-wrapper">
-                            <div class="shift-total">${this.formatCurrency(calc.total)}</div>
-                            <div class="shift-breakdown">
-                                ${this.formatCurrencyShort(calc.baseWage)} + ${this.formatCurrencyShort(calc.bonus)}
-                            </div>
+                    <div class="shift-amount-wrapper">
+                        <div class="shift-total">${this.formatCurrency(calc.total)}</div>
+                        <div class="shift-breakdown">
+                            ${this.formatCurrencyShort(calc.baseWage)} + ${this.formatCurrencyShort(calc.bonus)}
                         </div>
-                        ${deleteButtonHtml}
                     </div>
                 </div>
             `;
@@ -1329,6 +1318,7 @@ export const app = {
         const dayName = this.WEEKDAYS[shift.date.getDay()];
         const monthName = this.MONTHS[shift.date.getMonth()];
         const formattedDate = `${dayName} ${shift.date.getDate()}. ${monthName} ${shift.date.getFullYear()}`;
+        const originalIndex = this.shifts.indexOf(shift);
         
         // Create content
         detailCard.innerHTML = `
@@ -1386,9 +1376,21 @@ export const app = {
                     <div class="detail-label">Total lønn</div>
                     <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
                 </div>
+                
+                ${!this.demoMode ? `
+                <div class="detail-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                    <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="width: 100%; gap: 8px;">
+                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Slett vakt
+                    </button>
+                </div>
+                ` : ''}
             </div>
             
-            <button class="close-btn" onclick="app.closeShiftDetails()">×</button>
+            <button class="close-btn close-shift-details">×</button>
         `;
         
         document.body.appendChild(detailCard);
@@ -1803,7 +1805,7 @@ export const app = {
                 <input type="time" class="form-control" value="18:00">
                 <input type="time" class="form-control" value="22:00">
                 <input type="number" class="form-control" placeholder="kr/t" value="25">
-                <button class="btn btn-icon btn-danger remove-bonus" onclick="app.removeBonusSlot(this)">×</button>
+                <button class="btn btn-icon btn-danger remove-bonus">×</button>
             `;
             weekdayContainer.appendChild(slot);
             console.log('Added test slot to weekday container');
@@ -1847,7 +1849,7 @@ export const app = {
                 <input type="time" class="form-control" value="19:00">
                 <input type="time" class="form-control" value="23:00">
                 <input type="number" class="form-control" placeholder="kr/t" value="30">
-                <button class="btn btn-icon btn-danger remove-bonus" onclick="app.removeBonusSlot(this)">×</button>
+                <button class="btn btn-icon btn-danger remove-bonus">×</button>
             `;
             weekdayContainer.appendChild(slot);
         }
@@ -1900,7 +1902,7 @@ export const app = {
                 <input type="time" class="form-control" value="18:00">
                 <input type="time" class="form-control" value="22:00">  
                 <input type="number" class="form-control" placeholder="kr/t" value="25">
-                <button class="btn btn-icon btn-danger remove-bonus" onclick="app.removeBonusSlot(this)">×</button>
+                <button class="btn btn-icon btn-danger remove-bonus">×</button>
             `;
             weekdayContainer.appendChild(slot);
             console.log('Added test slot to weekday container');
