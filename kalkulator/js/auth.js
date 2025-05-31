@@ -244,24 +244,6 @@ async function handlePasswordRecovery() {
                 window.authElements.authMsg.textContent = 'Noe gikk galt ved passord-reset';
             }
         }
-                }
-                
-                if (data.session) {
-                    console.log('Session set successfully, showing password reset form');
-                    // User is authenticated, show password reset form
-                    showPasswordResetForm();
-                } else {
-                    if (window.authElements?.authMsg) {
-                        window.authElements.authMsg.textContent = 'Kunne ikke opprette session';
-                    }
-                }
-            }
-        } catch (err) {
-            console.error('Recovery handling error:', err);
-            if (window.authElements?.authMsg) {
-                window.authElements.authMsg.textContent = 'Noe gikk galt ved passord-reset';
-            }
-        }
     } else if (isRecoveryQuery) {
         // Handle legacy Supabase token format in query params
         try {
