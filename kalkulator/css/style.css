@@ -1668,6 +1668,41 @@ input:checked + .slider:before {
     0 32px 64px rgba(0, 255, 136, 0.2),
     0 16px 32px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(0, 255, 136, 0.3);
+  width: min(90vw, 500px);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Close button for shift detail card */
+.shift-detail-card .close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 102, 153, 0.1);
+  border: 1px solid rgba(255, 102, 153, 0.3);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--danger);
+  transition: all 0.2s var(--ease-default);
+  z-index: 21;
+  opacity: 0;
+  transform: scale(0.8);
+  animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+}
+
+.shift-detail-card .close-btn:hover {
+  background: rgba(255, 102, 153, 0.2);
+  border-color: rgba(255, 102, 153, 0.5);
+  transform: scale(1.1);
+  color: #ff6699;
 }
 
 .shift-detail-header {
@@ -1676,6 +1711,7 @@ input:checked + .slider:before {
   justify-content: center;
   gap: 12px;
   margin-bottom: 24px;
+  position: relative; /* For proper close button positioning */
 }
 
 .shift-detail-icon {
@@ -1765,24 +1801,93 @@ input:checked + .slider:before {
 /* Responsive adjustments for shift details */
 @media (max-width: 480px) {
   .shift-detail-card {
-    margin: 20px;
-    width: calc(100% - 40px);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    width: calc(100vw - 40px);
+    max-width: none;
     padding: 20px;
+    padding-top: 50px; /* Extra space for close button */
+    max-height: calc(100vh - 40px);
+  }
+  
+  .shift-detail-card .close-btn {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+  
+  .shift-detail-header {
+    margin-bottom: 20px;
+    text-align: center;
   }
   
   .shift-detail-title {
-    font-size: 22px;
+    font-size: 20px;
   }
   
   .detail-section {
-    padding: 14px 18px;
+    padding: 14px 16px;
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+    text-align: left;
   }
   
   .detail-value {
     align-self: flex-end;
+    font-size: 15px;
+  }
+  
+  .detail-value.large {
+    font-size: 18px;
+  }
+  
+  .detail-label {
+    font-size: 13px;
+  }
+}
+
+/* Extra small screens for shift details */
+@media (max-width: 360px) {
+  .shift-detail-card {
+    width: calc(100vw - 20px);
+    padding: 16px;
+    padding-top: 45px;
+    max-height: calc(100vh - 20px);
+  }
+  
+  .shift-detail-card .close-btn {
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+  
+  .shift-detail-title {
+    font-size: 18px;
+  }
+  
+  .detail-section {
+    padding: 12px 14px;
+    gap: 4px;
+  }
+  
+  .detail-value {
+    font-size: 14px;
+  }
+  
+  .detail-value.large {
+    font-size: 16px;
+  }
+  
+  .detail-label {
+    font-size: 12px;
   }
 }
 
