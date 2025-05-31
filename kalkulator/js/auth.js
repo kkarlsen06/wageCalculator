@@ -64,7 +64,7 @@ function toggleForgot(show) {
 async function sendResetLink(email) {
   try {
     const { error } = await supa.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/kalkulator/index.html#recover`
+      redirectTo: "https://kkarlsen.art/kalkulator/index.html#recover"
     });
     const msg = document.getElementById("forgot-msg");
     msg.style.color = error ? "var(--danger)" : "var(--success)";
