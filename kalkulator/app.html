@@ -198,6 +198,7 @@
               <div class="tab-nav">
                   <button class="tab-btn active" onclick="app.switchSettingsTabSync('general')">Generelt</button>
                   <button class="tab-btn" onclick="app.switchSettingsTabSync('wage')">Lønn</button>
+                  <button class="tab-btn" onclick="app.switchSettingsTabSync('profile')">Profil</button>
                   <button class="tab-btn" onclick="app.switchSettingsTabSync('data')">Data</button>
               </div>
 
@@ -291,6 +292,34 @@
                           <button class="btn btn-secondary" onclick="app.addBonusSlot('sunday')">+ Legg til tidsperiode</button>
                       </div>
                   </div>
+              </div>
+
+              <div id="profileTab" class="tab-content">
+                  <div class="form-group">
+                      <label>Fullt navn</label>
+                      <input type="text" id="profileName" class="form-control" placeholder="Fullt navn">
+                  </div>
+                  
+                  <div class="form-group">
+                      <label>E-post</label>
+                      <input type="email" id="profileEmail" class="form-control" placeholder="E-post" disabled>
+                  </div>
+                  
+                  <div class="form-group">
+                      <label>Arbeidsgiver</label>
+                      <input type="text" id="profileCompany" class="form-control" placeholder="Arbeidsgiver (valgfritt)">
+                  </div>
+                  
+                  <div class="form-group">
+                      <label>Stilling</label>
+                      <input type="text" id="profilePosition" class="form-control" placeholder="Stilling (valgfritt)">
+                  </div>
+                  
+                  <div class="form-group">
+                      <button class="btn btn-primary" onclick="app.updateProfile()">Oppdater profil</button>
+                  </div>
+                  
+                  <p id="profile-update-msg" style="color: var(--success); min-height: 24px; text-align: center; font-size: 14px;"></p>
               </div>
 
               <div id="dataTab" class="tab-content">

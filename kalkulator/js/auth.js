@@ -31,6 +31,26 @@ function setupEventListeners() {
   const signupBtn= document.getElementById("signup-btn");
   const authBox  = document.getElementById("auth-box");
 
+  // Signup form elements
+  const signupCard = document.getElementById("signup-card");
+  const signupEmail = document.getElementById("signup-email");
+  const signupPassword = document.getElementById("signup-password");
+  const signupName = document.getElementById("signup-name");
+  const signupCompany = document.getElementById("signup-company");
+  const signupPosition = document.getElementById("signup-position");
+  const createAccountBtn = document.getElementById("create-account-btn");
+  const backLoginSignupBtn = document.getElementById("back-login-signup-btn");
+  const signupMsg = document.getElementById("signup-msg");
+
+  // Profile completion form elements
+  const completeProfileCard = document.getElementById("complete-profile-card");
+  const completeName = document.getElementById("complete-name");
+  const completeCompany = document.getElementById("complete-company");
+  const completePosition = document.getElementById("complete-position");
+  const completeProfileBtn = document.getElementById("complete-profile-btn");
+  const skipProfileBtn = document.getElementById("skip-profile-btn");
+  const completeProfileMsg = document.getElementById("complete-profile-msg");
+
   const forgotBtn      = document.getElementById("forgot-btn");
   const forgotCard     = document.getElementById("forgot-card");
   const forgotEmailInp = document.getElementById("forgot-email");
@@ -40,12 +60,22 @@ function setupEventListeners() {
   // Store references globally for other functions to use
   window.authElements = {
     authMsg, emailInp, passInp, loginBtn, signupBtn, authBox,
+    signupCard, signupEmail, signupPassword, signupName, signupCompany, signupPosition, 
+    createAccountBtn, backLoginSignupBtn, signupMsg,
+    completeProfileCard, completeName, completeCompany, completePosition, 
+    completeProfileBtn, skipProfileBtn, completeProfileMsg,
     forgotBtn, forgotCard, forgotEmailInp, sendResetBtn, backLoginBtn
   };
 
   // Auth actions
   if (loginBtn) loginBtn.onclick  = () => signIn(emailInp.value, passInp.value);
-  if (signupBtn) signupBtn.onclick = () => signUp(emailInp.value, passInp.value);
+  if (signupBtn) signupBtn.onclick = () => showSignupForm();
+  if (createAccountBtn) createAccountBtn.onclick = () => signUpWithDetails();
+  if (backLoginSignupBtn) backLoginSignupBtn.onclick = () => showLoginForm();
+
+  // Profile completion actions
+  if (completeProfileBtn) completeProfileBtn.onclick = () => completeProfile();
+  if (skipProfileBtn) skipProfileBtn.onclick = () => skipProfileCompletion();
 
   // Forgot password
   if (forgotBtn) forgotBtn.onclick = () => toggleForgot(true);
@@ -71,6 +101,26 @@ function setupEventListeners() {
     });
   }
 
+  // Enter key support for signup form
+  if (signupPosition && createAccountBtn) {
+    signupPosition.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        createAccountBtn.click();
+      }
+    });
+  }
+
+  // Enter key support for profile completion form
+  if (completePosition && completeProfileBtn) {
+    completePosition.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        completeProfileBtn.click();
+      }
+    });
+  }
+
   if (forgotEmailInp && sendResetBtn) {
     forgotEmailInp.addEventListener('keypress', function(event) {
       if (event.key === 'Enter') {
@@ -85,10 +135,171 @@ async function signIn(email, password) {
   try {
     const { error } = await supa.auth.signInWithPassword({ email, password });
     window.authElements.authMsg.textContent = error ? error.message : "";
-    if (!error) window.location.href = "app.html";
+    if (!error) {
+      // Check if user needs to complete profile
+      await checkAndShowProfileCompletion();
+    }
   } catch (err) {
     console.error("Supabase error:", err);
     window.authElements.authMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
+  }
+}
+
+function showSignupForm() {
+  window.authElements.authBox.style.display = "none";
+  window.authElements.signupCard.style.display = "flex";
+  window.authElements.forgotCard.style.display = "none";
+}
+
+function showLoginForm() {
+  window.authElements.authBox.style.display = "flex";
+  window.authElements.signupCard.style.display = "none";
+  window.authElements.forgotCard.style.display = "none";
+  window.authElements.completeProfileCard.style.display = "none";
+}
+
+async function signUpWithDetails() {
+  const email = window.authElements.signupEmail.value;
+  const password = window.authElements.signupPassword.value;
+  const name = window.authElements.signupName.value;
+  const company = window.authElements.signupCompany.value;
+  const position = window.authElements.signupPosition.value;
+
+  if (!email || !password || !name) {
+    window.authElements.signupMsg.textContent = "Vennligst fyll ut alle påkrevde felt";
+    return;
+  }
+
+  try {
+    const { error, data } = await supa.auth.signUp({ email, password });
+    if (error) {
+      window.authElements.signupMsg.textContent = error.message;
+      return;
+    }
+
+    // Create extended profile
+    const alias = email.split("@")[0];
+    await supa.from("profiles").insert({ 
+      id: data.user.id, 
+      username: alias,
+      full_name: name,
+      company: company || null,
+      position: position || null,
+      profile_completed: true
+    });
+
+    window.authElements.signupMsg.style.color = "var(--success)";
+    window.authElements.signupMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
+  } catch (err) {
+    console.error("Supabase error:", err);
+    window.authElements.signupMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
+  }
+}
+
+async function checkAndShowProfileCompletion() {
+  try {
+    const { data: { user } } = await supa.auth.getUser();
+    if (!user) return;
+
+    // Check if profile exists and is complete
+    const { data: profile, error } = await supa
+      .from("profiles")
+      .select("profile_completed, full_name")
+      .eq("id", user.id)
+      .single();
+
+    // If profile doesn't exist or has error, we might need to create it
+    if (error && error.code === 'PGRST116') {
+      // No profile found, this shouldn't happen but let's handle it
+      console.log("No profile found, creating basic profile");
+      const alias = user.email.split("@")[0];
+      await supa.from("profiles").insert({ 
+        id: user.id, 
+        username: alias,
+        profile_completed: false
+      });
+      // Show profile completion form
+      showProfileCompletionForm();
+      return;
+    } else if (error) {
+      console.error("Error fetching profile:", error);
+      // If there's an unexpected error, just redirect to app
+      window.location.href = "app.html";
+      return;
+    }
+
+    if (!profile || !profile.profile_completed || !profile.full_name) {
+      // Show profile completion form
+      showProfileCompletionForm();
+    } else {
+      // Profile is complete, redirect to app
+      window.location.href = "app.html";
+    }
+  } catch (err) {
+    console.error("Error checking profile completion:", err);
+    // If there's an error, just redirect to app
+    window.location.href = "app.html";
+  }
+}
+
+function showProfileCompletionForm() {
+  window.authElements.authBox.style.display = "none";
+  window.authElements.signupCard.style.display = "none";
+  window.authElements.forgotCard.style.display = "none";
+  window.authElements.completeProfileCard.style.display = "flex";
+}
+
+async function completeProfile() {
+  const name = window.authElements.completeName.value;
+  const company = window.authElements.completeCompany.value;
+  const position = window.authElements.completePosition.value;
+
+  if (!name) {
+    window.authElements.completeProfileMsg.textContent = "Vennligst fyll ut navn";
+    return;
+  }
+
+  try {
+    const { data: { user } } = await supa.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supa
+      .from("profiles")
+      .update({ 
+        full_name: name,
+        company: company || null,
+        position: position || null,
+        profile_completed: true
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      window.authElements.completeProfileMsg.textContent = "Feil ved oppdatering av profil";
+      console.error("Profile update error:", error);
+      return;
+    }
+
+    window.location.href = "app.html";
+  } catch (err) {
+    console.error("Error completing profile:", err);
+    window.authElements.completeProfileMsg.textContent = "Kunne ikke oppdatere profil";
+  }
+}
+
+async function skipProfileCompletion() {
+  try {
+    const { data: { user } } = await supa.auth.getUser();
+    if (user) {
+      // Mark as completed but without full details
+      await supa
+        .from("profiles")
+        .update({ profile_completed: true })
+        .eq("id", user.id);
+    }
+    window.location.href = "app.html";
+  } catch (err) {
+    console.error("Error skipping profile:", err);
+    window.location.href = "app.html";
   }
 }
 
@@ -154,8 +365,8 @@ function setupAuthStateHandling() {
   
     // Don't redirect if we're in password recovery mode
     if (session && !isInRecoveryMode() && !isInPasswordRecovery) {
-      console.log('User logged in, redirecting to dashboard');
-      window.location.href = "app.html";
+      console.log('User logged in, checking profile completion');
+      await checkAndShowProfileCompletion();
     } else if (event === 'PASSWORD_RECOVERY') {
       // Handle password recovery
       console.log('PASSWORD_RECOVERY event triggered');
@@ -180,8 +391,8 @@ function setupAuthStateHandling() {
     if (!isInRecoveryMode() && !isInPasswordRecovery) {
       const { data: { session } } = await supa.auth.getSession();
       if (session) {
-        console.log('Existing session found, redirecting to dashboard');
-        window.location.href = "app.html";
+        console.log('Existing session found, checking profile completion');
+        await checkAndShowProfileCompletion();
       }
     } else {
       console.log('Recovery mode detected, skipping auto-redirect');

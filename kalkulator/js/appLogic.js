@@ -734,7 +734,9 @@ export const app = {
         const currentActiveTab = document.querySelector('.tab-btn.active');
         const currentTab = currentActiveTab ? 
             (currentActiveTab.textContent === 'Generelt' ? 'general' : 
-             currentActiveTab.textContent === 'Lønn' ? 'wage' : 'data') : null;
+             currentActiveTab.textContent === 'Lønn' ? 'wage' : 
+             currentActiveTab.textContent === 'Profil' ? 'profile' :
+             'data') : null;
         
         // If switching away from wage tab and in custom mode, auto-save bonuses
         if (currentTab === 'wage' && !this.usePreset && tab !== 'wage') {
@@ -742,7 +744,7 @@ export const app = {
             await this.saveCustomBonusesSilent();
         }
         
-        const tabs = ['general','wage','data'];
+        const tabs = ['general','wage','profile','data'];
         tabs.forEach((t,i) => {
             const btn = document.querySelectorAll('.tab-nav .tab-btn')[i];
             btn.classList.toggle('active', t === tab);
@@ -755,6 +757,14 @@ export const app = {
             setTimeout(() => {
                 console.log('Switching to wage tab - populating custom bonus slots');
                 this.populateCustomBonusSlots();
+            }, 100);
+        }
+        
+        // When switching to profile tab, load profile data
+        if (tab === 'profile') {
+            setTimeout(() => {
+                console.log('Switching to profile tab - loading profile data');
+                this.loadProfileData();
             }, 100);
         }
     },
@@ -1495,7 +1505,101 @@ export const app = {
         });
     },
 
-    // ...existing code...
+    // Profile management methods
+    async loadProfileData() {
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+
+            // Load profile data
+            const { data: profile, error } = await window.supa
+                .from('profiles')
+                .select('full_name, company, position')
+                .eq('id', user.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') {
+                console.error('Error loading profile:', error);
+                return;
+            }
+
+            // Populate form fields
+            const nameField = document.getElementById('profileName');
+            const emailField = document.getElementById('profileEmail');
+            const companyField = document.getElementById('profileCompany');
+            const positionField = document.getElementById('profilePosition');
+
+            if (nameField) nameField.value = profile?.full_name || '';
+            if (emailField) emailField.value = user.email || '';
+            if (companyField) companyField.value = profile?.company || '';
+            if (positionField) positionField.value = profile?.position || '';
+
+        } catch (err) {
+            console.error('Error loading profile data:', err);
+        }
+    },
+
+    async updateProfile() {
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+
+            const nameField = document.getElementById('profileName');
+            const companyField = document.getElementById('profileCompany');
+            const positionField = document.getElementById('profilePosition');
+            const msgElement = document.getElementById('profile-update-msg');
+
+            const name = nameField?.value || '';
+            const company = companyField?.value || '';
+            const position = positionField?.value || '';
+
+            if (!name.trim()) {
+                if (msgElement) {
+                    msgElement.style.color = 'var(--danger)';
+                    msgElement.textContent = 'Navn er påkrevd';
+                }
+                return;
+            }
+
+            // Update profile
+            const { error } = await window.supa
+                .from('profiles')
+                .update({
+                    full_name: name.trim(),
+                    company: company.trim() || null,
+                    position: position.trim() || null,
+                    profile_completed: true
+                })
+                .eq('id', user.id);
+
+            if (error) {
+                console.error('Error updating profile:', error);
+                if (msgElement) {
+                    msgElement.style.color = 'var(--danger)';
+                    msgElement.textContent = 'Feil ved oppdatering av profil';
+                }
+                return;
+            }
+
+            // Show success message
+            if (msgElement) {
+                msgElement.style.color = 'var(--success)';
+                msgElement.textContent = 'Profil oppdatert!';
+                setTimeout(() => {
+                    msgElement.textContent = '';
+                }, 3000);
+            }
+
+        } catch (err) {
+            console.error('Error updating profile:', err);
+            const msgElement = document.getElementById('profile-update-msg');
+            if (msgElement) {
+                msgElement.style.color = 'var(--danger)';
+                msgElement.textContent = 'Kunne ikke oppdatere profil';
+            }
+        }
+    },
+
     calculateShift(shift) {
         const startMinutes = this.timeToMinutes(shift.startTime);
         let endMinutes = this.timeToMinutes(shift.endTime);
@@ -2276,5 +2380,100 @@ export const app = {
                 console.log('❌ Modal did not open properly');
             }
         }, 100);
+    },
+
+    // Profile management methods
+    async loadProfileData() {
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+
+            // Load profile data
+            const { data: profile, error } = await window.supa
+                .from('profiles')
+                .select('full_name, company, position')
+                .eq('id', user.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') {
+                console.error('Error loading profile:', error);
+                return;
+            }
+
+            // Populate form fields
+            const nameField = document.getElementById('profileName');
+            const emailField = document.getElementById('profileEmail');
+            const companyField = document.getElementById('profileCompany');
+            const positionField = document.getElementById('profilePosition');
+
+            if (nameField) nameField.value = profile?.full_name || '';
+            if (emailField) emailField.value = user.email || '';
+            if (companyField) companyField.value = profile?.company || '';
+            if (positionField) positionField.value = profile?.position || '';
+
+        } catch (err) {
+            console.error('Error loading profile data:', err);
+        }
+    },
+
+    async updateProfile() {
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+
+            const nameField = document.getElementById('profileName');
+            const companyField = document.getElementById('profileCompany');
+            const positionField = document.getElementById('profilePosition');
+            const msgElement = document.getElementById('profile-update-msg');
+
+            const name = nameField?.value || '';
+            const company = companyField?.value || '';
+            const position = positionField?.value || '';
+
+            if (!name.trim()) {
+                if (msgElement) {
+                    msgElement.style.color = 'var(--danger)';
+                    msgElement.textContent = 'Navn er påkrevd';
+                }
+                return;
+            }
+
+            // Update profile
+            const { error } = await window.supa
+                .from('profiles')
+                .update({
+                    full_name: name.trim(),
+                    company: company.trim() || null,
+                    position: position.trim() || null,
+                    profile_completed: true
+                })
+                .eq('id', user.id);
+
+            if (error) {
+                console.error('Error updating profile:', error);
+                if (msgElement) {
+                    msgElement.style.color = 'var(--danger)';
+                    msgElement.textContent = 'Feil ved oppdatering av profil';
+                }
+                return;
+            }
+
+            // Show success message
+            if (msgElement) {
+                msgElement.style.color = 'var(--success)';
+                msgElement.textContent = 'Profil oppdatert!';
+                setTimeout(() => {
+                    msgElement.textContent = '';
+                }, 3000);
+            }
+
+        } catch (err) {
+            console.error('Error updating profile:', err);
+            const msgElement = document.getElementById('profile-update-msg');
+            if (msgElement) {
+                msgElement.style.color = 'var(--danger)';
+                msgElement.textContent = 'Kunne ikke oppdatere profil';
+            }
+        }
     }
 }
