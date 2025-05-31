@@ -1,64 +1,112 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+// Initialize Supabase client when DOM is loaded
+let supa;
 
-// 1. Init
-const supa = createClient(
-  "https://iuwjdacxbirhmsglcbxp.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NTIxNDAsImV4cCI6MjA2NDAyODE0MH0.iSjbvGVpM3zOWCGpg5HrQp37PjJCmiHIwVQLgc2LgcE"
-);
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Supabase client using global supabase object
+  supa = window.supabase.createClient(
+    "https://iuwjdacxbirhmsglcbxp.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NTIxNDAsImV4cCI6MjA2NDAyODE0MH0.iSjbvGVpM3zOWCGpg5HrQp37PjJCmiHIwVQLgc2LgcE"
+  );
 
-// Make supa available globally
-window.supa = supa;
+  // Make supa available globally
+  window.supa = supa;
+  
+  // Set up event listeners now that elements are available
+  setupEventListeners();
+  
+  // Handle authentication state changes
+  setupAuthStateHandling();
+  
+  // Check if user is coming from password reset email
+  handlePasswordRecovery();
+});
 
-// Element refs
-const authMsg = document.getElementById("auth-msg");
-const emailInp = document.getElementById("email");
-const passInp = document.getElementById("password");
-const loginBtn = document.getElementById("login-btn");
-const signupBtn= document.getElementById("signup-btn");
-const authBox  = document.getElementById("auth-box");
+function setupEventListeners() {
+  // Element refs
+  const authMsg = document.getElementById("auth-msg");
+  const emailInp = document.getElementById("email");
+  const passInp = document.getElementById("password");
+  const loginBtn = document.getElementById("login-btn");
+  const signupBtn= document.getElementById("signup-btn");
+  const authBox  = document.getElementById("auth-box");
 
-const forgotBtn      = document.getElementById("forgot-btn");
-const forgotCard     = document.getElementById("forgot-card");
-const forgotEmailInp = document.getElementById("forgot-email");
-const sendResetBtn   = document.getElementById("send-reset-btn");
-const backLoginBtn   = document.getElementById("back-login-btn");
+  const forgotBtn      = document.getElementById("forgot-btn");
+  const forgotCard     = document.getElementById("forgot-card");
+  const forgotEmailInp = document.getElementById("forgot-email");
+  const sendResetBtn   = document.getElementById("send-reset-btn");
+  const backLoginBtn   = document.getElementById("back-login-btn");
 
-// Auth actions
-loginBtn.onclick  = () => signIn(emailInp.value, passInp.value);
-signupBtn.onclick = () => signUp(emailInp.value, passInp.value);
+  // Store references globally for other functions to use
+  window.authElements = {
+    authMsg, emailInp, passInp, loginBtn, signupBtn, authBox,
+    forgotBtn, forgotCard, forgotEmailInp, sendResetBtn, backLoginBtn
+  };
+
+  // Auth actions
+  if (loginBtn) loginBtn.onclick  = () => signIn(emailInp.value, passInp.value);
+  if (signupBtn) signupBtn.onclick = () => signUp(emailInp.value, passInp.value);
+
+  // Forgot password
+  if (forgotBtn) forgotBtn.onclick = () => toggleForgot(true);
+  if (backLoginBtn) backLoginBtn.onclick = () => toggleForgot(false);
+  if (sendResetBtn) sendResetBtn.onclick = () => sendResetLink(forgotEmailInp.value);
+
+  // Add enter key functionality
+  if (passInp && loginBtn) {
+    passInp.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        loginBtn.click();
+      }
+    });
+  }
+
+  if (emailInp && loginBtn) {
+    emailInp.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        loginBtn.click();
+      }
+    });
+  }
+
+  if (forgotEmailInp && sendResetBtn) {
+    forgotEmailInp.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        sendResetBtn.click();
+      }
+    });
+  }
+}
 
 async function signIn(email, password) {
   try {
     const { error } = await supa.auth.signInWithPassword({ email, password });
-    authMsg.textContent = error ? error.message : "";
+    window.authElements.authMsg.textContent = error ? error.message : "";
     if (!error) window.location.href = "app.html";
   } catch (err) {
     console.error("Supabase error:", err);
-    authMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
+    window.authElements.authMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
   }
 }
 
 async function signUp(email, password) {
   try {
     const { error, data } = await supa.auth.signUp({ email, password });
-    if (error) return authMsg.textContent = error.message;
+    if (error) return window.authElements.authMsg.textContent = error.message;
     const alias = email.split("@")[0];
     await supa.from("profiles").insert({ id: data.user.id, username: alias });
-    authMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
+    window.authElements.authMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
   } catch (err) {
     console.error("Supabase error:", err);
-    authMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
+    window.authElements.authMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
   }
 }
 
-// Forgot password
-forgotBtn.onclick = () => toggleForgot(true);
-backLoginBtn.onclick = () => toggleForgot(false);
-sendResetBtn.onclick = () => sendResetLink(forgotEmailInp.value);
-
 function toggleForgot(show) {
-  forgotCard.style.display = show ? "flex" : "none";
-  authBox.style.display    = show ? "none" : "flex";
+  window.authElements.forgotCard.style.display = show ? "flex" : "none";
+  window.authElements.authBox.style.display    = show ? "none" : "flex";
 }
 
 async function sendResetLink(email) {
@@ -77,75 +125,33 @@ async function sendResetLink(email) {
   }
 }
 
-// Redirect if already logged in
-supa.auth.onAuthStateChange(async (event, session) => {
-  console.log('Auth state change:', event, session);
+function setupAuthStateHandling() {
+  // Redirect if already logged in
+  supa.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth state change:', event, session);
   
   // Don't redirect if we're in password recovery mode
   const hashFragment = window.location.hash;
-  const isRecoveryMode = hashFragment.includes('recover') || hashFragment.includes('access_token');
-  
-  if (session && !isRecoveryMode) {
-    window.location.href = "app.html";
-  } else if (event === 'PASSWORD_RECOVERY') {
-    // Handle password recovery
-    showPasswordResetForm();
-  }
-});
+  const isRecoveryMode = hashFragment.includes('recover') || hashFragment.includes('access_token');    if (session && !isRecoveryMode) {
+      window.location.href = "app.html";
+    } else if (event === 'PASSWORD_RECOVERY') {
+      // Handle password recovery
+      showPasswordResetForm();
+    }
+  });
 
-(async () => {
-  // Don't auto-redirect if we're handling password recovery
-  const hashFragment = window.location.hash;
-  const isRecoveryMode = hashFragment.includes('recover') || hashFragment.includes('access_token');
-  
-  if (!isRecoveryMode) {
-    const { data: { session } } = await supa.auth.getSession();
-    if (session) window.location.href = "app.html";
-  }
-})();
-
-// Add enter key functionality to login form
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if user is coming from password reset email
-    handlePasswordRecovery();
+  // Check current session
+  (async () => {
+    // Don't auto-redirect if we're handling password recovery
+    const hashFragment = window.location.hash;
+    const isRecoveryMode = hashFragment.includes('recover') || hashFragment.includes('access_token');
     
-    const passwordField = document.getElementById('password');
-    const emailField = document.getElementById('email');
-    const loginButton = document.getElementById('login-btn');
-    
-    // Add enter key functionality to password field
-    if (passwordField && loginButton) {
-        passwordField.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                loginButton.click();
-            }
-        });
+    if (!isRecoveryMode) {
+      const { data: { session } } = await supa.auth.getSession();
+      if (session) window.location.href = "app.html";
     }
-    
-    // Also add to email field for convenience
-    if (emailField && loginButton) {
-        emailField.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                loginButton.click();
-            }
-        });
-    }
-    
-    // Add enter key functionality to forgot password field
-    const forgotEmailField = document.getElementById('forgot-email');
-    const sendResetButton = document.getElementById('send-reset-btn');
-    
-    if (forgotEmailField && sendResetButton) {
-        forgotEmailField.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                sendResetButton.click();
-            }
-        });
-    }
-});
+  })();
+}
 
 // Handle password recovery from email link
 async function handlePasswordRecovery() {
@@ -159,7 +165,9 @@ async function handlePasswordRecovery() {
             
             if (error) {
                 console.error('Recovery error:', error);
-                authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
+                if (window.authElements?.authMsg) {
+                    window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
+                }
                 return;
             }
             
@@ -167,11 +175,15 @@ async function handlePasswordRecovery() {
                 // User is authenticated, show password reset form
                 showPasswordResetForm();
             } else {
-                authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
+                if (window.authElements?.authMsg) {
+                    window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
+                }
             }
         } catch (err) {
             console.error('Recovery handling error:', err);
-            authMsg.textContent = 'Noe gikk galt ved passord-reset';
+            if (window.authElements?.authMsg) {
+                window.authElements.authMsg.textContent = 'Noe gikk galt ved passord-reset';
+            }
         }
     }
 }
@@ -179,8 +191,8 @@ async function handlePasswordRecovery() {
 // Show password reset form
 function showPasswordResetForm() {
     // Hide normal login form and forgot password form
-    authBox.style.display = 'none';
-    forgotCard.style.display = 'none';
+    if (window.authElements?.authBox) window.authElements.authBox.style.display = 'none';
+    if (window.authElements?.forgotCard) window.authElements.forgotCard.style.display = 'none';
     
     // Create or show password reset form
     let resetForm = document.getElementById('reset-password-form');
@@ -267,47 +279,9 @@ function cancelPasswordReset() {
         resetForm.style.display = 'none';
     }
     
-    authBox.style.display = 'flex';
-    forgotCard.style.display = 'none';
+    if (window.authElements?.authBox) window.authElements.authBox.style.display = 'flex';
+    if (window.authElements?.forgotCard) window.authElements.forgotCard.style.display = 'none';
     
     // Clear any messages
-    authMsg.textContent = '';
+    if (window.authElements?.authMsg) window.authElements.authMsg.textContent = '';
 }
-
-window.addEventListener("DOMContentLoaded", async () => {
-  const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const accessToken = hashParams.get("access_token");
-  const refreshToken = hashParams.get("refresh_token");
-  const type = hashParams.get("type");
-
-  if (type === "recovery" && accessToken) {
-    const { error } = await supa.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken ?? ""
-    });
-
-    if (error) {
-      console.error("Kunne ikke sette session:", error.message);
-      alert("Kunne ikke logge inn via lenken.");
-      return;
-    }
-
-    document.getElementById("recover-form")?.style.setProperty("display", "block");
-  }
-});
-
-document.getElementById("recover-form")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const newPassword = document.getElementById("new-password").value;
-
-  const { error } = await supa.auth.updateUser({
-    password: newPassword
-  });
-
-  if (error) {
-    alert("Kunne ikke oppdatere passord: " + error.message);
-  } else {
-    alert("Passordet er oppdatert! Du er nå logget inn.");
-    window.location.href = "/kalkulator/index.html"; // redirect etterpå
-  }
-});

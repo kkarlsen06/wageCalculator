@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Supabase Connection</title>
+</head>
+<body>
+  <h1>Test Supabase Connection</h1>
+  <div id="status">Testing...</div>
+  
+  <!-- Load Supabase from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+      const statusDiv = document.getElementById('status');
+      
+      try {
+        // Test if Supabase is loaded
+        if (!window.supabase) {
+          statusDiv.innerHTML = '❌ Supabase library not loaded';
+          return;
+        }
+        
+        // Initialize Supabase client
+        const supa = window.supabase.createClient(
+          "https://iuwjdacxbirhmsglcbxp.supabase.co",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NTIxNDAsImV4cCI6MjA2NDAyODE0MH0.iSjbvGVpM3zOWCGpg5HrQp37PjJCmiHIwVQLgc2LgcE"
+        );
+        
+        // Test basic Supabase functionality
+        const { data, error } = await supa.auth.getSession();
+        
+        if (error) {
+          statusDiv.innerHTML = `❌ Supabase connection error: ${error.message}`;
+        } else {
+          statusDiv.innerHTML = '✅ Supabase is working correctly!<br>✅ CDN load successful<br>✅ Client initialization successful<br>✅ Auth API accessible';
+        }
+        
+      } catch (err) {
+        statusDiv.innerHTML = `❌ Error: ${err.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
