@@ -2,5 +2,6 @@
 # Redirect for better URL structure
 
 # Optional: redirect old auth.html to /kalkulator
+/*    /index.html   200
 /auth.html /kalkulator/ 301
 /kalkulator/auth.html /kalkulator/ 301
