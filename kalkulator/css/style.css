@@ -1367,7 +1367,8 @@ input:checked + .slider:before {
   justify-content: space-between;
   align-items: center;
   transition: all 0.3s var(--ease-default);
-  min-height: 24px;
+  min-height: 52px; /* Ensure consistent height on desktop */
+  gap: 12px; /* Add gap between date and amount */
 }
 
 .breakdown-card .details li:hover {
@@ -1381,12 +1382,17 @@ input:checked + .slider:before {
   color: var(--text-primary);
   font-weight: 500;
   font-size: 16px;
+  flex: 1; /* Allow date to take available space */
+  min-width: 0; /* Allow text to wrap if needed */
 }
 
 .breakdown-card .details li .amount {
   color: var(--accent);
   font-weight: 600;
   font-size: 18px;
+  flex-shrink: 0; /* Prevent amount from shrinking */
+  text-align: right;
+  min-width: 90px; /* Ensure consistent width for amounts */
 }
 
 /* Dynamic animation delays for any number of items */
@@ -1473,10 +1479,16 @@ input:checked + .slider:before {
   .breakdown-card .details li {
     font-size: 14px;
     padding: 14px 18px;
+    min-height: 48px; /* Consistent height on tablets */
+  }
+  
+  .breakdown-card .details li .date {
+    font-size: 15px;
   }
   
   .breakdown-card .details li .amount {
     font-size: 16px;
+    min-width: 70px; /* Ensure consistent amount spacing */
   }
   
   .breakdown-card .breakdown-title {
@@ -1492,16 +1504,26 @@ input:checked + .slider:before {
   .breakdown-card .details li {
     font-size: 13px;
     padding: 12px 16px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center; /* Center align vertically */
+    justify-content: space-between; /* Spread date and amount apart */
+    gap: 8px;
+    min-height: 44px; /* Ensure consistent height */
+  }
+  
+  .breakdown-card .details li .date {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1; /* Allow date to take available space */
+    min-width: 0; /* Allow text to wrap if needed */
   }
   
   .breakdown-card .details li .amount {
-    align-self: flex-start;
     font-size: 15px;
-    width: 100%;
+    font-weight: 600;
+    flex-shrink: 0; /* Prevent amount from shrinking */
     text-align: right;
+    min-width: 80px; /* Ensure consistent width for amounts */
   }
   
   .breakdown-card .breakdown-title {
@@ -1516,6 +1538,33 @@ input:checked + .slider:before {
   .breakdown-card.expanded {
     margin: 10px;
     max-height: 90vh;
+  }
+}
+
+/* Extra small screen adjustments */
+@media (max-width: 360px) {
+  .breakdown-card .details li {
+    padding: 10px 14px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+  
+  .breakdown-card .details li .date {
+    font-size: 13px;
+  }
+  
+  .breakdown-card .details li .amount {
+    font-size: 14px;
+    min-width: 75px;
+  }
+  
+  .breakdown-card .breakdown-title {
+    font-size: 18px;
+  }
+  
+  .breakdown-card.expanded {
+    margin: 8px;
+    padding: 16px;
   }
 }
 
