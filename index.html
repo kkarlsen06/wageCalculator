@@ -42,5 +42,36 @@
     <footer>
         <p>&copy; 2025 Hjalmar Samuel Kristensen-Karlsen</p>
     </footer>
+    
+    <!-- Handle password recovery redirects -->
+    <script>
+        // Check if this is a password recovery redirect from Supabase
+        const hashFragment = window.location.hash;
+        const searchParams = window.location.search;
+        const urlParams = new URLSearchParams(searchParams);
+        const fullUrl = window.location.href;
+        
+        console.log('Checking for recovery tokens...');
+        console.log('Hash:', hashFragment);
+        console.log('Search:', searchParams);
+        console.log('Full URL:', fullUrl);
+        
+        // Check for recovery tokens in either hash fragment or query parameters
+        const hasRecoveryInHash = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
+        const hasRecoveryInSearch = searchParams.includes('access_token') && searchParams.includes('type=recovery');
+        const hasLegacyRecovery = urlParams.has('token') && urlParams.get('type') === 'recovery';
+        
+        if (hasRecoveryInHash || hasRecoveryInSearch || hasLegacyRecovery) {
+            console.log('Recovery tokens detected, redirecting to kalkulator...');
+            // Redirect to the kalkulator page with the recovery tokens
+            if (hasRecoveryInHash) {
+                window.location.href = '/kalkulator/index.html' + hashFragment;
+            } else if (hasRecoveryInSearch) {
+                window.location.href = '/kalkulator/index.html' + searchParams;
+            } else if (hasLegacyRecovery) {
+                window.location.href = '/kalkulator/index.html' + searchParams;
+            }
+        }
+    </script>
 </body>
 </html>

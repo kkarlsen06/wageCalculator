@@ -111,8 +111,14 @@ function toggleForgot(show) {
 
 async function sendResetLink(email) {
   try {
+    // Use the current domain to ensure consistency
+    const currentDomain = window.location.origin;
+    const redirectUrl = `${currentDomain}/kalkulator/index.html`;
+    
+    console.log('Sending reset link with redirect URL:', redirectUrl);
+    
     const { error } = await supa.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://www.kkarlsen.art/kalkulator/index.html"
+      redirectTo: redirectUrl
     });
     const msg = document.getElementById("forgot-msg");
     msg.style.color = error ? "var(--danger)" : "var(--success)";
@@ -163,11 +169,16 @@ function setupAuthStateHandling() {
 // Handle password recovery from email link
 async function handlePasswordRecovery() {
     const hashFragment = window.location.hash;
+    const urlParams = new URLSearchParams(window.location.search);
     
-    // Check if this is a recovery link
-    if (hashFragment.includes('access_token') && hashFragment.includes('type=recovery')) {
+    // Check if this is a recovery link (can be in hash or query params)
+    const isRecoveryHash = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
+    const isRecoveryQuery = urlParams.has('token') && urlParams.get('type') === 'recovery';
+    
+    if (isRecoveryHash) {
+        // Handle tokens in hash fragment (modern Supabase format)
         try {
-            console.log('Recovery link detected:', hashFragment);
+            console.log('Recovery link detected in hash:', hashFragment);
             
             // Parse the URL fragments to get tokens
             const hashParams = new URLSearchParams(hashFragment.substring(1));
@@ -199,13 +210,49 @@ async function handlePasswordRecovery() {
                         window.authElements.authMsg.textContent = 'Kunne ikke opprette session';
                     }
                 }
-            } else {
-                if (window.authElements?.authMsg) {
-                    window.authElements.authMsg.textContent = 'Manglende recovery-data i lenke';
-                }
             }
         } catch (err) {
             console.error('Recovery handling error:', err);
+            if (window.authElements?.authMsg) {
+                window.authElements.authMsg.textContent = 'Noe gikk galt ved passord-reset';
+            }
+        }
+    } else if (isRecoveryQuery) {
+        // Handle legacy Supabase token format in query params
+        try {
+            console.log('Recovery link detected in query params:', window.location.search);
+            
+            const token = urlParams.get('token');
+            const type = urlParams.get('type');
+            
+            if (type === 'recovery' && token) {
+                // Use verifyOtp to exchange the token for a session
+                const { data, error } = await supa.auth.verifyOtp({
+                    token_hash: token,
+                    type: 'recovery'
+                });
+                
+                if (error) {
+                    console.error('Token verification error:', error);
+                    if (window.authElements?.authMsg) {
+                        window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
+                    }
+                    return;
+                }
+                
+                if (data.session) {
+                    console.log('Token verified successfully, showing password reset form');
+                    // Clear URL params and show password reset form
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    showPasswordResetForm();
+                } else {
+                    if (window.authElements?.authMsg) {
+                        window.authElements.authMsg.textContent = 'Kunne ikke opprette session';
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Token verification error:', err);
             if (window.authElements?.authMsg) {
                 window.authElements.authMsg.textContent = 'Noe gikk galt ved passord-reset';
             }

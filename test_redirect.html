@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Recovery Redirect</title>
+</head>
+<body>
+    <h1>Test Recovery Redirect</h1>
+    <p>Denne siden tester recovery redirect-logikken.</p>
+    
+    <div>
+        <h3>Simuler recovery lenker:</h3>
+        <button onclick="testHashRecovery()">Test Hash Recovery (moderne format)</button>
+        <button onclick="testQueryRecovery()">Test Query Recovery (legacy format)</button>
+        <button onclick="testBothDomains()">Test begge domener</button>
+    </div>
+    
+    <div id="output" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+
+        function testHashRecovery() {
+            log('Testing hash recovery redirect...');
+            // Simuler en hash med recovery tokens
+            const testHash = '#access_token=fake_token&refresh_token=fake_refresh&type=recovery';
+            
+            // Test logikken fra index.html
+            const hashFragment = testHash;
+            const searchParams = '';
+            
+            log('Hash: ' + hashFragment);
+            log('Search: ' + searchParams);
+            
+            const hasRecoveryInHash = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
+            const hasRecoveryInSearch = searchParams.includes('access_token') && searchParams.includes('type=recovery');
+            
+            if (hasRecoveryInHash || hasRecoveryInSearch) {
+                log('✅ Recovery tokens detected in hash');
+                log('Would redirect to: /kalkulator/index.html' + hashFragment);
+            } else {
+                log('❌ Recovery tokens NOT detected');
+            }
+        }
+
+        function testQueryRecovery() {
+            log('Testing query recovery redirect...');
+            // Simuler query parameters med recovery tokens
+            const testSearch = '?token=fake_token&type=recovery';
+            
+            const hashFragment = '';
+            const searchParams = testSearch;
+            
+            log('Hash: ' + hashFragment);
+            log('Search: ' + searchParams);
+            
+            const hasRecoveryInHash = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
+            const hasRecoveryInSearch = searchParams.includes('access_token') && searchParams.includes('type=recovery');
+            
+            if (hasRecoveryInHash || hasRecoveryInSearch) {
+                log('✅ Recovery tokens detected in search params');
+                log('Would redirect to: /kalkulator/index.html' + searchParams);
+            } else {
+                log('❌ Recovery tokens NOT detected in search params');
+                // Sjekk legacy format
+                if (searchParams.includes('token') && searchParams.includes('type=recovery')) {
+                    log('⚠️ Legacy format detected (token + type=recovery)');
+                    log('Need to update detection logic for legacy format');
+                }
+            }
+        }
+
+        function testBothDomains() {
+            log('Testing domain handling...');
+            const currentOrigin = window.location.origin;
+            log('Current origin: ' + currentOrigin);
+            
+            // Test various origin formats
+            const testOrigins = [
+                'https://kkarlsen.art',
+                'https://www.kkarlsen.art',
+                'http://localhost:3000',
+                'http://127.0.0.1:5500'
+            ];
+            
+            testOrigins.forEach(origin => {
+                const redirectUrl = `${origin}/kalkulator/index.html`;
+                log('For origin ' + origin + ' -> redirect URL: ' + redirectUrl);
+            });
+        }
+    </script>
+</body>
+</html>
