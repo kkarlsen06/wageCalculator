@@ -112,7 +112,7 @@ function toggleForgot(show) {
 async function sendResetLink(email) {
   try {
     const { error } = await supa.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://www.kkarlsen.art/kalkulator/index.html#recover"
+      redirectTo: "https://www.kkarlsen.art/kalkulator/index.html"
     });
     const msg = document.getElementById("forgot-msg");
     msg.style.color = error ? "var(--danger)" : "var(--success)";
@@ -130,12 +130,19 @@ function setupAuthStateHandling() {
   supa.auth.onAuthStateChange(async (event, session) => {
     console.log('Auth state change:', event, session);
   
-  // Don't redirect if we're in password recovery mode
-  const hashFragment = window.location.hash;
-  const isRecoveryMode = hashFragment.includes('recover') || hashFragment.includes('access_token');    if (session && !isRecoveryMode) {
+    // Don't redirect if we're in password recovery mode
+    const hashFragment = window.location.hash;
+    const isRecoveryMode = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
+    
+    if (session && !isRecoveryMode) {
       window.location.href = "app.html";
     } else if (event === 'PASSWORD_RECOVERY') {
       // Handle password recovery
+      console.log('PASSWORD_RECOVERY event triggered');
+      showPasswordResetForm();
+    } else if (event === 'TOKEN_REFRESHED' && isRecoveryMode) {
+      // User is in recovery mode and token refreshed, show reset form
+      console.log('Token refreshed in recovery mode');
       showPasswordResetForm();
     }
   });
@@ -144,7 +151,7 @@ function setupAuthStateHandling() {
   (async () => {
     // Don't auto-redirect if we're handling password recovery
     const hashFragment = window.location.hash;
-    const isRecoveryMode = hashFragment.includes('recover') || hashFragment.includes('access_token');
+    const isRecoveryMode = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
     
     if (!isRecoveryMode) {
       const { data: { session } } = await supa.auth.getSession();
@@ -158,25 +165,43 @@ async function handlePasswordRecovery() {
     const hashFragment = window.location.hash;
     
     // Check if this is a recovery link
-    if (hashFragment.includes('recover') || hashFragment.includes('access_token')) {
+    if (hashFragment.includes('access_token') && hashFragment.includes('type=recovery')) {
         try {
-            // Get the session from the URL fragments
-            const { data, error } = await supa.auth.getSession();
+            console.log('Recovery link detected:', hashFragment);
             
-            if (error) {
-                console.error('Recovery error:', error);
-                if (window.authElements?.authMsg) {
-                    window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
+            // Parse the URL fragments to get tokens
+            const hashParams = new URLSearchParams(hashFragment.substring(1));
+            const accessToken = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            const type = hashParams.get('type');
+            
+            if (type === 'recovery' && accessToken) {
+                // Set the session using the tokens from the URL
+                const { data, error } = await supa.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken || ''
+                });
+                
+                if (error) {
+                    console.error('Recovery error:', error);
+                    if (window.authElements?.authMsg) {
+                        window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
+                    }
+                    return;
                 }
-                return;
-            }
-            
-            if (data.session) {
-                // User is authenticated, show password reset form
-                showPasswordResetForm();
+                
+                if (data.session) {
+                    console.log('Session set successfully, showing password reset form');
+                    // User is authenticated, show password reset form
+                    showPasswordResetForm();
+                } else {
+                    if (window.authElements?.authMsg) {
+                        window.authElements.authMsg.textContent = 'Kunne ikke opprette session';
+                    }
+                }
             } else {
                 if (window.authElements?.authMsg) {
-                    window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
+                    window.authElements.authMsg.textContent = 'Manglende recovery-data i lenke';
                 }
             }
         } catch (err) {
