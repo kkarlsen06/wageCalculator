@@ -1,5 +1,6 @@
 // Initialize Supabase client when DOM is loaded
 let supa;
+let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize Supabase client using global supabase object
@@ -149,22 +150,26 @@ function setupAuthStateHandling() {
   supa.auth.onAuthStateChange(async (event, session) => {
     console.log('Auth state change:', event, session);
     console.log('Is in recovery mode:', isInRecoveryMode());
+    console.log('Is in password recovery flag:', isInPasswordRecovery);
   
     // Don't redirect if we're in password recovery mode
-    if (session && !isInRecoveryMode()) {
+    if (session && !isInRecoveryMode() && !isInPasswordRecovery) {
       console.log('User logged in, redirecting to dashboard');
       window.location.href = "app.html";
     } else if (event === 'PASSWORD_RECOVERY') {
       // Handle password recovery
       console.log('PASSWORD_RECOVERY event triggered');
+      isInPasswordRecovery = true;
       showPasswordResetForm();
-    } else if (event === 'TOKEN_REFRESHED' && isInRecoveryMode()) {
+    } else if (event === 'TOKEN_REFRESHED' && (isInRecoveryMode() || isInPasswordRecovery)) {
       // User is in recovery mode and token refreshed, show reset form
       console.log('Token refreshed in recovery mode');
+      isInPasswordRecovery = true;
       showPasswordResetForm();
-    } else if (session && isInRecoveryMode()) {
+    } else if (session && (isInRecoveryMode() || isInPasswordRecovery)) {
       // User has valid session from recovery tokens, show password reset form
       console.log('User authenticated via recovery tokens, showing password reset form');
+      isInPasswordRecovery = true;
       showPasswordResetForm();
     }
   });
@@ -172,7 +177,7 @@ function setupAuthStateHandling() {
   // Check current session
   (async () => {
     // Don't auto-redirect if we're handling password recovery
-    if (!isInRecoveryMode()) {
+    if (!isInRecoveryMode() && !isInPasswordRecovery) {
       const { data: { session } } = await supa.auth.getSession();
       if (session) {
         console.log('Existing session found, redirecting to dashboard');
@@ -192,6 +197,8 @@ async function handlePasswordRecovery() {
         return;
     }
     
+    // Set the flag to prevent auto-redirect
+    isInPasswordRecovery = true;
     console.log('Password recovery mode detected, processing tokens...');
     
     const hashFragment = window.location.hash;
@@ -221,6 +228,7 @@ async function handlePasswordRecovery() {
                 
                 if (error) {
                     console.error('Recovery error:', error);
+                    isInPasswordRecovery = false;
                     if (window.authElements?.authMsg) {
                         window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
                     }
@@ -233,6 +241,7 @@ async function handlePasswordRecovery() {
                     window.history.replaceState({}, document.title, window.location.pathname);
                     showPasswordResetForm();
                 } else {
+                    isInPasswordRecovery = false;
                     if (window.authElements?.authMsg) {
                         window.authElements.authMsg.textContent = 'Kunne ikke opprette session';
                     }
@@ -240,6 +249,7 @@ async function handlePasswordRecovery() {
             }
         } catch (err) {
             console.error('Recovery handling error:', err);
+            isInPasswordRecovery = false;
             if (window.authElements?.authMsg) {
                 window.authElements.authMsg.textContent = 'Noe gikk galt ved passord-reset';
             }
@@ -261,6 +271,7 @@ async function handlePasswordRecovery() {
                 
                 if (error) {
                     console.error('Token verification error:', error);
+                    isInPasswordRecovery = false;
                     if (window.authElements?.authMsg) {
                         window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
                     }
@@ -273,6 +284,7 @@ async function handlePasswordRecovery() {
                     window.history.replaceState({}, document.title, window.location.pathname);
                     showPasswordResetForm();
                 } else {
+                    isInPasswordRecovery = false;
                     if (window.authElements?.authMsg) {
                         window.authElements.authMsg.textContent = 'Kunne ikke opprette session';
                     }
@@ -280,6 +292,7 @@ async function handlePasswordRecovery() {
             }
         } catch (err) {
             console.error('Token verification error:', err);
+            isInPasswordRecovery = false;
             if (window.authElements?.authMsg) {
                 window.authElements.authMsg.textContent = 'Noe gikk galt ved passord-reset';
             }
@@ -355,7 +368,8 @@ async function updatePassword(newPassword, confirmPassword) {
             resetMsg.style.color = 'var(--success)';
             resetMsg.textContent = 'Passord oppdatert! Omdirigerer...';
             
-            // Clear the hash and redirect to app
+            // Clear the recovery flag and hash, then redirect to app
+            isInPasswordRecovery = false;
             window.location.hash = '';
             setTimeout(() => {
                 window.location.href = 'app.html';
@@ -369,7 +383,8 @@ async function updatePassword(newPassword, confirmPassword) {
 
 // Cancel password reset
 function cancelPasswordReset() {
-    // Clear the hash
+    // Clear the recovery flag and hash
+    isInPasswordRecovery = false;
     window.location.hash = '';
     
     // Hide reset form and show login form
