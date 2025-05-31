@@ -120,6 +120,21 @@ h2 {
   line-height: 1.6;
 }
 
+.lønnsliste li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  margin-bottom: 6px;
+}
+
+@media (max-width: 600px) {
+  .lønnsliste li {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+}
+
 .bugs {
   margin-bottom: 3rem;
 }
