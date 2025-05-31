@@ -12,26 +12,44 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Make supa available globally
   window.supa = supa;
   
-  // Immediate redirect if already authenticated
+  let shouldDisplayLoginPage = true; // Assume we display the login page by default
+
+  // Immediate redirect if already authenticated and not in a recovery flow
   try {
     const { data: { session } } = await supa.auth.getSession();
-    if (session && !isInRecoveryMode() && !isInPasswordRecovery) {
-      console.log('Immediate redirect: existing session, redirecting to app.html');
+    // Check if the URL hash indicates a password recovery attempt
+    const isRecoveryUrl = window.location.hash.includes('type=recovery');
+
+    if (session && !isRecoveryUrl && !isInPasswordRecovery) { // isInPasswordRecovery is a global flag
+      console.log('Immediate redirect: existing session, not in recovery flow, redirecting to app.html');
+      shouldDisplayLoginPage = false;
       window.location.replace('app.html');
-      return;
+      return; // Stop further script execution on this page if redirected
     }
   } catch (e) {
     console.error('Error checking session for immediate redirect:', e);
+    // In case of error, default to showing the login page (shouldDisplayLoginPage remains true)
   }
 
+  // If we are not redirecting, make the body visible
+  if (shouldDisplayLoginPage) {
+    document.body.style.visibility = 'visible';
+  }
+  
   // Set up event listeners now that elements are available
   setupEventListeners();
   
   // Handle authentication state changes
   setupAuthStateHandling();
   
-  // Check if user is coming from password reset email
+  // Check if user is coming from password reset email (via URL hash)
   handlePasswordRecovery();
+
+  // Fallback: If after all checks, the page is meant to be shown but is still hidden
+  if (shouldDisplayLoginPage && document.body.style.visibility === 'hidden') {
+    console.warn('Fallback: Body was still hidden after initial setup, forcing visibility.');
+    document.body.style.visibility = 'visible';
+  }
 });
 
 function setupEventListeners() {
@@ -425,113 +443,12 @@ function setupAuthStateHandling() {
 
 // Handle password recovery from email link
 async function handlePasswordRecovery() {
-    // Use the common function to check if we're in recovery mode
-    if (!isInRecoveryMode()) {
-        console.log('Not in recovery mode, skipping password recovery handling');
-        return;
-    }
-    
-    // Set the flag to prevent auto-redirect
-    isInPasswordRecovery = true;
-    console.log('Password recovery mode detected, processing tokens...');
-    
-    const hashFragment = window.location.hash;
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Check if this is a recovery link (can be in hash or query params)
-    const isRecoveryHash = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
-    const isRecoveryQuery = urlParams.has('token') && urlParams.get('type') === 'recovery';
-    
-    if (isRecoveryHash) {
-        // Handle tokens in hash fragment (modern Supabase format)
-        try {
-            console.log('Recovery link detected in hash:', hashFragment);
-            
-            // Parse the URL fragments to get tokens
-            const hashParams = new URLSearchParams(hashFragment.substring(1));
-            const accessToken = hashParams.get('access_token');
-            const refreshToken = hashParams.get('refresh_token');
-            const type = hashParams.get('type');
-            
-            if (type === 'recovery' && accessToken) {
-                // Set the session using the tokens from the URL
-                const { data, error } = await supa.auth.setSession({
-                    access_token: accessToken,
-                    refresh_token: refreshToken || ''
-                });
-                
-                if (error) {
-                    console.error('Recovery error:', error);
-                    isInPasswordRecovery = false;
-                    if (window.authElements?.authMsg) {
-                        window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
-                    }
-                    return;
-                }
-                
-                if (data.session) {
-                    console.log('Session set successfully, showing password reset form');
-                    // Clear URL params and show password reset form
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    showPasswordResetForm();
-                } else {
-                    isInPasswordRecovery = false;
-                    if (window.authElements?.authMsg) {
-                        window.authElements.authMsg.textContent = 'Kunne ikke opprette session';
-                    }
-                }
-            }
-        } catch (err) {
-            console.error('Recovery handling error:', err);
-            isInPasswordRecovery = false;
-            if (window.authElements?.authMsg) {
-                window.authElements.authMsg.textContent = 'Noe gikk galt ved passord-reset';
-            }
-        }
-    } else if (isRecoveryQuery) {
-        // Handle legacy Supabase token format in query params
-        try {
-            console.log('Recovery link detected in query params:', window.location.search);
-            
-            const token = urlParams.get('token');
-            const type = urlParams.get('type');
-            
-            if (type === 'recovery' && token) {
-                // Use verifyOtp to exchange the token for a session
-                const { data, error } = await supa.auth.verifyOtp({
-                    token_hash: token,
-                    type: 'recovery'
-                });
-                
-                if (error) {
-                    console.error('Token verification error:', error);
-                    isInPasswordRecovery = false;
-                    if (window.authElements?.authMsg) {
-                        window.authElements.authMsg.textContent = 'Ugyldig eller utløpt reset-lenke';
-                    }
-                    return;
-                }
-                
-                if (data.session) {
-                    console.log('Token verified successfully, showing password reset form');
-                    // Clear URL params and show password reset form
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    showPasswordResetForm();
-                } else {
-                    isInPasswordRecovery = false;
-                    if (window.authElements?.authMsg) {
-                        window.authElements.authMsg.textContent = 'Kunne ikke opprette session';
-                    }
-                }
-            }
-        } catch (err) {
-            console.error('Token verification error:', err);
-            isInPasswordRecovery = false;
-            if (window.authElements?.authMsg) {
-                window.authElements.authMsg.textContent = 'Noe gikk galt ved passord-reset';
-            }
-        }
-    }
+  console.log("handlePasswordRecovery called");
+  if (window.location.hash.includes('type=recovery')) {
+    console.log("Password recovery type detected in URL hash.");
+    isInPasswordRecovery = true; // Set the flag
+    document.body.style.visibility = 'visible'; // Make body visible for recovery form
+  }
 }
 
 // Show password reset form
