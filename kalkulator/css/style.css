@@ -387,41 +387,45 @@ input[type="time"].form-control[value=""]:focus {
 .date-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
+  gap: 2px;
+  flex: 1;
 }
 .date-cell {
   aspect-ratio: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 2px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+  text-align: center;
+  min-height: 45px;
   transition: all var(--speed-normal) var(--ease-default);
   /* Initially hidden for animation */
   opacity: 0;
   animation: calendarCellFadeIn 0.3s var(--ease-default) forwards;
 }
 .date-cell:hover:not(.disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px -4px rgba(0, 255, 136, 0.4);
-  border-color: var(--accent);
+  background: rgba(0, 255, 136, 0.15);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
 }
 .date-cell.selected {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--bg-primary);
+  background: rgba(0, 255, 136, 0.08);
+  color: var(--accent);
   font-weight: 600;
 }
 .date-cell.disabled {
   opacity: 0.3;
   cursor: not-allowed;
+  color: var(--text-secondary);
 }
 
 /* Buttons */
