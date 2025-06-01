@@ -106,6 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('[onclick]').forEach(el => {
     const onClick = el.getAttribute('onclick');
     if (onClick) {
+      // Store the original onclick for repeated use
       el.addEventListener('click', (event) => {
         try {
           // Parse and execute the onclick handler safely
@@ -141,6 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               
               // Execute the function
               if (app[functionName]) {
+                console.log(`Executing ${functionName} with params:`, parsedParams);
                 app[functionName](...parsedParams);
               }
             }
@@ -151,7 +153,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           console.error('Error executing onclick handler:', error, 'Original onclick:', onClick);
         }
       });
-      el.removeAttribute('onclick');
+      // Keep the onclick attribute but set it to empty to prevent double execution
+      el.setAttribute('onclick', 'return false;');
     }
   });
 

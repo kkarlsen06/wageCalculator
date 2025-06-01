@@ -30,7 +30,7 @@ export const app = {
     },
     // State
     shifts: [],
-    currentMonth: new Date().getMonth() + 1, // Default to current month
+    currentMonth: new Date().getMonth() + 1, // Start in current month (June 2025)
     currentWageLevel: 1,
     usePreset: true,
     customWage: 200,
@@ -41,17 +41,17 @@ export const app = {
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
     DEMO_SHIFTS: [
-        { id: 'demo-1', date: "2025-05-03T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
-        { id: 'demo-2', date: "2025-05-10T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
-        { id: 'demo-3', date: "2025-05-12T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { id: 'demo-4', date: "2025-05-15T00:00:00.000Z", startTime: "17:00", endTime: "22:00", type: 0 },
-        { id: 'demo-5', date: "2025-05-19T00:00:00.000Z", startTime: "17:00", endTime: "21:00", type: 0 },
-        { id: 'demo-6', date: "2025-05-21T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
-        { id: 'demo-7', date: "2025-05-22T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { id: 'demo-8', date: "2025-05-23T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
-        { id: 'demo-9', date: "2025-05-24T00:00:00.000Z", startTime: "13:00", endTime: "18:00", type: 1 },
-        { id: 'demo-10', date: "2025-05-26T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { id: 'demo-11', date: "2025-05-30T00:00:00.000Z", startTime: "15:45", endTime: "23:15", type: 0 }
+        { id: 'demo-1', date: "2025-06-03T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
+        { id: 'demo-2', date: "2025-06-10T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
+        { id: 'demo-3', date: "2025-06-12T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
+        { id: 'demo-4', date: "2025-06-15T00:00:00.000Z", startTime: "17:00", endTime: "22:00", type: 0 },
+        { id: 'demo-5', date: "2025-06-19T00:00:00.000Z", startTime: "17:00", endTime: "21:00", type: 0 },
+        { id: 'demo-6', date: "2025-06-21T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 1 },
+        { id: 'demo-7', date: "2025-06-22T00:00:00.000Z", startTime: "13:00", endTime: "18:00", type: 1 },
+        { id: 'demo-8', date: "2025-06-23T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
+        { id: 'demo-9', date: "2025-06-24T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
+        { id: 'demo-10', date: "2025-06-26T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
+        { id: 'demo-11', date: "2025-06-30T00:00:00.000Z", startTime: "15:45", endTime: "23:15", type: 0 }
     ].map(shift => ({
         ...shift,
         date: new Date(shift.date)
@@ -230,67 +230,138 @@ export const app = {
         icon.style.transform = card.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
     },
     async addShift() {
-        if (!this.selectedDate) {
-            alert('Vennligst velg en dato');
-            return;
-        }
-        const startHour = document.getElementById('startHour').value;
-        const startMinute = document.getElementById('startMinute').value || '00';
-        const endHour = document.getElementById('endHour').value;
-        const endMinute = document.getElementById('endMinute').value || '00';
-        if (!startHour || !endHour) {
-            alert('Vennligst fyll ut arbeidstid');
-            return;
-        }
-        if (this.demoMode) {
-            if (confirm('Du er i demo-modus. Vil du bytte til dine egne vakter for å legge til denne vakten?')) {
-                this.toggleDemoMode(false);
-                document.getElementById('demoDataToggle').checked = false;
-            } else {
+        console.log('addShift: Starting shift addition process');
+        try {
+            if (!this.selectedDate) {
+                console.log('addShift: No date selected');
+                alert('Vennligst velg en dato');
                 return;
             }
-        }
-        const dayOfWeek = this.selectedDate.getDay();
-        const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
-        const newShift = {
-            date: new Date(this.selectedDate),
-            startTime: `${startHour}:${startMinute}`,
-            endTime: `${endHour}:${endMinute}`,
-            type
-        };
-        const { data: { user } } = await window.supa.auth.getUser();
-        if (!user) {
-            alert("Du er ikke innlogget");
-            return;
-        }
-        const dateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
-        const { data: saved, error } = await window.supa.from("user_shifts")
-            .insert({
+            
+            const startHour = document.getElementById('startHour').value;
+            const startMinute = document.getElementById('startMinute').value || '00';
+            const endHour = document.getElementById('endHour').value;
+            const endMinute = document.getElementById('endMinute').value || '00';
+            
+            if (!startHour || !endHour) {
+                console.log('addShift: Missing time values');
+                alert('Vennligst fyll ut arbeidstid');
+                return;
+            }
+            
+            if (this.demoMode) {
+                console.log('addShift: In demo mode, asking user to switch');
+                if (confirm('Du er i demo-modus. Vil du bytte til dine egne vakter for å legge til denne vakten?')) {
+                    this.toggleDemoMode(false);
+                    document.getElementById('demoDataToggle').checked = false;
+                } else {
+                    console.log('addShift: User cancelled switch from demo mode');
+                    return;
+                }
+            }
+            
+            const dayOfWeek = this.selectedDate.getDay();
+            const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
+            const newShift = {
+                date: new Date(this.selectedDate),
+                startTime: `${startHour}:${startMinute}`,
+                endTime: `${endHour}:${endMinute}`,
+                type
+            };
+            
+            const { data: { user }, error: authError } = await window.supa.auth.getUser();
+            if (authError) {
+                console.error('addShift: Authentication error:', authError);
+                alert('Feil ved autentisering');
+                return;
+            }
+            if (!user) {
+                console.log('addShift: No authenticated user found');
+                alert("Du er ikke innlogget");
+                return;
+            }
+            
+            const dateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
+            
+            console.log('addShift: Date debugging:');
+            console.log('  - Current UI month:', this.currentMonth);
+            console.log('  - Selected date object:', this.selectedDate);
+            console.log('  - New shift date object:', newShift.date);
+            console.log('  - New shift date month (1-based):', newShift.date.getMonth() + 1);
+            console.log('  - Date string for database:', dateStr);
+            
+            // Validate that the selected date is in the current UI month
+            if (newShift.date.getMonth() + 1 !== this.currentMonth) {
+                console.warn('addShift: Date mismatch detected!');
+                console.warn(`  - UI shows month ${this.currentMonth}, but selected date is in month ${newShift.date.getMonth() + 1}`);
+                console.warn('  - Correcting date to match UI month...');
+                
+                // Correct the date to be in the current UI month
+                const correctedDate = new Date(this.YEAR, this.currentMonth - 1, this.selectedDate.getDate());
+                newShift.date = correctedDate;
+                
+                console.warn('  - Corrected date:', correctedDate);
+                console.warn('  - Corrected date month:', correctedDate.getMonth() + 1);
+            }
+            
+            // Recalculate dateStr after potential correction
+            const finalDateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
+            console.log('  - Final date string for database:', finalDateStr);
+            
+            const insertData = {
                 user_id: user.id,
-                shift_date: dateStr,
+                shift_date: finalDateStr,
                 start_time: newShift.startTime,
                 end_time: newShift.endTime,
                 shift_type: newShift.type
-            })
-            .select()
-            .single();
-        if (error) {
-            alert("Kunne ikke lagre vakt i databasen");
-            console.error(error);
-            return;
+            };
+            
+            console.log('addShift: Saving shift for date:', finalDateStr, 'in month:', newShift.date.getMonth() + 1, 'current filter month:', this.currentMonth);
+            
+            const { data: saved, error } = await window.supa.from("user_shifts")
+                .insert(insertData)
+                .select()
+                .single();
+                
+            if (error) {
+                console.error('addShift: Database error when saving shift:', error);
+                alert(`Kunne ikke lagre vakt i databasen: ${error.message}`);
+                return;
+            }
+            
+            console.log('addShift: Database insert successful, ID:', saved.id);
+            
+            // Update last active timestamp since user added a shift
+            await this.updateLastActiveTimestamp(user.id);
+            
+            newShift.id = saved.id;
+            
+            // Add to userShifts array
+            this.userShifts.push(newShift);
+            
+            // Update this.shifts based on current mode
+            if (!this.demoMode) {
+                // In normal mode, this.shifts should reflect userShifts
+                this.shifts = [...this.userShifts];
+            }
+            // In demo mode, this.shifts stays as DEMO_SHIFTS, so new shift won't show until demo mode is turned off
+            
+            this.updateDisplay();
+            
+            document.getElementById('shiftForm').reset();
+            this.selectedDate = null;
+            document.querySelectorAll('.date-cell').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+            
+            this.clearFormState();
+            
+            console.log('addShift: Completed successfully. Total shifts:', this.shifts.length);
+            
+        } catch (e) {
+            console.error('addShift: Critical error:', e);
+            alert(`En uventet feil oppstod: ${e.message}`);
         }
-        newShift.id = saved.id;
-        this.shifts.push(newShift);
-        this.userShifts.push(newShift);
-        this.updateDisplay();
-        document.getElementById('shiftForm').reset();
-        this.selectedDate = null;
-        document.querySelectorAll('.date-cell').forEach(cell => {
-            cell.classList.remove('selected');
-        });
-        
-        // Clear form state after successful shift addition
-        this.clearFormState();
     },
     populateDateGrid() {
         const dateGrid = document.getElementById('dateGrid');
@@ -319,6 +390,12 @@ export const app = {
                 document.querySelectorAll('.date-cell').forEach(c=>c.classList.remove('selected'));
                 cell.classList.add('selected');
                 this.selectedDate = new Date(cellDate);
+                console.log('Date selected:', {
+                    cellDate: cellDate,
+                    selectedDate: this.selectedDate,
+                    currentUIMonth: this.currentMonth,
+                    selectedDateMonth: this.selectedDate.getMonth() + 1
+                });
                 this.saveFormState(); // Save form state when date is selected
             });
             dateGrid.appendChild(cell);
@@ -370,7 +447,7 @@ export const app = {
         this.saveFormState(); // Save when month changes
         this.updateDisplay();
         this.populateDateGrid();
-        this.saveSettingsToSupabase();
+        this.saveSettingsToSupabase(); // This will also update last_active via saveSettingsToSupabase
     },
     toggleDemoMode(enabled) {
         this.demoMode = enabled;
@@ -388,27 +465,48 @@ export const app = {
         }
 
         try {
+            // First, update user's last active timestamp
+            await this.updateLastActiveTimestamp(user.id);
+
             // Fetch shifts
+            console.log('=== LOADING SHIFTS FROM DATABASE ===');
+            console.log('User ID:', user.id);
+            
             const { data: shifts, error: shiftsError } = await window.supa
                 .from('user_shifts')
                 .select('*')
                 .eq('user_id', user.id);
 
+            console.log('Raw shifts from database:', shifts);
+            console.log('Shifts error:', shiftsError);
+
             if (shiftsError) {
                 console.error('Error fetching shifts from Supabase:', shiftsError);
             } else {
+                console.log(`Found ${shifts?.length || 0} shifts in database`);
+                
                 // Map shifts to app format
-                this.userShifts = (shifts || []).map(s => ({
-                    id: s.id,
-                    date: new Date(s.shift_date + 'T00:00:00.000Z'),
-                    startTime: s.start_time,
-                    endTime: s.end_time,
-                    type: s.shift_type
-                }));
+                this.userShifts = (shifts || []).map(s => {
+                    const mappedShift = {
+                        id: s.id,
+                        date: new Date(s.shift_date + 'T00:00:00.000Z'),
+                        startTime: s.start_time,
+                        endTime: s.end_time,
+                        type: s.shift_type
+                    };
+                    console.log('Mapped shift:', s, '→', mappedShift);
+                    return mappedShift;
+                });
+                
+                console.log('Total userShifts after mapping:', this.userShifts.length);
+                console.log('Demo mode status:', this.demoMode);
                 
                 // Set current shifts based on demo mode
                 if (!this.demoMode) {
                     this.shifts = [...this.userShifts];
+                    console.log('Set shifts to userShifts, total shifts now:', this.shifts.length);
+                } else {
+                    console.log('In demo mode, keeping demo shifts');
                 }
             }
 
@@ -438,8 +536,19 @@ export const app = {
                     saturday: loadedBonuses.saturday || [],
                     sunday: loadedBonuses.sunday || []
                 };
-                this.currentMonth = settings.current_month || new Date().getMonth() + 1;
+                // Check if user has been inactive for more than 5 hours
+                const shouldResetToCurrentMonth = this.shouldResetToCurrentMonth(settings.last_active);
+                
+                this.currentMonth = shouldResetToCurrentMonth 
+                    ? new Date().getMonth() + 1 
+                    : (settings.current_month || new Date().getMonth() + 1);
+                    
                 this.pauseDeduction = settings.pause_deduction || false;
+                
+                if (shouldResetToCurrentMonth && settings.current_month && settings.current_month !== new Date().getMonth() + 1) {
+                    console.log(`User was inactive for >5 hours. Resetting from month ${settings.current_month} to current month ${new Date().getMonth() + 1}`);
+                }
+                
                 // Note: demo_mode is kept as local-only state, not stored in database
                 
                 console.log('Loaded settings from database:', settings);
@@ -458,6 +567,71 @@ export const app = {
         }
     },
 
+    // Update user's last active timestamp
+    async updateLastActiveTimestamp(userId) {
+        try {
+            const now = new Date().toISOString();
+            
+            // First check if last_active column exists by trying to fetch it
+            const { data: existingSettings, error: fetchError } = await window.supa
+                .from('user_settings')
+                .select('last_active')
+                .eq('user_id', userId)
+                .limit(1);
+                
+            if (fetchError && fetchError.code === 'PGRST204') {
+                // Column doesn't exist, skip updating last_active
+                console.log('last_active column does not exist in user_settings table, skipping timestamp update');
+                return;
+            }
+            
+            const { error } = await window.supa
+                .from('user_settings')
+                .upsert({
+                    user_id: userId,
+                    last_active: now
+                }, {
+                    onConflict: 'user_id'
+                });
+                
+            if (error) {
+                if (error.code === 'PGRST204') {
+                    console.log('last_active column does not exist, skipping timestamp update');
+                } else {
+                    console.error('Error updating last active timestamp:', error);
+                }
+            } else {
+                console.log('Updated last active timestamp:', now);
+            }
+        } catch (e) {
+            console.error('Error in updateLastActiveTimestamp:', e);
+        }
+    },
+
+    // Check if user should be reset to current month based on inactivity
+    shouldResetToCurrentMonth(lastActiveString) {
+        if (!lastActiveString) {
+            console.log('No last_active timestamp found, keeping user\'s selected month');
+            return false; // If no timestamp, don't reset - keep user's preference
+        }
+
+        try {
+            const lastActive = new Date(lastActiveString);
+            const now = new Date();
+            const hoursSinceLastActive = (now - lastActive) / (1000 * 60 * 60); // Convert to hours
+            
+            const shouldReset = hoursSinceLastActive > 5;
+            console.log(`Last active: ${lastActive.toLocaleString()}`);
+            console.log(`Hours since last active: ${hoursSinceLastActive.toFixed(1)}`);
+            console.log(`Should reset to current month: ${shouldReset}`);
+            
+            return shouldReset;
+        } catch (e) {
+            console.error('Error parsing last_active timestamp:', e);
+            return false; // If error parsing, don't reset - keep user's preference
+        }
+    },
+
     setDefaultSettings() {
         this.usePreset = true;
         this.customWage = 200;
@@ -467,7 +641,7 @@ export const app = {
             saturday: [],
             sunday: []
         };
-        this.currentMonth = new Date().getMonth() + 1;
+        this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.pauseDeduction = false;
         this.demoMode = false;
     },
@@ -574,6 +748,10 @@ export const app = {
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
+                // Only include last_active if the column exists
+                if ('last_active' in existingSettings) {
+                    settingsData.last_active = new Date().toISOString();
+                }
             } else {
                 // No existing settings - try to save with common field names
                 settingsData.use_preset = this.usePreset;
@@ -582,6 +760,7 @@ export const app = {
                 settingsData.current_month = this.currentMonth;
                 settingsData.pause_deduction = this.pauseDeduction;
                 settingsData.custom_bonuses = this.customBonuses || {};
+                // For new settings, we'll try to include last_active and let it fail gracefully if column doesn't exist
             }
 
             console.log('Attempting to save settings data:', settingsData);
@@ -630,7 +809,7 @@ export const app = {
                 this.customWage = data.customWage || 200;
                 this.currentWageLevel = data.currentWageLevel || 1;
                 this.customBonuses = data.customBonuses || {};
-                this.currentMonth = data.currentMonth || new Date().getMonth() + 1;
+                this.currentMonth = data.currentMonth || new Date().getMonth() + 1; // Default to current month
                 this.pauseDeduction = data.pauseDeduction !== false;
                 this.demoMode = data.demoMode || false;
                 
@@ -699,7 +878,7 @@ export const app = {
                 }, 100);
                 
                 // Restore current month if it was changed from default
-                if (formState.currentMonth && formState.currentMonth !== new Date().getMonth() + 1) {
+                if (formState.currentMonth && formState.currentMonth !== new Date().getMonth() + 1) { // Compare to current month default
                     this.currentMonth = formState.currentMonth;
                     // Update the date grid for the restored month
                     this.populateDateGrid();
@@ -983,6 +1162,7 @@ export const app = {
         }
     },
     updateDisplay() {
+        console.log('updateDisplay: Month', this.currentMonth, 'Shifts:', this.shifts.length, 'Demo mode:', this.demoMode);
         this.updateHeader();
         this.updateStats();
         this.updateShiftList();
@@ -1016,11 +1196,32 @@ export const app = {
         document.getElementById('shiftCount').textContent = monthShifts.length;
     },
     updateShiftList() {
+        console.log('=== UPDATE SHIFT LIST DEBUG ===');
+        console.log('Current month (1-based):', this.currentMonth);
+        console.log('Filter month index (0-based):', this.currentMonth - 1);
+        console.log('Filter year:', this.YEAR);
+        console.log('Total shifts in this.shifts:', this.shifts.length);
+        
+        this.shifts.forEach((shift, index) => {
+            console.log(`Shift ${index}:`, {
+                id: shift.id,
+                date: shift.date,
+                month: shift.date.getMonth(),
+                year: shift.date.getFullYear(),
+                startTime: shift.startTime,
+                endTime: shift.endTime,
+                matchesFilter: shift.date.getMonth() === this.currentMonth - 1 && shift.date.getFullYear() === this.YEAR
+            });
+        });
+        
         const shiftList = document.getElementById('shiftList');
         const monthShifts = this.shifts.filter(shift =>
             shift.date.getMonth() === this.currentMonth - 1 &&
             shift.date.getFullYear() === this.YEAR
         );
+        
+        console.log('updateShiftList: Found', monthShifts.length, 'shifts for month', this.currentMonth);
+        
         let demoBannerHtml = '';
         if (this.demoMode) {
             demoBannerHtml = `
@@ -2439,5 +2640,199 @@ export const app = {
                 console.log('❌ Modal did not open properly');
             }
         }, 100);
-    }
+    },
+    // === DEBUG FUNCTIONS FOR TROUBLESHOOTING ===
+    
+    // Test basic database connectivity
+    async testDatabaseConnection() {
+        console.log('=== TESTING DATABASE CONNECTION ===');
+        
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            console.log('Current user:', user?.email);
+            
+            if (!user) {
+                console.error('❌ No user found');
+                return false;
+            }
+            
+            // Test basic select operation
+            console.log('Testing basic select operation...');
+            const { data: shifts, error: selectError } = await window.supa
+                .from('user_shifts')
+                .select('*')
+                .eq('user_id', user.id)
+                .limit(1);
+                
+            console.log('Select result:', { shifts, selectError });
+            
+            if (selectError) {
+                console.error('❌ Select operation failed:', selectError);
+                return false;
+            }
+            
+            console.log('✅ Database connection working');
+            return true;
+            
+        } catch (e) {
+            console.error('❌ Database connection test failed:', e);
+            return false;
+        }
+    },
+    
+    // Test database access and permissions
+    async testDatabaseAccess() {
+        console.log('=== TESTING DATABASE ACCESS AND PERMISSIONS ===');
+        
+        const { data: { user } } = await window.supa.auth.getUser();
+        console.log('Current user:', user?.email);
+        
+        if (!user) {
+            console.error('❌ No user found');
+            return;
+        }
+        
+        // Test 1: Select existing shifts
+        console.log('Test 1: Selecting existing shifts...');
+        const { data: existingShifts, error: selectError } = await window.supa
+            .from('user_shifts')
+            .select('*')
+            .eq('user_id', user.id);
+            
+        console.log('Existing shifts:', { existingShifts, selectError });
+        
+        // Test 2: Try inserting a test shift
+        console.log('Test 2: Attempting test insert...');
+        const testShift = {
+            user_id: user.id,
+            shift_date: '2025-01-20',
+            start_time: '10:00',
+            end_time: '18:00',
+            shift_type: 0
+        };
+        
+        const { data: insertData, error: insertError } = await window.supa
+            .from('user_shifts')
+            .insert(testShift)
+            .select()
+            .single();
+            
+        console.log('Insert test result:', { insertData, insertError });
+        
+        if (insertError) {
+            console.error('❌ Insert failed. Error details:', {
+                code: insertError.code,
+                message: insertError.message,
+                details: insertError.details,
+                hint: insertError.hint
+            });
+            
+            // Check if it's a permissions issue
+            if (insertError.code === '42501' || insertError.message?.includes('permission') || insertError.message?.includes('policy')) {
+                console.error('🚫 This appears to be a Row Level Security (RLS) permissions issue');
+                console.error('The user may not have permission to insert data');
+            }
+        } else {
+            console.log('✅ Insert successful, cleaning up test data...');
+            // Clean up test data
+            if (insertData?.id) {
+                await window.supa
+                    .from('user_shifts')
+                    .delete()
+                    .eq('id', insertData.id);
+                console.log('✅ Test data cleaned up');
+            }
+        }
+        
+        // Test 3: Check user session validity
+        console.log('Test 3: Checking session validity...');
+        const { data: session, error: sessionError } = await window.supa.auth.getSession();
+        console.log('Session check:', { 
+            hasSession: !!session.session, 
+            sessionError,
+            accessToken: session.session?.access_token ? 'Present' : 'Missing',
+            refreshToken: session.session?.refresh_token ? 'Present' : 'Missing'
+        });
+    },
+    
+    // Test network connectivity to Supabase
+    async testNetworkConnection() {
+        console.log('=== TESTING NETWORK CONNECTION ===');
+        
+        try {
+            // Test if we can reach Supabase at all
+            const response = await fetch(window.supa.supabaseUrl + '/rest/v1/', {
+                method: 'HEAD',
+                headers: {
+                    'apikey': window.supa.supabaseKey
+                }
+            });
+            
+            console.log('Network test response:', {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok
+            });
+            
+            if (response.ok) {
+                console.log('✅ Network connection to Supabase is working');
+                return true;
+            } else {
+                console.error('❌ Network connection issue. Status:', response.status);
+                return false;
+            }
+            
+        } catch (e) {
+            console.error('❌ Network connection failed:', e);
+            return false;
+        }
+    },
+    
+    // Comprehensive diagnostic function
+    async runCompleteDiagnostic() {
+        console.log('🔍 RUNNING COMPLETE DIAGNOSTIC FOR SHIFT ADDITION PROBLEMS');
+        console.log('================================================');
+        
+        // Step 1: Test network
+        console.log('Step 1: Testing network connection...');
+        const networkOk = await this.testNetworkConnection();
+        
+        // Step 2: Test database connection
+        console.log('Step 2: Testing database connection...');
+        const dbConnectionOk = await this.testDatabaseConnection();
+        
+        // Step 3: Test database access and permissions
+        console.log('Step 3: Testing database access and permissions...');
+        await this.testDatabaseAccess();
+        
+        // Step 4: Check form state
+        console.log('Step 4: Checking form state...');
+        const startHour = document.getElementById('startHour')?.value;
+        const endHour = document.getElementById('endHour')?.value;
+        const selectedDate = this.selectedDate;
+        
+        console.log('Form state:', {
+            selectedDate,
+            startHour,
+            endHour,
+            demoMode: this.demoMode
+        });
+        
+        // Step 5: Summary
+        console.log('================================================');
+        console.log('DIAGNOSTIC SUMMARY:');
+        console.log('Network:', networkOk ? '✅ OK' : '❌ FAILED');
+        console.log('Database Connection:', dbConnectionOk ? '✅ OK' : '❌ FAILED');
+        console.log('Form has required data:', (selectedDate && startHour && endHour) ? '✅ OK' : '❌ MISSING');
+        console.log('Demo mode:', this.demoMode ? '⚠️ ACTIVE (may prevent saves)' : '✅ DISABLED');
+        
+        if (!networkOk) {
+            console.log('🔧 RECOMMENDATION: Check internet connection and Supabase service status');
+        }
+        if (!dbConnectionOk) {
+            console.log('🔧 RECOMMENDATION: Check Supabase configuration and API keys');
+        }
+    },
+
+    // === END DEBUG FUNCTIONS ===
 }
