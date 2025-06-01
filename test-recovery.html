@@ -48,22 +48,22 @@
         <h3>Test lenker:</h3>
         
         <p><strong>1. Hash-basert recovery token (Supabase standard):</strong></p>
-        <a href="/kalkulator/index.html#access_token=test_token&type=recovery&token_type=bearer" class="btn">
+        <a href="/kalkulator/index.html#access_token=test_token&expires_in=3600&refresh_token=test_refresh&token_type=bearer&type=recovery" class="btn">
             Test med hash token
         </a>
         <br><code>/kalkulator/index.html#access_token=test_token&type=recovery&token_type=bearer</code>
         
         <p><strong>2. Query-basert recovery token:</strong></p>
-        <a href="/kalkulator/index.html?access_token=test_token&type=recovery&token_type=bearer" class="btn">
+        <a href="/kalkulator/index.html?access_token=test_token&type=recovery&token_type=bearer&expires_in=3600" class="btn">
             Test med query token
         </a>
         <br><code>/kalkulator/index.html?access_token=test_token&type=recovery&token_type=bearer</code>
         
-        <p><strong>3. Legacy recovery format:</strong></p>
-        <a href="/kalkulator/index.html?token=test_token&type=recovery" class="btn">
-            Test med legacy token
+        <p><strong>3. Enkel recovery type test:</strong></p>
+        <a href="/kalkulator/index.html#type=recovery" class="btn">
+            Test med bare recovery type
         </a>
-        <br><code>/kalkulator/index.html?token=test_token&type=recovery</code>
+        <br><code>/kalkulator/index.html#type=recovery</code>
         
         <h3>Hvordan teste:</h3>
         <ol>

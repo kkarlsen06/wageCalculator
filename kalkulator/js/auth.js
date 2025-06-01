@@ -3,6 +3,11 @@ let supa;
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
 document.addEventListener('DOMContentLoaded', async function() {
+  console.log('=== DOM LOADED - Starting auth initialization ===');
+  console.log('Current URL:', window.location.href);
+  console.log('Hash:', window.location.hash);
+  console.log('Search:', window.location.search);
+
   // Initialize Supabase client using global supabase object
   supa = window.supabase.createClient(
     "https://iuwjdacxbirhmsglcbxp.supabase.co",
@@ -14,17 +19,22 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   let shouldDisplayLoginPage = true; // Assume we display the login page by default
 
+  // Check if we're in password recovery mode BEFORE checking session
+  const isRecoveryFlow = isInRecoveryMode();
+  console.log('Initial recovery mode check:', isRecoveryFlow);
+
   // Immediate redirect if already authenticated and not in a recovery flow
   try {
     const { data: { session } } = await supa.auth.getSession();
-    // Check if the URL hash indicates a password recovery attempt
-    const isRecoveryUrl = window.location.hash.includes('type=recovery');
 
-    if (session && !isRecoveryUrl && !isInPasswordRecovery) { // isInPasswordRecovery is a global flag
+    if (session && !isRecoveryFlow && !isInPasswordRecovery) {
       console.log('Immediate redirect: existing session, not in recovery flow, redirecting to app.html');
       shouldDisplayLoginPage = false;
       window.location.replace('app.html');
       return; // Stop further script execution on this page if redirected
+    } else if (session && isRecoveryFlow) {
+      console.log('Session found but in recovery mode - will show password reset form');
+      isInPasswordRecovery = true;
     }
   } catch (e) {
     console.error('Error checking session for immediate redirect:', e);
@@ -421,50 +431,59 @@ function isInRecoveryMode() {
   const hasRecoveryInQuery = urlParams.has('token') && urlParams.get('type') === 'recovery';
   const hasRecoveryInSearch = window.location.search.includes('access_token') && window.location.search.includes('type=recovery');
   
+  // Also check for the specific recovery type parameter
+  const hasRecoveryType = hashFragment.includes('type=recovery') || window.location.search.includes('type=recovery');
+  
+  const isRecovery = hasRecoveryInHash || hasRecoveryInQuery || hasRecoveryInSearch || hasRecoveryType;
+  
   // Debug logging
   console.log('Recovery mode check:', {
     hashFragment,
     search: window.location.search,
     hasRecoveryInHash,
     hasRecoveryInQuery,
-    hasRecoveryInSearch
+    hasRecoveryInSearch,
+    hasRecoveryType,
+    isRecovery
   });
   
-  return hasRecoveryInHash || hasRecoveryInQuery || hasRecoveryInSearch;
+  return isRecovery;
 }
 
 function setupAuthStateHandling() {
   // Redirect if already logged in
   supa.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth state change:', event, session);
+    console.log('Auth state change:', event, session?.user?.email || 'no session');
     console.log('Is in recovery mode:', isInRecoveryMode());
     console.log('Is in password recovery flag:', isInPasswordRecovery);
   
-    // Don't redirect if we're in password recovery mode
-    if (session && !isInRecoveryMode() && !isInPasswordRecovery) {
-      console.log('User logged in, checking profile completion');
-      await checkAndShowProfileCompletion();
-    } else if (event === 'PASSWORD_RECOVERY') {
-      // Handle password recovery
+    // Handle different auth events
+    if (event === 'PASSWORD_RECOVERY') {
       console.log('PASSWORD_RECOVERY event triggered');
       isInPasswordRecovery = true;
       showPasswordResetForm();
+    } else if (event === 'SIGNED_IN') {
+      // Check if this sign in is from a recovery flow
+      if (isInRecoveryMode() || isInPasswordRecovery) {
+        console.log('User signed in via recovery tokens, showing password reset form');
+        isInPasswordRecovery = true;
+        showPasswordResetForm();
+      } else {
+        console.log('Normal sign in, checking profile completion');
+        await checkAndShowProfileCompletion();
+      }
     } else if (event === 'TOKEN_REFRESHED' && (isInRecoveryMode() || isInPasswordRecovery)) {
-      // User is in recovery mode and token refreshed, show reset form
       console.log('Token refreshed in recovery mode');
       isInPasswordRecovery = true;
       showPasswordResetForm();
-    } else if (session && (isInRecoveryMode() || isInPasswordRecovery)) {
-      // User has valid session from recovery tokens, show password reset form
-      console.log('User authenticated via recovery tokens, showing password reset form');
-      isInPasswordRecovery = true;
-      showPasswordResetForm();
+    } else if (session && !isInRecoveryMode() && !isInPasswordRecovery && event !== 'SIGNED_OUT') {
+      console.log('Session exists, not in recovery, checking profile completion');
+      await checkAndShowProfileCompletion();
     }
   });
 
-  // Check current session
+  // Check current session - but respect recovery mode
   (async () => {
-    // Don't auto-redirect if we're handling password recovery
     if (!isInRecoveryMode() && !isInPasswordRecovery) {
       const { data: { session } } = await supa.auth.getSession();
       if (session) {
@@ -473,6 +492,11 @@ function setupAuthStateHandling() {
       }
     } else {
       console.log('Recovery mode detected, skipping auto-redirect');
+      // If we're in recovery mode, make sure the form shows
+      if (isInRecoveryMode()) {
+        isInPasswordRecovery = true;
+        setTimeout(() => showPasswordResetForm(), 200);
+      }
     }
   })();
 }
@@ -480,28 +504,15 @@ function setupAuthStateHandling() {
 // Handle password recovery from email link
 async function handlePasswordRecovery() {
   console.log("handlePasswordRecovery called");
-  const isRecovery = window.location.hash.includes('type=recovery') || 
-                    window.location.search.includes('type=recovery') ||
-                    isInRecoveryMode();
+  const isRecovery = isInRecoveryMode();
                     
   if (isRecovery) {
     console.log("Password recovery type detected in URL.");
     isInPasswordRecovery = true; // Set the flag
     document.body.style.visibility = 'visible'; // Make body visible for recovery form
     
-    // Try to handle the session tokens first
-    try {
-      const { data, error } = await supa.auth.getSession();
-      if (error) {
-        console.error('Error getting session during recovery:', error);
-      } else {
-        console.log('Session during recovery:', data.session ? 'Found' : 'Not found');
-      }
-    } catch (err) {
-      console.error('Exception getting session during recovery:', err);
-    }
-    
-    // Show the password reset form
+    // Show the password reset form immediately
+    console.log('Showing password reset form for recovery flow');
     setTimeout(() => {
       showPasswordResetForm();
     }, 100); // Small delay to ensure DOM is ready
@@ -602,6 +613,12 @@ async function updatePassword(newPassword, confirmPassword) {
             return;
         }
         
+        // Verify this is actually a recovery session by checking user metadata or URL
+        const isRecoverySession = isInRecoveryMode() || isInPasswordRecovery;
+        if (!isRecoverySession) {
+            console.warn('Attempting password update without recovery context');
+        }
+        
         console.log('Updating password for user:', session.user.email);
         
         const { error } = await supa.auth.updateUser({
@@ -618,9 +635,14 @@ async function updatePassword(newPassword, confirmPassword) {
             // Clear the recovery flag and hash, then redirect to app
             isInPasswordRecovery = false;
             window.location.hash = '';
-            setTimeout(() => {
-                window.location.href = 'app.html';
-            }, 2000);
+            
+            // Sign out and then redirect to login to force fresh authentication
+            setTimeout(async () => {
+                await supa.auth.signOut();
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 500);
+            }, 1500);
         }
     } catch (err) {
         console.error('Password update exception:', err);
