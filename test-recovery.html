@@ -47,7 +47,13 @@
         
         <h3>Test lenker:</h3>
         
-        <p><strong>1. Hash-basert recovery token (Supabase standard):</strong></p>
+        <p><strong>1. Simuler Supabase verify redirect (som din lenke):</strong></p>
+        <a href="/kalkulator/index.html" onclick="sessionStorage.setItem('supabase_recovery_flow', 'true'); return true;" class="btn">
+            Test Supabase verify redirect
+        </a>
+        <br><code>Simulerer redirect fra supabase.co/auth/v1/verify</code>
+        
+        <p><strong>2. Hash-basert recovery token (Supabase standard):</strong></p>
         <a href="/kalkulator/index.html#access_token=test_token&expires_in=3600&refresh_token=test_refresh&token_type=bearer&type=recovery" class="btn">
             Test med hash token
         </a>

@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   console.log('Current URL:', window.location.href);
   console.log('Hash:', window.location.hash);
   console.log('Search:', window.location.search);
+  console.log('Pathname:', window.location.pathname);
 
   // Initialize Supabase client using global supabase object
   supa = window.supabase.createClient(
@@ -16,6 +17,54 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // Make supa available globally
   window.supa = supa;
+  
+  // Check if Supabase has processed the URL automatically
+  console.log('Waiting for Supabase to process URL tokens...');
+  await new Promise(resolve => setTimeout(resolve, 100)); // Give Supabase time to process
+  
+  // Set up auth state listening IMMEDIATELY to catch any recovery events
+  supa.auth.onAuthStateChange(async (event, session) => {
+    console.log('=== IMMEDIATE AUTH STATE CHANGE ===', event, session?.user?.email || 'no session');
+    
+    if (event === 'PASSWORD_RECOVERY') {
+      console.log('PASSWORD_RECOVERY event detected immediately');
+      isInPasswordRecovery = true;
+      document.body.style.visibility = 'visible';
+      setTimeout(() => showPasswordResetForm(), 50);
+      return;
+    }
+    
+    if (event === 'SIGNED_IN' && (isInRecoveryMode() || sessionStorage.getItem('supabase_recovery_flow') === 'true')) {
+      console.log('SIGNED_IN via recovery flow detected');
+      isInPasswordRecovery = true;
+      document.body.style.visibility = 'visible';
+      setTimeout(() => showPasswordResetForm(), 50);
+      return;
+    }
+  });
+  
+  // Check immediately if we have a recovery session
+  try {
+    const { data: { session } } = await supa.auth.getSession();
+    console.log('=== IMMEDIATE SESSION CHECK ===');
+    console.log('Session exists:', !!session);
+    console.log('Is recovery mode:', isInRecoveryMode());
+    console.log('Recovery flow in sessionStorage:', sessionStorage.getItem('supabase_recovery_flow'));
+    
+    if (session && (isInRecoveryMode() || sessionStorage.getItem('supabase_recovery_flow') === 'true')) {
+      console.log('Found recovery session immediately, showing password reset form');
+      isInPasswordRecovery = true;
+      document.body.style.visibility = 'visible';
+      setTimeout(() => showPasswordResetForm(), 100);
+      return;
+    }
+  } catch (e) {
+    console.error('Error in immediate session check:', e);
+  }
+  
+  // Check if Supabase has processed the URL automatically
+  console.log('Waiting for Supabase to process URL tokens...');
+  await new Promise(resolve => setTimeout(resolve, 100)); // Give Supabase time to process
   
   let shouldDisplayLoginPage = true; // Assume we display the login page by default
 
@@ -425,27 +474,54 @@ async function sendMagicLink(email) {
 function isInRecoveryMode() {
   const hashFragment = window.location.hash;
   const urlParams = new URLSearchParams(window.location.search);
+  const currentUrl = window.location.href;
   
   // Check for recovery tokens in either hash fragment or query parameters
   const hasRecoveryInHash = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
   const hasRecoveryInQuery = urlParams.has('token') && urlParams.get('type') === 'recovery';
   const hasRecoveryInSearch = window.location.search.includes('access_token') && window.location.search.includes('type=recovery');
   
-  // Also check for the specific recovery type parameter
+  // Check for the specific recovery type parameter in different formats
   const hasRecoveryType = hashFragment.includes('type=recovery') || window.location.search.includes('type=recovery');
   
-  const isRecovery = hasRecoveryInHash || hasRecoveryInQuery || hasRecoveryInSearch || hasRecoveryType;
+  // Check if we came from Supabase verify URL (even if tokens are not visible anymore)
+  const cameFromSupabaseVerify = document.referrer.includes('supabase.co/auth/v1/verify') || 
+                                sessionStorage.getItem('supabase_recovery_flow') === 'true';
+  
+  // Parse hash fragment as URL parameters if it contains access_token
+  let hashParams = null;
+  if (hashFragment.startsWith('#') && hashFragment.includes('access_token')) {
+    try {
+      hashParams = new URLSearchParams(hashFragment.substring(1));
+    } catch (e) {
+      console.error('Error parsing hash fragment:', e);
+    }
+  }
+  
+  const hasHashRecoveryType = hashParams && hashParams.get('type') === 'recovery';
+  
+  const isRecovery = hasRecoveryInHash || hasRecoveryInQuery || hasRecoveryInSearch || 
+                    hasRecoveryType || cameFromSupabaseVerify || hasHashRecoveryType;
   
   // Debug logging
   console.log('Recovery mode check:', {
+    currentUrl,
     hashFragment,
     search: window.location.search,
     hasRecoveryInHash,
     hasRecoveryInQuery,
     hasRecoveryInSearch,
     hasRecoveryType,
+    hasHashRecoveryType,
+    cameFromSupabaseVerify,
+    referrer: document.referrer,
     isRecovery
   });
+  
+  // If we detect recovery mode, mark it in sessionStorage for future checks
+  if (isRecovery) {
+    sessionStorage.setItem('supabase_recovery_flow', 'true');
+  }
   
   return isRecovery;
 }
@@ -503,10 +579,21 @@ function setupAuthStateHandling() {
 
 // Handle password recovery from email link
 async function handlePasswordRecovery() {
-  console.log("handlePasswordRecovery called");
+  console.log("=== handlePasswordRecovery called ===");
   const isRecovery = isInRecoveryMode();
+  
+  // Also check if Supabase has set any auth-related data
+  const hashFragment = window.location.hash;
+  const hasAuthFragment = hashFragment.includes('access_token') || hashFragment.includes('refresh_token');
+  
+  console.log('Recovery check results:', {
+    isRecovery,
+    hasAuthFragment,
+    hash: hashFragment,
+    sessionStorageFlag: sessionStorage.getItem('supabase_recovery_flow')
+  });
                     
-  if (isRecovery) {
+  if (isRecovery || hasAuthFragment) {
     console.log("Password recovery type detected in URL.");
     isInPasswordRecovery = true; // Set the flag
     document.body.style.visibility = 'visible'; // Make body visible for recovery form
@@ -635,6 +722,7 @@ async function updatePassword(newPassword, confirmPassword) {
             // Clear the recovery flag and hash, then redirect to app
             isInPasswordRecovery = false;
             window.location.hash = '';
+            sessionStorage.removeItem('supabase_recovery_flow');
             
             // Sign out and then redirect to login to force fresh authentication
             setTimeout(async () => {
@@ -659,6 +747,7 @@ function cancelPasswordReset() {
     // Clear the recovery flag and hash
     isInPasswordRecovery = false;
     window.location.hash = '';
+    sessionStorage.removeItem('supabase_recovery_flow');
     
     // Hide reset form and show login form
     const resetForm = document.getElementById('reset-password-form');
