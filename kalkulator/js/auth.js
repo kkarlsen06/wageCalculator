@@ -421,6 +421,15 @@ function isInRecoveryMode() {
   const hasRecoveryInQuery = urlParams.has('token') && urlParams.get('type') === 'recovery';
   const hasRecoveryInSearch = window.location.search.includes('access_token') && window.location.search.includes('type=recovery');
   
+  // Debug logging
+  console.log('Recovery mode check:', {
+    hashFragment,
+    search: window.location.search,
+    hasRecoveryInHash,
+    hasRecoveryInQuery,
+    hasRecoveryInSearch
+  });
+  
   return hasRecoveryInHash || hasRecoveryInQuery || hasRecoveryInSearch;
 }
 
@@ -471,18 +480,43 @@ function setupAuthStateHandling() {
 // Handle password recovery from email link
 async function handlePasswordRecovery() {
   console.log("handlePasswordRecovery called");
-  if (window.location.hash.includes('type=recovery')) {
-    console.log("Password recovery type detected in URL hash.");
+  const isRecovery = window.location.hash.includes('type=recovery') || 
+                    window.location.search.includes('type=recovery') ||
+                    isInRecoveryMode();
+                    
+  if (isRecovery) {
+    console.log("Password recovery type detected in URL.");
     isInPasswordRecovery = true; // Set the flag
     document.body.style.visibility = 'visible'; // Make body visible for recovery form
+    
+    // Try to handle the session tokens first
+    try {
+      const { data, error } = await supa.auth.getSession();
+      if (error) {
+        console.error('Error getting session during recovery:', error);
+      } else {
+        console.log('Session during recovery:', data.session ? 'Found' : 'Not found');
+      }
+    } catch (err) {
+      console.error('Exception getting session during recovery:', err);
+    }
+    
+    // Show the password reset form
+    setTimeout(() => {
+      showPasswordResetForm();
+    }, 100); // Small delay to ensure DOM is ready
   }
 }
 
 // Show password reset form
 function showPasswordResetForm() {
+    console.log("Showing password reset form");
+    
     // Hide normal login form and forgot password form
     if (window.authElements?.authBox) window.authElements.authBox.style.display = 'none';
+    if (window.authElements?.signupCard) window.authElements.signupCard.style.display = 'none';
     if (window.authElements?.forgotCard) window.authElements.forgotCard.style.display = 'none';
+    if (window.authElements?.completeProfileCard) window.authElements.completeProfileCard.style.display = 'none';
     
     // Create or show password reset form
     let resetForm = document.getElementById('reset-password-form');
@@ -518,12 +552,31 @@ function createPasswordResetForm() {
     updateBtn.onclick = () => updatePassword(newPasswordInp.value, confirmPasswordInp.value);
     cancelBtn.onclick = () => cancelPasswordReset();
     
+    // Add enter key support for password reset form
+    newPasswordInp.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            confirmPasswordInp.focus();
+        }
+    });
+    
+    confirmPasswordInp.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            updateBtn.click();
+        }
+    });
+    
     return resetForm;
 }
 
 // Update password
 async function updatePassword(newPassword, confirmPassword) {
     const resetMsg = document.getElementById('reset-msg');
+    const updateBtn = document.getElementById('update-password-btn');
+    
+    // Reset message styling
+    resetMsg.style.color = 'var(--danger)';
     
     if (!newPassword || newPassword.length < 6) {
         resetMsg.textContent = 'Passordet må være minst 6 tegn';
@@ -535,13 +588,29 @@ async function updatePassword(newPassword, confirmPassword) {
         return;
     }
     
+    // Disable button during update
+    updateBtn.disabled = true;
+    updateBtn.textContent = 'Oppdaterer...';
+    resetMsg.textContent = '';
+    
     try {
+        // First verify we have a session from the recovery link
+        const { data: { session } } = await supa.auth.getSession();
+        
+        if (!session) {
+            resetMsg.textContent = 'Ugyldig eller utløpt tilbakestillingslenke. Prøv å be om en ny lenke.';
+            return;
+        }
+        
+        console.log('Updating password for user:', session.user.email);
+        
         const { error } = await supa.auth.updateUser({
             password: newPassword
         });
         
         if (error) {
-            resetMsg.textContent = error.message;
+            console.error('Password update error:', error);
+            resetMsg.textContent = error.message || 'Kunne ikke oppdatere passord';
         } else {
             resetMsg.style.color = 'var(--success)';
             resetMsg.textContent = 'Passord oppdatert! Omdirigerer...';
@@ -554,8 +623,12 @@ async function updatePassword(newPassword, confirmPassword) {
             }, 2000);
         }
     } catch (err) {
-        console.error('Password update error:', err);
-        resetMsg.textContent = 'Kunne ikke oppdatere passord';
+        console.error('Password update exception:', err);
+        resetMsg.textContent = 'Kunne ikke oppdatere passord. Prøv igjen.';
+    } finally {
+        // Re-enable button
+        updateBtn.disabled = false;
+        updateBtn.textContent = 'Oppdater passord';
     }
 }
 

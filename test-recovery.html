@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Recovery Link</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-box">
+        <h1>Test Password Recovery</h1>
+        <p>Denne siden lar deg teste reset passord-funksjonaliteten ved å simulere lenker fra Supabase email.</p>
+        
+        <h3>Test lenker:</h3>
+        
+        <p><strong>1. Hash-basert recovery token (Supabase standard):</strong></p>
+        <a href="/kalkulator/index.html#access_token=test_token&type=recovery&token_type=bearer" class="btn">
+            Test med hash token
+        </a>
+        <br><code>/kalkulator/index.html#access_token=test_token&type=recovery&token_type=bearer</code>
+        
+        <p><strong>2. Query-basert recovery token:</strong></p>
+        <a href="/kalkulator/index.html?access_token=test_token&type=recovery&token_type=bearer" class="btn">
+            Test med query token
+        </a>
+        <br><code>/kalkulator/index.html?access_token=test_token&type=recovery&token_type=bearer</code>
+        
+        <p><strong>3. Legacy recovery format:</strong></p>
+        <a href="/kalkulator/index.html?token=test_token&type=recovery" class="btn">
+            Test med legacy token
+        </a>
+        <br><code>/kalkulator/index.html?token=test_token&type=recovery</code>
+        
+        <h3>Hvordan teste:</h3>
+        <ol>
+            <li>Klikk på en av lenkene over</li>
+            <li>Du skal automatisk se reset passord-skjemaet</li>
+            <li>Skriv inn et nytt passord (minst 6 tegn)</li>
+            <li>Bekreft passordet</li>
+            <li>Trykk "Oppdater passord"</li>
+        </ol>
+        
+        <p><strong>Merk:</strong> Disse er test-tokens og vil ikke fungere med ekte Supabase, men vil vise skjemaet slik at du kan teste brukergrensesnittet.</p>
+        
+        <a href="/kalkulator/" class="btn">Tilbake til kalkulator</a>
+    </div>
+</body>
+</html>

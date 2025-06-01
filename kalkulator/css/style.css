@@ -41,6 +41,30 @@ html {
   to { transform: rotate(360deg); }
 }
 
+/* Calendar cell animation - animate in row by row, left to right */
+@keyframes calendarCellFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Special animation for other-month cells */
+@keyframes calendarCellFadeInOtherMonth {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  to {
+    opacity: 0.3;
+    transform: scale(1) translateY(0);
+  }
+}
+
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -380,6 +404,9 @@ input[type="time"].form-control[value=""]:focus {
   cursor: pointer;
   font-size: 14px;
   transition: all var(--speed-normal) var(--ease-default);
+  /* Initially hidden for animation */
+  opacity: 0;
+  animation: calendarCellFadeIn 0.3s var(--ease-default) forwards;
 }
 .date-cell:hover:not(.disabled) {
   transform: translateY(-2px);
@@ -490,6 +517,35 @@ input[type="time"].form-control[value=""]:focus {
   border: 1px solid var(--border);
   animation: gradientSlide 0.5s ease;
   box-shadow: 0 16px 48px -12px rgba(0, 255, 136, 0.2);
+}
+
+/* Center settings modal on screen */
+#settingsModal.active {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#settingsModal .modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  z-index: 1300;
+  max-width: 480px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  border-radius: 16px;
+  box-shadow: 0 16px 48px -12px rgba(0, 255, 136, 0.2);
+}
+@media (max-width: 600px) {
+  #settingsModal .modal-content {
+    width: 98vw;
+    max-width: 99vw;
+    border-radius: 10px;
+    padding: 0 2vw;
+  }
 }
 
 /* Dynamic height for settings modal */
@@ -1336,12 +1392,16 @@ input:checked + .slider:before {
   position: relative;
   min-height: 45px;
   text-align: center;
+  /* Initially hidden for animation */
+  opacity: 0;
+  animation: calendarCellFadeIn 0.3s var(--ease-default) forwards;
 }
 
 .calendar-cell.other-month {
-  opacity: 0.3;
   background: rgba(255, 255, 255, 0.02);
   border: none;
+  /* Use special animation that ends with opacity 0.3 */
+  animation: calendarCellFadeInOtherMonth 0.3s var(--ease-default) forwards;
 }
 
 .calendar-cell.has-shifts {
@@ -1598,6 +1658,40 @@ input:checked + .slider:before {
 @keyframes fadeIn {
   to {
     opacity: 1;
+  }
+}
+
+/* New modal element animations */
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleInDelayed {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 

@@ -987,6 +987,10 @@ export const app = {
             return;
         }
         
+        // Check if current tab is the wage tab
+        const currentActiveTab = document.querySelector('.tab-btn.active');
+        const isWageTab = currentActiveTab && currentActiveTab.textContent === 'Lønn';
+        
         // Temporarily reset height to auto to get accurate measurements
         modalContent.style.height = 'auto';
         modalContent.style.maxHeight = '80vh';
@@ -998,30 +1002,43 @@ export const app = {
             const tabNav = modal.querySelector('.tab-nav');
             const headerHeight = (modalHeader?.offsetHeight || 0) + (tabNav?.offsetHeight || 0);
             
-            // Calculate the content height needed
-            const contentHeight = activeTabContent.scrollHeight;
-            const totalNeededHeight = headerHeight + contentHeight + 40; // Add padding
+            let finalHeight;
             
-            // Set reasonable limits
-            const minHeight = 250;
-            const maxHeight = Math.floor(window.innerHeight * 0.8); // 80vh
-            
-            const finalHeight = Math.min(Math.max(totalNeededHeight, minHeight), maxHeight);
+            if (isWageTab) {
+                // For wage tab, use dynamic height as before
+                const contentHeight = activeTabContent.scrollHeight;
+                const totalNeededHeight = headerHeight + contentHeight + 40; // Add padding
+                
+                // Set reasonable limits
+                const minHeight = 250;
+                const maxHeight = Math.floor(window.innerHeight * 0.8); // 80vh
+                
+                finalHeight = Math.min(Math.max(totalNeededHeight, minHeight), maxHeight);
+                
+                // Manage overflow based on whether content fits
+                if (totalNeededHeight > maxHeight) {
+                    modalContent.style.overflowY = 'auto';
+                    activeTabContent.style.overflowY = 'visible';
+                } else {
+                    modalContent.style.overflowY = 'hidden';
+                    activeTabContent.style.overflowY = 'visible';
+                }
+                
+                console.log(`Modal height adjusted (wage tab): ${finalHeight}px (dynamic)`);
+            } else {
+                // For all other tabs, use a constant height
+                const constantHeight = 400; // Fixed height for non-wage tabs
+                finalHeight = constantHeight;
+                
+                // Always set overflow to auto for constant height tabs
+                modalContent.style.overflowY = 'auto';
+                activeTabContent.style.overflowY = 'visible';
+                
+                console.log(`Modal height adjusted (non-wage tab): ${finalHeight}px (constant)`);
+            }
             
             // Apply the calculated height
             modalContent.style.height = `${finalHeight}px`;
-            
-            // Manage overflow based on whether content fits
-            if (totalNeededHeight > maxHeight) {
-                modalContent.style.overflowY = 'auto';
-                // Ensure the active tab content can scroll
-                activeTabContent.style.overflowY = 'visible';
-            } else {
-                modalContent.style.overflowY = 'hidden';
-                activeTabContent.style.overflowY = 'visible';
-            }
-            
-            console.log(`Modal height adjusted: ${finalHeight}px (content: ${contentHeight}px, header: ${headerHeight}px, needed: ${totalNeededHeight}px)`);
         });
     },
     
@@ -1440,6 +1457,20 @@ export const app = {
         const targetLeft = (viewportWidth - targetWidth) / 2;
         const targetTop = Math.max(20, (viewportHeight - targetHeight) / 2); // Ensure top padding
         
+        // Create a placeholder element to maintain grid layout
+        const placeholder = document.createElement('div');
+        placeholder.className = 'breakdown-card-placeholder';
+        placeholder.style.cssText = `
+            width: ${originalRect.width}px;
+            height: ${originalRect.height}px;
+            opacity: 0;
+            pointer-events: none;
+        `;
+        placeholder.dataset.originalCard = type;
+        
+        // Insert placeholder before removing the card
+        originalParent.insertBefore(placeholder, card);
+        
         // Move card to document.body to escape any stacking context issues
         document.body.appendChild(card);
         
@@ -1471,7 +1502,7 @@ export const app = {
             
         }, 80);
         
-        // Create title header (with delay to appear after morph)
+        // Create title header (animate in immediately after modal opens)
         setTimeout(() => {
             // Create title with icon
             const titleContainer = document.createElement('div');
@@ -1483,7 +1514,7 @@ export const app = {
                 gap: 12px;
                 margin-bottom: 20px;
                 opacity: 0;
-                animation: fadeIn 0.4s var(--ease-default) forwards;
+                animation: slideInFromBottom 0.5s var(--ease-default) 0.1s forwards;
             `;
             
             const icon = document.createElement('div');
@@ -1526,25 +1557,33 @@ export const app = {
             // Insert title container as first child
             card.insertBefore(titleContainer, card.firstChild);
             
-            // Create close button
+            // Create close button with animation
             const closeBtn = document.createElement('button');
             closeBtn.className = 'close-btn';
             closeBtn.innerHTML = '×';
+            closeBtn.style.cssText = `
+                opacity: 0;
+                animation: scaleInDelayed 0.4s var(--ease-default) 0.2s forwards;
+            `;
             closeBtn.onclick = (e) => {
                 e.stopPropagation();
                 this.closeBreakdown();
             };
             card.appendChild(closeBtn);
         
-        // Build calendar view
+        // Build calendar view with animation
         const calendarContainer = document.createElement('div');
         calendarContainer.className = 'breakdown-calendar';
+        calendarContainer.style.cssText = `
+            opacity: 0;
+            animation: slideInFromBottom 0.6s var(--ease-default) 0.3s forwards;
+        `;
         card.appendChild(calendarContainer);
         
-        // Create calendar for current month
+        // Create calendar for current month - start immediately
         this.createBreakdownCalendar(calendarContainer, type);
         
-        }, 300); // Delay for morph animation to complete
+        }, 100); // Minimal delay to let modal start morphing
     },
 
     // Create breakdown calendar view
@@ -1559,9 +1598,13 @@ export const app = {
 
         container.innerHTML = '';
 
-        // Add calendar header with day names
+        // Add calendar header with day names (with animation)
         const header = document.createElement('div');
         header.className = 'calendar-header';
+        header.style.cssText = `
+            opacity: 0;
+            animation: slideInFromTop 0.4s var(--ease-default) 0.2s forwards;
+        `;
         ['M', 'T', 'O', 'T', 'F', 'L', 'S'].forEach(day => {
             const dayHeader = document.createElement('div');
             dayHeader.textContent = day;
@@ -1597,6 +1640,13 @@ export const app = {
             const cell = document.createElement('div');
             cell.className = 'calendar-cell';
             
+            // Calculate animation delay based on row and column position
+            // Row by row, left to right animation - start while modal is opening
+            const row = Math.floor(i / 7);
+            const col = i % 7;
+            const animationDelay = 0.3 + (row * 7 + col) * 0.035; // Start early while modal morphs, 35ms between each cell
+            cell.style.animationDelay = `${animationDelay}s`;
+            
             const dayNumber = document.createElement('div');
             dayNumber.className = 'calendar-day-number';
             dayNumber.textContent = cellDate.getDate();
@@ -1604,6 +1654,8 @@ export const app = {
             // Style for current month vs other months
             if (cellDate.getMonth() !== monthIdx) {
                 cell.classList.add('other-month');
+                // Set custom animation for other-month cells that ends with opacity 0.3
+                cell.style.setProperty('--final-opacity', '0.3');
             }
 
             const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
@@ -1656,6 +1708,10 @@ export const app = {
             header.classList.remove('hidden');
         }
         
+        // Clean up any existing placeholders
+        const placeholders = document.querySelectorAll('.breakdown-card-placeholder');
+        placeholders.forEach(placeholder => placeholder.remove());
+        
         if (backdrop) {
             backdrop.classList.remove('active');
             
@@ -1692,25 +1748,33 @@ export const app = {
                 expandedCard.style.zIndex = '';
                 expandedCard.style.borderRadius = '';
                 
-                // Move card back to its original parent
+                // Move card back to its original parent and remove placeholder
                 const originalParent = document.querySelector('.breakdown-cards');
+                const placeholder = document.querySelector(`.breakdown-card-placeholder[data-original-card="${original.cardDataType}"]`);
+                
                 if (originalParent) {
-                    // Determine correct position based on card type
-                    const cardType = original.cardDataType;
-                    if (cardType === 'base') {
-                        // Base card should be first
-                        originalParent.insertBefore(expandedCard, originalParent.firstChild);
-                    } else if (cardType === 'bonus') {
-                        // Bonus card should be second (after base)
-                        const baseCard = originalParent.querySelector('[data-type="base"]');
-                        if (baseCard && baseCard.nextSibling) {
-                            originalParent.insertBefore(expandedCard, baseCard.nextSibling);
+                    if (placeholder) {
+                        // Replace placeholder with the original card
+                        originalParent.insertBefore(expandedCard, placeholder);
+                        placeholder.remove();
+                    } else {
+                        // Fallback to original positioning logic
+                        const cardType = original.cardDataType;
+                        if (cardType === 'base') {
+                            // Base card should be first
+                            originalParent.insertBefore(expandedCard, originalParent.firstChild);
+                        } else if (cardType === 'bonus') {
+                            // Bonus card should be second (after base)
+                            const baseCard = originalParent.querySelector('[data-type="base"]');
+                            if (baseCard && baseCard.nextSibling) {
+                                originalParent.insertBefore(expandedCard, baseCard.nextSibling);
+                            } else {
+                                originalParent.appendChild(expandedCard);
+                            }
                         } else {
+                            // Any other cards go at the end
                             originalParent.appendChild(expandedCard);
                         }
-                    } else {
-                        // Any other cards go at the end
-                        originalParent.appendChild(expandedCard);
                     }
                 }
                 
