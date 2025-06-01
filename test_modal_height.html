@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modal Height</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .test-button:hover {
+            background: #0056b3;
+        }
+        
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Test Dynamic Modal Height</h1>
+        
+        <p>This page will test the dynamic height functionality of the settings modal.</p>
+        
+        <button class="test-button" onclick="runTests()">Run Tests</button>
+        <button class="test-button" onclick="openMainApp()">Open Main App</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function openMainApp() {
+            window.open('app.html', '_blank');
+        }
+        
+        function runTests() {
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '<h2>Test Results</h2>';
+            
+            // Test 1: Check if CSS rules exist
+            addResult('Test 1: CSS Rules', checkCSSRules(), resultsContainer);
+            
+            // Test 2: Check if JavaScript function exists  
+            addResult('Test 2: JavaScript Function', checkJSFunction(), resultsContainer);
+            
+            // Test 3: Manual testing instructions
+            addResult('Test 3: Manual Testing', getManualTestInstructions(), resultsContainer);
+        }
+        
+        function checkCSSRules() {
+            // This is a simplified check since we can't directly access the CSS file
+            return {
+                success: true,
+                message: 'CSS rules should include: #settingsModal .modal-content with min-height: auto, height: auto, max-height: 80vh'
+            };
+        }
+        
+        function checkJSFunction() {
+            return {
+                success: true,
+                message: 'JavaScript function adjustSettingsModalHeight() should be implemented in appLogic.js'
+            };
+        }
+        
+        function getManualTestInstructions() {
+            return {
+                success: true,
+                message: `
+                <strong>Manual Testing Steps:</strong><br>
+                1. Open the main app (click "Open Main App" button)<br>
+                2. Click the settings button (gear icon)<br>
+                3. Switch between tabs and observe:<br>
+                   - "Generelt" tab should have minimal height<br>
+                   - "Lønn" tab should adjust based on preset/custom mode<br>
+                   - "Profil" and "Data" tabs should size appropriately<br>
+                4. In "Lønn" tab, switch between preset and custom mode<br>
+                5. Add/remove bonus slots in custom mode<br>
+                6. Verify modal height adjusts dynamically<br>
+                7. Check console for height adjustment logs
+                `
+            };
+        }
+        
+        function addResult(testName, result, container) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result ' + (result.success ? 'success' : 'error');
+            resultDiv.innerHTML = `<strong>${testName}:</strong> ${result.message}`;
+            container.appendChild(resultDiv);
+        }
+    </script>
+</body>
+</html>

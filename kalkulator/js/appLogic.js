@@ -715,6 +715,11 @@ export const app = {
                     this.populateCustomBonusSlots();
                 }, 100);
             }
+            
+            // Adjust modal height after switching preset/custom sections
+            setTimeout(() => {
+                this.adjustSettingsModalHeight();
+            }, 150);
         }
     },
     async saveSettingsToSupabase() {
@@ -964,6 +969,60 @@ export const app = {
                 this.loadProfileData();
             }, 100);
         }
+        
+        // Adjust modal height based on content after tab switch
+        setTimeout(() => {
+            this.adjustSettingsModalHeight();
+        }, 150);
+    },
+    
+    // Adjust settings modal height based on active tab content
+    adjustSettingsModalHeight() {
+        const modal = document.getElementById('settingsModal');
+        const modalContent = modal?.querySelector('.modal-content');
+        const activeTabContent = modal?.querySelector('.tab-content.active');
+        
+        if (!modalContent || !activeTabContent) {
+            console.log('Modal height adjustment skipped: missing elements');
+            return;
+        }
+        
+        // Temporarily reset height to auto to get accurate measurements
+        modalContent.style.height = 'auto';
+        modalContent.style.maxHeight = '80vh';
+        
+        // Small delay to ensure DOM has updated
+        requestAnimationFrame(() => {
+            // Get the modal header height
+            const modalHeader = modal.querySelector('.modal-header');
+            const tabNav = modal.querySelector('.tab-nav');
+            const headerHeight = (modalHeader?.offsetHeight || 0) + (tabNav?.offsetHeight || 0);
+            
+            // Calculate the content height needed
+            const contentHeight = activeTabContent.scrollHeight;
+            const totalNeededHeight = headerHeight + contentHeight + 40; // Add padding
+            
+            // Set reasonable limits
+            const minHeight = 250;
+            const maxHeight = Math.floor(window.innerHeight * 0.8); // 80vh
+            
+            const finalHeight = Math.min(Math.max(totalNeededHeight, minHeight), maxHeight);
+            
+            // Apply the calculated height
+            modalContent.style.height = `${finalHeight}px`;
+            
+            // Manage overflow based on whether content fits
+            if (totalNeededHeight > maxHeight) {
+                modalContent.style.overflowY = 'auto';
+                // Ensure the active tab content can scroll
+                activeTabContent.style.overflowY = 'visible';
+            } else {
+                modalContent.style.overflowY = 'hidden';
+                activeTabContent.style.overflowY = 'visible';
+            }
+            
+            console.log(`Modal height adjusted: ${finalHeight}px (content: ${contentHeight}px, header: ${headerHeight}px, needed: ${totalNeededHeight}px)`);
+        });
     },
     
     // Synchronous wrapper for HTML onclick handlers
@@ -1061,6 +1120,11 @@ export const app = {
         
         container.appendChild(slot);
         console.log(`Added bonus slot for ${type} with auto-save listeners`);
+        
+        // Adjust modal height after adding content
+        setTimeout(() => {
+            this.adjustSettingsModalHeight();
+        }, 50);
     },
     removeBonusSlot(button) {
         button.closest('.bonus-slot').remove();
@@ -1069,6 +1133,11 @@ export const app = {
             console.log('Auto-saving after removing bonus slot');
             this.saveCustomBonusesSilent().catch(console.error);
         }
+        
+        // Adjust modal height after removing content
+        setTimeout(() => {
+            this.adjustSettingsModalHeight();
+        }, 50);
     },
     
     // Auto-save custom bonuses with debouncing to avoid too many saves
@@ -1111,6 +1180,11 @@ export const app = {
                     this.populateCustomBonusSlots();
                 }, 100);
             }
+            
+            // Adjust modal height after everything is loaded
+            setTimeout(() => {
+                this.adjustSettingsModalHeight();
+            }, 200);
         }
     },
     async closeSettings() {
@@ -1462,50 +1536,113 @@ export const app = {
             };
             card.appendChild(closeBtn);
         
-        // Build details list
-        const details = document.createElement('ul');
-        details.className = 'details';
-        card.appendChild(details);
+        // Build calendar view
+        const calendarContainer = document.createElement('div');
+        calendarContainer.className = 'breakdown-calendar';
+        card.appendChild(calendarContainer);
         
-        // Process shifts and populate list
-        const shifts = this.shifts.filter(s => 
+        // Create calendar for current month
+        this.createBreakdownCalendar(calendarContainer, type);
+        
+        }, 300); // Delay for morph animation to complete
+    },
+
+    // Create breakdown calendar view
+    createBreakdownCalendar(container, type) {
+        const year = this.YEAR;
+        const monthIdx = this.currentMonth - 1;
+        const firstDay = new Date(year, monthIdx, 1);
+        const lastDay = new Date(year, monthIdx + 1, 0);
+        const startDate = new Date(firstDay);
+        const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+        startDate.setDate(startDate.getDate() - offset);
+
+        container.innerHTML = '';
+
+        // Add calendar header with day names
+        const header = document.createElement('div');
+        header.className = 'calendar-header';
+        ['M', 'T', 'O', 'T', 'F', 'L', 'S'].forEach(day => {
+            const dayHeader = document.createElement('div');
+            dayHeader.textContent = day;
+            dayHeader.className = 'calendar-day-header';
+            header.appendChild(dayHeader);
+        });
+        container.appendChild(header);
+
+        // Create calendar grid
+        const grid = document.createElement('div');
+        grid.className = 'calendar-grid';
+
+        // Get shifts for current month and create lookup by date
+        const monthShifts = this.shifts.filter(s => 
             s.date.getMonth() === this.currentMonth - 1 && 
             s.date.getFullYear() === this.YEAR
         );
         
-        shifts.sort((a, b) => b.date - a.date).forEach((shift, index) => {
-            const calc = this.calculateShift(shift);
-            const day = shift.date.getDate();
-            const monthName = this.MONTHS[shift.date.getMonth()];
-            const amount = type === 'base' ? calc.baseWage : calc.bonus;                if (amount > 0) { // Only show shifts with actual amounts
-                    const li = document.createElement('li');
-                    // Staggered animation with more natural delay
-                    li.style.animationDelay = `${0.3 + (index * 0.08)}s`;
-                    li.style.cursor = 'pointer';
-                    li.onclick = (e) => {
-                        e.stopPropagation();
-                        this.showShiftDetails(shift.id);
-                    };
-                    
-                    li.innerHTML = `
-                        <span class="date">${day}. ${monthName}</span>
-                        <span class="amount">${this.formatCurrency(amount)}</span>
-                    `;
-                    details.appendChild(li);
-                }
+        const shiftsByDate = {};
+        monthShifts.forEach(shift => {
+            const dateKey = shift.date.getDate();
+            if (!shiftsByDate[dateKey]) {
+                shiftsByDate[dateKey] = [];
+            }
+            shiftsByDate[dateKey].push(shift);
         });
-        
-        if (details.children.length === 0) {
-            const li = document.createElement('li');
-            li.style.animationDelay = '0.3s';
-            li.innerHTML = `
-                <span class="date">Ingen vakter funnet</span>
-                <span class="amount">-</span>
-            `;
-            details.appendChild(li);
+
+        // Create calendar cells (42 cells for 6 weeks)
+        for (let i = 0; i < 42; i++) {
+            const cellDate = new Date(startDate);
+            cellDate.setDate(startDate.getDate() + i);
+            
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell';
+            
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'calendar-day-number';
+            dayNumber.textContent = cellDate.getDate();
+            
+            // Style for current month vs other months
+            if (cellDate.getMonth() !== monthIdx) {
+                cell.classList.add('other-month');
+            }
+
+            const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
+            let totalAmount = 0;
+            
+            // Calculate total amount for this day
+            shiftsForDay.forEach(shift => {
+                if (cellDate.getMonth() === monthIdx) { // Only for current month
+                    const calc = this.calculateShift(shift);
+                    const amount = type === 'base' ? calc.baseWage : calc.bonus;
+                    totalAmount += amount;
+                }
+            });
+
+            // Add amount display
+            const amountDisplay = document.createElement('div');
+            amountDisplay.className = 'calendar-amount';
+            
+            if (totalAmount > 0) {
+                amountDisplay.textContent = this.formatCurrencyCalendar(totalAmount);
+                cell.classList.add('has-shifts');
+                
+                // Make clickable if there are shifts
+                cell.style.cursor = 'pointer';
+                cell.onclick = (e) => {
+                    e.stopPropagation();
+                    // If multiple shifts, show first one (or we could show a summary)
+                    if (shiftsForDay.length > 0) {
+                        this.showShiftDetails(shiftsForDay[0].id);
+                    }
+                };
+            }
+
+            cell.appendChild(dayNumber);
+            cell.appendChild(amountDisplay);
+            grid.appendChild(cell);
         }
-        
-        }, 300); // Delay for morph animation to complete
+
+        container.appendChild(grid);
     },
     
     // Close breakdown card
@@ -1587,11 +1724,11 @@ export const app = {
             
             // Remove all added elements
             const closeBtn = expandedCard.querySelector('.close-btn');
-            const details = expandedCard.querySelector('.details');
+            const calendar = expandedCard.querySelector('.breakdown-calendar');
             const titleContainer = expandedCard.querySelector('.breakdown-title-container');
             const title = expandedCard.querySelector('.breakdown-title'); // fallback for old structure
             if (closeBtn) closeBtn.remove();
-            if (details) details.remove();
+            if (calendar) calendar.remove();
             if (titleContainer) titleContainer.remove();
             if (title) title.remove(); // fallback cleanup
             
@@ -1926,6 +2063,9 @@ export const app = {
         return Math.round(amount).toLocaleString('nb-NO') + ' kr';
     },
     formatCurrencyShort(amount) {
+        return Math.round(amount).toLocaleString('nb-NO');
+    },
+    formatCurrencyCalendar(amount) {
         return Math.round(amount).toLocaleString('nb-NO');
     },
     formatHours(hours) {
