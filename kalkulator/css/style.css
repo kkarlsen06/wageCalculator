@@ -2317,3 +2317,24 @@ input:checked + .slider:before {
     max-width: min(var(--email-max-width, 200px), 60vw); /* More conservative on very small screens */
   }
 }
+
+/* Mobile: center expanded breakdown-card and prevent header height increase */
+@media (max-width: 768px) {
+  .breakdown-card.expanded {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: min(90vw, 400px) !important;
+    max-height: 80vh !important;
+    margin: 0 auto;
+  }
+  /* Prevent header from growing when email is shown */
+  .header {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    overflow: hidden;
+  }
+  .header-info {
+    flex-wrap: nowrap;
+  }
+}
