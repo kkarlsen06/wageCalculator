@@ -176,7 +176,7 @@ body {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-radius: 8px;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
 }
@@ -212,7 +212,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 14px;
   display: flex;
@@ -229,6 +229,12 @@ body {
 
 .settings-btn:hover svg {
   animation: spin 2s linear infinite;
+}
+
+/* Make SVG icons in top bar buttons grey */
+.header-back-btn svg,
+.settings-btn svg {
+  stroke: var(--text-secondary);
 }
 
 /* Icon sizing classes */
@@ -255,7 +261,7 @@ body {
   align-items: center;
   width: 100%;
   position: relative;
-  overflow: visible;
+  overflow: hidden; /* Hide elements that slide outside */
 }
 
 .header-info span {
@@ -293,18 +299,16 @@ body {
 
 .month-dropdown {
   display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
+  position: fixed; /* Changed to fixed positioning to escape stacking context */
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.3);
-  z-index: 2000; /* Higher than other elements to ensure visibility */
+  z-index: 9999; /* Even higher z-index since we're using fixed positioning */
   min-width: 150px;
   max-height: 300px;
   overflow-y: auto;
-  transform: translateY(-2px); /* Small offset to prevent gaps */
+  /* Removed transform since positioning is handled by JavaScript */
 }
 
 .month-dropdown.active {
@@ -461,14 +465,14 @@ input[type="time"].form-control[value=""]:focus {
   box-shadow: var(--shadow-hover-accent);
 }
 .date-cell.selected {
-  background: var(--shadow-accent);
-  color: var(--accent);
+  background: var(--accent3-alpha);
+  color: var(--accent3);
   font-weight: 600;
 }
 .date-cell.disabled {
   opacity: 0.3;
   cursor: not-allowed;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
 }
 
 /* Buttons */
@@ -852,7 +856,7 @@ input:checked + .slider:before {
 .add-shift-toggle:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px -8px var(--shadow-accent);
-  border-color: var(--accent);
+  border-color: var(--accent3);
   background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
 }
 .add-shift-toggle h2 {
@@ -1458,7 +1462,6 @@ input:checked + .slider:before {
   justify-content: center;
   align-items: center;
   background: var(--bg-card);
-  border: 1px solid var(--border-light);
   border-radius: 8px;
   padding: 4px 2px;
   font-size: 12px;
@@ -1481,7 +1484,6 @@ input:checked + .slider:before {
 
 .calendar-cell.has-shifts {
   background: var(--gradient-secondary);
-  border: 1px solid var(--accent4);
   cursor: pointer;
   justify-content: center;
   gap: 4px;
@@ -1567,6 +1569,24 @@ input:checked + .slider:before {
   .calendar-amount {
     font-size: 7px;
   }
+}
+
+/* Specific clipping area for email animation to prevent horizontal overflow */
+.header-info::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--bg-primary);
+  pointer-events: none;
+  z-index: 1;
+  transition: width 0.4s ease;
+}
+
+.header-info.email-animating::after {
+  width: 50px; /* Mask area to hide sliding elements */
 }
 
 /* Hide scrollbar for expanded cards */
@@ -1936,7 +1956,7 @@ input:checked + .slider:before {
 @media (max-width: 768px) {
   .shift-detail-card {
     width: min(95vw, 450px) !important;
-    margin: 0 10px;
+    margin: 0;
     max-height: 85vh;
     padding: 20px !important;
   }
@@ -2199,4 +2219,101 @@ input:checked + .slider:before {
 
 #userEmailDisplay {
   margin-left: auto;
+}
+
+/* Email toggle button styles */
+#userEmailContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center;
+  --slide-distance: -30px;
+}
+
+#userEmailContainer.slide-left {
+  transform: translateX(var(--slide-distance));
+}
+
+.email-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.email-toggle-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.email-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.email-toggle-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.user-email-text {
+  color: var(--text-secondary);
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  margin-left: 0;
+}
+
+.user-email-text.show {
+  opacity: 1;
+  max-width: var(--email-max-width, 400px); /* Use dynamic max-width or fallback to 400px */
+  margin-left: 8px;
+}
+
+/* Smooth month selector and wage hiding with icons */
+.header-info > span {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.header-info > span.hidden {
+  opacity: 0;
+  transform: translateX(var(--slide-distance, 20px));
+  pointer-events: none;
+}
+
+/* Hide SVG icons specifically during animation */
+.header-info > span.hidden svg {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Dynamic sliding for email container */
+
+/* Mobile optimizations for email display */
+@media (max-width: 768px) {
+  .user-email-text.show {
+    max-width: min(var(--email-max-width, 250px), 70vw); /* Limit to 70% of viewport width on mobile */
+    font-size: 13px; /* Slightly smaller text on mobile */
+  }
+  
+  .header-info {
+    gap: 10px; /* Reduce gap on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .user-email-text.show {
+    max-width: min(var(--email-max-width, 200px), 60vw); /* More conservative on very small screens */
+  }
 }

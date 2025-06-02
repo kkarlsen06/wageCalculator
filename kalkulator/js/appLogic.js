@@ -40,6 +40,7 @@ export const app = {
     demoMode: false,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
+    emailHideTimeout: null, // Timeout for auto-hiding email
     DEMO_SHIFTS: [
         { id: 'demo-1', date: "2025-06-03T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
         { id: 'demo-2', date: "2025-06-10T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
@@ -92,15 +93,35 @@ export const app = {
             if (!monthSelector.contains(e.target)) this.closeMonthDropdown();
         });
         
+        // Reposition month dropdown on window resize/scroll
+        window.addEventListener('resize', () => {
+            const dd = document.getElementById('monthDropdown');
+            if (dd.classList.contains('active')) {
+                this.positionMonthDropdown();
+            }
+        });
+        
+        window.addEventListener('scroll', () => {
+            const dd = document.getElementById('monthDropdown');
+            if (dd.classList.contains('active')) {
+                this.positionMonthDropdown();
+            }
+        });
+        
         // Close breakdown on Escape key
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 this.closeBreakdown();
+                // Also hide email if visible
+                this.hideEmailDisplay();
             }
         });
         
-        // Setup mobile email slide-out functionality
-        this.setupMobileEmailSlideOut();
+        // Clean up any existing timeout
+        if (this.emailHideTimeout) {
+            clearTimeout(this.emailHideTimeout);
+            this.emailHideTimeout = null;
+        }
         
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
@@ -116,88 +137,215 @@ export const app = {
             const { data: { user } } = await window.supa.auth.getUser();
             if (user && user.email) {
                 const userEmailElement = document.getElementById('userEmail');
-                const userEmailDisplay = document.getElementById('userEmailDisplay');
+                const userEmailContainer = document.getElementById('userEmailContainer');
                 
-                if (userEmailElement && userEmailDisplay) {
+                if (userEmailElement && userEmailContainer) {
                     userEmailElement.textContent = user.email;
-                    userEmailDisplay.style.display = 'flex';
+                    userEmailContainer.style.display = 'flex';
                 }
             }
         } catch (error) {
             console.error('Error fetching user email:', error);
             // Skjul email-elementet hvis det oppstår en feil
-            const userEmailDisplay = document.getElementById('userEmailDisplay');
-            if (userEmailDisplay) {
-                userEmailDisplay.style.display = 'none';
+            const userEmailContainer = document.getElementById('userEmailContainer');
+            if (userEmailContainer) {
+                userEmailContainer.style.display = 'none';
             }
         }
     },
 
-    setupMobileEmailSlideOut() {
+    toggleEmailDisplay() {
         const userEmailDisplay = document.getElementById('userEmailDisplay');
-        const headerInfo = document.querySelector('.header-info');
         
-        if (!userEmailDisplay || !headerInfo) return;
+        if (!userEmailDisplay) return;
+
+        const isVisible = userEmailDisplay.style.display !== 'none';
         
-        // Create mobile email overlay if it doesn't exist
-        let mobileEmailOverlay = headerInfo.querySelector('.mobile-email-overlay');
-        if (!mobileEmailOverlay) {
-            mobileEmailOverlay = document.createElement('div');
-            mobileEmailOverlay.className = 'mobile-email-overlay';
-            headerInfo.appendChild(mobileEmailOverlay);
+        if (isVisible) {
+            this.hideEmailDisplay();
+        } else {
+            this.showEmailDisplay();
+        }
+    },
+
+    calculateSlideDistance(emailText) {
+        // Very simple approach: fixed slide distances based on screen size and email length
+        const isMobile = window.innerWidth <= 768;
+        const isSmallMobile = window.innerWidth <= 480;
+        
+        // Get email length category
+        const emailLength = emailText.length;
+        
+        let slideDistance = 0;
+        
+        if (isSmallMobile) {
+            // Small mobile: very conservative sliding
+            if (emailLength > 20) slideDistance = 60;
+            else if (emailLength > 15) slideDistance = 40;
+            else if (emailLength > 10) slideDistance = 20;
+        } else if (isMobile) {
+            // Mobile: moderate sliding
+            if (emailLength > 25) slideDistance = 100;
+            else if (emailLength > 20) slideDistance = 80;
+            else if (emailLength > 15) slideDistance = 60;
+            else if (emailLength > 10) slideDistance = 40;
+        } else {
+            // Desktop: more generous sliding
+            if (emailLength > 30) slideDistance = 150;
+            else if (emailLength > 25) slideDistance = 120;
+            else if (emailLength > 20) slideDistance = 100;
+            else if (emailLength > 15) slideDistance = 80;
+            else if (emailLength > 10) slideDistance = 60;
         }
         
-        let isShowing = false;
-        let hideTimeout;
-        
-        userEmailDisplay.addEventListener('click', (e) => {
-            // Only trigger on mobile screens
-            if (window.innerWidth > 480) return;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (isShowing) return;
-            
-            // Get user email
-            const userEmail = document.getElementById('userEmail');
-            if (!userEmail || !userEmail.textContent) return;
-            
-            // Set email text in overlay
-            mobileEmailOverlay.textContent = userEmail.textContent;
-            
-            // Show animation
-            isShowing = true;
-            headerInfo.classList.add('email-showing');
-            
-            // Use requestAnimationFrame for smooth animation
-            requestAnimationFrame(() => {
-                mobileEmailOverlay.classList.add('show');
-            });
-            
-            // Hide after 2 seconds with smooth transition
-            clearTimeout(hideTimeout);
-            hideTimeout = setTimeout(() => {
-                mobileEmailOverlay.classList.remove('show');
-                
-                // Wait for animation to complete before hiding container
-                setTimeout(() => {
-                    headerInfo.classList.remove('email-showing');
-                    isShowing = false;
-                }, 300); // Match CSS transition duration
-            }, 2000);
-        });
-        
-        // Reset on window resize
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 480 && isShowing) {
-                clearTimeout(hideTimeout);
-                mobileEmailOverlay.classList.remove('show');
-                headerInfo.classList.remove('email-showing');
-                isShowing = false;
-            }
-        });
+        return -slideDistance; // Negative because we slide left
     },
+
+    showEmailDisplay() {
+        const userEmailDisplay = document.getElementById('userEmailDisplay');
+        const userEmailContainer = document.getElementById('userEmailContainer');
+        const userEmail = document.getElementById('userEmail');
+        const monthSelector = document.querySelector('.month-selector');
+        const wageDisplay = document.getElementById('currentWage');
+        const emailToggleBtn = document.getElementById('emailToggleBtn');
+        
+        // Find the parent span elements using proper traversal
+        const monthSelectorSpan = monthSelector ? monthSelector.parentElement : null;
+        const wageSelectorSpan = wageDisplay ? wageDisplay.parentElement : null;
+        
+        // Calculate dynamic slide distance based on email length
+        const emailText = userEmail ? userEmail.textContent : '';
+        const slideDistance = this.calculateSlideDistance(emailText);
+        
+        // Set reasonable max-width based on screen size
+        const isMobile = window.innerWidth <= 768;
+        const isSmallMobile = window.innerWidth <= 480;
+        
+        let emailTextWidth;
+        if (isSmallMobile) {
+            emailTextWidth = Math.min(250, window.innerWidth * 0.6);
+        } else if (isMobile) {
+            emailTextWidth = Math.min(300, window.innerWidth * 0.7);
+        } else {
+            emailTextWidth = 400; // Desktop default
+        }
+        
+        // Set dynamic slide distance on container
+        if (userEmailContainer) {
+            userEmailContainer.style.setProperty('--slide-distance', `${slideDistance}px`);
+        }
+        
+        // Set dynamic max-width for email text
+        if (userEmailDisplay) {
+            userEmailDisplay.style.setProperty('--email-max-width', `${emailTextWidth}px`);
+        }
+        
+        // Set same distance for month/wage elements to move synchronously
+        if (monthSelectorSpan) {
+            monthSelectorSpan.style.setProperty('--slide-distance', `${slideDistance}px`);
+        }
+        if (wageSelectorSpan) {
+            wageSelectorSpan.style.setProperty('--slide-distance', `${slideDistance}px`);
+        }
+        
+        // Hide month selector and wage with smooth transition (including icons)
+        if (monthSelectorSpan) {
+            monthSelectorSpan.classList.add('hidden');
+        }
+        
+        // Close month dropdown if open to avoid confusion during animation
+        this.closeMonthDropdown();
+        
+        if (wageSelectorSpan) {
+            wageSelectorSpan.classList.add('hidden');
+        }
+        
+        // Mark button as active
+        if (emailToggleBtn) {
+            emailToggleBtn.classList.add('active');
+        }
+        
+        // Start container slide-left animation
+        if (userEmailContainer) {
+            userEmailContainer.classList.add('slide-left');
+        }
+        
+        // Show email with smooth transition after short delay
+        setTimeout(() => {
+            if (userEmailDisplay) {
+                userEmailDisplay.style.display = 'inline-block';
+                // Add show class for smooth appearance
+                requestAnimationFrame(() => {
+                    userEmailDisplay.classList.add('show');
+                });
+            }
+        }, 100);
+        
+        // Auto-hide email after 2 seconds
+        clearTimeout(this.emailHideTimeout);
+        this.emailHideTimeout = setTimeout(() => {
+            this.hideEmailDisplay();
+        }, 2000);
+    },
+
+    hideEmailDisplay() {
+        const userEmailDisplay = document.getElementById('userEmailDisplay');
+        const userEmailContainer = document.getElementById('userEmailContainer');
+        const monthSelector = document.querySelector('.month-selector');
+        const wageDisplay = document.getElementById('currentWage');
+        const emailToggleBtn = document.getElementById('emailToggleBtn');
+        
+        // Find the parent span elements using proper traversal
+        const monthSelectorSpan = monthSelector ? monthSelector.parentElement : null;
+        const wageSelectorSpan = wageDisplay ? wageDisplay.parentElement : null;
+        
+        // Remove active status from button
+        if (emailToggleBtn) {
+            emailToggleBtn.classList.remove('active');
+        }
+        
+        // Hide email first
+        if (userEmailDisplay) {
+            userEmailDisplay.classList.remove('show');
+        }
+        
+        // Slide container back after short delay
+        setTimeout(() => {
+            if (userEmailContainer) {
+                userEmailContainer.classList.remove('slide-left');
+            }
+        }, 100);
+        
+        // Show month selector and wage back after container returns (including icons)
+        setTimeout(() => {
+            if (monthSelectorSpan) {
+                monthSelectorSpan.classList.remove('hidden');
+                monthSelectorSpan.style.removeProperty('--slide-distance');
+            }
+            
+            if (wageSelectorSpan) {
+                wageSelectorSpan.classList.remove('hidden');
+                wageSelectorSpan.style.removeProperty('--slide-distance');
+            }
+            
+            // Hide email element completely
+            if (userEmailDisplay) {
+                userEmailDisplay.style.display = 'none';
+                userEmailDisplay.style.removeProperty('--email-max-width');
+            }
+            
+            // Reset slide distance on container
+            if (userEmailContainer) {
+                userEmailContainer.style.removeProperty('--slide-distance');
+            }
+        }, 300);
+        
+        // Clear timeout
+        clearTimeout(this.emailHideTimeout);
+        this.emailHideTimeout = null;
+    },
+
+    // Removed setupMobileEmailSlideOut since we now use a simpler toggle function
 
     populateTimeSelects() {
         const startHour = document.getElementById('startHour');
@@ -424,6 +572,8 @@ export const app = {
         // Close any other open modals first
         this.closeBreakdown();
         this.closeSettings();
+        // Close email display if visible
+        this.hideEmailDisplay();
         
         if (isActive) {
             dd.classList.remove('active');
@@ -431,15 +581,31 @@ export const app = {
             dd.classList.add('active');
             this.populateMonthDropdown();
             
-            // Ensure dropdown is visible by fixing any z-index issues
-            dd.style.zIndex = '2000';
+            // Position dropdown using fixed positioning relative to button
+            this.positionMonthDropdown();
+            
+            // Ensure dropdown is visible with high z-index
+            dd.style.zIndex = '9999';
         }
     },
     
     closeMonthDropdown() {
         const dd = document.getElementById('monthDropdown');
         dd.classList.remove('active');
-        dd.style.zIndex = ''; // Reset z-index
+        // Reset all positioning styles
+        dd.style.zIndex = '';
+        dd.style.top = '';
+        dd.style.left = '';
+    },
+    
+    positionMonthDropdown() {
+        const dd = document.getElementById('monthDropdown');
+        const monthButton = document.querySelector('.month-button');
+        if (dd && monthButton && dd.classList.contains('active')) {
+            const rect = monthButton.getBoundingClientRect();
+            dd.style.top = `${rect.bottom + 2}px`; // 2px below button
+            dd.style.left = `${rect.left}px`; // Align left edge with button
+        }
     },
     
     changeMonth(month) {
