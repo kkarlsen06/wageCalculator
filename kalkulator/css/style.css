@@ -2245,12 +2245,14 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   cursor: pointer;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 50%; /* Make it circular like before */
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  width: 36px; /* Fixed width for consistent circular shape */
+  height: 36px; /* Fixed height for consistent circular shape */
 }
 
 .email-toggle-btn:hover {
@@ -2281,12 +2283,21 @@ input:checked + .slider:before {
   line-height: 20px; /* Match height for vertical centering */
   display: flex;
   align-items: center;
+  justify-content: flex-start; /* Align text to start */
 }
 
 .user-email-text.show {
   opacity: 1;
   max-width: var(--email-max-width, 400px); /* Use dynamic max-width or fallback to 400px */
   margin-left: 8px;
+}
+
+.email-inner-text {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Smooth month selector and wage hiding with icons */
@@ -2311,7 +2322,7 @@ input:checked + .slider:before {
 /* Mobile optimizations for email display */
 @media (max-width: 768px) {
   .user-email-text.show {
-    max-width: min(var(--email-max-width, 180px), 50vw); /* More conservative max-width on mobile */
+    max-width: min(var(--email-max-width, 160px), 45vw); /* More conservative max-width on mobile */
     font-size: 12px; /* Smaller text on mobile */
   }
   
@@ -2335,13 +2346,19 @@ input:checked + .slider:before {
 
 @media (max-width: 480px) {
   .user-email-text.show {
-    max-width: min(var(--email-max-width, 140px), 40vw); /* Even more conservative on very small screens */
+    max-width: min(var(--email-max-width, 120px), 35vw); /* Even more conservative on very small screens */
     font-size: 11px; /* Even smaller text */
   }
   
   .header-info {
     gap: 6px; /* Further reduce gap */
     height: 18px; /* Slightly smaller fixed height */
+  }
+  
+  .email-toggle-btn {
+    width: 32px; /* Smaller button on small mobile */
+    height: 32px;
+    padding: 6px;
   }
 }
 

@@ -138,10 +138,16 @@ export const app = {
             if (user && user.email) {
                 const userEmailElement = document.getElementById('userEmail');
                 const userEmailContainer = document.getElementById('userEmailContainer');
+                const emailToggleBtn = document.getElementById('emailToggleBtn');
                 
                 if (userEmailElement && userEmailContainer) {
                     userEmailElement.textContent = user.email;
                     userEmailContainer.style.display = 'flex';
+                    
+                    // Add tooltip to email button showing full email
+                    if (emailToggleBtn) {
+                        emailToggleBtn.title = `Vis e-post: ${user.email}`;
+                    }
                 }
             }
         } catch (error) {
@@ -225,9 +231,9 @@ export const app = {
         
         let emailTextWidth;
         if (isSmallMobile) {
-            emailTextWidth = Math.min(140, window.innerWidth * 0.4); // More conservative on small mobile
+            emailTextWidth = Math.min(120, window.innerWidth * 0.35); // More conservative on small mobile
         } else if (isMobile) {
-            emailTextWidth = Math.min(180, window.innerWidth * 0.5); // More conservative on mobile
+            emailTextWidth = Math.min(160, window.innerWidth * 0.45); // More conservative on mobile
         } else {
             emailTextWidth = 400; // Desktop default
         }
