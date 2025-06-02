@@ -262,7 +262,7 @@ body {
   align-items: center;
   width: 100%;
   position: relative;
-  overflow: hidden; /* Hide elements that slide outside */
+  overflow: visible; /* Change from hidden to visible to prevent clipping */
   height: 20px; /* Fixed height to prevent layout shift */
   flex-shrink: 0; /* Prevent shrinking */
 }
@@ -2233,6 +2233,8 @@ input:checked + .slider:before {
   transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform-origin: center;
   --slide-distance: -30px;
+  position: relative; /* Add position for z-index */
+  z-index: 15; /* Higher z-index to ensure visibility */
 }
 
 #userEmailContainer.slide-left {
@@ -2244,20 +2246,20 @@ input:checked + .slider:before {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 8px;
-  border-radius: 50%; /* Make it circular like before */
+  padding: 0; /* Remove padding to make it just an icon */
+  border-radius: 0; /* Remove border radius */
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  width: 36px; /* Fixed width for consistent circular shape */
-  height: 36px; /* Fixed height for consistent circular shape */
+  width: 20px; /* Icon size */
+  height: 20px; /* Icon size */
 }
 
 .email-toggle-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  color: var(--accent); /* Just change color on hover */
+  transform: scale(1.1); /* Slight scale on hover */
 }
 
 .email-toggle-btn:active {
@@ -2265,8 +2267,7 @@ input:checked + .slider:before {
 }
 
 .email-toggle-btn.active {
-  background: var(--accent);
-  color: white;
+  color: var(--accent); /* Active state just changes color */
 }
 
 .user-email-text {
@@ -2284,6 +2285,8 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   justify-content: flex-start; /* Align text to start */
+  position: relative; /* Add position for z-index */
+  z-index: 10; /* Ensure it appears above other elements */
 }
 
 .user-email-text.show {
@@ -2329,6 +2332,7 @@ input:checked + .slider:before {
   .header-info {
     gap: 8px; /* Reduce gap on mobile */
     min-height: 20px; /* Fixed minimum height to prevent expansion */
+    justify-content: center; /* Center content on mobile for better alignment */
   }
   
   /* Prevent header height changes during email animation */
@@ -2340,7 +2344,12 @@ input:checked + .slider:before {
   .header-info {
     align-items: center;
     height: 20px; /* Fixed height */
-    overflow: hidden;
+    overflow: visible; /* Keep visible for mobile */
+  }
+  
+  /* Ensure user email container aligns properly on mobile */
+  #userEmailContainer {
+    margin-left: 8px; /* Reduce left margin on mobile */
   }
 }
 
@@ -2355,10 +2364,9 @@ input:checked + .slider:before {
     height: 18px; /* Slightly smaller fixed height */
   }
   
-  .email-toggle-btn {
-    width: 32px; /* Smaller button on small mobile */
-    height: 32px;
-    padding: 6px;
+  /* Better centering on very small screens */
+  #userEmailContainer {
+    margin-left: 4px; /* Smaller margin for better fit */
   }
 }
 
