@@ -2324,9 +2324,9 @@ input:checked + .slider:before {
 
 /* Mobile optimizations for email display */
 @media (max-width: 768px) {
-  .user-email-text.show {
-    max-width: min(var(--email-max-width, 160px), 45vw); /* More conservative max-width on mobile */
-    font-size: 12px; /* Smaller text on mobile */
+  /* Hide email button completely on mobile - user can see email in settings */
+  #userEmailContainer {
+    display: none !important;
   }
   
   .header-info {
@@ -2346,27 +2346,13 @@ input:checked + .slider:before {
     height: 20px; /* Fixed height */
     overflow: visible; /* Keep visible for mobile */
   }
-  
-  /* Ensure user email container aligns properly on mobile */
-  #userEmailContainer {
-    margin-left: 8px; /* Reduce left margin on mobile */
-  }
 }
 
 @media (max-width: 480px) {
-  .user-email-text.show {
-    max-width: min(var(--email-max-width, 120px), 35vw); /* Even more conservative on very small screens */
-    font-size: 11px; /* Even smaller text */
-  }
-  
+  /* Email container already hidden on mobile, no additional rules needed */
   .header-info {
     gap: 6px; /* Further reduce gap */
     height: 18px; /* Slightly smaller fixed height */
-  }
-  
-  /* Better centering on very small screens */
-  #userEmailContainer {
-    margin-left: 4px; /* Smaller margin for better fit */
   }
 }
 
