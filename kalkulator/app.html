@@ -84,7 +84,7 @@
               <div class="breakdown-cards">
                   <div class="breakdown-card" data-type="base" onclick="app.showBreakdown('base')">
                       <div class="breakdown-icon">
-                          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                               <line x1="12" y1="8" x2="12" y2="16"></line>
                               <line x1="8" y1="12" x2="16" y2="12"></line>
@@ -95,7 +95,7 @@
                   </div>
                   <div class="breakdown-card" data-type="bonus" onclick="app.showBreakdown('bonus')">
                       <div class="breakdown-icon">
-                          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                           </svg>
                       </div>
@@ -337,6 +337,60 @@
                   </span>
               </div>
               <div class="breakdown-list" id="breakdownList"></div>
+          </div>
+      </div>
+
+      <!-- Edit Shift Modal -->
+      <div id="editShiftModal" class="modal">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h2 class="modal-title">Rediger vakt</h2>
+                  <span class="modal-close" onclick="app.closeEditShift()">
+                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                  </span>
+              </div>
+              <div class="modal-body">
+                  <form id="editShiftForm">
+                      <div class="form-group">
+                          <label>Velg dato</label>
+                          <div class="date-grid" id="editDateGrid"></div>
+                      </div>
+
+                      <div class="form-group">
+                          <label>Arbeidstid</label>
+                          <div class="form-row">
+                              <select class="form-control" id="editStartHour">
+                                  <option value="">Fra time</option>
+                              </select>
+                              <select class="form-control" id="editStartMinute">
+                                  <option value="">Fra minutt</option>
+                              </select>
+                          </div>
+                          <div class="form-row">
+                              <select class="form-control" id="editEndHour">
+                                  <option value="">Til time</option>
+                              </select>
+                              <select class="form-control" id="editEndMinute">
+                                  <option value="">Til minutt</option>
+                              </select>
+                          </div>
+                      </div>
+
+                      <div class="form-actions">
+                          <button type="button" class="btn btn-primary" onclick="app.updateShift()">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                  <polyline points="7 3 7 8 15 8"></polyline>
+                              </svg>
+                              Lagre endringer
+                          </button>
+                      </div>
+                  </form>
+              </div>
           </div>
       </div>
 

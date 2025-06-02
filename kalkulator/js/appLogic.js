@@ -734,6 +734,9 @@ export const app = {
 
             // Update UI elements to reflect loaded settings
             this.updateSettingsUI();
+            // Update month dropdown and date grid to reflect potential reset of currentMonth
+            this.populateMonthDropdown();
+            this.populateDateGrid();
             this.updateDisplay();
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
@@ -1554,47 +1557,16 @@ export const app = {
         }).join('');
         shiftList.innerHTML = demoBannerHtml + shiftsHtml;
     },
-        // Toggle breakdown card expansion and show details
+        // Show breakdown modal
     showBreakdown(type) {
-        // Check if the same card is already expanded
-        const existingExpanded = document.querySelector('.breakdown-card.expanded');
-        const card = document.querySelector(`.breakdown-card[data-type="${type}"]`);
-        
-        if (existingExpanded && existingExpanded === card) {
-            // If clicking the same expanded card, collapse it
-            this.closeBreakdown();
-            return;
-        }
-        
         // Close any existing breakdown first
         this.closeBreakdown();
-        
-        if (!card) return;
         
         // Hide header with smooth animation
         const header = document.querySelector('.header');
         if (header) {
             header.classList.add('hidden');
         }
-        
-        // Get original position and size before transformation
-        const originalRect = card.getBoundingClientRect();
-        
-        // Store original styles and DOM position info more reliably
-        const originalParent = card.parentElement;
-        const originalNextSibling = card.nextElementSibling;
-        
-        card.dataset.originalPosition = JSON.stringify({
-            position: card.style.position || 'static',
-            top: card.style.top || 'auto',
-            left: card.style.left || 'auto',
-            width: card.style.width || 'auto',
-            height: card.style.height || 'auto',
-            transform: card.style.transform || 'none',
-            parentClass: originalParent ? originalParent.className : null,
-            nextSiblingDataType: originalNextSibling ? originalNextSibling.getAttribute('data-type') : null,
-            cardDataType: card.getAttribute('data-type')
-        });
         
         // Create backdrop
         const backdrop = document.createElement('div');
@@ -1615,149 +1587,143 @@ export const app = {
         backdrop.offsetHeight;
         backdrop.classList.add('active');
         
-        // Calculate target position (center of viewport with better mobile handling)
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+        // Create modal element without any class to avoid CSS conflicts
+        const modal = document.createElement('div');
+        modal.className = 'breakdown-modal-custom';
         
-        // Responsive sizing - more space on mobile
-        const targetWidth = viewportWidth <= 480 ? 
-            Math.min(viewportWidth * 0.95, 400) : 
-            Math.min(viewportWidth * 0.9, 500);
-            
-        const targetHeight = viewportHeight <= 768 ? 
-            Math.min(viewportHeight * 0.85, 600) : 
-            Math.min(viewportHeight * 0.8, 600);
-            
-        const targetLeft = (viewportWidth - targetWidth) / 2;
-        const targetTop = Math.max(20, (viewportHeight - targetHeight) / 2); // Ensure top padding
+        // Use translate3d for hardware acceleration and better positioning
+        modal.style.position = 'fixed';
+        modal.style.left = '50%';
+        modal.style.top = '50%';
+        modal.style.transform = 'translate3d(-50%, -50%, 0)';
+        modal.style.width = 'min(90vw, 500px)';
+        modal.style.maxHeight = '80vh';
+        modal.style.background = 'linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary))';
+        modal.style.borderRadius = '20px';
+        modal.style.padding = '24px';
+        modal.style.zIndex = '1500';
+        modal.style.boxShadow = '0 32px 64px var(--shadow-accent), 0 16px 32px rgba(0, 0, 0, 0.3)';
+        modal.style.border = '1px solid var(--accent3-alpha)';
+        modal.style.overflowY = 'auto';
+        modal.style.scrollbarWidth = 'none'; // Firefox
+        modal.style.msOverflowStyle = 'none'; // Internet Explorer 10+
+        modal.style.display = 'flex';
+        modal.style.flexDirection = 'column';
+        modal.style.opacity = '0';
+        modal.style.willChange = 'transform, opacity';
+        modal.style.transition = 'opacity 0.4s var(--ease-default)';
         
-        // Create a placeholder element to maintain grid layout
-        const placeholder = document.createElement('div');
-        placeholder.className = 'breakdown-card-placeholder';
-        placeholder.style.cssText = `
-            width: ${originalRect.width}px;
-            height: ${originalRect.height}px;
+        // Store reference for cleanup
+        this.currentModal = modal;
+        
+        // Create title with icon
+        const titleContainer = document.createElement('div');
+        titleContainer.className = 'breakdown-title-container';
+        titleContainer.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
             opacity: 0;
-            pointer-events: none;
+            animation: slideInFromBottom 0.5s var(--ease-default) 0.2s forwards;
+            flex-shrink: 0;
         `;
-        placeholder.dataset.originalCard = type;
         
-        // Insert placeholder before removing the card
-        originalParent.insertBefore(placeholder, card);
+        const icon = document.createElement('div');
+        icon.className = 'breakdown-title-icon';
+        icon.style.cssText = `
+            color: var(--accent3);
+            opacity: 0.8;
+        `;
         
-        // Move card to document.body to escape any stacking context issues
-        document.body.appendChild(card);
-        
-        // Set card position to fixed at exact current location
-        card.style.position = 'fixed';
-        card.style.top = `${originalRect.top}px`;
-        card.style.left = `${originalRect.left}px`;
-        card.style.width = `${originalRect.width}px`;
-        card.style.height = `${originalRect.height}px`;
-        card.style.margin = '0';
-        card.style.zIndex = '1500'; // Ensure it's above backdrop (999)
-        
-        // Add expanding class for initial scale effect
-        card.classList.add('expanding');
-        
-        // After a small delay, animate to final position
-        setTimeout(() => {
-            card.classList.remove('expanding');
-            card.classList.add('expanded');
-            
-            // Animate to target position and size with smoother timing
-            card.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            card.style.top = `${targetTop}px`;
-            card.style.left = `${targetLeft}px`;
-            card.style.width = `${targetWidth}px`;
-            card.style.height = `${targetHeight}px`;
-            card.style.borderRadius = '20px';
-            card.style.zIndex = '1500'; // Maintain high z-index
-            
-        }, 80);
-        
-        // Create title header (animate in immediately after modal opens)
-        setTimeout(() => {
-            // Create title with icon
-            const titleContainer = document.createElement('div');
-            titleContainer.className = 'breakdown-title-container';
-            titleContainer.style.cssText = `
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 12px;
-                margin-bottom: 20px;
-                opacity: 0;
-                animation: slideInFromBottom 0.5s var(--ease-default) 0.1s forwards;
+        // Add appropriate icon based on type
+        if (type === 'base') {
+            icon.innerHTML = `
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
             `;
-            
-            const icon = document.createElement('div');
-            icon.className = 'breakdown-title-icon';
-            icon.style.cssText = `
-                color: var(--accent3);
-                opacity: 0.8;
+        } else {
+            icon.innerHTML = `
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 6.26 22 7.27 17 12.14 18.18 19.02 12 15.77 5.82 19.02 7 12.14 2 7.27 8.91 6.26 12 2"></polygon>
+                </svg>
             `;
-            
-            // Add appropriate icon based on type
-            if (type === 'base') {
-                icon.innerHTML = `
-                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="12" y1="8" x2="12" y2="16"></line>
-                        <line x1="8" y1="12" x2="16" y2="12"></line>
-                    </svg>
-                `;
-            } else {
-                icon.innerHTML = `
-                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="12 2 15.09 6.26 22 7.27 17 12.14 18.18 19.02 12 15.77 5.82 19.02 7 12.14 2 7.27 8.91 6.26 12 2"></polygon>
-                    </svg>
-                `;
-            }
-            
-            const title = document.createElement('h3');
-            title.className = 'breakdown-title';
-            title.textContent = type === 'base' ? 'Grunnlønn' : 'Tillegg';
-            title.style.cssText = `
-                color: var(--accent3);
-                margin: 0;
-                font-size: 24px;
-                font-weight: 600;
-            `;
-            
-            titleContainer.appendChild(icon);
-            titleContainer.appendChild(title);
-            
-            // Insert title container as first child
-            card.insertBefore(titleContainer, card.firstChild);
-            
-            // Create close button with animation
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'close-btn';
-            closeBtn.innerHTML = '×';
-            closeBtn.style.cssText = `
-                opacity: 0;
-                animation: scaleInDelayed 0.4s var(--ease-default) 0.2s forwards;
-            `;
-            closeBtn.onclick = (e) => {
-                e.stopPropagation();
-                this.closeBreakdown();
-            };
-            card.appendChild(closeBtn);
+        }
         
-        // Build calendar view with animation
+        const title = document.createElement('h3');
+        title.className = 'breakdown-title';
+        title.textContent = type === 'base' ? 'Grunnlønn' : 'Tillegg';
+        title.style.cssText = `
+            color: var(--accent3);
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        `;
+        
+        titleContainer.appendChild(icon);
+        titleContainer.appendChild(title);
+        modal.appendChild(titleContainer);
+        
+        // Create close button
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        closeBtn.innerHTML = '×';
+        closeBtn.style.cssText = `
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 102, 153, 0.1);
+            border: 1px solid rgba(255, 102, 153, 0.3);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--danger);
+            transition: all 0.2s var(--ease-default);
+            z-index: 21;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
+            font-size: 18px;
+            font-weight: bold;
+        `;
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.closeBreakdown();
+        };
+        modal.appendChild(closeBtn);
+        
+        // Create calendar container
         const calendarContainer = document.createElement('div');
         calendarContainer.className = 'breakdown-calendar';
         calendarContainer.style.cssText = `
             opacity: 0;
             animation: slideInFromBottom 0.6s var(--ease-default) 0.3s forwards;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         `;
-        card.appendChild(calendarContainer);
+        modal.appendChild(calendarContainer);
         
-        // Create calendar for current month - start immediately
-        this.createBreakdownCalendar(calendarContainer, type);
+        // Add modal to body first
+        document.body.appendChild(modal);
         
-        }, 100); // Minimal delay to let modal start morphing
+        // Use setTimeout instead of requestAnimationFrame for more reliable timing
+        setTimeout(() => {
+            modal.style.opacity = '1';
+        }, 50);
+        
+        // Create calendar for current month
+        setTimeout(() => {
+            this.createBreakdownCalendar(calendarContainer, type);
+        }, 100);
     },
 
     // Create breakdown calendar view
@@ -1871,20 +1837,16 @@ export const app = {
         container.appendChild(grid);
     },
     
-    // Close breakdown card
+    // Close breakdown modal
     closeBreakdown() {
         const backdrop = document.querySelector('.backdrop-blur');
-        const expandedCard = document.querySelector('.breakdown-card.expanded');
+        const modal = this.currentModal;
         const header = document.querySelector('.header');
         
         // Show header again
         if (header) {
             header.classList.remove('hidden');
         }
-        
-        // Clean up any existing placeholders
-        const placeholders = document.querySelectorAll('.breakdown-card-placeholder');
-        placeholders.forEach(placeholder => placeholder.remove());
         
         if (backdrop) {
             backdrop.classList.remove('active');
@@ -1901,91 +1863,13 @@ export const app = {
             setTimeout(() => backdrop.remove(), 300);
         }
         
-        if (expandedCard) {
-            // Remove expanded class first to stop animations
-            expandedCard.classList.remove('expanded', 'expanding');
-            
-            // Restore original styles
-            const originalData = expandedCard.dataset.originalPosition;
-            if (originalData) {
-                const original = JSON.parse(originalData);
-                
-                // Reset all positioning styles with smooth transition
-                expandedCard.style.transition = 'all 0.4s var(--ease-default)';
-                expandedCard.style.position = original.position;
-                expandedCard.style.top = original.top;
-                expandedCard.style.left = original.left;
-                expandedCard.style.width = original.width;
-                expandedCard.style.height = original.height;
-                expandedCard.style.transform = original.transform;
-                expandedCard.style.margin = '';
-                expandedCard.style.zIndex = '';
-                expandedCard.style.borderRadius = '';
-                
-                // Move card back to its original parent and remove placeholder
-                const originalParent = document.querySelector('.breakdown-cards');
-                const placeholder = document.querySelector(`.breakdown-card-placeholder[data-original-card="${original.cardDataType}"]`);
-                
-                if (originalParent) {
-                    if (placeholder) {
-                        // Replace placeholder with the original card
-                        originalParent.insertBefore(expandedCard, placeholder);
-                        placeholder.remove();
-                    } else {
-                        // Fallback to original positioning logic
-                        const cardType = original.cardDataType;
-                        if (cardType === 'base') {
-                            // Base card should be first
-                            originalParent.insertBefore(expandedCard, originalParent.firstChild);
-                        } else if (cardType === 'bonus') {
-                            // Bonus card should be second (after base)
-                            const baseCard = originalParent.querySelector('[data-type="base"]');
-                            if (baseCard && baseCard.nextSibling) {
-                                originalParent.insertBefore(expandedCard, baseCard.nextSibling);
-                            } else {
-                                originalParent.appendChild(expandedCard);
-                            }
-                        } else {
-                            // Any other cards go at the end
-                            originalParent.appendChild(expandedCard);
-                        }
-                    }
-                }
-                
-                // Clear transition after restoration
-                setTimeout(() => {
-                    expandedCard.style.transition = '';
-                }, 400);
-                
-                delete expandedCard.dataset.originalPosition;
-            }
-            
-            // Remove all added elements
-            const closeBtn = expandedCard.querySelector('.close-btn');
-            const calendar = expandedCard.querySelector('.breakdown-calendar');
-            const titleContainer = expandedCard.querySelector('.breakdown-title-container');
-            const title = expandedCard.querySelector('.breakdown-title'); // fallback for old structure
-            if (closeBtn) closeBtn.remove();
-            if (calendar) calendar.remove();
-            if (titleContainer) titleContainer.remove();
-            if (title) title.remove(); // fallback cleanup
-            
-            // Restore original content visibility
-            const icon = expandedCard.querySelector('.breakdown-icon');
-            const value = expandedCard.querySelector('.breakdown-value');
-            const label = expandedCard.querySelector('.breakdown-label');
-            if (icon) {
-                icon.style.display = '';
-                icon.style.opacity = '1';
-            }
-            if (value) {
-                value.style.display = '';
-                value.style.opacity = '1';
-            }
-            if (label) {
-                label.style.display = '';
-                label.style.opacity = '1';
-            }
+        if (modal) {
+            // Animate out
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.remove();
+                this.currentModal = null;
+            }, 400);
         }
     },
     // Show detailed shift information in expanded view
@@ -2010,14 +1894,13 @@ export const app = {
         backdrop.onclick = () => this.closeShiftDetails();
         document.body.appendChild(backdrop);
         
-        // Add keyboard support
-        const keydownHandler = (e) => {
+        // Store keyboard handler reference for proper cleanup
+        this.shiftDetailsKeydownHandler = (e) => {
             if (e.key === 'Escape') {
                 this.closeShiftDetails();
             }
         };
-        document.addEventListener('keydown', keydownHandler);
-        backdrop.dataset.keydownHandler = 'attached';
+        document.addEventListener('keydown', this.shiftDetailsKeydownHandler);
         
         // Force reflow then activate backdrop
         backdrop.offsetHeight;
@@ -2026,25 +1909,19 @@ export const app = {
         // Create shift detail card
         const detailCard = document.createElement('div');
         detailCard.className = 'shift-detail-card';
-        detailCard.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            width: min(90vw, 500px);
-            max-height: 80vh;
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            padding: 24px;
-            z-index: 1200;
-            opacity: 0;
-            box-shadow: 
-                0 32px 64px var(--shadow-accent),
-                0 16px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--shadow-accent);
-            overflow-y: auto;
-            transition: all 0.4s var(--ease-default);
-        `;
+        
+        // Set initial styles that position it correctly from the start
+        detailCard.style.position = 'fixed';
+        detailCard.style.top = '50%';
+        detailCard.style.left = '50%';
+        detailCard.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        detailCard.style.width = 'min(90vw, 500px)';
+        detailCard.style.maxHeight = '80vh';
+        detailCard.style.padding = '24px';
+        detailCard.style.zIndex = '1200';
+        detailCard.style.opacity = '0';
+        detailCard.style.overflowY = 'auto';
+        detailCard.style.transition = 'all 0.4s var(--ease-default)';
         
         // Calculate shift details
         const calc = this.calculateShift(shift);
@@ -2111,14 +1988,23 @@ export const app = {
                 </div>
                 
                 ${!this.demoMode ? `
-                <div class="detail-section delete-section">
-                    <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="gap: 8px;">
-                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                        Slett vakt
-                    </button>
+                <div class="detail-section actions-section">
+                    <div class="shift-actions">
+                        <button class="btn btn-secondary edit-shift-btn" data-shift-id="${shift.id}" style="gap: 8px;">
+                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Rediger vakt
+                        </button>
+                        <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="gap: 8px;">
+                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Slett vakt
+                        </button>
+                    </div>
                 </div>
                 ` : ''}
             </div>
@@ -2128,40 +2014,74 @@ export const app = {
         
         document.body.appendChild(detailCard);
         
-        // Trigger animation after DOM insertion
-        setTimeout(() => {
+        // Trigger animation immediately
+        requestAnimationFrame(() => {
             detailCard.style.opacity = '1';
             detailCard.style.transform = 'translate(-50%, -50%) scale(1)';
-        }, 10);
+        });
     },
     
     // Close shift details view
     closeShiftDetails() {
-        const backdrop = document.querySelector('.backdrop-blur');
+        console.log('closeShiftDetails called');
+        
+        // Find and close any existing shift detail card
         const detailCard = document.querySelector('.shift-detail-card');
+        const backdrop = document.querySelector('.backdrop-blur');
         const header = document.querySelector('.header');
+        
+        console.log('Elements found:', {
+            detailCard: !!detailCard,
+            backdrop: !!backdrop,
+            header: !!header
+        });
         
         // Show header again
         if (header) {
             header.classList.remove('hidden');
+            console.log('Header shown');
         }
         
-        if (backdrop) {
-            backdrop.classList.remove('active');
-            setTimeout(() => backdrop.remove(), 300);
+        // Remove keyboard event listener properly
+        if (this.shiftDetailsKeydownHandler) {
+            document.removeEventListener('keydown', this.shiftDetailsKeydownHandler);
+            this.shiftDetailsKeydownHandler = null;
+            console.log('Keyboard listener removed');
         }
         
+        // Remove detail card first
         if (detailCard) {
-            detailCard.style.animation = 'shiftDetailExit 0.3s var(--ease-default) forwards';
-            setTimeout(() => detailCard.remove(), 300);
+            detailCard.style.opacity = '0';
+            detailCard.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            console.log('Detail card animation started');
+            
+            // Remove card after animation
+            setTimeout(() => {
+                if (detailCard.parentNode) {
+                    detailCard.remove();
+                    console.log('Detail card removed from DOM');
+                }
+            }, 300);
         }
         
-        // Remove keyboard listener - fix: remove the actual function reference
-        document.removeEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeShiftDetails();
-            }
-        });
+        // Remove backdrop after detail card animation starts
+        if (backdrop) {
+            // Start backdrop fade-out animation after a short delay
+            setTimeout(() => {
+                backdrop.classList.remove('active');
+                console.log('Backdrop deactivated');
+                
+                // Remove backdrop after its animation completes
+                setTimeout(() => {
+                    if (backdrop.parentNode) {
+                        backdrop.remove();
+                        console.log('Backdrop removed from DOM');
+                    }
+                }, 350); // Extra 50ms to ensure animation completes
+            }, 100); // 100ms delay to let modal start closing first
+        }
+        
+        console.log('closeShiftDetails completed');
     },
 
     // Profile management methods
@@ -2538,679 +2458,307 @@ export const app = {
         }
     },
     
-    // Debug/test function for custom bonuses
-    testCustomBonuses() {
-        console.log('=== Testing Custom Bonuses ===');
-        console.log('Current customBonuses:', this.customBonuses);
-        console.log('Current usePreset:', this.usePreset);
-        
-        // Test populating slots
-        console.log('Testing populateCustomBonusSlots...');
-        this.populateCustomBonusSlots();
-        
-        // Check if containers exist and have slots
-        ['weekday', 'saturday', 'sunday'].forEach(type => {
-            const container = document.getElementById(`${type}BonusSlots`);
-            if (container) {
-                const slots = container.querySelectorAll('.bonus-slot');
-                console.log(`${type}: ${slots.length} slots found`);
-                slots.forEach((slot, index) => {
-                    const inputs = slot.querySelectorAll('input');
-                    console.log(`  Slot ${index}:`, {
-                        from: inputs[0].value,
-                        to: inputs[1].value,
-                        rate: inputs[2].value
-                    });
-                });
-            } else {
-                console.log(`${type}: container not found`);
-            }
-        });
-        
-        // Test saving
-        console.log('Testing saveCustomBonuses...');
-        this.saveCustomBonuses();
-    },
-    // Debug function to inspect current bonus slots in DOM
-    debugBonusSlots() {
-        console.log('=== CURRENT DOM BONUS SLOTS STATE ===');
-        const types = ['weekday', 'saturday', 'sunday'];
-        
-        types.forEach(type => {
-            const container = document.getElementById(`${type}BonusSlots`);
-            if (!container) {
-                console.log(`${type}: container not found`);
-                return;
-            }
-            
-            const slots = container.querySelectorAll('.bonus-slot');
-            console.log(`${type}: ${slots.length} slots found`);
-            
-            slots.forEach((slot, index) => {
-                const inputs = slot.querySelectorAll('input');
-                if (inputs.length >= 3) {
-                    console.log(`  ${type} slot ${index}:`, {
-                        from: inputs[0].value,
-                        to: inputs[1].value,
-                        rate: inputs[2].value
-                    });
-                }
-            });
-        });
-        
-        console.log('Current app.customBonuses:', this.customBonuses);
-    },
-
-    // Test the complete save workflow
-    async testCompleteSaveWorkflow() {
-        console.log('=== TESTING COMPLETE SAVE WORKFLOW ===');
-        
-        // Step 1: Add some test data to DOM
-        console.log('Step 1: Adding test data to DOM slots');
-        const weekdayContainer = document.getElementById('weekdayBonusSlots');
-        if (weekdayContainer) {
-            // Clear and add test slot
-            weekdayContainer.innerHTML = '';
-            const slot = document.createElement('div');
-            slot.className = 'bonus-slot';
-            slot.innerHTML = `
-                <input type="time" class="form-control" value="18:00">
-                <input type="time" class="form-control" value="22:00">
-                <input type="number" class="form-control" placeholder="kr/t" value="25">
-                <button class="btn btn-icon btn-danger remove-bonus">×</button>
-            `;
-            weekdayContainer.appendChild(slot);
-            console.log('Added test slot to weekday container');
-        }
-        
-        // Step 2: Debug current DOM state
-        console.log('Step 2: Current DOM state');
-        this.debugBonusSlots();
-        
-        // Step 3: Call saveCustomBonuses and see what it captures
-        console.log('Step 3: Calling saveCustomBonuses');
-        await this.saveCustomBonuses();
-        
-        // Step 4: Check what's in app.customBonuses after save
-        console.log('Step 4: app.customBonuses after save:', this.customBonuses);
-        
-        // Step 5: Try to save to database
-        console.log('Step 5: Saving to database');
-        await this.saveSettingsToSupabase();
-        
-        // Step 6: Simulate page reload
-        console.log('Step 6: Simulating page reload');
-        this.customBonuses = {}; // Clear current bonuses
-        await this.loadFromSupabase();
-        
-        // Step 7: Check if data is reloaded correctly
-        console.log('Step 7: Data after reload:', this.customBonuses);
-    },
-
-    // Test individual save function
-    async testSaveCustomBonusesOnly() {
-        console.log('=== TESTING saveCustomBonuses FUNCTION ONLY ===');
-        
-        // First add a test slot manually
-        const weekdayContainer = document.getElementById('weekdayBonusSlots');
-        if (weekdayContainer) {
-            weekdayContainer.innerHTML = '';
-            const slot = document.createElement('div');
-            slot.className = 'bonus-slot';
-            slot.innerHTML = `
-                <input type="time" class="form-control" value="19:00">
-                <input type="time" class="form-control" value="23:00">
-                <input type="number" class="form-control" placeholder="kr/t" value="30">
-                <button class="btn btn-icon btn-danger remove-bonus">×</button>
-            `;
-            weekdayContainer.appendChild(slot);
-        }
-        
-        console.log('Before saveCustomBonuses - DOM state:');
-        this.debugBonusSlots();
-        
-        console.log('Before saveCustomBonuses - app.customBonuses:', this.customBonuses);
-        
-        await this.saveCustomBonuses();
-        
-        console.log('After saveCustomBonuses - app.customBonuses:', this.customBonuses);
-    },
-
-    async testDatabaseSave() {
-        console.log('=== TESTING DATABASE SAVE ===');
-        
-        // Set some test data
-        this.customBonuses = {
-            weekday: [{ from: "18:00", to: "22:00", rate: 25 }],
-            saturday: [{ from: "08:00", to: "16:00", rate: 30 }],
-            sunday: []
-        };
-        
-        console.log('Setting test custom bonuses:', this.customBonuses);
-        
-        // Try to save
-        await this.saveSettingsToSupabase();
-        
-        // Then try to load back
-        setTimeout(async () => {
-            console.log('Loading back from database...');
-            await this.loadFromSupabase();
-            console.log('Loaded custom bonuses:', this.customBonuses);
-        }, 1000);
-    },
-
-    // Test the entire workflow step by step
-    async debugSaveWorkflow() {
-        console.log('=== DEBUGGING SAVE WORKFLOW STEP BY STEP ===');
-        
-        // Step 1: Clear and set up test data in DOM
-        console.log('Step 1: Setting up test data in DOM');
-        const weekdayContainer = document.getElementById('weekdayBonusSlots');
-        if (weekdayContainer) {
-            weekdayContainer.innerHTML = '';
-            const slot = document.createElement('div');
-            slot.className = 'bonus-slot';
-            slot.innerHTML = `
-                <input type="time" class="form-control" value="18:00">
-                <input type="time" class="form-control" value="22:00">  
-                <input type="number" class="form-control" placeholder="kr/t" value="25">
-                <button class="btn btn-icon btn-danger remove-bonus">×</button>
-            `;
-            weekdayContainer.appendChild(slot);
-            console.log('Added test slot to weekday container');
-        }
-        
-        // Step 2: Check DOM state
-        console.log('Step 2: Current DOM state');
-        this.debugBonusSlots();
-        
-        // Step 3: Process DOM with saveCustomBonuses 
-        console.log('Step 3: Processing DOM with saveCustomBonuses');
-        // Call only the parsing part, not the save part
-        const types = ['weekday', 'saturday', 'sunday'];
-        const testBonuses = {};
-        
-        types.forEach(type => {
-            const container = document.getElementById(`${type}BonusSlots`);
-            if (container) {
-                const slots = container.querySelectorAll('.bonus-slot');
-                testBonuses[type] = [];
-                console.log(`Processing ${slots.length} slots for ${type}`);
-                
-                slots.forEach((slot, index) => {
-                    const inputs = slot.querySelectorAll('input');
-                    if (inputs.length >= 3) {
-                        const from = inputs[0].value;
-                        const to = inputs[1].value;
-                        const rate = parseFloat(inputs[2].value);
-                        
-                        if (from && to && rate && !isNaN(rate)) {
-                            testBonuses[type].push({ from, to, rate });
-                            console.log(`Captured bonus for ${type}:`, { from, to, rate });
-                        }
-                    }
-                });
-            } else {
-                testBonuses[type] = [];
-            }
-        });
-        
-        console.log('Step 4: Parsed bonuses from DOM:', testBonuses);
-        
-        // Step 5: Save to app state
-        this.customBonuses = testBonuses;
-        console.log('Step 5: Updated app.customBonuses:', this.customBonuses);
-        
-        // Step 6: Save to database manually
-        console.log('Step 6: Saving to database');
-        await this.saveSettingsToSupabase();
-        
-        // Step 7: Wait and reload
-        console.log('Step 7: Waiting 2 seconds then reloading from database');
-        setTimeout(async () => {
-            await this.loadFromSupabase();
-            console.log('Step 8: Reloaded from database:', this.customBonuses);
-        }, 2000);
-    },
-
-    async simpleDbTest() {
-        console.log('=== SIMPLE DATABASE TEST ===');
-        
-        // Set a very simple test bonus
-        const testBonuses = {
-            weekday: [{ from: "18:00", to: "22:00", rate: 25 }],
-            saturday: [],
-            sunday: []
-        };
-        
-        console.log('1. Setting test bonuses:', testBonuses);
-        this.customBonuses = testBonuses;
-        
-        console.log('2. Calling saveSettingsToSupabase...');
-        await this.saveSettingsToSupabase();
-        
-        console.log('3. Clearing local bonuses...');
-        this.customBonuses = {};
-        
-        console.log('4. Loading from database...');
-        await this.loadFromSupabase();
-        
-        console.log('5. Final result from database:', this.customBonuses);
-        
-        if (this.customBonuses.weekday && this.customBonuses.weekday.length > 0) {
-            console.log('✅ SUCCESS: Database save/load working!');
-        } else {
-            console.log('❌ FAILED: Custom bonuses not working');
-        }
-    },
-
-    // Quick test for the fix
-    async quickDbTest() {
-        console.log('=== QUICK DATABASE TEST ===');
-        console.log('Before test - current customBonuses:', this.customBonuses);
-        
-        // Test 1: Empty object
-        console.log('Test 1: Saving empty object {}');
-        this.customBonuses = {};
-        await this.saveSettingsToSupabase();
-        
-        // Test 2: Object with empty arrays
-        console.log('Test 2: Saving object with empty arrays');
-        this.customBonuses = { weekday: [], saturday: [], sunday: [] };
-        await this.saveSettingsToSupabase();
-        
-        // Test 3: Object with actual data
-        console.log('Test 3: Saving object with real data');
-        this.customBonuses = {
-            weekday: [{ from: "18:00", to: "22:00", rate: 25 }],
-            saturday: [],
-            sunday: []
-        };
-        await this.saveSettingsToSupabase();
-        
-        // Now try to load back
-        console.log('Loading back from database...');
-        setTimeout(async () => {
-            this.customBonuses = {}; // Clear first
-            await this.loadFromSupabase();
-            console.log('Final loaded result:', this.customBonuses);
-            
-            if (this.customBonuses.weekday && this.customBonuses.weekday.length > 0) {
-                console.log('✅ SUCCESS: Custom bonuses are being saved and loaded!');
-            } else {
-                console.log('❌ FAILED: Custom bonuses still not working');
-                console.log('Expected: weekday array with 1 item');
-                console.log('Actual:', this.customBonuses);
-            }
-        }, 1500);
-    },
-
-    setCustomMode() {
-        console.log('Switching to custom mode for testing');
-        this.usePreset = false;
-        document.getElementById('usePresetToggle').checked = false;
-        this.togglePresetSections();
-    },
-
-    // Test the actual user workflow
-    async testUserWorkflow() {
-        console.log('=== TESTING ACTUAL USER WORKFLOW ===');
-        
-        // Step 1: Switch to custom mode
-        console.log('Step 1: Switching to custom mode');
-        this.usePreset = false;
-        document.getElementById('usePresetToggle').checked = false;
-        this.togglePresetSections();
-        
-        // Wait for DOM to be ready
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // Step 2: Add some bonuses via DOM (simulate user input)
-        console.log('Step 2: Adding bonuses via DOM (simulating user input)');
-        
-        // Add weekday bonus
-        const weekdayContainer = document.getElementById('weekdayBonusSlots');
-        if (weekdayContainer) {
-            // Clear first
-            weekdayContainer.innerHTML = '';
-            
-            // Add two weekday bonuses
-            this.addBonusSlot('weekday');
-            this.addBonusSlot('weekday');
-            
-            // Fill in the values
-            const slots = weekdayContainer.querySelectorAll('.bonus-slot');
-            if (slots.length >= 2) {
-                // First bonus: 18:00-22:00, 25kr
-                slots[0].querySelectorAll('input')[0].value = '18:00';
-                slots[0].querySelectorAll('input')[1].value = '22:00';
-                slots[0].querySelectorAll('input')[2].value = '25';
-                
-                // Second bonus: 22:00-24:00, 40kr
-                slots[1].querySelectorAll('input')[0].value = '22:00';
-                slots[1].querySelectorAll('input')[1].value = '23:59';
-                slots[1].querySelectorAll('input')[2].value = '40';
-                
-                console.log('Added 2 weekday bonuses to DOM');
-            }
-        }
-        
-        // Add saturday bonus
-        this.addBonusSlot('saturday');
-        const saturdayContainer = document.getElementById('saturdayBonusSlots');
-        if (saturdayContainer) {
-            const slots = saturdayContainer.querySelectorAll('.bonus-slot');
-            if (slots.length >= 1) {
-                slots[0].querySelectorAll('input')[0].value = '08:00';
-                slots[0].querySelectorAll('input')[1].value = '16:00';
-                slots[0].querySelectorAll('input')[2].value = '50';
-                console.log('Added 1 saturday bonus to DOM');
-            }
-        }
-        
-        // Step 3: Check DOM state
-        console.log('Step 3: Checking DOM state after adding bonuses');
-        this.debugBonusSlots();
-        
-        // Step 4: Call saveCustomBonuses (this is what "Lagre tillegg" button does)
-        console.log('Step 4: Calling saveCustomBonuses (simulating "Lagre tillegg" button click)');
-        await this.saveCustomBonuses();
-        
-        // Step 5: Check what was saved
-        console.log('Step 5: Checking what was saved to app.customBonuses:', this.customBonuses);
-        
-        // Step 6: Simulate page refresh by clearing and reloading
-        console.log('Step 6: Simulating page refresh - clearing and reloading from database');
-        this.customBonuses = {}; // Clear
-        await this.loadFromSupabase();
-        
-        console.log('Step 7: Final result after "page refresh":', this.customBonuses);
-        
-        // Check results
-        const weekdayCount = this.customBonuses.weekday ? this.customBonuses.weekday.length : 0;
-        const saturdayCount = this.customBonuses.saturday ? this.customBonuses.saturday.length : 0;
-        
-        if (weekdayCount === 2 && saturdayCount === 1) {
-            console.log('✅ SUCCESS: User workflow is working correctly!');
-        } else {
-            console.log('❌ FAILED: User workflow not working');
-            console.log(`Expected: weekday=2, saturday=1`);
-            console.log(`Actual: weekday=${weekdayCount}, saturday=${saturdayCount}`);
-        }
-    },
-
-    // Test function to verify auto-save functionality
-    async testAutoSave() {
-        console.log('=== TESTING AUTO-SAVE FUNCTIONALITY ===');
-        
-        // Step 1: Switch to custom mode
-        console.log('Step 1: Switching to custom mode');
-        document.getElementById('usePresetToggle').checked = false;
-        await this.togglePreset();
-        
-        // Step 2: Add a bonus slot
-        console.log('Step 2: Adding bonus slot');
-        this.addBonusSlot('weekday');
-        
-        // Step 3: Fill in the bonus data
-        console.log('Step 3: Filling bonus data');
-        const container = document.getElementById('weekdayBonusSlots');
-        const slots = container.querySelectorAll('.bonus-slot');
-        const lastSlot = slots[slots.length - 1];
-        const inputs = lastSlot.querySelectorAll('input');
-        
-        inputs[0].value = '16:00';
-        inputs[1].value = '20:00';
-        inputs[2].value = '30';
-        
-        // Trigger change events
-        inputs.forEach(input => {
-            input.dispatchEvent(new Event('change'));
-        });
-        
-        console.log('Auto-save should trigger in 2 seconds...');
-        
-        // Wait for auto-save to complete
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        console.log('Step 4: Checking saved bonuses');
-        console.log('Current custom bonuses:', this.customBonuses);
-        
-        // Step 5: Test closing modal auto-save
-        console.log('Step 5: Testing modal close auto-save');
-        await this.closeSettings();
-        
-        console.log('Auto-save test completed!');
-    },
-
-    // Test function to verify simplified settings modal works correctly
-    testSettingsModal() {
-        console.log('=== TESTING SIMPLIFIED SETTINGS MODAL ===');
-        
-        console.log('Step 1: Opening settings modal');
-        this.openSettings();
-        
-        setTimeout(() => {
-            const modal = document.getElementById('settingsModal');
-            const isVisible = modal && modal.style.display === 'flex';
-            
-            if (isVisible) {
-                console.log('✅ Modal opened successfully');
-                
-                console.log('Step 2: Testing tab switching');
-                this.switchSettingsTabSync('bonuses');
-                
-                setTimeout(() => {
-                    console.log('Step 3: Closing settings modal');
-                    this.closeSettings();
-                    
-                    setTimeout(() => {
-                        const isClosed = modal && modal.style.display === 'none';
-                        if (isClosed) {
-                            console.log('✅ Modal closed successfully');
-                            console.log('✅ Settings modal test completed successfully!');
-                        } else {
-                            console.log('❌ Modal did not close properly');
-                        }
-                    }, 100);
-                }, 100);
-            } else {
-                console.log('❌ Modal did not open properly');
-            }
-        }, 100);
-    },
-    // === DEBUG FUNCTIONS FOR TROUBLESHOOTING ===
-    
-    // Test basic database connectivity
-    async testDatabaseConnection() {
-        console.log('=== TESTING DATABASE CONNECTION ===');
-        
-        try {
-            const { data: { user } } = await window.supa.auth.getUser();
-            console.log('Current user:', user?.email);
-            
-            if (!user) {
-                console.error('❌ No user found');
-                return false;
-            }
-            
-            // Test basic select operation
-            console.log('Testing basic select operation...');
-            const { data: shifts, error: selectError } = await window.supa
-                .from('user_shifts')
-                .select('*')
-                .eq('user_id', user.id)
-                .limit(1);
-                
-            console.log('Select result:', { shifts, selectError });
-            
-            if (selectError) {
-                console.error('❌ Select operation failed:', selectError);
-                return false;
-            }
-            
-            console.log('✅ Database connection working');
-            return true;
-            
-        } catch (e) {
-            console.error('❌ Database connection test failed:', e);
-            return false;
-        }
-    },
-    
-    // Test database access and permissions
-    async testDatabaseAccess() {
-        console.log('=== TESTING DATABASE ACCESS AND PERMISSIONS ===');
-        
-        const { data: { user } } = await window.supa.auth.getUser();
-        console.log('Current user:', user?.email);
-        
-        if (!user) {
-            console.error('❌ No user found');
+    // Edit shift functionality
+    editShift(shiftId) {
+        // Find the shift to edit
+        const shift = this.shifts.find(s => s.id === shiftId);
+        if (!shift) {
+            console.error('Shift not found:', shiftId);
             return;
         }
         
-        // Test 1: Select existing shifts
-        console.log('Test 1: Selecting existing shifts...');
-        const { data: existingShifts, error: selectError } = await window.supa
-            .from('user_shifts')
-            .select('*')
-            .eq('user_id', user.id);
-            
-        console.log('Existing shifts:', { existingShifts, selectError });
+        console.log('Opening edit modal for shift:', shift);
         
-        // Test 2: Try inserting a test shift
-        console.log('Test 2: Attempting test insert...');
-        const testShift = {
-            user_id: user.id,
-            shift_date: '2025-01-20',
-            start_time: '10:00',
-            end_time: '18:00',
-            shift_type: 0
-        };
+        // Store the shift being edited
+        this.editingShift = shift;
         
-        const { data: insertData, error: insertError } = await window.supa
-            .from('user_shifts')
-            .insert(testShift)
-            .select()
-            .single();
-            
-        console.log('Insert test result:', { insertData, insertError });
+        // Close shift details modal first and wait for it to complete
+        this.closeShiftDetails();
         
-        if (insertError) {
-            console.error('❌ Insert failed. Error details:', {
-                code: insertError.code,
-                message: insertError.message,
-                details: insertError.details,
-                hint: insertError.hint
-            });
-            
-            // Check if it's a permissions issue
-            if (insertError.code === '42501' || insertError.message?.includes('permission') || insertError.message?.includes('policy')) {
-                console.error('🚫 This appears to be a Row Level Security (RLS) permissions issue');
-                console.error('The user may not have permission to insert data');
-            }
-        } else {
-            console.log('✅ Insert successful, cleaning up test data...');
-            // Clean up test data
-            if (insertData?.id) {
-                await window.supa
-                    .from('user_shifts')
-                    .delete()
-                    .eq('id', insertData.id);
-                console.log('✅ Test data cleaned up');
-            }
-        }
-        
-        // Test 3: Check user session validity
-        console.log('Test 3: Checking session validity...');
-        const { data: session, error: sessionError } = await window.supa.auth.getSession();
-        console.log('Session check:', { 
-            hasSession: !!session.session, 
-            sessionError,
-            accessToken: session.session?.access_token ? 'Present' : 'Missing',
-            refreshToken: session.session?.refresh_token ? 'Present' : 'Missing'
-        });
+        // Reduced delay for smoother transition - just wait for backdrop animation
+        setTimeout(() => {
+            this.openEditModal(shift);
+        }, 200); // 200ms for smoother transition
     },
     
-    // Test network connectivity to Supabase
-    async testNetworkConnection() {
-        console.log('=== TESTING NETWORK CONNECTION ===');
+    // Separate method to open edit modal for better organization
+    openEditModal(shift) {
+        const editModal = document.getElementById('editShiftModal');
+        if (editModal) {
+            editModal.style.display = 'block';
+            
+            // Populate the edit form with current shift data
+            this.populateEditForm(shift);
+            
+            // Hide header
+            const header = document.querySelector('.header');
+            if (header) {
+                header.classList.add('hidden');
+            }
+            
+            // Add backdrop click handler
+            const backdrop = editModal.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.onclick = () => this.closeEditShift();
+            }
+            
+            // Add keyboard support
+            const keydownHandler = (e) => {
+                if (e.key === 'Escape') {
+                    this.closeEditShift();
+                }
+            };
+            document.addEventListener('keydown', keydownHandler);
+            editModal.dataset.keydownHandler = 'attached';
+        }
+    },
+    
+    closeEditShift() {
+        const editModal = document.getElementById('editShiftModal');
+        if (editModal) {
+            editModal.style.display = 'none';
+            
+            // Show header again
+            const header = document.querySelector('.header');
+            if (header) {
+                header.classList.remove('hidden');
+            }
+            
+            // Remove keyboard listener
+            if (editModal.dataset.keydownHandler) {
+                document.removeEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeEditShift();
+                    }
+                });
+                delete editModal.dataset.keydownHandler;
+            }
+            
+            // Clear editing state
+            this.editingShift = null;
+            this.editSelectedDate = null;
+            
+            // Clear form
+            document.getElementById('editShiftForm').reset();
+            
+            // Remove selected state from date grid
+            document.querySelectorAll('#editDateGrid .date-cell').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+        }
+    },
+    
+    populateEditForm(shift) {
+        // Populate time selects first
+        this.populateEditTimeSelects();
+        
+        // Populate date grid
+        this.populateEditDateGrid();
+        
+        // Set the selected date
+        this.editSelectedDate = new Date(shift.date);
+        
+        // Set time values
+        const [startHour, startMinute] = shift.startTime.split(':');
+        const [endHour, endMinute] = shift.endTime.split(':');
+        
+        document.getElementById('editStartHour').value = startHour;
+        document.getElementById('editStartMinute').value = startMinute || '00';
+        document.getElementById('editEndHour').value = endHour;
+        document.getElementById('editEndMinute').value = endMinute || '00';
+        
+        // Highlight the selected date in the grid
+        setTimeout(() => {
+            const dateDay = shift.date.getDate();
+            const dateCell = document.querySelector(`#editDateGrid .date-cell[data-day="${dateDay}"]`);
+            if (dateCell) {
+                dateCell.classList.add('selected');
+            }
+        }, 100);
+    },
+    
+    populateEditTimeSelects() {
+        const hourOptions = Array.from({length: 24}, (_, i) => 
+            `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`
+        ).join('');
+        
+        const minuteOptions = ['00', '15', '30', '45'].map(m => 
+            `<option value="${m}">${m}</option>`
+        ).join('');
+        
+        document.getElementById('editStartHour').innerHTML = '<option value="">Fra time</option>' + hourOptions;
+        document.getElementById('editStartMinute').innerHTML = '<option value="">Fra minutt</option>' + minuteOptions;
+        document.getElementById('editEndHour').innerHTML = '<option value="">Til time</option>' + hourOptions;
+        document.getElementById('editEndMinute').innerHTML = '<option value="">Til minutt</option>' + minuteOptions;
+    },
+    
+    populateEditDateGrid() {
+        const grid = document.getElementById('editDateGrid');
+        if (!grid) return;
+        
+        grid.innerHTML = '';
+        
+        const year = this.YEAR;
+        const month = this.currentMonth - 1; // Convert to 0-based
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDate = new Date(firstDay);
+        const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+        startDate.setDate(startDate.getDate() - offset);
+        
+        // Add day headers
+        ['M','T','O','T','F','L','S'].forEach(day => {
+            const hdr = document.createElement('div');
+            hdr.textContent = day;
+            hdr.style.cssText = 'font-weight:600;font-size:12px;color:var(--text-secondary);text-align:center;padding:8px;';
+            grid.appendChild(hdr);
+        });
+        
+        // Add calendar cells (42 cells for 6 weeks, like main calendar)
+        for (let i = 0; i < 42; i++) {
+            const cellDate = new Date(startDate);
+            cellDate.setDate(startDate.getDate() + i);
+            const cell = document.createElement('div');
+            cell.className = 'date-cell';
+            cell.textContent = cellDate.getDate();
+            cell.dataset.day = cellDate.getDate();
+            
+            // Mark out-of-month cells as disabled (like main calendar)
+            if (cellDate.getMonth() !== month) {
+                cell.classList.add('disabled');
+            } else {
+                // Add day type classes for current month dates
+                const dayOfWeek = cellDate.getDay();
+                if (dayOfWeek === 0) cell.classList.add('sunday');
+                else if (dayOfWeek === 6) cell.classList.add('saturday');
+                else cell.classList.add('weekday');
+                
+                // Add click handler only for current month dates
+                cell.addEventListener('click', () => {
+                    // Remove previous selection
+                    document.querySelectorAll('#editDateGrid .date-cell').forEach(c => c.classList.remove('selected'));
+                    
+                    // Add selection to clicked cell
+                    cell.classList.add('selected');
+                    
+                    // Store selected date
+                    this.editSelectedDate = new Date(cellDate);
+                });
+            }
+            
+            grid.appendChild(cell);
+        }
+    },
+    
+    async updateShift() {
+        console.log('updateShift: Starting shift update process');
+        
+        if (!this.editingShift) {
+            console.error('No shift being edited');
+            alert('Ingen vakt valgt for redigering');
+            return;
+        }
         
         try {
-            // Test if we can reach Supabase at all
-            const response = await fetch(window.supa.supabaseUrl + '/rest/v1/', {
-                method: 'HEAD',
-                headers: {
-                    'apikey': window.supa.supabaseKey
-                }
-            });
-            
-            console.log('Network test response:', {
-                status: response.status,
-                statusText: response.statusText,
-                ok: response.ok
-            });
-            
-            if (response.ok) {
-                console.log('✅ Network connection to Supabase is working');
-                return true;
-            } else {
-                console.error('❌ Network connection issue. Status:', response.status);
-                return false;
+            // Validate input
+            if (!this.editSelectedDate) {
+                alert('Vennligst velg en dato');
+                return;
             }
             
+            const startHour = document.getElementById('editStartHour').value;
+            const startMinute = document.getElementById('editStartMinute').value || '00';
+            const endHour = document.getElementById('editEndHour').value;
+            const endMinute = document.getElementById('editEndMinute').value || '00';
+            
+            // Automatically determine shift type from selected date
+            const dayOfWeek = this.editSelectedDate.getDay();
+            const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
+            
+            if (!startHour || !endHour) {
+                alert('Vennligst fyll ut arbeidstid');
+                return;
+            }
+            
+            if (this.demoMode) {
+                alert('Kan ikke redigere vakter i demo-modus');
+                return;
+            }
+            
+            // Get authenticated user
+            const { data: { user }, error: authError } = await window.supa.auth.getUser();
+            if (authError) {
+                console.error('updateShift: Authentication error:', authError);
+                alert('Feil ved autentisering');
+                return;
+            }
+            if (!user) {
+                console.log('updateShift: No authenticated user found');
+                alert('Du er ikke innlogget');
+                return;
+            }
+            
+            // Create updated shift data
+            const updatedShiftData = {
+                shift_date: `${this.editSelectedDate.getFullYear()}-${(this.editSelectedDate.getMonth() + 1).toString().padStart(2, '0')}-${this.editSelectedDate.getDate().toString().padStart(2, '0')}`,
+                start_time: `${startHour}:${startMinute}`,
+                end_time: `${endHour}:${endMinute}`,
+                shift_type: type
+            };
+            
+            console.log('updateShift: Updating shift with data:', updatedShiftData);
+            
+            // Update in database
+            const { data: updated, error } = await window.supa
+                .from('user_shifts')
+                .update(updatedShiftData)
+                .eq('id', this.editingShift.id)
+                .eq('user_id', user.id)
+                .select()
+                .single();
+                
+            if (error) {
+                console.error('updateShift: Database error when updating shift:', error);
+                alert(`Kunne ikke oppdatere vakt i databasen: ${error.message}`);
+                return;
+            }
+            
+            console.log('updateShift: Database update successful:', updated);
+            
+            // Update last active timestamp
+            await this.updateLastActiveTimestamp(user.id);
+            
+            // Update local shift objects
+            const originalShift = this.editingShift;
+            originalShift.date = new Date(this.editSelectedDate);
+            originalShift.startTime = `${startHour}:${startMinute}`;
+            originalShift.endTime = `${endHour}:${endMinute}`;
+            originalShift.type = type;
+            
+            // Update both userShifts and shifts arrays
+            const userShiftIndex = this.userShifts.findIndex(s => s.id === originalShift.id);
+            if (userShiftIndex !== -1) {
+                this.userShifts[userShiftIndex] = { ...originalShift };
+            }
+            
+            if (!this.demoMode) {
+                this.shifts = [...this.userShifts];
+            }
+            
+            // Update display
+            this.updateDisplay();
+            
+            // Close edit modal
+            this.closeEditShift();
+            
+            console.log('updateShift: Completed successfully');
+            
+            // Show success message
+            alert('Vakt oppdatert!');
+            
         } catch (e) {
-            console.error('❌ Network connection failed:', e);
-            return false;
+            console.error('updateShift: Critical error:', e);
+            alert(`En uventet feil oppstod: ${e.message}`);
         }
-    },
-    
-    // Comprehensive diagnostic function
-    async runCompleteDiagnostic() {
-        console.log('🔍 RUNNING COMPLETE DIAGNOSTIC FOR SHIFT ADDITION PROBLEMS');
-        console.log('================================================');
-        
-        // Step 1: Test network
-        console.log('Step 1: Testing network connection...');
-        const networkOk = await this.testNetworkConnection();
-        
-        // Step 2: Test database connection
-        console.log('Step 2: Testing database connection...');
-        const dbConnectionOk = await this.testDatabaseConnection();
-        
-        // Step 3: Test database access and permissions
-        console.log('Step 3: Testing database access and permissions...');
-        await this.testDatabaseAccess();
-        
-        // Step 4: Check form state
-        console.log('Step 4: Checking form state...');
-        const startHour = document.getElementById('startHour')?.value;
-        const endHour = document.getElementById('endHour')?.value;
-        const selectedDate = this.selectedDate;
-        
-        console.log('Form state:', {
-            selectedDate,
-            startHour,
-            endHour,
-            demoMode: this.demoMode
-        });
-        
-        // Step 5: Summary
-        console.log('================================================');
-        console.log('DIAGNOSTIC SUMMARY:');
-        console.log('Network:', networkOk ? '✅ OK' : '❌ FAILED');
-        console.log('Database Connection:', dbConnectionOk ? '✅ OK' : '❌ FAILED');
-        console.log('Form has required data:', (selectedDate && startHour && endHour) ? '✅ OK' : '❌ MISSING');
-        console.log('Demo mode:', this.demoMode ? '⚠️ ACTIVE (may prevent saves)' : '✅ DISABLED');
-        
-        if (!networkOk) {
-            console.log('🔧 RECOMMENDATION: Check internet connection and Supabase service status');
-        }
-        if (!dbConnectionOk) {
-            console.log('🔧 RECOMMENDATION: Check Supabase configuration and API keys');
-        }
-    },
-
-    // === END DEBUG FUNCTIONS ===
-}
+    }
+};

@@ -520,6 +520,18 @@ input[type="time"].form-control[value=""]:focus {
   box-shadow: 0 4px 12px -4px var(--shadow-accent);
 }
 
+/* Remove "flying" hover effects from buttons inside settings modal */
+#settingsModal .btn:hover {
+  transform: none; /* Override general button hover transform */
+  box-shadow: var(--shadow-hover-accent); /* Keep shadow but remove movement */
+}
+
+#settingsModal .btn-secondary:hover {
+  transform: none; /* Override secondary button hover transform */
+  border-color: var(--accent3);
+  box-shadow: 0 4px 12px -4px var(--shadow-accent);
+}
+
 .btn-secondary svg {
   transition: transform var(--speed-normal) var(--ease-default);
 }
@@ -612,6 +624,20 @@ input[type="time"].form-control[value=""]:focus {
   height: auto;
   max-height: 80vh;
 }
+
+/* Hide scrollbars in modals while keeping scroll functionality */
+.modal-content {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+.modal-content::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+/* Hide scrollbars in breakdown modal */
+.breakdown-modal-custom::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -636,7 +662,7 @@ input[type="time"].form-control[value=""]:focus {
 }
 .modal-close:hover {
   color: var(--accent);
-  transform: var(--lift-small) var(--scale-hover);
+  /* Removed transform to prevent "flying" effect */
 }
 .modal-close:hover svg {
   fill: var(--accent);
@@ -662,7 +688,7 @@ input[type="time"].form-control[value=""]:focus {
 .tab-btn:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
-  transform: var(--lift-small);
+  /* Removed transform to prevent "flying" effect */
   box-shadow: 0 4px 12px -4px var(--shadow-accent);
 }
 .tab-content {
@@ -1222,23 +1248,24 @@ input:checked + .slider:before {
 }
 
 .breakdown-icon {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   opacity: 0.8;
   transition: color var(--speed-normal);
   position: relative;
   z-index: 1;
+  color: var(--text-secondary); /* Grå stroke color for SVG-ikonene */
 }
 
 /* Responsive icon sizing */
 @media (max-width: 360px) {
   .breakdown-icon {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 }
 
 @media (max-width: 280px) {
   .breakdown-icon {
-    margin-bottom: 6px;
+    margin-bottom: 3px;
   }
 }
 
@@ -1246,7 +1273,7 @@ input:checked + .slider:before {
   color: var(--accent3);
 }
 .breakdown-value {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 600;
   margin-bottom: 5px;
   background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent2));
@@ -1261,25 +1288,25 @@ input:checked + .slider:before {
 /* Responsive font sizes for breakdown values */
 @media (max-width: 480px) {
   .breakdown-value {
-    font-size: 22px;
+    font-size: 28px;
   }
 }
 
 @media (max-width: 360px) {
   .breakdown-value {
-    font-size: 20px;
+    font-size: 26px;
   }
 }
 
 @media (max-width: 320px) {
   .breakdown-value {
-    font-size: 18px;
+    font-size: 24px;
   }
 }
 
 @media (max-width: 280px) {
   .breakdown-value {
-    font-size: 16px;
+    font-size: 22px;
   }
 }
 .breakdown-label {
@@ -1345,50 +1372,7 @@ input:checked + .slider:before {
   transform-origin: center center;
 }
 
-.breakdown-card.expanded {
-  z-index: 1500; /* Higher than backdrop (999) to appear above */
-}
-
-.breakdown-card.expanding {
-  z-index: 1500 !important; /* Also higher during expansion animation */
-  transform: scale(1.05);
-  box-shadow: 0 16px 48px var(--accent3-alpha);
-  border: 1px solid var(--shadow-accent);
-  transition: all 0.3s var(--ease-default);
-}
-
-/* Hide original content during expansion to prevent text jumping */
-.breakdown-card.expanding .breakdown-icon,
-.breakdown-card.expanding .breakdown-value,
-.breakdown-card.expanding .breakdown-label {
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.2s var(--ease-default);
-}
-
-.breakdown-card.expanded .breakdown-icon,
-.breakdown-card.expanded .breakdown-value,
-.breakdown-card.expanded .breakdown-label {
-  display: none; /* Completely hide to prevent layout shifts */
-}
-
-.breakdown-card.expanded {
-  z-index: 1500 !important; /* Force above backdrop (999) */
-  position: fixed !important;
-  max-height: 80vh;
-  overflow-y: auto;
-  user-select: text;
-  cursor: default;
-  box-shadow: 
-    0 32px 64px var(--accent3-alpha),
-    0 16px 32px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--accent3-alpha);
-  background: var(--bg-secondary);
-  transform-origin: center center;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
+/* Breakdown card expansion classes removed - now using modal approach */
 
 /* Title styling for expanded cards */
 .breakdown-card .breakdown-title-container {
@@ -1592,15 +1576,7 @@ input:checked + .slider:before {
   width: 50px; /* Mask area to hide sliding elements */
 }
 
-/* Hide scrollbar for expanded cards */
-.breakdown-card.expanded {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-}
-
-.breakdown-card.expanded::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
-}
+/* Removed expanded card scrollbar styles - now using modal approach */
 
 /* Hide scrollbar for details list */
 .breakdown-card .details {
@@ -1626,14 +1602,7 @@ input:checked + .slider:before {
   flex-direction: column;
 }
 
-.breakdown-card.expanded .details {
-  opacity: 1;
-  max-height: calc(80vh - 140px); /* Account for title, padding, and close button */
-  margin-top: 0;
-  padding: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+/* Removed expanded card details styles - now using modal approach */
 
 .breakdown-card .details li {
   list-style: none;
@@ -1694,35 +1663,7 @@ input:checked + .slider:before {
 .breakdown-card .details li:nth-child(n+11) { animation-delay: 1.3s; }
 
 /* Close button */
-.breakdown-card.expanded .close-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(255, 102, 153, 0.1);
-  border: 1px solid rgba(255, 102, 153, 0.3);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--danger);
-  transition: all 0.2s var(--ease-default);
-  z-index: 21;
-  opacity: 0;
-  transform: scale(0.8);
-  animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.breakdown-card.expanded .close-btn:hover {
-  background: var(--accent2-alpha);
-  border-color: var(--accent2);
-  transform: scale(1.1);
-  color: var(--accent2);
-}
+/* Removed expanded card close button styles - now using modal approach */
 
 @keyframes scaleIn {
   from {
@@ -1945,7 +1886,6 @@ input:checked + .slider:before {
   transition: all 0.2s var(--ease-default);
   font-size: 20px;
   font-weight: bold;
-  z-index: 10;
 }
 
 .shift-detail-card .close-btn:hover {
@@ -2041,51 +1981,10 @@ input:checked + .slider:before {
   }
 }
 
-/* Responsive adjustments for expanded cards */
-@media (max-width: 768px) {  
-  .breakdown-card.expanded {
-    margin: 10px !important;
-    max-height: 85vh !important;
-    width: calc(100vw - 20px) !important;
-    left: 10px !important;
-    top: 10px !important;
-    border-radius: 16px !important;
-  }
-  
-  .breakdown-card .details li {
-    font-size: 14px;
-    padding: 14px 18px;
-    min-height: 48px; /* Consistent height on tablets */
-  }
-  
-  .breakdown-card .details li .date {
-    font-size: 15px;
-  }
-  
-  .breakdown-card .details li .amount {
-    font-size: 16px;
-    min-width: 70px; /* Ensure consistent amount spacing */
-  }
-  
-  .breakdown-card .breakdown-title {
-    font-size: 22px;
-  }
-  
-  .breakdown-card .breakdown-title-container {
-    gap: 10px;
-  }
-}
+/* Removed responsive adjustments for expanded cards - now using modal approach */
 
 @media (max-width: 480px) {  
-  .breakdown-card.expanded {
-    margin: 5px !important;
-    max-height: 90vh !important;
-    width: calc(100vw - 10px) !important;
-    left: 5px !important;
-    top: 5px !important;
-    padding: 16px !important;
-    border-radius: 12px !important;
-  }
+  /* Removed .breakdown-card.expanded styles - now using modal approach */
   
   .breakdown-card .details li {
     font-size: 13px;
@@ -2143,10 +2042,7 @@ input:checked + .slider:before {
     font-size: 18px;
   }
   
-  .breakdown-card.expanded {
-    margin: 8px;
-    padding: 16px;
-  }
+  /* Removed .breakdown-card.expanded styles - now using modal approach */
 }
 
 /* Welcome screen overlay */
@@ -2356,18 +2252,81 @@ input:checked + .slider:before {
   }
 }
 
-/* Mobile: center expanded breakdown-card and prevent header height increase */
+/* Mobile: prevent header height increase - removed expanded card styles (now using modal) */
 @media (max-width: 768px) {
-  .breakdown-card.expanded {
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: min(90vw, 400px) !important;
-    max-height: 80vh !important;
-    margin: 0 auto;
-  }
+  /* Removed .breakdown-card.expanded styles - now using modal approach */
+  
   /* Prevent header from growing when email is shown */
   .header-info {
     flex-wrap: nowrap;
   }
+}
+
+/* Form Actions for Edit Modal */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.form-actions .btn {
+  min-width: 120px;
+  flex: 0 0 auto;
+}
+
+/* Edit Shift Modal Specific Styles */
+#editShiftModal .modal-content {
+  max-width: 500px;
+}
+
+#editShiftModal .modal-body {
+  padding: 20px;
+}
+
+#editShiftModal .date-grid {
+  margin-bottom: 20px;
+}
+
+/* Make edit modal buttons more accessible on mobile */
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-actions .btn {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  #editShiftModal .modal-content {
+    max-width: 95vw;
+  }
+}
+
+/* Shift actions styling for centered edit/delete buttons */
+.actions-section .shift-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+}
+
+.actions-section .shift-actions .btn {
+    width: 100%;
+    max-width: 200px;
+    justify-content: center;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 480px) {
+    .actions-section .shift-actions .btn {
+        max-width: none;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
 }

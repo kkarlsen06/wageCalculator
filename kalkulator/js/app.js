@@ -165,8 +165,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Use event delegation for shift items to handle dynamically generated content
     document.body.addEventListener('click', (event) => {
+      // Check if we clicked on any buttons first - if so, don't trigger shift details
+      if (event.target.closest('.delete-shift-btn') || 
+          event.target.closest('.edit-shift-btn') ||
+          event.target.closest('.btn')) {
+        return; // Let the button handlers take care of this
+      }
+      
       const shiftItem = event.target.closest('[data-shift-id]');
-      if (shiftItem && !event.target.closest('.delete-shift-btn')) {
+      if (shiftItem) {
         const shiftId = shiftItem.getAttribute('data-shift-id');
         console.log('Shift clicked, ID:', shiftId); // Debug log
         app.showShiftDetails(shiftId);
@@ -183,6 +190,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           // Close the shift details modal if it's open
           app.closeShiftDetails();
         });
+      }
+    });
+
+    // Use event delegation for edit shift buttons
+    document.body.addEventListener('click', (event) => {
+      const editBtn = event.target.closest('.edit-shift-btn');
+      if (editBtn) {
+        event.stopPropagation();
+        const shiftId = editBtn.getAttribute('data-shift-id');
+        app.editShift(shiftId);
       }
     });
     
