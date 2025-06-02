@@ -179,16 +179,18 @@ export const app = {
         let slideDistance = 0;
         
         if (isSmallMobile) {
-            // Small mobile: very conservative sliding
-            if (emailLength > 20) slideDistance = 60;
-            else if (emailLength > 15) slideDistance = 40;
+            // Small mobile: very conservative sliding to prevent overflow
+            if (emailLength > 20) slideDistance = 40;
+            else if (emailLength > 15) slideDistance = 30;
             else if (emailLength > 10) slideDistance = 20;
+            else slideDistance = 15;
         } else if (isMobile) {
             // Mobile: moderate sliding
-            if (emailLength > 25) slideDistance = 100;
-            else if (emailLength > 20) slideDistance = 80;
-            else if (emailLength > 15) slideDistance = 60;
-            else if (emailLength > 10) slideDistance = 40;
+            if (emailLength > 25) slideDistance = 70;
+            else if (emailLength > 20) slideDistance = 60;
+            else if (emailLength > 15) slideDistance = 50;
+            else if (emailLength > 10) slideDistance = 35;
+            else slideDistance = 25;
         } else {
             // Desktop: more generous sliding
             if (emailLength > 30) slideDistance = 150;
@@ -223,9 +225,9 @@ export const app = {
         
         let emailTextWidth;
         if (isSmallMobile) {
-            emailTextWidth = Math.min(250, window.innerWidth * 0.6);
+            emailTextWidth = Math.min(140, window.innerWidth * 0.4); // More conservative on small mobile
         } else if (isMobile) {
-            emailTextWidth = Math.min(300, window.innerWidth * 0.7);
+            emailTextWidth = Math.min(180, window.innerWidth * 0.5); // More conservative on mobile
         } else {
             emailTextWidth = 400; // Desktop default
         }
