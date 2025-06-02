@@ -415,13 +415,10 @@ section:nth-child(even) {
 
 /* Tech Section */
 .tech-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  display: block;
 }
 
-.tech-stack h3,
-.known-issues h3 {
+.tech-stack h3 {
   font-size: 1.5rem;
   margin-bottom: 2rem;
   color: var(--text-primary);
@@ -467,69 +464,6 @@ section:nth-child(even) {
 .tech-item:hover .tech-icon svg {
   color: var(--accent3);
   transform: scale(1.1);
-}
-
-.issue-card {
-  background: var(--bg-card);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--accent2);
-  padding: 2rem;
-  display: flex;
-  gap: 1rem;
-  transition: all var(--speed-normal) var(--ease-default);
-}
-
-.issue-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 8px 24px var(--shadow-soft),
-    0 4px 12px rgba(124, 58, 237, 0.1);
-}
-
-.issue-status {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
-.issue-content h4 {
-  font-size: 1.125rem;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.issue-content p {
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-
-.issue-progress {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 8px;
-  background: var(--bg-tertiary);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--gradient-primary);
-  border-radius: 4px;
-  transition: width var(--speed-slow) var(--ease-default);
-}
-
-.progress-text {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
 }
 
 /* Buttons */
@@ -634,11 +568,6 @@ footer p {
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
   }
-  
-  .tech-content {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
 }
 
 @media (max-width: 768px) {
@@ -708,16 +637,6 @@ footer p {
   .tech-grid {
     grid-template-columns: 1fr;
   }
-  
-  .issue-card {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .issue-progress {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -734,8 +653,7 @@ footer p {
     min-height: 100dvh; /* Use dynamic viewport height for better mobile support */
   }
   
-  .project-content,
-  .issue-card {
+  .project-content {
     padding: 1.5rem;
   }
   
@@ -743,6 +661,225 @@ footer p {
     font-size: 0.75rem;
     padding: 0.3rem 0.6rem;
   }
+}
+
+/* Page Load Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 10px rgba(8, 145, 178, 0.2),
+      0 0 20px rgba(8, 145, 178, 0.1),
+      0 0 30px rgba(8, 145, 178, 0.05);
+  }
+  50% {
+    box-shadow: 
+      0 0 15px rgba(8, 145, 178, 0.3),
+      0 0 30px rgba(8, 145, 178, 0.2),
+      0 0 45px rgba(8, 145, 178, 0.1);
+  }
+}
+
+/* Page load animation sequence */
+.hero-content {
+  animation: fadeInUp 0.8s var(--ease-default) 0.2s both;
+}
+
+.logo-wrapper {
+  animation: 
+    scaleIn 0.6s var(--ease-bounce) 0.4s both,
+    pulseGlow 3s ease-in-out 1.5s infinite;
+}
+
+.hero h1 {
+  animation: fadeInUp 0.8s var(--ease-default) 0.6s both;
+}
+
+.hero-subtitle {
+  animation: fadeInUp 0.8s var(--ease-default) 0.8s both;
+}
+
+.hero-description {
+  animation: fadeInUp 0.8s var(--ease-default) 1s both;
+}
+
+.hero-cta {
+  animation: fadeInUp 0.8s var(--ease-default) 1.2s both;
+}
+
+.hero-cta .btn {
+  transform: translateY(20px);
+  opacity: 0;
+  animation: fadeInUp 0.6s var(--ease-default) forwards;
+}
+
+.hero-cta .btn:first-child {
+  animation-delay: 1.4s;
+}
+
+.hero-cta .btn:last-child {
+  animation-delay: 1.6s;
+}
+
+/* Loading state for page */
+body {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out 0.1s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Scroll-triggered animations */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s var(--ease-default);
+}
+
+.animate-on-scroll.animate-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.animate-on-scroll.slide-left {
+  transform: translateX(-50px);
+}
+
+.animate-on-scroll.slide-left.animate-in {
+  transform: translateX(0);
+}
+
+.animate-on-scroll.slide-right {
+  transform: translateX(50px);
+}
+
+.animate-on-scroll.slide-right.animate-in {
+  transform: translateX(0);
+}
+
+.animate-on-scroll.scale {
+  transform: scale(0.8);
+}
+
+.animate-on-scroll.scale.animate-in {
+  transform: scale(1);
+}
+
+/* Staggered animations for grids */
+.stagger-animation > * {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s var(--ease-default);
+}
+
+.stagger-animation.animate-in > *:nth-child(1) {
+  transition-delay: 0.1s;
+}
+
+.stagger-animation.animate-in > *:nth-child(2) {
+  transition-delay: 0.2s;
+}
+
+.stagger-animation.animate-in > *:nth-child(3) {
+  transition-delay: 0.3s;
+}
+
+.stagger-animation.animate-in > *:nth-child(4) {
+  transition-delay: 0.4s;
+}
+
+.stagger-animation.animate-in > *:nth-child(5) {
+  transition-delay: 0.5s;
+}
+
+.stagger-animation.animate-in > *:nth-child(6) {
+  transition-delay: 0.6s;
+}
+
+.stagger-animation.animate-in > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Enhanced hover animations */
+.project-card {
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.project-card:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+.stat:hover {
+  transform: translateY(-4px) scale(1.05);
+}
+
+.tech-item:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* Smooth scroll behavior enhancement */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 2rem;
 }
 
 /* Animation utilities */
@@ -753,6 +890,18 @@ footer p {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  
+  .animate-on-scroll,
+  .stagger-animation > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  
+  body {
+    opacity: 1 !important;
+    animation: none !important;
   }
 }
 
