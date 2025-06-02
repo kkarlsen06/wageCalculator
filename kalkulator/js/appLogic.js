@@ -1316,7 +1316,7 @@ export const app = {
         let demoBannerHtml = '';
         if (this.demoMode) {
             demoBannerHtml = `
-                <div style="background: linear-gradient(135deg, #ffd700, #ffed4e); color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #ffc107; text-align: center; font-weight: 500;">
+                <div style="background: linear-gradient(135deg, var(--warning), var(--accent4)); color: var(--bg-primary); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--warning); text-align: center; font-weight: 500;">
                     <svg style="width: 16px; height: 16px; margin-right: 8px; vertical-align: text-top;" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
@@ -1520,7 +1520,7 @@ export const app = {
             const icon = document.createElement('div');
             icon.className = 'breakdown-title-icon';
             icon.style.cssText = `
-                color: var(--accent);
+                color: var(--accent3);
                 opacity: 0.8;
             `;
             
@@ -1545,7 +1545,7 @@ export const app = {
             title.className = 'breakdown-title';
             title.textContent = type === 'base' ? 'Grunnlønn' : 'Tillegg';
             title.style.cssText = `
-                color: var(--accent);
+                color: var(--accent3);
                 margin: 0;
                 font-size: 24px;
                 font-weight: 600;
@@ -1865,9 +1865,9 @@ export const app = {
             z-index: 1200;
             opacity: 0;
             box-shadow: 
-                0 32px 64px rgba(0, 255, 136, 0.2),
+                0 32px 64px var(--shadow-accent),
                 0 16px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(0, 255, 136, 0.3);
+            border: 1px solid var(--shadow-accent);
             overflow-y: auto;
             transition: all 0.4s var(--ease-default);
         `;

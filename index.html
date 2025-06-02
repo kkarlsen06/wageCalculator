@@ -7,34 +7,156 @@
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-    <header>
-        <h1>Hjalmar Samuel Kristensen-Karlsen</h1>
-        <p>Utvikler og student</p>
+    <header class="hero">
+        <div class="hero-content">
+            <div class="hero-avatar">
+                <div class="avatar-placeholder">HK</div>
+            </div>
+            <h1>Hjalmar Samuel Kristensen-Karlsen</h1>
+            <p class="hero-subtitle">Fullstack utvikler & student</p>
+            <p class="hero-description">Spesialisert innen webapplikasjoner og vitenskap</p>
+            <div class="hero-cta">
+                <a href="/kalkulator" class="btn btn-primary">Gå til kalkulator</a>
+                <a href="#projects" class="btn btn-secondary">Les mer</a>
+            </div>
+        </div>
     </header>
     
     <main>
-        <section class="about">
-            <h2>Om meg</h2>
-            <p><span class="highlight-name">Jeg heter Hjalmar</span>, er 18 år og jobber på Coop Extra Gakori. Jeg lagde denne lønnskalkulatoren fordi jeg ble lei av å regne ut lønna mi for hånd hver måned. Nå slipper både jeg og du å sitte med kalkulator og frustrasjon – bare legg inn vaktene dine, så fikser nettsida resten.</p>
+        <section class="about" id="about">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Om meg</h2>
+                    <div class="section-divider"></div>
+                </div>
+                <div class="about-content">
+                    <div class="about-text">
+                        <p><span class="highlight-name">Jeg heter Hjalmar</span>, er 18 år og jobber på Coop Extra Gakori ved siden av studiene. Som en person som setter pris på effektivitet og elegante løsninger, ble jeg frustrert over å regne ut lønna mi manuelt hver måned.</p>
+                        <p>Dette resulterte i utviklingen av en komplett lønnskalkulator som ikke bare løser mitt problem, men kan hjelpe alle som trenger å regne ut timelønn og overtidstillegg.</p>
+                    </div>
+                    <div class="about-stats">
+                        <div class="stat">
+                            <span class="stat-number">18</span>
+                            <span class="stat-label">År gammel</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">1+</span>
+                            <span class="stat-label">År erfaring</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">100%</span>
+                            <span class="stat-label">Dedikasjon</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
         
-        <section class="projects">
-            <h2>Prosjekter</h2>
-            <div class="project-card">
-                <h3>Lønnskalkulator</h3>
-                <p>En webapplikasjon for å regne ut månedslønn basert på vakter, arbeidstid og tariffbasert timelønn.</p>
-                <a href="/kalkulator" class="btn">Åpne kalkulator</a>
+        <section class="projects" id="projects">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Prosjekter</h2>
+                    <div class="section-divider"></div>
+                    <p class="section-subtitle">Innovative løsninger jeg har utviklet</p>
+                </div>
+                <div class="projects-grid">
+                    <div class="project-card featured">
+                        <div class="project-content">
+                            <div class="project-icon">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="3" y="2" width="18" height="20" rx="2" ry="2" fill="var(--accent)"/>
+                                    <rect x="6" y="4" width="12" height="4" rx="0.5" ry="0.5" fill="var(--bg-primary)"/>
+                                    <rect x="6.5" y="9" width="3" height="3" fill="var(--bg-primary)"/>
+                                    <rect x="10.5" y="9" width="3" height="3" fill="var(--bg-primary)"/>
+                                    <rect x="14.5" y="9" width="3" height="3" fill="var(--bg-primary)"/>
+                                    <rect x="6.5" y="13" width="3" height="3" fill="var(--bg-primary)"/>
+                                    <rect x="10.5" y="13" width="3" height="3" fill="var(--bg-primary)"/>
+                                    <rect x="14.5" y="13" width="3" height="3" fill="var(--bg-primary)"/>
+                                </svg>
+                            </div>
+                            <h3>Lønnskalkulator</h3>
+                            <p>En avansert webapplikasjon for nøyaktig beregning av månedslønn basert på vakter, arbeidstid og tariffbasert timelønn. Inkluderer autentisering, datapersistering og responsivt design.</p>
+                            <div class="project-features">
+                                <span class="feature-tag">HTML</span>
+                                <span class="feature-tag">Supabase</span>
+                                <span class="feature-tag">JavaScript</span>
+                                <span class="feature-tag">Zoho</span>
+                            </div>
+                            <div class="project-actions">
+                                <a href="/kalkulator" class="btn btn-primary">Åpne applikasjon</a>
+                                <a href="#tech" class="btn btn-outline">Tekniske detaljer</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="bugs">
-            <h2>Kjente bugs</h2>
-            <div class="bug-list">
-                <div class="bug-card">
-                    <h4>To faktor autentisering</h4>
-                    <p>Du får lagt til en epost ved registrering og må bekrefte denne, men du kan ikke bruke denne til MFA senere. Jobber med å implementere dette.</p>
+        <section class="tech" id="tech">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Teknologi & status</h2>
+                    <div class="section-divider"></div>
                 </div>
-
+                <div class="tech-content">
+                    <div class="tech-stack">
+                        <h3>Teknologier jeg bruker</h3>
+                        <div class="tech-grid">
+                            <div class="tech-item">
+                                <span class="tech-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M3 3H21V5H3V3ZM3 7H15V9H3V7ZM3 11H21V13H3V11ZM3 15H15V17H3V15ZM3 19H21V21H3V19Z" fill="currentColor"/>
+                                    </svg>
+                                </span>
+                                <span>HTML5 & CSS3</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M3 3L5 21L12 23L19 21L21 3H3ZM5.5 7H18.5L18 12H9L9.5 14H17.5L17 18L12 19.5L7 18L6.5 14H8.5L8.75 16L12 17L15.25 16L15.5 13H6L5.5 7Z" fill="currentColor"/>
+                                    </svg>
+                                </span>
+                                <span>JavaScript ES6+</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <span>Supabase</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M18 8C18 6.9 17.1 6 16 6H8C6.9 6 6 6.9 6 8V16C6 17.1 6.9 18 8 18H16C17.1 18 18 17.1 18 16V8ZM16 8V16H8V8H16ZM3 10V14H5V10H3ZM19 10V14H21V10H19Z" fill="currentColor"/>
+                                    </svg>
+                                </span>
+                                <span>Authentication</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="known-issues">
+                        <h3>Pågående forbedringer</h3>
+                        <div class="issue-card">
+                            <div class="issue-status">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2C17.5 2 22 6.5 22 12S17.5 22 12 22 2 17.5 2 12 6.5 2 12 2ZM12 6C10.9 6 10 6.9 10 8S10.9 10 12 10 14 9.1 14 8 13.1 6 12 6ZM12 20C16.4 20 20 16.4 20 12S16.4 4 12 4 4 7.6 4 12 7.6 20 12 20ZM14 16L12.5 14.5L16 11L17.4 12.4L14 16ZM10 16L6.6 12.6L8 11.2L10 13.2L10 16Z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="issue-content">
+                                <h4>Tofaktorautentisering</h4>
+                                <p>Implementerer støtte for å bruke registrert e-post til MFA. Funksjonaliteten for e-postbekreftelse er på plass, men MFA-integrasjonen er under utvikling.</p>
+                                <div class="issue-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 70%"></div>
+                                    </div>
+                                    <span class="progress-text">70% ferdig</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
