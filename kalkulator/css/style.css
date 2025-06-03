@@ -1225,7 +1225,7 @@ input:checked + .slider:before {
 /* Series Badge */
 .series-badge {
   display: inline-block;
-  background: var(--accent2);
+  background: var(--text-primary);
   color: var(--bg-primary);
   padding: 2px 8px;
   border-radius: 12px;
