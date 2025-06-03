@@ -2210,6 +2210,7 @@ input:checked + .slider:before {
 
 .name-part {
   display: inline-flex;
+  white-space: nowrap;
 }
 
 .name-space {
@@ -2241,6 +2242,11 @@ input:checked + .slider:before {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Ensure name parts stay together on the same line */
+.name-part {
+  white-space: nowrap;
 }
 @keyframes letter-in {
   from {
@@ -2570,14 +2576,23 @@ input:checked + .slider:before {
     padding: 0 5px;
   }
   
-  /* Break two-part names on narrow screens */
+  /* Keep name parts together but allow breaking between words */
   .name-line {
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0;
   }
   
+  .name-part {
+    white-space: nowrap;
+    display: inline-flex;
+  }
+  
+  /* Ensure space between name parts is visible */
   .name-space {
-    display: none;
+    display: inline-block;
+    width: 0.3em;
   }
   
   #welcomeScreen h1 {
