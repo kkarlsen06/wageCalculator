@@ -16,37 +16,91 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Fetch user for name
     const { data: { user } } = await supa.auth.getUser();
     const firstName = user?.user_metadata?.first_name || '';
-    const welcomeTextStr = `Hei, ${firstName}`;
 
     // Create overlay
     const welcomeScreen = document.createElement('div');
     welcomeScreen.id = 'welcomeScreen';
-    const h1 = document.createElement('h1');
-    h1.id = 'welcomeText';
-    welcomeScreen.appendChild(h1);
+    const welcomeContainer = document.createElement('div');
+    welcomeContainer.className = 'welcome-container';
+    welcomeScreen.appendChild(welcomeContainer);
     document.body.appendChild(welcomeScreen);
 
-    // Populate letters
-    h1.innerHTML = '';
-    const letters = [...welcomeTextStr].map((char, i) => {
+    // Create "Hei" line
+    const heiLine = document.createElement('div');
+    heiLine.className = 'welcome-line';
+    heiLine.id = 'heiLine';
+    welcomeContainer.appendChild(heiLine);
+
+    // Create name line(s)
+    const nameLine = document.createElement('div');
+    nameLine.className = 'welcome-line name-line';
+    nameLine.id = 'nameLine';
+    welcomeContainer.appendChild(nameLine);
+
+    // Populate "Hei" letters
+    const heiText = 'Hei';
+    const heiLetters = [...heiText].map((char, i) => {
       const span = document.createElement('span');
       span.className = 'letter';
-      // Render normal spaces as non-breaking spaces
-      span.textContent = char === ' ' ? '\u00A0' : char;
-      h1.appendChild(span);
+      span.textContent = char;
+      heiLine.appendChild(span);
       return span;
     });
 
+    // Handle name with potential line break for two-part names
+    let nameLetters = [];
+    if (firstName) {
+      const nameParts = firstName.trim().split(' ');
+      
+      if (nameParts.length > 1) {
+        // Multi-part name - create spans for potential responsive breaking
+        nameParts.forEach((part, partIndex) => {
+          const partSpan = document.createElement('span');
+          partSpan.className = 'name-part';
+          
+          [...part].forEach((char, charIndex) => {
+            const span = document.createElement('span');
+            span.className = 'letter';
+            span.textContent = char;
+            partSpan.appendChild(span);
+            nameLetters.push(span);
+          });
+          
+          nameLine.appendChild(partSpan);
+          
+          // Add space between parts (except for the last part)
+          if (partIndex < nameParts.length - 1) {
+            const spaceSpan = document.createElement('span');
+            spaceSpan.className = 'letter name-space';
+            spaceSpan.textContent = '\u00A0';
+            nameLine.appendChild(spaceSpan);
+            nameLetters.push(spaceSpan);
+          }
+        });
+      } else {
+        // Single name part
+        [...firstName].forEach((char, i) => {
+          const span = document.createElement('span');
+          span.className = 'letter';
+          span.textContent = char;
+          nameLine.appendChild(span);
+          nameLetters.push(span);
+        });
+      }
+    }
+
+    const allLetters = [...heiLetters, ...nameLetters];
+
     // Animate letters in
-    letters.forEach((span, i) => {
+    allLetters.forEach((span, i) => {
       span.style.animation = `letter-in 0.5s forwards ${i * 0.1}s`;
     });
-    const inDuration = 500 + letters.length * 100; // ms
+    const inDuration = 500 + allLetters.length * 100; // ms
     await new Promise(res => setTimeout(res, inDuration + 300));
 
     // Animate whole text out
-    h1.style.transformOrigin = 'center center';
-    h1.style.animation = `text-out 0.5s forwards`;
+    welcomeContainer.style.transformOrigin = 'center center';
+    welcomeContainer.style.animation = `text-out 0.5s forwards`;
     await new Promise(res => setTimeout(res, 800));  // 0.5s animation + buffer
 
     // Remove welcome overlay
@@ -211,6 +265,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (closeBtn) {
         event.stopPropagation();
         app.closeShiftDetails();
+      }
+    });
+
+    // Handle modal close when clicking outside modal content
+    document.body.addEventListener('click', (event) => {
+      const modal = event.target.closest('.modal');
+      if (modal && event.target === modal) {
+        // Clicked on modal overlay, close the modal
+        if (modal.id === 'addShiftModal') {
+          app.closeAddShiftModal();
+        } else if (modal.id === 'editShiftModal') {
+          app.closeEditShift();
+        } else if (modal.id === 'settingsModal') {
+          app.closeSettings();
+        } else if (modal.id === 'breakdownModal') {
+          app.closeBreakdown();
+        }
+      }
+    });
+
+    // Handle ESC key to close modals
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        // Check which modal is open and close it
+        if (document.getElementById('addShiftModal').style.display === 'block') {
+          app.closeAddShiftModal();
+        } else if (document.getElementById('editShiftModal').style.display === 'block') {
+          app.closeEditShift();
+        } else if (document.getElementById('settingsModal').style.display === 'block') {
+          app.closeSettings();
+        } else if (document.getElementById('breakdownModal').style.display === 'block') {
+          app.closeBreakdown();
+        }
       }
     });
 

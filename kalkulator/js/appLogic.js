@@ -37,23 +37,84 @@ export const app = {
     customBonuses: {}, // Reset to empty - will be loaded from database
     pauseDeduction: true,
     fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
+    directTimeInput: false, // Setting for using direct time input instead of dropdowns
     selectedDate: null,
     demoMode: false,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
     emailHideTimeout: null, // Timeout for auto-hiding email
     DEMO_SHIFTS: [
-        { id: 'demo-1', date: "2025-06-03T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
-        { id: 'demo-2', date: "2025-06-10T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
-        { id: 'demo-3', date: "2025-06-12T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { id: 'demo-4', date: "2025-06-15T00:00:00.000Z", startTime: "17:00", endTime: "22:00", type: 0 },
-        { id: 'demo-5', date: "2025-06-19T00:00:00.000Z", startTime: "17:00", endTime: "21:00", type: 0 },
-        { id: 'demo-6', date: "2025-06-21T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 1 },
-        { id: 'demo-7', date: "2025-06-22T00:00:00.000Z", startTime: "13:00", endTime: "18:00", type: 1 },
-        { id: 'demo-8', date: "2025-06-23T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
-        { id: 'demo-9', date: "2025-06-24T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { id: 'demo-10', date: "2025-06-26T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { id: 'demo-11', date: "2025-06-30T00:00:00.000Z", startTime: "15:45", endTime: "23:15", type: 0 }
+        // Demo recurring series for UI testing
+        { id: 'demo-series-1-1', date: "2025-06-04T00:00:00.000Z", startTime: "10:00", endTime: "12:00", type: 0, seriesId: 'demo-series-1' },
+        { id: 'demo-series-1-2', date: "2025-06-11T00:00:00.000Z", startTime: "10:00", endTime: "12:00", type: 0, seriesId: 'demo-series-1' },
+
+        // June (original demo data)
+        { id: 'demo-6-1', date: "2025-06-03T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
+        { id: 'demo-6-2', date: "2025-06-10T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
+        { id: 'demo-6-3', date: "2025-06-12T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
+        { id: 'demo-6-4', date: "2025-06-15T00:00:00.000Z", startTime: "17:00", endTime: "22:00", type: 0 },
+        { id: 'demo-6-5', date: "2025-06-19T00:00:00.000Z", startTime: "17:00", endTime: "21:00", type: 0 },
+        { id: 'demo-6-6', date: "2025-06-21T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 1 },
+        { id: 'demo-6-7', date: "2025-06-22T00:00:00.000Z", startTime: "13:00", endTime: "18:00", type: 1 },
+        { id: 'demo-6-8', date: "2025-06-23T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
+        { id: 'demo-6-9', date: "2025-06-24T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
+        { id: 'demo-6-10', date: "2025-06-26T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
+        { id: 'demo-6-11', date: "2025-06-30T00:00:00.000Z", startTime: "15:45", endTime: "23:15", type: 0 },
+
+        // January
+        { id: 'demo-1-1', date: "2025-01-05T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
+        { id: 'demo-1-2', date: "2025-01-12T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
+        { id: 'demo-1-3', date: "2025-01-18T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
+
+        // February
+        { id: 'demo-2-1', date: "2025-02-03T00:00:00.000Z", startTime: "07:00", endTime: "15:00", type: 0 },
+        { id: 'demo-2-2', date: "2025-02-14T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
+        { id: 'demo-2-3', date: "2025-02-23T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
+
+        // March
+        { id: 'demo-3-1', date: "2025-03-02T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
+        { id: 'demo-3-2', date: "2025-03-15T00:00:00.000Z", startTime: "13:00", endTime: "21:00", type: 1 },
+        { id: 'demo-3-3', date: "2025-03-23T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
+
+        // April
+        { id: 'demo-4-1', date: "2025-04-04T00:00:00.000Z", startTime: "07:30", endTime: "15:30", type: 0 },
+        { id: 'demo-4-2', date: "2025-04-12T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
+        { id: 'demo-4-3', date: "2025-04-20T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
+
+        // May
+        { id: 'demo-5-1', date: "2025-05-01T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
+        { id: 'demo-5-2', date: "2025-05-17T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
+        { id: 'demo-5-3', date: "2025-05-25T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
+
+        // July
+        { id: 'demo-7-1', date: "2025-07-04T00:00:00.000Z", startTime: "07:00", endTime: "15:00", type: 0 },
+        { id: 'demo-7-2', date: "2025-07-12T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
+        { id: 'demo-7-3', date: "2025-07-20T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
+
+        // August
+        { id: 'demo-8-1', date: "2025-08-03T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
+        { id: 'demo-8-2', date: "2025-08-16T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
+        { id: 'demo-8-3', date: "2025-08-24T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
+
+        // September
+        { id: 'demo-9-1', date: "2025-09-05T00:00:00.000Z", startTime: "07:30", endTime: "15:30", type: 0 },
+        { id: 'demo-9-2', date: "2025-09-13T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
+        { id: 'demo-9-3', date: "2025-09-21T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
+
+        // October
+        { id: 'demo-10-1', date: "2025-10-02T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
+        { id: 'demo-10-2', date: "2025-10-18T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
+        { id: 'demo-10-3', date: "2025-10-26T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
+
+        // November
+        { id: 'demo-11-1', date: "2025-11-06T00:00:00.000Z", startTime: "07:00", endTime: "15:00", type: 0 },
+        { id: 'demo-11-2', date: "2025-11-15T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
+        { id: 'demo-11-3', date: "2025-11-23T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
+
+        // December
+        { id: 'demo-12-1', date: "2025-12-03T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
+        { id: 'demo-12-2', date: "2025-12-13T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
+        { id: 'demo-12-3', date: "2025-12-21T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 }
     ].map(shift => ({
         ...shift,
         date: new Date(shift.date)
@@ -89,6 +150,11 @@ export const app = {
             this.saveSettingsToSupabase();
         });
         document.getElementById('fullMinuteRangeToggle').addEventListener('change', e => {
+            if (e.target.checked && this.directTimeInput) {
+                // Disable direct time input when full minute range is enabled
+                this.directTimeInput = false;
+                document.getElementById('directTimeInputToggle').checked = false;
+            }
             this.fullMinuteRange = e.target.checked;
             // Save current selections before repopulating
             const currentSelections = {
@@ -117,6 +183,17 @@ export const app = {
                 }
             }, 50);
             
+            this.saveSettingsToSupabase();
+        });
+        
+        document.getElementById('directTimeInputToggle').addEventListener('change', e => {
+            if (e.target.checked && this.fullMinuteRange) {
+                // Disable full minute range when direct time input is enabled
+                this.fullMinuteRange = false;
+                document.getElementById('fullMinuteRangeToggle').checked = false;
+            }
+            this.directTimeInput = e.target.checked;
+            this.populateTimeSelects();
             this.saveSettingsToSupabase();
         });
         // Close month dropdown when clicking outside
@@ -162,6 +239,9 @@ export const app = {
         this.restoreFormState();
         
         this.updateDisplay();
+        
+        // Check if we should show the recurring feature introduction
+        this.checkAndShowRecurringIntro();
     },
 
     async displayUserEmail() {
@@ -392,49 +472,281 @@ export const app = {
         const endHour = document.getElementById('endHour');
         const startMinute = document.getElementById('startMinute');
         const endMinute = document.getElementById('endMinute');
-        startHour.innerHTML = '<option value="">Fra time</option>';
-        endHour.innerHTML = '<option value="">Til time</option>';
-        startMinute.innerHTML = '<option value="">Fra minutt</option>';
-        endMinute.innerHTML = '<option value="">Til minutt</option>';
-        for (let h = 6; h <= 24; h++) {
-            const hh = String(h).padStart(2,'0');
-            startHour.innerHTML += `<option value="${hh}">${hh}</option>`;
-            endHour.innerHTML += `<option value="${hh}">${hh}</option>`;
-        }
         
-        // Use either 15-minute intervals or full minute range based on setting
-        if (this.fullMinuteRange) {
-            // Full minute range 00-59
-            for (let m = 0; m < 60; m++) {
-                const mm = String(m).padStart(2, '0');
-                const sel = m === 0 ? ' selected' : '';
-                startMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
-                endMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
-            }
+        // Also populate recurring time fields
+        const recurringStartHour = document.getElementById('recurringStartHour');
+        const recurringEndHour = document.getElementById('recurringEndHour');
+        const recurringStartMinute = document.getElementById('recurringStartMinute');
+        const recurringEndMinute = document.getElementById('recurringEndMinute');
+        
+        if (this.directTimeInput) {
+            // Replace dropdowns with text inputs for direct time entry
+            this.replaceTimeDropdownsWithInputs();
         } else {
-            // 15-minute intervals (default)
-            ['00','15','30','45'].forEach((m, idx) => {
-                const sel = idx===0? ' selected':'';
-                startMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
-                endMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
-            });
+            // Use dropdowns
+            this.ensureTimeDropdowns();
+            
+            // Populate simple shift time fields
+            startHour.innerHTML = '<option value="">Fra time</option>';
+            endHour.innerHTML = '<option value="">Til time</option>';
+            startMinute.innerHTML = '<option value="">Fra minutt</option>';
+            endMinute.innerHTML = '<option value="">Til minutt</option>';
+            
+            // Populate recurring shift time fields
+            if (recurringStartHour) {
+                recurringStartHour.innerHTML = '<option value="">Fra time</option>';
+                recurringEndHour.innerHTML = '<option value="">Til time</option>';
+                recurringStartMinute.innerHTML = '<option value="">Fra minutt</option>';
+                recurringEndMinute.innerHTML = '<option value="">Til minutt</option>';
+            }
+            
+            for (let h = 6; h <= 24; h++) {
+                const hh = String(h).padStart(2,'0');
+                startHour.innerHTML += `<option value="${hh}">${hh}</option>`;
+                endHour.innerHTML += `<option value="${hh}">${hh}</option>`;
+                
+                if (recurringStartHour) {
+                    recurringStartHour.innerHTML += `<option value="${hh}">${hh}</option>`;
+                    recurringEndHour.innerHTML += `<option value="${hh}">${hh}</option>`;
+                }
+            }
+            
+            // Use either 15-minute intervals or full minute range based on setting
+            if (this.fullMinuteRange) {
+                // Full minute range 00-59
+                for (let m = 0; m < 60; m++) {
+                    const mm = String(m).padStart(2, '0');
+                    const sel = m === 0 ? ' selected' : '';
+                    startMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
+                    endMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
+                    
+                    if (recurringStartMinute) {
+                        recurringStartMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
+                        recurringEndMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
+                    }
+                }
+            } else {
+                // 15-minute intervals (default)
+                ['00','15','30','45'].forEach((m, idx) => {
+                    const sel = idx===0? ' selected':'';
+                    startMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
+                    endMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
+                    
+                    if (recurringStartMinute) {
+                        recurringStartMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
+                        recurringEndMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
+                    }
+                });
+            }
         }
     },
-    toggleAddShift() {
-        const card = document.querySelector('.add-shift-card');
-        const toggle = document.querySelector('.add-shift-toggle');
-        const icon = document.getElementById('toggleIcon');
-        if (!document.getElementById('startHour').options.length) this.populateTimeSelects();
+    
+    replaceTimeDropdownsWithInputs() {
+        const timeInputs = [
+            { id: 'startHour', placeholder: 'Fra time (HH)' },
+            { id: 'startMinute', placeholder: 'Fra minutt (MM)' },
+            { id: 'endHour', placeholder: 'Til time (HH)' },
+            { id: 'endMinute', placeholder: 'Til minutt (MM)' },
+            // Also handle recurring time fields
+            { id: 'recurringStartHour', placeholder: 'Fra time (HH)' },
+            { id: 'recurringStartMinute', placeholder: 'Fra minutt (MM)' },
+            { id: 'recurringEndHour', placeholder: 'Til time (HH)' },
+            { id: 'recurringEndMinute', placeholder: 'Til minutt (MM)' }
+        ];
+        
+        timeInputs.forEach(input => {
+            const element = document.getElementById(input.id);
+            if (element && element.tagName === 'SELECT') {
+                const currentValue = element.value;
+                const newInput = document.createElement('input');
+                newInput.type = 'text';
+                newInput.id = input.id;
+                newInput.className = 'form-control time-input';
+                newInput.placeholder = input.placeholder;
+                newInput.maxLength = 2;
+                newInput.pattern = '[0-9]{2}';
+                newInput.value = currentValue;
+                
+                // Add input validation
+                newInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                    if (value.length > 2) value = value.slice(0, 2);
+                    
+                    if (input.id.includes('Hour')) {
+                        // Validate hours (06-24)
+                        const hour = parseInt(value);
+                        if (value.length === 2 && (hour < 6 || hour > 24)) {
+                            value = value.slice(0, 1);
+                        }
+                    } else {
+                        // Validate minutes (00-59)
+                        const minute = parseInt(value);
+                        if (value.length === 2 && minute > 59) {
+                            value = value.slice(0, 1);
+                        }
+                    }
+                    
+                    e.target.value = value;
+                });
+                
+                // Auto-pad with zero when leaving field
+                newInput.addEventListener('blur', (e) => {
+                    if (e.target.value.length === 1) {
+                        e.target.value = '0' + e.target.value;
+                    }
+                });
+                
+                element.replaceWith(newInput);
+            }
+        });
+    },
+    
+    ensureTimeDropdowns() {
+        const timeSelects = [
+            'startHour', 'startMinute', 'endHour', 'endMinute',
+            'recurringStartHour', 'recurringStartMinute', 'recurringEndHour', 'recurringEndMinute'
+        ];
+        
+        timeSelects.forEach(id => {
+            const element = document.getElementById(id);
+            if (element && element.tagName === 'INPUT') {
+                const currentValue = element.value;
+                const newSelect = document.createElement('select');
+                newSelect.id = id;
+                newSelect.className = 'form-control';
+                
+                element.replaceWith(newSelect);
+            }
+        });
+    },
+    
+    openAddShiftModal() {
+        // Populate form elements if they're empty
+        const startHourElement = document.getElementById('startHour');
+        if (startHourElement && startHourElement.tagName === 'SELECT' && !startHourElement.options.length) {
+            this.populateTimeSelects();
+        } else if (!startHourElement) {
+            this.populateTimeSelects();
+        }
         if (!document.getElementById('dateGrid').childElementCount) this.populateDateGrid();
-        card.classList.toggle('active');
-        toggle.classList.toggle('active');
-        icon.style.transform = card.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
+        
+        // Show the modal
+        document.getElementById('addShiftModal').style.display = 'block';
+        
+        // Clear any previously selected date
+        this.selectedDate = null;
+        const dateButtons = document.querySelectorAll('#dateGrid .date-btn');
+        dateButtons.forEach(btn => btn.classList.remove('selected'));
+        
+        // Reset form
+        document.getElementById('shiftForm').reset();
+        // Default to simple tab
+        this.switchAddShiftTab('simple');
+    },
+    // Switch between simple and recurring add shift tabs
+    switchAddShiftTab(tab) {
+        const modal = document.getElementById('addShiftModal');
+        const btns = modal.querySelectorAll('.tab-btn');
+        
+        // Update button active states
+        btns.forEach((btn, index) => {
+            const isSimpleTab = index === 0; // First button is "Enkel"
+            const shouldBeActive = (tab === 'simple' && isSimpleTab) || (tab === 'recurring' && !isSimpleTab);
+            btn.classList.toggle('active', shouldBeActive);
+        });
+        
+        // Update content visibility
+        const simple = document.getElementById('simpleFields');
+        const recurring = document.getElementById('recurringFields');
+        if (tab === 'simple') {
+            simple.classList.add('active');
+            recurring.classList.remove('active');
+        } else {
+            simple.classList.remove('active');
+            recurring.classList.add('active');
+        }
+    },
+    
+    closeAddShiftModal() {
+        document.getElementById('addShiftModal').style.display = 'none';
     },
     async addShift() {
-        console.log('addShift: Starting shift addition process');
+        // Handle recurring shifts
+        const recurringFields = document.getElementById('recurringFields');
+        const recurringVisible = recurringFields && recurringFields.classList.contains('active');
+        if (recurringVisible) {
+            // Generate a shared seriesId for this recurring batch
+            const seriesId = uuidv4();
+            // Gather recurring parameters
+            const freq = parseInt(document.getElementById('recurringFrequency').value, 10);
+            const startDateStr = document.getElementById('recurringStartDate').value;
+            const duration = parseFloat(document.getElementById('recurringDurationYears').value);
+            const startHour = document.getElementById('recurringStartHour').value;
+            const startMinute = document.getElementById('recurringStartMinute').value || '00';
+            const endHour = document.getElementById('recurringEndHour').value;
+            const endMinute = document.getElementById('recurringEndMinute').value || '00';
+            
+            if (!startDateStr || !freq || !duration || !startHour || !endHour) {
+                alert('Vennligst fyll ut alle felt for gjentakende vakt');
+                return;
+            }
+            
+            const first = new Date(startDateStr);
+            // Get weekday from the selected date (0=Sunday, 1=Monday, etc.)
+            const weekday = first.getDay();
+            
+            // Build occurrences
+            const dates = [new Date(first)];
+            let next = new Date(first);
+            
+            // Calculate end date correctly by adding months (duration * 12)
+            const endDate = new Date(first);
+            endDate.setMonth(endDate.getMonth() + Math.floor(duration * 12));
+            
+            while (true) {
+                next = new Date(next);
+                next.setDate(next.getDate() + freq * 7);
+                if (next > endDate) break;
+                dates.push(new Date(next));
+            }
+            
+            if (!confirm(`Dette vil legge til ${dates.length} vakter fra ${startDateStr}. Fortsette?`)) return;
+            
+            // Insert each shift
+            const { data: { user }, error: authError } = await window.supa.auth.getUser();
+            if (authError || !user) { alert('Autentiseringsfeil'); return; }
+            
+            for (const d of dates) {
+                const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+                const insertData = {
+                    user_id: user.id,
+                    shift_date: dateStr,
+                    start_time: `${startHour}:${startMinute}`,
+                    end_time: `${endHour}:${endMinute}`,
+                    shift_type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
+                    series_id: seriesId
+                };
+                const { data: saved, error } = await window.supa.from('user_shifts').insert(insertData).select().single();
+                if (error) { console.error('Gjentakende feil:', error); continue; }
+                
+                this.userShifts.push({
+                    id: saved.id,
+                    date: new Date(d),
+                    startTime: `${startHour}:${startMinute}`,
+                    endTime: `${endHour}:${endMinute}`,
+                    type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
+                    seriesId
+                });
+            }
+            
+            this.shifts = [...this.userShifts];
+            this.updateDisplay();
+            this.closeAddShiftModal();
+            alert(`La til ${dates.length} vakter`);
+            return;
+        }
         try {
             if (!this.selectedDate) {
-                console.log('addShift: No date selected');
                 alert('Vennligst velg en dato');
                 return;
             }
@@ -445,18 +757,15 @@ export const app = {
             const endMinute = document.getElementById('endMinute').value || '00';
             
             if (!startHour || !endHour) {
-                console.log('addShift: Missing time values');
                 alert('Vennligst fyll ut arbeidstid');
                 return;
             }
             
             if (this.demoMode) {
-                console.log('addShift: In demo mode, asking user to switch');
                 if (confirm('Du er i demo-modus. Vil du bytte til dine egne vakter for å legge til denne vakten?')) {
                     this.toggleDemoMode(false);
                     document.getElementById('demoDataToggle').checked = false;
                 } else {
-                    console.log('addShift: User cancelled switch from demo mode');
                     return;
                 }
             }
@@ -477,37 +786,21 @@ export const app = {
                 return;
             }
             if (!user) {
-                console.log('addShift: No authenticated user found');
                 alert("Du er ikke innlogget");
                 return;
             }
             
             const dateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
             
-            console.log('addShift: Date debugging:');
-            console.log('  - Current UI month:', this.currentMonth);
-            console.log('  - Selected date object:', this.selectedDate);
-            console.log('  - New shift date object:', newShift.date);
-            console.log('  - New shift date month (1-based):', newShift.date.getMonth() + 1);
-            console.log('  - Date string for database:', dateStr);
-            
             // Validate that the selected date is in the current UI month
             if (newShift.date.getMonth() + 1 !== this.currentMonth) {
-                console.warn('addShift: Date mismatch detected!');
-                console.warn(`  - UI shows month ${this.currentMonth}, but selected date is in month ${newShift.date.getMonth() + 1}`);
-                console.warn('  - Correcting date to match UI month...');
-                
                 // Correct the date to be in the current UI month
                 const correctedDate = new Date(this.YEAR, this.currentMonth - 1, this.selectedDate.getDate());
                 newShift.date = correctedDate;
-                
-                console.warn('  - Corrected date:', correctedDate);
-                console.warn('  - Corrected date month:', correctedDate.getMonth() + 1);
             }
             
             // Recalculate dateStr after potential correction
             const finalDateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
-            console.log('  - Final date string for database:', finalDateStr);
             
             const insertData = {
                 user_id: user.id,
@@ -516,8 +809,6 @@ export const app = {
                 end_time: newShift.endTime,
                 shift_type: newShift.type
             };
-            
-            console.log('addShift: Saving shift for date:', finalDateStr, 'in month:', newShift.date.getMonth() + 1, 'current filter month:', this.currentMonth);
             
             const { data: saved, error } = await window.supa.from("user_shifts")
                 .insert(insertData)
@@ -529,8 +820,6 @@ export const app = {
                 alert(`Kunne ikke lagre vakt i databasen: ${error.message}`);
                 return;
             }
-            
-            console.log('addShift: Database insert successful, ID:', saved.id);
             
             // Update last active timestamp since user added a shift
             await this.updateLastActiveTimestamp(user.id);
@@ -556,8 +845,6 @@ export const app = {
             });
             
             this.clearFormState();
-            
-            console.log('addShift: Completed successfully. Total shifts:', this.shifts.length);
             
         } catch (e) {
             console.error('addShift: Critical error:', e);
@@ -591,12 +878,6 @@ export const app = {
                 document.querySelectorAll('.date-cell').forEach(c=>c.classList.remove('selected'));
                 cell.classList.add('selected');
                 this.selectedDate = new Date(cellDate);
-                console.log('Date selected:', {
-                    cellDate: cellDate,
-                    selectedDate: this.selectedDate,
-                    currentUIMonth: this.currentMonth,
-                    selectedDateMonth: this.selectedDate.getMonth() + 1
-                });
                 this.saveFormState(); // Save form state when date is selected
             });
             dateGrid.appendChild(cell);
@@ -677,7 +958,6 @@ export const app = {
     async loadFromSupabase() {
         const { data: { user } } = await window.supa.auth.getUser();
         if (!user) {
-            console.log('No authenticated user, using default settings');
             this.setDefaultSettings();
             this.updateDisplay();
             return;
@@ -688,22 +968,14 @@ export const app = {
             await this.updateLastActiveTimestamp(user.id);
 
             // Fetch shifts
-            console.log('=== LOADING SHIFTS FROM DATABASE ===');
-            console.log('User ID:', user.id);
-            
             const { data: shifts, error: shiftsError } = await window.supa
                 .from('user_shifts')
                 .select('*')
                 .eq('user_id', user.id);
 
-            console.log('Raw shifts from database:', shifts);
-            console.log('Shifts error:', shiftsError);
-
             if (shiftsError) {
                 console.error('Error fetching shifts from Supabase:', shiftsError);
             } else {
-                console.log(`Found ${shifts?.length || 0} shifts in database`);
-                
                 // Map shifts to app format
                 this.userShifts = (shifts || []).map(s => {
                     const mappedShift = {
@@ -711,21 +983,17 @@ export const app = {
                         date: new Date(s.shift_date + 'T00:00:00.000Z'),
                         startTime: s.start_time,
                         endTime: s.end_time,
-                        type: s.shift_type
+                        type: s.shift_type,
+                        seriesId: s.series_id || null
                     };
-                    console.log('Mapped shift:', s, '→', mappedShift);
                     return mappedShift;
                 });
-                
-                console.log('Total userShifts after mapping:', this.userShifts.length);
-                console.log('Demo mode status:', this.demoMode);
                 
                 // Set current shifts based on demo mode
                 if (!this.demoMode) {
                     this.shifts = [...this.userShifts];
-                    console.log('Set shifts to userShifts, total shifts now:', this.shifts.length);
                 } else {
-                    console.log('In demo mode, keeping demo shifts');
+                    // In demo mode, keeping demo shifts
                 }
             }
 
@@ -764,15 +1032,14 @@ export const app = {
                     
                 this.pauseDeduction = settings.pause_deduction || false;
                 this.fullMinuteRange = settings.full_minute_range || false;
+                this.directTimeInput = settings.direct_time_input || false;
+                this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
                 
                 if (shouldResetToCurrentMonth && settings.current_month && settings.current_month !== new Date().getMonth() + 1) {
-                    console.log(`User was inactive for >5 hours. Resetting from month ${settings.current_month} to current month ${new Date().getMonth() + 1}`);
+                    // User was inactive for >5 hours, resetting to current month
                 }
                 
                 // Note: demo_mode is kept as local-only state, not stored in database
-                
-                console.log('Loaded settings from database:', settings);
-                console.log('Custom bonuses loaded:', this.customBonuses);
             } else {
                 // No settings found, set defaults
                 this.setDefaultSettings();
@@ -804,7 +1071,6 @@ export const app = {
                 
             if (fetchError && fetchError.code === 'PGRST204') {
                 // Column doesn't exist, skip updating last_active
-                console.log('last_active column does not exist in user_settings table, skipping timestamp update');
                 return;
             }
             
@@ -819,12 +1085,10 @@ export const app = {
                 
             if (error) {
                 if (error.code === 'PGRST204') {
-                    console.log('last_active column does not exist, skipping timestamp update');
+                    // last_active column does not exist, skipping timestamp update
                 } else {
                     console.error('Error updating last active timestamp:', error);
                 }
-            } else {
-                console.log('Updated last active timestamp:', now);
             }
         } catch (e) {
             console.error('Error in updateLastActiveTimestamp:', e);
@@ -834,7 +1098,6 @@ export const app = {
     // Check if user should be reset to current month based on inactivity
     shouldResetToCurrentMonth(lastActiveString) {
         if (!lastActiveString) {
-            console.log('No last_active timestamp found, keeping user\'s selected month');
             return false; // If no timestamp, don't reset - keep user's preference
         }
 
@@ -844,9 +1107,6 @@ export const app = {
             const hoursSinceLastActive = (now - lastActive) / (1000 * 60 * 60); // Convert to hours
             
             const shouldReset = hoursSinceLastActive > 5;
-            console.log(`Last active: ${lastActive.toLocaleString()}`);
-            console.log(`Hours since last active: ${hoursSinceLastActive.toFixed(1)}`);
-            console.log(`Should reset to current month: ${shouldReset}`);
             
             return shouldReset;
         } catch (e) {
@@ -867,7 +1127,9 @@ export const app = {
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.pauseDeduction = false;
         this.fullMinuteRange = false; // Default to 15-minute intervals
+        this.directTimeInput = false; // Default to dropdown time selection
         this.demoMode = false;
+        this.hasSeenRecurringIntro = false; // Track if user has seen recurring feature intro
     },
 
     // Helper function to test custom bonuses
@@ -883,7 +1145,6 @@ export const app = {
                 { from: "00:00", to: "23:59", rate: 100 }
             ]
         };
-        console.log('Set test custom bonuses:', this.customBonuses);
         this.populateCustomBonusSlots();
     },
 
@@ -914,6 +1175,11 @@ export const app = {
             fullMinuteRangeToggle.checked = this.fullMinuteRange;
         }
 
+        const directTimeInputToggle = document.getElementById('directTimeInputToggle');
+        if (directTimeInputToggle) {
+            directTimeInputToggle.checked = this.directTimeInput;
+        }
+
         // Toggle preset/custom sections
         this.togglePresetSections();
         
@@ -939,8 +1205,6 @@ export const app = {
                 customSection.style.display = 'block';
                 // Always populate when switching to custom mode
                 setTimeout(() => {
-                    console.log('Switching to custom mode - populating bonus slots');
-                    console.log('Current custom bonuses:', this.customBonuses);
                     this.populateCustomBonusSlots();
                 }, 100);
             }
@@ -980,6 +1244,8 @@ export const app = {
                 if ('current_month' in existingSettings) settingsData.current_month = this.currentMonth;
                 if ('pause_deduction' in existingSettings) settingsData.pause_deduction = this.pauseDeduction;
                 if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
+                if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
+                if ('has_seen_recurring_intro' in existingSettings) settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
@@ -995,16 +1261,11 @@ export const app = {
                 settingsData.current_month = this.currentMonth;
                 settingsData.pause_deduction = this.pauseDeduction;
                 settingsData.full_minute_range = this.fullMinuteRange;
+                settingsData.direct_time_input = this.directTimeInput;
+                settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 settingsData.custom_bonuses = this.customBonuses || {};
                 // For new settings, we'll try to include last_active and let it fail gracefully if column doesn't exist
             }
-
-            console.log('Attempting to save settings data:', settingsData);
-            console.log('Custom bonuses being saved to DB:', this.customBonuses);
-            console.log('CustomBonuses object keys:', Object.keys(this.customBonuses));
-            console.log('CustomBonuses weekday length:', this.customBonuses.weekday ? this.customBonuses.weekday.length : 'undefined');
-            console.log('CustomBonuses saturday length:', this.customBonuses.saturday ? this.customBonuses.saturday.length : 'undefined');
-            console.log('CustomBonuses sunday length:', this.customBonuses.sunday ? this.customBonuses.sunday.length : 'undefined');
 
             const { error } = await window.supa
                 .from('user_settings')
@@ -1019,18 +1280,13 @@ export const app = {
                     updated_at: new Date().toISOString()
                 };
                 
-                console.log('Trying minimal settings save...');
                 const { error: minError } = await window.supa
                     .from('user_settings')
                     .upsert(minimalData, { onConflict: 'user_id' });
                     
                 if (minError) {
                     console.error('Even minimal save failed:', minError);
-                } else {
-                    console.log('Minimal settings saved - some columns may not exist in schema');
                 }
-            } else {
-                console.log('Settings saved successfully');
             }
         } catch (e) {
             console.error('Error in saveSettingsToSupabase:', e);
@@ -1048,10 +1304,9 @@ export const app = {
                 this.currentMonth = data.currentMonth || new Date().getMonth() + 1; // Default to current month
                 this.pauseDeduction = data.pauseDeduction !== false;
                 this.fullMinuteRange = data.fullMinuteRange || false;
+                this.directTimeInput = data.directTimeInput || false;
                 this.demoMode = data.demoMode || false;
-                
-                console.log('Loaded from localStorage:', data);
-                console.log('Custom bonuses from localStorage:', this.customBonuses);
+                this.hasSeenRecurringIntro = data.hasSeenRecurringIntro || false;
                 
                 this.updateSettingsUI();
             } else {
@@ -1077,7 +1332,6 @@ export const app = {
         
         this.formState = formState;
         localStorage.setItem('vaktberegnerFormState', JSON.stringify(formState));
-        console.log('Form state saved:', formState);
     },
     
     // Restore form state after page restart
@@ -1086,7 +1340,6 @@ export const app = {
             const saved = localStorage.getItem('vaktberegnerFormState');
             if (saved) {
                 const formState = JSON.parse(saved);
-                console.log('Restoring form state:', formState);
                 
                 // Restore selected date
                 if (formState.selectedDate) {
@@ -1144,7 +1397,6 @@ export const app = {
     clearFormState() {
         this.formState = {};
         localStorage.removeItem('vaktberegnerFormState');
-        console.log('Form state cleared');
     },
     
     // Setup event listeners for form inputs to automatically save state
@@ -1159,8 +1411,6 @@ export const app = {
                 });
             }
         });
-        
-        console.log('Form state event listeners set up');
     },
     
     async switchSettingsTab(tab) {
@@ -1174,7 +1424,6 @@ export const app = {
         
         // If switching away from wage tab and in custom mode, auto-save bonuses
         if (currentTab === 'wage' && !this.usePreset && tab !== 'wage') {
-            console.log('Switching away from wage tab - auto-saving custom bonuses');
             await this.saveCustomBonusesSilent();
         }
         
@@ -1189,7 +1438,6 @@ export const app = {
         // When switching to wage tab and custom mode is active, populate bonus slots
         if (tab === 'wage' && !this.usePreset) {
             setTimeout(() => {
-                console.log('Switching to wage tab - populating custom bonus slots');
                 this.populateCustomBonusSlots();
             }, 100);
         }
@@ -1197,7 +1445,6 @@ export const app = {
         // When switching to profile tab, load profile data
         if (tab === 'profile') {
             setTimeout(() => {
-                console.log('Switching to profile tab - loading profile data');
                 this.loadProfileData();
             }, 100);
         }
@@ -1215,7 +1462,6 @@ export const app = {
         const activeTabContent = modal?.querySelector('.tab-content.active');
         
         if (!modalContent || !activeTabContent) {
-            console.log('Modal height adjustment skipped: missing elements');
             return;
         }
         
@@ -1255,8 +1501,6 @@ export const app = {
                     modalContent.style.overflowY = 'hidden';
                     activeTabContent.style.overflowY = 'visible';
                 }
-                
-                console.log(`Modal height adjusted (wage tab): ${finalHeight}px (dynamic)`);
             } else {
                 // For all other tabs, use a constant height
                 const constantHeight = 400; // Fixed height for non-wage tabs
@@ -1265,8 +1509,6 @@ export const app = {
                 // Always set overflow to auto for constant height tabs
                 modalContent.style.overflowY = 'auto';
                 activeTabContent.style.overflowY = 'visible';
-                
-                console.log(`Modal height adjusted (non-wage tab): ${finalHeight}px (constant)`);
             }
             
             // Apply the calculated height
@@ -1285,7 +1527,6 @@ export const app = {
         
         // If switching away from custom mode, save custom bonuses first
         if (wasCustomMode && this.usePreset) {
-            console.log('Switching from custom to preset - auto-saving custom bonuses');
             await this.saveCustomBonusesSilent();
         }
         
@@ -1295,7 +1536,6 @@ export const app = {
     },
     populateCustomBonusSlots() {
         const types = ['weekday', 'saturday', 'sunday'];
-        console.log('populateCustomBonusSlots called with bonuses:', this.customBonuses);
         
         types.forEach(type => {
             const container = document.getElementById(`${type}BonusSlots`);
@@ -1306,7 +1546,6 @@ export const app = {
             
             container.innerHTML = '';
             const bonuses = (this.customBonuses && this.customBonuses[type]) || [];
-            console.log(`Populating ${type} with ${bonuses.length} bonuses:`, bonuses);
             
             bonuses.forEach(bonus => {
                 const slot = document.createElement('div');
@@ -1322,14 +1561,12 @@ export const app = {
                 const inputs = slot.querySelectorAll('input');
                 inputs.forEach(input => {
                     input.addEventListener('change', () => {
-                        console.log('Bonus input changed - triggering auto-save');
                         this.autoSaveCustomBonuses();
                     });
                     // Removed blur event to reduce frequent saving
                 });
                 
                 container.appendChild(slot);
-                console.log(`Added slot for ${type} with auto-save listeners:`, bonus);
             });
         });
     },
@@ -1361,14 +1598,12 @@ export const app = {
         const inputs = slot.querySelectorAll('input');
         inputs.forEach(input => {
             input.addEventListener('change', () => {
-                console.log('Bonus input changed - triggering auto-save');
                 this.autoSaveCustomBonuses();
             });
             // Removed blur event to reduce frequent saving
         });
         
         container.appendChild(slot);
-        console.log(`Added bonus slot for ${type} with auto-save listeners`);
         
         // Adjust modal height after adding content
         setTimeout(() => {
@@ -1379,7 +1614,6 @@ export const app = {
         button.closest('.bonus-slot').remove();
         // Auto-save when removing bonus slots if in custom mode (silently)
         if (!this.usePreset) {
-            console.log('Auto-saving after removing bonus slot');
             this.saveCustomBonusesSilent().catch(console.error);
         }
         
@@ -1399,7 +1633,6 @@ export const app = {
             
             // Set new timeout to save after 5 seconds of inactivity (longer delay)
             this.autoSaveTimeout = setTimeout(() => {
-                console.log('Auto-saving custom bonuses after input change');
                 // Save silently without status messages
                 this.saveCustomBonusesSilent().catch(console.error);
             }, 5000);
@@ -1425,7 +1658,6 @@ export const app = {
             // Ensure custom bonus slots are populated if custom mode is active
             if (!this.usePreset) {
                 setTimeout(() => {
-                    console.log('Populating custom bonus slots in openSettings');
                     this.populateCustomBonusSlots();
                 }, 100);
             }
@@ -1439,7 +1671,6 @@ export const app = {
     async closeSettings() {
         // If in custom mode, automatically save custom bonuses before closing
         if (!this.usePreset) {
-            console.log('Auto-saving custom bonuses before closing settings');
             await this.saveCustomBonusesSilent();
         }
         
@@ -1461,10 +1692,11 @@ export const app = {
                 currentMonth: this.currentMonth,
                 pauseDeduction: this.pauseDeduction,
                 fullMinuteRange: this.fullMinuteRange,
-                demoMode: this.demoMode
+                directTimeInput: this.directTimeInput,
+                demoMode: this.demoMode,
+                hasSeenRecurringIntro: this.hasSeenRecurringIntro
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
-            console.log('Saved to localStorage:', data);
         } catch (e) {
             console.error('Error saving to localStorage', e);
         }
@@ -1486,7 +1718,6 @@ export const app = {
         }
     },
     updateDisplay() {
-        console.log('updateDisplay: Month', this.currentMonth, 'Shifts:', this.shifts.length, 'Demo mode:', this.demoMode);
         this.updateHeader();
         this.updateStats();
         this.updateShiftList();
@@ -1535,22 +1766,8 @@ export const app = {
         document.getElementById('shiftCount').textContent = monthShifts.length;
     },
     updateShiftList() {
-        console.log('=== UPDATE SHIFT LIST DEBUG ===');
-        console.log('Current month (1-based):', this.currentMonth);
-        console.log('Filter month index (0-based):', this.currentMonth - 1);
-        console.log('Filter year:', this.YEAR);
-        console.log('Total shifts in this.shifts:', this.shifts.length);
         
         this.shifts.forEach((shift, index) => {
-            console.log(`Shift ${index}:`, {
-                id: shift.id,
-                date: shift.date,
-                month: shift.date.getMonth(),
-                year: shift.date.getFullYear(),
-                startTime: shift.startTime,
-                endTime: shift.endTime,
-                matchesFilter: shift.date.getMonth() === this.currentMonth - 1 && shift.date.getFullYear() === this.YEAR
-            });
         });
         
         const shiftList = document.getElementById('shiftList');
@@ -1558,8 +1775,6 @@ export const app = {
             shift.date.getMonth() === this.currentMonth - 1 &&
             shift.date.getFullYear() === this.YEAR
         );
-        
-        console.log('updateShiftList: Found', monthShifts.length, 'shifts for month', this.currentMonth);
         
         let demoBannerHtml = '';
         if (this.demoMode) {
@@ -1596,6 +1811,7 @@ export const app = {
             const day = shift.date.getDate();
             const weekday = this.WEEKDAYS[shift.date.getDay()];
             const typeClass = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
+            const seriesBadge = shift.seriesId ? '<span class="series-badge">Serie</span>' : '';
             
             return `
                 <div class="shift-item ${typeClass}" data-shift-id="${shift.id}" style="cursor: pointer;">
@@ -1603,7 +1819,7 @@ export const app = {
                         <div class="shift-date">
                             <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
                             <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${weekday}</span>
+                            <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
                         </div>
                         <div class="shift-details">
                             <div class="shift-time-with-hours">
@@ -2075,9 +2291,10 @@ export const app = {
                             </svg>
                             Slett vakt
                         </button>
+                        ${shift.seriesId ? `<button class="btn btn-warning delete-series-btn" style="gap: 8px;">Slett serie</button>` : ``}
                     </div>
                 </div>
-                ` : ''}
+                ` : ``}
             </div>
             
             <button class="close-btn close-shift-details">×</button>
@@ -2090,47 +2307,50 @@ export const app = {
             detailCard.style.opacity = '1';
             detailCard.style.transform = 'translate(-50%, -50%) scale(1)';
         });
+        
+        // Attach handler for delete-series button
+        if (shift.seriesId) {
+            const seriesBtn = detailCard.querySelector('.delete-series-btn');
+            if (seriesBtn) {
+                seriesBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('Vil du slette hele serien?')) {
+                        this.deleteSeries(shift.seriesId);
+                        this.closeShiftDetails();
+                    }
+                });
+            }
+        }
     },
     
     // Close shift details view
     closeShiftDetails() {
-        console.log('closeShiftDetails called');
         
         // Find and close any existing shift detail card
         const detailCard = document.querySelector('.shift-detail-card');
         const backdrop = document.querySelector('.backdrop-blur');
         const header = document.querySelector('.header');
         
-        console.log('Elements found:', {
-            detailCard: !!detailCard,
-            backdrop: !!backdrop,
-            header: !!header
-        });
-        
         // Show header again
         if (header) {
             header.classList.remove('hidden');
-            console.log('Header shown');
         }
         
         // Remove keyboard event listener
         if (this.shiftDetailsKeydownHandler) {
             document.removeEventListener('keydown', this.shiftDetailsKeydownHandler);
             this.shiftDetailsKeydownHandler = null;
-            console.log('Keyboard listener removed');
         }
         
         // Remove detail card first
         if (detailCard) {
             detailCard.style.opacity = '0';
             detailCard.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            console.log('Detail card animation started');
             
             // Remove card after animation
             setTimeout(() => {
                 if (detailCard.parentNode) {
                     detailCard.remove();
-                    console.log('Detail card removed from DOM');
                 }
             }, 300);
         }
@@ -2140,19 +2360,38 @@ export const app = {
             // Start backdrop fade-out animation after a short delay
             setTimeout(() => {
                 backdrop.classList.remove('active');
-                console.log('Backdrop deactivated');
                 
                 // Remove backdrop after its animation completes
                 setTimeout(() => {
                     if (backdrop.parentNode) {
                         backdrop.remove();
-                        console.log('Backdrop removed from DOM');
                     }
                 }, 350); // Extra 50ms to ensure animation completes
             }, 100); // 100ms delay to let modal start closing first
         }
         
-        console.log('closeShiftDetails completed');
+    },
+    // Delete entire series by ID
+    async deleteSeries(seriesId) {
+        try {
+            const { data, error } = await window.supa
+                .from('user_shifts')
+                .delete()
+                .match({ series_id: seriesId });
+            if (error) {
+                console.error('Feil ved sletting av serie:', error);
+                alert('Kunne ikke slette serien');
+                return;
+            }
+            // Remove from local arrays
+            this.userShifts = this.userShifts.filter(s => s.seriesId !== seriesId);
+            this.shifts = this.shifts.filter(s => s.seriesId !== seriesId);
+            this.updateDisplay();
+            alert('Serien er slettet');
+        } catch (e) {
+            console.error('deleteSeries error:', e);
+            alert('En uventet feil oppstod');
+        }
     },
 
     // Profile management methods
@@ -2241,13 +2480,6 @@ export const app = {
         const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
         const bonusSegments = bonuses[bonusType] || [];
         
-        // Debug logging for bonus calculation
-        console.log(`Calculating shift for ${bonusType}:`, {
-            usePreset: this.usePreset,
-            bonusSegments: bonusSegments,
-            bonusesObject: bonuses,
-            customBonuses: this.customBonuses
-        });
         
         const bonus = this.calculateBonus(
             shift.startTime,
@@ -2316,7 +2548,6 @@ export const app = {
     
     // Capture custom bonuses from UI form elements
     captureCustomBonusesFromUI() {
-        console.log('=== captureCustomBonusesFromUI called ===');
         const capturedBonuses = {};
         const types = ['weekday', 'saturday', 'sunday'];
         
@@ -2326,7 +2557,6 @@ export const app = {
             
             if (container) {
                 const slots = container.querySelectorAll('.bonus-slot');
-                console.log(`Processing ${slots.length} slots for ${type}`);
                 
                 slots.forEach((slot, index) => {
                     const inputs = slot.querySelectorAll('input');
@@ -2334,8 +2564,6 @@ export const app = {
                         const from = inputs[0].value;
                         const to = inputs[1].value;
                         const rate = inputs[2].value;
-                        
-                        console.log(`${type} slot ${index}: from=${from}, to=${to}, rate=${rate}`);
                         
                         // Capture all slots, even if partially filled (validation happens later)
                         capturedBonuses[type].push({
@@ -2345,18 +2573,13 @@ export const app = {
                         });
                     }
                 });
-            } else {
-                console.log(`Container ${type}BonusSlots not found`);
             }
         });
         
-        console.log('Captured bonuses from UI:', capturedBonuses);
         return capturedBonuses;
     },
     
     async saveCustomBonuses() {
-        console.log('=== NEW saveCustomBonuses called ===');
-        console.log('Current bonuses before save:', this.customBonuses);
         
         // Use the new improved capture system
         const capturedBonuses = this.captureCustomBonusesFromUI();
@@ -2374,9 +2597,6 @@ export const app = {
                             to: bonus.to,
                             rate: parseFloat(bonus.rate)
                         });
-                        console.log(`Validated bonus for ${type}:`, bonus);
-                    } else {
-                        console.log(`Rejected invalid bonus for ${type}:`, bonus);
                     }
                 });
             }
@@ -2384,8 +2604,6 @@ export const app = {
         
         // Update with validated bonuses
         this.customBonuses = validatedBonuses;
-        
-        console.log('Final validated bonuses to save:', this.customBonuses);
         
         // Show save status to user
         this.showSaveStatus('Lagrer tillegg...');
@@ -2397,7 +2615,6 @@ export const app = {
             this.saveToLocalStorage(); // Also save to localStorage as backup
             
             this.showSaveStatus('Tillegg lagret ✓');
-            console.log('Custom bonuses saved successfully');
             
             // Show confirmation
             alert('Tillegg lagret!');
@@ -2411,7 +2628,6 @@ export const app = {
     // Silent version of saveCustomBonuses for auto-save (no alerts or status messages)
     async saveCustomBonusesSilent() {
         try {
-            console.log('=== saveCustomBonusesSilent called ===');
             
             // Use the new improved capture system
             const capturedBonuses = this.captureCustomBonusesFromUI();
@@ -2437,14 +2653,10 @@ export const app = {
             // Update with validated bonuses
             this.customBonuses = validatedBonuses;
             
-            console.log('Silent save - custom bonuses:', this.customBonuses);
-            
             // Save to both Supabase and localStorage without user feedback
             this.updateDisplay();
             await this.saveSettingsToSupabase();
             this.saveToLocalStorage();
-            
-            console.log('Custom bonuses saved silently');
             
         } catch (error) {
             console.error('Error in saveCustomBonusesSilent:', error);
@@ -2452,18 +2664,35 @@ export const app = {
     },
     
     async deleteShift(index) {
-        if (this.demoMode) return;
-        
         const shift = this.shifts[index];
-        if (!shift || !shift.id) return;
-        
-        if (!confirm('Er du sikker på at du vil slette denne vakten?')) return;
-        
+        if (shift.seriesId) {
+            // Ask if deleting entire series
+            if (confirm('Denne vakten er del av en serie. Vil du slette hele serien?')) {
+                await this.deleteSeries(shift.seriesId);
+                return;
+            }
+        }
         try {
+            if (this.demoMode) {
+                alert('Kan ikke slette vakter i demo-modus');
+                return;
+            }
+            
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) {
+                alert("Du er ikke innlogget");
+                return;
+            }
+            
+            const shiftToDelete = this.shifts[index];
+            if (!shiftToDelete || !shiftToDelete.id) return;
+            
+            if (!confirm('Er du sikker på at du vil slette denne vakten?')) return;
+            
             const { error } = await window.supa
                 .from('user_shifts')
                 .delete()
-                .eq('id', shift.id);
+                .eq('id', shiftToDelete.id);
                 
             if (error) {
                 console.error('Error deleting shift:', error);
@@ -2473,7 +2702,7 @@ export const app = {
             
             // Remove from local arrays
             this.shifts.splice(index, 1);
-            const userIndex = this.userShifts.findIndex(s => s.id === shift.id);
+            const userIndex = this.userShifts.findIndex(s => s.id === shiftToDelete.id);
             if (userIndex !== -1) {
                 this.userShifts.splice(userIndex, 1);
             }
@@ -2538,7 +2767,6 @@ export const app = {
             return;
         }
         
-        console.log('Opening edit modal for shift:', shift);
         
         // Store the shift being edited
         this.editingShift = shift;
@@ -2649,27 +2877,106 @@ export const app = {
     },
     
     populateEditTimeSelects() {
-        const hourOptions = Array.from({length: 24}, (_, i) => 
-            `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`
-        ).join('');
-        
-        let minuteOptions;
-        if (this.fullMinuteRange) {
-            // Full minute range 00-59
-            minuteOptions = Array.from({length: 60}, (_, i) => 
+        if (this.directTimeInput) {
+            // Replace dropdowns with text inputs for direct time entry
+            this.replaceEditTimeDropdownsWithInputs();
+        } else {
+            // Use dropdowns
+            this.ensureEditTimeDropdowns();
+            
+            const hourOptions = Array.from({length: 24}, (_, i) => 
                 `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`
             ).join('');
-        } else {
-            // 15-minute intervals (default)
-            minuteOptions = ['00', '15', '30', '45'].map(m => 
-                `<option value="${m}">${m}</option>`
-            ).join('');
+            
+            let minuteOptions;
+            if (this.fullMinuteRange) {
+                // Full minute range 00-59
+                minuteOptions = Array.from({length: 60}, (_, i) => 
+                    `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`
+                ).join('');
+            } else {
+                // 15-minute intervals (default)
+                minuteOptions = ['00', '15', '30', '45'].map(m => 
+                    `<option value="${m}">${m}</option>`
+                ).join('');
+            }
+            
+            document.getElementById('editStartHour').innerHTML = '<option value="">Fra time</option>' + hourOptions;
+            document.getElementById('editStartMinute').innerHTML = '<option value="">Fra minutt</option>' + minuteOptions;
+            document.getElementById('editEndHour').innerHTML = '<option value="">Til time</option>' + hourOptions;
+            document.getElementById('editEndMinute').innerHTML = '<option value="">Til minutt</option>' + minuteOptions;
         }
+    },
+    
+    replaceEditTimeDropdownsWithInputs() {
+        const timeInputs = [
+            { id: 'editStartHour', placeholder: 'Fra time (HH)' },
+            { id: 'editStartMinute', placeholder: 'Fra minutt (MM)' },
+            { id: 'editEndHour', placeholder: 'Til time (HH)' },
+            { id: 'editEndMinute', placeholder: 'Til minutt (MM)' }
+        ];
         
-        document.getElementById('editStartHour').innerHTML = '<option value="">Fra time</option>' + hourOptions;
-        document.getElementById('editStartMinute').innerHTML = '<option value="">Fra minutt</option>' + minuteOptions;
-        document.getElementById('editEndHour').innerHTML = '<option value="">Til time</option>' + hourOptions;
-        document.getElementById('editEndMinute').innerHTML = '<option value="">Til minutt</option>' + minuteOptions;
+        timeInputs.forEach(input => {
+            const element = document.getElementById(input.id);
+            if (element && element.tagName === 'SELECT') {
+                const currentValue = element.value;
+                const newInput = document.createElement('input');
+                newInput.type = 'text';
+                newInput.id = input.id;
+                newInput.className = 'form-control time-input';
+                newInput.placeholder = input.placeholder;
+                newInput.maxLength = 2;
+                newInput.pattern = '[0-9]{2}';
+                newInput.value = currentValue;
+                
+                // Add input validation
+                newInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                    if (value.length > 2) value = value.slice(0, 2);
+                    
+                    if (input.id.includes('Hour')) {
+                        // Validate hours (00-23)
+                        const hour = parseInt(value);
+                        if (value.length === 2 && hour > 23) {
+                            value = value.slice(0, 1);
+                        }
+                    } else {
+                        // Validate minutes (00-59)
+                        const minute = parseInt(value);
+                        if (value.length === 2 && minute > 59) {
+                            value = value.slice(0, 1);
+                        }
+                    }
+                    
+                    e.target.value = value;
+                });
+                
+                // Auto-pad with zero when leaving field
+                newInput.addEventListener('blur', (e) => {
+                    if (e.target.value.length === 1) {
+                        e.target.value = '0' + e.target.value;
+                    }
+                });
+                
+                element.replaceWith(newInput);
+            }
+        });
+    },
+    
+    ensureEditTimeDropdowns() {
+        const timeSelects = ['editStartHour', 'editStartMinute', 'editEndHour', 'editEndMinute'];
+        
+        timeSelects.forEach(id => {
+            const element = document.getElementById(id);
+            if (element && element.tagName === 'INPUT') {
+                const currentValue = element.value;
+                const newSelect = document.createElement('select');
+                newSelect.id = id;
+                newSelect.className = 'form-control';
+                
+                element.replaceWith(newSelect);
+            }
+        });
     },
     
     populateEditDateGrid() {
@@ -2731,7 +3038,6 @@ export const app = {
     },
     
     async updateShift() {
-        console.log('updateShift: Starting shift update process');
         
         if (!this.editingShift) {
             console.error('No shift being edited');
@@ -2773,7 +3079,6 @@ export const app = {
                 return;
             }
             if (!user) {
-                console.log('updateShift: No authenticated user found');
                 alert('Du er ikke innlogget');
                 return;
             }
@@ -2783,10 +3088,9 @@ export const app = {
                 shift_date: `${this.editSelectedDate.getFullYear()}-${(this.editSelectedDate.getMonth() + 1).toString().padStart(2, '0')}-${this.editSelectedDate.getDate().toString().padStart(2, '0')}`,
                 start_time: `${startHour}:${startMinute}`,
                 end_time: `${endHour}:${endMinute}`,
-                shift_type: type
+                shift_type: type,
+                series_id: null // Remove series ID when editing a shift
             };
-            
-            console.log('updateShift: Updating shift with data:', updatedShiftData);
             
             // Update in database
             const { data: updated, error } = await window.supa
@@ -2803,8 +3107,6 @@ export const app = {
                 return;
             }
             
-            console.log('updateShift: Database update successful:', updated);
-            
             // Update last active timestamp
             await this.updateLastActiveTimestamp(user.id);
             
@@ -2814,6 +3116,7 @@ export const app = {
             originalShift.startTime = `${startHour}:${startMinute}`;
             originalShift.endTime = `${endHour}:${endMinute}`;
             originalShift.type = type;
+            originalShift.seriesId = null; // Remove series ID from local object
             
             // Update both userShifts and shifts arrays
             const userShiftIndex = this.userShifts.findIndex(s => s.id === originalShift.id);
@@ -2830,8 +3133,7 @@ export const app = {
             
             // Close edit modal
             this.closeEditShift();
-            
-            console.log('updateShift: Completed successfully');
+
             
             // Show success message
             alert('Vakt oppdatert!');
@@ -2840,5 +3142,110 @@ export const app = {
             console.error('updateShift: Critical error:', e);
             alert(`En uventet feil oppstod: ${e.message}`);
         }
+    },
+    
+    // Feature introduction for recurring shifts
+    showRecurringIntroduction() {
+        // Close any open modals first
+        this.closeSettings();
+        this.closeBreakdown();
+        this.closeAddShiftModal();
+        this.closeEditShift();
+        
+        // Create modal HTML
+        const modalHtml = `
+            <div id="recurringIntroModal" class="modal" style="display: flex;">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">✨ Ny funksjon: Gjentakende vakter</h2>
+                    </div>
+                    <div class="modal-body" style="padding: 24px;">
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin-bottom: 16px;">Vi har lagt til en ny måte å legge inn faste vakter på!</p>
+                            
+                            <div style="background: var(--bg-secondary); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                                <h4 style="margin: 0 0 12px 0; color: var(--accent);">Slik fungerer det:</h4>
+                                <ul style="margin: 0; padding-left: 20px; line-height: 1.6; max-width: 400px;">
+                                    <li>Trykk på "Legg til vakt"-knappen</li>
+                                    <li>Velg "Gjentakende" i stedet for "Enkel"</li>
+                                    <li>Bestem hvor ofte vakten gjentas (hver uke, hver 2. uke, osv.)</li>
+                                    <li>Systemet legger automatisk til alle vaktene for deg</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: var(--accent-light); padding: 16px; border-radius: 8px; border-left: 4px solid var(--accent); max-width: 450px; margin: 0 auto;">
+                                <p style="margin: 0; font-weight: 500; color: var(--text-primary); line-height: 1.5;">
+                                    💡 <strong>Tips:</strong> Har du en fast vakt som gjentar seg? 
+                                    I stedet for å legge den til manuelt hver gang, bruk "Gjentakende" funksjonen 
+                                    - da slipper du å legge inn den samme vakten gang på gang!
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions" style="margin-top: 24px;">
+                            <button class="btn btn-primary" onclick="app.dismissRecurringIntro()" style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
+                                Forstått, takk!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add to DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Add escape key listener
+        this.recurringIntroKeyHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.dismissRecurringIntro();
+            }
+        };
+        document.addEventListener('keydown', this.recurringIntroKeyHandler);
+    },
+    
+    async dismissRecurringIntro() {
+        // Only mark as seen if this is the first time (automatic show)
+        // If user manually opens it, don't mark as seen so they can see it again if needed
+        if (!this.hasSeenRecurringIntro) {
+            this.hasSeenRecurringIntro = true;
+            
+            // Save to both localStorage and Supabase
+            this.saveToLocalStorage();
+            await this.saveSettingsToSupabase();
+        }
+        
+        // Remove modal
+        const modal = document.getElementById('recurringIntroModal');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Remove event listener
+        if (this.recurringIntroKeyHandler) {
+            document.removeEventListener('keydown', this.recurringIntroKeyHandler);
+            this.recurringIntroKeyHandler = null;
+        }
+    },
+    
+    // Check if we should show the recurring introduction
+    checkAndShowRecurringIntro() {
+        // Show if user hasn't seen it and either:
+        // 1. Has at least one existing shift (active user who would benefit), or
+        // 2. Has no shifts but has been using the app (might be new user learning)
+        const shouldShow = !this.hasSeenRecurringIntro && (
+            this.userShifts.length > 0 || 
+            // Show to new users after a longer delay to let them explore first
+            this.userShifts.length === 0
+        );
+        
+        if (shouldShow) {
+            // Longer delay for new users, shorter for users with existing shifts
+            const delay = this.userShifts.length > 0 ? 1500 : 5000;
+            setTimeout(() => {
+                this.showRecurringIntroduction();
+            }, delay);
+        }
     }
 };
+
