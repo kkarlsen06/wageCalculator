@@ -119,7 +119,7 @@ body {
 }
 
 .logo {
-  width: 180px;
+  width: 120px;
   height: auto;
   display: block;
   filter: drop-shadow(0 0 8px rgba(8, 145, 178, 0.3));
@@ -596,7 +596,7 @@ footer p {
   }
   
   .logo {
-    width: 150px;
+    width: 100px;
   }
   
   .hero-cta {

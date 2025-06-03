@@ -106,50 +106,14 @@
                   </div>
               </div>
 
-              <div class="add-shift-toggle" onclick="app.toggleAddShift()">
-                  <h2>Legg til vakt</h2>
-                  <svg class="icon" id="toggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="6 9 12 15 18 9"></polyline>
+              <button class="add-shift-button" onclick="app.openAddShiftModal()">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="16"></line>
+                      <line x1="8" y1="12" x2="16" y2="12"></line>
                   </svg>
-              </div>
-
-              <div class="add-shift-card">
-                  <form id="shiftForm">
-                      <div class="form-group">
-                          <label>Velg dato</label>
-                          <div class="date-grid" id="dateGrid"></div>
-                      </div>
-
-                      <div class="form-group">
-                          <label>Arbeidstid</label>
-                          <div class="form-row">
-                              <select class="form-control" id="startHour">
-                                  <option value="">Fra time</option>
-                              </select>
-                              <select class="form-control" id="startMinute">
-                                  <option value="">Fra minutt</option>
-                              </select>
-                          </div>
-                          <div class="form-row">
-                              <select class="form-control" id="endHour">
-                                  <option value="">Til time</option>
-                              </select>
-                              <select class="form-control" id="endMinute">
-                                  <option value="">Til minutt</option>
-                              </select>
-                          </div>
-                      </div>
-
-                      <button type="button" class="btn btn-primary" onclick="app.addShift()">
-                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <line x1="12" y1="8" x2="12" y2="16"></line>
-                              <line x1="8" y1="12" x2="16" y2="12"></line>
-                          </svg>
-                          Legg til vakt
-                      </button>
-                  </form>
-              </div>
+                  Legg til vakt
+              </button>
 
               <div class="shift-list" id="shiftList">
                   <div class="empty-state">
@@ -237,6 +201,24 @@
                               <span class="slider"></span>
                           </label>
                       </div>
+                  </div>
+                  
+                  <div class="form-group">
+                      <label>Tidsinnskriving</label>
+                      <div class="switch-group">
+                          <span class="text-secondary">Skriv inn tid direkte (timer:minutter) i stedet for dropdowns</span>
+                          <label class="switch">
+                              <input type="checkbox" id="directTimeInputToggle">
+                              <span class="slider"></span>
+                          </label>
+                      </div>
+                  </div>
+                  
+                  <div class="form-group">
+                      <label>Funksjonshjelp</label>
+                      <button class="btn btn-secondary" onclick="app.showRecurringIntroduction()" style="width: 100%;">
+                          Se introduksjon til gjentakende vakter
+                      </button>
                   </div>
               </div>
 
@@ -376,7 +358,7 @@
                           <label>Arbeidstid</label>
                           <div class="form-row">
                               <select class="form-control" id="editStartHour">
-                                  <option value="">Fra time</option>
+                                  <option value="">Fra hour</option>
                               </select>
                               <select class="form-control" id="editStartMinute">
                                   <option value="">Fra minutt</option>
@@ -384,7 +366,7 @@
                           </div>
                           <div class="form-row">
                               <select class="form-control" id="editEndHour">
-                                  <option value="">Til time</option>
+                                  <option value="">Til hour</option>
                               </select>
                               <select class="form-control" id="editEndMinute">
                                   <option value="">Til minutt</option>
@@ -394,12 +376,111 @@
 
                       <div class="form-actions">
                           <button type="button" class="btn btn-primary" onclick="app.updateShift()">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <svg class="icon-sm"
                                   <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                                   <polyline points="17 21 17 13 7 13 7 21"></polyline>
                                   <polyline points="7 3 7 8 15 8"></polyline>
                               </svg>
                               Lagre endringer
+                          </button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      </div>
+
+      <!-- Add Shift Modal -->
+      <div id="addShiftModal" class="modal">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h2 class="modal-title">Legg til vakt</h2>
+                  <span class="modal-close" onclick="app.closeAddShiftModal()">
+                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                  </span>
+              </div>
+              <div class="modal-body">
+                  <form id="shiftForm">
+                      <div class="tab-nav" style="margin-bottom:16px;">
+                          <button type="button" class="tab-btn active" onclick="app.switchAddShiftTab('simple')">Enkel</button>
+                          <button type="button" class="tab-btn" onclick="app.switchAddShiftTab('recurring')">Gjentakende</button>
+                      </div>
+
+                      <div id="simpleFields" class="tab-content active">
+                          <div class="form-group">
+                              <label>Velg dato</label>
+                              <div class="date-grid" id="dateGrid"></div>
+                          </div>
+
+                          <div class="form-group">
+                              <label>Arbeidstid</label>
+                              <div class="form-row">
+                                  <select class="form-control" id="startHour">
+                                      <option value="">Fra time</option>
+                                  </select>
+                                  <select class="form-control" id="startMinute">
+                                      <option value="">Fra minutt</option>
+                                  </select>
+                              </div>
+                              <div class="form-row">
+                                  <select class="form-control" id="endHour">
+                                      <option value="">Til time</option>
+                                  </select>
+                                  <select class="form-control" id="endMinute">
+                                      <option value="">Til minutt</option>
+                                  </select>
+                              </div>
+                          </div>
+                      </div>
+                      <div id="recurringFields" class="tab-content">
+                          <div class="form-group">
+                              <label>Hyppighet</label>
+                              <select class="form-control" id="recurringFrequency">
+                                  <option value="1">Hver uke</option>
+                                  <option value="2">Hver 2. uke</option>
+                                  <option value="3">Hver 3. uke</option>
+                                  <option value="4">Hver 4. uke</option>
+                              </select>
+                          </div>
+                          <div class="form-group">
+                              <label>Første vakt</label>
+                              <input type="date" class="form-control" id="recurringStartDate" />
+                          </div>
+                          <div class="form-group">
+                              <label>Arbeidstid</label>
+                              <div class="form-row">
+                                  <select class="form-control" id="recurringStartHour">
+                                      <option value="">Fra time</option>
+                                  </select>
+                                  <select class="form-control" id="recurringStartMinute">
+                                      <option value="">Fra minutt</option>
+                                  </select>
+                              </div>
+                              <div class="form-row">
+                                  <select class="form-control" id="recurringEndHour">
+                                      <option value="">Til time</option>
+                                  </select>
+                                  <select class="form-control" id="recurringEndMinute">
+                                      <option value="">Til minutt</option>
+                                  </select>
+                              </div>
+                          </div>
+                          <div class="form-group">
+                              <label>Slutt (år)</label>
+                              <input type="number" class="form-control" id="recurringDurationYears" step="0.5" min="0.5" max="3" value="1" />
+                          </div>
+                      </div>
+
+                      <div class="form-actions">
+                          <button type="button" class="btn btn-primary" onclick="app.addShift()">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                              </svg>
+                              Legg til vakt
                           </button>
                       </div>
                   </form>
@@ -416,6 +497,16 @@
 
     <!-- Last applikasjonslogikk -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- UUID library for generating series IDs -->
+    <script>
+        // Simple UUID v4 generator function
+        function uuidv4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+    </script>
     <script src="js/app.js?v=5"></script>
 </body>
 </html>
