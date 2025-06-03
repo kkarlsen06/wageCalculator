@@ -752,13 +752,32 @@ input[type="time"].form-control[value=""]:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
 
 #recurringIntroModal .modal-content {
   max-width: 520px;
+  width: 90vw;
+  max-height: 85vh;
+  height: auto;
   border: 2px solid var(--accent);
   box-shadow: 0 20px 60px -12px var(--shadow-accent);
   text-align: center;
+  overflow-y: auto;
+  margin: 0;
+}
+
+/* Mobile specific adjustments for recurring intro modal */
+@media (max-width: 768px) {
+  #recurringIntroModal {
+    padding: 16px;
+  }
+  
+  #recurringIntroModal .modal-content {
+    width: 95vw;
+    max-height: 80vh;
+    border-radius: 12px;
+  }
 }
 
 #recurringIntroModal .modal-title {

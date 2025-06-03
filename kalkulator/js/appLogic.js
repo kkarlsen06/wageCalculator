@@ -3155,35 +3155,34 @@ export const app = {
         // Create modal HTML
         const modalHtml = `
             <div id="recurringIntroModal" class="modal" style="display: flex;">
-                <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-content">
                     <div class="modal-header">
                         <h2 class="modal-title">✨ Ny funksjon: Gjentakende vakter</h2>
                     </div>
-                    <div class="modal-body" style="padding: 24px;">
-                        <div style="margin-bottom: 20px;">
-                            <p style="margin-bottom: 16px;">Vi har lagt til en ny måte å legge inn faste vakter på!</p>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div style="margin-bottom: 16px;">
+                            <p style="margin-bottom: 12px; font-size: 15px;">Vi har lagt til en ny måte å legge inn faste vakter på!</p>
                             
-                            <div style="background: var(--bg-secondary); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-                                <h4 style="margin: 0 0 12px 0; color: var(--accent);">Slik fungerer det:</h4>
-                                <ul style="margin: 0; padding-left: 20px; line-height: 1.6; max-width: 400px;">
+                            <div style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                                <h4 style="margin: 0 0 8px 0; color: var(--accent); font-size: 14px;">Slik fungerer det:</h4>
+                                <ul style="margin: 0; padding-left: 16px; line-height: 1.4; font-size: 14px; text-align: left;">
                                     <li>Trykk på "Legg til vakt"-knappen</li>
                                     <li>Velg "Gjentakende" i stedet for "Enkel"</li>
-                                    <li>Bestem hvor ofte vakten gjentas (hver uke, hver 2. uke, osv.)</li>
-                                    <li>Systemet legger automatisk til alle vaktene for deg</li>
+                                    <li>Bestem hvor ofte vakten gjentas</li>
+                                    <li>Systemet legger til alle vaktene automatisk</li>
                                 </ul>
                             </div>
                             
-                            <div style="background: var(--accent-light); padding: 16px; border-radius: 8px; border-left: 4px solid var(--accent); max-width: 450px; margin: 0 auto;">
-                                <p style="margin: 0; font-weight: 500; color: var(--text-primary); line-height: 1.5;">
+                            <div style="background: var(--accent-light); padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);">
+                                <p style="margin: 0; font-weight: 500; color: var(--text-primary); line-height: 1.4; font-size: 14px;">
                                     💡 <strong>Tips:</strong> Har du en fast vakt som gjentar seg? 
-                                    I stedet for å legge den til manuelt hver gang, bruk "Gjentakende" funksjonen 
-                                    - da slipper du å legge inn den samme vakten gang på gang!
+                                    Bruk "Gjentakende" funksjonen så slipper du å legge inn den samme vakten gang på gang!
                                 </p>
                             </div>
                         </div>
                         
-                        <div class="form-actions" style="margin-top: 24px;">
-                            <button class="btn btn-primary" onclick="app.dismissRecurringIntro()" style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
+                        <div class="form-actions" style="margin-top: 16px;">
+                            <button class="btn btn-primary" onclick="app.dismissRecurringIntro()" style="width: 100%; max-width: 200px; margin: 0 auto; display: block;">
                                 Forstått, takk!
                             </button>
                         </div>
