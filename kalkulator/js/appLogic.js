@@ -36,6 +36,7 @@ export const app = {
     customWage: 200,
     customBonuses: {}, // Reset to empty - will be loaded from database
     pauseDeduction: true,
+    fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
     selectedDate: null,
     demoMode: false,
     userShifts: [],
@@ -85,6 +86,37 @@ export const app = {
         document.getElementById('pauseDeductionToggle').addEventListener('change', e => {
             this.pauseDeduction = e.target.checked;
             this.updateDisplay();
+            this.saveSettingsToSupabase();
+        });
+        document.getElementById('fullMinuteRangeToggle').addEventListener('change', e => {
+            this.fullMinuteRange = e.target.checked;
+            // Save current selections before repopulating
+            const currentSelections = {
+                startHour: document.getElementById('startHour')?.value || '',
+                startMinute: document.getElementById('startMinute')?.value || '',
+                endHour: document.getElementById('endHour')?.value || '',
+                endMinute: document.getElementById('endMinute')?.value || ''
+            };
+            
+            // Repopulate time selects with new format
+            this.populateTimeSelects();
+            
+            // Restore selections if they're still valid
+            setTimeout(() => {
+                if (currentSelections.startHour) document.getElementById('startHour').value = currentSelections.startHour;
+                if (currentSelections.startMinute) {
+                    const startMinuteSelect = document.getElementById('startMinute');
+                    const option = startMinuteSelect.querySelector(`option[value="${currentSelections.startMinute}"]`);
+                    if (option) startMinuteSelect.value = currentSelections.startMinute;
+                }
+                if (currentSelections.endHour) document.getElementById('endHour').value = currentSelections.endHour;
+                if (currentSelections.endMinute) {
+                    const endMinuteSelect = document.getElementById('endMinute');
+                    const option = endMinuteSelect.querySelector(`option[value="${currentSelections.endMinute}"]`);
+                    if (option) endMinuteSelect.value = currentSelections.endMinute;
+                }
+            }, 50);
+            
             this.saveSettingsToSupabase();
         });
         // Close month dropdown when clicking outside
@@ -369,11 +401,24 @@ export const app = {
             startHour.innerHTML += `<option value="${hh}">${hh}</option>`;
             endHour.innerHTML += `<option value="${hh}">${hh}</option>`;
         }
-        ['00','15','30','45'].forEach((m, idx) => {
-            const sel = idx===0? ' selected':'';
-            startMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
-            endMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
-        });
+        
+        // Use either 15-minute intervals or full minute range based on setting
+        if (this.fullMinuteRange) {
+            // Full minute range 00-59
+            for (let m = 0; m < 60; m++) {
+                const mm = String(m).padStart(2, '0');
+                const sel = m === 0 ? ' selected' : '';
+                startMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
+                endMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
+            }
+        } else {
+            // 15-minute intervals (default)
+            ['00','15','30','45'].forEach((m, idx) => {
+                const sel = idx===0? ' selected':'';
+                startMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
+                endMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
+            });
+        }
     },
     toggleAddShift() {
         const card = document.querySelector('.add-shift-card');
@@ -718,6 +763,7 @@ export const app = {
                     : (settings.current_month || new Date().getMonth() + 1);
                     
                 this.pauseDeduction = settings.pause_deduction || false;
+                this.fullMinuteRange = settings.full_minute_range || false;
                 
                 if (shouldResetToCurrentMonth && settings.current_month && settings.current_month !== new Date().getMonth() + 1) {
                     console.log(`User was inactive for >5 hours. Resetting from month ${settings.current_month} to current month ${new Date().getMonth() + 1}`);
@@ -820,6 +866,7 @@ export const app = {
         };
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.pauseDeduction = false;
+        this.fullMinuteRange = false; // Default to 15-minute intervals
         this.demoMode = false;
     },
 
@@ -860,6 +907,11 @@ export const app = {
         const pauseDeductionToggle = document.getElementById('pauseDeductionToggle');
         if (pauseDeductionToggle) {
             pauseDeductionToggle.checked = this.pauseDeduction;
+        }
+
+        const fullMinuteRangeToggle = document.getElementById('fullMinuteRangeToggle');
+        if (fullMinuteRangeToggle) {
+            fullMinuteRangeToggle.checked = this.fullMinuteRange;
         }
 
         // Toggle preset/custom sections
@@ -927,6 +979,7 @@ export const app = {
                 if ('custom_wage' in existingSettings) settingsData.custom_wage = this.customWage;
                 if ('current_month' in existingSettings) settingsData.current_month = this.currentMonth;
                 if ('pause_deduction' in existingSettings) settingsData.pause_deduction = this.pauseDeduction;
+                if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
@@ -941,6 +994,7 @@ export const app = {
                 settingsData.custom_wage = this.customWage;
                 settingsData.current_month = this.currentMonth;
                 settingsData.pause_deduction = this.pauseDeduction;
+                settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.custom_bonuses = this.customBonuses || {};
                 // For new settings, we'll try to include last_active and let it fail gracefully if column doesn't exist
             }
@@ -993,6 +1047,7 @@ export const app = {
                 this.customBonuses = data.customBonuses || {};
                 this.currentMonth = data.currentMonth || new Date().getMonth() + 1; // Default to current month
                 this.pauseDeduction = data.pauseDeduction !== false;
+                this.fullMinuteRange = data.fullMinuteRange || false;
                 this.demoMode = data.demoMode || false;
                 
                 console.log('Loaded from localStorage:', data);
@@ -1405,6 +1460,7 @@ export const app = {
                 customBonuses: this.customBonuses,
                 currentMonth: this.currentMonth,
                 pauseDeduction: this.pauseDeduction,
+                fullMinuteRange: this.fullMinuteRange,
                 demoMode: this.demoMode
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
@@ -2057,7 +2113,7 @@ export const app = {
             console.log('Header shown');
         }
         
-        // Remove keyboard event listener properly
+        // Remove keyboard event listener
         if (this.shiftDetailsKeydownHandler) {
             document.removeEventListener('keydown', this.shiftDetailsKeydownHandler);
             this.shiftDetailsKeydownHandler = null;
@@ -2597,9 +2653,18 @@ export const app = {
             `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`
         ).join('');
         
-        const minuteOptions = ['00', '15', '30', '45'].map(m => 
-            `<option value="${m}">${m}</option>`
-        ).join('');
+        let minuteOptions;
+        if (this.fullMinuteRange) {
+            // Full minute range 00-59
+            minuteOptions = Array.from({length: 60}, (_, i) => 
+                `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`
+            ).join('');
+        } else {
+            // 15-minute intervals (default)
+            minuteOptions = ['00', '15', '30', '45'].map(m => 
+                `<option value="${m}">${m}</option>`
+            ).join('');
+        }
         
         document.getElementById('editStartHour').innerHTML = '<option value="">Fra time</option>' + hourOptions;
         document.getElementById('editStartMinute').innerHTML = '<option value="">Fra minutt</option>' + minuteOptions;
