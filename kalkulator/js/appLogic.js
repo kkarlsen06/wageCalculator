@@ -1440,8 +1440,23 @@ export const app = {
         if (typeof wage !== 'number' || isNaN(wage)) {
             wage = 0;
         }
-        document.getElementById('currentMonth').textContent = `${this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1)} ${this.YEAR}`;
+        const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
+        document.getElementById('currentMonth').textContent = `${monthName} ${this.YEAR}`;
         document.getElementById('currentWage').textContent = `${wage.toFixed(2).replace('.', ',')} kr/t`;
+        
+        // Update the total card label to match selected month
+        const totalLabel = document.querySelector('.total-label');
+        if (totalLabel) {
+            // Check if current month is the actual current month
+            const now = new Date();
+            const isCurrentMonth = this.currentMonth === (now.getMonth() + 1) && this.YEAR === now.getFullYear();
+            
+            if (isCurrentMonth) {
+                totalLabel.textContent = 'Total brutto lønn denne måneden';
+            } else {
+                totalLabel.textContent = `Total brutto lønn for ${monthName.toLowerCase()}`;
+            }
+        }
     },
     updateStats() {
         let totalHours = 0;
