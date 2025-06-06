@@ -450,6 +450,35 @@ input[type="time"].form-control[value=""]:focus {
   box-shadow: 0 6px 16px -6px rgba(255, 107, 129, 0.3);
 }
 
+/* Date Grid Container and Week Numbers */
+.date-grid-container {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.week-numbers {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 32px; /* Align with first row of calendar (accounting for header row) */
+}
+
+.week-number {
+  height: 45px; /* Match date-cell min-height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 4px;
+  min-width: 28px;
+  opacity: 0;
+  animation: calendarCellFadeIn 0.3s var(--ease-default) forwards;
+}
+
 /* Date Grid */
 .date-grid {
   display: grid;
@@ -797,7 +826,6 @@ input[type="time"].form-control[value=""]:focus {
   font-size: 16px;
   font-weight: 600;
   color: var(--accent);
-  text-align: center;
 }
 
 #recurringIntroModal .modal-body ul {
