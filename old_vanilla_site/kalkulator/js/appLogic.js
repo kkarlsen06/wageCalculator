@@ -853,7 +853,6 @@ export const app = {
     },
     populateDateGrid() {
         const dateGrid = document.getElementById('dateGrid');
-        const weekNumbers = document.getElementById('weekNumbers');
         const year = this.YEAR;
         const monthIdx = this.currentMonth - 1;
         const firstDay = new Date(year, monthIdx, 1);
@@ -861,32 +860,13 @@ export const app = {
         const startDate = new Date(firstDay);
         const offset = firstDay.getDay()===0 ? 6 : firstDay.getDay()-1;
         startDate.setDate(startDate.getDate() - offset);
-        
         dateGrid.innerHTML = '';
-        if (weekNumbers) weekNumbers.innerHTML = '';
-        
         ['M','T','O','T','F','L','S'].forEach(day => {
             const hdr = document.createElement('div');
             hdr.textContent = day;
             hdr.style.cssText = 'font-weight:600;font-size:12px;color:var(--text-secondary);text-align:center;padding:8px;';
             dateGrid.appendChild(hdr);
         });
-        
-        // Generate week numbers (6 weeks shown)
-        if (weekNumbers) {
-            for (let week = 0; week < 6; week++) {
-                const weekStartDate = new Date(startDate);
-                weekStartDate.setDate(startDate.getDate() + (week * 7));
-                const weekNum = this.getWeekNumber(weekStartDate);
-                
-                const weekDiv = document.createElement('div');
-                weekDiv.className = 'week-number';
-                weekDiv.textContent = weekNum;
-                weekDiv.style.animationDelay = `${week * 0.05}s`;
-                weekNumbers.appendChild(weekDiv);
-            }
-        }
-        
         for (let i=0;i<42;i++){
             const cellDate = new Date(startDate);
             cellDate.setDate(startDate.getDate()+i);
