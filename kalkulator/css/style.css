@@ -86,6 +86,18 @@ html {
   }
 }
 
+/* Special fade-in animation for week numbers that preserves rotation */
+@keyframes weekNumberFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px) rotate(180deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotate(180deg);
+  }
+}
+
 /* Special animation for other-month cells */
 @keyframes calendarCellFadeInOtherMonth {
   from {
@@ -154,7 +166,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .header-left {
@@ -201,7 +213,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .header h1 {
@@ -320,7 +332,7 @@ body {
 }
 
 .month-option {
-  padding: 10px 12px;
+  padding: 8px 12px;
   cursor: pointer;
   transition: all var(--speed-fast);
   font-size: 14px;
@@ -453,7 +465,7 @@ input[type="time"].form-control[value=""]:focus {
 /* Date Grid */
 .date-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 32px repeat(7, 1fr);
   gap: 2px;
   flex: 1;
 }
@@ -480,7 +492,7 @@ input[type="time"].form-control[value=""]:focus {
   animation: calendarCellFadeIn 0.3s var(--ease-default) forwards;
 }
 .date-cell:hover:not(.disabled) {
-  background: var(--shadow-accent);
+  background: var(--accent3-alpha);
   transform: var(--lift-small) scale(1.08);
   box-shadow: var(--shadow-hover-accent);
 }
@@ -490,9 +502,37 @@ input[type="time"].form-control[value=""]:focus {
   font-weight: 600;
 }
 .date-cell.disabled {
-  opacity: 0.3;
+  background: var(--bg-secondary);
+  opacity: 0.6;
   cursor: not-allowed;
   color: var(--text-tertiary);
+}
+
+/* Week number styling */
+.week-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 4px 2px;
+  min-height: 45px;
+  position: relative;
+  transform: rotate(180deg);
+}
+
+.week-number.header {
+  font-size: 10px;
+  font-weight: 500;
+  writing-mode: horizontal-tb;
+  text-orientation: initial;
+  background: var(--bg-secondary);
 }
 
 /* Buttons */
@@ -675,7 +715,7 @@ input[type="time"].form-control[value=""]:focus {
   position: sticky;
   top: 0;
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-  z-index: 1;
+  z-index: 100;
 }
 .modal-title {
   font-size: 20px;
@@ -704,7 +744,6 @@ input[type="time"].form-control[value=""]:focus {
 /* Tabs */
 .tab-nav {
   display: flex;
-  border-bottom: 1px solid var(--border);
   background: var(--bg-secondary);
   border-radius: var(--border-radius) var(--border-radius) 0 0;
   padding: 4px;
@@ -713,9 +752,9 @@ input[type="time"].form-control[value=""]:focus {
 .tab-btn {
   flex: 1;
   padding: 12px 16px;
-  background: transparent;
+  background: var(--bg-secondary);
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -728,15 +767,15 @@ input[type="time"].form-control[value=""]:focus {
   color: var(--text-primary);
 }
 .tab-btn.active {
-  background: var(--accent3);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 212, 170, 0.3), 0 0 0 1px rgba(0, 212, 170, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border);
   transform: translateY(-1px);
 }
 .tab-btn.active:hover {
-  background: var(--accent3);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
   transform: translateY(-1px);
 }
 .tab-content {
@@ -998,7 +1037,7 @@ input:checked + .slider:before {
   align-items: center;
   gap: 8px;
   transition: all var(--speed-normal) var(--ease-default);
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-size: 16px;
   font-weight: 600;
   width: 100%;
@@ -1107,7 +1146,7 @@ input:checked + .slider:before {
 }
 .shift-type {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
   background: var(--bg-tertiary);
@@ -1122,7 +1161,7 @@ input:checked + .slider:before {
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
-  margin-left: 15px;
+  margin-left: 16px;
   flex-shrink: 0;
 }
 .shift-amount-wrapper {
@@ -1131,7 +1170,7 @@ input:checked + .slider:before {
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
-  margin-left: 15px;
+  margin-left: 16px;
   flex-shrink: 0;
 }
 .shift-total { 
@@ -1346,6 +1385,8 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  gap: 8px;
 }
 
 .breakdown-card:hover {
@@ -1387,42 +1428,23 @@ input:checked + .slider:before {
   }
 }
 
-.breakdown-icon {
-  margin-bottom: 6px;
-  opacity: 0.8;
-  transition: color var(--speed-normal);
-  position: relative;
-  z-index: 1;
-  color: var(--text-secondary); /* Grå stroke color for SVG-ikonene */
-}
-
-/* Responsive icon sizing */
-@media (max-width: 360px) {
-  .breakdown-icon {
-    margin-bottom: 4px;
-  }
-}
-
-@media (max-width: 280px) {
-  .breakdown-icon {
-    margin-bottom: 3px;
-  }
-}
-
-.breakdown-card:hover .breakdown-icon {
-  color: var(--accent3);
-}
 .breakdown-value {
   font-size: 32px;
   font-weight: 600;
-  margin-bottom: 5px;
+  margin: 0;
   background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent2));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
   z-index: 1;
-  line-height: 1.2;
+  line-height: 1.1;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  flex-shrink: 0;
 }
 
 /* Responsive font sizes for breakdown values */
@@ -1455,6 +1477,11 @@ input:checked + .slider:before {
   position: relative;
   z-index: 1;
   line-height: 1.3;
+  text-align: center;
+  display: block;
+  width: 100%;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 /* Responsive font sizes for breakdown labels */
@@ -1556,15 +1583,15 @@ input:checked + .slider:before {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 2px;
   padding: 0 4px;
 }
 
 .calendar-header {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 32px repeat(7, 1fr);
   gap: 2px;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
 
 .calendar-day-header {
@@ -1572,12 +1599,12 @@ input:checked + .slider:before {
   font-size: 12px;
   color: var(--text-secondary);
   text-align: center;
-  padding: 8px 4px;
+  padding: 4px 2px;
 }
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 32px repeat(7, 1fr);
   gap: 2px;
   flex: 1;
 }
@@ -1607,6 +1634,38 @@ input:checked + .slider:before {
   border: 1px solid var(--border);
   /* Use special animation that ends with opacity 0.3 */
   animation: calendarCellFadeInOtherMonth 0.3s var(--ease-default) forwards;
+}
+
+/* Calendar week number styling */
+.calendar-week-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 4px 2px;
+  min-height: 45px;
+  opacity: 0;
+  animation: weekNumberFadeIn 0.3s var(--ease-default) forwards;
+  transform: rotate(180deg);
+  z-index: 2;
+}
+
+.calendar-week-number.header {
+  font-size: 9px;
+  font-weight: 500;
+  writing-mode: horizontal-tb;
+  text-orientation: initial;
+  background: var(--bg-secondary);
+  border: none;
+  padding: 4px 2px;
+  z-index: 2;
 }
 
 .calendar-cell.has-shifts {
@@ -1656,13 +1715,15 @@ input:checked + .slider:before {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+  display: block;
+  width: 100%;
 }
 
 /* Responsive calendar adjustments */
 @media (max-width: 480px) {
   .calendar-cell {
     min-height: 40px;
-    padding: 3px 1px;
+    padding: 4px 4px;
   }
   
   .calendar-day-number {
@@ -1675,14 +1736,32 @@ input:checked + .slider:before {
   
   .calendar-day-header {
     font-size: 11px;
-    padding: 6px 2px;
+    padding: 4px 2px;
+  }
+  
+  .week-number, .calendar-week-number {
+    font-size: 10px;
+    min-height: 40px;
+  }
+  
+  .week-number.header, .calendar-week-number.header {
+    font-size: 8px;
+    padding: 4px 2px;
+  }
+  
+  .date-grid {
+    grid-template-columns: 28px repeat(7, 1fr);
+  }
+  
+  .calendar-header, .calendar-grid {
+    grid-template-columns: 28px repeat(7, 1fr);
   }
 }
 
 @media (max-width: 360px) {
   .calendar-cell {
     min-height: 35px;
-    padding: 2px 1px;
+    padding: 4px 4px;
   }
   
   .calendar-day-number {
@@ -1693,8 +1772,41 @@ input:checked + .slider:before {
     font-size: clamp(8px, 2vw, 10px);
   }
   
-  .calendar-amount {
+  .week-number, .calendar-week-number {
+    font-size: 9px;
+    min-height: 35px;
+  }
+  
+  .week-number.header, .calendar-week-number.header {
     font-size: 7px;
+    padding: 4px 2px;
+  }
+  
+  .date-grid {
+    grid-template-columns: 24px repeat(7, 1fr);
+  }
+  
+  .calendar-header, .calendar-grid {
+    grid-template-columns: 24px repeat(7, 1fr);
+  }
+}
+
+@media (max-width: 320px) {
+  .week-number, .calendar-week-number {
+    font-size: 8px;
+  }
+  
+  .week-number.header, .calendar-week-number.header {
+    font-size: 6px;
+    padding: 4px 2px;
+  }
+  
+  .date-grid {
+    grid-template-columns: 20px repeat(7, 1fr);
+  }
+  
+  .calendar-header, .calendar-grid {
+    grid-template-columns: 20px repeat(7, 1fr);
   }
 }
 
@@ -2456,7 +2568,6 @@ input:checked + .slider:before {
   justify-content: flex-end;
   margin-top: 24px;
   padding-top: 16px;
-  border-top: 1px solid var(--border);
 }
 
 .form-actions .btn {
@@ -2592,7 +2703,7 @@ input:checked + .slider:before {
   
   .welcome-container {
     max-width: 98vw;
-    padding: 0 5px;
+    padding: 0 4px;
   }
   
   /* Keep name parts together but allow breaking between words */
@@ -2617,7 +2728,7 @@ input:checked + .slider:before {
   #welcomeScreen h1 {
     font-size: 28px;
     max-width: 98vw;
-    padding: 0 5px;
+    padding: 0 4px;
     line-height: 1.3;
   }
 }

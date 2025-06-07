@@ -851,6 +851,16 @@ export const app = {
             alert(`En uventet feil oppstod: ${e.message}`);
         }
     },
+    
+    // Helper function to calculate ISO week number
+    getISOWeekNumber(date) {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    },
+    
     populateDateGrid() {
         const dateGrid = document.getElementById('dateGrid');
         const year = this.YEAR;
@@ -861,13 +871,33 @@ export const app = {
         const offset = firstDay.getDay()===0 ? 6 : firstDay.getDay()-1;
         startDate.setDate(startDate.getDate() - offset);
         dateGrid.innerHTML = '';
+        
+        // Add week number header
+        const weekHeader = document.createElement('div');
+        weekHeader.textContent = '';
+        weekHeader.className = 'week-number header';
+        dateGrid.appendChild(weekHeader);
+        
+        // Add day headers
         ['M','T','O','T','F','L','S'].forEach(day => {
             const hdr = document.createElement('div');
             hdr.textContent = day;
             hdr.style.cssText = 'font-weight:600;font-size:12px;color:var(--text-secondary);text-align:center;padding:8px;';
             dateGrid.appendChild(hdr);
         });
+        
+        // Add week numbers and date cells
         for (let i=0;i<42;i++){
+            // Add week number at the start of each row (every 7 cells)
+            if (i % 7 === 0) {
+                const weekDate = new Date(startDate);
+                weekDate.setDate(startDate.getDate() + i);
+                const weekNum = this.getISOWeekNumber(weekDate);
+                const weekCell = document.createElement('div');
+                weekCell.className = 'week-number';
+                weekCell.textContent = weekNum;
+                dateGrid.appendChild(weekCell);
+            }
             const cellDate = new Date(startDate);
             cellDate.setDate(startDate.getDate()+i);
             const cell = document.createElement('div');
@@ -1739,9 +1769,9 @@ export const app = {
             const isCurrentMonth = this.currentMonth === (now.getMonth() + 1) && this.YEAR === now.getFullYear();
             
             if (isCurrentMonth) {
-                totalLabel.textContent = 'Total brutto lønn denne måneden';
+                totalLabel.textContent = 'Brutto';
             } else {
-                totalLabel.textContent = `Total brutto lønn for ${monthName.toLowerCase()}`;
+                totalLabel.textContent = `Brutto (${monthName.toLowerCase()})`;
             }
         }
     },
@@ -1761,8 +1791,8 @@ export const app = {
         });
         document.getElementById('totalAmount').textContent = this.formatCurrency(totalBase + totalBonus);
         document.getElementById('totalHours').textContent = this.formatHours(totalHours);
-        document.getElementById('baseAmount').textContent = this.formatCurrencyShort(totalBase);
-        document.getElementById('bonusAmount').textContent = this.formatCurrencyShort(totalBonus);
+        document.getElementById('baseAmount').textContent = this.formatCurrency(totalBase);
+        document.getElementById('bonusAmount').textContent = this.formatCurrency(totalBonus);
         document.getElementById('shiftCount').textContent = monthShifts.length;
     },
     updateShiftList() {
@@ -2032,6 +2062,14 @@ export const app = {
             opacity: 0;
             animation: slideInFromTop 0.4s var(--ease-default) 0.2s forwards;
         `;
+        
+        // Add week number header
+        const weekHeader = document.createElement('div');
+        weekHeader.textContent = '';
+        weekHeader.className = 'calendar-week-number header';
+        header.appendChild(weekHeader);
+        
+        // Add day headers
         ['M', 'T', 'O', 'T', 'F', 'L', 'S'].forEach(day => {
             const dayHeader = document.createElement('div');
             dayHeader.textContent = day;
@@ -2061,6 +2099,23 @@ export const app = {
 
         // Create calendar cells (42 cells for 6 weeks)
         for (let i = 0; i < 42; i++) {
+            // Add week number at the start of each row (every 7 cells)
+            if (i % 7 === 0) {
+                const weekDate = new Date(startDate);
+                weekDate.setDate(startDate.getDate() + i);
+                const weekNum = this.getISOWeekNumber(weekDate);
+                const weekCell = document.createElement('div');
+                weekCell.className = 'calendar-week-number';
+                weekCell.textContent = weekNum;
+                
+                // Calculate animation delay for week number
+                const row = Math.floor(i / 7);
+                const weekAnimationDelay = 0.3 + (row * 7) * 0.035;
+                weekCell.style.animationDelay = `${weekAnimationDelay}s`;
+                
+                grid.appendChild(weekCell);
+            }
+            
             const cellDate = new Date(startDate);
             cellDate.setDate(startDate.getDate() + i);
             
@@ -2069,9 +2124,10 @@ export const app = {
             
             // Calculate animation delay based on row and column position
             // Row by row, left to right animation - start while modal is opening
+            // Account for week number column by adding 1 to the base position
             const row = Math.floor(i / 7);
             const col = i % 7;
-            const animationDelay = 0.3 + (row * 7 + col) * 0.035; // Start early while modal morphs, 35ms between each cell
+            const animationDelay = 0.3 + (row * 8 + col + 1) * 0.035; // 8 columns now (week + 7 days), +1 for week number offset
             cell.style.animationDelay = `${animationDelay}s`;
             
             const dayNumber = document.createElement('div');
@@ -2530,7 +2586,7 @@ export const app = {
         return Math.round(amount).toLocaleString('nb-NO');
     },
     formatHours(hours) {
-        return hours.toFixed(2).replace('.', ',') + ' t';
+        return hours.toFixed(2).replace('.', ',') + ' timer';
     },
     
     // Settings management methods
@@ -2993,6 +3049,12 @@ export const app = {
         const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
         startDate.setDate(startDate.getDate() - offset);
         
+        // Add week number header
+        const weekHeader = document.createElement('div');
+        weekHeader.textContent = '';
+        weekHeader.className = 'week-number header';
+        grid.appendChild(weekHeader);
+        
         // Add day headers
         ['M','T','O','T','F','L','S'].forEach(day => {
             const hdr = document.createElement('div');
@@ -3003,6 +3065,16 @@ export const app = {
         
         // Add calendar cells (42 cells for 6 weeks, like main calendar)
         for (let i = 0; i < 42; i++) {
+            // Add week number at the start of each row (every 7 cells)
+            if (i % 7 === 0) {
+                const weekDate = new Date(startDate);
+                weekDate.setDate(startDate.getDate() + i);
+                const weekNum = this.getISOWeekNumber(weekDate);
+                const weekCell = document.createElement('div');
+                weekCell.className = 'week-number';
+                weekCell.textContent = weekNum;
+                grid.appendChild(weekCell);
+            }
             const cellDate = new Date(startDate);
             cellDate.setDate(startDate.getDate() + i);
             const cell = document.createElement('div');

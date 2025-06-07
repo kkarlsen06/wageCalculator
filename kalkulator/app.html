@@ -76,32 +76,20 @@
 
           <div class="content">
               <div class="total-card">
-                  <div class="total-label">Total brutto lønn denne måneden</div>
+                  <div class="total-label">Brutto</div>
                   <div class="total-amount" id="totalAmount">0 kr</div>
                   <div class="total-hours">
-                      <span id="totalHours">0</span> timer (<span id="shiftCount">0</span> vakter)
+                      <span id="totalHours">0</span> (<span id="shiftCount">0</span> vakter)
                   </div>
               </div>
 
               <div class="breakdown-cards">
                   <div class="breakdown-card" data-type="base" onclick="app.showBreakdown('base')">
-                      <div class="breakdown-icon">
-                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                              <line x1="12" y1="8" x2="12" y2="16"></line>
-                              <line x1="8" y1="12" x2="16" y2="12"></line>
-                          </svg>
-                      </div>
-                      <div class="breakdown-value" id="baseAmount">0</div>
+                      <div class="breakdown-value" id="baseAmount">0 kr</div>
                       <div class="breakdown-label">Grunnlønn</div>
                   </div>
                   <div class="breakdown-card" data-type="bonus" onclick="app.showBreakdown('bonus')">
-                      <div class="breakdown-icon">
-                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                          </svg>
-                      </div>
-                      <div class="breakdown-value" id="bonusAmount">0</div>
+                      <div class="breakdown-value" id="bonusAmount">0 kr</div>
                       <div class="breakdown-label">Tillegg</div>
                   </div>
               </div>
@@ -171,9 +159,9 @@
 
               <div id="generalTab" class="tab-content active">
                   <div class="form-group">
-                      <label>Demo-data</label>
+                      <label>Demo</label>
                       <div class="switch-group">
-                          <span class="text-secondary">Vis demo-vakter</span>
+                          <span class="text-secondary">Vis demovakter</span>
                           <label class="switch">
                               <input type="checkbox" id="demoDataToggle">
                               <span class="slider"></span>
@@ -182,9 +170,9 @@
                   </div>
                   
                   <div class="form-group">
-                      <label>Pausetrekk</label>
+                      <label>Betalt pause</label>
                       <div class="switch-group">
-                          <span class="text-secondary">Automatisk pausetrekk (over 5,5t)</span>
+                          <span class="text-secondary">Trekk for vakter > 5,5t</span>
                           <label class="switch">
                               <input type="checkbox" id="pauseDeductionToggle" checked>
                               <span class="slider"></span>
@@ -193,9 +181,9 @@
                   </div>
                   
                   <div class="form-group">
-                      <label>Minutt-format</label>
+                      <label>Minuttformat</label>
                       <div class="switch-group">
-                          <span class="text-secondary">Vis alle minutter (0-59) i stedet for kvarter</span>
+                          <span class="text-secondary">Alle minutter i stedet for kvarter</span>
                           <label class="switch">
                               <input type="checkbox" id="fullMinuteRangeToggle">
                               <span class="slider"></span>
@@ -206,7 +194,7 @@
                   <div class="form-group">
                       <label>Tidsinnskriving</label>
                       <div class="switch-group">
-                          <span class="text-secondary">Skriv inn tid direkte (timer:minutter) i stedet for dropdowns</span>
+                          <span class="text-secondary">Skriv inn tid direkte i stedet for dropdowns</span>
                           <label class="switch">
                               <input type="checkbox" id="directTimeInputToggle">
                               <span class="slider"></span>
@@ -217,7 +205,7 @@
                   <div class="form-group" style="display: none;">
                       <label>Funksjonshjelp</label>
                       <button class="btn btn-secondary" onclick="app.showRecurringIntroduction()" style="width: 100%;">
-                          Se introduksjon til gjentakende vakter
+                          Se introduksjon til serie vakter
                       </button>
                   </div>
               </div>
@@ -405,12 +393,11 @@
                   <form id="shiftForm">
                       <div class="tab-nav" style="margin-bottom:16px;">
                           <button type="button" class="tab-btn active" onclick="app.switchAddShiftTab('simple')">Enkel</button>
-                          <button type="button" class="tab-btn" onclick="app.switchAddShiftTab('recurring')">Gjentakende</button>
+                          <button type="button" class="tab-btn" onclick="app.switchAddShiftTab('recurring')">Serie</button>
                       </div>
 
                       <div id="simpleFields" class="tab-content active">
                           <div class="form-group">
-                              <label>Velg dato</label>
                               <div class="date-grid" id="dateGrid"></div>
                           </div>
 
@@ -435,7 +422,7 @@
                           </div>
                       </div>
                       <div id="recurringFields" class="tab-content">
-                          <div class="form-group">
+                          <div class="form-group" style="margin-bottom: 24px;">
                               <label>Hyppighet</label>
                               <select class="form-control" id="recurringFrequency">
                                   <option value="1">Hver uke</option>
@@ -444,11 +431,11 @@
                                   <option value="4">Hver 4. uke</option>
                               </select>
                           </div>
-                          <div class="form-group">
+                          <div class="form-group" style="margin-bottom: 24px;">
                               <label>Første vakt</label>
                               <input type="date" class="form-control" id="recurringStartDate" />
                           </div>
-                          <div class="form-group">
+                          <div class="form-group" style="margin-bottom: 24px;">
                               <label>Arbeidstid</label>
                               <div class="form-row">
                                   <select class="form-control" id="recurringStartHour">
