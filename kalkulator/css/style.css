@@ -628,32 +628,35 @@ input[type="time"].form-control[value=""]:focus {
   top: 0;
   width: 100%;
   height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.6);
+  background: rgba(13, 17, 23, 0.85);
 }
-.modal.active { display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+.modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
 .modal-content {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  width: 90vw;
+  max-width: 500px;
+  max-height: 85vh;
   margin: 0;
-  border-radius: 16px;
-  max-width: 600px;
-  width: 100vw;
-  height: 100vh;
+  height: auto;
   overflow-y: auto;
   position: relative;
-  border: 1px solid var(--border);
-  animation: gradientSlide 0.5s ease;
-  box-shadow: 0 16px 48px -12px var(--shadow-accent);
+  box-shadow: 0 32px 64px var(--shadow-accent);
+  animation: scaleIn 0.4s var(--ease-default);
 }
 
-/* Desktop sizing - make modal not full screen on larger screens */
+/* Desktop sizing */
 @media (min-width: 769px) {
   .modal-content {
-    width: 90vw;
-    height: auto;
-    max-height: 90vh;
+    width: 80vw;
+    max-height: 85vh;
     margin: 20px auto;
-    border-radius: 16px;
   }
 }
 
@@ -1503,27 +1506,6 @@ input:checked + .slider:before {
   }
 }
 
-/* Backdrop blur effect */
-.backdrop-blur {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  background: rgba(13, 17, 23, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 999;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s var(--ease-default);
-  cursor: pointer;
-}
-
-.backdrop-blur.active {
-  opacity: 1;
-  pointer-events: auto;
-}
 
 /* Header hiding animation when breakdown is open */
 .header.hidden {
@@ -2616,7 +2598,7 @@ input:checked + .slider:before {
     width: 100vw;
     height: 100vh;
     max-width: none;
-    max-height: none;
+    max-height: 100vh;
     border-radius: 0;
     margin: 0;
   }
@@ -2633,9 +2615,9 @@ input:checked + .slider:before {
   #addShiftModal .modal-content,
   #editShiftModal .modal-content {
     max-width: 600px;
-    width: 90vw;
+    width: 80vw;
     height: auto;
-    max-height: 90vh;
+    max-height: 85vh;
   }
 }
 
