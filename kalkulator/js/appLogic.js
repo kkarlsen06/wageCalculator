@@ -500,7 +500,9 @@ export const app = {
                 recurringEndMinute.innerHTML = '<option value="">Til minutt</option>';
             }
             
-            for (let h = 6; h <= 24; h++) {
+            // Only allow shifts starting between 06 and 23
+            // to match the validation rules below
+            for (let h = 6; h <= 23; h++) {
                 const hh = String(h).padStart(2,'0');
                 startHour.innerHTML += `<option value="${hh}">${hh}</option>`;
                 endHour.innerHTML += `<option value="${hh}">${hh}</option>`;
@@ -573,9 +575,9 @@ export const app = {
                     if (value.length > 2) value = value.slice(0, 2);
                     
                     if (input.id.includes('Hour')) {
-                        // Validate hours (06-24)
+                        // Validate hours (06-23)
                         const hour = parseInt(value);
-                        if (value.length === 2 && (hour < 6 || hour > 24)) {
+                        if (value.length === 2 && (hour < 6 || hour > 23)) {
                             value = value.slice(0, 1);
                         }
                     } else {
@@ -2524,6 +2526,11 @@ export const app = {
     calculateShift(shift) {
         const startMinutes = this.timeToMinutes(shift.startTime);
         let endMinutes = this.timeToMinutes(shift.endTime);
+        // If the end time is earlier than the start time, the shift continues
+        // after midnight. Add 24 hours so the duration is calculated correctly.
+        if (endMinutes <= startMinutes) {
+            endMinutes += 24 * 60;
+        }
         const durationHours = (endMinutes - startMinutes) / 60;
         let paidHours = durationHours;
         if (this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD) {
@@ -2537,9 +2544,14 @@ export const app = {
         const bonusSegments = bonuses[bonusType] || [];
         
         
+        // Recreate the end time after any pause deduction or midnight handling
+        // so we can reuse the same format when calculating bonuses
+        const endHour = Math.floor(endMinutes / 60) % 24;
+        const endTimeStr = `${String(endHour).padStart(2,'0')}:${(endMinutes % 60).toString().padStart(2,'0')}`;
+
         const bonus = this.calculateBonus(
             shift.startTime,
-            `${Math.floor(endMinutes/60).toString().padStart(2,'0')}:${(endMinutes%60).toString().padStart(2,'0')}`,
+            endTimeStr,
             bonusSegments
         );
         return {
@@ -2559,7 +2571,12 @@ export const app = {
     calculateBonus(startTime, endTime, bonusSegments) {
         let totalBonus = 0;
         const startMinutes = this.timeToMinutes(startTime);
-        const endMinutes = this.timeToMinutes(endTime);
+        let endMinutes = this.timeToMinutes(endTime);
+        // Bonus calculations also need to handle shifts that continue past
+        // midnight. Adjust the end time similar to calculateShift.
+        if (endMinutes <= startMinutes) {
+            endMinutes += 24 * 60;
+        }
         for (const segment of bonusSegments) {
             const segStart = this.timeToMinutes(segment.from);
             let segEnd = this.timeToMinutes(segment.to);
