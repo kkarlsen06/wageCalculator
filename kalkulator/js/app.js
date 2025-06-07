@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           app.closeEditShift();
         } else if (modal.id === 'settingsModal') {
           app.closeSettings();
-        } else if (modal.id === 'breakdownModal') {
+        } else if (modal.id === 'breakdownModal' || modal.id === 'breakdownModalDynamic') {
           app.closeBreakdown();
         }
       }
@@ -288,14 +288,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Handle ESC key to close modals
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
-        // Check which modal is open and close it
-        if (document.getElementById('addShiftModal').style.display === 'block') {
+        if (document.getElementById('addShiftModal').classList.contains('show')) {
           app.closeAddShiftModal();
-        } else if (document.getElementById('editShiftModal').style.display === 'block') {
+        } else if (document.getElementById('editShiftModal').classList.contains('show')) {
           app.closeEditShift();
-        } else if (document.getElementById('settingsModal').style.display === 'block') {
+        } else if (document.getElementById('settingsModal').classList.contains('show')) {
           app.closeSettings();
-        } else if (document.getElementById('breakdownModal').style.display === 'block') {
+        } else if (
+          document.getElementById('breakdownModal').classList.contains('show') ||
+          document.getElementById('breakdownModalDynamic')
+        ) {
           app.closeBreakdown();
         }
       }
