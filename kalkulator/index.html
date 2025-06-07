@@ -10,10 +10,10 @@
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
   <style>body{visibility:hidden;}</style>
 </head>
-<body style="padding-bottom: 80px;">
+<body class="pb-80">
   <!-- Tilbake til hovedside knapp -->
-  <div style="position: absolute; top: 20px; left: 20px; z-index: 1000;">
-    <a href="/" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+  <div class="absolute-top-left">
+    <a href="/" class="btn btn-secondary back-link">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="m12 19-7-7 7-7"/>
         <path d="M19 12H5"/>
@@ -24,23 +24,23 @@
 
   <div id="auth-box" class="auth-center">
     <div class="login-card">
-      <h2 style="margin-bottom: 20px;">Logg inn</h2>
-      <input id="email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 12px;" />
-      <input id="password" type="password" placeholder="Passord" required class="form-control" style="margin-bottom: 18px;" />
-      <button id="login-btn" class="btn btn-primary" style="margin-bottom: 12px;">Logg inn</button>
-      <button id="signup-btn" class="btn btn-secondary" style="margin-bottom: 12px;">Opprett ny konto</button>
-      <button id="forgot-btn" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;margin-top:4px;">Glemt passord?</button>
+      <h2 class="mb-20">Logg inn</h2>
+      <input id="email" type="email" placeholder="E-post" required class="form-control mb-12" />
+      <input id="password" type="password" placeholder="Passord" required class="form-control mb-18" />
+      <button id="login-btn" class="btn btn-primary mb-12">Logg inn</button>
+      <button id="signup-btn" class="btn btn-secondary mb-12">Opprett ny konto</button>
+      <button id="forgot-btn" class="mt-4" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;">Glemt passord?</button>
       <p id="auth-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
     </div>
   </div>
 
   <div id="signup-card" class="auth-center" style="display:none;">
     <div class="login-card">
-      <h2 style="margin-bottom: 20px;">Opprett ny konto</h2>
-      <input id="signup-email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 12px;" />
-      <input id="signup-password" type="password" placeholder="Passord" required class="form-control" style="margin-bottom: 12px;" />
-      <input id="signup-name" type="text" placeholder="Fornavn" required class="form-control" style="margin-bottom: 18px;" />
-      <button id="create-account-btn" class="btn btn-primary" style="margin-bottom: 12px;">Opprett konto</button>
+      <h2 class="mb-20">Opprett ny konto</h2>
+      <input id="signup-email" type="email" placeholder="E-post" required class="form-control mb-12" />
+      <input id="signup-password" type="password" placeholder="Passord" required class="form-control mb-12" />
+      <input id="signup-name" type="text" placeholder="Fornavn" required class="form-control mb-18" />
+      <button id="create-account-btn" class="btn btn-primary mb-12">Opprett konto</button>
       <button id="back-login-signup-btn" class="btn btn-secondary">Tilbake til innlogging</button>
       <p id="signup-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
     </div>
@@ -48,10 +48,10 @@
 
   <div id="forgot-card" class="auth-center" style="display:none;">
     <div class="login-card">
-      <h2 style="margin-bottom: 20px;">Tilbakestill passord</h2>
-      <input id="forgot-email" type="email" placeholder="E-post" required class="form-control" style="margin-bottom: 18px;" />
-      <button id="send-reset-btn" class="btn btn-primary" style="margin-bottom: 12px;">Send tilbakestillings-link</button>
-      <button id="send-magic-link-btn" class="btn btn-secondary" style="margin-bottom: 12px; display: none;">Send magisk lenke</button>
+      <h2 class="mb-20">Tilbakestill passord</h2>
+      <input id="forgot-email" type="email" placeholder="E-post" required class="form-control mb-18" />
+      <button id="send-reset-btn" class="btn btn-primary mb-12">Send tilbakestillings-link</button>
+      <button id="send-magic-link-btn" class="btn btn-secondary mb-12" style="display: none;">Send magisk lenke</button>
       <button id="back-login-btn" class="btn btn-secondary">Tilbake</button>
       <p id="forgot-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
     </div>
@@ -59,34 +59,18 @@
 
   <div id="complete-profile-card" class="auth-center" style="display:none;">
     <div class="login-card">
-      <h2 style="margin-bottom: 20px;">Fullfør profilen din</h2>
+      <h2 class="mb-20">Fullfør profilen din</h2>
       <p style="margin-bottom: 20px; color: var(--text-secondary); text-align: center;">
         Vennligst oppgi ditt fornavn for å fullføre profilen din.
       </p>
-      <input id="complete-name" type="text" placeholder="Fornavn" required class="form-control" style="margin-bottom: 18px;" />
-      <button id="complete-profile-btn" class="btn btn-primary" style="margin-bottom: 12px;">Fullfør profil</button>
+      <input id="complete-name" type="text" placeholder="Fornavn" required class="form-control mb-18" />
+      <button id="complete-profile-btn" class="btn btn-primary mb-12">Fullfør profil</button>
       <button id="skip-profile-btn" class="btn btn-secondary">Hopp over (kan gjøres senere)</button>
       <p id="complete-profile-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
     </div>
   </div>
 
-  <footer style="
-      width: 100%;
-      background: var(--bg-secondary);
-      color: var(--text-secondary);
-      text-align: center;
-      padding: 18px 10px 18px 10px;
-      font-size: 14px;
-      border-top: 1px solid var(--border);
-      border-radius: 16px 16px 0 0;
-      max-width: 600px;
-      margin: 0 auto;
-      position: fixed;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 50;
-  ">
+  <footer class="footer-auth">
       Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent4);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
   </footer>
 
