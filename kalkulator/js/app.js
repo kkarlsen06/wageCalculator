@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           app.closeEditShift();
         } else if (modal.id === 'settingsModal') {
           app.closeSettings();
-        } else if (modal.id === 'breakdownModal') {
+        } else if (modal.id === 'breakdownModal' || modal.id === 'dynamicBreakdownModal') {
           app.closeBreakdown();
         }
       }
@@ -295,7 +295,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           app.closeEditShift();
         } else if (document.getElementById('settingsModal').style.display === 'block') {
           app.closeSettings();
-        } else if (document.getElementById('breakdownModal').style.display === 'block') {
+        } else if (document.getElementById('breakdownModal').style.display === 'block' ||
+                   document.getElementById('dynamicBreakdownModal')) {
           app.closeBreakdown();
         }
       }

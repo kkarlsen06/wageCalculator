@@ -644,6 +644,8 @@ input[type="time"].form-control[value=""]:focus {
   border: 1px solid var(--border);
   animation: gradientSlide 0.5s ease;
   box-shadow: 0 16px 48px -12px var(--shadow-accent);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Desktop sizing - make modal not full screen on larger screens */
@@ -703,8 +705,20 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 /* Hide scrollbars in breakdown modal */
-.breakdown-modal-custom::-webkit-scrollbar {
+.breakdown-modal::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
+}
+
+.breakdown-modal {
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border: 1px solid var(--accent3-alpha);
+  border-radius: 20px;
+  box-shadow: 0 32px 64px var(--shadow-accent), 0 16px 32px rgba(0, 0, 0, 0.3);
+  width: min(90vw, 500px);
+  max-height: 80vh;
+  padding: 24px;
+  overflow-y: auto;
+  animation: fadeIn 0.4s var(--ease-default) forwards;
 }
 .modal-header {
   display: flex;
@@ -1990,22 +2004,22 @@ input:checked + .slider:before {
 @keyframes shiftDetailEnter {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: scale(0.9);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
   }
 }
 
 @keyframes shiftDetailExit {
   from {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
   }
   to {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: scale(0.9);
   }
 }
 
@@ -2014,10 +2028,15 @@ input:checked + .slider:before {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   border: 1px solid var(--border);
   border-radius: 20px;
-  box-shadow: 
+  box-shadow:
     0 32px 64px var(--shadow-accent),
     0 16px 32px rgba(0, 0, 0, 0.3);
   animation: shiftDetailEnter 0.4s var(--ease-default) forwards;
+  max-width: 500px;
+  width: 90vw;
+  max-height: 80vh;
+  padding: 24px;
+  overflow-y: auto;
 }
 
 .shift-detail-header {
@@ -2150,10 +2169,8 @@ input:checked + .slider:before {
 /* Responsive adjustments for shift detail modal */
 @media (max-width: 768px) {
   .shift-detail-card {
-    width: min(95vw, 450px) !important;
-    margin: 0;
-    max-height: 85vh;
-    padding: 20px !important;
+    width: 95vw;
+    padding: 20px;
   }
   
   .shift-detail-title {
@@ -2179,12 +2196,8 @@ input:checked + .slider:before {
 
 @media (max-width: 480px) {
   .shift-detail-card {
-    width: calc(100vw - 20px) !important;
-    left: 10px !important;
-    right: 10px !important;
-    transform: translateX(0) translateY(-50%) !important;
-    margin: 0;
-    padding: 16px !important;
+    width: calc(100vw - 20px);
+    padding: 16px;
     border-radius: 16px;
   }
   

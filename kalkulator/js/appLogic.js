@@ -1887,53 +1887,32 @@ export const app = {
             header.classList.add('hidden');
         }
         
-        // Create backdrop
-        const backdrop = document.createElement('div');
-        backdrop.className = 'backdrop-blur';
-        backdrop.onclick = () => this.closeBreakdown();
-        document.body.appendChild(backdrop);
-        
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'dynamicBreakdownModal';
+        overlay.className = 'modal active';
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                this.closeBreakdown();
+            }
+        };
+        document.body.appendChild(overlay);
+
         // Add keyboard support for closing
-        const keydownHandler = (e) => {
+        this.breakdownKeydownHandler = (e) => {
             if (e.key === 'Escape') {
                 this.closeBreakdown();
             }
         };
-        document.addEventListener('keydown', keydownHandler);
-        backdrop.dataset.keydownHandler = 'attached';
-        
-        // Force reflow then activate backdrop
-        backdrop.offsetHeight;
-        backdrop.classList.add('active');
-        
-        // Create modal element without any class to avoid CSS conflicts
+        document.addEventListener('keydown', this.breakdownKeydownHandler);
+
+        // Create modal element
         const modal = document.createElement('div');
-        modal.className = 'breakdown-modal-custom';
-        
-        // Use translate3d for hardware acceleration and better positioning
-        modal.style.position = 'fixed';
-        modal.style.left = '50%';
-        modal.style.top = '50%';
-        modal.style.transform = 'translate3d(-50%, -50%, 0)';
-        modal.style.width = 'min(90vw, 500px)';
-        modal.style.maxHeight = '80vh';
-        modal.style.background = 'linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary))';
-        modal.style.borderRadius = '20px';
-        modal.style.padding = '24px';
-        modal.style.zIndex = '1500';
-        modal.style.boxShadow = '0 32px 64px var(--shadow-accent), 0 16px 32px rgba(0, 0, 0, 0.3)';
-        modal.style.border = '1px solid var(--accent3-alpha)';
-        modal.style.overflowY = 'auto';
-        modal.style.scrollbarWidth = 'none'; // Firefox
-        modal.style.msOverflowStyle = 'none'; // Internet Explorer 10+
-        modal.style.display = 'flex';
-        modal.style.flexDirection = 'column';
+        modal.className = 'modal-content breakdown-modal';
         modal.style.opacity = '0';
-        modal.style.willChange = 'transform, opacity';
-        modal.style.transition = 'opacity 0.4s var(--ease-default)';
-        
+
         // Store reference for cleanup
-        this.currentModal = modal;
+        this.currentModal = overlay;
         
         // Create title with icon
         const titleContainer = document.createElement('div');
@@ -2030,9 +2009,9 @@ export const app = {
             flex-direction: column;
         `;
         modal.appendChild(calendarContainer);
-        
-        // Add modal to body first
-        document.body.appendChild(modal);
+
+        // Add modal to overlay first
+        overlay.appendChild(modal);
         
         // Use setTimeout instead of requestAnimationFrame for more reliable timing
         setTimeout(() => {
@@ -2184,8 +2163,8 @@ export const app = {
     
     // Close breakdown modal
     closeBreakdown() {
-        const backdrop = document.querySelector('.backdrop-blur');
-        const modal = this.currentModal;
+        const overlay = document.getElementById('dynamicBreakdownModal');
+        const modal = overlay ? overlay.querySelector('.breakdown-modal') : null;
         const header = document.querySelector('.header');
         
         // Show header again
@@ -2193,26 +2172,17 @@ export const app = {
             header.classList.remove('hidden');
         }
         
-        if (backdrop) {
-            backdrop.classList.remove('active');
-            
-            // Remove keyboard event listener
-            if (backdrop.dataset.keydownHandler) {
-                document.removeEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        this.closeBreakdown();
-                    }
-                });
-            }
-            
-            setTimeout(() => backdrop.remove(), 300);
+        if (this.breakdownKeydownHandler) {
+            document.removeEventListener('keydown', this.breakdownKeydownHandler);
+            this.breakdownKeydownHandler = null;
         }
-        
-        if (modal) {
-            // Animate out
-            modal.style.opacity = '0';
+
+        if (overlay) {
+            if (modal) {
+                modal.style.opacity = '0';
+            }
             setTimeout(() => {
-                modal.remove();
+                overlay.remove();
                 this.currentModal = null;
             }, 400);
         }
@@ -2233,11 +2203,16 @@ export const app = {
             header.classList.add('hidden');
         }
         
-        // Create backdrop
-        const backdrop = document.createElement('div');
-        backdrop.className = 'backdrop-blur';
-        backdrop.onclick = () => this.closeShiftDetails();
-        document.body.appendChild(backdrop);
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'shiftDetailModal';
+        overlay.className = 'modal active';
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                this.closeShiftDetails();
+            }
+        };
+        document.body.appendChild(overlay);
         
         // Store keyboard handler reference for proper cleanup
         this.shiftDetailsKeydownHandler = (e) => {
@@ -2247,26 +2222,10 @@ export const app = {
         };
         document.addEventListener('keydown', this.shiftDetailsKeydownHandler);
         
-        // Force reflow then activate backdrop
-        backdrop.offsetHeight;
-        backdrop.classList.add('active');
-        
         // Create shift detail card
         const detailCard = document.createElement('div');
-        detailCard.className = 'shift-detail-card';
-        
-        // Set initial styles that position it correctly from the start
-        detailCard.style.position = 'fixed';
-        detailCard.style.top = '50%';
-        detailCard.style.left = '50%';
-        detailCard.style.transform = 'translate(-50%, -50%) scale(0.8)';
-        detailCard.style.width = 'min(90vw, 500px)';
-        detailCard.style.maxHeight = '80vh';
-        detailCard.style.padding = '24px';
-        detailCard.style.zIndex = '1200';
+        detailCard.className = 'modal-content shift-detail-card';
         detailCard.style.opacity = '0';
-        detailCard.style.overflowY = 'auto';
-        detailCard.style.transition = 'all 0.4s var(--ease-default)';
         
         // Calculate shift details
         const calc = this.calculateShift(shift);
@@ -2358,12 +2317,11 @@ export const app = {
             <button class="close-btn close-shift-details">×</button>
         `;
         
-        document.body.appendChild(detailCard);
-        
-        // Trigger animation immediately
+        overlay.appendChild(detailCard);
+
+        // Trigger fade in
         requestAnimationFrame(() => {
             detailCard.style.opacity = '1';
-            detailCard.style.transform = 'translate(-50%, -50%) scale(1)';
         });
         
         // Attach handler for delete-series button
@@ -2385,8 +2343,8 @@ export const app = {
     closeShiftDetails() {
         
         // Find and close any existing shift detail card
-        const detailCard = document.querySelector('.shift-detail-card');
-        const backdrop = document.querySelector('.backdrop-blur');
+        const modal = document.getElementById('shiftDetailModal');
+        const detailCard = modal ? modal.querySelector('.shift-detail-card') : null;
         const header = document.querySelector('.header');
         
         // Show header again
@@ -2400,32 +2358,14 @@ export const app = {
             this.shiftDetailsKeydownHandler = null;
         }
         
-        // Remove detail card first
-        if (detailCard) {
-            detailCard.style.opacity = '0';
-            detailCard.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            
-            // Remove card after animation
+        // Fade out and remove modal
+        if (modal) {
+            if (detailCard) {
+                detailCard.style.animation = 'shiftDetailExit 0.3s var(--ease-default) forwards';
+            }
             setTimeout(() => {
-                if (detailCard.parentNode) {
-                    detailCard.remove();
-                }
+                modal.remove();
             }, 300);
-        }
-        
-        // Remove backdrop after detail card animation starts
-        if (backdrop) {
-            // Start backdrop fade-out animation after a short delay
-            setTimeout(() => {
-                backdrop.classList.remove('active');
-                
-                // Remove backdrop after its animation completes
-                setTimeout(() => {
-                    if (backdrop.parentNode) {
-                        backdrop.remove();
-                    }
-                }, 350); // Extra 50ms to ensure animation completes
-            }, 100); // 100ms delay to let modal start closing first
         }
         
     },
