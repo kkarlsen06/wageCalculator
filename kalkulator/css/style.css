@@ -2732,3 +2732,71 @@ input:checked + .slider:before {
     line-height: 1.3;
   }
 }
+
+/* Utility classes for consistent spacing */
+.mb-12 {
+  margin-bottom: 12px;
+}
+
+.mb-18 {
+  margin-bottom: 18px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.mt-4 {
+  margin-top: 4px;
+}
+
+.pb-80 {
+  padding-bottom: 80px;
+}
+
+/* Position helper for auth pages */
+.absolute-top-left {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+/* Auth specific footers */
+.footer-auth {
+  width: 100%;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 18px 10px;
+  font-size: 14px;
+  border-top: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  max-width: 600px;
+  margin: 0 auto;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+}
+
+.app-footer {
+  width: 100%;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 18px 10px;
+  font-size: 14px;
+  border-top: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  max-width: 600px;
+  margin: 0 auto;
+}
