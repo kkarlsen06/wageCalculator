@@ -200,8 +200,23 @@ function initTypingEffect() {
     let currentChar = 0;
     let isDeleting = false;
     let typingSpeed = 100;
+    let initialTextDeleted = false;
     
     function type() {
+        // If we haven't deleted the initial "Alta, Norge" text yet
+        if (!initialTextDeleted) {
+            const currentText = subtitle.textContent;
+            if (currentText.length > 0) {
+                subtitle.textContent = currentText.substring(0, currentText.length - 1);
+                setTimeout(type, 80); // Fast deletion speed
+                return;
+            } else {
+                initialTextDeleted = true;
+                currentChar = 0;
+                typingSpeed = 500; // Pause before starting new phrases
+            }
+        }
+        
         const phrase = phrases[currentPhrase];
         
         if (isDeleting) {
@@ -228,8 +243,8 @@ function initTypingEffect() {
         setTimeout(type, typingSpeed);
     }
     
-    // Start after a delay
-    setTimeout(type, 1500);
+    // Start after a longer delay to show "Alta, Norge" for more time
+    setTimeout(type, 4000); // Increased from 1500 to 4000ms (4 seconds)
 }
 
 // ───────────────────────────────────────────────────────────────────────────
