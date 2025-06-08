@@ -1,226 +1,394 @@
-// Scroll-triggered animations
-class ScrollAnimations {
-    constructor() {
-        this.init();
+// ═══════════════════════════════════════════════════════════════════════════
+// PORTFOLIO ANIMATIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ───────────────────────────────────────────────────────────────────────────
+// INITIALIZATION
+// ───────────────────────────────────────────────────────────────────────────
+
+// Immediate scroll prevention - run first
+(function() {
+    // Prevent browser scroll restoration
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
     }
-
-    init() {
-        this.setupIntersectionObserver();
-        this.addAnimationClasses();
-        this.enhanceExistingAnimations();
+    
+    // Force scroll to top immediately and repeatedly
+    const scrollToTop = () => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    };
+    
+    scrollToTop();
+    
+    // Clear any hash from URL that might cause scrolling
+    if (window.location.hash && window.location.hash !== '#') {
+        history.replaceState(null, null, window.location.pathname + window.location.search);
+        scrollToTop();
     }
+    
+    // Prevent any delayed scrolling
+    setTimeout(scrollToTop, 1);
+    setTimeout(scrollToTop, 10);
+    setTimeout(scrollToTop, 50);
+    setTimeout(scrollToTop, 100);
+})();
 
-    setupIntersectionObserver() {
-        // Create intersection observer for scroll animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -100px 0px'
-        };
+// Ensure page starts at top on beforeunload
+window.addEventListener('beforeunload', () => {
+    window.scrollTo(0, 0);
+});
 
-        this.observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    console.log('Element intersecting:', entry.target.className);
-                    entry.target.classList.add('animate-in');
-                    
-                    // Add special handling for staggered animations
-                    if (entry.target.classList.contains('stagger-animation')) {
-                        this.triggerStaggeredAnimation(entry.target);
-                    }
-                    
-                    // Unobserve the element after animation to improve performance
-                    this.observer.unobserve(entry.target);
+// Additional scroll prevention on load
+window.addEventListener('load', () => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+});
+
+// Prevent intersection observer from triggering scroll
+let preventScrolling = true;
+setTimeout(() => {
+    preventScrolling = false;
+}, 500);
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Force scroll to top multiple times with delays
+    const forceTop = () => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    };
+    
+    forceTop();
+    setTimeout(forceTop, 0);
+    setTimeout(forceTop, 1);
+    setTimeout(forceTop, 10);
+    setTimeout(forceTop, 50);
+    setTimeout(forceTop, 100);
+    setTimeout(forceTop, 200);
+    setTimeout(forceTop, 500);
+    
+    initNavbar();
+    initScrollAnimations();
+    initParallax();
+    initTypingEffect();
+    initHoverEffects();
+    initMobileMenu();
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// NAVBAR FUNCTIONALITY
+// ───────────────────────────────────────────────────────────────────────────
+function initNavbar() {
+    const navbar = document.querySelector('.navbar');
+    let lastScroll = 0;
+    
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        // Add background on scroll
+        if (currentScroll > 50) {
+            navbar.style.background = 'rgba(10, 10, 11, 0.95)';
+            navbar.style.backdropFilter = 'blur(30px)';
+        } else {
+            navbar.style.background = 'rgba(10, 10, 11, 0.8)';
+            navbar.style.backdropFilter = 'blur(20px)';
+        }
+        
+        // Hide/show on scroll
+        if (currentScroll > lastScroll && currentScroll > 200) {
+            navbar.style.transform = 'translateY(-100%)';
+        } else {
+            navbar.style.transform = 'translateY(0)';
+        }
+        
+        lastScroll = currentScroll;
+    });
+    
+    // Smooth scroll for nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+            if (href.startsWith('#')) {
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
                 }
-            });
-        }, observerOptions);
-
-        // Observe all elements with animation classes
-        this.observeElements();
-    }
-
-    addAnimationClasses() {
-        console.log('Adding animation classes to elements...');
-        
-        // Add animation classes to sections
-        const sections = document.querySelectorAll('section');
-        console.log('Found sections:', sections.length);
-        sections.forEach((section, index) => {
-            section.classList.add('animate-on-scroll');
-            section.style.transitionDelay = `${index * 0.1}s`;
-        });
-
-        // Add classes to section headers
-        const sectionHeaders = document.querySelectorAll('.section-header');
-        console.log('Found section headers:', sectionHeaders.length);
-        sectionHeaders.forEach(header => {
-            header.classList.add('animate-on-scroll');
-        });
-
-        // Add classes to about content
-        const aboutText = document.querySelector('.about-text');
-        if (aboutText) {
-            console.log('Adding animation to about text');
-            aboutText.classList.add('animate-on-scroll', 'slide-left');
-        }
-
-        const aboutStats = document.querySelector('.about-stats');
-        if (aboutStats) {
-            console.log('Adding stagger animation to about stats');
-            aboutStats.classList.add('stagger-animation');
-        }
-
-        // Add classes to project cards
-        const projectCards = document.querySelectorAll('.project-card');
-        console.log('Found project cards:', projectCards.length);
-        projectCards.forEach((card, index) => {
-            card.classList.add('animate-on-scroll');
-            card.style.transitionDelay = `${index * 0.2}s`;
-        });
-
-        // Add classes to tech content
-        const techContent = document.querySelector('.tech-content');
-        if (techContent) {
-            console.log('Adding animation to tech content');
-            techContent.classList.add('animate-on-scroll');
-        }
-
-        const techStack = document.querySelector('.tech-stack');
-        if (techStack) {
-            console.log('Adding animation to tech stack');
-            techStack.classList.add('animate-on-scroll', 'slide-left');
-        }
-
-        const techGrid = document.querySelector('.tech-grid');
-        if (techGrid) {
-            console.log('Adding stagger animation to tech grid');
-            techGrid.classList.add('stagger-animation');
-        }
-
-        // Add classes to footer
-        const footer = document.querySelector('footer');
-        if (footer) {
-            console.log('Adding animation to footer');
-            footer.classList.add('animate-on-scroll');
-        }
-    }
-
-    triggerStaggeredAnimation(container) {
-        const children = container.children;
-        Array.from(children).forEach((child, index) => {
-            setTimeout(() => {
-                child.style.opacity = '1';
-                child.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-    }
-
-    enhanceExistingAnimations() {
-        // Add subtle entrance animations to buttons
-        const buttons = document.querySelectorAll('.btn');
-        buttons.forEach((btn, index) => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.transform = 'translateY(-2px) scale(1.05)';
-            });
-            
-            btn.addEventListener('mouseleave', () => {
-                btn.style.transform = '';
-            });
-        });
-
-        // Add parallax effect to hero background
-        this.setupParallax();
-    }
-
-    setupParallax() {
-        const hero = document.querySelector('.hero');
-        if (!hero) return;
-
-        let ticking = false;
-
-        const updateParallax = () => {
-            const scrolled = window.pageYOffset;
-            const rate = scrolled * -0.2;
-            
-            hero.style.transform = `translateY(${rate}px)`;
-            ticking = false;
-        };
-
-        const requestTick = () => {
-            if (!ticking) {
-                requestAnimationFrame(updateParallax);
-                ticking = true;
             }
-        };
-
-        window.addEventListener('scroll', requestTick, { passive: true });
-    }
-
-    observeElements() {
-        // Observe all elements with animation classes
-        const animatedElements = document.querySelectorAll('.animate-on-scroll, .stagger-animation');
-        console.log('Observing elements:', animatedElements.length);
-        
-        animatedElements.forEach((element, index) => {
-            console.log(`Observing element ${index}:`, element.className);
-            this.observer.observe(element);
         });
-        
-        // Fallback: If no elements found, try again after a short delay
-        if (animatedElements.length === 0) {
-            console.log('No animated elements found, retrying in 500ms...');
-            setTimeout(() => this.observeElements(), 500);
-        }
-    }
-
-    // Utility method to add entrance animation to dynamically added elements
-    animateElement(element, animationType = 'fadeInUp', delay = 0) {
-        element.style.opacity = '0';
-        element.style.transform = this.getTransformForAnimation(animationType);
-        element.style.transition = `all 0.6s var(--ease-default) ${delay}s`;
-        
-        // Trigger animation on next frame
-        requestAnimationFrame(() => {
-            element.style.opacity = '1';
-            element.style.transform = 'none';
-        });
-    }
-
-    getTransformForAnimation(type) {
-        const transforms = {
-            fadeInUp: 'translateY(30px)',
-            fadeInDown: 'translateY(-30px)',
-            slideInLeft: 'translateX(-50px)',
-            slideInRight: 'translateX(50px)',
-            scaleIn: 'scale(0.8)'
-        };
-        return transforms[type] || transforms.fadeInUp;
-    }
+    });
 }
 
-// Initialize animations when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing animations...');
+// ───────────────────────────────────────────────────────────────────────────
+// SCROLL ANIMATIONS
+// ───────────────────────────────────────────────────────────────────────────
+function initScrollAnimations() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -100px 0px'
+    };
     
-    // Only initialize if user hasn't set reduced motion preference
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        console.log('Motion is allowed, starting animations...');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-in');
+                
+                // Stagger animations for child elements
+                const children = entry.target.querySelectorAll('.animate-child');
+                children.forEach((child, i) => {
+                    setTimeout(() => {
+                        child.classList.add('animate-in');
+                    }, i * 100);
+                });
+            }
+        });
+    }, observerOptions);
+    
+    // Observe sections
+    document.querySelectorAll('.section-header, .tech-card, .feature-item').forEach(el => {
+        el.classList.add('animate-element');
+        observer.observe(el);
+    });
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// PARALLAX EFFECTS
+// ───────────────────────────────────────────────────────────────────────────
+function initParallax() {
+    const orbs = document.querySelectorAll('.gradient-orb');
+    
+    window.addEventListener('mousemove', (e) => {
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
         
-        // Add a small delay to ensure all CSS is loaded
-        setTimeout(() => {
-            new ScrollAnimations();
-        }, 100);
-    } else {
-        console.log('Reduced motion preferred, skipping animations');
-    }
-});
+        orbs.forEach((orb, i) => {
+            const speed = (i + 1) * 0.5;
+            const xPos = (x - 0.5) * speed * 100;
+            const yPos = (y - 0.5) * speed * 100;
+            
+            orb.style.transform = `translate(${xPos}px, ${yPos}px)`;
+        });
+    });
+    
+    // Parallax on scroll
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        
+        orbs.forEach((orb, i) => {
+            const speed = (i + 1) * 0.3;
+            orb.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+    });
+}
 
-// Also try on window load as fallback
-window.addEventListener('load', () => {
-    if (!window.ScrollAnimations && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        console.log('Fallback initialization on window load...');
-        new ScrollAnimations();
+// ───────────────────────────────────────────────────────────────────────────
+// TYPING EFFECT
+// ───────────────────────────────────────────────────────────────────────────
+function initTypingEffect() {
+    const subtitle = document.querySelector('.hero-subtitle');
+    const phrases = [
+        'Utvikler med øye for detaljer',
+        'Elsker å problemløse',
+        'Brenner for brukeropplevelse',
+        'Skaper løsninger som fungerer'
+    ];
+    
+    let currentPhrase = 0;
+    let currentChar = 0;
+    let isDeleting = false;
+    let typingSpeed = 100;
+    
+    function type() {
+        const phrase = phrases[currentPhrase];
+        
+        if (isDeleting) {
+            subtitle.textContent = phrase.substring(0, currentChar - 1);
+            currentChar--;
+            typingSpeed = 50;
+        } else {
+            subtitle.textContent = phrase.substring(0, currentChar + 1);
+            currentChar++;
+            typingSpeed = 100;
+        }
+        
+        if (!isDeleting && currentChar === phrase.length) {
+            typingSpeed = 2000;
+            isDeleting = true;
+        } else if (isDeleting && currentChar === 0) {
+            isDeleting = false;
+            currentPhrase = (currentPhrase + 1) % phrases.length;
+            typingSpeed = 500;
+            // Ensure there's always some content to maintain height
+            subtitle.innerHTML = '&nbsp;';
+        }
+        
+        setTimeout(type, typingSpeed);
     }
-});
+    
+    // Start after a delay
+    setTimeout(type, 1500);
+}
 
-// Export for use in other scripts
-window.ScrollAnimations = ScrollAnimations;
+// ───────────────────────────────────────────────────────────────────────────
+// HOVER EFFECTS
+// ───────────────────────────────────────────────────────────────────────────
+function initHoverEffects() {
+    // Button ripple effect
+    document.querySelectorAll('.btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const ripple = document.createElement('span');
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+            
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            ripple.classList.add('ripple');
+            
+            this.appendChild(ripple);
+            
+            setTimeout(() => ripple.remove(), 600);
+        });
+    });
+    
+    // Card tilt effect - disabled on mobile
+    document.querySelectorAll('.tech-card, .floating-card').forEach(card => {
+        // Only enable tilt effect on desktop
+        if (window.innerWidth > 768) {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+            });
+        }
+    });
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// MOBILE MENU
+// ───────────────────────────────────────────────────────────────────────────
+function initMobileMenu() {
+    const toggle = document.querySelector('.nav-toggle');
+    const menu = document.querySelector('.nav-menu');
+    
+    toggle?.addEventListener('click', () => {
+        menu.classList.toggle('active');
+        toggle.classList.toggle('active');
+    });
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// UTILITY FUNCTIONS
+// ───────────────────────────────────────────────────────────────────────────
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// ANIMATION CSS INJECTION
+// ───────────────────────────────────────────────────────────────────────────
+const animationStyles = `
+    .animate-element {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s ease-out;
+    }
+    
+    .animate-element.animate-in {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .animate-child {
+        opacity: 0;
+        transform: translateX(-20px);
+        transition: all 0.6s ease-out;
+    }
+    
+    .animate-child.animate-in {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        transform: scale(0);
+        animation: ripple-animation 0.6s ease-out;
+        pointer-events: none;
+    }
+    
+    @keyframes ripple-animation {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    
+    .nav-menu.active {
+        display: flex !important;
+        position: fixed;
+        top: 60px;
+        right: 20px;
+        flex-direction: column;
+        background: var(--bg-card);
+        padding: var(--space-lg);
+        border-radius: 12px;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid var(--border-color);
+    }
+    
+    .nav-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    
+    .nav-toggle.active span:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .nav-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -6px);
+    }
+`;
+
+// Inject animation styles
+const styleSheet = document.createElement('style');
+styleSheet.textContent = animationStyles;
+document.head.appendChild(styleSheet);
+
+// ───────────────────────────────────────────────────────────────────────────
+// PERFORMANCE MONITORING
+// ───────────────────────────────────────────────────────────────────────────
+if ('performance' in window) {
+    window.addEventListener('load', () => {
+        const perfData = window.performance.timing;
+        const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+        console.log(`Page load time: ${pageLoadTime}ms`);
+    });
+}
