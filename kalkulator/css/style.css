@@ -2606,6 +2606,12 @@ input:checked + .slider:before {
   margin-bottom: 20px;
 }
 
+/* Breakdown Modal Specific Styles */
+#breakdownModal .modal-content {
+  max-width: 500px;
+  max-height: 80vh;
+}
+
 /* Full screen modals on mobile, constrained on desktop */
 @media (max-width: 768px) {
   #addShiftModal .modal-content,
@@ -2633,6 +2639,10 @@ input:checked + .slider:before {
     width: 90vw;
     height: auto;
     max-height: 90vh;
+  }
+  #breakdownModal .modal-content {
+    width: min(90vw, 500px);
+    height: auto;
   }
 }
 

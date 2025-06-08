@@ -1759,169 +1759,39 @@ export const app = {
     showBreakdown(type) {
         // Close any existing breakdown first
         this.closeBreakdown();
-        
+
         // Hide header with smooth animation
         const header = document.querySelector('.header');
         if (header) {
             header.classList.add('hidden');
         }
-        
-        // Create backdrop
-        const backdrop = document.createElement('div');
-        backdrop.className = 'backdrop-blur';
-        backdrop.onclick = () => this.closeBreakdown();
-        document.body.appendChild(backdrop);
-        
-        // Add keyboard support for closing
-        const keydownHandler = (e) => {
+
+        const modal = document.getElementById('breakdownModal');
+        const calendarContainer = document.getElementById('breakdownList');
+        if (!modal || !calendarContainer) return;
+
+        // Update title
+        const title = document.getElementById('breakdownTitle');
+        if (title) {
+            title.textContent = type === 'base' ? 'Grunnlønn' : 'Tillegg';
+        }
+
+        // Prepare container
+        calendarContainer.innerHTML = '';
+
+        modal.style.display = 'flex';
+        this.currentModal = modal;
+
+        // Build calendar content
+        this.createBreakdownCalendar(calendarContainer, type);
+
+        // Keyboard support for closing
+        this.breakdownKeydownHandler = (e) => {
             if (e.key === 'Escape') {
                 this.closeBreakdown();
             }
         };
-        document.addEventListener('keydown', keydownHandler);
-        backdrop.dataset.keydownHandler = 'attached';
-        
-        // Force reflow then activate backdrop
-        backdrop.offsetHeight;
-        backdrop.classList.add('active');
-        
-        // Create modal element without any class to avoid CSS conflicts
-        const modal = document.createElement('div');
-        modal.className = 'breakdown-modal-custom';
-        
-        // Use translate3d for hardware acceleration and better positioning
-        modal.style.position = 'fixed';
-        modal.style.left = '50%';
-        modal.style.top = '50%';
-        modal.style.transform = 'translate3d(-50%, -50%, 0)';
-        modal.style.width = 'min(90vw, 500px)';
-        modal.style.maxHeight = '80vh';
-        modal.style.background = 'linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary))';
-        modal.style.borderRadius = '20px';
-        modal.style.padding = '24px';
-        modal.style.zIndex = '1500';
-        modal.style.boxShadow = '0 32px 64px var(--shadow-accent), 0 16px 32px rgba(0, 0, 0, 0.3)';
-        modal.style.border = '1px solid var(--accent3-alpha)';
-        modal.style.overflowY = 'auto';
-        modal.style.scrollbarWidth = 'none'; // Firefox
-        modal.style.msOverflowStyle = 'none'; // Internet Explorer 10+
-        modal.style.display = 'flex';
-        modal.style.flexDirection = 'column';
-        modal.style.opacity = '0';
-        modal.style.willChange = 'transform, opacity';
-        modal.style.transition = 'opacity 0.4s var(--ease-default)';
-        
-        // Store reference for cleanup
-        this.currentModal = modal;
-        
-        // Create title with icon
-        const titleContainer = document.createElement('div');
-        titleContainer.className = 'breakdown-title-container';
-        titleContainer.style.cssText = `
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            opacity: 0;
-            animation: slideInFromBottom 0.5s var(--ease-default) 0.2s forwards;
-            flex-shrink: 0;
-        `;
-        
-        const icon = document.createElement('div');
-        icon.className = 'breakdown-title-icon';
-        icon.style.cssText = `
-            color: var(--accent3);
-            opacity: 0.8;
-        `;
-        
-        // Add appropriate icon based on type
-        if (type === 'base') {
-            icon.innerHTML = `
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-            `;
-        } else {
-            icon.innerHTML = `
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="12 2 15.09 6.26 22 7.27 17 12.14 18.18 19.02 12 15.77 5.82 19.02 7 12.14 2 7.27 8.91 6.26 12 2"></polygon>
-                </svg>
-            `;
-        }
-        
-        const title = document.createElement('h3');
-        title.className = 'breakdown-title';
-        title.textContent = type === 'base' ? 'Grunnlønn' : 'Tillegg';
-        title.style.cssText = `
-            color: var(--accent3);
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-        `;
-        
-        titleContainer.appendChild(icon);
-        titleContainer.appendChild(title);
-        modal.appendChild(titleContainer);
-        
-        // Create close button
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'close-btn';
-        closeBtn.innerHTML = '×';
-        closeBtn.style.cssText = `
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 102, 153, 0.1);
-            border: 1px solid rgba(255, 102, 153, 0.3);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--danger);
-            transition: all 0.2s var(--ease-default);
-            z-index: 21;
-            opacity: 0;
-            transform: scale(0.8);
-            animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
-            font-size: 18px;
-            font-weight: bold;
-        `;
-        closeBtn.onclick = (e) => {
-            e.stopPropagation();
-            this.closeBreakdown();
-        };
-        modal.appendChild(closeBtn);
-        
-        // Create calendar container
-        const calendarContainer = document.createElement('div');
-        calendarContainer.className = 'breakdown-calendar';
-        calendarContainer.style.cssText = `
-            opacity: 0;
-            animation: slideInFromBottom 0.6s var(--ease-default) 0.3s forwards;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        `;
-        modal.appendChild(calendarContainer);
-        
-        // Add modal to body first
-        document.body.appendChild(modal);
-        
-        // Use setTimeout instead of requestAnimationFrame for more reliable timing
-        setTimeout(() => {
-            modal.style.opacity = '1';
-        }, 50);
-        
-        // Create calendar for current month
-        setTimeout(() => {
-            this.createBreakdownCalendar(calendarContainer, type);
-        }, 100);
+        document.addEventListener('keydown', this.breakdownKeydownHandler);
     },
 
     // Create breakdown calendar view
@@ -2063,38 +1933,25 @@ export const app = {
     
     // Close breakdown modal
     closeBreakdown() {
-        const backdrop = document.querySelector('.backdrop-blur');
-        const modal = this.currentModal;
+        const modal = document.getElementById('breakdownModal');
         const header = document.querySelector('.header');
-        
-        // Show header again
+
         if (header) {
             header.classList.remove('hidden');
         }
-        
-        if (backdrop) {
-            backdrop.classList.remove('active');
-            
-            // Remove keyboard event listener
-            if (backdrop.dataset.keydownHandler) {
-                document.removeEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        this.closeBreakdown();
-                    }
-                });
-            }
-            
-            setTimeout(() => backdrop.remove(), 300);
-        }
-        
+
         if (modal) {
-            // Animate out
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.remove();
-                this.currentModal = null;
-            }, 400);
+            modal.style.display = 'none';
+            const container = document.getElementById('breakdownList');
+            if (container) container.innerHTML = '';
         }
+
+        if (this.breakdownKeydownHandler) {
+            document.removeEventListener('keydown', this.breakdownKeydownHandler);
+            this.breakdownKeydownHandler = null;
+        }
+
+        this.currentModal = null;
     },
     // Show detailed shift information in expanded view
     showShiftDetails(shiftId) {
