@@ -39,86 +39,9 @@ export const app = {
     fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
     directTimeInput: false, // Setting for using direct time input instead of dropdowns
     selectedDate: null,
-    demoMode: false,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
     emailHideTimeout: null, // Timeout for auto-hiding email
-    DEMO_SHIFTS: [
-        // Demo recurring series for UI testing
-        { id: 'demo-series-1-1', date: "2025-06-04T00:00:00.000Z", startTime: "10:00", endTime: "12:00", type: 0, seriesId: 'demo-series-1' },
-        { id: 'demo-series-1-2', date: "2025-06-11T00:00:00.000Z", startTime: "10:00", endTime: "12:00", type: 0, seriesId: 'demo-series-1' },
-
-        // June (original demo data)
-        { id: 'demo-6-1', date: "2025-06-03T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
-        { id: 'demo-6-2', date: "2025-06-10T00:00:00.000Z", startTime: "15:00", endTime: "23:15", type: 1 },
-        { id: 'demo-6-3', date: "2025-06-12T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { id: 'demo-6-4', date: "2025-06-15T00:00:00.000Z", startTime: "17:00", endTime: "22:00", type: 0 },
-        { id: 'demo-6-5', date: "2025-06-19T00:00:00.000Z", startTime: "17:00", endTime: "21:00", type: 0 },
-        { id: 'demo-6-6', date: "2025-06-21T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 1 },
-        { id: 'demo-6-7', date: "2025-06-22T00:00:00.000Z", startTime: "13:00", endTime: "18:00", type: 1 },
-        { id: 'demo-6-8', date: "2025-06-23T00:00:00.000Z", startTime: "16:00", endTime: "23:15", type: 0 },
-        { id: 'demo-6-9', date: "2025-06-24T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { id: 'demo-6-10', date: "2025-06-26T00:00:00.000Z", startTime: "17:00", endTime: "23:15", type: 0 },
-        { id: 'demo-6-11', date: "2025-06-30T00:00:00.000Z", startTime: "15:45", endTime: "23:15", type: 0 },
-
-        // January
-        { id: 'demo-1-1', date: "2025-01-05T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
-        { id: 'demo-1-2', date: "2025-01-12T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
-        { id: 'demo-1-3', date: "2025-01-18T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
-
-        // February
-        { id: 'demo-2-1', date: "2025-02-03T00:00:00.000Z", startTime: "07:00", endTime: "15:00", type: 0 },
-        { id: 'demo-2-2', date: "2025-02-14T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
-        { id: 'demo-2-3', date: "2025-02-23T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
-
-        // March
-        { id: 'demo-3-1', date: "2025-03-02T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
-        { id: 'demo-3-2', date: "2025-03-15T00:00:00.000Z", startTime: "13:00", endTime: "21:00", type: 1 },
-        { id: 'demo-3-3', date: "2025-03-23T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
-
-        // April
-        { id: 'demo-4-1', date: "2025-04-04T00:00:00.000Z", startTime: "07:30", endTime: "15:30", type: 0 },
-        { id: 'demo-4-2', date: "2025-04-12T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
-        { id: 'demo-4-3', date: "2025-04-20T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
-
-        // May
-        { id: 'demo-5-1', date: "2025-05-01T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
-        { id: 'demo-5-2', date: "2025-05-17T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
-        { id: 'demo-5-3', date: "2025-05-25T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
-
-        // July
-        { id: 'demo-7-1', date: "2025-07-04T00:00:00.000Z", startTime: "07:00", endTime: "15:00", type: 0 },
-        { id: 'demo-7-2', date: "2025-07-12T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
-        { id: 'demo-7-3', date: "2025-07-20T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
-
-        // August
-        { id: 'demo-8-1', date: "2025-08-03T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
-        { id: 'demo-8-2', date: "2025-08-16T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
-        { id: 'demo-8-3', date: "2025-08-24T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
-
-        // September
-        { id: 'demo-9-1', date: "2025-09-05T00:00:00.000Z", startTime: "07:30", endTime: "15:30", type: 0 },
-        { id: 'demo-9-2', date: "2025-09-13T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
-        { id: 'demo-9-3', date: "2025-09-21T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
-
-        // October
-        { id: 'demo-10-1', date: "2025-10-02T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
-        { id: 'demo-10-2', date: "2025-10-18T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
-        { id: 'demo-10-3', date: "2025-10-26T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 },
-
-        // November
-        { id: 'demo-11-1', date: "2025-11-06T00:00:00.000Z", startTime: "07:00", endTime: "15:00", type: 0 },
-        { id: 'demo-11-2', date: "2025-11-15T00:00:00.000Z", startTime: "14:00", endTime: "22:00", type: 1 },
-        { id: 'demo-11-3', date: "2025-11-23T00:00:00.000Z", startTime: "10:00", endTime: "18:00", type: 2 },
-
-        // December
-        { id: 'demo-12-1', date: "2025-12-03T00:00:00.000Z", startTime: "08:00", endTime: "16:00", type: 0 },
-        { id: 'demo-12-2', date: "2025-12-13T00:00:00.000Z", startTime: "15:00", endTime: "23:00", type: 1 },
-        { id: 'demo-12-3', date: "2025-12-21T00:00:00.000Z", startTime: "09:00", endTime: "17:00", type: 2 }
-    ].map(shift => ({
-        ...shift,
-        date: new Date(shift.date)
-    })),
     async init() {
         // Show UI elements
         this.populateTimeSelects();
@@ -135,15 +58,9 @@ export const app = {
             console.error('loadFromSupabase failed:', err);
             this.loadFromLocalStorage();
         }
-        // Update demo toggle to match loaded state
-        const demoToggle = document.getElementById('demoDataToggle');
-        if (demoToggle) {
-            demoToggle.checked = this.demoMode;
-        }
-        // Set initial shifts based on demo mode
-        this.shifts = this.demoMode ? this.DEMO_SHIFTS : this.userShifts;
-        // Bind demo and pause toggles
-        document.getElementById('demoDataToggle').addEventListener('change', e => this.toggleDemoMode(e.target.checked));
+        // Set initial shifts
+        this.shifts = [...this.userShifts];
+        // Bind pause toggle
         document.getElementById('pauseDeductionToggle').addEventListener('change', e => {
             this.pauseDeduction = e.target.checked;
             this.updateDisplay();
@@ -763,14 +680,6 @@ export const app = {
                 return;
             }
             
-            if (this.demoMode) {
-                if (confirm('Du er i demo-modus. Vil du bytte til dine egne vakter for å legge til denne vakten?')) {
-                    this.toggleDemoMode(false);
-                    document.getElementById('demoDataToggle').checked = false;
-                } else {
-                    return;
-                }
-            }
             
             const dayOfWeek = this.selectedDate.getDay();
             const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
@@ -831,12 +740,8 @@ export const app = {
             // Add to userShifts array
             this.userShifts.push(newShift);
             
-            // Update this.shifts based on current mode
-            if (!this.demoMode) {
-                // In normal mode, this.shifts should reflect userShifts
-                this.shifts = [...this.userShifts];
-            }
-            // In demo mode, this.shifts stays as DEMO_SHIFTS, so new shift won't show until demo mode is turned off
+            // Update this.shifts
+            this.shifts = [...this.userShifts];
             
             this.updateDisplay();
             
@@ -981,12 +886,6 @@ export const app = {
         this.populateDateGrid();
         this.saveSettingsToSupabase(); // This will also update last_active via saveSettingsToSupabase
     },
-    toggleDemoMode(enabled) {
-        this.demoMode = enabled;
-        this.shifts = enabled ? this.DEMO_SHIFTS : this.userShifts;
-        this.updateDisplay();
-        // Note: Demo mode is not saved to database, only local state
-    },
     async loadFromSupabase() {
         const { data: { user } } = await window.supa.auth.getUser();
         if (!user) {
@@ -1021,12 +920,8 @@ export const app = {
                     return mappedShift;
                 });
                 
-                // Set current shifts based on demo mode
-                if (!this.demoMode) {
-                    this.shifts = [...this.userShifts];
-                } else {
-                    // In demo mode, keeping demo shifts
-                }
+                // Set current shifts
+                this.shifts = [...this.userShifts];
             }
 
             // Fetch user settings
@@ -1071,7 +966,6 @@ export const app = {
                     // User was inactive for >5 hours, resetting to current month
                 }
                 
-                // Note: demo_mode is kept as local-only state, not stored in database
             } else {
                 // No settings found, set defaults
                 this.setDefaultSettings();
@@ -1160,7 +1054,6 @@ export const app = {
         this.pauseDeduction = false;
         this.fullMinuteRange = false; // Default to 15-minute intervals
         this.directTimeInput = false; // Default to dropdown time selection
-        this.demoMode = false;
         this.hasSeenRecurringIntro = false; // Track if user has seen recurring feature intro
     },
 
@@ -1337,7 +1230,6 @@ export const app = {
                 this.pauseDeduction = data.pauseDeduction !== false;
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
-                this.demoMode = data.demoMode || false;
                 this.hasSeenRecurringIntro = data.hasSeenRecurringIntro || false;
                 
                 this.updateSettingsUI();
@@ -1725,7 +1617,6 @@ export const app = {
                 pauseDeduction: this.pauseDeduction,
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
-                demoMode: this.demoMode,
                 hasSeenRecurringIntro: this.hasSeenRecurringIntro
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
@@ -1808,20 +1699,8 @@ export const app = {
             shift.date.getFullYear() === this.YEAR
         );
         
-        let demoBannerHtml = '';
-        if (this.demoMode) {
-            demoBannerHtml = `
-                <div style="background: linear-gradient(135deg, var(--warning), var(--accent4)); color: var(--bg-primary); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--warning); text-align: center; font-weight: 500;">
-                    <svg style="width: 16px; height: 16px; margin-right: 8px; vertical-align: text-top;" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                    </svg>
-                    Du viser demo-data for ${this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1)} ${this.YEAR}
-                </div>
-            `;
-        }
         if (monthShifts.length === 0) {
             shiftList.innerHTML = `
-                ${demoBannerHtml}
                 <div class="empty-state">
                     <div class="empty-icon">
                         <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1874,7 +1753,7 @@ export const app = {
                 </div>
             `;
         }).join('');
-        shiftList.innerHTML = demoBannerHtml + shiftsHtml;
+        shiftList.innerHTML = shiftsHtml;
     },
         // Show breakdown modal
     showBreakdown(type) {
@@ -2332,7 +2211,7 @@ export const app = {
                     <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
                 </div>
                 
-                ${!this.demoMode ? `
+                `
                 <div class="detail-section actions-section">
                     <div class="shift-actions">
                         <button class="btn btn-secondary edit-shift-btn" data-shift-id="${shift.id}" style="gap: 8px;">
@@ -2352,7 +2231,7 @@ export const app = {
                         ${shift.seriesId ? `<button class="btn btn-warning delete-series-btn" style="gap: 8px;">Slett serie</button>` : ``}
                     </div>
                 </div>
-                ` : ``}
+                `
             </div>
             
             <button class="close-btn close-shift-details">×</button>
@@ -2746,10 +2625,6 @@ export const app = {
             }
         }
         try {
-            if (this.demoMode) {
-                alert('Kan ikke slette vakter i demo-modus');
-                return;
-            }
             
             const { data: { user } } = await window.supa.auth.getUser();
             if (!user) {
@@ -3155,10 +3030,6 @@ export const app = {
                 return;
             }
             
-            if (this.demoMode) {
-                alert('Kan ikke redigere vakter i demo-modus');
-                return;
-            }
             
             // Get authenticated user
             const { data: { user }, error: authError } = await window.supa.auth.getUser();
@@ -3213,9 +3084,7 @@ export const app = {
                 this.userShifts[userShiftIndex] = { ...originalShift };
             }
             
-            if (!this.demoMode) {
-                this.shifts = [...this.userShifts];
-            }
+            this.shifts = [...this.userShifts];
             
             // Update display
             this.updateDisplay();
