@@ -1013,7 +1013,7 @@ html {
         min-height: 2.5rem;
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: center;
     }
     
     /* Hero section - Mobile layout reorganization */
@@ -1262,7 +1262,7 @@ html {
         min-height: 2.5rem; /* Fixed height for mobile */
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: center;
     }
     
     .hero-description {
