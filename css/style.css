@@ -137,7 +137,11 @@ html {
     border-radius: 50%;
     filter: blur(100px);
     opacity: 0.5;
-    animation: float 20s infinite ease-in-out;
+    animation: subtleFloat 25s infinite ease-in-out;
+    /* CSS custom properties for parallax effect */
+    --mouse-x: 0px;
+    --mouse-y: 0px;
+    --scroll-y: 0px;
 }
 
 .orb-1 {
@@ -146,7 +150,9 @@ html {
     background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
     top: -200px;
     left: -200px;
+    animation-name: subtleFloat;
     animation-delay: 0s;
+    transform: translate(var(--mouse-x), calc(var(--mouse-y) + var(--scroll-y)));
 }
 
 .orb-2 {
@@ -155,7 +161,9 @@ html {
     background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
     bottom: -300px;
     right: -300px;
-    animation-delay: 7s;
+    animation-name: subtleFloatReverse;
+    animation-delay: 0s;
+    transform: translate(var(--mouse-x), calc(var(--mouse-y) + var(--scroll-y)));
 }
 
 .orb-3 {
@@ -164,19 +172,53 @@ html {
     background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    animation-delay: 14s;
+    animation-name: subtleFloatSlow;
+    animation-delay: 0s;
+    transform: translate(calc(-50% + var(--mouse-x)), calc(-50% + var(--mouse-y) + var(--scroll-y)));
 }
 
-@keyframes float {
+@keyframes subtleFloat {
     0%, 100% {
-        transform: translate(0, 0) rotate(0deg);
+        transform: translate(calc(0px + var(--mouse-x)), calc(0px + var(--mouse-y) + var(--scroll-y)));
     }
-    33% {
-        transform: translate(30px, -30px) rotate(120deg);
+    25% {
+        transform: translate(calc(15px + var(--mouse-x)), calc(-10px + var(--mouse-y) + var(--scroll-y)));
     }
-    66% {
-        transform: translate(-20px, 20px) rotate(240deg);
+    50% {
+        transform: translate(calc(-10px + var(--mouse-x)), calc(15px + var(--mouse-y) + var(--scroll-y)));
+    }
+    75% {
+        transform: translate(calc(10px + var(--mouse-x)), calc(10px + var(--mouse-y) + var(--scroll-y)));
+    }
+}
+
+@keyframes subtleFloatReverse {
+    0%, 100% {
+        transform: translate(calc(0px + var(--mouse-x)), calc(0px + var(--mouse-y) + var(--scroll-y)));
+    }
+    25% {
+        transform: translate(calc(-12px + var(--mouse-x)), calc(8px + var(--mouse-y) + var(--scroll-y)));
+    }
+    50% {
+        transform: translate(calc(8px + var(--mouse-x)), calc(-12px + var(--mouse-y) + var(--scroll-y)));
+    }
+    75% {
+        transform: translate(calc(-8px + var(--mouse-x)), calc(-8px + var(--mouse-y) + var(--scroll-y)));
+    }
+}
+
+@keyframes subtleFloatSlow {
+    0%, 100% {
+        transform: translate(calc(-50% + var(--mouse-x)), calc(-50% + var(--mouse-y) + var(--scroll-y)));
+    }
+    25% {
+        transform: translate(calc(-50% + 8px + var(--mouse-x)), calc(-50% - 12px + var(--mouse-y) + var(--scroll-y)));
+    }
+    50% {
+        transform: translate(calc(-50% - 8px + var(--mouse-x)), calc(-50% + 8px + var(--mouse-y) + var(--scroll-y)));
+    }
+    75% {
+        transform: translate(calc(-50% + 12px + var(--mouse-x)), calc(-50% - 5px + var(--mouse-y) + var(--scroll-y)));
     }
 }
 
@@ -364,7 +406,28 @@ html {
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    width: 480px; /* Fixed pixel width - no expansion */
+    flex-shrink: 0; /* Prevent flex shrinking */
 }
+
+.hero-subtitle-text {
+    display: inline-block;
+    white-space: nowrap;
+    transition: transform 0.1s ease-out;
+}
+
+/* Debug helper - uncomment to see container bounds */
+/*
+.hero-subtitle {
+    border: 1px solid red !important;
+}
+.hero-subtitle-text {
+    border: 1px solid blue !important;
+}
+*/
 
 .hero-description {
     font-size: var(--font-size-lg);
@@ -1014,6 +1077,8 @@ html {
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 90vw; /* Use viewport width on mobile */
+        max-width: 400px; /* Cap the maximum width */
     }
     
     /* Hero section - Mobile layout reorganization */
@@ -1263,6 +1328,8 @@ html {
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 85vw; /* Use viewport width on small mobile */
+        max-width: 320px; /* Cap the maximum width */
     }
     
     .hero-description {

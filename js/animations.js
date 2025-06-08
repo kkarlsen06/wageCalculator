@@ -160,26 +160,29 @@ function initScrollAnimations() {
 function initParallax() {
     const orbs = document.querySelectorAll('.gradient-orb');
     
+    // Store initial positions and respect CSS animations
     window.addEventListener('mousemove', (e) => {
         const x = e.clientX / window.innerWidth;
         const y = e.clientY / window.innerHeight;
         
         orbs.forEach((orb, i) => {
-            const speed = (i + 1) * 0.5;
-            const xPos = (x - 0.5) * speed * 100;
-            const yPos = (y - 0.5) * speed * 100;
+            const speed = (i + 1) * 0.2; // Reduced speed for subtlety
+            const xPos = (x - 0.5) * speed * 30; // Reduced range
+            const yPos = (y - 0.5) * speed * 30; // Reduced range
             
-            orb.style.transform = `translate(${xPos}px, ${yPos}px)`;
+            // Use CSS custom properties to avoid overriding CSS animations
+            orb.style.setProperty('--mouse-x', `${xPos}px`);
+            orb.style.setProperty('--mouse-y', `${yPos}px`);
         });
     });
     
-    // Parallax on scroll
+    // Subtle parallax on scroll
     window.addEventListener('scroll', () => {
         const scrolled = window.pageYOffset;
         
         orbs.forEach((orb, i) => {
-            const speed = (i + 1) * 0.3;
-            orb.style.transform = `translateY(${scrolled * speed}px)`;
+            const speed = (i + 1) * 0.1; // Much more subtle scroll effect
+            orb.style.setProperty('--scroll-y', `${scrolled * speed}px`);
         });
     });
 }
@@ -189,11 +192,13 @@ function initParallax() {
 // ───────────────────────────────────────────────────────────────────────────
 function initTypingEffect() {
     const subtitle = document.querySelector('.hero-subtitle');
+    const subtitleText = document.querySelector('.hero-subtitle-text');
     const phrases = [
         'Utvikler med øye for detaljer',
-        'Elsker å problemløse',
-        'Brenner for brukeropplevelse',
-        'Skaper løsninger som fungerer'
+        'Elsker å løse avanserte problemer',
+        'Bygger intuitive brukergrensesnitt',
+        'Brenner for god brukeropplevelse',
+        'Skaper løsninger som fungerer, hver gang'
     ];
     
     let currentPhrase = 0;
@@ -202,12 +207,47 @@ function initTypingEffect() {
     let typingSpeed = 100;
     let initialTextDeleted = false;
     
+    function startScrollAnimation(futureText) {
+        // Temporarily set the text to measure what the width will be
+        const currentText = subtitleText.textContent;
+        subtitleText.textContent = futureText;
+        
+        const textWidth = subtitleText.scrollWidth;
+        const containerWidth = subtitle.clientWidth;
+        
+        // Restore the current text
+        subtitleText.textContent = currentText;
+        
+        if (textWidth > containerWidth) {
+            subtitle.classList.add('overflow-scroll');
+            
+            // Calculate how much we need to scroll left to keep the end visible
+            const overflowAmount = textWidth - containerWidth;
+            const scrollDistance = -overflowAmount;
+            
+            // Set scroll position BEFORE updating text
+            subtitleText.style.transform = `translateX(${scrollDistance}px)`;
+            
+        } else {
+            subtitle.classList.remove('overflow-scroll');
+            subtitleText.style.transform = 'translateX(0)';
+        }
+    }
+    
+    function updateText(text) {
+        // First, calculate and set scroll position for the new text
+        startScrollAnimation(text);
+        
+        // Then update the text content
+        subtitleText.textContent = text;
+    }
+    
     function type() {
         // If we haven't deleted the initial "Alta, Norge" text yet
         if (!initialTextDeleted) {
-            const currentText = subtitle.textContent;
+            const currentText = subtitleText.textContent;
             if (currentText.length > 0) {
-                subtitle.textContent = currentText.substring(0, currentText.length - 1);
+                updateText(currentText.substring(0, currentText.length - 1));
                 setTimeout(type, 80); // Fast deletion speed
                 return;
             } else {
@@ -220,11 +260,11 @@ function initTypingEffect() {
         const phrase = phrases[currentPhrase];
         
         if (isDeleting) {
-            subtitle.textContent = phrase.substring(0, currentChar - 1);
+            updateText(phrase.substring(0, currentChar - 1));
             currentChar--;
             typingSpeed = 50;
         } else {
-            subtitle.textContent = phrase.substring(0, currentChar + 1);
+            updateText(phrase.substring(0, currentChar + 1));
             currentChar++;
             typingSpeed = 100;
         }
@@ -237,11 +277,16 @@ function initTypingEffect() {
             currentPhrase = (currentPhrase + 1) % phrases.length;
             typingSpeed = 500;
             // Ensure there's always some content to maintain height
-            subtitle.innerHTML = '&nbsp;';
+            updateText('\u00A0'); // Non-breaking space
         }
         
         setTimeout(type, typingSpeed);
     }
+    
+    // Listen for window resize to restart scroll animation
+    window.addEventListener('resize', debounce(() => {
+        startScrollAnimation(subtitleText.textContent);
+    }, 100));
     
     // Start after a longer delay to show "Alta, Norge" for more time
     setTimeout(type, 4000); // Increased from 1500 to 4000ms (4 seconds)
