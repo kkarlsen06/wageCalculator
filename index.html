@@ -3,174 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Only one viewport tag is required; duplicate removed for consistent responsive behavior -->
-    <title>Kompensasjonskalkulator – Beregn lønn for vakter og ekstratimer | kkarlsen.art</title>
-    <meta name="description" content="Få kontroll på lønna. Kalkuler vaktlønn, tillegg og kompensasjon automatisk. Enten du jobber helg, kveld eller tar ekstravakter. Gratis og presist.">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="icon" href="/assets/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <title>Hjalmar Karlsen | Utvikler & Designer</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" href="/assets/favicon.ico">
+    
+    <!-- Scripts -->
+    <script src="js/redirect.js"></script>
     <script src="js/animations.js" defer></script>
 </head>
 <body>
-    <header class="hero">
-        <div class="hero-background-icon">
-            <img src="/assets/kkarlsen_ikon_clean.png" alt="Background Logo" class="background-logo" />
-        </div>
-        <div class="hero-content">
-            <h1>Lønnskalkulator</h1>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
 
-            <p class="hero-description">Sjekk grunnlønn og tillegg for hver eneste vakt!</p>
-            <div class="hero-cta">
-                <a href="/kalkulator" class="btn btn-primary">Gå til kalkulator</a>
-                <a href="#projects" class="btn btn-secondary">Les mer</a>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <span class="logo-text">HSKK • DEV</span>
+            </a>
+            <div class="nav-menu">
+                <a href="#hero" class="nav-link">Hjem</a>
+                <a href="#project" class="nav-link">Prosjekt</a>
+                <a href="#tech" class="nav-link">Teknologi</a>
+                <a href="https://github.com/kkarlsen06" target="_blank" class="nav-link nav-github">
+                    <i class="fab fa-github"></i>
+                    <span>GitHub</span>
+                </a>
             </div>
+            <button class="nav-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
-    </header>
-    
-    <main>
-        <section class="projects" id="projects">
-            <div class="container">
-                <div class="section-header">
-                    <h2>Prosjekter</h2>
-                    <div class="section-divider"></div>
-                    <p class="section-subtitle">Innovative løsninger jeg har utviklet</p>
-                </div>
-                <div class="projects-grid">
-                    <div class="project-card featured">
-                        <div class="project-content">
-                            <div class="project-icon">
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="3" y="2" width="18" height="20" rx="2" ry="2" fill="var(--accent)"/>
-                                    <rect x="6" y="4" width="12" height="4" rx="0.5" ry="0.5" fill="var(--bg-primary)"/>
-                                    <rect x="6.5" y="9" width="3" height="3" fill="var(--bg-primary)"/>
-                                    <rect x="10.5" y="9" width="3" height="3" fill="var(--bg-primary)"/>
-                                    <rect x="14.5" y="9" width="3" height="3" fill="var(--bg-primary)"/>
-                                    <rect x="6.5" y="13" width="3" height="3" fill="var(--bg-primary)"/>
-                                    <rect x="10.5" y="13" width="3" height="3" fill="var(--bg-primary)"/>
-                                    <rect x="14.5" y="13" width="3" height="3" fill="var(--bg-primary)"/>
-                                </svg>
-                            </div>
-                            <h3>Lønnskalkulator</h3>
-                            <p>En avansert webapplikasjon for nøyaktig beregning av månedslønn basert på vakter, arbeidstid og tariffbasert timelønn. Inkluderer autentisering, datapersistering og responsivt design.</p>
-                            <div class="project-features">
-                                <span class="feature-tag">HTML</span>
-                                <span class="feature-tag">Supabase</span>
-                                <span class="feature-tag">JavaScript</span>
-                                <span class="feature-tag">Zoho</span>
-                            </div>
-                            <div class="project-actions">
-                                <a href="/kalkulator" class="btn btn-primary">Åpne applikasjon</a>
-                                <a href="#tech" class="btn btn-outline">Tekniske detaljer</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+    </nav>
 
-        <section class="about" id="about">
-            <div class="container">
-                <div class="section-header">
-                    <h2>Om utvikleren</h2>
-                    <div class="section-divider"></div>
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <!-- BADGE SECTION - Separate from title -->
+                <div class="hero-badge">
+                    <span class="badge-text">Tilgjengelig for oppdrag</span>
+                    <span class="badge-dot"></span>
                 </div>
-                <div class="about-content">
-                    <div class="about-text">
-                        <p><span class="highlight-name">Jeg heter Hjalmar</span>, er 18 år og jobber på Coop Extra Gakori ved siden av studiene. Som en person som setter pris på effektivitet og elegante løsninger, ble jeg frustrert over å regne ut lønna mi manuelt hver måned.</p>
-                        <p>Dette resulterte i utviklingen av en komplett lønnskalkulator som ikke bare løser mitt problem, men kan hjelpe alle som trenger å regne ut timelønn og overtidstillegg.</p>
+                
+                <!-- TITLE SECTION - Title and Description -->
+                <div class="hero-top-section">
+                    <h1 class="hero-title">
+                        <span class="hero-name">Hjalmar Karlsen</span>
+                        <span class="hero-subtitle">Alta, Norge</span>
+                    </h1>
+                    
+                    <p class="hero-description">
+                        <span class="hero-description-short">Jeg brenner for å skape digitale løsninger som faktisk løser reelle problemer.</span>
+                        <span class="hero-description-full"> Spesialisert på moderne webutvikling med fokus på brukervennlighet og ytelse.</span>
+                    </p>
+                </div>
+                
+                <!-- BOTTOM THIRD - CTA and Stats -->
+                <div class="hero-bottom-section">
+                    <div class="hero-cta">
+                        <a href="/kalkulator" class="btn btn-primary btn-large">
+                            <i class="fas fa-calculator"></i>
+                            <span>Lønnskalkulator</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        <a href="#project" class="btn btn-secondary btn-large">
+                            <span>Mitt arbeid</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </a>
                     </div>
-                    <div class="about-stats">
+                    
+                    <div class="hero-stats">
                         <div class="stat">
-                            <span class="stat-number">18</span>
-                            <span class="stat-label">År gammel</span>
+                            <span class="stat-number">100%</span>
+                            <span class="stat-label">Tariff-nøyaktig</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">5+</span>
+                            <span class="stat-label">Fornøyde brukere</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">24/7</span>
+                            <span class="stat-label">Tilgjengelig</span>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+            
+            <div class="hero-visual">
+                <div class="floating-card">
+                    <div class="card-content">
+                        <div class="code-preview">
+                            <div class="code-header">
+                                <span class="code-dot red"></span>
+                                <span class="code-dot yellow"></span>
+                                <span class="code-dot green"></span>
+                            </div>
+                            <pre><code><span class="code-comment">// Beregn total lønn for alle måneder</span>
+<span class="code-variable">monthShifts</span>.<span class="code-function">forEach</span>((<span class="code-param">month</span>) => {
+  <span class="code-keyword">const</span> <span class="code-variable">totalHours</span> = <span class="code-param">month</span>.<span class="code-variable">shifts</span>.<span class="code-function">reduce</span>((<span class="code-param">sum</span>, <span class="code-param">shift</span>) => {
+    <span class="code-keyword">return</span> <span class="code-param">sum</span> + <span class="code-function">calculateHours</span>(<span class="code-param">shift</span>);
+  }, <span class="code-number">0</span>);
+  
+  <span class="code-keyword">const</span> <span class="code-variable">monthlyPay</span> = <span class="code-variable">totalHours</span> * <span class="code-variable">hourlyRate</span>;
+  <span class="code-keyword">const</span> <span class="code-variable">bonuses</span> = <span class="code-function">calculateBonuses</span>(<span class="code-param">month</span>.<span class="code-variable">shifts</span>);<span class="code-mobile-truncate">
+  
+  <span class="code-param">month</span>.<span class="code-variable">totalPay</span> = <span class="code-variable">monthlyPay</span> + <span class="code-variable">bonuses</span>;
+  
+  <span class="code-function">console</span>.<span class="code-function">log</span>(<span class="code-string">`${month.name}: ${month.totalPay} kr`</span>);
+});</span></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="scroll-indicator">
+            <div class="mouse">
+                <div class="wheel"></div>
+            </div>
+            <span class="scroll-text">Scroll for mer</span>
+        </div>
+    </section>
 
-        <section class="tech" id="tech">
-            <div class="container">
-                <div class="section-header">
-                    <h2>Teknologi & status</h2>
-                    <div class="section-divider"></div>
-                </div>
-                <div class="tech-content">
-                    <div class="tech-stack">
-                        <h3>Teknologier jeg bruker</h3>
-                        <div class="tech-grid">
-                            <div class="tech-item">
-                                <span class="tech-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M3 3H21V5H3V3ZM3 7H15V9H3V7ZM3 11H21V13H3V11ZM3 15H15V17H3V15ZM3 19H21V21H3V19Z" fill="currentColor"/>
-                                    </svg>
-                                </span>
-                                <span>HTML5 & CSS3</span>
+    <!-- Main Project Section -->
+    <section id="project" class="project-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">Fremhevet prosjekt</span>
+                <h2 class="section-title">Lønnskalkulator</h2>
+                <p class="section-description">
+                    En komplett løsning for beregning av lønn, tillegg og kompensasjon. 
+                    Har du Virketariff? Denne kalkulatoren er laget for deg!
+                    <br> Eller legg inn lønn og tillegg selv.
+                </p>
+            </div>
+            
+            <div class="project-showcase">
+                <div class="showcase-content">
+                    <div class="showcase-features">
+                        <h3 class="features-title">Hovedfunksjoner</h3>
+                        <ul class="features-list">
+                            <li class="feature-item">
+                                <i class="fas fa-chart-line"></i>
+                                <div>
+                                    <h4>Avanserte beregninger</h4>
+                                    <p>Presise kalkulasjoner basert på gjeldende tariffavtaler</p>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-clock"></i>
+                                <div>
+                                    <h4>Sanntidsoppdateringer</h4>
+                                    <p>Se resultatene mens du fyller inn informasjon</p>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <div>
+                                    <h4>Sikker datalagring</h4>
+                                    <p>Dine data er trygge med Supabase-integrasjon</p>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-mobile-alt"></i>
+                                <div>
+                                    <h4>Responsivt design</h4>
+                                    <p>Fungerer perfekt på alle enheter</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="showcase-preview">
+                        <div class="preview-window">
+                            <div class="window-header">
+                                <div class="window-controls">
+                                    <span class="control red"></span>
+                                    <span class="control yellow"></span>
+                                    <span class="control green"></span>
+                                </div>
+                                <span class="window-title">Lønnskalkulator</span>
                             </div>
-                            <div class="tech-item">
-                                <span class="tech-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M3 3L5 21L12 23L19 21L21 3H3ZM5.5 7H18.5L18 12H9L9.5 14H17.5L17 18L12 19.5L7 18L6.5 14H8.5L8.75 16L12 17L15.25 16L15.5 13H6L5.5 7Z" fill="currentColor"/>
-                                    </svg>
-                                </span>
-                                <span>JavaScript ES6+</span>
-                            </div>
-                            <div class="tech-item">
-                                <span class="tech-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                </span>
-                                <span>Supabase</span>
-                            </div>
-                            <div class="tech-item">
-                                <span class="tech-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M18 8C18 6.9 17.1 6 16 6H8C6.9 6 6 6.9 6 8V16C6 17.1 6.9 18 8 18H16C17.1 18 18 17.1 18 16V8ZM16 8V16H8V8H16ZM3 10V14H5V10H3ZM19 10V14H21V10H19Z" fill="currentColor"/>
-                                    </svg>
-                                </span>
-                                <span>Authentication</span>
+                            <div class="window-content">
+                                <div class="preview-stats">
+                                    <div class="preview-stat">
+                                        <span class="stat-icon">💰</span>
+                                        <span class="stat-value">45.750,-</span>
+                                        <span class="stat-label">Månedslønn</span>
+                                    </div>
+                                    <div class="preview-stat">
+                                        <span class="stat-icon">📊</span>
+                                        <span class="stat-value">+18%</span>
+                                        <span class="stat-label">Tillegg</span>
+                                    </div>
+                                    <div class="preview-stat">
+                                        <span class="stat-icon">⏱️</span>
+                                        <span class="stat-value">162.5t</span>
+                                        <span class="stat-label">Timer</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        
+                        <a href="/kalkulator" class="showcase-cta">
+                            <span>Prøv kalkulatoren nå</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
             </div>
-        </section>
-    </main>
-    
-    <footer>
-        <p>&copy; 2025 Hjalmar Samuel Kristensen-Karlsen</p>
+        </div>
+    </section>
+
+    <!-- Tech Stack Section -->
+    <section id="tech" class="tech-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">Teknologi</span>
+                <h2 class="section-title">Moderne stack</h2>
+                <p class="section-description">
+                    Bygget med de nyeste verktøyene for optimal ytelse og skalerbarhet
+                </p>
+            </div>
+            
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <div class="tech-icon">
+                        <i class="fab fa-html5"></i>
+                    </div>
+                    <h3>HTML5</h3>
+                    <p>Semantisk markup</p>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">
+                        <i class="fab fa-css3-alt"></i>
+                    </div>
+                    <h3>CSS3</h3>
+                    <p>Moderne styling</p>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">
+                        <i class="fab fa-js"></i>
+                    </div>
+                    <h3>JavaScript</h3>
+                    <p>ES2024 features</p>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3>Supabase</h3>
+                    <p>Backend & Auth</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <p>&copy; 2025 Hjalmar Kristensen-Karlsen</p>
+                <p>Laget med <span class="heart">❤️</span> i Norge</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/hjalmarkk" target="_blank" aria-label="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="mailto:kkarlsen06@kkarlsen.art" aria-label="Email">
+                    <i class="fas fa-envelope"></i>
+                </a>
+            </div>
+        </div>
     </footer>
-    
-    <!-- Handle password recovery redirects -->
-    <script>
-        // Check if this is a password recovery redirect from Supabase
-        const hashFragment = window.location.hash;
-        const searchParams = window.location.search;
-        const urlParams = new URLSearchParams(searchParams);
-        const fullUrl = window.location.href;
-        
-        console.log('Checking for recovery tokens...');
-        console.log('Hash:', hashFragment);
-        console.log('Search:', searchParams);
-        console.log('Full URL:', fullUrl);
-        
-        // Check for recovery tokens in either hash fragment or query parameters
-        const hasRecoveryInHash = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
-        const hasRecoveryInSearch = searchParams.includes('access_token') && searchParams.includes('type=recovery');
-        const hasLegacyRecovery = urlParams.has('token') && urlParams.get('type') === 'recovery';
-        
-        if (hasRecoveryInHash || hasRecoveryInSearch || hasLegacyRecovery) {
-            console.log('Recovery tokens detected, redirecting to kalkulator...');
-            // Redirect to the kalkulator page with the recovery tokens
-            if (hasRecoveryInHash) {
-                window.location.href = '/kalkulator/index.html' + hashFragment;
-            } else if (hasRecoveryInSearch) {
-                window.location.href = '/kalkulator/index.html' + searchParams;
-            } else if (hasLegacyRecovery) {
-                window.location.href = '/kalkulator/index.html' + searchParams;
-            }
-        }
-    </script>
 </body>
 </html>
