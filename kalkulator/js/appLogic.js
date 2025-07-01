@@ -7,6 +7,8 @@ export const app = {
              'juli', 'august', 'september', 'oktober', 'november', 'desember'],
     WEEKDAYS: ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'],
     PRESET_WAGE_RATES: {
+        'under16': 129.91,
+        'under18': 132.90,
         1: 184.54,
         2: 185.38,
         3: 187.46,
@@ -2485,7 +2487,8 @@ export const app = {
     
     // Settings management methods
     updateWageLevel(level) {
-        this.currentWageLevel = parseInt(level);
+        // Handle both string values (like 'under16', 'under18') and numeric values
+        this.currentWageLevel = isNaN(level) ? level : parseInt(level);
         this.updateDisplay();
         this.saveSettingsToSupabase();
     },

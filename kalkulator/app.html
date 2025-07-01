@@ -160,7 +160,7 @@
                   <div class="form-group">
                       <label>Minuttformat</label>
                       <div class="switch-group">
-                          <span class="text-secondary">Alle minutter i stedet for kvarter</span>
+                          <span class="text-secondary">Vis hvert minutt i stedet for kvarter <br> i drop-down</span>
                           <label class="switch">
                               <input type="checkbox" id="fullMinuteRangeToggle">
                               <span class="slider"></span>
@@ -200,6 +200,8 @@
                       <div class="form-group">
                           <label>Lønnstrinn (Virke 2025)</label>
                           <select class="form-control" id="wageSelect" onchange="app.updateWageLevel(this.value)">
+                              <option value="under16">Unge arbeidstakere under 16 år (129,91 kr/t)</option>
+                              <option value="under18">Unge arbeidstakere under 18 år (132,90 kr/t)</option>
                               <option value="1" selected>Trinn 1 (184,54 kr/t)</option>
                               <option value="2">Trinn 2 (185,38 kr/t)</option>
                               <option value="3">Trinn 3 (187,46 kr/t)</option>
