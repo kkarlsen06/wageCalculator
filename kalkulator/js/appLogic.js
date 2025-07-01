@@ -7,8 +7,9 @@ export const app = {
              'juli', 'august', 'september', 'oktober', 'november', 'desember'],
     WEEKDAYS: ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'],
     PRESET_WAGE_RATES: {
-        'under16': 129.91,
-        'under18': 132.90,
+        // Use negative numbers for young workers to avoid conflicts with regular levels 1-6
+        '-1': 129.91,  // under16
+        '-2': 132.90,  // under18
         1: 184.54,
         2: 185.38,
         3: 187.46,
@@ -942,10 +943,7 @@ export const app = {
                 this.usePreset = settings.use_preset !== false; // Default to true
                 this.customWage = settings.custom_wage || 200;
                 
-                // Try different possible column names for wage level
-                // Fix: Only use default if both wage_level and current_wage_level are undefined/null
-                this.currentWageLevel = settings.wage_level !== undefined ? settings.wage_level : 
-                                      (settings.current_wage_level !== undefined ? settings.current_wage_level : 1);
+                this.currentWageLevel = settings.wage_level || settings.current_wage_level || 1;
                 
                 // Ensure customBonuses has proper structure
                 const loadedBonuses = settings.custom_bonuses || {};
@@ -1228,8 +1226,7 @@ export const app = {
                 const data = JSON.parse(saved);
                 this.usePreset = data.usePreset !== false;
                 this.customWage = data.customWage || 200;
-                // Fix: Only use default if currentWageLevel is undefined or null
-                this.currentWageLevel = data.currentWageLevel !== undefined ? data.currentWageLevel : 1;
+                this.currentWageLevel = data.currentWageLevel || 1;
                 this.customBonuses = data.customBonuses || {};
                 this.currentMonth = data.currentMonth || new Date().getMonth() + 1; // Default to current month
                 this.pauseDeduction = data.pauseDeduction !== false;
@@ -2490,8 +2487,8 @@ export const app = {
     
     // Settings management methods
     updateWageLevel(level) {
-        // Handle both string values (like 'under16', 'under18') and numeric values
-        this.currentWageLevel = isNaN(level) ? level : parseInt(level);
+        // Convert to integer (handles both positive and negative values)
+        this.currentWageLevel = parseInt(level);
         this.updateDisplay();
         this.saveSettingsToSupabase();
     },

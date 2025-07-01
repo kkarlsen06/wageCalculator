@@ -11,8 +11,8 @@
     <div>
         <label>Lønnstrinn (Virke 2025)</label>
         <select id="testWageSelect" onchange="testUpdateWage(this.value)">
-            <option value="under16">Unge arbeidstakere under 16 år (129,91 kr/t)</option>
-            <option value="under18">Unge arbeidstakere under 18 år (132,90 kr/t)</option>
+            <option value="-1">Unge arbeidstakere under 16 år (129,91 kr/t)</option>
+            <option value="-2">Unge arbeidstakere under 18 år (132,90 kr/t)</option>
             <option value="1" selected>Trinn 1 (184,54 kr/t)</option>
             <option value="2">Trinn 2 (185,38 kr/t)</option>
             <option value="3">Trinn 3 (187,46 kr/t)</option>
@@ -37,8 +37,8 @@
     
     <script>
         const PRESET_WAGE_RATES = {
-            'under16': 129.91,
-            'under18': 132.90,
+            '-1': 129.91,  // under16
+            '-2': 132.90,  // under18
             1: 184.54,
             2: 185.38,
             3: 187.46,
@@ -50,7 +50,7 @@
         let currentWageLevel = 1;
         
         function testUpdateWage(level) {
-            const wageLevel = isNaN(level) ? level : parseInt(level);
+            const wageLevel = parseInt(level);
             const hourlyWage = PRESET_WAGE_RATES[wageLevel];
             
             currentWageLevel = wageLevel;
@@ -83,8 +83,8 @@
                 console.log('Method 1 (|| 1):', method1);
                 console.log('Method 2 (!== undefined):', method2);
                 
-                // Use the correct method
-                currentWageLevel = method2;
+                // Use the correct method (now with || since we use integers)
+                currentWageLevel = data.currentWageLevel || 1;
                 document.getElementById('testWageSelect').value = currentWageLevel;
                 testUpdateWage(currentWageLevel);
             }
