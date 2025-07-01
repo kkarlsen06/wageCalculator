@@ -25,6 +25,16 @@
     <p>Valgt lønnstrinn: <span id="selectedLevel">1</span></p>
     <p>Timelønn: <span id="hourlyWage">184,54 kr</span></p>
     
+    <div style="margin-top: 20px;">
+        <button onclick="saveSettings()">Lagre innstillinger</button>
+        <button onclick="loadSettings()">Last innstillinger</button>
+        <button onclick="clearSettings()">Slett lagrede innstillinger</button>
+    </div>
+    
+    <div style="margin-top: 10px;">
+        <p>Lagret i localStorage: <span id="savedData">-</span></p>
+    </div>
+    
     <script>
         const PRESET_WAGE_RATES = {
             'under16': 129.91,
@@ -37,14 +47,57 @@
             6: 256.14
         };
         
+        let currentWageLevel = 1;
+        
         function testUpdateWage(level) {
             const wageLevel = isNaN(level) ? level : parseInt(level);
             const hourlyWage = PRESET_WAGE_RATES[wageLevel];
             
+            currentWageLevel = wageLevel;
+            
             document.getElementById('selectedLevel').textContent = level;
             document.getElementById('hourlyWage').textContent = hourlyWage.toFixed(2).replace('.', ',') + ' kr';
             
-            console.log('Wage level:', wageLevel, 'Hourly wage:', hourlyWage);
+            console.log('Wage level:', wageLevel, 'Type:', typeof wageLevel, 'Hourly wage:', hourlyWage);
+        }
+        
+        function saveSettings() {
+            const data = {
+                currentWageLevel: currentWageLevel
+            };
+            localStorage.setItem('testWageSettings', JSON.stringify(data));
+            document.getElementById('savedData').textContent = JSON.stringify(data);
+            console.log('Saved:', data);
+        }
+        
+        function loadSettings() {
+            const saved = localStorage.getItem('testWageSettings');
+            if (saved) {
+                const data = JSON.parse(saved);
+                console.log('Loaded:', data);
+                
+                // Test both methods
+                const method1 = data.currentWageLevel || 1;
+                const method2 = data.currentWageLevel !== undefined ? data.currentWageLevel : 1;
+                
+                console.log('Method 1 (|| 1):', method1);
+                console.log('Method 2 (!== undefined):', method2);
+                
+                // Use the correct method
+                currentWageLevel = method2;
+                document.getElementById('testWageSelect').value = currentWageLevel;
+                testUpdateWage(currentWageLevel);
+            }
+        }
+        
+        function clearSettings() {
+            localStorage.removeItem('testWageSettings');
+            document.getElementById('savedData').textContent = '-';
+        }
+        
+        // Load on page load
+        window.onload = function() {
+            loadSettings();
         }
     </script>
 </body>

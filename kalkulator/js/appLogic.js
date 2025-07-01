@@ -943,7 +943,9 @@ export const app = {
                 this.customWage = settings.custom_wage || 200;
                 
                 // Try different possible column names for wage level
-                this.currentWageLevel = settings.wage_level || settings.current_wage_level || 1;
+                // Fix: Only use default if both wage_level and current_wage_level are undefined/null
+                this.currentWageLevel = settings.wage_level !== undefined ? settings.wage_level : 
+                                      (settings.current_wage_level !== undefined ? settings.current_wage_level : 1);
                 
                 // Ensure customBonuses has proper structure
                 const loadedBonuses = settings.custom_bonuses || {};
@@ -1226,7 +1228,8 @@ export const app = {
                 const data = JSON.parse(saved);
                 this.usePreset = data.usePreset !== false;
                 this.customWage = data.customWage || 200;
-                this.currentWageLevel = data.currentWageLevel || 1;
+                // Fix: Only use default if currentWageLevel is undefined or null
+                this.currentWageLevel = data.currentWageLevel !== undefined ? data.currentWageLevel : 1;
                 this.customBonuses = data.customBonuses || {};
                 this.currentMonth = data.currentMonth || new Date().getMonth() + 1; // Default to current month
                 this.pauseDeduction = data.pauseDeduction !== false;
