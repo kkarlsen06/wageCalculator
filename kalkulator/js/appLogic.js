@@ -368,6 +368,19 @@ export const app = {
             });
         }
 
+        const header = document.querySelector('.header');
+        if (header && window.ResizeObserver) {
+            let lastHeight = header.getBoundingClientRect().height;
+            const ro = new ResizeObserver(entries => {
+                const h = entries[0].target.getBoundingClientRect().height;
+                if (Math.abs(h - lastHeight) > 1) {
+                    lastHeight = h;
+                    this.updateStats();
+                }
+            });
+            ro.observe(header);
+        }
+
         // Recalculate stat cards once all assets are loaded
         window.addEventListener('load', () => {
             this.updateStats();
@@ -2047,6 +2060,8 @@ export const app = {
 
         const viewport = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         const shiftSection = document.querySelector('.shift-section');
+        const nav = document.querySelector('.navbar');
+        const navHeight = nav ? nav.getBoundingClientRect().height : 0;
 
         for (const s of stats) {
             const card = document.createElement('div');
@@ -2056,8 +2071,11 @@ export const app = {
             card.addEventListener('click', () => this.showStatDetails(s.id));
             container.appendChild(card);
 
-            const cutoff = Math.min(viewport, shiftSection ? shiftSection.getBoundingClientRect().top : viewport);
-            if (card.getBoundingClientRect().bottom > cutoff) {
+            const cutoff = Math.min(
+                viewport - navHeight,
+                shiftSection ? shiftSection.getBoundingClientRect().top - navHeight : viewport - navHeight
+            );
+            if (container.getBoundingClientRect().bottom > cutoff) {
                 container.removeChild(card);
                 break;
             }
