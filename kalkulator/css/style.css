@@ -920,6 +920,16 @@ input[type="time"].form-control[value=""]:focus {
   display: block;
 }
 
+/* View toggle in shift section */
+.view-toggle {
+  margin-left: auto;
+  margin-right: 12px;
+}
+.view-toggle .tab-btn {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
 /* Recurring Feature Introduction Modal */
 #recurringIntroModal {
   display: flex;
@@ -1850,6 +1860,29 @@ input:checked + .slider:before {
   max-width: 100%;
   display: block;
   width: 100%;
+}
+
+/* Shift calendar customizations */
+.shift-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 4px 20px 4px;
+}
+.shift-calendar .calendar-cell,
+.shift-calendar .calendar-week-number {
+  min-height: 65px;
+}
+.calendar-breakdown {
+  font-size: clamp(9px, 2.3vw, 13px);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.calendar-total {
+  font-size: clamp(10px, 2.5vw, 14px);
+  font-weight: 700;
+  color: var(--accent4);
+  line-height: 1;
 }
 
 /* Responsive calendar adjustments */

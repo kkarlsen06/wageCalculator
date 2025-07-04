@@ -114,6 +114,10 @@
               <div class="app-container">
                   <div class="section-header">
                       <h2>Vakter</h2>
+                      <div class="tab-nav view-toggle">
+                          <button class="tab-btn active" onclick="app.switchShiftView('list')">Liste</button>
+                          <button class="tab-btn" onclick="app.switchShiftView('calendar')">Kalender</button>
+                      </div>
                       <button class="settings-btn" onclick="app.openAddShiftModal()">
                           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <circle cx="12" cy="12" r="10"></circle>
@@ -137,6 +141,7 @@
                           <p>Ingen vakter registrert ennå</p>
                       </div>
                   </div>
+                  <div id="shiftCalendar" class="shift-calendar" style="display:none;"></div>
                   <footer class="app-footer">
                       Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
                   </footer>
