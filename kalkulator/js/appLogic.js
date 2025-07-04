@@ -238,6 +238,7 @@ export const app = {
     fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
     directTimeInput: false, // Setting for using direct time input instead of dropdowns
     monthlyGoal: 20000, // Monthly income goal
+    shiftView: 'list',
     selectedDate: null,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
@@ -356,6 +357,7 @@ export const app = {
         this.restoreFormState();
 
         this.updateDisplay(true); // Animate progress bar on initial load
+        this.switchShiftView(this.shiftView);
 
         window.addEventListener('resize', () => {
             this.updateStats();
@@ -1874,6 +1876,7 @@ export const app = {
         this.updateHeader();
         this.updateStats(shouldAnimate);
         this.updateShiftList();
+        this.updateShiftCalendar();
     },
     updateHeader() {
         let wage = this.getCurrentWageRate();
@@ -2101,6 +2104,138 @@ export const app = {
             `;
         }).join('');
         shiftList.innerHTML = shiftsHtml;
+    },
+
+    updateShiftCalendar() {
+        if (this.shiftView !== 'calendar') return;
+        this.renderShiftCalendar();
+    },
+
+    renderShiftCalendar() {
+        const container = document.getElementById('shiftCalendar');
+        if (!container) return;
+
+        const year = this.YEAR;
+        const monthIdx = this.currentMonth - 1;
+        const firstDay = new Date(year, monthIdx, 1);
+        const startDate = new Date(firstDay);
+        const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+        startDate.setDate(startDate.getDate() - offset);
+
+        container.innerHTML = '';
+
+        const header = document.createElement('div');
+        header.className = 'calendar-header';
+
+        const weekHeader = document.createElement('div');
+        weekHeader.className = 'calendar-week-number header';
+        header.appendChild(weekHeader);
+        ['M','T','O','T','F','L','S'].forEach(day => {
+            const h = document.createElement('div');
+            h.textContent = day;
+            h.className = 'calendar-day-header';
+            header.appendChild(h);
+        });
+        container.appendChild(header);
+
+        const grid = document.createElement('div');
+        grid.className = 'calendar-grid';
+
+        const monthShifts = this.shifts.filter(s =>
+            s.date.getMonth() === monthIdx &&
+            s.date.getFullYear() === year
+        );
+
+        const shiftsByDate = {};
+        monthShifts.forEach(shift => {
+            const key = shift.date.getDate();
+            if (!shiftsByDate[key]) shiftsByDate[key] = [];
+            shiftsByDate[key].push(shift);
+        });
+
+        for (let i = 0; i < 42; i++) {
+            if (i % 7 === 0) {
+                const weekDate = new Date(startDate);
+                weekDate.setDate(startDate.getDate() + i);
+                const weekNum = this.getISOWeekNumber(weekDate);
+                const weekCell = document.createElement('div');
+                weekCell.className = 'calendar-week-number';
+                weekCell.textContent = weekNum;
+                grid.appendChild(weekCell);
+            }
+
+            const cellDate = new Date(startDate);
+            cellDate.setDate(startDate.getDate() + i);
+
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell';
+            if (cellDate.getMonth() !== monthIdx) {
+                cell.classList.add('other-month');
+            }
+
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'calendar-day-number';
+            dayNumber.textContent = cellDate.getDate();
+
+            const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
+            let base = 0;
+            let bonus = 0;
+            shiftsForDay.forEach(shift => {
+                if (cellDate.getMonth() === monthIdx) {
+                    const calc = this.calculateShift(shift);
+                    base += calc.baseWage;
+                    bonus += calc.bonus;
+                }
+            });
+
+            const breakdown = document.createElement('div');
+            breakdown.className = 'calendar-breakdown';
+            const totalDisplay = document.createElement('div');
+            totalDisplay.className = 'calendar-total';
+
+            if (base + bonus > 0) {
+                breakdown.innerHTML = `${this.formatCurrencyShort(base)}<br>+${this.formatCurrencyShort(bonus)}`;
+                totalDisplay.textContent = this.formatCurrencyCalendar(base + bonus);
+                cell.classList.add('has-shifts');
+                cell.style.cursor = 'pointer';
+                cell.onclick = (e) => {
+                    e.stopPropagation();
+                    if (shiftsForDay.length > 0) {
+                        this.showShiftDetails(shiftsForDay[0].id);
+                    }
+                };
+            }
+
+            cell.appendChild(dayNumber);
+            cell.appendChild(breakdown);
+            cell.appendChild(totalDisplay);
+            grid.appendChild(cell);
+        }
+
+        container.appendChild(grid);
+    },
+
+    switchShiftView(view) {
+        this.shiftView = view;
+        const btns = document.querySelectorAll('.view-toggle .tab-btn');
+        btns.forEach((btn, idx) => {
+            const isList = idx === 0;
+            const active = (view === 'list' && isList) || (view === 'calendar' && !isList);
+            btn.classList.toggle('active', active);
+        });
+
+        const list = document.getElementById('shiftList');
+        const cal = document.getElementById('shiftCalendar');
+        if (!list || !cal) return;
+
+        if (view === 'calendar') {
+            list.style.display = 'none';
+            cal.style.display = 'flex';
+            this.renderShiftCalendar();
+        } else {
+            list.style.display = 'flex';
+            cal.style.display = 'none';
+        }
     },
         // Show breakdown modal
     showBreakdown(type) {
