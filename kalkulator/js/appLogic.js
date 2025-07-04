@@ -2049,7 +2049,9 @@ export const app = {
         for (const s of stats) {
             const card = document.createElement('div');
             card.className = 'stat-card';
+            card.dataset.statId = s.id;
             card.innerHTML = `<div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div>`;
+            card.addEventListener('click', () => this.showStatDetails(s.id));
             container.appendChild(card);
 
             if (container.getBoundingClientRect().bottom > viewport) {
@@ -2810,7 +2812,199 @@ export const app = {
                 }, 350); // Extra 50ms to ensure animation completes
             }, 100); // 100ms delay to let modal start closing first
         }
-        
+
+    },
+
+    // Show details for a statistic card
+    showStatDetails(statId) {
+        this.closeStatDetails();
+        this.closeBreakdown();
+        this.closeSettings();
+
+        const header = document.querySelector('.header');
+        if (header) header.classList.add('hidden');
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'backdrop-blur';
+        backdrop.onclick = () => this.closeStatDetails();
+        document.body.appendChild(backdrop);
+        backdrop.offsetHeight;
+        backdrop.classList.add('active');
+
+        this.statDetailsKeydownHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeStatDetails();
+            }
+        };
+        document.addEventListener('keydown', this.statDetailsKeydownHandler);
+
+        const card = document.createElement('div');
+        card.className = 'shift-detail-card stat-detail-card';
+        card.style.position = 'fixed';
+        card.style.top = '50%';
+        card.style.left = '50%';
+        card.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        card.style.width = 'min(90vw, 500px)';
+        card.style.maxHeight = '80vh';
+        card.style.padding = '24px';
+        card.style.zIndex = '1200';
+        card.style.opacity = '0';
+        card.style.overflowY = 'auto';
+        card.style.transition = 'all 0.4s var(--ease-default)';
+
+        const monthShifts = this.shifts.filter(s =>
+            s.date.getMonth() === this.currentMonth - 1 &&
+            s.date.getFullYear() === this.YEAR
+        );
+        const contributions = monthShifts.map(shift => ({
+            date: shift.date,
+            calc: this.calculateShift(shift)
+        }));
+
+        const formatDate = d => `${d.getDate()}. ${this.MONTHS[d.getMonth()]}`;
+
+        let title = '';
+        let rows = '';
+        let summaryLabel = '';
+        let summaryValue = '';
+
+        switch (statId) {
+            case 'avgHourly': {
+                title = 'Snittlønn/time';
+                let total = 0;
+                let hours = 0;
+                contributions.forEach(c => { total += c.calc.total; hours += c.calc.paidHours; rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${this.formatCurrency(c.calc.total)} / ${c.calc.paidHours.toFixed(2)} t</div></div>`; });
+                const avg = hours > 0 ? total / hours : 0;
+                summaryLabel = 'Snittlønn/time';
+                summaryValue = this.formatCurrency(avg);
+                break;
+            }
+            case 'totalHours': {
+                title = 'Timer totalt';
+                let hours = 0;
+                contributions.forEach(c => { hours += c.calc.paidHours; rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${c.calc.paidHours.toFixed(2)} t</div></div>`; });
+                summaryLabel = 'Sum timer';
+                summaryValue = this.formatHours(hours);
+                break;
+            }
+            case 'shiftCount': {
+                title = 'Antall vakter';
+                contributions.forEach(c => { rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">1</div></div>`; });
+                summaryLabel = 'Totalt';
+                summaryValue = contributions.length;
+                break;
+            }
+            case 'bonusTotal': {
+                title = 'Tillegg/UB';
+                let bonus = 0;
+                contributions.forEach(c => { bonus += c.calc.bonus; if (c.calc.bonus > 0) { rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${this.formatCurrency(c.calc.bonus)}</div></div>`; } });
+                summaryLabel = 'Sum tillegg';
+                summaryValue = this.formatCurrency(bonus);
+                break;
+            }
+            case 'longestShift': {
+                title = 'Lengste vakt';
+                let longest = 0;
+                contributions.forEach(c => { if (c.calc.totalHours > longest) longest = c.calc.totalHours; rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${c.calc.totalHours.toFixed(2)} t</div></div>`; });
+                summaryLabel = 'Lengste';
+                summaryValue = this.formatHours(longest);
+                break;
+            }
+            case 'avgPerShift': {
+                title = 'Snitt per vakt';
+                let total = 0;
+                contributions.forEach(c => { total += c.calc.total; rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${this.formatCurrency(c.calc.total)}</div></div>`; });
+                const avg = contributions.length > 0 ? total / contributions.length : 0;
+                summaryLabel = 'Snitt per vakt';
+                summaryValue = this.formatCurrency(avg);
+                break;
+            }
+            case 'bestDay': {
+                title = 'Beste dag';
+                const totals = {};
+                contributions.forEach(c => {
+                    const key = formatDate(c.date);
+                    totals[key] = (totals[key] || 0) + c.calc.total;
+                });
+                let bestKey = '';
+                let bestVal = 0;
+                Object.entries(totals).forEach(([k,v]) => { rows += `<div class="detail-section"><div class="detail-label">${k}</div><div class="detail-value">${this.formatCurrency(v)}</div></div>`; if (v > bestVal) { bestVal = v; bestKey = k; } });
+                summaryLabel = 'Beste dag';
+                summaryValue = `${bestKey} – ${this.formatCurrency(bestVal)}`;
+                break;
+            }
+            case 'monthCompare': {
+                title = 'Endring fra forrige mnd';
+                let currentTotal = 0;
+                contributions.forEach(c => { currentTotal += c.calc.total; });
+                const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
+                const prevYear = this.currentMonth === 1 ? this.YEAR - 1 : this.YEAR;
+                const prevShifts = this.shifts.filter(s =>
+                    s.date.getMonth() === prevMonth - 1 &&
+                    s.date.getFullYear() === prevYear
+                );
+                let prevTotal = 0;
+                prevShifts.forEach(s => { const c = this.calculateShift(s); prevTotal += c.total; });
+                rows += `<div class="detail-section"><div class="detail-label">Denne måneden</div><div class="detail-value">${this.formatCurrency(currentTotal)}</div></div>`;
+                rows += `<div class="detail-section"><div class="detail-label">Forrige måned</div><div class="detail-value">${this.formatCurrency(prevTotal)}</div></div>`;
+                const diff = currentTotal - prevTotal;
+                summaryLabel = 'Endring';
+                summaryValue = (diff >= 0 ? '+' : '') + this.formatCurrency(diff);
+                break;
+            }
+        }
+
+        card.innerHTML = `
+            <div class="shift-detail-header">
+                <div class="shift-detail-icon">
+                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                    </svg>
+                </div>
+                <h3 class="shift-detail-title">${title}</h3>
+            </div>
+            <div class="shift-detail-content">
+                ${rows}
+                <div class="detail-section total">
+                    <div class="detail-label">${summaryLabel}</div>
+                    <div class="detail-value accent large">${summaryValue}</div>
+                </div>
+            </div>
+            <button class="close-btn">×</button>`;
+
+        card.querySelector('.close-btn').onclick = (e) => { e.stopPropagation(); this.closeStatDetails(); };
+        document.body.appendChild(card);
+        requestAnimationFrame(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translate(-50%, -50%) scale(1)';
+        });
+    },
+
+    closeStatDetails() {
+        const card = document.querySelector('.stat-detail-card');
+        const backdrop = document.querySelector('.backdrop-blur');
+        const header = document.querySelector('.header');
+
+        if (header) header.classList.remove('hidden');
+
+        if (this.statDetailsKeydownHandler) {
+            document.removeEventListener('keydown', this.statDetailsKeydownHandler);
+            this.statDetailsKeydownHandler = null;
+        }
+
+        if (card) {
+            card.style.opacity = '0';
+            card.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            setTimeout(() => { if (card.parentNode) card.remove(); }, 300);
+        }
+
+        if (backdrop) {
+            setTimeout(() => {
+                backdrop.classList.remove('active');
+                setTimeout(() => { if (backdrop.parentNode) backdrop.remove(); }, 350);
+            }, 100);
+        }
     },
     // Delete entire series by ID
     async deleteSeries(seriesId) {
