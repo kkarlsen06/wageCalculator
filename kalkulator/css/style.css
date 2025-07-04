@@ -3,7 +3,8 @@
   background: var(--bg-primary);
   border-radius: 16px;
   padding: 0;
-  margin-bottom: 20px;
+  /* spacing now handled by parent gap */
+  margin-bottom: 0;
   box-shadow: 0 8px 24px -4px var(--shadow-blue);
   position: relative;
   overflow: hidden;
@@ -1415,7 +1416,8 @@ input:checked + .slider:before {
   border-radius: 24px;
   padding: 30px;
   text-align: center;
-  margin-bottom: 30px;
+  /* spacing now handled by parent gap */
+  margin-bottom: 0;
   box-shadow: 0 12px 40px -8px var(--shadow-blue);
   position: relative;
   overflow: hidden;
@@ -1471,7 +1473,8 @@ input:checked + .slider:before {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
-  margin-bottom: 30px;
+  /* spacing now handled by parent gap */
+  margin-bottom: 0;
   width: 100%;
 }
 
@@ -2966,9 +2969,10 @@ input:checked + .slider:before {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding-top: 20px;
   padding-bottom: 20px;
+  gap: 20px;
 }
 
 /* Shift section styling */
@@ -2995,7 +2999,7 @@ input:checked + .slider:before {
 }
 
 .section-header h2 {
-  margin: 0;
+  margin: 0 0 0 22px;
   font-size: 24px;
   font-weight: 600;
   color: var(--text-primary);
@@ -3008,45 +3012,6 @@ input:checked + .slider:before {
   min-height: 0;
 }
 
-/* Scroll indicator for dashboard */
-.scroll-indicator {
-  position: absolute;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-secondary);
-  font-size: 14px;
-  opacity: 0.7;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.scroll-arrow {
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
-}
-
-/* Hide scroll indicator on mobile when keyboard might be visible */
-@media (max-height: 600px) {
-  .scroll-indicator {
-    display: none;
-  }
-}
 
 /* Ensure proper layout on mobile */
 @media (max-width: 768px) {
@@ -3061,7 +3026,8 @@ input:checked + .slider:before {
   }
   
   .section-header h2 {
-    font-size: 20px;
+    margin-left: 22px;
+  font-size: 20px;
   }
 }
 
@@ -3070,4 +3036,35 @@ input:checked + .slider:before {
   position: relative;
   top: 0;
   border-radius: 0 0 16px 16px;
+}
+
+/* Stat cards */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+  width: 100%;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 4px 16px -4px var(--shadow-blue);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.stat-value {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 14px;
 }
