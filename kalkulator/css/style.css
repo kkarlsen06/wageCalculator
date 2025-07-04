@@ -3,7 +3,8 @@
   background: var(--bg-primary);
   border-radius: 16px;
   padding: 0;
-  margin-bottom: 20px;
+  /* spacing now handled by parent gap */
+  margin-bottom: 0;
   box-shadow: 0 8px 24px -4px var(--shadow-blue);
   position: relative;
   overflow: hidden;
@@ -1415,7 +1416,8 @@ input:checked + .slider:before {
   border-radius: 24px;
   padding: 30px;
   text-align: center;
-  margin-bottom: 30px;
+  /* spacing now handled by parent gap */
+  margin-bottom: 0;
   box-shadow: 0 12px 40px -8px var(--shadow-blue);
   position: relative;
   overflow: hidden;
@@ -1471,7 +1473,8 @@ input:checked + .slider:before {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
-  margin-bottom: 30px;
+  /* spacing now handled by parent gap */
+  margin-bottom: 0;
   width: 100%;
 }
 
@@ -2966,9 +2969,10 @@ input:checked + .slider:before {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding-top: 20px;
   padding-bottom: 20px;
+  gap: 20px;
 }
 
 /* Shift section styling */
@@ -3070,4 +3074,35 @@ input:checked + .slider:before {
   position: relative;
   top: 0;
   border-radius: 0 0 16px 16px;
+}
+
+/* Stat cards */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+  width: 100%;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 4px 16px -4px var(--shadow-blue);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.stat-value {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 14px;
 }
