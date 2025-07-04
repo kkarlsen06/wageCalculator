@@ -280,12 +280,12 @@ body {
 
 .header {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-  padding: 20px;
+  padding: 4px 16px;
   border-bottom: 1px solid var(--border);
   border-radius: 0 0 16px 16px;
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
   overflow: visible;
-  min-height: 80px; /* Fixed minimum height to prevent layout shift */
+  min-height: 48px; /* Smaller height for slim top bar */
   flex-shrink: 0;
 }
 
@@ -300,18 +300,36 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 2px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+/* Maintain styling for month selector and wage in header-left */
+.header-left span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.header-left span svg.icon-sm {
+  width: 14px;
+  height: 14px;
 }
 
 .header-right {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
+}
+.header-right .settings-btn {
+  padding: 4px 10px;
+  font-size: 13px;
 }
 
 .header-back-btn {
@@ -409,8 +427,8 @@ body {
   align-items: center;
   width: 100%;
   position: relative;
-  overflow: visible; /* Change from hidden to visible to prevent clipping */
-  height: 20px; /* Fixed height to prevent layout shift */
+  overflow: visible; /* Keep visible to prevent clipping */
+  height: 14px; /* Slightly smaller for slim header */
   flex-shrink: 0; /* Prevent shrinking */
 }
 
@@ -433,11 +451,11 @@ body {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
+  gap: 4px;
+  padding: 2px 6px;
   border-radius: 6px;
   transition: all var(--speed-normal) var(--ease-default);
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .month-button:hover {
