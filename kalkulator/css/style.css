@@ -2936,7 +2936,7 @@ input:checked + .slider:before {
 .snap-container {
   height: var(--app-height, 100vh);
   overflow-y: auto;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: y proximity;
   scroll-behavior: smooth;
   position: relative;
   /* Enable smooth scrolling with scroll-snap */
@@ -2951,6 +2951,11 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+/* Allow long content inside the shift list section */
+.snap-section.shift-section {
+  height: auto;
 }
 
 /* Dashboard section styling */
@@ -2979,14 +2984,13 @@ input:checked + .slider:before {
 .shift-section {
   background: var(--bg-secondary);
   padding-top: 20px;
+  min-height: var(--app-height, 100vh);
 }
 
 .shift-section .app-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  height: 100%;
+  overflow: visible;
 }
 
 .section-header {
@@ -3006,10 +3010,7 @@ input:checked + .slider:before {
 }
 
 .shift-section .shift-list {
-  flex: 1;
-  overflow-y: auto;
   padding-bottom: 20px;
-  min-height: 0;
 }
 
 
