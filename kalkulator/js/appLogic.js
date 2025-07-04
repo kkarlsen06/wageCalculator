@@ -2057,7 +2057,7 @@ export const app = {
             container.appendChild(card);
 
             const cutoff = Math.min(viewport, shiftSection ? shiftSection.getBoundingClientRect().top : viewport);
-            if (card.getBoundingClientRect().bottom > cutoff) {
+            if (container.getBoundingClientRect().bottom > cutoff) {
                 container.removeChild(card);
                 break;
             }
