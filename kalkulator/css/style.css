@@ -1,6 +1,6 @@
 /* Progress card - hele kortet er progressbaren */
 .progress-card {
-  background: var(--bg-primary);
+  background: var(--gradient-progress-bg);
   border-radius: 16px;
   padding: 0;
   /* spacing now handled by parent gap */
@@ -188,10 +188,14 @@ html {
     var(--accent) 0%, 
     var(--accent3) 50%, 
     var(--accent2) 100%);
-  --gradient-secondary: linear-gradient(135deg, 
-    var(--accent-alpha) 0%, 
-    var(--accent3-alpha) 50%, 
+  --gradient-secondary: linear-gradient(135deg,
+    var(--accent-alpha) 0%,
+    var(--accent3-alpha) 50%,
     var(--accent2-alpha) 100%);
+  --gradient-progress-bg: linear-gradient(135deg,
+    rgba(0, 212, 170, 0.08) 0%,
+    rgba(8, 145, 178, 0.08) 50%,
+    rgba(124, 58, 237, 0.08) 100%);
   --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
   --speed-fast: 0.15s;
   --speed-normal: 0.3s;
