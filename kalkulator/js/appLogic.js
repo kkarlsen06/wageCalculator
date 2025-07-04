@@ -1796,15 +1796,18 @@ export const app = {
     // Auto-save custom bonuses with debouncing to avoid too many saves
     autoSaveCustomBonuses() {
         if (!this.usePreset) {
-            // Clear existing timeout
+            // Clear existing timeout to prevent memory leaks
             if (this.autoSaveTimeout) {
                 clearTimeout(this.autoSaveTimeout);
+                this.autoSaveTimeout = null; // Reset the variable to prevent memory leaks
             }
             
             // Set new timeout to save after 5 seconds of inactivity (longer delay)
             this.autoSaveTimeout = setTimeout(() => {
                 // Save silently without status messages
                 this.saveCustomBonusesSilent().catch(console.error);
+                // Clear the timeout reference after execution
+                this.autoSaveTimeout = null;
             }, 5000);
         }
     },
@@ -3124,34 +3127,68 @@ export const app = {
     calculateShift(shift) {
         const startMinutes = this.timeToMinutes(shift.startTime);
         let endMinutes = this.timeToMinutes(shift.endTime);
-        // If the end time is earlier than the start time, the shift continues
-        // after midnight. Add 24 hours so the duration is calculated correctly.
-        if (endMinutes <= startMinutes) {
+        
+        // Improved logic for handling shifts that cross midnight
+        if (endMinutes < startMinutes) {
+            // Shift spans midnight, add 24 hours to end time
+            endMinutes += 24 * 60;
+        } else if (endMinutes === startMinutes) {
+            // Handle edge case where start and end times are the same
+            // This could be a 24-hour shift or invalid input
+            console.warn('Shift has same start and end time', {
+                startTime: shift.startTime,
+                endTime: shift.endTime
+            });
+            // Assume it's a 24-hour shift if times are identical
             endMinutes += 24 * 60;
         }
+        
         const durationHours = (endMinutes - startMinutes) / 60;
+        
+        // Validate shift duration
+        if (durationHours <= 0) {
+            console.error('Invalid shift duration', {
+                startTime: shift.startTime,
+                endTime: shift.endTime,
+                durationHours: durationHours
+            });
+            return {
+                hours: 0,
+                totalHours: 0,
+                paidHours: 0,
+                pauseDeducted: false,
+                baseWage: 0,
+                bonus: 0,
+                total: 0
+            };
+        }
+        
         let paidHours = durationHours;
+        let adjustedEndMinutes = endMinutes;
+        
+        // Apply pause deduction if enabled
         if (this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD) {
             paidHours -= this.PAUSE_DEDUCTION;
-            endMinutes -= this.PAUSE_DEDUCTION * 60;
+            adjustedEndMinutes -= this.PAUSE_DEDUCTION * 60;
         }
+        
         const wageRate = this.getCurrentWageRate();
         const baseWage = paidHours * wageRate;
         const bonuses = this.getCurrentBonuses();
         const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
         const bonusSegments = bonuses[bonusType] || [];
         
-        
         // Recreate the end time after any pause deduction or midnight handling
         // so we can reuse the same format when calculating bonuses
-        const endHour = Math.floor(endMinutes / 60) % 24;
-        const endTimeStr = `${String(endHour).padStart(2,'0')}:${(endMinutes % 60).toString().padStart(2,'0')}`;
+        const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
+        const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
 
         const bonus = this.calculateBonus(
             shift.startTime,
             endTimeStr,
             bonusSegments
         );
+        
         return {
             hours: parseFloat(paidHours.toFixed(2)),
             totalHours: parseFloat(durationHours.toFixed(2)),

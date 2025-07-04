@@ -11,8 +11,8 @@ if (window.visualViewport) {
 // Initialize Supabase client
 document.addEventListener('DOMContentLoaded', async () => {
   const supa = window.supabase.createClient(
-    "https://iuwjdacxbirhmsglcbxp.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NTIxNDAsImV4cCI6MjA2NDAyODE0MH0.iSjbvGVpM3zOWCGpg5HrQp37PjJCmiHIwVQLgc2LgcE"
+    window.CONFIG.supabase.url,
+    window.CONFIG.supabase.anonKey
   );
   window.supa = supa;
 
