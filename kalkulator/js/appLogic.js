@@ -1622,7 +1622,7 @@ export const app = {
         
         // Temporarily reset height to auto to get accurate measurements
         modalContent.style.height = 'auto';
-        modalContent.style.maxHeight = '80vh';
+        modalContent.style.maxHeight = '90vh';
         
         // Small delay to ensure DOM has updated
         requestAnimationFrame(() => {
@@ -1640,7 +1640,7 @@ export const app = {
                 
                 // Set reasonable limits
                 const minHeight = 250;
-                const maxHeight = Math.floor(window.innerHeight * 0.8); // 80vh
+                const maxHeight = Math.floor(window.innerHeight * 0.9); // 90vh
                 
                 finalHeight = Math.min(Math.max(totalNeededHeight, minHeight), maxHeight);
                 
