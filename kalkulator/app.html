@@ -11,118 +11,154 @@
 <body>
     <!-- Hoved-appen skjules til bruker er innlogget -->
     <div id="app" style="display:none">
-      <!-- Flytt hele app-container, modals og footer hit -->
-      <div class="app-container">
-          <div class="header">
-              <!-- Top row: navigation buttons -->
-              <div class="header-top">
-                  <div class="header-left">
-                      <a href="/" class="header-back-btn">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="m12 19-7-7 7-7"/>
-                              <path d="M19 12H5"/>
-                          </svg>
-                          Hovedside
-                      </a>
-                  </div>
-                  <div class="header-right">
-                        <button class="settings-btn" onclick="app.openSettings()">
-                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                            <span>Innstillinger</span>
-                        </button>
-                        <button class="settings-btn" onclick="logout()">Logg&nbsp;ut</button>
-                  </div>
-              </div>
-              <div class="header-info">
-                  <span>
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
-                          <line x1="3" y1="10" x2="21" y2="10"></line>
-                      </svg>
-                      <div class="month-selector">
-                          <button class="month-button" onclick="app.toggleMonthDropdown()">
-                              <span id="currentMonth">Mai 2025</span>
+      <!-- Snap container for full-screen sections -->
+      <div class="snap-container">
+          
+          <!-- Dashboard Section -->
+          <section class="snap-section dashboard-section">
+              <div class="app-container">
+                  <div class="header">
+                      <!-- Top row: navigation buttons -->
+                      <div class="header-top">
+                          <div class="header-left">
+                              <a href="/" class="header-back-btn">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="m12 19-7-7 7-7"/>
+                                      <path d="M19 12H5"/>
+                                  </svg>
+                                  Hovedside
+                              </a>
+                          </div>
+                          <div class="header-right">
+                                <button class="settings-btn" onclick="app.openSettings()">
+                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <span>Innstillinger</span>
+                                </button>
+                                <button class="settings-btn" onclick="logout()">Logg&nbsp;ut</button>
+                          </div>
+                      </div>
+                      <div class="header-info">
+                          <span>
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <polyline points="6 9 12 15 18 9"></polyline>
+                                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                                  <line x1="3" y1="10" x2="21" y2="10"></line>
                               </svg>
-                          </button>
+                              <div class="month-selector">
+                                  <button class="month-button" onclick="app.toggleMonthDropdown()">
+                                      <span id="currentMonth">Mai 2025</span>
+                                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <polyline points="6 9 12 15 18 9"></polyline>
+                                      </svg>
+                                  </button>
+                              </div>
+                          </span>
+                          <span>
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <path d="M12 6v6l4 2"></path>
+                              </svg>
+                              <span id="currentWage">184,54 kr/t</span>
+                          </span>
+                          <div id="userEmailContainer" style="display: none;">
+                              <button id="emailToggleBtn" class="email-toggle-btn" onclick="app.toggleEmailDisplay()">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                      <polyline points="22,6 12,13 2,6"></polyline>
+                                  </svg>
+                              </button>
+                              <span id="userEmailDisplay" class="user-email-text" style="display: none;">
+                                  <span id="userEmail" class="email-inner-text"></span>
+                              </span>
+                          </div>
                       </div>
-                  </span>
-                  <span>
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <path d="M12 6v6l4 2"></path>
-                      </svg>
-                      <span id="currentWage">184,54 kr/t</span>
-                  </span>
-                  <div id="userEmailContainer" style="display: none;">
-                      <button id="emailToggleBtn" class="email-toggle-btn" onclick="app.toggleEmailDisplay()">
-                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                              <polyline points="22,6 12,13 2,6"></polyline>
+                  </div>
+
+                  <div class="content dashboard-content">
+                      <div class="total-card">
+                          <div class="total-label">Brutto</div>
+                          <div class="total-amount" id="totalAmount">0 kr</div>
+                          <div class="total-hours">
+                              <span id="totalHours">0</span> (<span id="shiftCount">0</span> vakter)
+                          </div>
+                      </div>
+
+                      <div class="progress-card" title="Månedlig mål fremdrift">
+                          <div class="progress-fill" style="width: 0%"></div>
+                          <span class="progress-label">0 % av 0 kr</span>
+                      </div>
+
+                      <div class="breakdown-cards">
+                          <div class="breakdown-card" data-type="base" onclick="app.showBreakdown('base')">
+                              <div class="breakdown-value" id="baseAmount">0 kr</div>
+                              <div class="breakdown-label">Grunnlønn</div>
+                          </div>
+                          <div class="breakdown-card" data-type="bonus" onclick="app.showBreakdown('bonus')">
+                              <div class="breakdown-value" id="bonusAmount">0 kr</div>
+                              <div class="breakdown-label">Tillegg</div>
+                          </div>
+                      </div>
+
+                      <button class="add-shift-button" onclick="app.openAddShiftModal()">
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <line x1="12" y1="8" x2="12" y2="16"></line>
+                              <line x1="8" y1="12" x2="16" y2="12"></line>
                           </svg>
+                          Legg til vakt
                       </button>
-                      <span id="userEmailDisplay" class="user-email-text" style="display: none;">
-                          <span id="userEmail" class="email-inner-text"></span>
-                      </span>
-                  </div>
-              </div>
-          </div>
 
-          <div class="content">
-              <div class="total-card">
-                  <div class="total-label">Brutto</div>
-                  <div class="total-amount" id="totalAmount">0 kr</div>
-                  <div class="total-hours">
-                      <span id="totalHours">0</span> (<span id="shiftCount">0</span> vakter)
-                  </div>
-              </div>
-
-              <div class="breakdown-cards">
-                  <div class="breakdown-card" data-type="base" onclick="app.showBreakdown('base')">
-                      <div class="breakdown-value" id="baseAmount">0 kr</div>
-                      <div class="breakdown-label">Grunnlønn</div>
-                  </div>
-                  <div class="breakdown-card" data-type="bonus" onclick="app.showBreakdown('bonus')">
-                      <div class="breakdown-value" id="bonusAmount">0 kr</div>
-                      <div class="breakdown-label">Tillegg</div>
-                  </div>
-              </div>
-
-              <button class="add-shift-button" onclick="app.openAddShiftModal()">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="8" x2="12" y2="16"></line>
-                      <line x1="8" y1="12" x2="16" y2="12"></line>
-                  </svg>
-                  Legg til vakt
-              </button>
-
-              <div class="shift-list" id="shiftList">
-                  <div class="empty-state">
-                      <div class="empty-icon">
-                          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                              <polyline points="14 2 14 8 20 8"></polyline>
-                              <line x1="16" y1="13" x2="8" y2="13"></line>
-                              <line x1="16" y1="17" x2="8" y2="17"></line>
-                              <polyline points="10 9 9 9 8 9"></polyline>
-                          </svg>
+                      <!-- Scroll indicator -->
+                      <div class="scroll-indicator">
+                          <div class="scroll-arrow">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M6 9l6 6 6-6"></path>
+                              </svg>
+                          </div>
+                          <span>Scroll for vakter</span>
                       </div>
-                      <p>Ingen vakter registrert ennå</p>
                   </div>
               </div>
-          </div>
-      </div> <!-- slutt på .app-container -->
+          </section>
 
-      <footer class="app-footer">
-          Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
-      </footer>
+          <!-- Shift List Section -->
+          <section class="snap-section shift-section">
+              <div class="app-container">
+                  <div class="section-header">
+                      <h2>Vakter</h2>
+                      <button class="settings-btn" onclick="app.openAddShiftModal()">
+                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <line x1="12" y1="8" x2="12" y2="16"></line>
+                              <line x1="8" y1="12" x2="16" y2="12"></line>
+                          </svg>
+                          Legg til
+                      </button>
+                  </div>
+                  <div class="shift-list" id="shiftList">
+                      <div class="empty-state">
+                          <div class="empty-icon">
+                              <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                  <polyline points="14 2 14 8 20 8"></polyline>
+                                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                                  <polyline points="10 9 9 9 8 9"></polyline>
+                              </svg>
+                          </div>
+                          <p>Ingen vakter registrert ennå</p>
+                      </div>
+                  </div>
+                  <footer class="app-footer">
+                      Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
+                  </footer>
+              </div>
+          </section>
+      </div> <!-- slutt på .snap-container -->
 
       <!-- Settings Modal -->
       <div id="settingsModal" class="modal">
@@ -156,7 +192,6 @@
                           </label>
                       </div>
                   </div>
-                  
                   <div class="form-group">
                       <label>Minuttformat</label>
                       <div class="switch-group">
@@ -167,7 +202,6 @@
                           </label>
                       </div>
                   </div>
-                  
                   <div class="form-group">
                       <label>Tidsinnskriving</label>
                       <div class="switch-group">
@@ -177,6 +211,14 @@
                               <span class="slider"></span>
                           </label>
                       </div>
+                  </div>
+                  <div class="form-group">
+                      <label for="monthlyGoalInput">Månedlig inntektsmål</label>
+                      <div class="switch-group">
+                          <input type="number" id="monthlyGoalInput" class="form-control" min="0" step="100" style="max-width:140px;display:inline-block;" placeholder="20000">
+                          <button class="btn btn-secondary" id="saveMonthlyGoalBtn" style="margin-left:8px;">Lagre</button>
+                      </div>
+                      <small class="form-hint">Brukes til fremdriftslinjen i Brutto-kortet</small>
                   </div>
                   
               </div>

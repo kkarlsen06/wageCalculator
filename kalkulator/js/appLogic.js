@@ -1,3 +1,199 @@
+// --- Månedlig mål UI-håndtering ---
+function setupMonthlyGoalInput() {
+    const input = document.getElementById('monthlyGoalInput');
+    const btn = document.getElementById('saveMonthlyGoalBtn');
+    if (!input || !btn) return;
+    // Sett nåværende mål i inputfeltet
+    input.value = getMonthlyGoal();
+    btn.onclick = function() {
+        const val = parseInt(input.value, 10);
+        if (!isNaN(val) && val > 0) {
+            setMonthlyGoal(val);
+            input.value = val;
+            btn.textContent = 'Lagret!';
+            setTimeout(()=>{btn.textContent='Lagre';}, 1200);
+        } else {
+            btn.textContent = 'Ugyldig';
+            setTimeout(()=>{btn.textContent='Lagre';}, 1200);
+        }
+    };
+}
+
+// Kjør når innstillinger-modal åpnes
+const origOpenSettings = window.app && window.app.openSettings;
+if (origOpenSettings) {
+    window.app.openSettings = async function() {
+        if (typeof origOpenSettings === 'function') await origOpenSettings.apply(this, arguments);
+        setupMonthlyGoalInput();
+    };
+}
+
+// Initialize pending confetti flag
+window.pendingConfetti = false;
+// Oppdater fremdriftslinje for månedlig inntektsmål
+function updateProgressBar(current, goal, shouldAnimate = false) {
+    const percent = Math.min((current / goal) * 100, 100).toFixed(1);
+    const fill = document.querySelector('.progress-fill');
+    const label = document.querySelector('.progress-label');
+    if (!fill || !label) return;
+    
+    // Set initial width to 0 if animating
+    if (shouldAnimate) {
+        fill.style.width = '0%';
+        fill.style.transition = 'none';
+        // Force reflow
+        fill.offsetHeight;
+        // Re-enable transition to match CSS animation duration
+        fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s';
+    } else {
+        // Remove animation for immediate updates
+        fill.style.transition = 'none';
+    }
+    
+    // Use setTimeout to ensure animation starts after initial render
+    setTimeout(() => {
+        fill.style.width = percent + '%';
+    }, shouldAnimate ? 50 : 0);
+    
+    label.textContent = percent + '% av ' + goal.toLocaleString('no-NO') + ' kr';
+    fill.title = `${current.toLocaleString('no-NO')} kr av ${goal.toLocaleString('no-NO')} kr`;
+    
+    if (percent >= 100) {
+        fill.classList.add('full');
+        // Only trigger confetti when appropriate
+        if (shouldAnimate) {
+            // Wait for progress animation to complete before showing confetti
+            setTimeout(() => {
+                triggerConfettiIfVisible();
+            }, 1200); // Wait for progress animation (0.8s) + delay (0.3s) + small buffer
+        } else {
+            // For immediate updates (like adding shifts), check if we should show confetti
+            setTimeout(() => {
+                triggerConfettiIfVisible();
+            }, 100); // Small delay to ensure modal state is updated
+        }
+    } else {
+        fill.classList.remove('full');
+    }
+}
+
+// Konfetti-animasjon for når målet nås - kun når ingen modaler er åpne
+function triggerConfettiIfVisible() {
+    // Check if any modals are open
+    const modals = ['addShiftModal', 'editShiftModal', 'settingsModal', 'breakdownModal'];
+    const isAnyModalOpen = modals.some(modalId => {
+        const modal = document.getElementById(modalId);
+        return modal && modal.style.display === 'block';
+    });
+    
+    // Only show confetti if no modals are open
+    if (!isAnyModalOpen) {
+        triggerConfetti();
+    } else {
+        // Set a flag to trigger confetti when modal is closed
+        window.pendingConfetti = true;
+    }
+}
+
+// Check and trigger pending confetti when modals are closed
+function checkPendingConfetti() {
+    if (window.pendingConfetti) {
+        const fill = document.querySelector('.progress-fill');
+        if (fill && fill.classList.contains('full')) {
+            triggerConfetti();
+        }
+        window.pendingConfetti = false;
+    }
+}
+
+// Konfetti-animasjon for når målet nås
+function triggerConfetti() {
+    const colors = ['#00d4aa', '#7c3aed', '#0891b2', '#f59e0b', '#ef4444', '#10b981', '#ec4899', '#8b5cf6'];
+    const confettiCount = 60;
+    
+    // Create confetti in multiple bursts for more effect
+    for (let burst = 0; burst < 3; burst++) {
+        setTimeout(() => {
+            for (let i = 0; i < confettiCount / 3; i++) {
+                createConfettiPiece(colors[Math.floor(Math.random() * colors.length)]);
+            }
+        }, burst * 200);
+    }
+}
+
+function createConfettiPiece(color) {
+    const confetti = document.createElement('div');
+    const size = Math.random() * 6 + 4; // 4-10px
+    const shape = Math.random() > 0.5 ? '50%' : '20%'; // Mix of circles and rounded squares
+    
+    confetti.style.cssText = `
+        position: fixed;
+        width: ${size}px;
+        height: ${size}px;
+        background: ${color};
+        z-index: 10000;
+        pointer-events: none;
+        border-radius: ${shape};
+        animation: confetti-fall ${2.5 + Math.random() * 1.5}s linear forwards;
+    `;
+    
+    // Random starting position from the progress bar area
+    const progressCard = document.querySelector('.progress-card');
+    const rect = progressCard ? progressCard.getBoundingClientRect() : { left: 0, top: 100, width: window.innerWidth };
+    
+    const startX = rect.left + Math.random() * rect.width;
+    const startY = rect.top - 20;
+    const endX = startX + (Math.random() - 0.5) * 300; // More horizontal spread
+    const rotation = Math.random() * 720; // Multiple rotations
+    
+    confetti.style.left = startX + 'px';
+    confetti.style.top = startY + 'px';
+    confetti.style.setProperty('--end-x', endX + 'px');
+    confetti.style.setProperty('--rotation', rotation + 'deg');
+    
+    document.body.appendChild(confetti);
+    
+    // Remove after animation
+    setTimeout(() => {
+        if (confetti.parentNode) {
+            confetti.parentNode.removeChild(confetti);
+        }
+    }, 4000);
+}
+
+// Hent og lagre månedlig mål fra localStorage eller default
+function getMonthlyGoal() {
+    // First try to get from app object (loaded from Supabase)
+    if (typeof app !== 'undefined' && app.monthlyGoal) {
+        return app.monthlyGoal;
+    }
+    // Fallback to localStorage
+    const stored = localStorage.getItem('monthlyGoal');
+    return stored ? parseInt(stored, 10) : 20000;
+}
+
+async function setMonthlyGoal(goal) {
+    // Save to app object
+    if (typeof app !== 'undefined') {
+        app.monthlyGoal = goal;
+        // Save to Supabase
+        await app.saveSettingsToSupabase();
+    }
+    // Also save to localStorage as backup
+    localStorage.setItem('monthlyGoal', goal);
+    // Update the progress bar immediately
+    if (typeof app !== 'undefined' && app.updateStats) app.updateStats();
+}
+
+// Legg til i app-objektet for enkel tilgang fra innstillinger
+if (typeof window !== 'undefined') {
+    window.updateProgressBar = updateProgressBar;
+    window.getMonthlyGoal = getMonthlyGoal;
+    window.setMonthlyGoal = setMonthlyGoal;
+    window.triggerConfettiIfVisible = triggerConfettiIfVisible;
+    window.checkPendingConfetti = checkPendingConfetti;
+    window.triggerConfetti = triggerConfetti;
+}
 export const app = {
     // Constants
     YEAR: 2025,
@@ -41,6 +237,7 @@ export const app = {
     pauseDeduction: true,
     fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
     directTimeInput: false, // Setting for using direct time input instead of dropdowns
+    monthlyGoal: 20000, // Monthly income goal
     selectedDate: null,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
@@ -158,7 +355,10 @@ export const app = {
         // Restore form state after initialization
         this.restoreFormState();
         
-        this.updateDisplay();
+        this.updateDisplay(true); // Animate progress bar on initial load
+        
+        // Setup monthly goal input after everything is loaded
+        setupMonthlyGoalInput();
         
         // Check if we should show the recurring feature introduction
         this.checkAndShowRecurringIntro();
@@ -591,6 +791,10 @@ export const app = {
     
     closeAddShiftModal() {
         document.getElementById('addShiftModal').style.display = 'none';
+        // Check for pending confetti after modal is closed
+        setTimeout(() => {
+            checkPendingConfetti();
+        }, 100);
     },
     async addShift() {
         // Handle recurring shifts
@@ -962,6 +1166,7 @@ export const app = {
                 this.pauseDeduction = settings.pause_deduction || false;
                 this.fullMinuteRange = settings.full_minute_range || false;
                 this.directTimeInput = settings.direct_time_input || false;
+                this.monthlyGoal = settings.monthly_goal || 20000;
                 this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
                 
                 if (shouldResetToCurrentMonth && settings.current_month && settings.current_month !== new Date().getMonth() + 1) {
@@ -978,7 +1183,7 @@ export const app = {
             // Update month dropdown and date grid to reflect potential reset of currentMonth
             this.populateMonthDropdown();
             this.populateDateGrid();
-            this.updateDisplay();
+            // Don't call updateDisplay here - it will be called with animation in init()
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
             this.setDefaultSettings();
@@ -1056,6 +1261,7 @@ export const app = {
         this.pauseDeduction = false;
         this.fullMinuteRange = false; // Default to 15-minute intervals
         this.directTimeInput = false; // Default to dropdown time selection
+        this.monthlyGoal = 20000; // Default monthly goal
         this.hasSeenRecurringIntro = false; // Track if user has seen recurring feature intro
     },
 
@@ -1172,6 +1378,7 @@ export const app = {
                 if ('pause_deduction' in existingSettings) settingsData.pause_deduction = this.pauseDeduction;
                 if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
+                if ('monthly_goal' in existingSettings) settingsData.monthly_goal = this.monthlyGoal;
                 if ('has_seen_recurring_intro' in existingSettings) settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
@@ -1189,6 +1396,7 @@ export const app = {
                 settingsData.pause_deduction = this.pauseDeduction;
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
+                settingsData.monthly_goal = this.monthlyGoal;
                 settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 settingsData.custom_bonuses = this.customBonuses || {};
                 // For new settings, we'll try to include last_active and let it fail gracefully if column doesn't exist
@@ -1232,6 +1440,7 @@ export const app = {
                 this.pauseDeduction = data.pauseDeduction !== false;
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
+                this.monthlyGoal = data.monthlyGoal || 20000;
                 this.hasSeenRecurringIntro = data.hasSeenRecurringIntro || false;
                 
                 this.updateSettingsUI();
@@ -1242,7 +1451,7 @@ export const app = {
             console.error('Error loading from localStorage:', e);
             this.setDefaultSettings();
         }
-        this.updateDisplay();
+        // Don't call updateDisplay here - it will be called with animation in init()
     },
     
     // Save form state to preserve user input across page restarts
@@ -1605,6 +1814,11 @@ export const app = {
             modal.style.display = 'none';
         }
         
+        // Check for pending confetti after modal is closed
+        setTimeout(() => {
+            checkPendingConfetti();
+        }, 100);
+        
         // Save settings when closing modal
         this.saveSettingsToSupabase();
     },
@@ -1642,9 +1856,9 @@ export const app = {
             };
         }
     },
-    updateDisplay() {
+    updateDisplay(shouldAnimate = false) {
         this.updateHeader();
-        this.updateStats();
+        this.updateStats(shouldAnimate);
         this.updateShiftList();
     },
     updateHeader() {
@@ -1670,7 +1884,7 @@ export const app = {
             }
         }
     },
-    updateStats() {
+    updateStats(shouldAnimate = false) {
         let totalHours = 0;
         let totalBase = 0;
         let totalBonus = 0;
@@ -1684,11 +1898,15 @@ export const app = {
             totalBase += calc.baseWage;
             totalBonus += calc.bonus;
         });
-        document.getElementById('totalAmount').textContent = this.formatCurrency(totalBase + totalBonus);
+        const totalAmount = totalBase + totalBonus;
+        document.getElementById('totalAmount').textContent = this.formatCurrency(totalAmount);
         document.getElementById('totalHours').textContent = this.formatHours(totalHours);
         document.getElementById('baseAmount').textContent = this.formatCurrency(totalBase);
         document.getElementById('bonusAmount').textContent = this.formatCurrency(totalBonus);
         document.getElementById('shiftCount').textContent = monthShifts.length;
+        // Oppdater fremdriftslinje for månedlig inntektsmål
+        const monthlyGoal = getMonthlyGoal();
+        updateProgressBar(totalAmount, monthlyGoal, shouldAnimate);
     },
     updateShiftList() {
         
@@ -2095,6 +2313,10 @@ export const app = {
             setTimeout(() => {
                 modal.remove();
                 this.currentModal = null;
+                // Check for pending confetti after modal is closed
+                setTimeout(() => {
+                    checkPendingConfetti();
+                }, 100);
             }, 400);
         }
     },
@@ -2793,6 +3015,11 @@ export const app = {
             document.querySelectorAll('#editDateGrid .date-cell').forEach(cell => {
                 cell.classList.remove('selected');
             });
+            
+            // Check for pending confetti after modal is closed
+            setTimeout(() => {
+                checkPendingConfetti();
+            }, 100);
         }
     },
     
