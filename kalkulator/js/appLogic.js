@@ -1921,6 +1921,26 @@ export const app = {
         document.getElementById('baseAmount').textContent = this.formatCurrency(totalBase);
         document.getElementById('bonusAmount').textContent = this.formatCurrency(totalBonus);
         document.getElementById('shiftCount').textContent = monthShifts.length;
+
+        // Calculate delta versus previous month for the total card label
+        const deltaLabelEl = document.querySelector('.total-label');
+        if (deltaLabelEl) {
+            const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
+            const prevYear = this.currentMonth === 1 ? this.YEAR - 1 : this.YEAR;
+            const prevShifts = this.shifts.filter(s =>
+                s.date.getMonth() === prevMonth - 1 &&
+                s.date.getFullYear() === prevYear
+            );
+            let prevTotal = 0;
+            prevShifts.forEach(s => { prevTotal += this.calculateShift(s).total; });
+            let deltaPercent = 0;
+            if (prevTotal > 0) {
+                deltaPercent = ((totalAmount - prevTotal) / prevTotal) * 100;
+            }
+            const arrow = deltaPercent >= 0 ? '▲' : '▼';
+            const prevMonthName = this.MONTHS[prevMonth - 1];
+            deltaLabelEl.textContent = `${arrow} ${Math.abs(deltaPercent).toFixed(1)} % vs. ${prevMonthName}`;
+        }
         // Oppdater fremdriftslinje for månedlig inntektsmål
         const monthlyGoal = getMonthlyGoal();
         updateProgressBar(totalAmount, monthlyGoal, shouldAnimate);
