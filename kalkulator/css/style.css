@@ -806,7 +806,7 @@ input[type="time"].form-control[value=""]:focus {
   z-index: 1300;
   max-width: 480px;
   width: 90vw;
-  max-height: 80vh;
+  max-height: 90vh;
   overflow-y: auto;
   border-radius: 16px;
   box-shadow: 0 16px 48px -12px var(--shadow-accent);
@@ -824,7 +824,7 @@ input[type="time"].form-control[value=""]:focus {
 #settingsModal .modal-content {
   min-height: auto;
   height: auto;
-  max-height: 80vh;
+  max-height: 90vh;
 }
 
 /* Hide scrollbars in modals while keeping scroll functionality */
