@@ -1565,8 +1565,9 @@ export const app = {
     },
     
     async switchSettingsTab(tab) {
-        // Get current active tab before switching
-        const currentActiveTab = document.querySelector('.tab-btn.active');
+        // Get current active tab before switching (within settings modal only)
+        const settingsModal = document.getElementById('settingsModal');
+        const currentActiveTab = settingsModal?.querySelector('.tab-btn.active');
         const currentTab = currentActiveTab ? 
             (currentActiveTab.textContent === 'Generelt' ? 'general' : 
              currentActiveTab.textContent === 'Lønn' ? 'wage' : 
@@ -1579,11 +1580,16 @@ export const app = {
         }
         
         const tabs = ['general','wage','profile','data'];
-        tabs.forEach((t,i) => {
-            const btn = document.querySelectorAll('.tab-nav .tab-btn')[i];
-            btn.classList.toggle('active', t === tab);
+        const btns = settingsModal?.querySelectorAll('.tab-nav .tab-btn') || [];
+        tabs.forEach((t, i) => {
+            const btn = btns[i];
+            if (btn) {
+                btn.classList.toggle('active', t === tab);
+            }
             const content = document.getElementById(`${t}Tab`);
-            content.classList.toggle('active', t === tab);
+            if (content) {
+                content.classList.toggle('active', t === tab);
+            }
         });
         
         // When switching to wage tab and custom mode is active, populate bonus slots
@@ -1617,7 +1623,7 @@ export const app = {
         }
         
         // Check if current tab is the wage tab
-        const currentActiveTab = document.querySelector('.tab-btn.active');
+        const currentActiveTab = modal?.querySelector('.tab-btn.active');
         const isWageTab = currentActiveTab && currentActiveTab.textContent === 'Lønn';
         
         // Temporarily reset height to auto to get accurate measurements
