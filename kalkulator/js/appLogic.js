@@ -354,9 +354,13 @@ export const app = {
         
         // Restore form state after initialization
         this.restoreFormState();
-        
+
         this.updateDisplay(true); // Animate progress bar on initial load
-        
+
+        window.addEventListener('resize', () => {
+            this.updateStats();
+        });
+
         // Setup monthly goal input after everything is loaded
         setupMonthlyGoalInput();
         
@@ -1907,6 +1911,122 @@ export const app = {
         // Oppdater fremdriftslinje for månedlig inntektsmål
         const monthlyGoal = getMonthlyGoal();
         updateProgressBar(totalAmount, monthlyGoal, shouldAnimate);
+
+        const stats = this.calculateStatCards(monthShifts, {
+            totalHours,
+            totalBase,
+            totalBonus,
+            totalAmount
+        });
+        this.renderStatCards(stats);
+    },
+
+    calculateStatCards(monthShifts, totals) {
+        const { totalHours, totalBase, totalBonus, totalAmount } = totals;
+        let longest = 0;
+        let bestDay = { date: null, total: 0 };
+
+        monthShifts.forEach(shift => {
+            const calc = this.calculateShift(shift);
+            const duration = calc.totalHours;
+            if (duration > longest) longest = duration;
+            if (calc.total > bestDay.total) {
+                bestDay = { date: shift.date, total: calc.total };
+            }
+        });
+
+        const shiftCount = monthShifts.length;
+        const avgHourly = totalHours > 0 ? totalAmount / totalHours : 0;
+        const avgPerShift = shiftCount > 0 ? totalAmount / shiftCount : 0;
+
+        const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
+        const prevYear = this.currentMonth === 1 ? this.YEAR - 1 : this.YEAR;
+        const prevShifts = this.shifts.filter(s =>
+            s.date.getMonth() === prevMonth - 1 &&
+            s.date.getFullYear() === prevYear
+        );
+        let prevTotal = 0;
+        prevShifts.forEach(s => { prevTotal += this.calculateShift(s).total; });
+        const diff = totalAmount - prevTotal;
+
+        const stats = [
+            {
+                id: 'avgHourly',
+                relevanceScore: 10,
+                label: 'Snittlønn/time',
+                value: avgHourly ? this.formatCurrency(avgHourly) : '0 kr'
+            },
+            {
+                id: 'bestDay',
+                relevanceScore: 9,
+                label: bestDay.date
+                    ? `Beste dag ${bestDay.date.getDate()}.${bestDay.date.getMonth()+1}`
+                    : 'Beste dag',
+                value: this.formatCurrency(bestDay.total)
+            },
+            {
+                id: 'totalHours',
+                relevanceScore: 8,
+                label: 'Timer totalt',
+                value: this.formatHours(totalHours)
+            },
+            {
+                id: 'shiftCount',
+                relevanceScore: 7,
+                label: 'Antall vakter',
+                value: shiftCount
+            },
+            {
+                id: 'bonusTotal',
+                relevanceScore: totalBonus > 0 ? 6 : 2,
+                label: 'Tillegg/UB',
+                value: this.formatCurrency(totalBonus)
+            },
+            {
+                id: 'longestShift',
+                relevanceScore: 6,
+                label: 'Lengste vakt',
+                value: this.formatHours(longest)
+            },
+            {
+                id: 'avgPerShift',
+                relevanceScore: 8,
+                label: 'Snitt per vakt',
+                value: this.formatCurrency(avgPerShift)
+            },
+            {
+                id: 'monthCompare',
+                relevanceScore: 5,
+                label: 'Endring fra forrige mnd',
+                value: (diff >= 0 ? '+' : '') + this.formatCurrency(diff)
+            }
+        ];
+
+        return stats.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    },
+
+    renderStatCards(stats) {
+        const container = document.getElementById('statCards');
+        if (!container) return;
+
+        if (!this._statCardHeight) {
+            const tmp = document.createElement('div');
+            tmp.className = 'stat-card';
+            tmp.style.visibility = 'hidden';
+            tmp.innerHTML = '<div class="stat-value">0</div><div class="stat-label">x</div>';
+            container.appendChild(tmp);
+            this._statCardHeight = tmp.offsetHeight + 15;
+            tmp.remove();
+        }
+
+        const rect = container.getBoundingClientRect();
+        const available = window.innerHeight - rect.top - 24;
+        const maxCards = Math.max(0, Math.floor(available / this._statCardHeight));
+        const toShow = stats.slice(0, maxCards);
+
+        container.innerHTML = toShow
+            .map(s => `<div class="stat-card"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div></div>`)
+            .join('');
     },
     updateShiftList() {
         
