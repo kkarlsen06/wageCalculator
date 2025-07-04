@@ -3110,6 +3110,11 @@ input:checked + .slider:before {
   flex-direction: column;
   justify-content: center;
   gap: 4px;
+  cursor: pointer;
+  transition: transform var(--speed-normal) var(--ease-default);
+}
+.stat-card:hover {
+  transform: var(--lift-small);
 }
 
 .stat-value {
