@@ -1462,6 +1462,15 @@ input:checked + .slider:before {
   font-size: 14px;
   margin-bottom: 10px;
 }
+.delta-arrow {
+  margin-right: 4px;
+}
+.delta-positive {
+  color: var(--success);
+}
+.delta-negative {
+  color: var(--danger);
+}
 .total-amount {
   font-size: 48px;
   font-weight: 700;
