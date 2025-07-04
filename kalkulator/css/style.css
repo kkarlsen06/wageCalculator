@@ -300,12 +300,22 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .header-left {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.header-logo {
+  width: 28px;
+  height: 28px;
+}
+
+.header-calendar-icon {
+  margin-left: 12px;
 }
 
 .header-right {
@@ -424,6 +434,7 @@ body {
   position: relative;
   display: inline-block;
   z-index: 300;
+  margin-left: 0;
 }
 
 .month-button {

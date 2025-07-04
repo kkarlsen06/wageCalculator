@@ -18,31 +18,10 @@
           <section class="snap-section dashboard-section">
               <div class="app-container">
                   <div class="header">
-                      <!-- Top row: navigation buttons -->
                       <div class="header-top">
                           <div class="header-left">
-                              <a href="/" class="header-back-btn">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                      <path d="m12 19-7-7 7-7"/>
-                                      <path d="M19 12H5"/>
-                                  </svg>
-                                  Hovedside
-                              </a>
-                          </div>
-                          <div class="header-right">
-                                <button class="settings-btn" onclick="app.openSettings()">
-                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                    <span>Innstillinger</span>
-                                </button>
-                                <button class="settings-btn" onclick="logout()">Logg&nbsp;ut</button>
-                          </div>
-                      </div>
-                      <div class="header-info">
-                          <span>
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <img src="../assets/kkarlsen_ikon_clean.png" class="header-logo" alt="kkarlsen logo">
+                              <svg class="icon-sm header-calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                   <line x1="16" y1="2" x2="16" y2="6"></line>
                                   <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -56,24 +35,15 @@
                                       </svg>
                                   </button>
                               </div>
-                          </span>
-                          <span>
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <circle cx="12" cy="12" r="10"></circle>
-                                  <path d="M12 6v6l4 2"></path>
-                              </svg>
-                              <span id="currentWage">184,54 kr/t</span>
-                          </span>
-                          <div id="userEmailContainer" style="display: none;">
-                              <button id="emailToggleBtn" class="email-toggle-btn" onclick="app.toggleEmailDisplay()">
-                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                      <polyline points="22,6 12,13 2,6"></polyline>
-                                  </svg>
-                              </button>
-                              <span id="userEmailDisplay" class="user-email-text" style="display: none;">
-                                  <span id="userEmail" class="email-inner-text"></span>
-                              </span>
+                          </div>
+                          <div class="header-right">
+                                <button class="settings-btn" onclick="app.openSettings()">
+                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <span>Innstillinger</span>
+                                </button>
                           </div>
                       </div>
                   </div>
@@ -299,6 +269,9 @@
                   </div>
                   
                   <p id="profile-update-msg" style="color: var(--success); min-height: 24px; text-align: center; font-size: 14px;"></p>
+                  <div class="form-group">
+                      <button class="btn btn-secondary" onclick="logout()">Logg ut</button>
+                  </div>
               </div>
 
               <div id="dataTab" class="tab-content">
