@@ -1879,13 +1879,8 @@ export const app = {
         this.updateShiftCalendar();
     },
     updateHeader() {
-        let wage = this.getCurrentWageRate();
-        if (typeof wage !== 'number' || isNaN(wage)) {
-            wage = 0;
-        }
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
         document.getElementById('currentMonth').textContent = `${monthName} ${this.YEAR}`;
-        document.getElementById('currentWage').textContent = `${wage.toFixed(2).replace('.', ',')} kr/t`;
         
         // Update the total card label to match selected month
         const totalLabel = document.querySelector('.total-label');
