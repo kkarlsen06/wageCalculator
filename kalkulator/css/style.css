@@ -280,12 +280,12 @@ body {
 
 .header {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-  padding: 20px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--border);
   border-radius: 0 0 16px 16px;
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
   overflow: visible;
-  min-height: 80px; /* Fixed minimum height to prevent layout shift */
+  min-height: 60px; /* Reduced height for slimmer top bar */
   flex-shrink: 0;
 }
 
@@ -300,12 +300,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 .header-right {
