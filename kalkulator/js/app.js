@@ -1,3 +1,13 @@
+function setAppHeight() {
+  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', h + 'px');
+}
+setAppHeight();
+window.addEventListener('resize', setAppHeight);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', setAppHeight);
+}
+
 // Initialize Supabase client
 document.addEventListener('DOMContentLoaded', async () => {
   const supa = window.supabase.createClient(
