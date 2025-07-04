@@ -2936,10 +2936,10 @@ input:checked + .slider:before {
 .snap-container {
   height: var(--app-height, 100vh);
   overflow-y: auto;
-  scroll-snap-type: y mandatory;
+  /* Disable mandatory snap so list view scrolls freely */
+  scroll-snap-type: none;
   scroll-behavior: smooth;
   position: relative;
-  /* Enable smooth scrolling with scroll-snap */
   -webkit-overflow-scrolling: touch;
 }
 
