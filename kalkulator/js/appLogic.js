@@ -2046,6 +2046,7 @@ export const app = {
         container.innerHTML = '';
 
         const viewport = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const shiftSection = document.querySelector('.shift-section');
 
         for (const s of stats) {
             const card = document.createElement('div');
@@ -2055,7 +2056,8 @@ export const app = {
             card.addEventListener('click', () => this.showStatDetails(s.id));
             container.appendChild(card);
 
-            if (container.getBoundingClientRect().bottom > viewport) {
+            const cutoff = Math.min(viewport, shiftSection ? shiftSection.getBoundingClientRect().top : viewport);
+            if (card.getBoundingClientRect().bottom > cutoff) {
                 container.removeChild(card);
                 break;
             }
