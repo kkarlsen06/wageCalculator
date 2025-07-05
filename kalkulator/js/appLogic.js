@@ -1656,7 +1656,8 @@ export const app = {
         const currentTab = currentActiveTab ? 
             (currentActiveTab.textContent === 'Lønn & Beregning' ? 'wage' : 
              currentActiveTab.textContent === 'Brukergrensesnitt' ? 'interface' : 
-             currentActiveTab.textContent === 'Konto & Data' ? 'account' :
+             currentActiveTab.textContent === 'Konto' ? 'account' :
+             currentActiveTab.textContent === 'Data' ? 'data' :
              'wage') : null;
         
         // If switching away from wage tab and in custom mode, auto-save bonuses
@@ -1664,7 +1665,7 @@ export const app = {
             await this.saveCustomBonusesSilent();
         }
         
-        const tabs = ['wage', 'interface', 'account'];
+        const tabs = ['wage', 'interface', 'account', 'data'];
         const btns = settingsModal?.querySelectorAll('.tab-nav .tab-btn') || [];
         tabs.forEach((t, i) => {
             const btn = btns[i];
@@ -1688,6 +1689,13 @@ export const app = {
         if (tab === 'account') {
             setTimeout(() => {
                 this.loadProfileData();
+            }, 100);
+        }
+        
+        // When switching to data tab, setup export period options
+        if (tab === 'data') {
+            setTimeout(() => {
+                this.setupExportPeriodOptions();
             }, 100);
         }
         
@@ -1991,6 +1999,9 @@ export const app = {
                 totalLabel.textContent = `Brutto (${monthName.toLowerCase()})`;
             }
         }
+
+        // Update current month label in export options if visible
+        this.updateCurrentMonthLabel();
     },
     updateStats(shouldAnimate = false) {
         let totalHours = 0;
@@ -4815,6 +4826,179 @@ export const app = {
                 }
             });
         }
+    },
+
+    // Setup export period options and event listeners
+    setupExportPeriodOptions() {
+        // Update current month label
+        this.updateCurrentMonthLabel();
+        
+        // Setup event listeners for radio buttons
+        const periodRadios = document.querySelectorAll('input[name="exportPeriod"]');
+        const customSection = document.getElementById('customPeriodSection');
+        
+        periodRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.value === 'custom') {
+                    customSection.style.display = 'block';
+                    // Set default dates if empty
+                    const startDate = document.getElementById('exportStartDate');
+                    const endDate = document.getElementById('exportEndDate');
+                    if (!startDate.value) {
+                        const now = new Date();
+                        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                        startDate.value = firstDay.toISOString().split('T')[0];
+                    }
+                    if (!endDate.value) {
+                        const now = new Date();
+                        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                        endDate.value = lastDay.toISOString().split('T')[0];
+                    }
+                } else {
+                    customSection.style.display = 'none';
+                }
+            });
+        });
+        
+        // Initialize custom section visibility
+        const customRadio = document.querySelector('input[name="exportPeriod"][value="custom"]');
+        if (customRadio && customRadio.checked) {
+            customSection.style.display = 'block';
+        }
+    },
+
+    // Update current month label in export options
+    updateCurrentMonthLabel() {
+        const label = document.getElementById('currentMonthLabel');
+        if (label) {
+            const monthName = this.MONTHS[this.currentMonth - 1];
+            label.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${this.YEAR}`;
+        }
+    },
+
+    // Export data with period selection
+    exportDataWithPeriod(format) {
+        try {
+            // Get selected period
+            const periodRadio = document.querySelector('input[name="exportPeriod"]:checked');
+            const period = periodRadio ? periodRadio.value : 'all';
+            
+            // Filter shifts based on selected period
+            let filteredShifts = [...this.shifts];
+            
+            if (period === 'current') {
+                // Current month (from month picker)
+                filteredShifts = this.shifts.filter(shift =>
+                    shift.date.getMonth() === this.currentMonth - 1 &&
+                    shift.date.getFullYear() === this.YEAR
+                );
+            } else if (period === 'custom') {
+                // Custom period
+                const startDate = document.getElementById('exportStartDate').value;
+                const endDate = document.getElementById('exportEndDate').value;
+                
+                if (!startDate || !endDate) {
+                    alert('Vennligst fyll ut både start- og sluttdato for egendefinert periode.');
+                    return;
+                }
+                
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                if (start > end) {
+                    alert('Startdato må være før sluttdato.');
+                    return;
+                }
+                
+                filteredShifts = this.shifts.filter(shift => {
+                    const shiftDate = new Date(shift.date);
+                    return shiftDate >= start && shiftDate <= end;
+                });
+            }
+            
+            if (filteredShifts.length === 0) {
+                alert('Ingen vakter funnet for den valgte perioden.');
+                return;
+            }
+
+            // Create export data with filtered shifts
+            const data = {
+                shifts: filteredShifts.map(shift => ({
+                    id: shift.id,
+                    date: shift.date.toISOString(),
+                    startTime: shift.startTime,
+                    endTime: shift.endTime,
+                    type: shift.type,
+                    seriesId: shift.seriesId || null
+                })),
+                settings: {
+                    usePreset: this.usePreset,
+                    customWage: this.customWage,
+                    currentWageLevel: this.currentWageLevel,
+                    customBonuses: this.customBonuses,
+                    pauseDeduction: this.pauseDeduction,
+                    fullMinuteRange: this.fullMinuteRange,
+                    directTimeInput: this.directTimeInput,
+                    monthlyGoal: this.monthlyGoal,
+                    currencyFormat: this.currencyFormat,
+                    compactView: this.compactView
+                },
+                exportDate: new Date().toISOString(),
+                exportPeriod: period,
+                version: '1.0'
+            };
+
+            if (format === 'csv') {
+                this.exportAsCSV(data);
+            } else if (format === 'pdf') {
+                this.exportAsPDF(data);
+            } else {
+                // Default to JSON
+                this.exportAsJSON(data);
+            }
+        } catch (error) {
+            console.error('Error exporting data:', error);
+            alert('Kunne ikke eksportere data. Prøv igjen.');
+        }
+    },
+
+    // Import data from data tab
+    async importDataFromDataTab() {
+        const fileInput = document.getElementById('importFileData');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('Velg en fil å importere');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const content = e.target.result;
+
+                if (file.name.endsWith('.json')) {
+                    const data = JSON.parse(content);
+                    await this.importFromJSON(data);
+                } else if (file.name.endsWith('.csv')) {
+                    await this.importFromCSV(content);
+                } else {
+                    alert('Ikke støttet filformat. Bruk JSON eller CSV.');
+                    return;
+                }
+
+                alert('Data importert successfully!');
+                this.updateDisplay();
+                
+                // Clear file input
+                fileInput.value = '';
+            } catch (error) {
+                console.error('Error importing data:', error);
+                alert('Kunne ikke importere data. Sjekk filformatet.');
+            }
+        };
+
+        reader.readAsText(file);
     }
 };
 

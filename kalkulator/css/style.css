@@ -3503,3 +3503,59 @@ input:checked + .slider:before {
   padding-top: 15px;
   padding-bottom: 15px;
 }
+
+/* Export period options styles */
+.export-period-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  transition: all var(--speed-fast) var(--ease-default);
+}
+
+.radio-option:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
+.radio-option input[type="radio"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.radio-option span {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.radio-option input[type="radio"]:checked + span {
+  color: var(--accent);
+}
+
+/* Mobile responsive for export period options */
+@media (max-width: 480px) {
+  .export-period-options {
+    gap: 8px;
+  }
+  
+  .radio-option {
+    padding: 6px 8px;
+  }
+  
+  .radio-option span {
+    font-size: 13px;
+  }
+}
