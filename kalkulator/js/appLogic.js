@@ -105,6 +105,11 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
 
 // Konfetti-animasjon for når målet nås - kun når ingen modaler er åpne
 function triggerConfettiIfVisible() {
+    // Ensure progress bar is still at 100% before triggering
+    const fill = document.querySelector('.progress-fill');
+    if (!fill || !fill.classList.contains('full')) {
+        return; // Do not trigger confetti if goal is no longer reached
+    }
     // Check if any modals are open
     const modals = ['addShiftModal', 'editShiftModal', 'settingsModal', 'breakdownModal'];
     const isAnyModalOpen = modals.some(modalId => {
@@ -1159,7 +1164,8 @@ export const app = {
     changeMonth(month) {
         this.currentMonth = month;
         this.saveFormState(); // Save when month changes
-        this.updateDisplay();
+        // Animate progress bar when switching months
+        this.updateDisplay(true);
         this.populateDateGrid();
         this.saveSettingsToSupabase(); // This will also update last_active via saveSettingsToSupabase
     },
