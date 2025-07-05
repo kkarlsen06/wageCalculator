@@ -3233,7 +3233,7 @@ input:checked + .slider:before {
   gap: 12px;
   box-shadow: 0 8px 32px -4px var(--shadow);
   z-index: 100;
-  max-width: 90%;
+  max-width: calc(100% - 20px); /* Allow more width but keep some margin */
   width: auto;
   backdrop-filter: blur(10px);
   background: rgba(26, 26, 29, 0.95);
@@ -3247,12 +3247,15 @@ input:checked + .slider:before {
   background: transparent; /* Override tab-nav background */
   border-radius: 0; /* Remove tab-nav border radius */
   padding: 0; /* Remove tab-nav padding */
+  display: flex; /* Ensure flex display */
+  gap: 4px; /* Add gap between toggle buttons */
 }
 
 .floating-action-bar .view-toggle .tab-btn {
   padding: 8px 16px;
   font-size: 14px;
   border-radius: 10px; /* Add rounded corners to all sides */
+  white-space: nowrap; /* Prevent text wrapping */
 }
 
 /* Ensure active state maintains rounded corners */
@@ -3301,7 +3304,11 @@ input:checked + .slider:before {
     bottom: 10px;
     padding: 10px 12px;
     gap: 8px;
-    max-width: 95%;
+    max-width: calc(100% - 16px); /* Even less margin on small screens */
+  }
+  
+  .floating-action-bar .view-toggle {
+    gap: 4px; /* Smaller gap on mobile */
   }
   
   .floating-action-bar .view-toggle .tab-btn {
@@ -3317,6 +3324,24 @@ input:checked + .slider:before {
   .floating-action-bar .add-btn svg {
     width: 16px;
     height: 16px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .floating-action-bar {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  
+  .floating-action-bar .view-toggle .tab-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .floating-action-bar .add-btn {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
 
