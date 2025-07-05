@@ -2320,9 +2320,9 @@ export const app = {
                 <div class="shift-item ${typeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer;">
                     <div class="shift-info">
                         <div class="shift-date">
-                            <span class="shift-date-number">${day}. ${month}</span>
+                            <span class="shift-date-number">${dateDisplay}</span>
                             <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                            <span class="shift-date-weekday">${seriesBadge}</span>
                         </div>
                         <div class="shift-details">
                             <div class="shift-time-with-hours">
