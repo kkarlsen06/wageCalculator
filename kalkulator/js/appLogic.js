@@ -2164,6 +2164,7 @@ export const app = {
         const year = this.YEAR;
         const monthIdx = this.currentMonth - 1;
         const firstDay = new Date(year, monthIdx, 1);
+        const lastDay = new Date(year, monthIdx + 1, 0);
         const startDate = new Date(firstDay);
         const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
         startDate.setDate(startDate.getDate() - offset);
@@ -2199,75 +2200,83 @@ export const app = {
             shiftsByDate[key].push(shift);
         });
 
-        for (let i = 0; i < 42; i++) {
-            if (i % 7 === 0) {
-                const weekDate = new Date(startDate);
-                weekDate.setDate(startDate.getDate() + i);
-                const weekNum = this.getISOWeekNumber(weekDate);
-                const weekCell = document.createElement('div');
-                weekCell.className = 'calendar-week-number';
-                weekCell.textContent = weekNum;
-                grid.appendChild(weekCell);
-            }
+        // Calculate how many weeks we need to show
+        // Start from the first day of the month and go to the last day
+        const endDate = new Date(lastDay);
+        const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const totalWeeks = Math.ceil(totalDays / 7);
 
-            const cellDate = new Date(startDate);
-            cellDate.setDate(startDate.getDate() + i);
+        for (let week = 0; week < totalWeeks; week++) {
+            // Add week number at the start of each row
+            const weekDate = new Date(startDate);
+            weekDate.setDate(startDate.getDate() + (week * 7));
+            const weekNum = this.getISOWeekNumber(weekDate);
+            const weekCell = document.createElement('div');
+            weekCell.className = 'calendar-week-number';
+            weekCell.textContent = weekNum;
+            grid.appendChild(weekCell);
 
-            const cell = document.createElement('div');
-            cell.className = 'calendar-cell';
-            if (cellDate.getMonth() !== monthIdx) {
-                cell.classList.add('other-month');
-            }
+            // Add 7 days for this week
+            for (let day = 0; day < 7; day++) {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + (week * 7) + day);
 
-            // --- WRAP ALL CONTENT IN .calendar-cell-content ---
-            const content = document.createElement('div');
-            content.className = 'calendar-cell-content';
-
-            const dayNumber = document.createElement('div');
-            dayNumber.className = 'calendar-day-number';
-            dayNumber.textContent = cellDate.getDate();
-            content.appendChild(dayNumber);
-
-            const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
-            let base = 0;
-            let bonus = 0;
-            shiftsForDay.forEach(shift => {
-                if (cellDate.getMonth() === monthIdx) {
-                    const calc = this.calculateShift(shift);
-                    base += calc.baseWage;
-                    bonus += calc.bonus;
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                if (cellDate.getMonth() !== monthIdx) {
+                    cell.classList.add('other-month');
                 }
-            });
 
-            if (base + bonus > 0) {
-                // Create wrapper for shift data
-                const shiftData = document.createElement('div');
-                shiftData.className = 'calendar-shift-data';
-                
-                const breakdown = document.createElement('div');
-                breakdown.className = 'calendar-breakdown';
-                breakdown.innerHTML = `${this.formatCurrencyShort(base)}<br>+${this.formatCurrencyShort(bonus)}`;
-                
-                const totalDisplay = document.createElement('div');
-                totalDisplay.className = 'calendar-total';
-                totalDisplay.textContent = this.formatCurrencyCalendar(base + bonus);
-                
-                shiftData.appendChild(breakdown);
-                shiftData.appendChild(totalDisplay);
-                content.appendChild(shiftData);
-                
-                cell.classList.add('has-shifts');
-                cell.style.cursor = 'pointer';
-                cell.onclick = (e) => {
-                    e.stopPropagation();
-                    if (shiftsForDay.length > 0) {
-                        this.showShiftDetails(shiftsForDay[0].id);
+                // --- WRAP ALL CONTENT IN .calendar-cell-content ---
+                const content = document.createElement('div');
+                content.className = 'calendar-cell-content';
+
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'calendar-day-number';
+                dayNumber.textContent = cellDate.getDate();
+                content.appendChild(dayNumber);
+
+                const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
+                let base = 0;
+                let bonus = 0;
+                shiftsForDay.forEach(shift => {
+                    if (cellDate.getMonth() === monthIdx) {
+                        const calc = this.calculateShift(shift);
+                        base += calc.baseWage;
+                        bonus += calc.bonus;
                     }
-                };
-            }
+                });
 
-            cell.appendChild(content);
-            grid.appendChild(cell);
+                if (base + bonus > 0) {
+                    // Create wrapper for shift data
+                    const shiftData = document.createElement('div');
+                    shiftData.className = 'calendar-shift-data';
+                    
+                    const breakdown = document.createElement('div');
+                    breakdown.className = 'calendar-breakdown';
+                    breakdown.innerHTML = `${this.formatCurrencyShort(base)}<br>+${this.formatCurrencyShort(bonus)}`;
+                    
+                    const totalDisplay = document.createElement('div');
+                    totalDisplay.className = 'calendar-total';
+                    totalDisplay.textContent = this.formatCurrencyCalendar(base + bonus);
+                    
+                    shiftData.appendChild(breakdown);
+                    shiftData.appendChild(totalDisplay);
+                    content.appendChild(shiftData);
+                    
+                    cell.classList.add('has-shifts');
+                    cell.style.cursor = 'pointer';
+                    cell.onclick = (e) => {
+                        e.stopPropagation();
+                        if (shiftsForDay.length > 0) {
+                            this.showShiftDetails(shiftsForDay[0].id);
+                        }
+                    };
+                }
+
+                cell.appendChild(content);
+                grid.appendChild(cell);
+            }
         }
 
         container.appendChild(grid);
@@ -2518,94 +2527,98 @@ export const app = {
             shiftsByDate[dateKey].push(shift);
         });
 
-        // Create calendar cells (42 cells for 6 weeks)
-        for (let i = 0; i < 42; i++) {
-            // Add week number at the start of each row (every 7 cells)
-            if (i % 7 === 0) {
-                const weekDate = new Date(startDate);
-                weekDate.setDate(startDate.getDate() + i);
-                const weekNum = this.getISOWeekNumber(weekDate);
-                const weekCell = document.createElement('div');
-                weekCell.className = 'calendar-week-number';
-                weekCell.textContent = weekNum;
-                
-                // Calculate animation delay for week number
-                const row = Math.floor(i / 7);
-                const weekAnimationDelay = 0.3 + (row * 7) * 0.035;
-                weekCell.style.animationDelay = `${weekAnimationDelay}s`;
-                
-                grid.appendChild(weekCell);
-            }
-            
-            const cellDate = new Date(startDate);
-            cellDate.setDate(startDate.getDate() + i);
-            
-            const cell = document.createElement('div');
-            cell.className = 'calendar-cell';
-            
-            // Calculate animation delay based on row and column position
-            // Row by row, left to right animation - start while modal is opening
-            // Account for week number column by adding 1 to the base position
-            const row = Math.floor(i / 7);
-            const col = i % 7;
-            const animationDelay = 0.3 + (row * 8 + col + 1) * 0.035; // 8 columns now (week + 7 days), +1 for week number offset
-            cell.style.animationDelay = `${animationDelay}s`;
-            
-            // Create content wrapper and day number
-            const content = document.createElement('div');
-            content.className = 'calendar-cell-content';
-            
-            const dayNumber = document.createElement('div');
-            dayNumber.className = 'calendar-day-number';
-            dayNumber.textContent = cellDate.getDate();
-            content.appendChild(dayNumber);
-            
-            // Style for current month vs other months
-            if (cellDate.getMonth() !== monthIdx) {
-                cell.classList.add('other-month');
-                // Set custom animation for other-month cells that ends with opacity 0.3
-                cell.style.setProperty('--final-opacity', '0.3');
-            }
+        // Calculate how many weeks we need to show
+        // Start from the first day of the month and go to the last day
+        const endDate = new Date(lastDay);
+        const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const totalWeeks = Math.ceil(totalDays / 7);
 
-            const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
-            let totalAmount = 0;
+        for (let week = 0; week < totalWeeks; week++) {
+            // Add week number at the start of each row
+            const weekDate = new Date(startDate);
+            weekDate.setDate(startDate.getDate() + (week * 7));
+            const weekNum = this.getISOWeekNumber(weekDate);
+            const weekCell = document.createElement('div');
+            weekCell.className = 'calendar-week-number';
+            weekCell.textContent = weekNum;
             
-            // Calculate total amount for this day
-            shiftsForDay.forEach(shift => {
-                if (cellDate.getMonth() === monthIdx) { // Only for current month
-                    const calc = this.calculateShift(shift);
-                    const amount = type === 'base' ? calc.baseWage : calc.bonus;
-                    totalAmount += amount;
+            // Calculate animation delay for week number
+            const weekAnimationDelay = 0.3 + (week * 7) * 0.035;
+            weekCell.style.animationDelay = `${weekAnimationDelay}s`;
+            
+            grid.appendChild(weekCell);
+
+            // Add 7 days for this week
+            for (let day = 0; day < 7; day++) {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + (week * 7) + day);
+                
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                
+                // Calculate animation delay based on row and column position
+                // Row by row, left to right animation - start while modal is opening
+                // Account for week number column by adding 1 to the base position
+                const col = day;
+                const animationDelay = 0.3 + (week * 8 + col + 1) * 0.035; // 8 columns now (week + 7 days), +1 for week number offset
+                cell.style.animationDelay = `${animationDelay}s`;
+                
+                // Create content wrapper and day number
+                const content = document.createElement('div');
+                content.className = 'calendar-cell-content';
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'calendar-day-number';
+                dayNumber.textContent = cellDate.getDate();
+                content.appendChild(dayNumber);
+                
+                // Style for current month vs other months
+                if (cellDate.getMonth() !== monthIdx) {
+                    cell.classList.add('other-month');
+                    // Set custom animation for other-month cells that ends with opacity 0.3
+                    cell.style.setProperty('--final-opacity', '0.3');
                 }
-            });
 
-            if (totalAmount > 0) {
-                // Create wrapper for shift data
-                const shiftData = document.createElement('div');
-                shiftData.className = 'calendar-shift-data';
+                const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
+                let totalAmount = 0;
                 
-                const amountDisplay = document.createElement('div');
-                amountDisplay.className = 'calendar-amount';
-                amountDisplay.textContent = this.formatCurrencyCalendar(totalAmount);
-                
-                shiftData.appendChild(amountDisplay);
-                content.appendChild(shiftData);
-                
-                cell.classList.add('has-shifts');
-                
-                // Make clickable if there are shifts
-                cell.style.cursor = 'pointer';
-                cell.onclick = (e) => {
-                    e.stopPropagation();
-                    // If multiple shifts, show first one (or we could show a summary)
-                    if (shiftsForDay.length > 0) {
-                        this.showShiftDetails(shiftsForDay[0].id);
+                // Calculate total amount for this day
+                shiftsForDay.forEach(shift => {
+                    if (cellDate.getMonth() === monthIdx) { // Only for current month
+                        const calc = this.calculateShift(shift);
+                        const amount = type === 'base' ? calc.baseWage : calc.bonus;
+                        totalAmount += amount;
                     }
-                };
-            }
+                });
 
-            cell.appendChild(content);
-            grid.appendChild(cell);
+                if (totalAmount > 0) {
+                    // Create wrapper for shift data
+                    const shiftData = document.createElement('div');
+                    shiftData.className = 'calendar-shift-data';
+                    
+                    const amountDisplay = document.createElement('div');
+                    amountDisplay.className = 'calendar-amount';
+                    amountDisplay.textContent = this.formatCurrencyCalendar(totalAmount);
+                    
+                    shiftData.appendChild(amountDisplay);
+                    content.appendChild(shiftData);
+                    
+                    cell.classList.add('has-shifts');
+                    
+                    // Make clickable if there are shifts
+                    cell.style.cursor = 'pointer';
+                    cell.onclick = (e) => {
+                        e.stopPropagation();
+                        // If multiple shifts, show first one (or we could show a summary)
+                        if (shiftsForDay.length > 0) {
+                            this.showShiftDetails(shiftsForDay[0].id);
+                        }
+                    };
+                }
+
+                cell.appendChild(content);
+                grid.appendChild(cell);
+            }
         }
 
         container.appendChild(grid);

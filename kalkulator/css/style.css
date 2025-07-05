@@ -301,15 +301,15 @@ html {
   }
 }
 
-/* Special fade-in animation for week numbers that preserves rotation */
+/* Special fade-in animation for week numbers */
 @keyframes weekNumberFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.8) translateY(-10px) rotate(180deg);
+    transform: scale(0.8) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0) rotate(180deg);
+    transform: scale(1) translateY(0);
   }
 }
 
@@ -1839,9 +1839,10 @@ input:checked + .slider:before {
   display: grid;
   grid-template-columns: 32px repeat(7, 1fr);
   gap: 2px;
-  margin-bottom: 12px;
+  margin-bottom: 2px; /* Reduced from 12px to bring week letters closer to top-cells */
   width: 100%;
   box-sizing: border-box;
+  align-items: center; /* Vertically center week letters and week number header */
 }
 
 .calendar-day-header {
@@ -1849,12 +1850,13 @@ input:checked + .slider:before {
   font-size: 12px;
   color: var(--text-secondary);
   text-align: center;
-  padding: 4px 2px;
+  padding: 2px 2px; /* Reduced vertical padding for tighter spacing */
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: 32px repeat(7, 1fr);
+  grid-auto-rows: minmax(45px, auto);
   gap: 2px;
   flex: 1;
   width: 100%;
@@ -1903,7 +1905,7 @@ input:checked + .slider:before {
 /* Calendar week number styling */
 .calendar-week-number {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background: transparent;
   border: none;
@@ -1911,13 +1913,13 @@ input:checked + .slider:before {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+  writing-mode: horizontal-tb;
+  text-orientation: initial;
   padding: 4px 2px;
   min-height: 45px;
   opacity: 0;
   animation: weekNumberFadeIn 0.3s var(--ease-default) forwards;
-  transform: rotate(180deg);
+  transform: none;
   z-index: 2;
 }
 
@@ -1926,8 +1928,8 @@ input:checked + .slider:before {
   font-weight: 500;
   writing-mode: horizontal-tb;
   text-orientation: initial;
-  background: var(--bg-secondary);
-  border: none;
+  background: transparent !important; /* Remove artifact above week numbers */
+  border: none !important;
   padding: 4px 2px;
   z-index: 2;
 }
@@ -3164,7 +3166,7 @@ input:checked + .slider:before {
 .snap-section.shift-section {
   min-height: var(--app-height, 100vh);
   height: auto;
-  background: var(--bg-secondary);
+  background: var(--bg-primary); /* Changed to match dashboard section */
 }
 
 

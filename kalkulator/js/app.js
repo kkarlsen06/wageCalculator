@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       span.style.animation = `letter-in 0.5s forwards ${i * 0.1}s`;
     });
     const inDuration = 500 + allLetters.length * 100; // ms
-    await new Promise(res => setTimeout(res, inDuration + 300));
+    await new Promise(res => setTimeout(res, inDuration + 100)); // Reduced from 300ms to 100ms
 
     // Animate whole text out
     welcomeContainer.style.transformOrigin = 'center center';
