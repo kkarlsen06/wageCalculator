@@ -2324,13 +2324,18 @@ export const app = {
                 nextShiftDate.style.display = 'block';
             }
             
-            // Create the shift item using the same structure as in the shift list, but without date info
+            // Create the shift item using the exact same structure as in the shift list
             const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
             const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
             
             nextShiftContent.innerHTML = `
                 <div class="shift-item ${typeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer;">
                     <div class="shift-info">
+                        <div class="shift-date">
+                            <span class="shift-date-number">${day}. ${month}</span>
+                            <span class="shift-date-separator"></span>
+                            <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                        </div>
                         <div class="shift-details">
                             <div class="shift-time-with-hours">
                                 <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2341,7 +2346,6 @@ export const app = {
                                 <span class="shift-time-arrow">→</span>
                                 <span>${this.formatHours(calculation.hours)}</span>
                             </div>
-                            ${seriesBadge}
                         </div>
                     </div>
                     <div class="shift-amount-wrapper">
