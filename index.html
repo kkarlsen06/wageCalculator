@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hjalmar Karlsen | Utvikler & Designer</title>
     
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fonts: preload only weights 400 & 700 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.min.css">
     <link rel="icon" href="/assets/favicon.ico">
     
     <!-- Scripts -->
@@ -35,7 +38,7 @@
             </a>
             <div id="nav-menu" class="nav-menu">
                 <a href="#hero" class="nav-link">Hjem</a>
-                <a href="#project" class="nav-link">Prosjekt</a>
+                <a href="#project" class="nav-link">Prosjekter</a>
                 <a href="#tech" class="nav-link">Teknologi</a>
                 <a href="https://github.com/kkarlsen06" target="_blank" rel="noopener noreferrer" class="nav-link nav-github">
                     <i class="fab fa-github"></i>
@@ -80,11 +83,11 @@
                     <div class="hero-cta">
                         <a href="/kalkulator" class="btn btn-primary btn-large">
                             <i class="fas fa-calculator"></i>
-                            <span>Lønnskalkulator</span>
+                            <span>Kompensasjonskalkulator</span>
                             <i class="fas fa-arrow-right"></i>
                         </a>
                         <a href="#project" class="btn btn-secondary btn-large">
-                            <span>Mitt arbeid</span>
+                            <span>Prosjekter</span>
                             <i class="fas fa-chevron-down"></i>
                         </a>
                     </div>
@@ -147,7 +150,7 @@
         <div class="container">
             <div class="section-header">
                 <span class="section-label">Fremhevet prosjekt</span>
-                <h2 class="section-title">Lønnskalkulator</h2>
+                <h2 class="section-title">Kompensasjonskalkulator</h2>
                 <p class="section-description">
                     En komplett løsning for beregning av lønn, tillegg og kompensasjon. 
                     Har du Virketariff? Denne kalkulatoren er laget for deg!
@@ -199,7 +202,7 @@
                                     <span class="control yellow"></span>
                                     <span class="control green"></span>
                                 </div>
-                                <span class="window-title">Lønnskalkulator</span>
+                                <span class="window-title">Kompensasjonskalkulator</span>
                             </div>
                             <div class="window-content">
                                 <div class="preview-stats">
