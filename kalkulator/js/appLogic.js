@@ -37,23 +37,51 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
     const label = document.querySelector('.progress-label');
     if (!fill || !label) return;
     
-    // Set initial width to 0 if animating
-    if (shouldAnimate) {
-        fill.style.width = '0%';
-        fill.style.transition = 'none';
-        // Force reflow
-        fill.offsetHeight;
-        // Re-enable transition to match CSS animation duration
-        fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s';
-    } else {
-        // Remove animation for immediate updates
-        fill.style.transition = 'none';
+    // Prevent multiple animations during initialization
+    if (shouldAnimate && fill.dataset.animating === 'true') {
+        return;
     }
     
-    // Use setTimeout to ensure animation starts after initial render
-    setTimeout(() => {
-        fill.style.width = percent + '%';
-    }, shouldAnimate ? 50 : 0);
+    // Set initial width to 0 if animating
+    if (shouldAnimate) {
+        // Ensure progress bar starts at 0% with no transition
+        fill.classList.add('loading');
+        fill.style.width = '0%';
+        fill.style.transition = 'none';
+        
+        // Force reflow to ensure the 0% width is applied
+        fill.offsetHeight;
+        
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+            // Remove loading class and re-enable transition
+            fill.classList.remove('loading');
+            fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Force another reflow to ensure transition is applied
+            fill.offsetHeight;
+            
+            // Start the width animation
+            fill.style.width = percent + '%';
+            
+            // Set a flag to prevent immediate updates from overriding the animation
+            fill.dataset.animating = 'true';
+            setTimeout(() => {
+                fill.dataset.animating = 'false';
+                // Mark initial animation as complete
+                if (typeof app !== 'undefined') {
+                    app.initialAnimationComplete = true;
+                }
+            }, 1000); // Allow updates after animation completes
+        });
+    } else {
+        // Only update if not currently animating
+        if (fill.dataset.animating !== 'true') {
+            // Remove animation for immediate updates
+            fill.style.transition = 'none';
+            fill.style.width = percent + '%';
+        }
+    }
     
     label.textContent = percent + '% av ' + goal.toLocaleString('no-NO') + ' kr';
     fill.title = `${current.toLocaleString('no-NO')} kr av ${goal.toLocaleString('no-NO')} kr`;
@@ -65,12 +93,10 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
             // Wait for progress animation to complete before showing confetti
             setTimeout(() => {
                 triggerConfettiIfVisible();
-            }, 1200); // Wait for progress animation (0.8s) + delay (0.3s) + small buffer
+            }, 1400); // Wait for progress animation (0.8s) + delay (0.5s) + small buffer
         } else {
             // For immediate updates (like adding shifts), check if we should show confetti
-            setTimeout(() => {
-                triggerConfettiIfVisible();
-            }, 100); // Small delay to ensure modal state is updated
+            triggerConfettiIfVisible();
         }
     } else {
         fill.classList.remove('full');
@@ -243,7 +269,16 @@ export const app = {
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
     emailHideTimeout: null, // Timeout for auto-hiding email
+    initialAnimationComplete: false, // Track if initial progress bar animation is complete
     async init() {
+        // Reset progress bar to initial state
+        const fill = document.querySelector('.progress-fill');
+        if (fill) {
+            fill.classList.add('loading');
+            fill.style.width = '0%';
+            fill.style.transition = 'none';
+        }
+        
         // Show UI elements
         this.populateTimeSelects();
         this.populateDateGrid();
@@ -356,15 +391,18 @@ export const app = {
         // Restore form state after initialization
         this.restoreFormState();
 
-        this.updateDisplay(true); // Animate progress bar on initial load
+        // Add a small delay to ensure DOM is fully ready before animating progress bar
+        setTimeout(() => {
+            this.updateDisplay(true); // Animate progress bar on initial load
+        }, 100);
         this.switchShiftView(this.shiftView);
 
         window.addEventListener('resize', () => {
-            this.updateStats();
+            this.updateStats(false);
         });
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', () => {
-                this.updateStats();
+                this.updateStats(false);
             });
         }
 
@@ -375,7 +413,7 @@ export const app = {
                 const h = entries[0].target.getBoundingClientRect().height;
                 if (Math.abs(h - lastHeight) > 1) {
                     lastHeight = h;
-                    this.updateStats();
+                    this.updateStats(false);
                 }
             });
             ro.observe(header);
@@ -383,7 +421,10 @@ export const app = {
 
         // Recalculate stat cards once all assets are loaded
         window.addEventListener('load', () => {
-            this.updateStats();
+            // Don't animate on window load to avoid conflicts with initial animation
+            if (!this.initialAnimationComplete) {
+                this.updateStats(false);
+            }
         });
 
         // Setup monthly goal input after everything is loaded
@@ -2306,64 +2347,49 @@ export const app = {
     },
         // Show breakdown modal
     showBreakdown(type) {
-        // Close any existing breakdown first
         this.closeBreakdown();
-        
-        // Hide header with smooth animation
+        this.closeStatDetails();
+        this.closeSettings();
+
         const header = document.querySelector('.header');
-        if (header) {
-            header.classList.add('hidden');
-        }
-        
-        // Create backdrop
+        if (header) header.classList.add('hidden');
+
         const backdrop = document.createElement('div');
         backdrop.className = 'backdrop-blur';
         backdrop.onclick = () => this.closeBreakdown();
         document.body.appendChild(backdrop);
-        
-        // Add keyboard support for closing
-        const keydownHandler = (e) => {
+        backdrop.offsetHeight;
+        backdrop.classList.add('active');
+
+        this.breakdownKeydownHandler = (e) => {
             if (e.key === 'Escape') {
                 this.closeBreakdown();
             }
         };
-        document.addEventListener('keydown', keydownHandler);
-        backdrop.dataset.keydownHandler = 'attached';
-        
-        // Force reflow then activate backdrop
-        backdrop.offsetHeight;
-        backdrop.classList.add('active');
-        
-        // Create modal element without any class to avoid CSS conflicts
+        document.addEventListener('keydown', this.breakdownKeydownHandler);
+
+        // Create modal container
         const modal = document.createElement('div');
-        modal.className = 'breakdown-modal-custom';
-        
-        // Use translate3d for hardware acceleration and better positioning
-        modal.style.position = 'fixed';
-        modal.style.left = '50%';
-        modal.style.top = '50%';
-        modal.style.transform = 'translate3d(-50%, -50%, 0)';
-        modal.style.width = 'min(90vw, 500px)';
-        modal.style.maxHeight = '80vh';
-        modal.style.background = 'linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary))';
-        modal.style.borderRadius = '20px';
-        modal.style.padding = '24px';
-        modal.style.zIndex = '1500';
-        modal.style.boxShadow = '0 32px 64px var(--shadow-accent), 0 16px 32px rgba(0, 0, 0, 0.3)';
-        modal.style.border = '1px solid var(--accent3-alpha)';
-        modal.style.overflowY = 'auto';
-        modal.style.scrollbarWidth = 'none'; // Firefox
-        modal.style.msOverflowStyle = 'none'; // Internet Explorer 10+
-        modal.style.display = 'flex';
-        modal.style.flexDirection = 'column';
-        modal.style.opacity = '0';
-        modal.style.willChange = 'transform, opacity';
-        modal.style.transition = 'opacity 0.4s var(--ease-default)';
-        
-        // Store reference for cleanup
-        this.currentModal = modal;
-        
-        // Create title with icon
+        modal.className = 'breakdown-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: min(95vw, 600px);
+            max-height: 85vh;
+            background: var(--bg-primary);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px var(--shadow-blue);
+            z-index: 1200;
+            opacity: 0;
+            transition: all 0.4s var(--ease-default);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        `;
+
+        // Create title container
         const titleContainer = document.createElement('div');
         titleContainer.className = 'breakdown-title-container';
         titleContainer.style.cssText = `
@@ -2372,35 +2398,22 @@ export const app = {
             justify-content: center;
             gap: 12px;
             margin-bottom: 20px;
-            opacity: 0;
-            animation: slideInFromBottom 0.5s var(--ease-default) 0.2s forwards;
+            padding: 24px 24px 0 24px;
             flex-shrink: 0;
         `;
-        
+
+        // Create icon based on type
         const icon = document.createElement('div');
         icon.className = 'breakdown-title-icon';
+        icon.innerHTML = type === 'base' ? 
+            '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>' :
+            '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
         icon.style.cssText = `
             color: var(--accent3);
             opacity: 0.8;
         `;
-        
-        // Add appropriate icon based on type
-        if (type === 'base') {
-            icon.innerHTML = `
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-            `;
-        } else {
-            icon.innerHTML = `
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="12 2 15.09 6.26 22 7.27 17 12.14 18.18 19.02 12 15.77 5.82 19.02 7 12.14 2 7.27 8.91 6.26 12 2"></polygon>
-                </svg>
-            `;
-        }
-        
+
+        // Create title
         const title = document.createElement('h3');
         title.className = 'breakdown-title';
         title.textContent = type === 'base' ? 'Grunnlønn' : 'Tillegg';
@@ -2410,11 +2423,11 @@ export const app = {
             font-size: 24px;
             font-weight: 600;
         `;
-        
+
         titleContainer.appendChild(icon);
         titleContainer.appendChild(title);
         modal.appendChild(titleContainer);
-        
+
         // Create close button
         const closeBtn = document.createElement('button');
         closeBtn.className = 'close-btn';
@@ -2446,7 +2459,7 @@ export const app = {
             this.closeBreakdown();
         };
         modal.appendChild(closeBtn);
-        
+
         // Create calendar container
         const calendarContainer = document.createElement('div');
         calendarContainer.className = 'breakdown-calendar';
@@ -2456,21 +2469,18 @@ export const app = {
             flex: 1;
             display: flex;
             flex-direction: column;
+            padding: 0 24px 24px 24px;
         `;
         modal.appendChild(calendarContainer);
-        
-        // Add modal to body first
+
+        // Create the breakdown calendar
+        this.createBreakdownCalendar(calendarContainer, type);
+
         document.body.appendChild(modal);
-        
-        // Use setTimeout instead of requestAnimationFrame for more reliable timing
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             modal.style.opacity = '1';
-        }, 50);
-        
-        // Create calendar for current month
-        setTimeout(() => {
-            this.createBreakdownCalendar(calendarContainer, type);
-        }, 100);
+            modal.style.transform = 'translate(-50%, -50%) scale(1)';
+        });
     },
 
     // Create breakdown calendar view
@@ -2626,41 +2636,28 @@ export const app = {
     
     // Close breakdown modal
     closeBreakdown() {
+        const modal = document.querySelector('.breakdown-modal');
         const backdrop = document.querySelector('.backdrop-blur');
-        const modal = this.currentModal;
         const header = document.querySelector('.header');
-        
-        // Show header again
-        if (header) {
-            header.classList.remove('hidden');
+
+        if (header) header.classList.remove('hidden');
+
+        if (this.breakdownKeydownHandler) {
+            document.removeEventListener('keydown', this.breakdownKeydownHandler);
+            this.breakdownKeydownHandler = null;
         }
-        
-        if (backdrop) {
-            backdrop.classList.remove('active');
-            
-            // Remove keyboard event listener
-            if (backdrop.dataset.keydownHandler) {
-                document.removeEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        this.closeBreakdown();
-                    }
-                });
-            }
-            
-            setTimeout(() => backdrop.remove(), 300);
-        }
-        
+
         if (modal) {
-            // Animate out
             modal.style.opacity = '0';
+            modal.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            setTimeout(() => { if (modal.parentNode) modal.remove(); }, 300);
+        }
+
+        if (backdrop) {
             setTimeout(() => {
-                modal.remove();
-                this.currentModal = null;
-                // Check for pending confetti after modal is closed
-                setTimeout(() => {
-                    checkPendingConfetti();
-                }, 100);
-            }, 400);
+                backdrop.classList.remove('active');
+                setTimeout(() => { if (backdrop.parentNode) backdrop.remove(); }, 350);
+            }, 100);
         }
     },
     // Show detailed shift information in expanded view
@@ -2671,148 +2668,196 @@ export const app = {
         
         // Close any existing expanded views
         this.closeBreakdown();
+        this.closeStatDetails();
         this.closeSettings();
         
         // Hide header
         const header = document.querySelector('.header');
-        if (header) {
-            header.classList.add('hidden');
-        }
-        
-        // Create backdrop
+        if (header) header.classList.add('hidden');
+
         const backdrop = document.createElement('div');
         backdrop.className = 'backdrop-blur';
         backdrop.onclick = () => this.closeShiftDetails();
         document.body.appendChild(backdrop);
-        
-        // Store keyboard handler reference for proper cleanup
+        backdrop.offsetHeight;
+        backdrop.classList.add('active');
+
         this.shiftDetailsKeydownHandler = (e) => {
             if (e.key === 'Escape') {
                 this.closeShiftDetails();
             }
         };
         document.addEventListener('keydown', this.shiftDetailsKeydownHandler);
-        
-        // Force reflow then activate backdrop
-        backdrop.offsetHeight;
-        backdrop.classList.add('active');
-        
-        // Create shift detail card
-        const detailCard = document.createElement('div');
-        detailCard.className = 'shift-detail-card';
-        
-        // Set initial styles that position it correctly from the start
-        detailCard.style.position = 'fixed';
-        detailCard.style.top = '50%';
-        detailCard.style.left = '50%';
-        detailCard.style.transform = 'translate(-50%, -50%) scale(0.8)';
-        detailCard.style.width = 'min(90vw, 500px)';
-        detailCard.style.maxHeight = '80vh';
-        detailCard.style.padding = '24px';
-        detailCard.style.zIndex = '1200';
-        detailCard.style.opacity = '0';
-        detailCard.style.overflowY = 'auto';
-        detailCard.style.transition = 'all 0.4s var(--ease-default)';
-        
+
+        // Create modal container
+        const modal = document.createElement('div');
+        modal.className = 'breakdown-modal shift-detail-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: min(95vw, 500px);
+            max-height: 85vh;
+            background: var(--bg-primary);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px var(--shadow-blue);
+            z-index: 1200;
+            opacity: 0;
+            transition: all 0.4s var(--ease-default);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        `;
+
+        // Create title container
+        const titleContainer = document.createElement('div');
+        titleContainer.className = 'breakdown-title-container';
+        titleContainer.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 24px 24px 0 24px;
+            flex-shrink: 0;
+        `;
+
+        // Create icon
+        const icon = document.createElement('div');
+        icon.className = 'breakdown-title-icon';
+        icon.innerHTML = '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>';
+        icon.style.cssText = `
+            color: var(--accent3);
+            opacity: 0.8;
+        `;
+
+        // Create title
+        const title = document.createElement('h3');
+        title.className = 'breakdown-title';
+        title.textContent = 'Vaktdetaljer';
+        title.style.cssText = `
+            color: var(--accent3);
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        `;
+
+        titleContainer.appendChild(icon);
+        titleContainer.appendChild(title);
+        modal.appendChild(titleContainer);
+
+        // Create close button
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        closeBtn.innerHTML = '×';
+        closeBtn.style.cssText = `
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 102, 153, 0.1);
+            border: 1px solid rgba(255, 102, 153, 0.3);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--danger);
+            transition: all 0.2s var(--ease-default);
+            z-index: 21;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
+            font-size: 18px;
+            font-weight: bold;
+        `;
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.closeShiftDetails();
+        };
+        modal.appendChild(closeBtn);
+
+        // Create content container
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'shift-detail-content';
+        contentContainer.style.cssText = `
+            opacity: 0;
+            animation: slideInFromBottom 0.6s var(--ease-default) 0.3s forwards;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 24px 24px 24px;
+            gap: 16px;
+        `;
+
         // Calculate shift details
         const calc = this.calculateShift(shift);
         const dayName = this.WEEKDAYS[shift.date.getDay()];
         const monthName = this.MONTHS[shift.date.getMonth()];
-        const formattedDate = `${dayName} ${shift.date.getDate()}. ${monthName} ${shift.date.getFullYear()}`;
+        const formattedDate = `${dayName} ${shift.date.getDate()}. ${monthName}`;
         const originalIndex = this.shifts.indexOf(shift);
-        
-        // Create content
-        detailCard.innerHTML = `
-            <div class="shift-detail-header">
-                <div class="shift-detail-icon">
-                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M12 6v6l4 2"></path>
-                    </svg>
-                </div>
-                <h3 class="shift-detail-title">Vaktdetaljer</h3>
+
+        // Create compact content
+        contentContainer.innerHTML = `
+            <div class="detail-section">
+                <div class="detail-label">Dato</div>
+                <div class="detail-value">${formattedDate}</div>
             </div>
             
-            <div class="shift-detail-content">
-                <div class="detail-section">
-                    <div class="detail-label">Dato</div>
-                    <div class="detail-value">${formattedDate}</div>
-                </div>
-                
-                <div class="detail-section">
-                    <div class="detail-label">Arbeidstid</div>
-                    <div class="detail-value">${shift.startTime} - ${shift.endTime}</div>
-                </div>
-                
-                <div class="detail-section">
-                    <div class="detail-label">Total varighet</div>
-                    <div class="detail-value">${calc.totalHours.toFixed(2)} timer</div>
-                </div>
-                
-                <div class="detail-section">
-                    <div class="detail-label">Betalt tid</div>
-                    <div class="detail-value">${calc.paidHours.toFixed(2)} timer</div>
-                </div>
-                
-                ${calc.pauseDeducted ? `
-                <div class="detail-section">
-                    <div class="detail-label">Pausetrekk</div>
-                    <div class="detail-value">30 minutter</div>
-                </div>
-                ` : ''}
-                
-                <div class="detail-section">
-                    <div class="detail-label">Grunnlønn</div>
-                    <div class="detail-value accent">${this.formatCurrency(calc.baseWage)}</div>
-                </div>
-                
-                ${calc.bonus > 0 ? `
-                <div class="detail-section bonus-section">
-                    <div class="detail-label">Tillegg</div>
-                    <div class="detail-value accent">${this.formatCurrency(calc.bonus)}</div>
-                </div>
-                ` : ''}
-                
-                <div class="detail-section total">
-                    <div class="detail-label">Total lønn</div>
-                    <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
-                </div>
-
-                <div class="detail-section actions-section">
-                    <div class="shift-actions">
-                        <button class="btn btn-secondary edit-shift-btn" data-shift-id="${shift.id}" style="gap: 8px;">
-                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            Rediger vakt
-                        </button>
-                        <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="gap: 8px;">
-                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            Slett vakt
-                        </button>
-                        ${shift.seriesId ? `<button class="btn btn-warning delete-series-btn" style="gap: 8px;">Slett serie</button>` : ``}
-                    </div>
-                </div>
+            <div class="detail-section">
+                <div class="detail-label">Tid</div>
+                <div class="detail-value">${shift.startTime} - ${shift.endTime} (${calc.totalHours.toFixed(2)}t)</div>
+            </div>
+            
+            <div class="detail-section">
+                <div class="detail-label">Grunnlønn</div>
+                <div class="detail-value accent">${this.formatCurrency(calc.baseWage)}</div>
+            </div>
+            
+            ${calc.bonus > 0 ? `
+            <div class="detail-section">
+                <div class="detail-label">Tillegg</div>
+                <div class="detail-value accent">${this.formatCurrency(calc.bonus)}</div>
+            </div>
+            ` : ''}
+            
+            <div class="detail-section total">
+                <div class="detail-label">Total</div>
+                <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
             </div>
 
-            <button class="close-btn close-shift-details">×</button>
+            <div class="shift-actions" style="display: flex; gap: 12px; margin-top: 8px;">
+                <button class="btn btn-secondary edit-shift-btn" data-shift-id="${shift.id}" style="flex: 1; gap: 8px; padding: 12px;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Rediger
+                </button>
+                <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="flex: 1; gap: 8px; padding: 12px;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Slett
+                </button>
+                ${shift.seriesId ? `<button class="btn btn-warning delete-series-btn" style="flex: 1; gap: 8px; padding: 12px;">Slett serie</button>` : ''}
+            </div>
         `;
-        
-        document.body.appendChild(detailCard);
-        
-        // Trigger animation immediately
+
+        modal.appendChild(contentContainer);
+
+        document.body.appendChild(modal);
         requestAnimationFrame(() => {
-            detailCard.style.opacity = '1';
-            detailCard.style.transform = 'translate(-50%, -50%) scale(1)';
+            modal.style.opacity = '1';
+            modal.style.transform = 'translate(-50%, -50%) scale(1)';
         });
-        
+
         // Attach handler for delete-series button
         if (shift.seriesId) {
-            const seriesBtn = detailCard.querySelector('.delete-series-btn');
+            const seriesBtn = contentContainer.querySelector('.delete-series-btn');
             if (seriesBtn) {
                 seriesBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -2827,51 +2872,29 @@ export const app = {
     
     // Close shift details view
     closeShiftDetails() {
-        
-        // Find and close any existing shift detail card
-        const detailCard = document.querySelector('.shift-detail-card');
+        const modal = document.querySelector('.shift-detail-modal');
         const backdrop = document.querySelector('.backdrop-blur');
         const header = document.querySelector('.header');
-        
-        // Show header again
-        if (header) {
-            header.classList.remove('hidden');
-        }
-        
-        // Remove keyboard event listener
+
+        if (header) header.classList.remove('hidden');
+
         if (this.shiftDetailsKeydownHandler) {
             document.removeEventListener('keydown', this.shiftDetailsKeydownHandler);
             this.shiftDetailsKeydownHandler = null;
         }
-        
-        // Remove detail card first
-        if (detailCard) {
-            detailCard.style.opacity = '0';
-            detailCard.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            
-            // Remove card after animation
-            setTimeout(() => {
-                if (detailCard.parentNode) {
-                    detailCard.remove();
-                }
-            }, 300);
-        }
-        
-        // Remove backdrop after detail card animation starts
-        if (backdrop) {
-            // Start backdrop fade-out animation after a short delay
-            setTimeout(() => {
-                backdrop.classList.remove('active');
-                
-                // Remove backdrop after its animation completes
-                setTimeout(() => {
-                    if (backdrop.parentNode) {
-                        backdrop.remove();
-                    }
-                }, 350); // Extra 50ms to ensure animation completes
-            }, 100); // 100ms delay to let modal start closing first
+
+        if (modal) {
+            modal.style.opacity = '0';
+            modal.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            setTimeout(() => { if (modal.parentNode) modal.remove(); }, 300);
         }
 
+        if (backdrop) {
+            setTimeout(() => {
+                backdrop.classList.remove('active');
+                setTimeout(() => { if (backdrop.parentNode) backdrop.remove(); }, 350);
+            }, 100);
+        }
     },
 
     // Show details for a statistic card
@@ -2897,151 +2920,367 @@ export const app = {
         };
         document.addEventListener('keydown', this.statDetailsKeydownHandler);
 
-        const card = document.createElement('div');
-        card.className = 'shift-detail-card stat-detail-card';
-        card.style.position = 'fixed';
-        card.style.top = '50%';
-        card.style.left = '50%';
-        card.style.transform = 'translate(-50%, -50%) scale(0.8)';
-        card.style.width = 'min(90vw, 500px)';
-        card.style.maxHeight = '80vh';
-        card.style.padding = '24px';
-        card.style.zIndex = '1200';
-        card.style.opacity = '0';
-        card.style.overflowY = 'auto';
-        card.style.transition = 'all 0.4s var(--ease-default)';
+        // Create modal container
+        const modal = document.createElement('div');
+        modal.className = 'breakdown-modal stat-detail-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: min(95vw, 600px);
+            max-height: 85vh;
+            background: var(--bg-primary);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px var(--shadow-blue);
+            z-index: 1200;
+            opacity: 0;
+            transition: all 0.4s var(--ease-default);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        `;
 
-        const monthShifts = this.shifts.filter(s =>
-            s.date.getMonth() === this.currentMonth - 1 &&
-            s.date.getFullYear() === this.YEAR
-        );
-        const contributions = monthShifts.map(shift => ({
-            date: shift.date,
-            calc: this.calculateShift(shift)
-        }));
+        // Create title container
+        const titleContainer = document.createElement('div');
+        titleContainer.className = 'breakdown-title-container';
+        titleContainer.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 24px 24px 0 24px;
+            flex-shrink: 0;
+        `;
 
-        const formatDate = d => `${d.getDate()}. ${this.MONTHS[d.getMonth()]}`;
+        // Create icon based on stat type
+        const icon = document.createElement('div');
+        icon.className = 'breakdown-title-icon';
+        icon.innerHTML = this.getStatIcon(statId);
+        icon.style.cssText = `
+            color: var(--accent3);
+            opacity: 0.8;
+        `;
 
-        let title = '';
-        let rows = '';
-        let summaryLabel = '';
-        let summaryValue = '';
+        // Create title
+        const title = document.createElement('h3');
+        title.className = 'breakdown-title';
+        title.textContent = this.getStatTitle(statId);
+        title.style.cssText = `
+            color: var(--accent3);
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        `;
 
-        switch (statId) {
-            case 'avgHourly': {
-                title = 'Snittlønn/time';
-                let total = 0;
-                let hours = 0;
-                contributions.forEach(c => { total += c.calc.total; hours += c.calc.paidHours; rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${this.formatCurrency(c.calc.total)} / ${c.calc.paidHours.toFixed(2)} t</div></div>`; });
-                const avg = hours > 0 ? total / hours : 0;
-                summaryLabel = 'Snittlønn/time';
-                summaryValue = this.formatCurrency(avg);
-                break;
-            }
-            case 'totalHours': {
-                title = 'Timer totalt';
-                let hours = 0;
-                contributions.forEach(c => { hours += c.calc.paidHours; rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${c.calc.paidHours.toFixed(2)} t</div></div>`; });
-                summaryLabel = 'Sum timer';
-                summaryValue = this.formatHours(hours);
-                break;
-            }
-            case 'shiftCount': {
-                title = 'Antall vakter';
-                contributions.forEach(c => { rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">1</div></div>`; });
-                summaryLabel = 'Totalt';
-                summaryValue = contributions.length;
-                break;
-            }
-            case 'bonusTotal': {
-                title = 'Tillegg/UB';
-                let bonus = 0;
-                contributions.forEach(c => { bonus += c.calc.bonus; if (c.calc.bonus > 0) { rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${this.formatCurrency(c.calc.bonus)}</div></div>`; } });
-                summaryLabel = 'Sum tillegg';
-                summaryValue = this.formatCurrency(bonus);
-                break;
-            }
-            case 'longestShift': {
-                title = 'Lengste vakt';
-                let longest = 0;
-                contributions.forEach(c => { if (c.calc.totalHours > longest) longest = c.calc.totalHours; rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${c.calc.totalHours.toFixed(2)} t</div></div>`; });
-                summaryLabel = 'Lengste';
-                summaryValue = this.formatHours(longest);
-                break;
-            }
-            case 'avgPerShift': {
-                title = 'Snitt per vakt';
-                let total = 0;
-                contributions.forEach(c => { total += c.calc.total; rows += `<div class="detail-section"><div class="detail-label">${formatDate(c.date)}</div><div class="detail-value">${this.formatCurrency(c.calc.total)}</div></div>`; });
-                const avg = contributions.length > 0 ? total / contributions.length : 0;
-                summaryLabel = 'Snitt per vakt';
-                summaryValue = this.formatCurrency(avg);
-                break;
-            }
-            case 'bestDay': {
-                title = 'Beste dag';
-                const totals = {};
-                contributions.forEach(c => {
-                    const key = formatDate(c.date);
-                    totals[key] = (totals[key] || 0) + c.calc.total;
-                });
-                let bestKey = '';
-                let bestVal = 0;
-                Object.entries(totals).forEach(([k,v]) => { rows += `<div class="detail-section"><div class="detail-label">${k}</div><div class="detail-value">${this.formatCurrency(v)}</div></div>`; if (v > bestVal) { bestVal = v; bestKey = k; } });
-                summaryLabel = 'Beste dag';
-                summaryValue = `${bestKey} – ${this.formatCurrency(bestVal)}`;
-                break;
-            }
-            case 'monthCompare': {
-                title = 'Endring fra forrige mnd';
-                let currentTotal = 0;
-                contributions.forEach(c => { currentTotal += c.calc.total; });
-                const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
-                const prevYear = this.currentMonth === 1 ? this.YEAR - 1 : this.YEAR;
-                const prevShifts = this.shifts.filter(s =>
-                    s.date.getMonth() === prevMonth - 1 &&
-                    s.date.getFullYear() === prevYear
-                );
-                let prevTotal = 0;
-                prevShifts.forEach(s => { const c = this.calculateShift(s); prevTotal += c.total; });
-                rows += `<div class="detail-section"><div class="detail-label">Denne måneden</div><div class="detail-value">${this.formatCurrency(currentTotal)}</div></div>`;
-                rows += `<div class="detail-section"><div class="detail-label">Forrige måned</div><div class="detail-value">${this.formatCurrency(prevTotal)}</div></div>`;
-                const diff = currentTotal - prevTotal;
-                summaryLabel = 'Endring';
-                summaryValue = (diff >= 0 ? '+' : '') + this.formatCurrency(diff);
-                break;
-            }
-        }
+        titleContainer.appendChild(icon);
+        titleContainer.appendChild(title);
+        modal.appendChild(titleContainer);
 
-        card.innerHTML = `
-            <div class="shift-detail-header">
-                <div class="shift-detail-icon">
-                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M12 6v6l4 2"></path>
-                    </svg>
-                </div>
-                <h3 class="shift-detail-title">${title}</h3>
-            </div>
-            <div class="shift-detail-content">
-                ${rows}
-                <div class="detail-section total">
-                    <div class="detail-label">${summaryLabel}</div>
-                    <div class="detail-value accent large">${summaryValue}</div>
-                </div>
-            </div>
-            <button class="close-btn">×</button>`;
+        // Create close button
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        closeBtn.innerHTML = '×';
+        closeBtn.style.cssText = `
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 102, 153, 0.1);
+            border: 1px solid rgba(255, 102, 153, 0.3);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--danger);
+            transition: all 0.2s var(--ease-default);
+            z-index: 21;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
+            font-size: 18px;
+            font-weight: bold;
+        `;
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.closeStatDetails();
+        };
+        modal.appendChild(closeBtn);
 
-        card.querySelector('.close-btn').onclick = (e) => { e.stopPropagation(); this.closeStatDetails(); };
-        document.body.appendChild(card);
+        // Create calendar container
+        const calendarContainer = document.createElement('div');
+        calendarContainer.className = 'breakdown-calendar';
+        calendarContainer.style.cssText = `
+            opacity: 0;
+            animation: slideInFromBottom 0.6s var(--ease-default) 0.3s forwards;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 24px 24px 24px;
+        `;
+        modal.appendChild(calendarContainer);
+
+        // Create the stat calendar
+        this.createStatCalendar(calendarContainer, statId);
+
+        document.body.appendChild(modal);
         requestAnimationFrame(() => {
-            card.style.opacity = '1';
-            card.style.transform = 'translate(-50%, -50%) scale(1)';
+            modal.style.opacity = '1';
+            modal.style.transform = 'translate(-50%, -50%) scale(1)';
         });
     },
 
+    // Get icon for stat type
+    getStatIcon(statId) {
+        const icons = {
+            'avgHourly': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
+            'totalHours': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
+            'shiftCount': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+            'bonusTotal': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
+            'longestShift': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
+            'avgPerShift': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
+            'bestDay': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
+            'monthCompare': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>'
+        };
+        return icons[statId] || icons['avgHourly'];
+    },
+
+    // Get title for stat type
+    getStatTitle(statId) {
+        const titles = {
+            'avgHourly': 'Snittlønn/time',
+            'totalHours': 'Timer totalt',
+            'shiftCount': 'Antall vakter',
+            'bonusTotal': 'Tillegg/UB',
+            'longestShift': 'Lengste vakt',
+            'avgPerShift': 'Snitt per vakt',
+            'bestDay': 'Beste dag',
+            'monthCompare': 'Endring fra forrige mnd'
+        };
+        return titles[statId] || 'Statistikk';
+    },
+
+    // Create stat calendar view
+    createStatCalendar(container, statId) {
+        const year = this.YEAR;
+        const monthIdx = this.currentMonth - 1;
+        const firstDay = new Date(year, monthIdx, 1);
+        const lastDay = new Date(year, monthIdx + 1, 0);
+        const startDate = new Date(firstDay);
+        const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+        startDate.setDate(startDate.getDate() - offset);
+
+        container.innerHTML = '';
+
+        // Add calendar header with day names
+        const header = document.createElement('div');
+        header.className = 'calendar-header';
+        header.style.cssText = `
+            opacity: 0;
+            animation: slideInFromTop 0.4s var(--ease-default) 0.2s forwards;
+        `;
+        
+        // Add week number header
+        const weekHeader = document.createElement('div');
+        weekHeader.textContent = '';
+        weekHeader.className = 'calendar-week-number header';
+        header.appendChild(weekHeader);
+        
+        // Add day headers
+        ['M', 'T', 'O', 'T', 'F', 'L', 'S'].forEach(day => {
+            const dayHeader = document.createElement('div');
+            dayHeader.textContent = day;
+            dayHeader.className = 'calendar-day-header';
+            header.appendChild(dayHeader);
+        });
+        container.appendChild(header);
+
+        // Create calendar grid
+        const grid = document.createElement('div');
+        grid.className = 'calendar-grid';
+
+        // Get shifts for current month and create lookup by date
+        const monthShifts = this.shifts.filter(s => 
+            s.date.getMonth() === this.currentMonth - 1 && 
+            s.date.getFullYear() === this.YEAR
+        );
+        
+        const shiftsByDate = {};
+        monthShifts.forEach(shift => {
+            const dateKey = shift.date.getDate();
+            if (!shiftsByDate[dateKey]) {
+                shiftsByDate[dateKey] = [];
+            }
+            shiftsByDate[dateKey].push(shift);
+        });
+
+        // Calculate how many weeks we need to show
+        const endDate = new Date(lastDay);
+        const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const totalWeeks = Math.ceil(totalDays / 7);
+
+        for (let week = 0; week < totalWeeks; week++) {
+            // Add week number at the start of each row
+            const weekDate = new Date(startDate);
+            weekDate.setDate(startDate.getDate() + (week * 7));
+            const weekNum = this.getISOWeekNumber(weekDate);
+            const weekCell = document.createElement('div');
+            weekCell.className = 'calendar-week-number';
+            weekCell.textContent = weekNum;
+            
+            // Calculate animation delay for week number
+            const weekAnimationDelay = 0.3 + (week * 7) * 0.035;
+            weekCell.style.animationDelay = `${weekAnimationDelay}s`;
+            
+            grid.appendChild(weekCell);
+
+            // Add 7 days for this week
+            for (let day = 0; day < 7; day++) {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + (week * 7) + day);
+                
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                
+                // Calculate animation delay based on row and column position
+                const col = day;
+                const animationDelay = 0.3 + (week * 8 + col + 1) * 0.035;
+                cell.style.animationDelay = `${animationDelay}s`;
+                
+                // Create content wrapper and day number
+                const content = document.createElement('div');
+                content.className = 'calendar-cell-content';
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'calendar-day-number';
+                dayNumber.textContent = cellDate.getDate();
+                content.appendChild(dayNumber);
+                
+                // Style for current month vs other months
+                if (cellDate.getMonth() !== monthIdx) {
+                    cell.classList.add('other-month');
+                    cell.style.setProperty('--final-opacity', '0.3');
+                }
+
+                const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
+                let displayValue = '';
+                let hasData = false;
+                
+                // Calculate display value based on stat type
+                if (cellDate.getMonth() === monthIdx && shiftsForDay.length > 0) {
+                    hasData = true;
+                    displayValue = this.calculateStatValue(statId, shiftsForDay);
+                }
+
+                if (hasData && displayValue !== '') {
+                    // Create wrapper for stat data
+                    const statData = document.createElement('div');
+                    statData.className = 'calendar-shift-data';
+                    
+                    const valueDisplay = document.createElement('div');
+                    valueDisplay.className = 'calendar-amount';
+                    valueDisplay.textContent = displayValue;
+                    
+                    statData.appendChild(valueDisplay);
+                    content.appendChild(statData);
+                    
+                    cell.classList.add('has-shifts');
+                    
+                    // Make clickable if there are shifts
+                    cell.style.cursor = 'pointer';
+                    cell.onclick = (e) => {
+                        e.stopPropagation();
+                        if (shiftsForDay.length > 0) {
+                            this.showShiftDetails(shiftsForDay[0].id);
+                        }
+                    };
+                }
+
+                cell.appendChild(content);
+                grid.appendChild(cell);
+            }
+        }
+
+        container.appendChild(grid);
+    },
+
+    // Calculate display value for stat type
+    calculateStatValue(statId, shiftsForDay) {
+        switch (statId) {
+            case 'avgHourly': {
+                let total = 0;
+                let hours = 0;
+                shiftsForDay.forEach(shift => {
+                    const calc = this.calculateShift(shift);
+                    total += calc.total;
+                    hours += calc.paidHours;
+                });
+                const avg = hours > 0 ? total / hours : 0;
+                return this.formatCurrencyCalendar(avg);
+            }
+            case 'totalHours': {
+                let hours = 0;
+                shiftsForDay.forEach(shift => {
+                    const calc = this.calculateShift(shift);
+                    hours += calc.paidHours;
+                });
+                return hours > 0 ? `${hours.toFixed(1)}t` : '';
+            }
+            case 'shiftCount': {
+                return shiftsForDay.length > 0 ? '●' : '';
+            }
+            case 'bonusTotal': {
+                let bonus = 0;
+                shiftsForDay.forEach(shift => {
+                    const calc = this.calculateShift(shift);
+                    bonus += calc.bonus;
+                });
+                return bonus > 0 ? this.formatCurrencyCalendar(bonus) : '';
+            }
+            case 'longestShift': {
+                let longest = 0;
+                shiftsForDay.forEach(shift => {
+                    const calc = this.calculateShift(shift);
+                    if (calc.totalHours > longest) longest = calc.totalHours;
+                });
+                return longest > 0 ? `${longest.toFixed(1)}t` : '';
+            }
+            case 'avgPerShift': {
+                let total = 0;
+                shiftsForDay.forEach(shift => {
+                    const calc = this.calculateShift(shift);
+                    total += calc.total;
+                });
+                const avg = shiftsForDay.length > 0 ? total / shiftsForDay.length : 0;
+                return avg > 0 ? this.formatCurrencyCalendar(avg) : '';
+            }
+            case 'bestDay': {
+                let total = 0;
+                shiftsForDay.forEach(shift => {
+                    const calc = this.calculateShift(shift);
+                    total += calc.total;
+                });
+                return total > 0 ? this.formatCurrencyCalendar(total) : '';
+            }
+            case 'monthCompare': {
+                // For month compare, show total for the day
+                let total = 0;
+                shiftsForDay.forEach(shift => {
+                    const calc = this.calculateShift(shift);
+                    total += calc.total;
+                });
+                return total > 0 ? this.formatCurrencyCalendar(total) : '';
+            }
+            default:
+                return '';
+        }
+    },
+
     closeStatDetails() {
-        const card = document.querySelector('.stat-detail-card');
+        const modal = document.querySelector('.stat-detail-modal');
         const backdrop = document.querySelector('.backdrop-blur');
         const header = document.querySelector('.header');
 
@@ -3052,10 +3291,10 @@ export const app = {
             this.statDetailsKeydownHandler = null;
         }
 
-        if (card) {
-            card.style.opacity = '0';
-            card.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            setTimeout(() => { if (card.parentNode) card.remove(); }, 300);
+        if (modal) {
+            modal.style.opacity = '0';
+            modal.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            setTimeout(() => { if (modal.parentNode) modal.remove(); }, 300);
         }
 
         if (backdrop) {
