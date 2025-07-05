@@ -2278,11 +2278,15 @@ export const app = {
         
         const nextShiftContent = document.getElementById('nextShiftContent');
         const nextShiftEmpty = document.getElementById('nextShiftEmpty');
+        const nextShiftDate = document.getElementById('nextShiftDate');
         
         if (upcomingShifts.length === 0) {
             // No upcoming shifts
             nextShiftContent.style.display = 'none';
             nextShiftEmpty.style.display = 'flex';
+            if (nextShiftDate) {
+                nextShiftDate.style.display = 'none';
+            }
         } else {
             // Show next shift details
             nextShiftContent.style.display = 'flex';
@@ -2303,33 +2307,30 @@ export const app = {
             const tomorrow = new Date(now);
             tomorrow.setDate(now.getDate() + 1);
             
-            // Create separate date and weekday parts to match regular shift items structure
-            let dateNumberPart;
-            let weekdayPart;
+            // Create date display for header
+            let headerDateText;
             
             if (shiftDate.toDateString() === today.toDateString()) {
-                dateNumberPart = `I dag - ${day}. ${month}`;
-                weekdayPart = weekday;
+                headerDateText = `I dag`;
             } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
-                dateNumberPart = `I morgen - ${day}. ${month}`;
-                weekdayPart = weekday;
+                headerDateText = `I morgen`;
             } else {
-                dateNumberPart = `${day}. ${month}`;
-                weekdayPart = weekday;
+                headerDateText = `${weekday} ${day}. ${month}`;
             }
             
-            // Create the shift item using the same structure as in the shift list
+            // Update the header with date information
+            if (nextShiftDate) {
+                nextShiftDate.textContent = headerDateText;
+                nextShiftDate.style.display = 'block';
+            }
+            
+            // Create the shift item using the same structure as in the shift list, but without date info
             const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
             const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
             
             nextShiftContent.innerHTML = `
                 <div class="shift-item ${typeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer;">
                     <div class="shift-info">
-                        <div class="shift-date">
-                            <span class="shift-date-number">${dateNumberPart}</span>
-                            <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${weekdayPart}${seriesBadge}</span>
-                        </div>
                         <div class="shift-details">
                             <div class="shift-time-with-hours">
                                 <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2340,6 +2341,7 @@ export const app = {
                                 <span class="shift-time-arrow">→</span>
                                 <span>${this.formatHours(calculation.hours)}</span>
                             </div>
+                            ${seriesBadge}
                         </div>
                     </div>
                     <div class="shift-amount-wrapper">
