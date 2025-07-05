@@ -277,10 +277,10 @@ class ErrorHandler {
 
     /**
      * Handle async operation with error handling
-     * @param {Promise} promise - Promise to handle
+     * @param {Promise|Function} promiseOrFactory - Promise to handle or function that returns a promise
      * @param {Object} options - Error handling options
      */
-    async handleAsync(promise, options = {}) {
+    async handleAsync(promiseOrFactory, options = {}) {
         const {
             successMessage = null,
             errorMessage = null,
@@ -288,12 +288,17 @@ class ErrorHandler {
             loadingElement = null
         } = options;
 
+        // Support both direct promises and factory functions for proper retry functionality
+        const getPromise = typeof promiseOrFactory === 'function' 
+            ? promiseOrFactory 
+            : () => promiseOrFactory;
+
         try {
             if (showLoading && loadingElement && window.LoadingHelper) {
                 window.LoadingHelper.show(loadingElement);
             }
 
-            const result = await promise;
+            const result = await getPromise();
 
             if (successMessage) {
                 this.showSuccess(successMessage);
@@ -306,7 +311,7 @@ class ErrorHandler {
             const message = errorMessage || this.formatError(error);
             this.showError(message, {
                 actionText: 'Prøv igjen',
-                actionCallback: () => this.handleAsync(promise, options)
+                actionCallback: () => this.handleAsync(getPromise, options)
             });
             
             throw error;
@@ -456,13 +461,19 @@ if (typeof module !== 'undefined' && module.exports) {
  * // Show success
  * ErrorHelper.showSuccess('Data lagret!');
  * 
- * // Handle async operation
+ * // Handle async operation (with retry support)
  * ErrorHelper.handleAsync(
- *     fetch('/api/save'),
+ *     () => fetch('/api/save'),  // Pass a function that returns a new promise
  *     { 
  *         successMessage: 'Lagret!',
  *         loadingElement: '#save-button'
  *     }
+ * );
+ * 
+ * // For backward compatibility, direct promises still work (but without retry)
+ * ErrorHelper.handleAsync(
+ *     fetch('/api/data'),
+ *     { successMessage: 'Data hentet!' }
  * );
  * 
  * // Form validation
