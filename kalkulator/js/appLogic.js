@@ -2231,10 +2231,8 @@ export const app = {
 
         const now = new Date();
         const currentMonth = now.getMonth() + 1;
-        const currentYear = now.getFullYear();
-        
-        // Only show next shift card if we're viewing the current month
-        if (this.currentMonth !== currentMonth || this.YEAR !== currentYear) {
+        // Removed currentYear comparison to this.YEAR to avoid hiding the card when the hard-coded year differs from the actual year
+        if (this.currentMonth !== currentMonth) {
             nextShiftCard.style.display = 'none';
             return;
         }
@@ -2303,9 +2301,10 @@ export const app = {
             const month = this.MONTHS[shiftDate.getMonth()];
             
             // Check if it's today or tomorrow
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
+            // Use the same reference time ("now") to avoid race conditions around midnight
+            const today = new Date(now);
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
             
             let dateDisplay;
             if (shiftDate.toDateString() === today.toDateString()) {
