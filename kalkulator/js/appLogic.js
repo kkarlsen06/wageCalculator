@@ -388,6 +388,9 @@ export const app = {
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
         
+        // Setup event listeners for new settings
+        this.setupNewSettingsListeners();
+        
         // Restore form state after initialization
         this.restoreFormState();
 
@@ -1235,9 +1238,11 @@ export const app = {
                     
                 this.pauseDeduction = settings.pause_deduction || false;
                 this.fullMinuteRange = settings.full_minute_range || false;
-                this.directTimeInput = settings.direct_time_input || false;
-                this.monthlyGoal = settings.monthly_goal || 20000;
-                this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
+                            this.directTimeInput = settings.direct_time_input || false;
+            this.monthlyGoal = settings.monthly_goal || 20000;
+            this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
+            this.currencyFormat = settings.currency_format || false;
+            this.compactView = settings.compact_view || false;
                 
                 if (shouldResetToCurrentMonth && settings.current_month && settings.current_month !== new Date().getMonth() + 1) {
                     // User was inactive for >5 hours, resetting to current month
@@ -1333,6 +1338,8 @@ export const app = {
         this.directTimeInput = false; // Default to dropdown time selection
         this.monthlyGoal = 20000; // Default monthly goal
         this.hasSeenRecurringIntro = false; // Track if user has seen recurring feature intro
+        this.currencyFormat = false; // Default to "kr" instead of "NOK"
+        this.compactView = false; // Default to normal view
     },
 
     // Helper function to test custom bonuses
@@ -1381,6 +1388,16 @@ export const app = {
         const directTimeInputToggle = document.getElementById('directTimeInputToggle');
         if (directTimeInputToggle) {
             directTimeInputToggle.checked = this.directTimeInput;
+        }
+
+        const currencyFormatToggle = document.getElementById('currencyFormatToggle');
+        if (currencyFormatToggle) {
+            currencyFormatToggle.checked = this.currencyFormat;
+        }
+
+        const compactViewToggle = document.getElementById('compactViewToggle');
+        if (compactViewToggle) {
+            compactViewToggle.checked = this.compactView;
         }
 
         // Toggle preset/custom sections
@@ -1450,6 +1467,8 @@ export const app = {
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
                 if ('monthly_goal' in existingSettings) settingsData.monthly_goal = this.monthlyGoal;
                 if ('has_seen_recurring_intro' in existingSettings) settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
+                if ('currency_format' in existingSettings) settingsData.currency_format = this.currencyFormat;
+                if ('compact_view' in existingSettings) settingsData.compact_view = this.compactView;
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
@@ -1468,6 +1487,8 @@ export const app = {
                 settingsData.direct_time_input = this.directTimeInput;
                 settingsData.monthly_goal = this.monthlyGoal;
                 settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
+                settingsData.currency_format = this.currencyFormat;
+                settingsData.compact_view = this.compactView;
                 settingsData.custom_bonuses = this.customBonuses || {};
                 // For new settings, we'll try to include last_active and let it fail gracefully if column doesn't exist
             }
@@ -1512,6 +1533,8 @@ export const app = {
                 this.directTimeInput = data.directTimeInput || false;
                 this.monthlyGoal = data.monthlyGoal || 20000;
                 this.hasSeenRecurringIntro = data.hasSeenRecurringIntro || false;
+                this.currencyFormat = data.currencyFormat || false;
+                this.compactView = data.compactView || false;
                 
                 this.updateSettingsUI();
             } else {
@@ -1623,17 +1646,17 @@ export const app = {
         const settingsModal = document.getElementById('settingsModal');
         const currentActiveTab = settingsModal?.querySelector('.tab-btn.active');
         const currentTab = currentActiveTab ? 
-            (currentActiveTab.textContent === 'Generelt' ? 'general' : 
-             currentActiveTab.textContent === 'Lønn' ? 'wage' : 
-             currentActiveTab.textContent === 'Profil' ? 'profile' :
-             'data') : null;
+            (currentActiveTab.textContent === 'Lønn & Beregning' ? 'wage' : 
+             currentActiveTab.textContent === 'Brukergrensesnitt' ? 'interface' : 
+             currentActiveTab.textContent === 'Konto & Data' ? 'account' :
+             'wage') : null;
         
         // If switching away from wage tab and in custom mode, auto-save bonuses
         if (currentTab === 'wage' && !this.usePreset && tab !== 'wage') {
             await this.saveCustomBonusesSilent();
         }
         
-        const tabs = ['general','wage','profile','data'];
+        const tabs = ['wage', 'interface', 'account'];
         const btns = settingsModal?.querySelectorAll('.tab-nav .tab-btn') || [];
         tabs.forEach((t, i) => {
             const btn = btns[i];
@@ -1653,8 +1676,8 @@ export const app = {
             }, 100);
         }
         
-        // When switching to profile tab, load profile data
-        if (tab === 'profile') {
+        // When switching to account tab, load profile data
+        if (tab === 'account') {
             setTimeout(() => {
                 this.loadProfileData();
             }, 100);
@@ -1863,8 +1886,8 @@ export const app = {
             // Update UI to match current state
             this.updateSettingsUI();
             
-            // Set active tab to general
-            this.switchSettingsTabSync('general');
+            // Set active tab to wage (most important settings first)
+            this.switchSettingsTabSync('wage');
             
             // Show the modal
             modal.style.display = 'flex';
@@ -1912,7 +1935,9 @@ export const app = {
                 pauseDeduction: this.pauseDeduction,
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
-                hasSeenRecurringIntro: this.hasSeenRecurringIntro
+                hasSeenRecurringIntro: this.hasSeenRecurringIntro,
+                currencyFormat: this.currencyFormat,
+                compactView: this.compactView
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
         } catch (e) {
@@ -4238,6 +4263,231 @@ export const app = {
             setTimeout(() => {
                 this.showRecurringIntroduction();
             }, delay);
+        }
+    },
+
+    // Export data functionality
+    exportData(format) {
+        try {
+            const data = {
+                shifts: this.shifts.map(shift => ({
+                    id: shift.id,
+                    date: shift.date.toISOString(),
+                    startTime: shift.startTime,
+                    endTime: shift.endTime,
+                    type: shift.type,
+                    seriesId: shift.seriesId || null
+                })),
+                settings: {
+                    usePreset: this.usePreset,
+                    customWage: this.customWage,
+                    currentWageLevel: this.currentWageLevel,
+                    customBonuses: this.customBonuses,
+                    pauseDeduction: this.pauseDeduction,
+                    fullMinuteRange: this.fullMinuteRange,
+                    directTimeInput: this.directTimeInput,
+                    monthlyGoal: this.monthlyGoal,
+                    currencyFormat: this.currencyFormat,
+                    compactView: this.compactView
+                },
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+
+            if (format === 'csv') {
+                this.exportAsCSV(data);
+            } else if (format === 'pdf') {
+                this.exportAsPDF(data);
+            } else {
+                // Default to JSON
+                this.exportAsJSON(data);
+            }
+        } catch (error) {
+            console.error('Error exporting data:', error);
+            alert('Kunne ikke eksportere data. Prøv igjen.');
+        }
+    },
+
+    exportAsCSV(data) {
+        const csvContent = [
+            ['Dato', 'Dag', 'Start', 'Slutt', 'Timer', 'Grunnlønn', 'Tillegg', 'Totalt', 'Type', 'Serie'].join(','),
+            ...data.shifts.map(shift => {
+                const date = new Date(shift.date);
+                const calc = this.calculateShift({
+                    ...shift,
+                    date: date
+                });
+                return [
+                    date.toLocaleDateString('no-NO'),
+                    this.WEEKDAYS[date.getDay()],
+                    shift.startTime,
+                    shift.endTime,
+                    calc.hours.toFixed(2),
+                    calc.baseWage.toFixed(2),
+                    calc.bonus.toFixed(2),
+                    calc.total.toFixed(2),
+                    shift.type === 0 ? 'Ukedag' : shift.type === 1 ? 'Lørdag' : 'Søndag',
+                    shift.seriesId ? 'Ja' : 'Nei'
+                ].join(',');
+            })
+        ].join('\n');
+
+        this.downloadFile(csvContent, 'vaktdata.csv', 'text/csv');
+    },
+
+    exportAsJSON(data) {
+        const jsonContent = JSON.stringify(data, null, 2);
+        this.downloadFile(jsonContent, 'vaktdata.json', 'application/json');
+    },
+
+    exportAsPDF(data) {
+        // For now, show a message that PDF export is not implemented
+        // This would require a PDF library like jsPDF
+        alert('PDF-eksport er ikke implementert ennå. Bruk CSV-eksport i stedet.');
+    },
+
+    downloadFile(content, filename, contentType) {
+        const blob = new Blob([content], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
+
+    // Import data functionality
+    importData() {
+        const fileInput = document.getElementById('importFile');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('Velg en fil å importere');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const content = e.target.result;
+
+                if (file.name.endsWith('.json')) {
+                    const data = JSON.parse(content);
+                    this.importFromJSON(data);
+                } else if (file.name.endsWith('.csv')) {
+                    this.importFromCSV(content);
+                } else {
+                    alert('Ikke støttet filformat. Bruk JSON eller CSV.');
+                    return;
+                }
+
+                alert('Data importert successfully!');
+                this.updateDisplay();
+            } catch (error) {
+                console.error('Error importing data:', error);
+                alert('Kunne ikke importere data. Sjekk filformatet.');
+            }
+        };
+
+        reader.readAsText(file);
+    },
+
+    importFromJSON(data) {
+        if (data.shifts && Array.isArray(data.shifts)) {
+            // Convert date strings back to Date objects
+            const importedShifts = data.shifts.map(shift => ({
+                ...shift,
+                date: new Date(shift.date)
+            }));
+
+            // Add unique IDs if missing
+            importedShifts.forEach(shift => {
+                if (!shift.id) {
+                    shift.id = Date.now() + Math.random();
+                }
+            });
+
+            // Merge with existing shifts (avoid duplicates)
+            const existingIds = new Set(this.shifts.map(s => s.id));
+            const newShifts = importedShifts.filter(s => !existingIds.has(s.id));
+            
+            this.shifts = [...this.shifts, ...newShifts];
+            this.saveToSupabase();
+        }
+
+        if (data.settings) {
+            // Optionally import settings (ask user first)
+            const importSettings = confirm('Vil du også importere innstillinger? Dette vil overskrive dine nåværende innstillinger.');
+            if (importSettings) {
+                Object.assign(this, data.settings);
+                this.saveSettingsToSupabase();
+                this.updateSettingsUI();
+            }
+        }
+    },
+
+    importFromCSV(content) {
+        const lines = content.split('\n');
+        const shifts = [];
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            const values = line.split(',');
+            if (values.length >= 6) {
+                const dateParts = values[0].split('.');
+                const date = new Date(
+                    parseInt(dateParts[2]),
+                    parseInt(dateParts[1]) - 1,
+                    parseInt(dateParts[0])
+                );
+                
+                const shift = {
+                    id: Date.now() + Math.random(),
+                    date: date,
+                    startTime: values[2],
+                    endTime: values[3],
+                    type: values[8] === 'Ukedag' ? 0 : values[8] === 'Lørdag' ? 1 : 2,
+                    seriesId: values[9] === 'Ja' ? 'imported-series' : null
+                };
+                
+                shifts.push(shift);
+            }
+        }
+        
+        this.shifts = [...this.shifts, ...shifts];
+        this.saveToSupabase();
+    },
+
+    // Add event listeners for new settings
+    setupNewSettingsListeners() {
+        // Currency format toggle
+        const currencyFormatToggle = document.getElementById('currencyFormatToggle');
+        if (currencyFormatToggle) {
+            currencyFormatToggle.addEventListener('change', () => {
+                this.currencyFormat = currencyFormatToggle.checked;
+                this.saveSettingsToSupabase();
+                this.updateDisplay(); // Refresh display with new format
+            });
+        }
+
+        // Compact view toggle
+        const compactViewToggle = document.getElementById('compactViewToggle');
+        if (compactViewToggle) {
+            compactViewToggle.addEventListener('change', () => {
+                this.compactView = compactViewToggle.checked;
+                this.saveSettingsToSupabase();
+                this.updateDisplay(); // Refresh display with new view
+                
+                // Add/remove compact class to body
+                if (this.compactView) {
+                    document.body.classList.add('compact-view');
+                } else {
+                    document.body.classList.remove('compact-view');
+                }
+            });
         }
     }
 };

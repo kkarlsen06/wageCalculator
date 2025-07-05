@@ -3433,3 +3433,64 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   font-size: 14px;
 }
+
+/* Compact view styles - applied when body has .compact-view class */
+.compact-view .shift-item {
+  padding: 12px;
+  min-height: 60px;
+}
+
+.compact-view .shift-date {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.compact-view .shift-details {
+  font-size: 12px;
+}
+
+.compact-view .shift-breakdown {
+  font-size: 11px;
+}
+
+.compact-view .total-card {
+  padding: 16px;
+}
+
+.compact-view .total-amount {
+  font-size: 28px;
+}
+
+.compact-view .breakdown-card {
+  padding: 12px;
+}
+
+.compact-view .breakdown-value {
+  font-size: 16px;
+}
+
+.compact-view .breakdown-label {
+  font-size: 12px;
+}
+
+.compact-view .stat-card {
+  padding: 12px;
+}
+
+.compact-view .stat-value {
+  font-size: 14px;
+}
+
+.compact-view .stat-label {
+  font-size: 11px;
+}
+
+.compact-view .gap-20 {
+  gap: 15px;
+}
+
+.compact-view .dashboard-content {
+  gap: 15px;
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
