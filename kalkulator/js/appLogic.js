@@ -4358,7 +4358,7 @@ export const app = {
             }
 
             // Create new PDF instance
-            const { jsPDF } = window.jsPDF;
+            const jsPDF = window.jsPDF;
             const doc = new jsPDF();
 
             // Set up document properties
