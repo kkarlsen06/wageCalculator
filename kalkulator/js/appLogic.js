@@ -2037,6 +2037,7 @@ export const app = {
         this.updateStats(shouldAnimate);
         this.updateShiftList();
         this.updateShiftCalendar();
+        this.updateNextShiftCard();
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
@@ -2296,6 +2297,103 @@ export const app = {
     updateShiftCalendar() {
         if (this.shiftView !== 'calendar') return;
         this.renderShiftCalendar();
+    },
+
+    updateNextShiftCard() {
+        const nextShiftCard = document.getElementById('nextShiftCard');
+        if (!nextShiftCard) return;
+
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        
+        // Only show next shift card if we're viewing the current month
+        if (this.currentMonth !== currentMonth || this.YEAR !== currentYear) {
+            nextShiftCard.style.display = 'none';
+            return;
+        }
+        
+        nextShiftCard.style.display = 'block';
+        
+        // Get all shifts from now onwards
+        const upcomingShifts = this.shifts.filter(shift => {
+            const shiftDate = new Date(shift.date);
+            
+            // If shift is on a future date, include it
+            if (shiftDate > now) {
+                return true;
+            }
+            
+            // If shift is today, check if it hasn't started yet
+            if (shiftDate.toDateString() === now.toDateString()) {
+                const [startHour, startMinute] = shift.startTime.split(':').map(Number);
+                const shiftStartTime = new Date(shiftDate);
+                shiftStartTime.setHours(startHour, startMinute, 0, 0);
+                
+                return shiftStartTime > now;
+            }
+            
+            return false;
+        });
+        
+        // Sort by date and time
+        upcomingShifts.sort((a, b) => {
+            const aDate = new Date(a.date);
+            const bDate = new Date(b.date);
+            
+            if (aDate.getTime() !== bDate.getTime()) {
+                return aDate - bDate;
+            }
+            
+            // Same date, sort by start time
+            const [aHour, aMinute] = a.startTime.split(':').map(Number);
+            const [bHour, bMinute] = b.startTime.split(':').map(Number);
+            
+            return (aHour * 60 + aMinute) - (bHour * 60 + bMinute);
+        });
+        
+        const nextShiftDate = document.getElementById('nextShiftDate');
+        const nextShiftTime = document.getElementById('nextShiftTime');
+        const nextShiftEarnings = document.getElementById('nextShiftEarnings');
+        const nextShiftContent = document.querySelector('.next-shift-content');
+        const nextShiftEmpty = document.getElementById('nextShiftEmpty');
+        
+        if (upcomingShifts.length === 0) {
+            // No upcoming shifts
+            nextShiftContent.style.display = 'none';
+            nextShiftEmpty.style.display = 'flex';
+        } else {
+            // Show next shift details
+            nextShiftContent.style.display = 'flex';
+            nextShiftEmpty.style.display = 'none';
+            
+            const nextShift = upcomingShifts[0];
+            const calculation = this.calculateShift(nextShift);
+            
+            // Format date
+            const shiftDate = new Date(nextShift.date);
+            const weekday = this.WEEKDAYS[shiftDate.getDay()];
+            const day = shiftDate.getDate();
+            const month = this.MONTHS[shiftDate.getMonth()];
+            
+            // Check if it's today or tomorrow
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            
+            let dateDisplay;
+            if (shiftDate.toDateString() === today.toDateString()) {
+                dateDisplay = `I dag - ${weekday} ${day}. ${month}`;
+            } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
+                dateDisplay = `I morgen - ${weekday} ${day}. ${month}`;
+            } else {
+                dateDisplay = `${weekday} ${day}. ${month}`;
+            }
+            
+            nextShiftDate.textContent = dateDisplay;
+            nextShiftTime.textContent = `${nextShift.startTime} - ${nextShift.endTime}`;
+            nextShiftEarnings.textContent = `Estimert: ${this.formatCurrency(calculation.total)}`;
+        }
     },
 
     renderShiftCalendar() {
