@@ -3089,7 +3089,7 @@ input:checked + .slider:before {
 .snap-container {
   height: var(--app-height, 100vh);
   overflow-y: auto;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: y proximity;
   scroll-behavior: smooth;
   position: relative;
   /* Enable smooth scrolling with scroll-snap */
@@ -3110,6 +3110,16 @@ input:checked + .slider:before {
 .snap-section.shift-section {
   min-height: var(--app-height, 100vh);
   height: auto;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+/* Make the shift list container scrollable when content exceeds viewport */
+.shift-section .app-container {
+  max-height: var(--app-height, 100vh);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Dashboard section styling */
