@@ -1176,9 +1176,6 @@ export const app = {
         }
 
         try {
-            // First, update user's last active timestamp
-            await this.updateLastActiveTimestamp(user.id);
-
             // Fetch shifts
             const { data: shifts, error: shiftsError } = await window.supa
                 .from('user_shifts')
@@ -1230,24 +1227,16 @@ export const app = {
                     saturday: loadedBonuses.saturday || [],
                     sunday: loadedBonuses.sunday || []
                 };
-                // Check if user has been inactive for more than 5 hours
-                const shouldResetToCurrentMonth = this.shouldResetToCurrentMonth(settings.last_active);
-                
-                this.currentMonth = shouldResetToCurrentMonth 
-                    ? new Date().getMonth() + 1 
-                    : (settings.current_month || new Date().getMonth() + 1);
+                // Always set to current month on page load
+                this.currentMonth = new Date().getMonth() + 1;
                     
                 this.pauseDeduction = settings.pause_deduction || false;
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
             this.monthlyGoal = settings.monthly_goal || 20000;
-            this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
-            this.currencyFormat = settings.currency_format || false;
-            this.compactView = settings.compact_view || false;
-                
-                if (shouldResetToCurrentMonth && settings.current_month && settings.current_month !== new Date().getMonth() + 1) {
-                    // User was inactive for >5 hours, resetting to current month
-                }
+                            this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
+                this.currencyFormat = settings.currency_format || false;
+                this.compactView = settings.compact_view || false;
                 
             } else {
                 // No settings found, set defaults
@@ -1263,64 +1252,6 @@ export const app = {
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
             this.setDefaultSettings();
-        }
-    },
-
-    // Update user's last active timestamp
-    async updateLastActiveTimestamp(userId) {
-        try {
-            const now = new Date().toISOString();
-            
-            // First check if last_active column exists by trying to fetch it
-            const { data: existingSettings, error: fetchError } = await window.supa
-                .from('user_settings')
-                .select('last_active')
-                .eq('user_id', userId)
-                .limit(1);
-                
-            if (fetchError && fetchError.code === 'PGRST204') {
-                // Column doesn't exist, skip updating last_active
-                return;
-            }
-            
-            const { error } = await window.supa
-                .from('user_settings')
-                .upsert({
-                    user_id: userId,
-                    last_active: now
-                }, {
-                    onConflict: 'user_id'
-                });
-                
-            if (error) {
-                if (error.code === 'PGRST204') {
-                    // last_active column does not exist, skipping timestamp update
-                } else {
-                    console.error('Error updating last active timestamp:', error);
-                }
-            }
-        } catch (e) {
-            console.error('Error in updateLastActiveTimestamp:', e);
-        }
-    },
-
-    // Check if user should be reset to current month based on inactivity
-    shouldResetToCurrentMonth(lastActiveString) {
-        if (!lastActiveString) {
-            return false; // If no timestamp, don't reset - keep user's preference
-        }
-
-        try {
-            const lastActive = new Date(lastActiveString);
-            const now = new Date();
-            const hoursSinceLastActive = (now - lastActive) / (1000 * 60 * 60); // Convert to hours
-            
-            const shouldReset = hoursSinceLastActive > 5;
-            
-            return shouldReset;
-        } catch (e) {
-            console.error('Error parsing last_active timestamp:', e);
-            return false; // If error parsing, don't reset - keep user's preference
         }
     },
 
@@ -1480,10 +1411,6 @@ export const app = {
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
-                // Only include last_active if the column exists
-                if ('last_active' in existingSettings) {
-                    settingsData.last_active = new Date().toISOString();
-                }
             } else {
                 // No existing settings - try to save with common field names
                 settingsData.use_preset = this.usePreset;
@@ -1498,7 +1425,6 @@ export const app = {
                 settingsData.currency_format = this.currencyFormat;
                 settingsData.compact_view = this.compactView;
                 settingsData.custom_bonuses = this.customBonuses || {};
-                // For new settings, we'll try to include last_active and let it fail gracefully if column doesn't exist
             }
 
             const { error } = await window.supa

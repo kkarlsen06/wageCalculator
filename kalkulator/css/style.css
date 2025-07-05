@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERROR/* Progress card - hele kortet er progressbaren */
+/* Progress card - hele kortet er progressbaren */
 .progress-card {
   background: var(--gradient-progress-bg);
   border-radius: 16px;
@@ -2039,7 +2039,6 @@ input:checked + .slider:before {
   background: var(--gradient-secondary);
   border-radius: 24px;
   padding: 20px;
-  margin-bottom: 20px;
   box-shadow: 0 12px 40px -8px var(--shadow-blue);
   position: relative;
   overflow: hidden;
