@@ -2276,10 +2276,7 @@ export const app = {
             return (aHour * 60 + aMinute) - (bHour * 60 + bMinute);
         });
         
-        const nextShiftDate = document.getElementById('nextShiftDate');
-        const nextShiftTime = document.getElementById('nextShiftTime');
-        const nextShiftEarnings = document.getElementById('nextShiftEarnings');
-        const nextShiftContent = document.querySelector('.next-shift-content');
+        const nextShiftContent = document.getElementById('nextShiftContent');
         const nextShiftEmpty = document.getElementById('nextShiftEmpty');
         
         if (upcomingShifts.length === 0) {
@@ -2306,18 +2303,61 @@ export const app = {
             const tomorrow = new Date(now);
             tomorrow.setDate(now.getDate() + 1);
             
-            let dateDisplay;
+            // Create separate date and weekday parts to match regular shift items structure
+            let dateNumberPart;
+            let weekdayPart;
+            
             if (shiftDate.toDateString() === today.toDateString()) {
-                dateDisplay = `I dag - ${weekday} ${day}. ${month}`;
+                dateNumberPart = `I dag - ${day}. ${month}`;
+                weekdayPart = weekday;
             } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
-                dateDisplay = `I morgen - ${weekday} ${day}. ${month}`;
+                dateNumberPart = `I morgen - ${day}. ${month}`;
+                weekdayPart = weekday;
             } else {
-                dateDisplay = `${weekday} ${day}. ${month}`;
+                dateNumberPart = `${day}. ${month}`;
+                weekdayPart = weekday;
             }
             
-            nextShiftDate.textContent = dateDisplay;
-            nextShiftTime.textContent = `${nextShift.startTime} - ${nextShift.endTime}`;
-            nextShiftEarnings.textContent = `Estimert: ${this.formatCurrency(calculation.total)}`;
+            // Create the shift item using the same structure as in the shift list
+            const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
+            const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+            
+            nextShiftContent.innerHTML = `
+                <div class="shift-item ${typeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer;">
+                    <div class="shift-info">
+                        <div class="shift-date">
+                            <span class="shift-date-number">${dateNumberPart}</span>
+                            <span class="shift-date-separator"></span>
+                            <span class="shift-date-weekday">${weekdayPart}${seriesBadge}</span>
+                        </div>
+                        <div class="shift-details">
+                            <div class="shift-time-with-hours">
+                                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                <span>${nextShift.startTime} - ${nextShift.endTime}</span>
+                                <span class="shift-time-arrow">→</span>
+                                <span>${this.formatHours(calculation.hours)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shift-amount-wrapper">
+                        <div class="shift-total">${this.formatCurrency(calculation.total)}</div>
+                        <div class="shift-breakdown">
+                            ${this.formatCurrencyShort(calculation.baseWage)} + ${this.formatCurrencyShort(calculation.bonus)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add click handler to show shift details
+            const shiftItem = nextShiftContent.querySelector('.shift-item');
+            if (shiftItem) {
+                shiftItem.addEventListener('click', () => {
+                    this.showShiftDetails(nextShift.id);
+                });
+            }
         }
     },
 
