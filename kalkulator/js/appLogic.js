@@ -4351,14 +4351,14 @@ export const app = {
 
     exportAsPDF(data) {
         try {
-            // Check if jsPDF is available
-            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-                alert('PDF-biblioteket kunne ikke lastes. Prøv å laste siden på nytt.');
+            // Check if jsPDF is available and correctly exposed by the UMD build
+            if (typeof window.jspdf?.jsPDF !== 'function') {
+                alert('PDF-biblioteket (jsPDF) ble ikke funnet. Prøv å laste siden på nytt.');
                 return;
             }
 
-            // Create new PDF instance
-            const jsPDF = window.jspdf.jsPDF;
+            // Create new PDF instance from the UMD export
+            const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
             // Set up document properties
