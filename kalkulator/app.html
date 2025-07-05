@@ -137,7 +137,8 @@
               <div class="tab-nav">
                   <button class="tab-btn active" onclick="app.switchSettingsTabSync('wage')">Lønn & Beregning</button>
                   <button class="tab-btn" onclick="app.switchSettingsTabSync('interface')">Brukergrensesnitt</button>
-                  <button class="tab-btn" onclick="app.switchSettingsTabSync('account')">Konto & Data</button>
+                  <button class="tab-btn" onclick="app.switchSettingsTabSync('account')">Konto</button>
+                  <button class="tab-btn" onclick="app.switchSettingsTabSync('data')">Data</button>
               </div>
 
               <div id="wageTab" class="tab-content active">
@@ -301,47 +302,6 @@
                   <p id="profile-update-msg" style="color: var(--success); min-height: 24px; text-align: center; font-size: 14px;"></p>
                   
                   <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
-                      <label>Dataeksport</label>
-                      <div class="form-row">
-                          <button class="btn btn-secondary" onclick="app.exportData('csv')" style="margin-right: 8px;">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                  <polyline points="14 2 14 8 20 8"></polyline>
-                                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                              </svg>
-                              Eksporter som CSV
-                          </button>
-                          <button class="btn btn-secondary" onclick="app.exportData('pdf')">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                  <polyline points="14 2 14 8 20 8"></polyline>
-                                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                              </svg>
-                              Eksporter som PDF
-                          </button>
-                      </div>
-                      <small class="form-hint">Last ned dine vaktdata for regnskapsføring eller backup</small>
-                  </div>
-                  
-                  <div class="form-group">
-                      <label>Dataimport</label>
-                      <div class="form-row">
-                          <input type="file" id="importFile" class="form-control" accept=".csv,.json" style="margin-right: 8px;">
-                          <button class="btn btn-secondary" onclick="app.importData()">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                  <polyline points="7 10 12 15 17 10"></polyline>
-                                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                              </svg>
-                              Importer vakter
-                          </button>
-                      </div>
-                      <small class="form-hint">Importer vaktdata fra CSV eller JSON-fil</small>
-                  </div>
-                  
-                  <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
                       <label>Kontoadministrasjon</label>
                       <div class="form-row">
                           <button class="btn btn-secondary" onclick="logout()" style="margin-right: 8px;">
@@ -364,6 +324,79 @@
                           </button>
                       </div>
                       <small class="form-hint">Permanent fjerning av alle vakter og innstillinger</small>
+                  </div>
+              </div>
+
+              <div id="dataTab" class="tab-content">
+                  <div class="form-group">
+                      <label>Eksportperiode</label>
+                      <div class="form-row">
+                          <div class="export-period-options">
+                              <label class="radio-option">
+                                  <input type="radio" name="exportPeriod" value="all" checked>
+                                  <span>Alle data</span>
+                              </label>
+                              <label class="radio-option">
+                                  <input type="radio" name="exportPeriod" value="current">
+                                  <span id="currentMonthLabel">Inneværende måned</span>
+                              </label>
+                              <label class="radio-option">
+                                  <input type="radio" name="exportPeriod" value="custom">
+                                  <span>Egendefinert periode</span>
+                              </label>
+                          </div>
+                      </div>
+                      <small class="form-hint">Velg hvilken tidsperiode du vil eksportere data for</small>
+                  </div>
+                  
+                  <div id="customPeriodSection" class="form-group" style="display: none;">
+                      <label>Egendefinert periode</label>
+                      <div class="form-row">
+                          <input type="date" id="exportStartDate" class="form-control" style="margin-right: 8px;">
+                          <input type="date" id="exportEndDate" class="form-control">
+                      </div>
+                      <small class="form-hint">Velg start- og sluttdato for eksporten</small>
+                  </div>
+                  
+                  <div class="form-group">
+                      <label>Dataeksport</label>
+                      <div class="form-row">
+                          <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('csv')" style="margin-right: 8px;">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                  <polyline points="14 2 14 8 20 8"></polyline>
+                                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                              </svg>
+                              Eksporter som CSV
+                          </button>
+                          <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('pdf')">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                  <polyline points="14 2 14 8 20 8"></polyline>
+                                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                              </svg>
+                              Eksporter som PDF
+                          </button>
+                      </div>
+                      <small class="form-hint">Last ned dine vaktdata for regnskapsføring eller backup</small>
+                  </div>
+                  
+                  <div class="form-group">
+                      <label>Dataimport</label>
+                      <div class="form-row">
+                          <input type="file" id="importFileData" class="form-control" accept=".csv,.json" style="margin-right: 8px;">
+                          <button class="btn btn-secondary" onclick="app.importDataFromDataTab()">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                  <polyline points="7 10 12 15 17 10"></polyline>
+                                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                              </svg>
+                              Importer vakter
+                          </button>
+                      </div>
+                      <small class="form-hint">Importer vaktdata fra CSV eller JSON-fil</small>
                   </div>
               </div>
           </div>
