@@ -409,8 +409,9 @@ html {
     overflow: hidden;
     white-space: nowrap;
     position: relative;
-    width: 480px; /* Fixed pixel width - no expansion */
-    flex-shrink: 0; /* Prevent flex shrinking */
+    width: auto; /* Responsive width */
+    max-width: 100%; /* Do not exceed container */
+    flex-shrink: 1; /* Allow shrinking on narrow screens */
 }
 
 .hero-subtitle-text {

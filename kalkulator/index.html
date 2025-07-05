@@ -8,9 +8,12 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
-  <style>body{visibility:hidden;}</style>
+  <style>
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  </style>
 </head>
 <body class="pb-80">
+  <h1 class="sr-only">Kompensasjonskalkulator</h1>
   <!-- Tilbake til hovedside knapp -->
   <div class="absolute-top-left">
     <a href="/" class="btn btn-secondary back-link">
@@ -25,8 +28,8 @@
   <div id="auth-box" class="auth-center">
     <div class="login-card">
       <h2 class="mb-20">Logg inn</h2>
-      <input id="email" type="email" placeholder="E-post" required class="form-control mb-12" />
-      <input id="password" type="password" placeholder="Passord" required class="form-control mb-18" />
+      <input id="email" type="email" placeholder="E-post" required class="form-control mb-12" autocomplete="email" />
+      <input id="password" type="password" placeholder="Passord" required class="form-control mb-18" autocomplete="current-password" />
       <button id="login-btn" class="btn btn-primary mb-12">Logg inn</button>
       <button id="signup-btn" class="btn btn-secondary mb-12">Opprett ny konto</button>
       <button id="forgot-btn" class="mt-4" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;">Glemt passord?</button>
@@ -37,9 +40,9 @@
   <div id="signup-card" class="auth-center" style="display:none;">
     <div class="login-card">
       <h2 class="mb-20">Opprett ny konto</h2>
-      <input id="signup-email" type="email" placeholder="E-post" required class="form-control mb-12" />
-      <input id="signup-password" type="password" placeholder="Passord" required class="form-control mb-12" />
-      <input id="signup-name" type="text" placeholder="Fornavn" required class="form-control mb-18" />
+      <input id="signup-email" type="email" placeholder="E-post" required class="form-control mb-12" autocomplete="email" />
+      <input id="signup-password" type="password" placeholder="Passord" required class="form-control mb-12" autocomplete="new-password" />
+      <input id="signup-name" type="text" placeholder="Fornavn" required class="form-control mb-18" autocomplete="given-name" />
       <button id="create-account-btn" class="btn btn-primary mb-12">Opprett konto</button>
       <button id="back-login-signup-btn" class="btn btn-secondary">Tilbake til innlogging</button>
       <p id="signup-msg" role="alert" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
@@ -49,7 +52,7 @@
   <div id="forgot-card" class="auth-center" style="display:none;">
     <div class="login-card">
       <h2 class="mb-20">Tilbakestill passord</h2>
-      <input id="forgot-email" type="email" placeholder="E-post" required class="form-control mb-18" />
+      <input id="forgot-email" type="email" placeholder="E-post" required class="form-control mb-18" autocomplete="email" />
       <button id="send-reset-btn" class="btn btn-primary mb-12">Send tilbakestillings-link</button>
       <button id="send-magic-link-btn" class="btn btn-secondary mb-12" style="display: none;">Send magisk lenke</button>
       <button id="back-login-btn" class="btn btn-secondary">Tilbake</button>
@@ -63,7 +66,7 @@
       <p style="margin-bottom: 20px; color: var(--text-secondary); text-align: center;">
         Vennligst oppgi ditt fornavn for å fullføre profilen din.
       </p>
-      <input id="complete-name" type="text" placeholder="Fornavn" required class="form-control mb-18" />
+      <input id="complete-name" type="text" placeholder="Fornavn" required class="form-control mb-18" autocomplete="given-name" />
       <button id="complete-profile-btn" class="btn btn-primary mb-12">Fullfør profil</button>
       <button id="skip-profile-btn" class="btn btn-secondary">Hopp over (kan gjøres senere)</button>
       <p id="complete-profile-msg" role="alert" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
@@ -71,7 +74,7 @@
   </div>
 
   <footer class="footer-auth">
-      Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent4);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
+      Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" rel="noopener noreferrer" style="color:var(--accent4);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
   </footer>
 
   <!-- Load Supabase from CDN -->
