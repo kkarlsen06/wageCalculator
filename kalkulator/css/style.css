@@ -3307,26 +3307,27 @@ input:checked + .slider:before {
 @media (max-width: 480px) {
   .floating-action-bar {
     bottom: 10px;
-    padding: 8px 10px; /* Reduced padding */
-    gap: 6px; /* Reduced gap */
-    max-width: calc(100% - 10px); /* Less margin on mobile */
-    left: 5px; /* Position from left instead of center */
-    right: 5px; /* Add right constraint */
-    transform: none; /* Remove center transform */
-    width: auto; /* Let it expand naturally */
+    padding: 8px 12px; /* Reasonable padding */
+    gap: 8px; /* Reasonable gap */
+    max-width: calc(100% - 20px); /* Keep some margin */
+    left: 50%; /* Back to center positioning */
+    transform: translateX(-50%); /* Center transform */
+    right: auto; /* Remove right constraint */
+    width: fit-content; /* Only as wide as needed */
+    min-width: 0; /* Allow natural sizing */
   }
   
   .floating-action-bar .view-toggle {
-    gap: 3px; /* Even smaller gap on mobile */
+    gap: 4px; /* Small gap between toggle buttons */
   }
   
   .floating-action-bar .view-toggle .tab-btn {
-    padding: 6px 10px; /* Reduced horizontal padding */
+    padding: 6px 14px; /* Balanced padding */
     font-size: 13px;
   }
   
   .floating-action-bar .add-btn {
-    padding: 6px 10px; /* Reduced horizontal padding */
+    padding: 6px 14px; /* Balanced padding */
     font-size: 13px;
     flex-shrink: 0; /* Prevent shrinking */
   }
@@ -3342,33 +3343,43 @@ input:checked + .slider:before {
   }
 }
 
-/* Extra small screens */
+/* Extra small screens - more aggressive spacing reduction */
 @media (max-width: 360px) {
   .floating-action-bar {
-    gap: 4px; /* Further reduced gap */
-    padding: 6px 8px; /* Further reduced padding */
-    left: 4px;
-    right: 4px;
+    gap: 6px; /* Smaller gap */
+    padding: 6px 10px; /* Smaller padding */
+    max-width: calc(100% - 16px); /* Slightly less margin */
   }
   
   .floating-action-bar .view-toggle {
-    gap: 2px; /* Minimal gap */
+    gap: 3px; /* Minimal gap */
   }
   
   .floating-action-bar .view-toggle .tab-btn {
-    padding: 5px 8px; /* Further reduced padding */
+    padding: 5px 10px; /* Smaller padding */
     font-size: 12px;
   }
   
   .floating-action-bar .add-btn {
-    padding: 5px 8px; /* Further reduced padding */
+    padding: 5px 10px; /* Smaller padding */
     font-size: 12px;
-    gap: 4px; /* Smaller gap between icon and text */
+    gap: 6px; /* Smaller gap between icon and text */
   }
   
   .floating-action-bar .add-btn svg {
     width: 14px;
     height: 14px;
+  }
+}
+
+/* Very small screens - hide button text if needed */
+@media (max-width: 320px) {
+  .floating-action-bar .add-btn span {
+    display: none; /* Hide text on very small screens */
+  }
+  
+  .floating-action-bar .add-btn {
+    padding: 6px 10px; /* Square-ish button when icon only */
   }
 }
 
@@ -3435,26 +3446,4 @@ input:checked + .slider:before {
 .stat-label {
   color: var(--text-secondary);
   font-size: 14px;
-}
-
-@keyframes fadeInUpMobile {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeOutDownMobile {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(20px);
-  }
 }
