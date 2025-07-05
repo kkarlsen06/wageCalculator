@@ -330,51 +330,84 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (!snapContainer || !dashboardSection || !shiftSection) return;
 
-    let isScrolling = false;
-    let scrollTimeout;
+    let isSnapping = false;
+    let touchStartY = 0;
+    let touchStartScrollTop = 0;
     let lastScrollTop = 0;
+    let scrollEndTimeout;
 
-    snapContainer.addEventListener('scroll', () => {
+    // Helper function to perform snap
+    function performSnap() {
+      if (isSnapping) return;
+      
       const currentScrollTop = snapContainer.scrollTop;
-      const scrollingDown = currentScrollTop > lastScrollTop;
       const viewportHeight = window.innerHeight;
-      
-      // Clear previous timeout
-      clearTimeout(scrollTimeout);
-      isScrolling = true;
-
-      // Get positions
-      const dashboardBottom = dashboardSection.offsetTop + dashboardSection.offsetHeight;
       const shiftTop = shiftSection.offsetTop;
+      const threshold = viewportHeight * 0.5; // 50% of viewport
       
-      // If we're in the middle zone between sections
-      if (currentScrollTop > dashboardSection.offsetTop + viewportHeight * 0.3 && 
-          currentScrollTop < shiftTop - viewportHeight * 0.3) {
+      // Check if we're in the transition zone
+      if (currentScrollTop > 0 && currentScrollTop < shiftTop) {
+        isSnapping = true;
         
-        // Snap based on direction
-        scrollTimeout = setTimeout(() => {
-          if (scrollingDown) {
-            // Snap to shift section
-            snapContainer.scrollTo({
-              top: shiftTop,
-              behavior: 'smooth'
-            });
-          } else {
-            // Snap to dashboard
-            snapContainer.scrollTo({
-              top: dashboardSection.offsetTop,
-              behavior: 'smooth'
-            });
-          }
-          isScrolling = false;
-        }, 50); // Small delay to ensure scroll has stopped
-      } else {
-        scrollTimeout = setTimeout(() => {
-          isScrolling = false;
-        }, 150);
+        // Determine which section to snap to based on position
+        if (currentScrollTop < threshold) {
+          // Snap to dashboard
+          snapContainer.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        } else {
+          // Snap to shift section
+          snapContainer.scrollTo({
+            top: shiftTop,
+            behavior: 'smooth'
+          });
+        }
+        
+        // Reset snapping flag after animation
+        setTimeout(() => {
+          isSnapping = false;
+        }, 500);
       }
+    }
+
+    // Touch handling for mobile
+    snapContainer.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+      touchStartScrollTop = snapContainer.scrollTop;
+      clearTimeout(scrollEndTimeout);
+    }, { passive: true });
+
+    snapContainer.addEventListener('touchend', (e) => {
+      // Wait a bit for momentum scrolling to finish
+      scrollEndTimeout = setTimeout(() => {
+        performSnap();
+      }, 100);
+    }, { passive: true });
+
+    // Scroll handling for desktop
+    snapContainer.addEventListener('scroll', () => {
+      lastScrollTop = snapContainer.scrollTop;
       
-      lastScrollTop = currentScrollTop;
+      // For desktop, detect when scrolling stops
+      clearTimeout(scrollEndTimeout);
+      scrollEndTimeout = setTimeout(() => {
+        // Only snap on desktop if not touch device
+        if (!('ontouchstart' in window)) {
+          performSnap();
+        }
+      }, 100);
+    }, { passive: true });
+
+    // Also handle wheel events for more responsive desktop experience
+    snapContainer.addEventListener('wheel', (e) => {
+      // Only on desktop
+      if ('ontouchstart' in window) return;
+      
+      clearTimeout(scrollEndTimeout);
+      scrollEndTimeout = setTimeout(() => {
+        performSnap();
+      }, 100);
     }, { passive: true });
   }
 
