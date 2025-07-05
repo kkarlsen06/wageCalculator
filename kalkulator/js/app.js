@@ -321,4 +321,64 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Call addEventListeners once - event delegation handles dynamic content
   addEventListeners();
+
+  // Add scroll handling for shift section to enable scrolling back to dashboard
+  function setupShiftSectionScroll() {
+    const shiftContainer = document.querySelector('.shift-section .app-container');
+    const snapContainer = document.querySelector('.snap-container');
+    
+    if (!shiftContainer || !snapContainer) return;
+
+    let isScrolling = false;
+    let scrollTimeout;
+
+    shiftContainer.addEventListener('scroll', (event) => {
+      // Clear previous timeout
+      clearTimeout(scrollTimeout);
+      
+      // If we're at the top of the shift container and trying to scroll up
+      if (shiftContainer.scrollTop <= 0) {
+        // Check if this is a wheel event (user scrolling up with mouse/trackpad)
+        if (event.deltaY < 0 || event.detail < 0) {
+          // Prevent the default scroll behavior
+          event.preventDefault();
+          
+          // Scroll the snap container to the dashboard section
+          const dashboardSection = document.querySelector('.dashboard-section');
+          if (dashboardSection) {
+            dashboardSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      }
+      
+      // Set a timeout to reset the scrolling flag
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    }, { passive: false });
+
+    // Also handle touch events for mobile
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    shiftContainer.addEventListener('touchstart', (event) => {
+      touchStartY = event.touches[0].clientY;
+    }, { passive: true });
+
+    shiftContainer.addEventListener('touchend', (event) => {
+      touchEndY = event.changedTouches[0].clientY;
+      
+      // If we're at the top and swiping up (touchEndY < touchStartY)
+      if (shiftContainer.scrollTop <= 0 && touchEndY < touchStartY) {
+        // Scroll to dashboard
+        const dashboardSection = document.querySelector('.dashboard-section');
+        if (dashboardSection) {
+          dashboardSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }, { passive: true });
+  }
+
+  // Setup scroll handling after a short delay to ensure DOM is ready
+  setTimeout(setupShiftSectionScroll, 100);
 });
