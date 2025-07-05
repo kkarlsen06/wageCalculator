@@ -83,8 +83,9 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         }
     }
     
-    label.textContent = percent + '% av ' + goal.toLocaleString('no-NO') + ' kr';
-    fill.title = `${current.toLocaleString('no-NO')} kr av ${goal.toLocaleString('no-NO')} kr`;
+    const currencySuffix = window.app && window.app.currencyFormat ? ' NOK' : ' kr';
+    label.textContent = percent + '% av ' + goal.toLocaleString('no-NO') + currencySuffix;
+    fill.title = `${current.toLocaleString('no-NO')}${currencySuffix} av ${goal.toLocaleString('no-NO')}${currencySuffix}`;
     
     if (percent >= 100) {
         fill.classList.add('full');
@@ -1400,6 +1401,13 @@ export const app = {
             compactViewToggle.checked = this.compactView;
         }
 
+        // Apply compact view CSS class to body if setting is enabled
+        if (this.compactView) {
+            document.body.classList.add('compact-view');
+        } else {
+            document.body.classList.remove('compact-view');
+        }
+
         // Toggle preset/custom sections
         this.togglePresetSections();
         
@@ -2070,7 +2078,7 @@ export const app = {
                 id: 'avgHourly',
                 relevanceScore: 10,
                 label: 'Snittlønn/time',
-                value: avgHourly ? this.formatCurrency(avgHourly) : '0 kr'
+                value: avgHourly ? this.formatCurrency(avgHourly) : this.formatCurrency(0)
             },
             {
                 id: 'bestDay',
@@ -3528,7 +3536,8 @@ export const app = {
         return Math.max(0, end - start);
     },
     formatCurrency(amount) {
-        return Math.round(amount).toLocaleString('nb-NO') + ' kr';
+        const currencySuffix = this.currencyFormat ? ' NOK' : ' kr';
+        return Math.round(amount).toLocaleString('nb-NO') + currencySuffix;
     },
     formatCurrencyShort(amount) {
         return Math.round(amount).toLocaleString('nb-NO');
