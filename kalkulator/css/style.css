@@ -2076,6 +2076,14 @@ input:checked + .slider:before {
   margin: 0;
 }
 
+.next-shift-date {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .next-shift-content {
   display: flex;
   flex-direction: column;
@@ -2132,6 +2140,10 @@ input:checked + .slider:before {
     font-size: 13px;
   }
   
+  .next-shift-date {
+    font-size: 11px;
+  }
+  
   .next-shift-content {
     gap: 5px;
   }
@@ -2160,6 +2172,10 @@ input:checked + .slider:before {
   
   .next-shift-title {
     font-size: 12px;
+  }
+  
+  .next-shift-date {
+    font-size: 10px;
   }
   
   .next-shift-content {
