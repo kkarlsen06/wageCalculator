@@ -3238,6 +3238,8 @@ input:checked + .slider:before {
   backdrop-filter: blur(10px);
   background: rgba(26, 26, 29, 0.95);
   transition: opacity 0.3s ease-out; /* Add transition for smooth fade */
+  box-sizing: border-box; /* Ensure padding is included in width calculations */
+  min-width: fit-content; /* Ensure minimum width to fit content */
 }
 
 /* View toggle in floating bar */
@@ -3249,6 +3251,7 @@ input:checked + .slider:before {
   padding: 0; /* Remove tab-nav padding */
   display: flex; /* Ensure flex display */
   gap: 4px; /* Add gap between toggle buttons */
+  width: auto; /* Ensure auto width */
 }
 
 .floating-action-bar .view-toggle .tab-btn {
@@ -3256,6 +3259,8 @@ input:checked + .slider:before {
   font-size: 14px;
   border-radius: 10px; /* Add rounded corners to all sides */
   white-space: nowrap; /* Prevent text wrapping */
+  flex: 0 0 auto; /* Override flex: 1 from base tab-btn */
+  min-width: 0; /* Allow buttons to shrink if needed */
 }
 
 /* Ensure active state maintains rounded corners */
