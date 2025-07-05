@@ -2084,31 +2084,19 @@ input:checked + .slider:before {
   justify-content: center;
 }
 
-.next-shift-date {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--accent);
-  line-height: 1.2;
+/* Style the shift-item when it's inside the next-shift-card */
+.next-shift-card .shift-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px;
   margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all var(--speed-normal) var(--ease-default);
 }
 
-.next-shift-time {
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  margin: 0;
-}
-
-.next-shift-earnings {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--accent4);
-  background: linear-gradient(135deg, var(--accent), var(--accent3));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0;
-  margin-top: 2px;
+.next-shift-card .shift-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
 }
 
 .next-shift-empty {
@@ -2148,16 +2136,9 @@ input:checked + .slider:before {
     gap: 5px;
   }
   
-  .next-shift-date {
-    font-size: 15px;
-  }
-  
-  .next-shift-time {
-    font-size: 12px;
-  }
-  
-  .next-shift-earnings {
-    font-size: 14px;
+  .next-shift-card .shift-item {
+    padding: 12px;
+    border-radius: 12px;
   }
   
   .empty-message {
@@ -2185,16 +2166,9 @@ input:checked + .slider:before {
     gap: 4px;
   }
   
-  .next-shift-date {
-    font-size: 14px;
-  }
-  
-  .next-shift-time {
-    font-size: 11px;
-  }
-  
-  .next-shift-earnings {
-    font-size: 13px;
+  .next-shift-card .shift-item {
+    padding: 10px;
+    border-radius: 10px;
   }
   
   .empty-message {
