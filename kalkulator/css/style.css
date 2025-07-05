@@ -3307,46 +3307,68 @@ input:checked + .slider:before {
 @media (max-width: 480px) {
   .floating-action-bar {
     bottom: 10px;
-    padding: 10px 12px;
-    gap: 8px;
-    max-width: calc(100% - 16px); /* Even less margin on small screens */
+    padding: 8px 10px; /* Reduced padding */
+    gap: 6px; /* Reduced gap */
+    max-width: calc(100% - 10px); /* Less margin on mobile */
+    left: 5px; /* Position from left instead of center */
+    right: 5px; /* Add right constraint */
+    transform: none; /* Remove center transform */
+    width: auto; /* Let it expand naturally */
   }
   
   .floating-action-bar .view-toggle {
-    gap: 4px; /* Smaller gap on mobile */
+    gap: 3px; /* Even smaller gap on mobile */
   }
   
   .floating-action-bar .view-toggle .tab-btn {
-    padding: 6px 12px;
+    padding: 6px 10px; /* Reduced horizontal padding */
     font-size: 13px;
   }
   
   .floating-action-bar .add-btn {
-    padding: 6px 12px;
+    padding: 6px 10px; /* Reduced horizontal padding */
     font-size: 13px;
+    flex-shrink: 0; /* Prevent shrinking */
+  }
+  
+  .floating-action-bar .add-btn span {
+    display: inline-block; /* Ensure text displays properly */
   }
   
   .floating-action-bar .add-btn svg {
     width: 16px;
     height: 16px;
+    flex-shrink: 0; /* Prevent icon shrinking */
   }
 }
 
 /* Extra small screens */
 @media (max-width: 360px) {
   .floating-action-bar {
-    gap: 6px;
-    padding: 8px 10px;
+    gap: 4px; /* Further reduced gap */
+    padding: 6px 8px; /* Further reduced padding */
+    left: 4px;
+    right: 4px;
+  }
+  
+  .floating-action-bar .view-toggle {
+    gap: 2px; /* Minimal gap */
   }
   
   .floating-action-bar .view-toggle .tab-btn {
-    padding: 6px 10px;
+    padding: 5px 8px; /* Further reduced padding */
     font-size: 12px;
   }
   
   .floating-action-bar .add-btn {
-    padding: 6px 10px;
+    padding: 5px 8px; /* Further reduced padding */
     font-size: 12px;
+    gap: 4px; /* Smaller gap between icon and text */
+  }
+  
+  .floating-action-bar .add-btn svg {
+    width: 14px;
+    height: 14px;
   }
 }
 
@@ -3413,4 +3435,26 @@ input:checked + .slider:before {
 .stat-label {
   color: var(--text-secondary);
   font-size: 14px;
+}
+
+@keyframes fadeInUpMobile {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOutDownMobile {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 }
