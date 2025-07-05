@@ -108,7 +108,7 @@ function checkPendingConfetti() {
 
 // Konfetti-animasjon for når målet nås
 function triggerConfetti() {
-    const colors = ['#00d4aa', '#7c3aed', '#0891b2', '#f59e0b', '#ef4444', '#10b981', '#ec4899', '#8b5cf6'];
+    const colors = ['#00d4aa', '#7c3aed', '#0891b2', '#10b981', '#ef4444', '#f59e0b', '#ec4899', '#8b5cf6'];
     const confettiCount = 60;
     
     // Create confetti in multiple bursts for more effect

@@ -6,12 +6,18 @@
    ROOT & VARIABLES
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-    /* Colors */
+    /* Colors - Standardized palette */
     --primary: #6366f1;
     --primary-dark: #4f46e5;
     --primary-light: #818cf8;
     --secondary: #0ea5e9;
-    --accent: #f59e0b;
+    --accent: #10b981;
+    
+    /* Semantic colors */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #0ea5e9;
     
     --text-primary: #f3f4f6;
     --text-secondary: #9ca3af;
@@ -30,14 +36,25 @@
     --gradient-dark: linear-gradient(180deg, #0a0a0b 0%, #111113 100%);
     --gradient-glow: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
     
-    /* Spacing */
-    --space-xs: 0.5rem;
-    --space-sm: 1rem;
-    --space-md: 1.5rem;
-    --space-lg: 2rem;
-    --space-xl: 3rem;
-    --space-2xl: 4rem;
-    --space-3xl: 6rem;
+    /* Spacing - 8px grid system */
+    --space-1: 0.5rem;   /* 8px */
+    --space-2: 1rem;     /* 16px */
+    --space-3: 1.5rem;   /* 24px */
+    --space-4: 2rem;     /* 32px */
+    --space-5: 2.5rem;   /* 40px */
+    --space-6: 3rem;     /* 48px */
+    --space-8: 4rem;     /* 64px */
+    --space-10: 5rem;    /* 80px */
+    --space-12: 6rem;    /* 96px */
+    
+    /* Legacy spacing (deprecated) */
+    --space-xs: var(--space-1);
+    --space-sm: var(--space-2);
+    --space-md: var(--space-3);
+    --space-lg: var(--space-4);
+    --space-xl: var(--space-6);
+    --space-2xl: var(--space-8);
+    --space-3xl: var(--space-12);
     
     /* Typography */
     --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -111,6 +128,48 @@ html {
     html {
         scroll-behavior: smooth;
     }
+}
+
+/* Accessibility - Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .gradient-orb {
+        animation: none !important;
+    }
+    
+    .floating-card {
+        animation: none !important;
+    }
+}
+
+/* Accessibility - Focus management */
+.focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 4px;
+    z-index: 9999;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+}
+
+.skip-link:focus {
+    top: 6px;
 }
 
 ::selection {
@@ -401,7 +460,7 @@ html {
     font-size: clamp(1.5rem, 3vw, 2.5rem);
     font-weight: 300;
     color: var(--text-secondary);
-    margin-top: var(--space-xs);
+    margin-top: var(--space-1);
     min-height: 3rem; /* Fixed height to prevent layout shift during typing effect */
     display: flex;
     align-items: center;
@@ -409,7 +468,8 @@ html {
     overflow: hidden;
     white-space: nowrap;
     position: relative;
-    width: 480px; /* Fixed pixel width - no expansion */
+    max-width: 100%; /* Responsive width */
+    width: 100%;
     flex-shrink: 0; /* Prevent flex shrinking */
 }
 
@@ -452,21 +512,37 @@ html {
     align-items: stretch;
 }
 
-/* Buttons */
+/* Buttons - Improved accessibility and consistency */
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: 0.75rem 1.5rem;
+    gap: var(--space-1);
+    padding: 0 var(--space-4);
+    height: 44px; /* Touch-friendly minimum */
     font-size: var(--font-size-base);
     font-weight: 500;
     text-decoration: none;
     border-radius: 8px;
-    transition: all var(--transition-base);
+    transition: all 150ms ease;
     cursor: pointer;
     border: none;
     position: relative;
     overflow: hidden;
+    min-width: 44px; /* Minimum touch target */
+    justify-content: center;
+    text-align: center;
+    line-height: 1;
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
 .btn-large {
@@ -480,9 +556,9 @@ html {
     box-shadow: var(--shadow-lg), var(--shadow-glow);
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-xl), 0 0 80px rgba(99, 102, 241, 0.4);
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg), 0 0 40px rgba(99, 102, 241, 0.3);
 }
 
 .btn-secondary {
@@ -491,9 +567,32 @@ html {
     border: 1px solid var(--border-color);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
     background: var(--bg-hover);
     border-color: var(--border-light);
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: var(--error);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
 /* Hero Stats */
@@ -926,6 +1025,97 @@ html {
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
+   LOADING STATES
+   ─────────────────────────────────────────────────────────────────────────── */
+.loading {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite;
+    border-radius: inherit;
+}
+
+@keyframes loading-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.skeleton {
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite;
+    border-radius: 4px;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   FORM IMPROVEMENTS
+   ─────────────────────────────────────────────────────────────────────────── */
+.form-control {
+    height: 44px;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    background: var(--bg-card);
+    color: var(--text-primary);
+    transition: all 150ms ease;
+    min-width: 44px;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    outline: none;
+}
+
+.form-control.error {
+    border-color: var(--error);
+}
+
+.form-control.success {
+    border-color: var(--success);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-error {
+    color: var(--error);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-1);
+    display: block;
+}
+
+.form-success {
+    color: var(--success);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-1);
+    display: block;
+}
+
+.form-hint {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-1);
+    display: block;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
    FOOTER
    ─────────────────────────────────────────────────────────────────────────── */
 .footer {
@@ -1055,6 +1245,18 @@ html {
     
     .nav-toggle {
         display: flex;
+    }
+    
+    /* Ensure touch-friendly targets */
+    .btn, .nav-link, .form-control, .nav-toggle {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Improved viewport handling */
+    .hero {
+        min-height: 100dvh;
+        min-height: 100vh; /* Fallback */
     }
     
     /* Enhanced badge spacing on mobile for better visual hierarchy */

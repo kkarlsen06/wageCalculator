@@ -9,30 +9,34 @@
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
 </head>
 <body>
+    <!-- Skip links for accessibility -->
+    <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
+    
     <!-- Hoved-appen skjules til bruker er innlogget -->
     <div id="app" style="display:none">
       <!-- Snap container for full-screen sections -->
       <div class="snap-container">
           
           <!-- Dashboard Section -->
-          <section class="snap-section dashboard-section">
+          <section class="snap-section dashboard-section" role="main" aria-label="Dashboard">
+            <main id="main-content">
               <div class="app-container">
                   <div class="header">
                       <div class="header-top">
                           <div class="header-left">
                               <img src="../assets/kkarlsen_ikon_clean.png" class="header-logo" alt="kkarlsen logo">
                               <div class="month-selector">
-                                  <button class="month-button" onclick="app.toggleMonthDropdown()">
-                                      <span id="currentMonth">Mai 2025</span>
-                                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                          <polyline points="6 9 12 15 18 9"></polyline>
-                                      </svg>
-                                  </button>
+                                                                <button class="month-button" onclick="app.toggleMonthDropdown()" aria-label="Velg måned" aria-expanded="false" aria-haspopup="listbox">
+                                  <span id="currentMonth">Mai 2025</span>
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                      <polyline points="6 9 12 15 18 9"></polyline>
+                                  </svg>
+                              </button>
                               </div>
                           </div>
                           <div class="header-right">
-                                <button class="settings-btn" onclick="app.openSettings()">
-                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <button class="settings-btn" onclick="app.openSettings()" aria-label="Åpne innstillinger">
+                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
@@ -71,10 +75,11 @@
 
                   </div>
               </div>
+             </main>
           </section>
 
           <!-- Shift List Section -->
-          <section class="snap-section shift-section">
+          <section class="snap-section shift-section" role="complementary" aria-label="Vaktliste">
               <div class="app-container">
                   <div class="section-header">
                       <h2>Vakter</h2>
@@ -455,6 +460,9 @@
 
     <!-- Last applikasjonslogikk -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Helper utilities -->
+    <script src="../js/loading-helpers.js"></script>
+    <script src="../js/error-handling.js"></script>
     <!-- Load configuration first -->
     <script src="js/config.js"></script>
     <!-- UUID library for generating series IDs -->
