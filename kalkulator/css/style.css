@@ -3089,7 +3089,7 @@ input:checked + .slider:before {
 .snap-container {
   height: var(--app-height, 100vh);
   overflow-y: auto;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: y proximity;
   scroll-behavior: smooth;
   position: relative;
   /* Enable smooth scrolling with scroll-snap */
@@ -3100,7 +3100,7 @@ input:checked + .slider:before {
 .snap-section {
   height: var(--app-height, 100vh);
   scroll-snap-align: start;
-  scroll-snap-stop: always;
+  scroll-snap-stop: normal;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -3109,6 +3109,7 @@ input:checked + .slider:before {
 /* Allow long content inside the shift list section */
 .snap-section.shift-section {
   height: auto;
+  scroll-snap-stop: always;
 }
 
 /* Dashboard section styling */
