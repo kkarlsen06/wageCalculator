@@ -329,54 +329,116 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (!shiftContainer || !snapContainer) return;
 
-    let isScrolling = false;
-    let scrollTimeout;
+    let touchStartY = 0;
+    let touchCurrentY = 0;
+    let isDragging = false;
+    let atTop = false;
+    const threshold = 80; // pixels to drag before triggering navigation
 
-    shiftContainer.addEventListener('scroll', (event) => {
-      // Clear previous timeout
-      clearTimeout(scrollTimeout);
-      
-      // If we're at the top of the shift container and trying to scroll up
+    // Create pull indicator element
+    const pullIndicator = document.createElement('div');
+    pullIndicator.style.cssText = `
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 40px;
+      background: var(--bg-tertiary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 100;
+    `;
+    pullIndicator.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    `;
+    shiftContainer.style.position = 'relative';
+    shiftContainer.appendChild(pullIndicator);
+
+    // Touch start
+    shiftContainer.addEventListener('touchstart', (e) => {
       if (shiftContainer.scrollTop <= 0) {
-        // Check if this is a wheel event (user scrolling up with mouse/trackpad)
-        if (event.deltaY < 0 || event.detail < 0) {
-          // Prevent the default scroll behavior
-          event.preventDefault();
-          
-          // Scroll the snap container to the dashboard section
-          const dashboardSection = document.querySelector('.dashboard-section');
-          if (dashboardSection) {
-            dashboardSection.scrollIntoView({ behavior: 'smooth' });
-          }
-        }
+        touchStartY = e.touches[0].clientY;
+        atTop = true;
+      } else {
+        atTop = false;
       }
+    }, { passive: true });
+
+    // Touch move
+    shiftContainer.addEventListener('touchmove', (e) => {
+      if (!atTop) return;
       
-      // Set a timeout to reset the scrolling flag
-      scrollTimeout = setTimeout(() => {
-        isScrolling = false;
-      }, 150);
+      touchCurrentY = e.touches[0].clientY;
+      const pullDistance = touchCurrentY - touchStartY;
+      
+      // Only track downward pulls when at top
+      if (pullDistance > 0 && shiftContainer.scrollTop <= 0) {
+        isDragging = true;
+        
+        // Prevent default to stop bounce effect
+        if (pullDistance > 10) {
+          e.preventDefault();
+        }
+        
+        // Show and animate pull indicator
+        const progress = Math.min(pullDistance / threshold, 1);
+        pullIndicator.style.opacity = progress;
+        pullIndicator.style.transform = `translateX(-50%) translateY(${Math.min(pullDistance * 0.5, 40)}px) scale(${0.8 + progress * 0.2})`;
+        
+        // Add slight transform to container for feedback
+        shiftContainer.style.transform = `translateY(${Math.min(pullDistance * 0.3, 30)}px)`;
+      }
     }, { passive: false });
 
-    // Also handle touch events for mobile
-    let touchStartY = 0;
-    let touchEndY = 0;
-
-    shiftContainer.addEventListener('touchstart', (event) => {
-      touchStartY = event.touches[0].clientY;
-    }, { passive: true });
-
-    shiftContainer.addEventListener('touchend', (event) => {
-      touchEndY = event.changedTouches[0].clientY;
+    // Touch end
+    shiftContainer.addEventListener('touchend', (e) => {
+      if (!isDragging) return;
       
-      // If we're at the top and swiping up (touchEndY < touchStartY)
-      if (shiftContainer.scrollTop <= 0 && touchEndY < touchStartY) {
-        // Scroll to dashboard
+      const pullDistance = touchCurrentY - touchStartY;
+      
+      // Reset visual feedback
+      pullIndicator.style.opacity = '0';
+      pullIndicator.style.transform = 'translateX(-50%) translateY(0) scale(0.8)';
+      shiftContainer.style.transform = 'translateY(0)';
+      
+      // If pulled far enough, navigate to dashboard
+      if (pullDistance > threshold) {
         const dashboardSection = document.querySelector('.dashboard-section');
         if (dashboardSection) {
-          dashboardSection.scrollIntoView({ behavior: 'smooth' });
+          snapContainer.scrollTo({
+            top: dashboardSection.offsetTop,
+            behavior: 'smooth'
+          });
         }
       }
+      
+      // Reset state
+      isDragging = false;
+      touchStartY = 0;
+      touchCurrentY = 0;
     }, { passive: true });
+
+    // Also handle wheel events for desktop
+    shiftContainer.addEventListener('wheel', (e) => {
+      // If at top and scrolling up
+      if (shiftContainer.scrollTop <= 0 && e.deltaY < 0) {
+        e.preventDefault();
+        const dashboardSection = document.querySelector('.dashboard-section');
+        if (dashboardSection) {
+          snapContainer.scrollTo({
+            top: dashboardSection.offsetTop,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }, { passive: false });
   }
 
   // Setup scroll handling after a short delay to ensure DOM is ready
