@@ -141,27 +141,34 @@
 
               <div id="generalTab" class="tab-content active">
                   
-                  <div class="form-group">
-                      <label>Betalt pause</label>
+                  <!-- Månedlig inntektsmål -->
+                  <div class="form-group" id="monthlyGoalGroup">
+                      <label for="monthlyGoalInput">Månedlig inntektsmål</label>
                       <div class="switch-group">
-                          <span class="text-secondary">Trekk for vakter > 5,5t</span>
-                          <label class="switch">
-                              <input type="checkbox" id="pauseDeductionToggle" checked>
-                              <span class="slider"></span>
-                          </label>
+                          <input type="number" id="monthlyGoalInput" class="form-control" min="0" step="100" style="max-width:140px;display:inline-block;" placeholder="20000">
+                          <button class="btn btn-secondary" id="saveMonthlyGoalBtn" style="margin-left:8px;">Lagre</button>
+                      </div>
+                      <small class="form-hint">Brukes til fremdriftslinjen i Brutto-kortet</small>
+                  </div>
+
+                  <!-- Standard visning -->
+                  <div class="form-group" id="defaultViewGroup">
+                      <label>Standard visning</label>
+                      <div class="switch-group">
+                          <span class="text-secondary">Hvilken visning åpnes på Vakter-siden</span>
+                          <div class="radio-group">
+                              <label class="radio-inline">
+                                  <input type="radio" name="defaultView" value="list" checked> Liste
+                              </label>
+                              <label class="radio-inline" style="margin-left:16px;">
+                                  <input type="radio" name="defaultView" value="calendar"> Kalender
+                              </label>
+                          </div>
                       </div>
                   </div>
-                  <div class="form-group">
-                      <label>Minuttformat</label>
-                      <div class="switch-group">
-                          <span class="text-secondary">Vis hvert minutt i stedet for kvarter <br> i drop-down</span>
-                          <label class="switch">
-                              <input type="checkbox" id="fullMinuteRangeToggle">
-                              <span class="slider"></span>
-                          </label>
-                      </div>
-                  </div>
-                  <div class="form-group">
+
+                  <!-- Tidsinnskriving -->
+                  <div class="form-group" id="directTimeGroup">
                       <label>Tidsinnskriving</label>
                       <div class="switch-group">
                           <span class="text-secondary">Skriv inn tid direkte i stedet for dropdowns</span>
@@ -171,15 +178,30 @@
                           </label>
                       </div>
                   </div>
-                  <div class="form-group">
-                      <label for="monthlyGoalInput">Månedlig inntektsmål</label>
+
+                  <!-- Minuttformat (skjules når direktetid er aktivert) -->
+                  <div class="form-group" id="fullMinuteGroup">
+                      <label>Minuttformat</label>
                       <div class="switch-group">
-                          <input type="number" id="monthlyGoalInput" class="form-control" min="0" step="100" style="max-width:140px;display:inline-block;" placeholder="20000">
-                          <button class="btn btn-secondary" id="saveMonthlyGoalBtn" style="margin-left:8px;">Lagre</button>
+                          <span class="text-secondary">Vis hvert minutt i stedet for kvarter <br> i drop-down</span>
+                          <label class="switch">
+                              <input type="checkbox" id="fullMinuteRangeToggle">
+                              <span class="slider"></span>
+                          </label>
                       </div>
-                      <small class="form-hint">Brukes til fremdriftslinjen i Brutto-kortet</small>
                   </div>
-                  
+
+                  <!-- Betalt pause -->
+                  <div class="form-group" id="pauseDeductionGroup">
+                      <label>Betalt pause</label>
+                      <div class="switch-group">
+                          <span class="text-secondary">Trekk for vakter &gt; 5,5 t</span>
+                          <label class="switch">
+                              <input type="checkbox" id="pauseDeductionToggle" checked>
+                              <span class="slider"></span>
+                          </label>
+                      </div>
+                  </div>
               </div>
 
               <div id="wageTab" class="tab-content">

@@ -302,13 +302,34 @@ export const app = {
             this.updateDisplay();
             this.saveSettingsToSupabase();
         });
+        
+        // ===== Default view radio buttons =====
+        const defaultViewRadios = document.querySelectorAll('input[name="defaultView"]');
+        defaultViewRadios.forEach(radio => {
+            radio.addEventListener('change', e => {
+                if (e.target.checked) {
+                    this.shiftView = e.target.value;
+                    this.switchShiftView(this.shiftView);
+                    this.saveSettingsToSupabase();
+                    this.saveToLocalStorage();
+                }
+            });
+        });
+        // Ensure radios reflect current state on load
+        defaultViewRadios.forEach(r => {
+            r.checked = (r.value === this.shiftView);
+        });
+        
         document.getElementById('fullMinuteRangeToggle').addEventListener('change', e => {
             if (e.target.checked && this.directTimeInput) {
                 // Disable direct time input when full minute range is enabled
                 this.directTimeInput = false;
                 document.getElementById('directTimeInputToggle').checked = false;
+                const minuteGroupDisable = document.getElementById('fullMinuteGroup');
+                if (minuteGroupDisable) minuteGroupDisable.style.display = 'block';
             }
             this.fullMinuteRange = e.target.checked;
+            // Hide/show minute group handled below
             // Save current selections before repopulating
             const currentSelections = {
                 startHour: document.getElementById('startHour')?.value || '',
@@ -346,9 +367,16 @@ export const app = {
                 document.getElementById('fullMinuteRangeToggle').checked = false;
             }
             this.directTimeInput = e.target.checked;
+            // Show/hide minute-format group
+            const minuteGroup = document.getElementById('fullMinuteGroup');
+            if (minuteGroup) minuteGroup.style.display = this.directTimeInput ? 'none' : 'block';
             this.populateTimeSelects();
             this.saveSettingsToSupabase();
         });
+        // Set initial visibility for minute group
+        const minuteGroupInit = document.getElementById('fullMinuteGroup');
+        if (minuteGroupInit) minuteGroupInit.style.display = this.directTimeInput ? 'none' : 'block';
+        
         // Close month dropdown when clicking outside
         document.addEventListener('click', e => {
             const monthSelector = document.querySelector('.month-selector');
@@ -1383,6 +1411,16 @@ export const app = {
             directTimeInputToggle.checked = this.directTimeInput;
         }
 
+        // Sync default view radios
+        const viewRadios = document.querySelectorAll('input[name="defaultView"]');
+        viewRadios.forEach(r => {
+            r.checked = (r.value === this.shiftView);
+        });
+
+        // Hide minute-format group if direct input enabled
+        const minuteGroup = document.getElementById('fullMinuteGroup');
+        if (minuteGroup) minuteGroup.style.display = this.directTimeInput ? 'none' : 'block';
+
         // Toggle preset/custom sections
         this.togglePresetSections();
         
@@ -1448,6 +1486,7 @@ export const app = {
                 if ('pause_deduction' in existingSettings) settingsData.pause_deduction = this.pauseDeduction;
                 if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
+                if ('shift_view' in existingSettings) settingsData.shift_view = this.shiftView;
                 if ('monthly_goal' in existingSettings) settingsData.monthly_goal = this.monthlyGoal;
                 if ('has_seen_recurring_intro' in existingSettings) settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 if ('custom_bonuses' in existingSettings) {
@@ -1466,6 +1505,7 @@ export const app = {
                 settingsData.pause_deduction = this.pauseDeduction;
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
+                settingsData.shift_view = this.shiftView;
                 settingsData.monthly_goal = this.monthlyGoal;
                 settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 settingsData.custom_bonuses = this.customBonuses || {};
@@ -1510,6 +1550,7 @@ export const app = {
                 this.pauseDeduction = data.pauseDeduction !== false;
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
+                this.shiftView = data.shiftView || 'list';
                 this.monthlyGoal = data.monthlyGoal || 20000;
                 this.hasSeenRecurringIntro = data.hasSeenRecurringIntro || false;
                 
@@ -1912,6 +1953,7 @@ export const app = {
                 pauseDeduction: this.pauseDeduction,
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
+                shiftView: this.shiftView,
                 hasSeenRecurringIntro: this.hasSeenRecurringIntro
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
