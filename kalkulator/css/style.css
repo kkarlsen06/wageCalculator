@@ -3100,7 +3100,7 @@ input:checked + .slider:before {
 .snap-section {
   height: var(--app-height, 100vh);
   scroll-snap-align: start;
-  scroll-snap-stop: always;
+  scroll-snap-stop: normal;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -3129,6 +3129,10 @@ input:checked + .slider:before {
   background: var(--bg-secondary);
   min-height: 100%;
   padding-bottom: 20px;
+  /* Make scrolling immediately responsive */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  will-change: scroll-position;
 }
 
 /* Dashboard section styling */

@@ -443,4 +443,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Setup scroll handling after a short delay to ensure DOM is ready
   setTimeout(setupShiftSectionScroll, 100);
+
+  // Make shift section immediately scrollable when it comes into view
+  function makeShiftSectionResponsive() {
+    const snapContainer = document.querySelector('.snap-container');
+    const shiftSection = document.querySelector('.shift-section');
+    const shiftContainer = document.querySelector('.shift-section .app-container');
+    
+    if (!snapContainer || !shiftSection || !shiftContainer) return;
+
+    // Use Intersection Observer to detect when shift section is visible
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+          // Shift section is more than 50% visible
+          // Focus the container to make it immediately scrollable
+          shiftContainer.focus({ preventScroll: true });
+          
+          // If there's a pending scroll, apply it
+          if (window.pendingShiftScroll) {
+            shiftContainer.scrollTop = window.pendingShiftScroll;
+            window.pendingShiftScroll = null;
+          }
+        }
+      });
+    }, {
+      threshold: [0.5]
+    });
+
+    observer.observe(shiftSection);
+  }
+
+  makeShiftSectionResponsive();
 });
