@@ -1159,7 +1159,7 @@ export const app = {
     changeMonth(month) {
         this.currentMonth = month;
         this.saveFormState(); // Save when month changes
-        this.updateDisplay();
+        this.updateDisplay(true); // Enable animation when switching months
         this.populateDateGrid();
         this.saveSettingsToSupabase(); // This will also update last_active via saveSettingsToSupabase
     },
