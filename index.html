@@ -16,10 +16,15 @@
     <link rel="icon" href="/assets/favicon.ico">
     
     <!-- Scripts -->
+    <script src="js/loading-helpers.js"></script>
+    <script src="js/error-handling.js"></script>
     <script src="js/redirect.js"></script>
     <script src="js/animations.js" defer></script>
 </head>
 <body>
+    <!-- Skip links for accessibility -->
+    <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
+    
     <!-- Animated Background -->
     <div class="bg-animation">
         <div class="gradient-orb orb-1"></div>
@@ -28,30 +33,32 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="navbar">
+    <nav class="navbar" role="navigation" aria-label="Hovednavigasjon">
         <div class="nav-container">
-            <a href="#" class="nav-logo">
+            <a href="#" class="nav-logo" aria-label="Gå til toppen av siden">
                 <span class="logo-text">kkarlsen_06 • DEV</span>
             </a>
-            <div class="nav-menu">
-                <a href="#hero" class="nav-link">Hjem</a>
-                <a href="#project" class="nav-link">Prosjekt</a>
-                <a href="#tech" class="nav-link">Teknologi</a>
-                <a href="https://github.com/kkarlsen06" target="_blank" class="nav-link nav-github">
-                    <i class="fab fa-github"></i>
+            <div class="nav-menu" role="menubar">
+                <a href="#hero" class="nav-link" role="menuitem">Hjem</a>
+                <a href="#project" class="nav-link" role="menuitem">Prosjekt</a>
+                <a href="#tech" class="nav-link" role="menuitem">Teknologi</a>
+                <a href="https://github.com/kkarlsen06" target="_blank" rel="noopener noreferrer" class="nav-link nav-github" role="menuitem" aria-label="Åpne GitHub-profil i ny fane">
+                    <i class="fab fa-github" aria-hidden="true"></i>
                     <span>GitHub</span>
                 </a>
             </div>
-            <button class="nav-toggle" aria-label="Toggle menu">
-                <span></span>
-                <span></span>
-                <span></span>
+            <button class="nav-toggle" aria-label="Åpne/lukk navigasjonsmeny" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
             </button>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section id="hero" class="hero">
+    <!-- Main Content -->
+    <main id="main-content">
+        <!-- Hero Section -->
+        <section id="hero" class="hero">
         <div class="hero-container">
             <div class="hero-content">
                 <!-- BADGE SECTION - Separate from title -->
@@ -275,6 +282,7 @@
             </div>
         </div>
     </section>
+    </main>
 
     <!-- Footer -->
     <footer class="footer">
