@@ -4436,9 +4436,9 @@ export const app = {
             yPosition += 10;
 
             // Period information
-            if (shifts.length > 0) {
-                const firstShift = shifts[0].date;
-                const lastShift = shifts[shifts.length - 1].date;
+            if (calculatedShifts.length > 0) {
+                const firstShift = calculatedShifts[0].date;
+                const lastShift = calculatedShifts[calculatedShifts.length - 1].date;
                 const periodText = `Periode: ${firstShift.toLocaleDateString('no-NO')} - ${lastShift.toLocaleDateString('no-NO')}`;
                 doc.text(periodText, leftMargin, yPosition);
                 yPosition += 15;
