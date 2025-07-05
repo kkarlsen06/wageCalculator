@@ -4359,7 +4359,7 @@ export const app = {
     },
 
     // Import data functionality
-    importData() {
+    async importData() {
         const fileInput = document.getElementById('importFile');
         const file = fileInput.files[0];
         
@@ -4369,15 +4369,15 @@ export const app = {
         }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             try {
                 const content = e.target.result;
 
                 if (file.name.endsWith('.json')) {
                     const data = JSON.parse(content);
-                    this.importFromJSON(data);
+                    await this.importFromJSON(data);
                 } else if (file.name.endsWith('.csv')) {
-                    this.importFromCSV(content);
+                    await this.importFromCSV(content);
                 } else {
                     alert('Ikke støttet filformat. Bruk JSON eller CSV.');
                     return;
@@ -4394,7 +4394,84 @@ export const app = {
         reader.readAsText(file);
     },
 
-    importFromJSON(data) {
+    // Detect duplicate shifts based on date, time, and type
+    detectDuplicateShifts(importedShifts) {
+        const newShifts = [];
+        const duplicates = [];
+        
+        importedShifts.forEach(importedShift => {
+            // Create a unique key for each shift based on its data
+            const shiftKey = this.createShiftKey(importedShift);
+            
+            // Check if this shift already exists in current shifts
+            const isDuplicate = this.shifts.some(existingShift => {
+                const existingKey = this.createShiftKey(existingShift);
+                return shiftKey === existingKey;
+            });
+            
+            if (isDuplicate) {
+                duplicates.push(importedShift);
+            } else {
+                newShifts.push(importedShift);
+            }
+        });
+        
+        return { newShifts, duplicates };
+    },
+    
+    // Create a unique key for a shift based on its data
+    createShiftKey(shift) {
+        const dateStr = `${shift.date.getFullYear()}-${(shift.date.getMonth() + 1).toString().padStart(2, '0')}-${shift.date.getDate().toString().padStart(2, '0')}`;
+        return `${dateStr}_${shift.startTime}_${shift.endTime}_${shift.type}`;
+    },
+
+    // Save imported shifts to Supabase database
+    async saveImportedShiftsToSupabase(shifts) {
+        try {
+            const { data: { user }, error: authError } = await window.supa.auth.getUser();
+            if (authError || !user) {
+                throw new Error('Du er ikke innlogget');
+            }
+
+            // Prepare shifts for database insertion
+            const shiftsToInsert = shifts.map(shift => {
+                const dateStr = `${shift.date.getFullYear()}-${(shift.date.getMonth() + 1).toString().padStart(2, '0')}-${shift.date.getDate().toString().padStart(2, '0')}`;
+                return {
+                    user_id: user.id,
+                    shift_date: dateStr,
+                    start_time: shift.startTime,
+                    end_time: shift.endTime,
+                    shift_type: shift.type,
+                    series_id: shift.seriesId || null
+                };
+            });
+
+            // Insert all shifts in a batch
+            const { data: savedShifts, error } = await window.supa
+                .from('user_shifts')
+                .insert(shiftsToInsert)
+                .select();
+
+            if (error) {
+                console.error('Error saving imported shifts to Supabase:', error);
+                throw new Error(`Kunne ikke lagre importerte vakter: ${error.message}`);
+            }
+
+            // Update the imported shifts with the actual database IDs
+            savedShifts.forEach((savedShift, index) => {
+                shifts[index].id = savedShift.id;
+            });
+
+            // Update last active timestamp
+            await this.updateLastActiveTimestamp(user.id);
+
+        } catch (error) {
+            console.error('Error in saveImportedShiftsToSupabase:', error);
+            throw error;
+        }
+    },
+
+    async importFromJSON(data) {
         if (data.shifts && Array.isArray(data.shifts)) {
             // Convert date strings back to Date objects
             const importedShifts = data.shifts.map(shift => ({
@@ -4409,12 +4486,25 @@ export const app = {
                 }
             });
 
-            // Merge with existing shifts (avoid duplicates)
-            const existingIds = new Set(this.shifts.map(s => s.id));
-            const newShifts = importedShifts.filter(s => !existingIds.has(s.id));
+            // Check for duplicates based on shift data (not just IDs)
+            const { newShifts, duplicates } = this.detectDuplicateShifts(importedShifts);
             
-            this.shifts = [...this.shifts, ...newShifts];
-            this.saveToSupabase();
+            if (duplicates.length > 0) {
+                const duplicateCount = duplicates.length;
+                const proceed = confirm(`Fant ${duplicateCount} duplikat vakter som allerede eksisterer. Vil du fortsatt importere de ${newShifts.length} nye vaktene?`);
+                if (!proceed) {
+                    return;
+                }
+            }
+            
+            // Save only new shifts to database
+            if (newShifts.length > 0) {
+                await this.saveImportedShiftsToSupabase(newShifts);
+                
+                // Update local arrays
+                this.shifts = [...this.shifts, ...newShifts];
+                this.userShifts = [...this.userShifts, ...newShifts];
+            }
         }
 
         if (data.settings) {
@@ -4428,7 +4518,7 @@ export const app = {
         }
     },
 
-    importFromCSV(content) {
+    async importFromCSV(content) {
         const lines = content.split('\n');
         const shifts = [];
         for (let i = 1; i < lines.length; i++) {
@@ -4457,8 +4547,25 @@ export const app = {
             }
         }
         
-        this.shifts = [...this.shifts, ...shifts];
-        this.saveToSupabase();
+        // Check for duplicates based on shift data
+        const { newShifts, duplicates } = this.detectDuplicateShifts(shifts);
+        
+        if (duplicates.length > 0) {
+            const duplicateCount = duplicates.length;
+            const proceed = confirm(`Fant ${duplicateCount} duplikat vakter som allerede eksisterer. Vil du fortsatt importere de ${newShifts.length} nye vaktene?`);
+            if (!proceed) {
+                return;
+            }
+        }
+        
+        // Save only new shifts to database
+        if (newShifts.length > 0) {
+            await this.saveImportedShiftsToSupabase(newShifts);
+            
+            // Update local arrays
+            this.shifts = [...this.shifts, ...newShifts];
+            this.userShifts = [...this.userShifts, ...newShifts];
+        }
     },
 
     // Add event listeners for new settings
