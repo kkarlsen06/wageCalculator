@@ -338,6 +338,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function checkFloatingBarVisibility() {
       const rect = shiftSection.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
+      const isMobile = window.innerWidth <= 480;
       
       // Show floating bar when shift section is in view
       // Consider it "in view" when at least 50% of viewport shows the shift section
@@ -348,13 +349,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         isVisible = true;
         clearTimeout(animationTimeout);
         floatingBar.style.display = 'flex';
-        floatingBar.style.animation = 'fadeInUp 0.3s ease-out forwards';
+        // Use different animation for mobile since transform is different
+        floatingBar.style.animation = isMobile ? 'fadeIn 0.3s ease-out forwards' : 'fadeInUp 0.3s ease-out forwards';
         floatingBar.style.opacity = '1';
       } else if (!shouldBeVisible && isVisible) {
         // Hide with fade out animation
         isVisible = false;
         clearTimeout(animationTimeout);
-        floatingBar.style.animation = 'fadeOutDown 0.3s ease-out forwards';
+        floatingBar.style.animation = isMobile ? 'fadeOut 0.3s ease-out forwards' : 'fadeOutDown 0.3s ease-out forwards';
         floatingBar.style.opacity = '0';
         
         // Hide completely after animation completes
