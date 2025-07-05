@@ -3085,55 +3085,31 @@ input:checked + .slider:before {
   flex-shrink: 0;
 }
 
-/* Scroll-snap container for TikTok-like section navigation */
+/* Container for sections - no snap, just normal scrolling */
 .snap-container {
   height: var(--app-height, 100vh);
   overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
   position: relative;
-  /* Enable smooth scrolling with scroll-snap */
+  /* Enable smooth scrolling */
   -webkit-overflow-scrolling: touch;
 }
 
-/* Individual sections that snap to full screen */
+/* Individual sections */
 .snap-section {
   height: var(--app-height, 100vh);
-  scroll-snap-align: start;
-  scroll-snap-stop: normal;
   display: flex;
   flex-direction: column;
   position: relative;
 }
 
-/* Allow long content inside the shift list section */
+/* Shift section can expand beyond viewport */
 .snap-section.shift-section {
   min-height: var(--app-height, 100vh);
   height: auto;
-  scroll-snap-align: start;
-  scroll-snap-stop: normal;
   background: var(--bg-secondary);
 }
 
-/* Make the shift list container scrollable when content exceeds viewport */
-.shift-section .app-container {
-  max-height: var(--app-height, 100vh);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  /* Prevent scroll events from bubbling up to snap container */
-  overscroll-behavior: contain;
-  /* Prevent scroll chaining to parent */
-  scroll-behavior: auto;
-  /* Ensure the background extends to cover all content */
-  background: var(--bg-secondary);
-  min-height: 100%;
-  padding-bottom: 20px;
-  /* Make scrolling immediately responsive */
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
-  will-change: scroll-position;
-}
+
 
 /* Dashboard section styling */
 .dashboard-section {

@@ -322,157 +322,61 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Call addEventListeners once - event delegation handles dynamic content
   addEventListeners();
 
-  // Add scroll handling for shift section to enable scrolling back to dashboard
-  function setupShiftSectionScroll() {
-    const shiftContainer = document.querySelector('.shift-section .app-container');
+  // Simple scroll-based snapping between sections
+  function setupSimpleSnapping() {
     const snapContainer = document.querySelector('.snap-container');
-    
-    if (!shiftContainer || !snapContainer) return;
-
-    let touchStartY = 0;
-    let touchCurrentY = 0;
-    let isDragging = false;
-    let atTop = false;
-    const threshold = 80; // pixels to drag before triggering navigation
-
-    // Create pull indicator element
-    const pullIndicator = document.createElement('div');
-    pullIndicator.style.cssText = `
-      position: absolute;
-      top: -50px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 40px;
-      height: 40px;
-      background: var(--bg-tertiary);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.2s, transform 0.2s;
-      z-index: 100;
-    `;
-    pullIndicator.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="18 15 12 9 6 15"></polyline>
-      </svg>
-    `;
-    shiftContainer.style.position = 'relative';
-    shiftContainer.appendChild(pullIndicator);
-
-    // Touch start
-    shiftContainer.addEventListener('touchstart', (e) => {
-      if (shiftContainer.scrollTop <= 0) {
-        touchStartY = e.touches[0].clientY;
-        atTop = true;
-      } else {
-        atTop = false;
-      }
-    }, { passive: true });
-
-    // Touch move
-    shiftContainer.addEventListener('touchmove', (e) => {
-      if (!atTop) return;
-      
-      touchCurrentY = e.touches[0].clientY;
-      const pullDistance = touchCurrentY - touchStartY;
-      
-      // Only track downward pulls when at top
-      if (pullDistance > 0 && shiftContainer.scrollTop <= 0) {
-        isDragging = true;
-        
-        // Prevent default to stop bounce effect
-        if (pullDistance > 10) {
-          e.preventDefault();
-        }
-        
-        // Show and animate pull indicator
-        const progress = Math.min(pullDistance / threshold, 1);
-        pullIndicator.style.opacity = progress;
-        pullIndicator.style.transform = `translateX(-50%) translateY(${Math.min(pullDistance * 0.5, 40)}px) scale(${0.8 + progress * 0.2})`;
-        
-        // Add slight transform to container for feedback
-        shiftContainer.style.transform = `translateY(${Math.min(pullDistance * 0.3, 30)}px)`;
-      }
-    }, { passive: false });
-
-    // Touch end
-    shiftContainer.addEventListener('touchend', (e) => {
-      if (!isDragging) return;
-      
-      const pullDistance = touchCurrentY - touchStartY;
-      
-      // Reset visual feedback
-      pullIndicator.style.opacity = '0';
-      pullIndicator.style.transform = 'translateX(-50%) translateY(0) scale(0.8)';
-      shiftContainer.style.transform = 'translateY(0)';
-      
-      // If pulled far enough, navigate to dashboard
-      if (pullDistance > threshold) {
-        const dashboardSection = document.querySelector('.dashboard-section');
-        if (dashboardSection) {
-          snapContainer.scrollTo({
-            top: dashboardSection.offsetTop,
-            behavior: 'smooth'
-          });
-        }
-      }
-      
-      // Reset state
-      isDragging = false;
-      touchStartY = 0;
-      touchCurrentY = 0;
-    }, { passive: true });
-
-    // Also handle wheel events for desktop
-    shiftContainer.addEventListener('wheel', (e) => {
-      // If at top and scrolling up
-      if (shiftContainer.scrollTop <= 0 && e.deltaY < 0) {
-        e.preventDefault();
-        const dashboardSection = document.querySelector('.dashboard-section');
-        if (dashboardSection) {
-          snapContainer.scrollTo({
-            top: dashboardSection.offsetTop,
-            behavior: 'smooth'
-          });
-        }
-      }
-    }, { passive: false });
-  }
-
-  // Setup scroll handling after a short delay to ensure DOM is ready
-  setTimeout(setupShiftSectionScroll, 100);
-
-  // Make shift section immediately scrollable when it comes into view
-  function makeShiftSectionResponsive() {
-    const snapContainer = document.querySelector('.snap-container');
+    const dashboardSection = document.querySelector('.dashboard-section');
     const shiftSection = document.querySelector('.shift-section');
-    const shiftContainer = document.querySelector('.shift-section .app-container');
     
-    if (!snapContainer || !shiftSection || !shiftContainer) return;
+    if (!snapContainer || !dashboardSection || !shiftSection) return;
 
-    // Use Intersection Observer to detect when shift section is visible
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-          // Shift section is more than 50% visible
-          // Focus the container to make it immediately scrollable
-          shiftContainer.focus({ preventScroll: true });
-          
-          // If there's a pending scroll, apply it
-          if (window.pendingShiftScroll) {
-            shiftContainer.scrollTop = window.pendingShiftScroll;
-            window.pendingShiftScroll = null;
+    let isScrolling = false;
+    let scrollTimeout;
+    let lastScrollTop = 0;
+
+    snapContainer.addEventListener('scroll', () => {
+      const currentScrollTop = snapContainer.scrollTop;
+      const scrollingDown = currentScrollTop > lastScrollTop;
+      const viewportHeight = window.innerHeight;
+      
+      // Clear previous timeout
+      clearTimeout(scrollTimeout);
+      isScrolling = true;
+
+      // Get positions
+      const dashboardBottom = dashboardSection.offsetTop + dashboardSection.offsetHeight;
+      const shiftTop = shiftSection.offsetTop;
+      
+      // If we're in the middle zone between sections
+      if (currentScrollTop > dashboardSection.offsetTop + viewportHeight * 0.3 && 
+          currentScrollTop < shiftTop - viewportHeight * 0.3) {
+        
+        // Snap based on direction
+        scrollTimeout = setTimeout(() => {
+          if (scrollingDown) {
+            // Snap to shift section
+            snapContainer.scrollTo({
+              top: shiftTop,
+              behavior: 'smooth'
+            });
+          } else {
+            // Snap to dashboard
+            snapContainer.scrollTo({
+              top: dashboardSection.offsetTop,
+              behavior: 'smooth'
+            });
           }
-        }
-      });
-    }, {
-      threshold: [0.5]
-    });
-
-    observer.observe(shiftSection);
+          isScrolling = false;
+        }, 50); // Small delay to ensure scroll has stopped
+      } else {
+        scrollTimeout = setTimeout(() => {
+          isScrolling = false;
+        }, 150);
+      }
+      
+      lastScrollTop = currentScrollTop;
+    }, { passive: true });
   }
 
-  makeShiftSectionResponsive();
+  setupSimpleSnapping();
 });
