@@ -2044,6 +2044,10 @@ input:checked + .slider:before {
   overflow: hidden;
   transition: all var(--speed-normal) var(--ease-default);
   border: 1px solid var(--border);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .next-shift-card:hover {
@@ -2054,8 +2058,9 @@ input:checked + .slider:before {
 .next-shift-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .next-shift-icon {
@@ -2065,7 +2070,7 @@ input:checked + .slider:before {
 }
 
 .next-shift-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -2074,80 +2079,73 @@ input:checked + .slider:before {
 .next-shift-content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
 }
 
 .next-shift-date {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--accent);
   line-height: 1.2;
+  margin: 0;
 }
 
 .next-shift-time {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
   font-weight: 500;
+  margin: 0;
 }
 
 .next-shift-earnings {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--accent4);
   background: linear-gradient(135deg, var(--accent), var(--accent3));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  margin: 0;
+  margin-top: 2px;
 }
 
 .next-shift-empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 0;
   text-align: center;
+  flex: 1;
 }
 
 .empty-message {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
   font-style: italic;
+  margin: 0;
 }
 
 /* Responsive adjustments for next shift card */
 @media (max-width: 480px) {
   .next-shift-card {
     padding: 16px;
-    margin-bottom: 16px;
     border-radius: 20px;
+    min-height: 110px;
   }
   
   .next-shift-header {
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 8px;
+    margin-bottom: 10px;
   }
   
   .next-shift-title {
-    font-size: 15px;
-  }
-  
-  .next-shift-date {
-    font-size: 16px;
-  }
-  
-  .next-shift-time {
     font-size: 13px;
   }
   
-  .next-shift-earnings {
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 360px) {
-  .next-shift-card {
-    padding: 14px;
-    border-radius: 16px;
+  .next-shift-content {
+    gap: 5px;
   }
   
   .next-shift-date {
@@ -2160,6 +2158,47 @@ input:checked + .slider:before {
   
   .next-shift-earnings {
     font-size: 14px;
+  }
+  
+  .empty-message {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .next-shift-card {
+    padding: 14px;
+    border-radius: 16px;
+    min-height: 100px;
+  }
+  
+  .next-shift-header {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  
+  .next-shift-title {
+    font-size: 12px;
+  }
+  
+  .next-shift-content {
+    gap: 4px;
+  }
+  
+  .next-shift-date {
+    font-size: 14px;
+  }
+  
+  .next-shift-time {
+    font-size: 11px;
+  }
+  
+  .next-shift-earnings {
+    font-size: 13px;
+  }
+  
+  .empty-message {
+    font-size: 11px;
   }
 }
 
