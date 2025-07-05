@@ -1176,9 +1176,6 @@ export const app = {
         }
 
         try {
-            // First, update user's last active timestamp
-            await this.updateLastActiveTimestamp(user.id);
-
             // Fetch shifts
             const { data: shifts, error: shiftsError } = await window.supa
                 .from('user_shifts')
@@ -1230,24 +1227,16 @@ export const app = {
                     saturday: loadedBonuses.saturday || [],
                     sunday: loadedBonuses.sunday || []
                 };
-                // Check if user has been inactive for more than 5 hours
-                const shouldResetToCurrentMonth = this.shouldResetToCurrentMonth(settings.last_active);
-                
-                this.currentMonth = shouldResetToCurrentMonth 
-                    ? new Date().getMonth() + 1 
-                    : (settings.current_month || new Date().getMonth() + 1);
+                // Always set to current month on page load
+                this.currentMonth = new Date().getMonth() + 1;
                     
                 this.pauseDeduction = settings.pause_deduction || false;
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
             this.monthlyGoal = settings.monthly_goal || 20000;
-            this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
-            this.currencyFormat = settings.currency_format || false;
-            this.compactView = settings.compact_view || false;
-                
-                if (shouldResetToCurrentMonth && settings.current_month && settings.current_month !== new Date().getMonth() + 1) {
-                    // User was inactive for >5 hours, resetting to current month
-                }
+                            this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
+                this.currencyFormat = settings.currency_format || false;
+                this.compactView = settings.compact_view || false;
                 
             } else {
                 // No settings found, set defaults
@@ -1263,64 +1252,6 @@ export const app = {
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
             this.setDefaultSettings();
-        }
-    },
-
-    // Update user's last active timestamp
-    async updateLastActiveTimestamp(userId) {
-        try {
-            const now = new Date().toISOString();
-            
-            // First check if last_active column exists by trying to fetch it
-            const { data: existingSettings, error: fetchError } = await window.supa
-                .from('user_settings')
-                .select('last_active')
-                .eq('user_id', userId)
-                .limit(1);
-                
-            if (fetchError && fetchError.code === 'PGRST204') {
-                // Column doesn't exist, skip updating last_active
-                return;
-            }
-            
-            const { error } = await window.supa
-                .from('user_settings')
-                .upsert({
-                    user_id: userId,
-                    last_active: now
-                }, {
-                    onConflict: 'user_id'
-                });
-                
-            if (error) {
-                if (error.code === 'PGRST204') {
-                    // last_active column does not exist, skipping timestamp update
-                } else {
-                    console.error('Error updating last active timestamp:', error);
-                }
-            }
-        } catch (e) {
-            console.error('Error in updateLastActiveTimestamp:', e);
-        }
-    },
-
-    // Check if user should be reset to current month based on inactivity
-    shouldResetToCurrentMonth(lastActiveString) {
-        if (!lastActiveString) {
-            return false; // If no timestamp, don't reset - keep user's preference
-        }
-
-        try {
-            const lastActive = new Date(lastActiveString);
-            const now = new Date();
-            const hoursSinceLastActive = (now - lastActive) / (1000 * 60 * 60); // Convert to hours
-            
-            const shouldReset = hoursSinceLastActive > 5;
-            
-            return shouldReset;
-        } catch (e) {
-            console.error('Error parsing last_active timestamp:', e);
-            return false; // If error parsing, don't reset - keep user's preference
         }
     },
 
@@ -1480,10 +1411,6 @@ export const app = {
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
-                // Only include last_active if the column exists
-                if ('last_active' in existingSettings) {
-                    settingsData.last_active = new Date().toISOString();
-                }
             } else {
                 // No existing settings - try to save with common field names
                 settingsData.use_preset = this.usePreset;
@@ -1498,7 +1425,6 @@ export const app = {
                 settingsData.currency_format = this.currencyFormat;
                 settingsData.compact_view = this.compactView;
                 settingsData.custom_bonuses = this.customBonuses || {};
-                // For new settings, we'll try to include last_active and let it fail gracefully if column doesn't exist
             }
 
             const { error } = await window.supa
@@ -2037,6 +1963,7 @@ export const app = {
         this.updateStats(shouldAnimate);
         this.updateShiftList();
         this.updateShiftCalendar();
+        this.updateNextShiftCard();
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
@@ -2296,6 +2223,102 @@ export const app = {
     updateShiftCalendar() {
         if (this.shiftView !== 'calendar') return;
         this.renderShiftCalendar();
+    },
+
+    updateNextShiftCard() {
+        const nextShiftCard = document.getElementById('nextShiftCard');
+        if (!nextShiftCard) return;
+
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        // Removed currentYear comparison to this.YEAR to avoid hiding the card when the hard-coded year differs from the actual year
+        if (this.currentMonth !== currentMonth) {
+            nextShiftCard.style.display = 'none';
+            return;
+        }
+        
+        nextShiftCard.style.display = 'block';
+        
+        // Get all shifts from now onwards
+        const upcomingShifts = this.shifts.filter(shift => {
+            const shiftDate = new Date(shift.date);
+            
+            // If shift is on a future date, include it
+            if (shiftDate > now) {
+                return true;
+            }
+            
+            // If shift is today, check if it hasn't started yet
+            if (shiftDate.toDateString() === now.toDateString()) {
+                const [startHour, startMinute] = shift.startTime.split(':').map(Number);
+                const shiftStartTime = new Date(shiftDate);
+                shiftStartTime.setHours(startHour, startMinute, 0, 0);
+                
+                return shiftStartTime > now;
+            }
+            
+            return false;
+        });
+        
+        // Sort by date and time
+        upcomingShifts.sort((a, b) => {
+            const aDate = new Date(a.date);
+            const bDate = new Date(b.date);
+            
+            if (aDate.getTime() !== bDate.getTime()) {
+                return aDate - bDate;
+            }
+            
+            // Same date, sort by start time
+            const [aHour, aMinute] = a.startTime.split(':').map(Number);
+            const [bHour, bMinute] = b.startTime.split(':').map(Number);
+            
+            return (aHour * 60 + aMinute) - (bHour * 60 + bMinute);
+        });
+        
+        const nextShiftDate = document.getElementById('nextShiftDate');
+        const nextShiftTime = document.getElementById('nextShiftTime');
+        const nextShiftEarnings = document.getElementById('nextShiftEarnings');
+        const nextShiftContent = document.querySelector('.next-shift-content');
+        const nextShiftEmpty = document.getElementById('nextShiftEmpty');
+        
+        if (upcomingShifts.length === 0) {
+            // No upcoming shifts
+            nextShiftContent.style.display = 'none';
+            nextShiftEmpty.style.display = 'flex';
+        } else {
+            // Show next shift details
+            nextShiftContent.style.display = 'flex';
+            nextShiftEmpty.style.display = 'none';
+            
+            const nextShift = upcomingShifts[0];
+            const calculation = this.calculateShift(nextShift);
+            
+            // Format date
+            const shiftDate = new Date(nextShift.date);
+            const weekday = this.WEEKDAYS[shiftDate.getDay()];
+            const day = shiftDate.getDate();
+            const month = this.MONTHS[shiftDate.getMonth()];
+            
+            // Check if it's today or tomorrow
+            // Use the same reference time ("now") to avoid race conditions around midnight
+            const today = new Date(now);
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
+            
+            let dateDisplay;
+            if (shiftDate.toDateString() === today.toDateString()) {
+                dateDisplay = `I dag - ${weekday} ${day}. ${month}`;
+            } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
+                dateDisplay = `I morgen - ${weekday} ${day}. ${month}`;
+            } else {
+                dateDisplay = `${weekday} ${day}. ${month}`;
+            }
+            
+            nextShiftDate.textContent = dateDisplay;
+            nextShiftTime.textContent = `${nextShift.startTime} - ${nextShift.endTime}`;
+            nextShiftEarnings.textContent = `Estimert: ${this.formatCurrency(calculation.total)}`;
+        }
     },
 
     renderShiftCalendar() {

@@ -2034,6 +2034,135 @@ input:checked + .slider:before {
   line-height: 1;
 }
 
+/* Next Shift Card Styling */
+.next-shift-card {
+  background: var(--gradient-secondary);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 12px 40px -8px var(--shadow-blue);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--speed-normal) var(--ease-default);
+  border: 1px solid var(--border);
+}
+
+.next-shift-card:hover {
+  transform: var(--lift-small);
+  box-shadow: var(--shadow-hover-blue);
+}
+
+.next-shift-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.next-shift-icon {
+  color: var(--accent3);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.next-shift-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.next-shift-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.next-shift-date {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+
+.next-shift-time {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.next-shift-earnings {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent4);
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.next-shift-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+}
+
+.empty-message {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* Responsive adjustments for next shift card */
+@media (max-width: 480px) {
+  .next-shift-card {
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 20px;
+  }
+  
+  .next-shift-header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  
+  .next-shift-title {
+    font-size: 15px;
+  }
+  
+  .next-shift-date {
+    font-size: 16px;
+  }
+  
+  .next-shift-time {
+    font-size: 13px;
+  }
+  
+  .next-shift-earnings {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 360px) {
+  .next-shift-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+  
+  .next-shift-date {
+    font-size: 15px;
+  }
+  
+  .next-shift-time {
+    font-size: 12px;
+  }
+  
+  .next-shift-earnings {
+    font-size: 14px;
+  }
+}
+
 /* Responsive calendar adjustments */
 @media (max-width: 480px) {
   .calendar-cell {
