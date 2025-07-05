@@ -379,6 +379,16 @@ body {
   height: 28px;
 }
 
+.header-logo-link {
+  display: inline-block;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.header-logo-link:hover {
+  transform: scale(1.05);
+}
+
 .header-right {
   display: flex;
   gap: 10px;
