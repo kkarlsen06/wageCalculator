@@ -4352,13 +4352,13 @@ export const app = {
     exportAsPDF(data) {
         try {
             // Check if jsPDF is available
-            if (typeof window.jsPDF === 'undefined') {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
                 alert('PDF-biblioteket kunne ikke lastes. Prøv å laste siden på nytt.');
                 return;
             }
 
             // Create new PDF instance
-            const jsPDF = window.jsPDF;
+            const jsPDF = window.jspdf.jsPDF;
             const doc = new jsPDF();
 
             // Set up document properties
