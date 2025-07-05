@@ -135,8 +135,8 @@
               </div>
               
               <div class="tab-nav">
-                  <button class="tab-btn active" onclick="app.switchSettingsTabSync('wage')">Lønn & Beregning</button>
-                  <button class="tab-btn" onclick="app.switchSettingsTabSync('interface')">Brukergrensesnitt</button>
+                  <button class="tab-btn active" onclick="app.switchSettingsTabSync('wage')">Lønn</button>
+                  <button class="tab-btn" onclick="app.switchSettingsTabSync('interface')">UI</button>
                   <button class="tab-btn" onclick="app.switchSettingsTabSync('account')">Konto</button>
                   <button class="tab-btn" onclick="app.switchSettingsTabSync('data')">Data</button>
               </div>
@@ -210,19 +210,21 @@
                       </div>
                   </div>
                   
-                  <div class="form-group">
+                  <div class="form-group form-group-with-hint">
                       <label>Pausetrekk</label>
                       <div class="switch-group">
+                        <div>
                           <span class="text-secondary">Trekk fra betalt pause for vakter over 5,5 timer</span>
-                          <label class="switch">
-                              <input type="checkbox" id="pauseDeductionToggle" checked>
-                              <span class="slider"></span>
-                          </label>
+                          <small class="form-hint">Følger standard arbeidsrett - påvirker lønnsberegningen</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="pauseDeductionToggle" checked>
+                            <span class="slider"></span>
+                        </label>
                       </div>
-                      <small class="form-hint">Følger standard arbeidsrett - påvirker lønnsberegningen</small>
                   </div>
                   
-                  <div class="form-group">
+                  <div class="form-group form-group-with-hint">
                       <label for="monthlyGoalInput">Månedlig inntektsmål</label>
                       <div class="switch-group">
                           <input type="number" id="monthlyGoalInput" class="form-control" min="0" step="100" style="max-width:140px;display:inline-block;" placeholder="20000">
@@ -233,63 +235,71 @@
               </div>
 
               <div id="interfaceTab" class="tab-content">
-                  <div class="form-group">
+                  <div class="form-group form-group-with-hint">
                       <label>Tidsinnskriving</label>
                       <div class="switch-group">
+                        <div>
                           <span class="text-secondary">Skriv inn tid direkte i stedet for dropdown-menyer</span>
-                          <label class="switch">
-                              <input type="checkbox" id="directTimeInputToggle">
-                              <span class="slider"></span>
-                          </label>
+                          <small class="form-hint">Raskere registrering av vakter for erfarne brukere</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="directTimeInputToggle">
+                            <span class="slider"></span>
+                        </label>
                       </div>
-                      <small class="form-hint">Raskere registrering av vakter for erfarne brukere</small>
                   </div>
                   
-                  <div class="form-group">
+                  <div class="form-group form-group-with-hint">
                       <label>Minuttformat</label>
                       <div class="switch-group">
+                        <div>
                           <span class="text-secondary">Vis hvert minutt i stedet for 15-minutters intervaller</span>
-                          <label class="switch">
-                              <input type="checkbox" id="fullMinuteRangeToggle">
-                              <span class="slider"></span>
-                          </label>
+                          <small class="form-hint">Mer presise tidsvalg, men lengre dropdown-lister</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="fullMinuteRangeToggle">
+                            <span class="slider"></span>
+                        </label>
                       </div>
-                      <small class="form-hint">Mer presise tidsvalg, men lengre dropdown-lister</small>
                   </div>
                   
-                  <div class="form-group">
+                  <div class="form-group form-group-with-hint">
                       <label>Valutaformat</label>
                       <div class="switch-group">
+                        <div>
                           <span class="text-secondary">Vis kroner som "NOK" i stedet for "kr"</span>
-                          <label class="switch">
-                              <input type="checkbox" id="currencyFormatToggle">
-                              <span class="slider"></span>
-                          </label>
+                          <small class="form-hint">Mer formelt valutaformat for eksport og rapporter</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="currencyFormatToggle">
+                            <span class="slider"></span>
+                        </label>
                       </div>
-                      <small class="form-hint">Mer formelt valutaformat for eksport og rapporter</small>
                   </div>
                   
-                  <div class="form-group">
+                  <div class="form-group form-group-with-hint">
                       <label>Kompakt visning</label>
                       <div class="switch-group">
+                        <div>
                           <span class="text-secondary">Vis mer informasjon på mindre plass</span>
-                          <label class="switch">
-                              <input type="checkbox" id="compactViewToggle">
-                              <span class="slider"></span>
-                          </label>
+                          <small class="form-hint">Bedre for små skjermer og mange vakter</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="compactViewToggle">
+                            <span class="slider"></span>
+                        </label>
                       </div>
-                      <small class="form-hint">Bedre for små skjermer og mange vakter</small>
                   </div>
               </div>
 
               <div id="accountTab" class="tab-content">
-                  <div class="form-group">
+                  <div class="form-group form-group-with-hint">
                       <label>Fornavn</label>
                       <input type="text" id="profileName" class="form-control" placeholder="Fornavn">
                       <small class="form-hint">Vises i velkomstskjermen og rapporter</small>
                   </div>
                   
-                  <div class="form-group">
+                  <div class="form-group form-group-with-hint">
                       <label>E-post</label>
                       <input type="email" id="profileEmail" class="form-control" placeholder="E-post" disabled>
                       <small class="form-hint">E-postadressen kan ikke endres etter registrering</small>
@@ -301,7 +311,7 @@
                   
                   <p id="profile-update-msg" style="color: var(--success); min-height: 24px; text-align: center; font-size: 14px;"></p>
                   
-                  <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                  <div class="form-group form-group-with-hint" style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
                       <label>Kontoadministrasjon</label>
                       <div class="form-row">
                           <button class="btn btn-secondary" onclick="logout()" style="margin-right: 8px;">
@@ -329,7 +339,7 @@
 
               <div id="dataTab" class="tab-content">
                   <div class="form-group">
-                      <label>Eksport</label>
+                      <label>Dataeksport</label>
                       <div class="form-row">
                           <div class="export-period-options">
                               <label class="radio-option">
@@ -346,18 +356,18 @@
                               </label>
                           </div>
                       </div>
-                      <small class="form-hint">Velg hvilken periode du vil eksportere data for</small>
                   </div>
                   
                   <div id="customPeriodSection" class="form-group" style="display: none;">
+                    <small class="form-hint">Velg start- og sluttdato for eksporten</small>
                       <div class="form-row">
                           <input type="date" id="exportStartDate" class="form-control" style="margin-right: 8px;" placeholder="Fra dato">
                           <input type="date" id="exportEndDate" class="form-control" placeholder="Til dato">
                       </div>
-                      <small class="form-hint">Velg start- og sluttdato for eksporten</small>
                   </div>
                   
-                  <div id="exportOptionsSection" class="form-group" style="display: none;">
+                  <div id="exportOptionsSection" class="form-group form-group-with-hint" style="display: none;">
+                    <small class="form-hint">Last ned dine vaktdata for regnskapsføring eller backup</small>
                       <div class="form-row">
                           <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('csv')" style="margin-right: 8px;">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -378,10 +388,10 @@
                               Eksporter som PDF
                           </button>
                       </div>
-                      <small class="form-hint">Last ned dine vaktdata for regnskapsføring eller backup</small>
+
                   </div>
                   
-                  <div class="form-group">
+                  <div class="form-group form-group-with-hint">
                       <label>Dataimport</label>
                       <div class="form-row">
                           <input type="file" id="importFileData" class="form-control" accept=".csv,.json" style="margin-right: 8px;">

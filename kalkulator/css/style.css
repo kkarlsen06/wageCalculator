@@ -573,19 +573,24 @@ body {
 
 /* Forms */
 .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 .form-group label {
   display: block;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+/* Add extra top margin to first form group in tab content for better separation */
+.tab-content > .form-group:first-child {
+  margin-top: 24px;
 }
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 .form-control {
   background: var(--bg-tertiary);
@@ -948,7 +953,6 @@ input[type="time"].form-control[value=""]:focus {
   justify-content: space-between;
   align-items: center;
   padding: 20px 20px;
-  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
@@ -982,7 +986,7 @@ input[type="time"].form-control[value=""]:focus {
 .tab-nav {
   display: flex;
   background: var(--bg-secondary);
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border-radius: var(--border-radius) var(--border-radius);
   padding: 4px;
   gap: 4px;
 }
@@ -1008,12 +1012,6 @@ input[type="time"].form-control[value=""]:focus {
   color: var(--text-primary);
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border);
-  transform: translateY(-1px);
-}
-.tab-btn.active:hover {
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text-primary);
-  transform: translateY(-1px);
 }
 .tab-content {
   display: none;
@@ -1157,7 +1155,8 @@ input:checked + .slider:before {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  min-height: 40px;
+  min-height: auto;
+  margin-bottom: 4px;
 }
 
 .switch-group span {
@@ -1176,6 +1175,17 @@ input:checked + .slider:before {
   font-size: 12px;
   color: var(--text-secondary);
   opacity: 0.8;
+  margin-top: 0;
+}
+
+/* Form groups with hints should still have proper spacing */
+.form-group:has(.form-hint) {
+  margin-bottom: 20px;
+}
+
+/* Alternative approach for browsers that don't support :has() */
+.form-group-with-hint {
+  margin-bottom: 20px;
 }
 
 /* Compact buttons in settings */
@@ -3558,4 +3568,10 @@ input:checked + .slider:before {
   .radio-option span {
     font-size: 13px;
   }
+}
+
+.switch-group .form-hint {
+  margin-top: 2px;
+  margin-bottom: 0;
+  display: block;
 }

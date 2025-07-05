@@ -1654,8 +1654,8 @@ export const app = {
         const settingsModal = document.getElementById('settingsModal');
         const currentActiveTab = settingsModal?.querySelector('.tab-btn.active');
         const currentTab = currentActiveTab ? 
-            (currentActiveTab.textContent === 'Lønn & Beregning' ? 'wage' : 
-             currentActiveTab.textContent === 'Brukergrensesnitt' ? 'interface' : 
+            (currentActiveTab.textContent === 'Lønn' ? 'wage' : 
+             currentActiveTab.textContent === 'UI' ? 'interface' : 
              currentActiveTab.textContent === 'Konto' ? 'account' :
              currentActiveTab.textContent === 'Data' ? 'data' :
              'wage') : null;
@@ -1804,7 +1804,7 @@ export const app = {
                     <input type="time" class="form-control" value="${bonus.from}">
                     <input type="time" class="form-control" value="${bonus.to}">
                     <input type="number" class="form-control" placeholder="kr/t" value="${bonus.rate}">
-                    <button class="btn btn-icon btn-danger remove-bonus">×</button>
+                    <button class="btn btn-icon btn-danger remove-bonus" title="Fjern dette tillegget">×</button>
                 `;
                 
                 // Add auto-save event listeners to the inputs (only on change, not blur)
@@ -1815,6 +1815,15 @@ export const app = {
                     });
                     // Removed blur event to reduce frequent saving
                 });
+                
+                // Add click event listener to the remove button
+                const removeBtn = slot.querySelector('.remove-bonus');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.removeBonusSlot(removeBtn);
+                    });
+                }
                 
                 container.appendChild(slot);
             });
@@ -1853,6 +1862,15 @@ export const app = {
             // Removed blur event to reduce frequent saving
         });
         
+        // Add click event listener to the remove button
+        const removeBtn = slot.querySelector('.remove-bonus');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.removeBonusSlot(removeBtn);
+            });
+        }
+        
         container.appendChild(slot);
         
         // Adjust modal height after adding content
@@ -1890,6 +1908,44 @@ export const app = {
                 this.autoSaveTimeout = null;
             }, 5000);
         }
+    },
+    
+    // Show save status message to user
+    showSaveStatus(message) {
+        // Find or create status element
+        let statusElement = document.getElementById('bonus-save-status');
+        if (!statusElement) {
+            statusElement = document.createElement('div');
+            statusElement.id = 'bonus-save-status';
+            statusElement.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--bg-primary);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 12px 16px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 10000;
+                box-shadow: 0 4px 12px var(--shadow-blue);
+                transition: all 0.3s var(--ease-default);
+                opacity: 0;
+                transform: translateX(100%);
+            `;
+            document.body.appendChild(statusElement);
+        }
+        
+        // Update message and show
+        statusElement.textContent = message;
+        statusElement.style.opacity = '1';
+        statusElement.style.transform = 'translateX(0)';
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            statusElement.style.opacity = '0';
+            statusElement.style.transform = 'translateX(100%)';
+        }, 3000);
     },
     
     async openSettings() {

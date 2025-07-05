@@ -311,11 +311,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // Handle remove bonus slot buttons
-    document.querySelectorAll('.remove-bonus').forEach(el => {
-      el.addEventListener('click', () => {
-        app.removeBonusSlot(el);
-      });
+    // Handle remove bonus slot buttons using event delegation
+    document.body.addEventListener('click', (event) => {
+      const removeBtn = event.target.closest('.remove-bonus');
+      if (removeBtn) {
+        event.stopPropagation();
+        app.removeBonusSlot(removeBtn);
+      }
     });
   }
 
