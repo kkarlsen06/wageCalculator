@@ -4836,9 +4836,16 @@ export const app = {
         // Setup event listeners for radio buttons
         const periodRadios = document.querySelectorAll('input[name="exportPeriod"]');
         const customSection = document.getElementById('customPeriodSection');
+        const exportOptionsSection = document.getElementById('exportOptionsSection');
         
         periodRadios.forEach(radio => {
             radio.addEventListener('change', () => {
+                // Show export options when any period is selected
+                if (exportOptionsSection) {
+                    exportOptionsSection.style.display = 'block';
+                }
+                
+                // Handle custom period section
                 if (radio.value === 'custom') {
                     customSection.style.display = 'block';
                     // Set default dates if empty
@@ -4857,13 +4864,31 @@ export const app = {
                 } else {
                     customSection.style.display = 'none';
                 }
+                
+                // Adjust modal height after showing/hiding sections
+                setTimeout(() => {
+                    this.adjustSettingsModalHeight();
+                }, 50);
             });
         });
         
-        // Initialize custom section visibility
-        const customRadio = document.querySelector('input[name="exportPeriod"][value="custom"]');
-        if (customRadio && customRadio.checked) {
-            customSection.style.display = 'block';
+        // Initialize visibility based on current selection
+        const checkedRadio = document.querySelector('input[name="exportPeriod"]:checked');
+        if (checkedRadio) {
+            // Show export options if a period is already selected
+            if (exportOptionsSection) {
+                exportOptionsSection.style.display = 'block';
+            }
+            
+            // Show custom section if custom period is selected
+            if (checkedRadio.value === 'custom') {
+                customSection.style.display = 'block';
+            }
+        } else {
+            // Hide export options if no period is selected
+            if (exportOptionsSection) {
+                exportOptionsSection.style.display = 'none';
+            }
         }
     },
 
@@ -4881,7 +4906,11 @@ export const app = {
         try {
             // Get selected period
             const periodRadio = document.querySelector('input[name="exportPeriod"]:checked');
-            const period = periodRadio ? periodRadio.value : 'all';
+            if (!periodRadio) {
+                alert('Vennligst velg en periode for eksport først.');
+                return;
+            }
+            const period = periodRadio.value;
             
             // Filter shifts based on selected period
             let filteredShifts = [...this.shifts];

@@ -329,11 +329,11 @@
 
               <div id="dataTab" class="tab-content">
                   <div class="form-group">
-                      <label>Eksportperiode</label>
+                      <label>Eksport</label>
                       <div class="form-row">
                           <div class="export-period-options">
                               <label class="radio-option">
-                                  <input type="radio" name="exportPeriod" value="all" checked>
+                                  <input type="radio" name="exportPeriod" value="all">
                                   <span>Alle data</span>
                               </label>
                               <label class="radio-option">
@@ -346,20 +346,18 @@
                               </label>
                           </div>
                       </div>
-                      <small class="form-hint">Velg hvilken tidsperiode du vil eksportere data for</small>
+                      <small class="form-hint">Velg hvilken periode du vil eksportere data for</small>
                   </div>
                   
                   <div id="customPeriodSection" class="form-group" style="display: none;">
-                      <label>Egendefinert periode</label>
                       <div class="form-row">
-                          <input type="date" id="exportStartDate" class="form-control" style="margin-right: 8px;">
-                          <input type="date" id="exportEndDate" class="form-control">
+                          <input type="date" id="exportStartDate" class="form-control" style="margin-right: 8px;" placeholder="Fra dato">
+                          <input type="date" id="exportEndDate" class="form-control" placeholder="Til dato">
                       </div>
                       <small class="form-hint">Velg start- og sluttdato for eksporten</small>
                   </div>
                   
-                  <div class="form-group">
-                      <label>Dataeksport</label>
+                  <div id="exportOptionsSection" class="form-group" style="display: none;">
                       <div class="form-row">
                           <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('csv')" style="margin-right: 8px;">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
