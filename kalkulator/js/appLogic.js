@@ -2303,13 +2303,19 @@ export const app = {
             const tomorrow = new Date(now);
             tomorrow.setDate(now.getDate() + 1);
             
-            let dateDisplay;
+            // Create separate date and weekday parts to match regular shift items structure
+            let dateNumberPart;
+            let weekdayPart;
+            
             if (shiftDate.toDateString() === today.toDateString()) {
-                dateDisplay = `I dag - ${weekday} ${day}. ${month}`;
+                dateNumberPart = `I dag - ${day}. ${month}`;
+                weekdayPart = weekday;
             } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
-                dateDisplay = `I morgen - ${weekday} ${day}. ${month}`;
+                dateNumberPart = `I morgen - ${day}. ${month}`;
+                weekdayPart = weekday;
             } else {
-                dateDisplay = `${weekday} ${day}. ${month}`;
+                dateNumberPart = `${day}. ${month}`;
+                weekdayPart = weekday;
             }
             
             // Create the shift item using the same structure as in the shift list
@@ -2320,9 +2326,9 @@ export const app = {
                 <div class="shift-item ${typeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer;">
                     <div class="shift-info">
                         <div class="shift-date">
-                            <span class="shift-date-number">${dateDisplay}</span>
+                            <span class="shift-date-number">${dateNumberPart}</span>
                             <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${seriesBadge}</span>
+                            <span class="shift-date-weekday">${weekdayPart}${seriesBadge}</span>
                         </div>
                         <div class="shift-details">
                             <div class="shift-time-with-hours">
