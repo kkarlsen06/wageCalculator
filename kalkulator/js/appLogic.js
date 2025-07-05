@@ -4350,9 +4350,219 @@ export const app = {
     },
 
     exportAsPDF(data) {
-        // For now, show a message that PDF export is not implemented
-        // This would require a PDF library like jsPDF
-        alert('PDF-eksport er ikke implementert ennå. Bruk CSV-eksport i stedet.');
+        try {
+            // Check if jsPDF is available
+            if (typeof window.jsPDF === 'undefined') {
+                alert('PDF-biblioteket kunne ikke lastes. Prøv å laste siden på nytt.');
+                return;
+            }
+
+            // Create new PDF instance
+            const { jsPDF } = window.jsPDF;
+            const doc = new jsPDF();
+
+            // Set up document properties
+            doc.setProperties({
+                title: 'Vaktrapport',
+                subject: 'Lønn og vaktdetaljer',
+                author: 'Vaktkalkulator',
+                creator: 'Vaktkalkulator'
+            });
+
+            // Get current date for export
+            const exportDate = new Date().toLocaleDateString('no-NO', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Calculate summary statistics
+            const shifts = data.shifts.map(shift => ({
+                ...shift,
+                date: new Date(shift.date)
+            }));
+
+            let totalHours = 0;
+            let totalWages = 0;
+            let totalBonus = 0;
+            let totalBaseWage = 0;
+            const shiftsByType = { weekday: 0, saturday: 0, sunday: 0 };
+
+            const calculatedShifts = shifts.map(shift => {
+                const calc = this.calculateShift(shift);
+                totalHours += calc.hours;
+                totalWages += calc.total;
+                totalBonus += calc.bonus;
+                totalBaseWage += calc.baseWage;
+                
+                const typeKey = shift.type === 0 ? 'weekday' : shift.type === 1 ? 'saturday' : 'sunday';
+                shiftsByType[typeKey]++;
+                
+                return {
+                    ...shift,
+                    calc: calc
+                };
+            });
+
+            // Sort shifts by date
+            calculatedShifts.sort((a, b) => a.date - b.date);
+
+            let yPosition = 20;
+            const leftMargin = 20;
+            const rightMargin = 190;
+            const pageWidth = 210;
+            const pageHeight = 297;
+
+            // Helper function to check if we need a new page
+            const checkPageBreak = (requiredSpace) => {
+                if (yPosition + requiredSpace > pageHeight - 20) {
+                    doc.addPage();
+                    yPosition = 20;
+                    return true;
+                }
+                return false;
+            };
+
+            // Title
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Vaktrapport', leftMargin, yPosition);
+            yPosition += 15;
+
+            // Export date
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Eksportert: ${exportDate}`, leftMargin, yPosition);
+            yPosition += 10;
+
+            // Period information
+            if (shifts.length > 0) {
+                const firstShift = shifts[0].date;
+                const lastShift = shifts[shifts.length - 1].date;
+                const periodText = `Periode: ${firstShift.toLocaleDateString('no-NO')} - ${lastShift.toLocaleDateString('no-NO')}`;
+                doc.text(periodText, leftMargin, yPosition);
+                yPosition += 15;
+            }
+
+            // Summary section
+            checkPageBreak(60);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Sammendrag', leftMargin, yPosition);
+            yPosition += 10;
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            
+            const summaryData = [
+                ['Totalt antall vakter:', shifts.length.toString()],
+                ['Totale timer:', totalHours.toFixed(2) + ' timer'],
+                ['Total grunnlønn:', this.formatCurrencyShort(totalBaseWage) + ' kr'],
+                ['Totale tillegg:', this.formatCurrencyShort(totalBonus) + ' kr'],
+                ['Total lønn:', this.formatCurrencyShort(totalWages) + ' kr'],
+                ['', ''],
+                ['Vakter per type:', ''],
+                ['  Ukedager:', shiftsByType.weekday.toString()],
+                ['  Lørdager:', shiftsByType.saturday.toString()],
+                ['  Søndager/helligdager:', shiftsByType.sunday.toString()]
+            ];
+
+            summaryData.forEach(([label, value]) => {
+                if (label) {
+                    doc.text(label, leftMargin, yPosition);
+                    if (value) {
+                        doc.text(value, leftMargin + 60, yPosition);
+                    }
+                }
+                yPosition += 5;
+            });
+
+            yPosition += 10;
+
+            // Detailed shift table
+            checkPageBreak(50);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Detaljert vaktliste', leftMargin, yPosition);
+            yPosition += 10;
+
+            // Table headers
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            const headers = ['Dato', 'Dag', 'Start', 'Slutt', 'Timer', 'Grunnlønn', 'Tillegg', 'Totalt'];
+            const colWidths = [25, 20, 15, 15, 15, 25, 25, 25];
+            const colPositions = [leftMargin];
+            
+            for (let i = 1; i < colWidths.length; i++) {
+                colPositions.push(colPositions[i-1] + colWidths[i-1]);
+            }
+
+            // Draw table header
+            headers.forEach((header, index) => {
+                doc.text(header, colPositions[index], yPosition);
+            });
+            yPosition += 5;
+
+            // Draw header line
+            doc.setLineWidth(0.5);
+            doc.line(leftMargin, yPosition, rightMargin, yPosition);
+            yPosition += 5;
+
+            // Table data
+            doc.setFont('helvetica', 'normal');
+            calculatedShifts.forEach(shift => {
+                checkPageBreak(8);
+                
+                const rowData = [
+                    shift.date.toLocaleDateString('no-NO'),
+                    this.WEEKDAYS[shift.date.getDay()].substring(0, 3),
+                    shift.startTime,
+                    shift.endTime,
+                    shift.calc.hours.toFixed(2),
+                    this.formatCurrencyShort(shift.calc.baseWage),
+                    this.formatCurrencyShort(shift.calc.bonus),
+                    this.formatCurrencyShort(shift.calc.total)
+                ];
+
+                rowData.forEach((data, index) => {
+                    doc.text(data, colPositions[index], yPosition);
+                });
+                yPosition += 5;
+            });
+
+            // Summary line
+            yPosition += 5;
+            doc.setLineWidth(0.5);
+            doc.line(leftMargin, yPosition, rightMargin, yPosition);
+            yPosition += 5;
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Sum:', colPositions[0], yPosition);
+            doc.text(totalHours.toFixed(2), colPositions[4], yPosition);
+            doc.text(this.formatCurrencyShort(totalBaseWage), colPositions[5], yPosition);
+            doc.text(this.formatCurrencyShort(totalBonus), colPositions[6], yPosition);
+            doc.text(this.formatCurrencyShort(totalWages), colPositions[7], yPosition);
+
+            // Add footer to all pages
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Side ${i} av ${totalPages}`, rightMargin - 20, pageHeight - 10);
+                doc.text('Generert av Vaktkalkulator', leftMargin, pageHeight - 10);
+            }
+
+            // Generate filename with current date
+            const filename = `vaktrapport_${new Date().toISOString().split('T')[0]}.pdf`;
+            
+            // Save the PDF
+            doc.save(filename);
+
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('Kunne ikke generere PDF. Prøv igjen eller bruk CSV-eksport.');
+        }
     },
 
     downloadFile(content, filename, contentType) {
