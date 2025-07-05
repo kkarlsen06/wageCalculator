@@ -3112,6 +3112,7 @@ input:checked + .slider:before {
   height: auto;
   scroll-snap-align: start;
   scroll-snap-stop: normal;
+  background: var(--bg-secondary);
 }
 
 /* Make the shift list container scrollable when content exceeds viewport */
@@ -3122,6 +3123,12 @@ input:checked + .slider:before {
   flex-direction: column;
   /* Prevent scroll events from bubbling up to snap container */
   overscroll-behavior: contain;
+  /* Prevent scroll chaining to parent */
+  scroll-behavior: auto;
+  /* Ensure the background extends to cover all content */
+  background: var(--bg-secondary);
+  min-height: 100%;
+  padding-bottom: 20px;
 }
 
 /* Dashboard section styling */
@@ -3151,12 +3158,6 @@ input:checked + .slider:before {
   background: var(--bg-secondary);
   padding-top: 20px;
   min-height: var(--app-height, 100vh);
-}
-
-.shift-section .app-container {
-  display: flex;
-  flex-direction: column;
-  overflow: visible;
 }
 
 .section-header {
