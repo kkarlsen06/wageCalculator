@@ -83,18 +83,6 @@
               <div class="app-container">
                   <div class="section-header">
                       <h2>Vakter</h2>
-                      <div class="tab-nav view-toggle">
-                          <button class="tab-btn active" onclick="app.switchShiftView('list')">Liste</button>
-                          <button class="tab-btn" onclick="app.switchShiftView('calendar')">Kalender</button>
-                      </div>
-                      <button class="settings-btn" onclick="app.openAddShiftModal()">
-                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <line x1="12" y1="8" x2="12" y2="16"></line>
-                              <line x1="8" y1="12" x2="16" y2="12"></line>
-                          </svg>
-                          Legg til
-                      </button>
                   </div>
                   <div class="shift-list" id="shiftList">
                       <div class="empty-state">
@@ -114,6 +102,22 @@
                   <footer class="app-footer">
                       Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
                   </footer>
+              </div>
+              
+              <!-- Floating action bar for shift controls -->
+              <div class="floating-action-bar">
+                  <div class="tab-nav view-toggle">
+                      <button class="tab-btn active" onclick="app.switchShiftView('list')">Liste</button>
+                      <button class="tab-btn" onclick="app.switchShiftView('calendar')">Kalender</button>
+                  </div>
+                  <button class="add-btn" onclick="app.openAddShiftModal()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="12" y1="8" x2="12" y2="16"></line>
+                          <line x1="8" y1="12" x2="16" y2="12"></line>
+                      </svg>
+                      <span>Legg til</span>
+                  </button>
               </div>
           </section>
       </div> <!-- slutt på .snap-container -->

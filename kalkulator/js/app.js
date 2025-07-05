@@ -322,5 +322,54 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Call addEventListeners once - event delegation handles dynamic content
   addEventListeners();
 
+  // Handle floating action bar visibility based on scroll position
+  const snapContainer = document.querySelector('.snap-container');
+  const floatingBar = document.querySelector('.floating-action-bar');
+  const shiftSection = document.querySelector('.shift-section');
+  
+  if (snapContainer && floatingBar && shiftSection) {
+    // Initially hide the floating bar
+    floatingBar.style.display = 'none';
+    floatingBar.style.opacity = '0';
+    
+    let isVisible = false;
+    let animationTimeout = null;
+    
+    function checkFloatingBarVisibility() {
+      const rect = shiftSection.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      
+      // Show floating bar when shift section is in view
+      // Consider it "in view" when at least 50% of viewport shows the shift section
+      const shouldBeVisible = rect.top < viewportHeight * 0.5 && rect.bottom > viewportHeight * 0.5;
+      
+      if (shouldBeVisible && !isVisible) {
+        // Show with fade in animation
+        isVisible = true;
+        clearTimeout(animationTimeout);
+        floatingBar.style.display = 'flex';
+        floatingBar.style.animation = 'fadeInUp 0.3s ease-out forwards';
+        floatingBar.style.opacity = '1';
+      } else if (!shouldBeVisible && isVisible) {
+        // Hide with fade out animation
+        isVisible = false;
+        clearTimeout(animationTimeout);
+        floatingBar.style.animation = 'fadeOutDown 0.3s ease-out forwards';
+        floatingBar.style.opacity = '0';
+        
+        // Hide completely after animation completes
+        animationTimeout = setTimeout(() => {
+          if (!isVisible) {
+            floatingBar.style.display = 'none';
+          }
+        }, 300);
+      }
+    }
+    
+    // Check on scroll
+    snapContainer.addEventListener('scroll', checkFloatingBarVisibility);
+    // Check initially
+    checkFloatingBarVisibility();
+  }
 
 });

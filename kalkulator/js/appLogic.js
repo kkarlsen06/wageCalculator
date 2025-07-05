@@ -2219,9 +2219,14 @@ export const app = {
                 cell.classList.add('other-month');
             }
 
+            // --- WRAP ALL CONTENT IN .calendar-cell-content ---
+            const content = document.createElement('div');
+            content.className = 'calendar-cell-content';
+
             const dayNumber = document.createElement('div');
             dayNumber.className = 'calendar-day-number';
             dayNumber.textContent = cellDate.getDate();
+            content.appendChild(dayNumber);
 
             const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
             let base = 0;
@@ -2234,14 +2239,23 @@ export const app = {
                 }
             });
 
-            const breakdown = document.createElement('div');
-            breakdown.className = 'calendar-breakdown';
-            const totalDisplay = document.createElement('div');
-            totalDisplay.className = 'calendar-total';
-
             if (base + bonus > 0) {
+                // Create wrapper for shift data
+                const shiftData = document.createElement('div');
+                shiftData.className = 'calendar-shift-data';
+                
+                const breakdown = document.createElement('div');
+                breakdown.className = 'calendar-breakdown';
                 breakdown.innerHTML = `${this.formatCurrencyShort(base)}<br>+${this.formatCurrencyShort(bonus)}`;
+                
+                const totalDisplay = document.createElement('div');
+                totalDisplay.className = 'calendar-total';
                 totalDisplay.textContent = this.formatCurrencyCalendar(base + bonus);
+                
+                shiftData.appendChild(breakdown);
+                shiftData.appendChild(totalDisplay);
+                content.appendChild(shiftData);
+                
                 cell.classList.add('has-shifts');
                 cell.style.cursor = 'pointer';
                 cell.onclick = (e) => {
@@ -2252,9 +2266,7 @@ export const app = {
                 };
             }
 
-            cell.appendChild(dayNumber);
-            cell.appendChild(breakdown);
-            cell.appendChild(totalDisplay);
+            cell.appendChild(content);
             grid.appendChild(cell);
         }
 
@@ -2539,9 +2551,14 @@ export const app = {
             const animationDelay = 0.3 + (row * 8 + col + 1) * 0.035; // 8 columns now (week + 7 days), +1 for week number offset
             cell.style.animationDelay = `${animationDelay}s`;
             
+            // Create content wrapper and day number
+            const content = document.createElement('div');
+            content.className = 'calendar-cell-content';
+            
             const dayNumber = document.createElement('div');
             dayNumber.className = 'calendar-day-number';
             dayNumber.textContent = cellDate.getDate();
+            content.appendChild(dayNumber);
             
             // Style for current month vs other months
             if (cellDate.getMonth() !== monthIdx) {
@@ -2562,12 +2579,18 @@ export const app = {
                 }
             });
 
-            // Add amount display
-            const amountDisplay = document.createElement('div');
-            amountDisplay.className = 'calendar-amount';
-            
             if (totalAmount > 0) {
+                // Create wrapper for shift data
+                const shiftData = document.createElement('div');
+                shiftData.className = 'calendar-shift-data';
+                
+                const amountDisplay = document.createElement('div');
+                amountDisplay.className = 'calendar-amount';
                 amountDisplay.textContent = this.formatCurrencyCalendar(totalAmount);
+                
+                shiftData.appendChild(amountDisplay);
+                content.appendChild(shiftData);
+                
                 cell.classList.add('has-shifts');
                 
                 // Make clickable if there are shifts
@@ -2581,8 +2604,7 @@ export const app = {
                 };
             }
 
-            cell.appendChild(dayNumber);
-            cell.appendChild(amountDisplay);
+            cell.appendChild(content);
             grid.appendChild(cell);
         }
 
