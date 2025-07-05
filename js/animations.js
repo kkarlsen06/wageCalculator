@@ -6,34 +6,10 @@
 // INITIALIZATION
 // ───────────────────────────────────────────────────────────────────────────
 
-// Immediate scroll prevention - run first
-(function() {
-    // Prevent browser scroll restoration
-    if ('scrollRestoration' in history) {
-        history.scrollRestoration = 'manual';
-    }
-    
-    // Force scroll to top immediately and repeatedly
-    const scrollToTop = () => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    };
-    
-    scrollToTop();
-    
-    // Clear any hash from URL that might cause scrolling
-    if (window.location.hash && window.location.hash !== '#') {
-        history.replaceState(null, null, window.location.pathname + window.location.search);
-        scrollToTop();
-    }
-    
-    // Prevent any delayed scrolling
-    setTimeout(scrollToTop, 1);
-    setTimeout(scrollToTop, 10);
-    setTimeout(scrollToTop, 50);
-    setTimeout(scrollToTop, 100);
-})();
+// Disable automatic scroll restoration without forcibly scrolling users back
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}
 
 // Ensure page starts at top on beforeunload
 window.addEventListener('beforeunload', () => {
@@ -54,26 +30,21 @@ setTimeout(() => {
 }, 500);
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Force scroll to top multiple times with delays
-    const forceTop = () => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    };
-    
-    forceTop();
-    setTimeout(forceTop, 0);
-    setTimeout(forceTop, 1);
-    setTimeout(forceTop, 10);
-    setTimeout(forceTop, 50);
-    setTimeout(forceTop, 100);
-    setTimeout(forceTop, 200);
-    setTimeout(forceTop, 500);
-    
     initNavbar();
-    initScrollAnimations();
-    initParallax();
-    initTypingEffect();
+
+    // Respect the user's reduced-motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!prefersReducedMotion) {
+        initScrollAnimations();
+        initParallax();
+        initTypingEffect();
+    } else {
+        // Provide a static subtitle as a fallback when animations are disabled
+        const subtitleText = document.querySelector('.hero-subtitle-text');
+        if (subtitleText) subtitleText.textContent = 'Utvikler';
+    }
+
     initHoverEffects();
     initMobileMenu();
 });
@@ -348,9 +319,14 @@ function initMobileMenu() {
     const toggle = document.querySelector('.nav-toggle');
     const menu = document.querySelector('.nav-menu');
     
-    toggle?.addEventListener('click', () => {
-        menu.classList.toggle('active');
+    // Guard against missing elements
+    if (!toggle || !menu) return;
+
+    // Keep aria-expanded in sync for accessibility
+    toggle.addEventListener('click', () => {
+        const isOpen = menu.classList.toggle('active');
         toggle.classList.toggle('active');
+        toggle.setAttribute('aria-expanded', String(isOpen));
     });
 }
 
