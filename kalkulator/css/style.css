@@ -156,7 +156,7 @@ html {
   --primary-dark: #4f46e5;
   --primary-light: #818cf8;
   --secondary: #0ea5e9;
-  --accent: #f59e0b;
+  --accent: #10b981;
   
   /* Semantic colors */
   --success: #10b981;
@@ -181,8 +181,8 @@ html {
   --accent2: var(--primary);
   --accent3: var(--secondary);
   --accent4: var(--info);
-  --accent-light: rgba(245, 158, 11, 0.1);
-  --accent-alpha: rgba(245, 158, 11, 0.15);
+  --accent-light: rgba(16, 185, 129, 0.1);
+  --accent-alpha: rgba(16, 185, 129, 0.15);
   --accent2-alpha: rgba(99, 102, 241, 0.15);
   --accent3-alpha: rgba(14, 165, 233, 0.15);
   --accent4-alpha: rgba(14, 165, 233, 0.15);
@@ -195,7 +195,7 @@ html {
   
   /* Shadow colors */
   --shadow: rgba(0, 0, 0, 0.4);
-  --shadow-accent: rgba(245, 158, 11, 0.15);
+  --shadow-accent: rgba(16, 185, 129, 0.15);
   --shadow-soft: rgba(0, 0, 0, 0.1);
   --shadow-blue: rgba(8, 47, 73, 0.6);
   --shadow-hover: 0 12px 32px -8px rgba(0, 0, 0, 0.3);
