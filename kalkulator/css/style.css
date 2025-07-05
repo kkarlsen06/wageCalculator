@@ -582,9 +582,14 @@ body {
   margin-bottom: 4px;
 }
 
-/* Add extra top margin to first form group in tab content for better separation */
-.tab-content > .form-group:first-child {
+.tab-content label{
   margin-top: 24px;
+}
+
+/* Add extra top margin to first form group in tab content for better separation */
+.tab-content > .label:first-child {
+  margin-top: 0px;
+  padding-top: 0px;
 }
 .form-row {
   display: grid;
