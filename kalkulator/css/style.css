@@ -3089,7 +3089,7 @@ input:checked + .slider:before {
 .snap-container {
   height: var(--app-height, 100vh);
   overflow-y: auto;
-  scroll-snap-type: y proximity;
+  scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   position: relative;
   /* Enable smooth scrolling with scroll-snap */
@@ -3120,6 +3120,8 @@ input:checked + .slider:before {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  /* Prevent scroll events from bubbling up to snap container */
+  overscroll-behavior: contain;
 }
 
 /* Dashboard section styling */
