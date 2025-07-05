@@ -83,8 +83,9 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         }
     }
     
-    label.textContent = percent + '% av ' + goal.toLocaleString('no-NO') + ' kr';
-    fill.title = `${current.toLocaleString('no-NO')} kr av ${goal.toLocaleString('no-NO')} kr`;
+    const currencySuffix = window.app && window.app.currencyFormat ? ' NOK' : ' kr';
+    label.textContent = percent + '% av ' + goal.toLocaleString('no-NO') + currencySuffix;
+    fill.title = `${current.toLocaleString('no-NO')}${currencySuffix} av ${goal.toLocaleString('no-NO')}${currencySuffix}`;
     
     if (percent >= 100) {
         fill.classList.add('full');
@@ -387,6 +388,9 @@ export const app = {
         
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
+        
+        // Setup event listeners for new settings
+        this.setupNewSettingsListeners();
         
         // Restore form state after initialization
         this.restoreFormState();
@@ -1235,9 +1239,11 @@ export const app = {
                     
                 this.pauseDeduction = settings.pause_deduction || false;
                 this.fullMinuteRange = settings.full_minute_range || false;
-                this.directTimeInput = settings.direct_time_input || false;
-                this.monthlyGoal = settings.monthly_goal || 20000;
-                this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
+                            this.directTimeInput = settings.direct_time_input || false;
+            this.monthlyGoal = settings.monthly_goal || 20000;
+            this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
+            this.currencyFormat = settings.currency_format || false;
+            this.compactView = settings.compact_view || false;
                 
                 if (shouldResetToCurrentMonth && settings.current_month && settings.current_month !== new Date().getMonth() + 1) {
                     // User was inactive for >5 hours, resetting to current month
@@ -1333,6 +1339,8 @@ export const app = {
         this.directTimeInput = false; // Default to dropdown time selection
         this.monthlyGoal = 20000; // Default monthly goal
         this.hasSeenRecurringIntro = false; // Track if user has seen recurring feature intro
+        this.currencyFormat = false; // Default to "kr" instead of "NOK"
+        this.compactView = false; // Default to normal view
     },
 
     // Helper function to test custom bonuses
@@ -1381,6 +1389,23 @@ export const app = {
         const directTimeInputToggle = document.getElementById('directTimeInputToggle');
         if (directTimeInputToggle) {
             directTimeInputToggle.checked = this.directTimeInput;
+        }
+
+        const currencyFormatToggle = document.getElementById('currencyFormatToggle');
+        if (currencyFormatToggle) {
+            currencyFormatToggle.checked = this.currencyFormat;
+        }
+
+        const compactViewToggle = document.getElementById('compactViewToggle');
+        if (compactViewToggle) {
+            compactViewToggle.checked = this.compactView;
+        }
+
+        // Apply compact view CSS class to body if setting is enabled
+        if (this.compactView) {
+            document.body.classList.add('compact-view');
+        } else {
+            document.body.classList.remove('compact-view');
         }
 
         // Toggle preset/custom sections
@@ -1450,6 +1475,8 @@ export const app = {
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
                 if ('monthly_goal' in existingSettings) settingsData.monthly_goal = this.monthlyGoal;
                 if ('has_seen_recurring_intro' in existingSettings) settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
+                if ('currency_format' in existingSettings) settingsData.currency_format = this.currencyFormat;
+                if ('compact_view' in existingSettings) settingsData.compact_view = this.compactView;
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
@@ -1468,6 +1495,8 @@ export const app = {
                 settingsData.direct_time_input = this.directTimeInput;
                 settingsData.monthly_goal = this.monthlyGoal;
                 settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
+                settingsData.currency_format = this.currencyFormat;
+                settingsData.compact_view = this.compactView;
                 settingsData.custom_bonuses = this.customBonuses || {};
                 // For new settings, we'll try to include last_active and let it fail gracefully if column doesn't exist
             }
@@ -1512,6 +1541,8 @@ export const app = {
                 this.directTimeInput = data.directTimeInput || false;
                 this.monthlyGoal = data.monthlyGoal || 20000;
                 this.hasSeenRecurringIntro = data.hasSeenRecurringIntro || false;
+                this.currencyFormat = data.currencyFormat || false;
+                this.compactView = data.compactView || false;
                 
                 this.updateSettingsUI();
             } else {
@@ -1623,17 +1654,17 @@ export const app = {
         const settingsModal = document.getElementById('settingsModal');
         const currentActiveTab = settingsModal?.querySelector('.tab-btn.active');
         const currentTab = currentActiveTab ? 
-            (currentActiveTab.textContent === 'Generelt' ? 'general' : 
-             currentActiveTab.textContent === 'Lønn' ? 'wage' : 
-             currentActiveTab.textContent === 'Profil' ? 'profile' :
-             'data') : null;
+            (currentActiveTab.textContent === 'Lønn & Beregning' ? 'wage' : 
+             currentActiveTab.textContent === 'Brukergrensesnitt' ? 'interface' : 
+             currentActiveTab.textContent === 'Konto & Data' ? 'account' :
+             'wage') : null;
         
         // If switching away from wage tab and in custom mode, auto-save bonuses
         if (currentTab === 'wage' && !this.usePreset && tab !== 'wage') {
             await this.saveCustomBonusesSilent();
         }
         
-        const tabs = ['general','wage','profile','data'];
+        const tabs = ['wage', 'interface', 'account'];
         const btns = settingsModal?.querySelectorAll('.tab-nav .tab-btn') || [];
         tabs.forEach((t, i) => {
             const btn = btns[i];
@@ -1653,8 +1684,8 @@ export const app = {
             }, 100);
         }
         
-        // When switching to profile tab, load profile data
-        if (tab === 'profile') {
+        // When switching to account tab, load profile data
+        if (tab === 'account') {
             setTimeout(() => {
                 this.loadProfileData();
             }, 100);
@@ -1863,8 +1894,8 @@ export const app = {
             // Update UI to match current state
             this.updateSettingsUI();
             
-            // Set active tab to general
-            this.switchSettingsTabSync('general');
+            // Set active tab to wage (most important settings first)
+            this.switchSettingsTabSync('wage');
             
             // Show the modal
             modal.style.display = 'flex';
@@ -1912,7 +1943,9 @@ export const app = {
                 pauseDeduction: this.pauseDeduction,
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
-                hasSeenRecurringIntro: this.hasSeenRecurringIntro
+                hasSeenRecurringIntro: this.hasSeenRecurringIntro,
+                currencyFormat: this.currencyFormat,
+                compactView: this.compactView
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
         } catch (e) {
@@ -2045,7 +2078,7 @@ export const app = {
                 id: 'avgHourly',
                 relevanceScore: 10,
                 label: 'Snittlønn/time',
-                value: avgHourly ? this.formatCurrency(avgHourly) : '0 kr'
+                value: avgHourly ? this.formatCurrency(avgHourly) : this.formatCurrency(0)
             },
             {
                 id: 'bestDay',
@@ -3503,7 +3536,8 @@ export const app = {
         return Math.max(0, end - start);
     },
     formatCurrency(amount) {
-        return Math.round(amount).toLocaleString('nb-NO') + ' kr';
+        const currencySuffix = this.currencyFormat ? ' NOK' : ' kr';
+        return Math.round(amount).toLocaleString('nb-NO') + currencySuffix;
     },
     formatCurrencyShort(amount) {
         return Math.round(amount).toLocaleString('nb-NO');
@@ -4238,6 +4272,338 @@ export const app = {
             setTimeout(() => {
                 this.showRecurringIntroduction();
             }, delay);
+        }
+    },
+
+    // Export data functionality
+    exportData(format) {
+        try {
+            const data = {
+                shifts: this.shifts.map(shift => ({
+                    id: shift.id,
+                    date: shift.date.toISOString(),
+                    startTime: shift.startTime,
+                    endTime: shift.endTime,
+                    type: shift.type,
+                    seriesId: shift.seriesId || null
+                })),
+                settings: {
+                    usePreset: this.usePreset,
+                    customWage: this.customWage,
+                    currentWageLevel: this.currentWageLevel,
+                    customBonuses: this.customBonuses,
+                    pauseDeduction: this.pauseDeduction,
+                    fullMinuteRange: this.fullMinuteRange,
+                    directTimeInput: this.directTimeInput,
+                    monthlyGoal: this.monthlyGoal,
+                    currencyFormat: this.currencyFormat,
+                    compactView: this.compactView
+                },
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+
+            if (format === 'csv') {
+                this.exportAsCSV(data);
+            } else if (format === 'pdf') {
+                this.exportAsPDF(data);
+            } else {
+                // Default to JSON
+                this.exportAsJSON(data);
+            }
+        } catch (error) {
+            console.error('Error exporting data:', error);
+            alert('Kunne ikke eksportere data. Prøv igjen.');
+        }
+    },
+
+    exportAsCSV(data) {
+        const csvContent = [
+            ['Dato', 'Dag', 'Start', 'Slutt', 'Timer', 'Grunnlønn', 'Tillegg', 'Totalt', 'Type', 'Serie'].join(','),
+            ...data.shifts.map(shift => {
+                const date = new Date(shift.date);
+                const calc = this.calculateShift({
+                    ...shift,
+                    date: date
+                });
+                return [
+                    date.toLocaleDateString('no-NO'),
+                    this.WEEKDAYS[date.getDay()],
+                    shift.startTime,
+                    shift.endTime,
+                    calc.hours.toFixed(2),
+                    calc.baseWage.toFixed(2),
+                    calc.bonus.toFixed(2),
+                    calc.total.toFixed(2),
+                    shift.type === 0 ? 'Ukedag' : shift.type === 1 ? 'Lørdag' : 'Søndag',
+                    shift.seriesId ? 'Ja' : 'Nei'
+                ].join(',');
+            })
+        ].join('\n');
+
+        this.downloadFile(csvContent, 'vaktdata.csv', 'text/csv');
+    },
+
+    exportAsJSON(data) {
+        const jsonContent = JSON.stringify(data, null, 2);
+        this.downloadFile(jsonContent, 'vaktdata.json', 'application/json');
+    },
+
+    exportAsPDF(data) {
+        // For now, show a message that PDF export is not implemented
+        // This would require a PDF library like jsPDF
+        alert('PDF-eksport er ikke implementert ennå. Bruk CSV-eksport i stedet.');
+    },
+
+    downloadFile(content, filename, contentType) {
+        const blob = new Blob([content], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
+
+    // Import data functionality
+    async importData() {
+        const fileInput = document.getElementById('importFile');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('Velg en fil å importere');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const content = e.target.result;
+
+                if (file.name.endsWith('.json')) {
+                    const data = JSON.parse(content);
+                    await this.importFromJSON(data);
+                } else if (file.name.endsWith('.csv')) {
+                    await this.importFromCSV(content);
+                } else {
+                    alert('Ikke støttet filformat. Bruk JSON eller CSV.');
+                    return;
+                }
+
+                alert('Data importert successfully!');
+                this.updateDisplay();
+            } catch (error) {
+                console.error('Error importing data:', error);
+                alert('Kunne ikke importere data. Sjekk filformatet.');
+            }
+        };
+
+        reader.readAsText(file);
+    },
+
+    // Detect duplicate shifts based on date, time, and type
+    detectDuplicateShifts(importedShifts) {
+        const newShifts = [];
+        const duplicates = [];
+        
+        importedShifts.forEach(importedShift => {
+            // Create a unique key for each shift based on its data
+            const shiftKey = this.createShiftKey(importedShift);
+            
+            // Check if this shift already exists in current shifts
+            const isDuplicate = this.shifts.some(existingShift => {
+                const existingKey = this.createShiftKey(existingShift);
+                return shiftKey === existingKey;
+            });
+            
+            if (isDuplicate) {
+                duplicates.push(importedShift);
+            } else {
+                newShifts.push(importedShift);
+            }
+        });
+        
+        return { newShifts, duplicates };
+    },
+    
+    // Create a unique key for a shift based on its data
+    createShiftKey(shift) {
+        const dateStr = `${shift.date.getFullYear()}-${(shift.date.getMonth() + 1).toString().padStart(2, '0')}-${shift.date.getDate().toString().padStart(2, '0')}`;
+        return `${dateStr}_${shift.startTime}_${shift.endTime}_${shift.type}`;
+    },
+
+    // Save imported shifts to Supabase database
+    async saveImportedShiftsToSupabase(shifts) {
+        try {
+            const { data: { user }, error: authError } = await window.supa.auth.getUser();
+            if (authError || !user) {
+                throw new Error('Du er ikke innlogget');
+            }
+
+            // Prepare shifts for database insertion
+            const shiftsToInsert = shifts.map(shift => {
+                const dateStr = `${shift.date.getFullYear()}-${(shift.date.getMonth() + 1).toString().padStart(2, '0')}-${shift.date.getDate().toString().padStart(2, '0')}`;
+                return {
+                    user_id: user.id,
+                    shift_date: dateStr,
+                    start_time: shift.startTime,
+                    end_time: shift.endTime,
+                    shift_type: shift.type,
+                    series_id: shift.seriesId || null
+                };
+            });
+
+            // Insert all shifts in a batch
+            const { data: savedShifts, error } = await window.supa
+                .from('user_shifts')
+                .insert(shiftsToInsert)
+                .select();
+
+            if (error) {
+                console.error('Error saving imported shifts to Supabase:', error);
+                throw new Error(`Kunne ikke lagre importerte vakter: ${error.message}`);
+            }
+
+            // Update the imported shifts with the actual database IDs
+            savedShifts.forEach((savedShift, index) => {
+                shifts[index].id = savedShift.id;
+            });
+
+            // Update last active timestamp
+            await this.updateLastActiveTimestamp(user.id);
+
+        } catch (error) {
+            console.error('Error in saveImportedShiftsToSupabase:', error);
+            throw error;
+        }
+    },
+
+    async importFromJSON(data) {
+        if (data.shifts && Array.isArray(data.shifts)) {
+            // Convert date strings back to Date objects
+            const importedShifts = data.shifts.map(shift => ({
+                ...shift,
+                date: new Date(shift.date)
+            }));
+
+            // Add unique IDs if missing
+            importedShifts.forEach(shift => {
+                if (!shift.id) {
+                    shift.id = Date.now() + Math.random();
+                }
+            });
+
+            // Check for duplicates based on shift data (not just IDs)
+            const { newShifts, duplicates } = this.detectDuplicateShifts(importedShifts);
+            
+            if (duplicates.length > 0) {
+                const duplicateCount = duplicates.length;
+                const proceed = confirm(`Fant ${duplicateCount} duplikat vakter som allerede eksisterer. Vil du fortsatt importere de ${newShifts.length} nye vaktene?`);
+                if (!proceed) {
+                    return;
+                }
+            }
+            
+            // Save only new shifts to database
+            if (newShifts.length > 0) {
+                await this.saveImportedShiftsToSupabase(newShifts);
+                
+                // Update local arrays
+                this.shifts = [...this.shifts, ...newShifts];
+                this.userShifts = [...this.userShifts, ...newShifts];
+            }
+        }
+
+        if (data.settings) {
+            // Optionally import settings (ask user first)
+            const importSettings = confirm('Vil du også importere innstillinger? Dette vil overskrive dine nåværende innstillinger.');
+            if (importSettings) {
+                Object.assign(this, data.settings);
+                this.saveSettingsToSupabase();
+                this.updateSettingsUI();
+            }
+        }
+    },
+
+    async importFromCSV(content) {
+        const lines = content.split('\n');
+        const shifts = [];
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            const values = line.split(',');
+            if (values.length >= 6) {
+                const dateParts = values[0].split('.');
+                const date = new Date(
+                    parseInt(dateParts[2]),
+                    parseInt(dateParts[1]) - 1,
+                    parseInt(dateParts[0])
+                );
+                
+                const shift = {
+                    id: Date.now() + Math.random(),
+                    date: date,
+                    startTime: values[2],
+                    endTime: values[3],
+                    type: values[8] === 'Ukedag' ? 0 : values[8] === 'Lørdag' ? 1 : 2,
+                    seriesId: values[9] === 'Ja' ? 'imported-series' : null
+                };
+                
+                shifts.push(shift);
+            }
+        }
+        
+        // Check for duplicates based on shift data
+        const { newShifts, duplicates } = this.detectDuplicateShifts(shifts);
+        
+        if (duplicates.length > 0) {
+            const duplicateCount = duplicates.length;
+            const proceed = confirm(`Fant ${duplicateCount} duplikat vakter som allerede eksisterer. Vil du fortsatt importere de ${newShifts.length} nye vaktene?`);
+            if (!proceed) {
+                return;
+            }
+        }
+        
+        // Save only new shifts to database
+        if (newShifts.length > 0) {
+            await this.saveImportedShiftsToSupabase(newShifts);
+            
+            // Update local arrays
+            this.shifts = [...this.shifts, ...newShifts];
+            this.userShifts = [...this.userShifts, ...newShifts];
+        }
+    },
+
+    // Add event listeners for new settings
+    setupNewSettingsListeners() {
+        // Currency format toggle
+        const currencyFormatToggle = document.getElementById('currencyFormatToggle');
+        if (currencyFormatToggle) {
+            currencyFormatToggle.addEventListener('change', () => {
+                this.currencyFormat = currencyFormatToggle.checked;
+                this.saveSettingsToSupabase();
+                this.updateDisplay(); // Refresh display with new format
+            });
+        }
+
+        // Compact view toggle
+        const compactViewToggle = document.getElementById('compactViewToggle');
+        if (compactViewToggle) {
+            compactViewToggle.addEventListener('change', () => {
+                this.compactView = compactViewToggle.checked;
+                this.saveSettingsToSupabase();
+                this.updateDisplay(); // Refresh display with new view
+                
+                // Add/remove compact class to body
+                if (this.compactView) {
+                    document.body.classList.add('compact-view');
+                } else {
+                    document.body.classList.remove('compact-view');
+                }
+            });
         }
     }
 };
