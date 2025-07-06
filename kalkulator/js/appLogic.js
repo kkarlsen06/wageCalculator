@@ -282,7 +282,6 @@ export const app = {
         
         // Show UI elements
         this.populateTimeSelects();
-        this.populateDateGrid();
         this.populateMonthDropdown();
         
         // Display user email
@@ -1048,6 +1047,10 @@ export const app = {
     
     populateDateGrid() {
         const dateGrid = document.getElementById('dateGrid');
+        if (!dateGrid) {
+            // dateGrid element doesn't exist (modal not open), so skip population
+            return;
+        }
         const year = this.YEAR;
         const monthIdx = this.currentMonth - 1;
         const firstDay = new Date(year, monthIdx, 1);
@@ -1187,7 +1190,6 @@ export const app = {
     changeMonth(month) {
         this.currentMonth = month;
         this.updateDisplay(true); // Enable animation when switching months
-        this.populateDateGrid();
         // Note: Don't save currentMonth to settings - it should always default to current month on page load
     },
     async loadFromSupabase() {
@@ -1268,9 +1270,8 @@ export const app = {
 
             // Update UI elements to reflect loaded settings
             this.updateSettingsUI();
-            // Update month dropdown and date grid to reflect potential reset of currentMonth
+            // Update month dropdown to reflect potential reset of currentMonth
             this.populateMonthDropdown();
-            this.populateDateGrid();
             // Don't call updateDisplay here - it will be called with animation in init()
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
@@ -1906,6 +1907,7 @@ export const app = {
         this.updateShiftList();
         this.updateShiftCalendar();
         this.updateNextShiftCard();
+        this.populateDateGrid();
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
