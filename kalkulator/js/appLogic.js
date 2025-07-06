@@ -133,7 +133,12 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
             }, 850);
         }
     } else {
-        // For immediate updates, set width without transition
+        // For immediate updates, only proceed if no animation is in progress
+        if (fill.dataset.animating === 'true') {
+            return;
+        }
+        
+        // Set width without transition
         fill.style.transition = 'none';
         fill.style.width = Math.min(percent, 100) + '%';
         // Force reflow
