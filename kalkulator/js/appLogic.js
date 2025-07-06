@@ -2060,6 +2060,14 @@ export const app = {
         const nav = document.querySelector('.navbar');
         const navHeight = nav ? nav.getBoundingClientRect().height : 0;
 
+        // Account for the next shift card height when it's visible
+        const nextShiftCard = document.getElementById('nextShiftCard');
+        let nextShiftCardHeight = 0;
+        if (nextShiftCard && nextShiftCard.style.display !== 'none') {
+            const nextShiftRect = nextShiftCard.getBoundingClientRect();
+            nextShiftCardHeight = nextShiftRect.height;
+        }
+
         for (const s of stats) {
             const card = document.createElement('div');
             card.className = 'stat-card';
@@ -2068,10 +2076,15 @@ export const app = {
             card.addEventListener('click', () => this.showStatDetails(s.id));
             container.appendChild(card);
 
-            const cutoff = Math.min(
+            // Calculate cutoff considering the next shift card height
+            const baseCutoff = Math.min(
                 viewport - navHeight,
                 shiftSection ? shiftSection.getBoundingClientRect().top - navHeight : viewport - navHeight
             );
+            
+            // Subtract the next shift card height to provide proper spacing
+            const cutoff = baseCutoff - nextShiftCardHeight;
+            
             if (container.getBoundingClientRect().bottom > cutoff) {
                 container.removeChild(card);
                 break;
