@@ -32,7 +32,7 @@ if (origOpenSettings) {
 window.pendingConfetti = false;
 // Oppdater fremdriftslinje for månedlig inntektsmål
 function updateProgressBar(current, goal, shouldAnimate = false) {
-    const percent = ((current / goal) * 100).toFixed(1);
+    const percent = (goal > 0 ? (current / goal) * 100 : 0).toFixed(1);
     const fill = document.querySelector('.progress-fill');
     const label = document.querySelector('.progress-label');
     if (!fill || !label) return;
