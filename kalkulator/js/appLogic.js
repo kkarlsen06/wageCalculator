@@ -1906,6 +1906,7 @@ export const app = {
         this.updateShiftList();
         this.updateShiftCalendar();
         this.updateNextShiftCard();
+        this.populateDateGrid();
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
