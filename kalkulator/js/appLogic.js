@@ -2094,8 +2094,9 @@ export const app = {
         const cardsPerRow = Math.floor((containerWidth + gridGap) / (cardMinWidth + gridGap));
         
         // Calculate total height needed for all cards
-        const totalRows = Math.ceil(stats.length / cardsPerRow);
-        const totalHeight = totalRows * cardHeight + (totalRows - 1) * gridGap;
+        // Handle edge case where cardsPerRow is 0 (container too small)
+        const totalRows = cardsPerRow > 0 ? Math.ceil(stats.length / cardsPerRow) : 0;
+        const totalHeight = totalRows * cardHeight + Math.max(0, totalRows - 1) * gridGap;
         
         // Determine how many cards we can actually display
         let maxCards = stats.length;
