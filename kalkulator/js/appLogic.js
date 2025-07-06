@@ -2048,6 +2048,15 @@ export const app = {
         document.getElementById('baseAmount').textContent = this.formatCurrency(totalBase);
         document.getElementById('bonusAmount').textContent = this.formatCurrency(totalBonus);
         document.getElementById('shiftCount').textContent = monthShifts.length;
+        
+        // Update header shift count
+        const headerShiftCountEl = document.getElementById('headerShiftCount');
+        if (headerShiftCountEl) {
+            headerShiftCountEl.textContent = monthShifts.length;
+        }
+        
+        // Update last updated time
+        this.updateLastUpdatedTime();
 
         // Calculate delta versus previous month for the total card label
         const deltaLabelEl = document.querySelector('.total-label');
@@ -2317,6 +2326,18 @@ export const app = {
     updateShiftCalendar() {
         if (this.shiftView !== 'calendar') return;
         this.renderShiftCalendar();
+    },
+
+    updateLastUpdatedTime() {
+        const lastUpdatedEl = document.getElementById('lastUpdatedTime');
+        if (lastUpdatedEl) {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('no-NO', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            lastUpdatedEl.textContent = timeString;
+        }
     },
 
     updateNextShiftCard() {

@@ -94,18 +94,41 @@
           <!-- Shift List Section -->
           <section class="snap-section shift-section" role="complementary" aria-label="Vaktliste">
               <div class="app-container">
-                  <div class="section-header centered-header">
-                      <div class="header-icon">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                              <line x1="16" y1="2" x2="16" y2="6"></line>
-                              <line x1="8" y1="2" x2="8" y2="6"></line>
-                              <line x1="3" y1="10" x2="21" y2="10"></line>
-                          </svg>
+                  <div class="section-header shift-history-header">
+                      <div class="header-left">
+                          <div class="shift-count-display">
+                              <div class="shift-count-icon">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                                  </svg>
+                              </div>
+                              <div class="shift-count-text">
+                                  <span id="headerShiftCount">0</span>
+                                  <span class="shift-count-label">vakter</span>
+                              </div>
+                          </div>
                       </div>
-                      <h2>Vakter</h2>
-                      <div class="header-subtitle">
-                          <span>Din arbeidshistorikk</span>
+                      <div class="header-center">
+                          <h2>Vakter</h2>
+                          <span class="header-subtitle">Din arbeidshistorikk</span>
+                      </div>
+                      <div class="header-right">
+                          <div class="last-updated">
+                              <div class="last-updated-icon">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <polyline points="23 4 23 10 17 10"></polyline>
+                                      <polyline points="1 20 1 14 7 14"></polyline>
+                                      <path d="M20.49 9A9 9 0 0 0 5.64 5.64l-.41.4L6 11l4.64-4.64-.41-.4A9 9 0 0 0 20.49 9z"></path>
+                                  </svg>
+                              </div>
+                              <div class="last-updated-text">
+                                  <span class="last-updated-label">Oppdatert</span>
+                                  <span id="lastUpdatedTime">--:--</span>
+                              </div>
+                          </div>
                       </div>
                   </div>
                   <div class="shift-list" id="shiftList">
