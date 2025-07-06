@@ -2046,8 +2046,8 @@ export const app = {
 
         const viewport = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         const shiftSection = document.querySelector('.shift-section');
-        const nav = document.querySelector('.navbar');
-        const navHeight = nav ? nav.getBoundingClientRect().height : 0;
+        const header = document.querySelector('.header');
+        const headerHeight = header ? header.getBoundingClientRect().height : 0;
 
         // Account for the next shift card height when it's visible
         const nextShiftCard = document.getElementById('nextShiftCard');
@@ -2057,27 +2057,62 @@ export const app = {
             nextShiftCardHeight = nextShiftRect.height;
         }
 
-        for (const s of stats) {
+        // Calculate available space more accurately
+        const containerRect = container.getBoundingClientRect();
+        const containerTop = containerRect.top;
+        
+        // Calculate cutoff point - use shift section top as boundary
+        let cutoff = viewport - headerHeight;
+        if (shiftSection) {
+            const shiftSectionTop = shiftSection.getBoundingClientRect().top;
+            cutoff = Math.min(cutoff, shiftSectionTop - headerHeight);
+        }
+        
+        // Account for next shift card height and add some padding
+        const availableHeight = cutoff - containerTop - nextShiftCardHeight - 20; // 20px padding
+        
+        // Create a temporary card to measure dimensions
+        const tempCard = document.createElement('div');
+        tempCard.className = 'stat-card';
+        tempCard.innerHTML = `<div class="stat-value">0</div><div class="stat-label">test</div>`;
+        tempCard.style.visibility = 'hidden';
+        tempCard.style.position = 'absolute';
+        tempCard.style.top = '-9999px';
+        document.body.appendChild(tempCard);
+        
+        // Force layout calculation
+        const cardHeight = tempCard.getBoundingClientRect().height;
+        document.body.removeChild(tempCard);
+        
+        // Get grid gap from computed styles
+        const containerStyles = window.getComputedStyle(container);
+        const gridGap = parseInt(containerStyles.gap) || 15;
+        
+        // Calculate how many cards can fit
+        const containerWidth = containerRect.width;
+        const cardMinWidth = 160; // From CSS minmax(160px, 1fr)
+        const cardsPerRow = Math.floor((containerWidth + gridGap) / (cardMinWidth + gridGap));
+        
+        // Calculate total height needed for all cards
+        const totalRows = Math.ceil(stats.length / cardsPerRow);
+        const totalHeight = totalRows * cardHeight + (totalRows - 1) * gridGap;
+        
+        // Determine how many cards we can actually display
+        let maxCards = stats.length;
+        if (totalHeight > availableHeight) {
+            const maxRows = Math.floor((availableHeight + gridGap) / (cardHeight + gridGap));
+            maxCards = Math.max(0, maxRows * cardsPerRow);
+        }
+
+        // Add cards up to the limit
+        for (let i = 0; i < Math.min(stats.length, maxCards); i++) {
+            const s = stats[i];
             const card = document.createElement('div');
             card.className = 'stat-card';
             card.dataset.statId = s.id;
             card.innerHTML = `<div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div>`;
             card.addEventListener('click', () => this.showStatDetails(s.id));
             container.appendChild(card);
-
-            // Calculate cutoff considering the next shift card height
-            const baseCutoff = Math.min(
-                viewport - navHeight,
-                shiftSection ? shiftSection.getBoundingClientRect().top - navHeight : viewport - navHeight
-            );
-            
-            // Subtract the next shift card height to provide proper spacing
-            const cutoff = baseCutoff - nextShiftCardHeight;
-            
-            if (container.getBoundingClientRect().bottom > cutoff) {
-                container.removeChild(card);
-                break;
-            }
         }
     },
     updateShiftList() {
