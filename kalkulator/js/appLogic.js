@@ -282,7 +282,6 @@ export const app = {
         
         // Show UI elements
         this.populateTimeSelects();
-        this.populateDateGrid();
         this.populateMonthDropdown();
         
         // Display user email
@@ -1191,7 +1190,6 @@ export const app = {
     changeMonth(month) {
         this.currentMonth = month;
         this.updateDisplay(true); // Enable animation when switching months
-        this.populateDateGrid();
         // Note: Don't save currentMonth to settings - it should always default to current month on page load
     },
     async loadFromSupabase() {
@@ -1272,9 +1270,8 @@ export const app = {
 
             // Update UI elements to reflect loaded settings
             this.updateSettingsUI();
-            // Update month dropdown and date grid to reflect potential reset of currentMonth
+            // Update month dropdown to reflect potential reset of currentMonth
             this.populateMonthDropdown();
-            this.populateDateGrid();
             // Don't call updateDisplay here - it will be called with animation in init()
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
