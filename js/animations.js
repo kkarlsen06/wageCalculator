@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTypingEffect();
     initHoverEffects();
     initMobileMenu();
+    initMobileStats();
 });
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -352,6 +353,53 @@ function initMobileMenu() {
         menu.classList.toggle('active');
         toggle.classList.toggle('active');
     });
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// MOBILE STATS HANDLING
+// ───────────────────────────────────────────────────────────────────────────
+function initMobileStats() {
+    const heroStats = document.querySelector('.hero-stats');
+    
+    if (!heroStats) return;
+    
+    // Handle viewport changes on mobile
+    function handleViewportChange() {
+        if (window.innerWidth <= 768) {
+            // Use the visual viewport API if available for better mobile support
+            if (window.visualViewport) {
+                const updateStatsPosition = () => {
+                    // Position stats relative to the visual viewport
+                    const offset = window.visualViewport.height < window.innerHeight ? 
+                        window.innerHeight - window.visualViewport.height : 0;
+                    
+                    heroStats.style.bottom = `calc(var(--space-md) + ${offset}px)`;
+                };
+                
+                window.visualViewport.addEventListener('resize', updateStatsPosition);
+                window.visualViewport.addEventListener('scroll', updateStatsPosition);
+                updateStatsPosition();
+            }
+            
+            // Hide stats when keyboard is open (heuristic: significant height reduction)
+            const initialHeight = window.innerHeight;
+            window.addEventListener('resize', debounce(() => {
+                const currentHeight = window.innerHeight;
+                const heightDiff = initialHeight - currentHeight;
+                
+                if (heightDiff > 150) {
+                    // Keyboard likely open
+                    heroStats.style.display = 'none';
+                } else {
+                    // Keyboard likely closed
+                    heroStats.style.display = 'flex';
+                }
+            }, 100));
+        }
+    }
+    
+    handleViewportChange();
+    window.addEventListener('resize', debounce(handleViewportChange, 100));
 }
 
 // ───────────────────────────────────────────────────────────────────────────
