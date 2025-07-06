@@ -1370,7 +1370,6 @@ input:checked + .slider:before {
 }
 
 .shift-date-number {
-  min-width: 50px;
   flex-shrink: 0;
 }
 
@@ -2036,52 +2035,23 @@ input:checked + .slider:before {
 
 /* Next Shift Card Styling */
 .next-shift-card {
-  background: var(--gradient-secondary);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 0 12px 40px -8px var(--shadow-blue);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
   position: relative;
-  overflow: hidden;
-  transition: all var(--speed-normal) var(--ease-default);
-  border: 1px solid var(--border);
-  min-height: 120px;
+  overflow: visible;
+  transition: none;
+  border: none;
+  min-height: auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .next-shift-card:hover {
-  transform: var(--lift-small);
-  box-shadow: var(--shadow-hover-blue);
-}
-
-.next-shift-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  flex-shrink: 0;
-}
-
-.next-shift-icon {
-  color: var(--accent3);
-  opacity: 0.8;
-  flex-shrink: 0;
-}
-
-.next-shift-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.next-shift-date {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-left: auto;
-  flex-shrink: 0;
+  transform: none;
+  box-shadow: none;
 }
 
 .next-shift-content {
@@ -2094,17 +2064,22 @@ input:checked + .slider:before {
 
 /* Style the shift-item when it's inside the next-shift-card */
 .next-shift-card .shift-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 16px;
+  background: var(--gradient-secondary);
+  border-radius: 24px; /* Fully rounded edges */
+  padding: 18px;
   margin: 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
   transition: all var(--speed-normal) var(--ease-default);
+  box-shadow: 0 12px 40px -8px var(--shadow-blue);
+  min-height: 80px;
+  position: relative;
+  overflow: hidden; /* Add overflow hidden to contain the badge */
 }
 
 .next-shift-card .shift-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
+  background: var(--gradient-secondary);
+  transform: var(--lift-small);
+  box-shadow: var(--shadow-hover-blue);
 }
 
 .next-shift-empty {
@@ -2126,31 +2101,23 @@ input:checked + .slider:before {
 /* Responsive adjustments for next shift card */
 @media (max-width: 480px) {
   .next-shift-card {
-    padding: 16px;
-    border-radius: 20px;
-    min-height: 110px;
+    padding: 0;
+    border-radius: 0;
+    min-height: auto;
   }
   
-  .next-shift-header {
-    gap: 8px;
-    margin-bottom: 10px;
-  }
+
   
-  .next-shift-title {
-    font-size: 13px;
-  }
-  
-  .next-shift-date {
-    font-size: 11px;
-  }
+
   
   .next-shift-content {
     gap: 5px;
   }
   
   .next-shift-card .shift-item {
-    padding: 12px;
-    border-radius: 12px;
+    padding: 16px;
+    border-radius: 20px; /* Fully rounded edges */
+    min-height: 80px;
   }
   
   .empty-message {
@@ -2160,31 +2127,23 @@ input:checked + .slider:before {
 
 @media (max-width: 360px) {
   .next-shift-card {
-    padding: 14px;
-    border-radius: 16px;
-    min-height: 100px;
+    padding: 0;
+    border-radius: 0;
+    min-height: auto;
   }
   
-  .next-shift-header {
-    gap: 6px;
-    margin-bottom: 8px;
-  }
+
   
-  .next-shift-title {
-    font-size: 12px;
-  }
-  
-  .next-shift-date {
-    font-size: 10px;
-  }
+
   
   .next-shift-content {
     gap: 4px;
   }
   
   .next-shift-card .shift-item {
-    padding: 10px;
-    border-radius: 10px;
+    padding: 14px;
+    border-radius: 16px; /* Fully rounded edges */
+    min-height: 80px;
   }
   
   .empty-message {
@@ -3737,4 +3696,37 @@ input:checked + .slider:before {
   margin-top: 2px;
   margin-bottom: 0;
   display: block;
+}
+
+/* Neste badge styling */
+.next-shift-badge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: var(--gradient-progress-bg);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Create flat left edges, rounded right edge (reversed due to 180deg rotation) */
+  border-radius: 0 24px 24px 0;
+  
+  /* Text rotation - bottom facing inward */
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
+/* Adjust shift-info padding to make room for the badge */
+.next-shift-card .shift-item .shift-info {
+  padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
 }

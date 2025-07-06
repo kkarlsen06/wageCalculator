@@ -2278,15 +2278,11 @@ export const app = {
         
         const nextShiftContent = document.getElementById('nextShiftContent');
         const nextShiftEmpty = document.getElementById('nextShiftEmpty');
-        const nextShiftDate = document.getElementById('nextShiftDate');
         
         if (upcomingShifts.length === 0) {
             // No upcoming shifts
             nextShiftContent.style.display = 'none';
             nextShiftEmpty.style.display = 'flex';
-            if (nextShiftDate) {
-                nextShiftDate.style.display = 'none';
-            }
         } else {
             // Show next shift details
             nextShiftContent.style.display = 'flex';
@@ -2307,34 +2303,26 @@ export const app = {
             const tomorrow = new Date(now);
             tomorrow.setDate(now.getDate() + 1);
             
-            // Create date display for header
-            let headerDateText;
-            
-            if (shiftDate.toDateString() === today.toDateString()) {
-                headerDateText = `I dag`;
-            } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
-                headerDateText = `I morgen`;
-            } else {
-                headerDateText = `${weekday} ${day}. ${month}`;
-            }
-            
-            // Update the header with date information
-            if (nextShiftDate) {
-                nextShiftDate.textContent = headerDateText;
-                nextShiftDate.style.display = 'block';
-            }
-            
             // Create the shift item using the exact same structure as in the shift list
             const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
             const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
             
+            // Add "i dag" or "i morgen" to the date display
+            let dateSuffix = '';
+            if (shiftDate.toDateString() === today.toDateString()) {
+                dateSuffix = ' (i dag)';
+            } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
+                dateSuffix = ' (i morgen)';
+            }
+            
             nextShiftContent.innerHTML = `
-                <div class="shift-item ${typeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer;">
+                <div class="shift-item ${typeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer; position: relative;">
+                    <div class="next-shift-badge">Neste</div>
                     <div class="shift-info">
                         <div class="shift-date">
                             <span class="shift-date-number">${day}. ${month}</span>
                             <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                            <span class="shift-date-weekday">${weekday}${dateSuffix}${seriesBadge}</span>
                         </div>
                         <div class="shift-details">
                             <div class="shift-time-with-hours">
