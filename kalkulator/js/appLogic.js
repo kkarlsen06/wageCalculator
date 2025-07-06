@@ -1048,6 +1048,10 @@ export const app = {
     
     populateDateGrid() {
         const dateGrid = document.getElementById('dateGrid');
+        if (!dateGrid) {
+            // dateGrid element doesn't exist (modal not open), so skip population
+            return;
+        }
         const year = this.YEAR;
         const monthIdx = this.currentMonth - 1;
         const firstDay = new Date(year, monthIdx, 1);
@@ -1906,7 +1910,6 @@ export const app = {
         this.updateShiftList();
         this.updateShiftCalendar();
         this.updateNextShiftCard();
-        this.populateDateGrid();
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
