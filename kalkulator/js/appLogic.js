@@ -1162,10 +1162,9 @@ export const app = {
     
     changeMonth(month) {
         this.currentMonth = month;
-        this.saveFormState(); // Save when month changes
         this.updateDisplay(true); // Enable animation when switching months
         this.populateDateGrid();
-        this.saveSettingsToSupabase(); // This will also update last_active via saveSettingsToSupabase
+        // Note: Don't save currentMonth to settings - it should always default to current month on page load
     },
     async loadFromSupabase() {
         const { data: { user } } = await window.supa.auth.getUser();
@@ -1397,7 +1396,7 @@ export const app = {
                 if ('wage_level' in existingSettings) settingsData.wage_level = this.currentWageLevel;
                 if ('current_wage_level' in existingSettings) settingsData.current_wage_level = this.currentWageLevel;
                 if ('custom_wage' in existingSettings) settingsData.custom_wage = this.customWage;
-                if ('current_month' in existingSettings) settingsData.current_month = this.currentMonth;
+                // Remove currentMonth from settings - it should always default to current month on page load
                 if ('pause_deduction' in existingSettings) settingsData.pause_deduction = this.pauseDeduction;
                 if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
@@ -1413,7 +1412,7 @@ export const app = {
                 settingsData.use_preset = this.usePreset;
                 settingsData.wage_level = this.currentWageLevel;
                 settingsData.custom_wage = this.customWage;
-                settingsData.current_month = this.currentMonth;
+                // Remove currentMonth from settings - it should always default to current month on page load
                 settingsData.pause_deduction = this.pauseDeduction;
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
@@ -1458,7 +1457,7 @@ export const app = {
                 this.customWage = data.customWage || 200;
                 this.currentWageLevel = data.currentWageLevel || 1;
                 this.customBonuses = data.customBonuses || {};
-                this.currentMonth = data.currentMonth || new Date().getMonth() + 1; // Default to current month
+                this.currentMonth = new Date().getMonth() + 1; // Always default to current month
                 this.pauseDeduction = data.pauseDeduction !== false;
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
@@ -1486,7 +1485,7 @@ export const app = {
             startMinute: document.getElementById('startMinute')?.value || '',
             endHour: document.getElementById('endHour')?.value || '',
             endMinute: document.getElementById('endMinute')?.value || '',
-            currentMonth: this.currentMonth
+            // Remove currentMonth from form state - it should always default to current month on page load
         };
         
         this.formState = formState;
@@ -1526,24 +1525,7 @@ export const app = {
                     if (endMinute && formState.endMinute) endMinute.value = formState.endMinute;
                 }, 100);
                 
-                // Restore current month if it was changed from default
-                if (formState.currentMonth && formState.currentMonth !== new Date().getMonth() + 1) { // Compare to current month default
-                    this.currentMonth = formState.currentMonth;
-                    // Update the date grid for the restored month
-                    this.populateDateGrid();
-                    // Re-select the date cell after date grid update
-                    if (formState.selectedDate) {
-                        setTimeout(() => {
-                            const dateDay = this.selectedDate.getDate();
-                            const dateCells = document.querySelectorAll('.date-cell');
-                            dateCells.forEach(cell => {
-                                if (cell.textContent == dateDay && !cell.classList.contains('disabled')) {
-                                    cell.classList.add('selected');
-                                }
-                            });
-                        }, 50);
-                    }
-                }
+                // Remove currentMonth restoration - it should always default to current month on page load
                 
                 this.formState = formState;
             }
@@ -1855,7 +1837,7 @@ export const app = {
                 customWage: this.customWage,
                 currentWageLevel: this.currentWageLevel,
                 customBonuses: this.customBonuses,
-                currentMonth: this.currentMonth,
+                // Remove currentMonth from localStorage - it should always default to current month on page load
                 pauseDeduction: this.pauseDeduction,
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
