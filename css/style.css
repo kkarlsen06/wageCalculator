@@ -1378,9 +1378,43 @@ html {
         text-align: center;
     }
     
-    /* Hide stats on mobile */
+    /* Show stats on mobile with fixed positioning */
     .hero-stats {
-        display: none;
+        position: fixed;
+        bottom: var(--space-md);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        background: rgba(10, 10, 11, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: var(--space-sm) var(--space-md);
+        box-shadow: var(--shadow-lg);
+        gap: var(--space-md);
+        max-width: calc(100vw - 2 * var(--space-md));
+        margin: 0;
+        justify-content: center;
+        transition: bottom 0.3s ease, opacity 0.3s ease;
+    }
+    
+    .hero-stats .stat {
+        text-align: center;
+        min-width: 0;
+        flex: 1;
+    }
+    
+    .hero-stats .stat-number {
+        font-size: var(--font-size-lg);
+        line-height: 1.2;
+    }
+    
+    .hero-stats .stat-label {
+        font-size: var(--font-size-xs);
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     /* MIDDLE THIRD - Code box */
@@ -1566,7 +1600,19 @@ html {
     }
     
     .hero-stats {
-        display: none; /* Hide stats on small mobile too */
+        /* Keep the same fixed positioning on small mobile */
+        bottom: var(--space-sm);
+        padding: var(--space-xs) var(--space-sm);
+        gap: var(--space-sm);
+        max-width: calc(100vw - 2 * var(--space-sm));
+    }
+    
+    .hero-stats .stat-number {
+        font-size: var(--font-size-base);
+    }
+    
+    .hero-stats .stat-label {
+        font-size: 0.65rem;
     }
     
     .floating-card {
