@@ -30,7 +30,6 @@
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
   position: relative;
   overflow: hidden;
-  max-width: 100%;
   /* Ensure initial state is 0% width for smooth animation */
   width: 0%;
   will-change: width;
@@ -104,6 +103,40 @@
     transparent 0%,
     rgba(16,120,59,0.08) 100%
   );
+}
+
+/* Overachievement styling - when goal is exceeded */
+.progress-fill.overachievement {
+  background: linear-gradient(135deg,
+    var(--success) 0%,
+    var(--accent) 50%,
+    var(--primary) 100%
+  );
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.progress-fill.overachievement::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.1) 50%,
+    transparent 100%
+  );
+  animation: overachievementShimmer 2s infinite;
+}
+
+@keyframes overachievementShimmer {
+  0%, 100% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes goalCelebrate {

@@ -32,7 +32,7 @@ if (origOpenSettings) {
 window.pendingConfetti = false;
 // Oppdater fremdriftslinje for månedlig inntektsmål
 function updateProgressBar(current, goal, shouldAnimate = false) {
-    const percent = Math.min((current / goal) * 100, 100).toFixed(1);
+    const percent = (goal > 0 ? (current / goal) * 100 : 0).toFixed(1);
     const fill = document.querySelector('.progress-fill');
     const label = document.querySelector('.progress-label');
     if (!fill || !label) return;
@@ -41,6 +41,9 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
     if (shouldAnimate && fill.dataset.animating === 'true') {
         return;
     }
+    
+    // Calculate display width (capped at 100% for visual display)
+    const displayWidth = Math.min(parseFloat(percent), 100);
     
     // Set initial width to 0 if animating
     if (shouldAnimate) {
@@ -62,7 +65,7 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
             fill.offsetHeight;
             
             // Start the width animation
-            fill.style.width = percent + '%';
+            fill.style.width = displayWidth + '%';
             
             // Set a flag to prevent immediate updates from overriding the animation
             fill.dataset.animating = 'true';
@@ -79,7 +82,7 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         if (fill.dataset.animating !== 'true') {
             // Remove animation for immediate updates
             fill.style.transition = 'none';
-            fill.style.width = percent + '%';
+            fill.style.width = displayWidth + '%';
         }
     }
     
@@ -89,6 +92,12 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
     
     if (percent >= 100) {
         fill.classList.add('full');
+        // Add overachievement styling for values above 100%
+        if (percent > 100) {
+            fill.classList.add('overachievement');
+        } else {
+            fill.classList.remove('overachievement');
+        }
         // Only trigger confetti when appropriate
         if (shouldAnimate) {
             // Wait for progress animation to complete before showing confetti
@@ -101,6 +110,7 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         }
     } else {
         fill.classList.remove('full');
+        fill.classList.remove('overachievement');
     }
 }
 
