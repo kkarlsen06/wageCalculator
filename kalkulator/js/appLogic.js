@@ -93,10 +93,11 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
     if (percent >= 100) {
         fill.classList.add('full');
         // Add overachievement styling for values above 100%
+        const progressCard = fill.closest('.progress-card');
         if (percent > 100) {
-            fill.classList.add('overachievement');
+            if (progressCard) progressCard.classList.add('overachievement');
         } else {
-            fill.classList.remove('overachievement');
+            if (progressCard) progressCard.classList.remove('overachievement');
         }
         // Only trigger confetti when appropriate
         if (shouldAnimate) {
@@ -110,7 +111,8 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         }
     } else {
         fill.classList.remove('full');
-        fill.classList.remove('overachievement');
+        const progressCard = fill.closest('.progress-card');
+        if (progressCard) progressCard.classList.remove('overachievement');
     }
 }
 

@@ -123,8 +123,8 @@
   animation: none;
 }
 
-/* Add glowing border to indicate overachievement */
-.progress-fill.overachievement::after {
+/* Add glowing border to indicate overachievement - positioned on the progress card */
+.progress-card.overachievement::after {
   content: '';
   position: absolute;
   top: -2px;
@@ -138,6 +138,8 @@
               0 0 32px rgba(16, 185, 129, 0.4),
               inset 0 0 16px rgba(16, 185, 129, 0.2);
   animation: glowPulse 2s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 1;
 }
 
 @keyframes glowPulse {
