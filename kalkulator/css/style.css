@@ -108,11 +108,12 @@
 /* Overachievement styling - when goal is exceeded */
 .progress-fill.overachievement {
   background: linear-gradient(135deg,
-    var(--success) 0%,
-    var(--accent) 50%,
-    var(--primary) 100%
+    var(--text-secondary) 0%,
+    var(--text-tertiary) 50%,
+    var(--border-light) 100%
   );
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
 .progress-fill.overachievement::before {
@@ -122,20 +123,35 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255,255,255,0.1) 50%,
-    transparent 100%
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    rgba(255,255,255,0.1) 8px,
+    rgba(255,255,255,0.1) 16px
   );
-  animation: overachievementShimmer 2s infinite;
+  animation: overachievementStripes 3s linear infinite;
 }
 
-@keyframes overachievementShimmer {
-  0%, 100% {
-    transform: translateX(-100%);
+/* Add subtle border to indicate overachievement */
+.progress-fill.overachievement::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid var(--accent);
+  border-radius: inherit;
+  opacity: 0.6;
+}
+
+@keyframes overachievementStripes {
+  0% {
+    background-position: 0 0;
   }
-  50% {
-    transform: translateX(100%);
+  100% {
+    background-position: 32px 0;
   }
 }
 
