@@ -4903,11 +4903,6 @@ export const app = {
                 } else {
                     customSection.style.display = 'none';
                 }
-                
-                // Adjust modal height after showing/hiding sections
-                setTimeout(() => {
-        
-                }, 50);
             });
         });
         
