@@ -834,7 +834,7 @@ export const app = {
         
         // Clear any previously selected dates
         this.selectedDates = [];
-        const dateButtons = document.querySelectorAll('#dateGrid .date-btn');
+        const dateButtons = document.querySelectorAll('#dateGrid .date-cell');
         dateButtons.forEach(btn => btn.classList.remove('selected'));
         
         // Update the selected dates info
