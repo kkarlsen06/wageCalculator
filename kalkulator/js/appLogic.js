@@ -1368,10 +1368,7 @@ export const app = {
                 }, 100);
             }
             
-            // Adjust modal height after switching preset/custom sections
-            setTimeout(() => {
-                this.adjustSettingsModalHeight();
-            }, 150);
+
         }
     },
     async saveSettingsToSupabase() {
@@ -1625,72 +1622,10 @@ export const app = {
             }, 100);
         }
         
-        // Adjust modal height based on content after tab switch
-        setTimeout(() => {
-            this.adjustSettingsModalHeight();
-        }, 150);
+
     },
     
-    // Adjust settings modal height based on active tab content
-    adjustSettingsModalHeight() {
-        const modal = document.getElementById('settingsModal');
-        const modalContent = modal?.querySelector('.modal-content');
-        const activeTabContent = modal?.querySelector('.tab-content.active');
-        
-        if (!modalContent || !activeTabContent) {
-            return;
-        }
-        
-        // Check if current tab is the wage tab
-        const currentActiveTab = modal?.querySelector('.tab-btn.active');
-        const isWageTab = currentActiveTab && currentActiveTab.textContent === 'Lønn';
-        
-        // Temporarily reset height to auto to get accurate measurements
-        modalContent.style.height = 'auto';
-        modalContent.style.maxHeight = '90vh';
-        
-        // Small delay to ensure DOM has updated
-        requestAnimationFrame(() => {
-            // Get the modal header height
-            const modalHeader = modal.querySelector('.modal-header');
-            const tabNav = modal.querySelector('.tab-nav');
-            const headerHeight = (modalHeader?.offsetHeight || 0) + (tabNav?.offsetHeight || 0);
-            
-            let finalHeight;
-            
-            if (isWageTab) {
-                // For wage tab, use dynamic height as before
-                const contentHeight = activeTabContent.scrollHeight;
-                const totalNeededHeight = headerHeight + contentHeight + 40; // Add padding
-                
-                // Set reasonable limits
-                const minHeight = 250;
-                const maxHeight = Math.floor(window.innerHeight * 0.9); // 90vh
-                
-                finalHeight = Math.min(Math.max(totalNeededHeight, minHeight), maxHeight);
-                
-                // Manage overflow based on whether content fits
-                if (totalNeededHeight > maxHeight) {
-                    modalContent.style.overflowY = 'auto';
-                    activeTabContent.style.overflowY = 'visible';
-                } else {
-                    modalContent.style.overflowY = 'hidden';
-                    activeTabContent.style.overflowY = 'visible';
-                }
-            } else {
-                // For all other tabs, use a constant height
-                const constantHeight = 400; // Fixed height for non-wage tabs
-                finalHeight = constantHeight;
-                
-                // Always set overflow to auto for constant height tabs
-                modalContent.style.overflowY = 'auto';
-                activeTabContent.style.overflowY = 'visible';
-            }
-            
-            // Apply the calculated height
-            modalContent.style.height = `${finalHeight}px`;
-        });
-    },
+
     
     // Synchronous wrapper for HTML onclick handlers
     switchSettingsTabSync(tab) {
@@ -1799,10 +1734,7 @@ export const app = {
         
         container.appendChild(slot);
         
-        // Adjust modal height after adding content
-        setTimeout(() => {
-            this.adjustSettingsModalHeight();
-        }, 50);
+
     },
     removeBonusSlot(button) {
         button.closest('.bonus-slot').remove();
@@ -1811,10 +1743,7 @@ export const app = {
             this.saveCustomBonusesSilent().catch(console.error);
         }
         
-        // Adjust modal height after removing content
-        setTimeout(() => {
-            this.adjustSettingsModalHeight();
-        }, 50);
+
     },
     
     // Auto-save custom bonuses with debouncing to avoid too many saves
@@ -1897,10 +1826,7 @@ export const app = {
                 }, 100);
             }
             
-            // Adjust modal height after everything is loaded
-            setTimeout(() => {
-                this.adjustSettingsModalHeight();
-            }, 200);
+
         }
     },
     async closeSettings() {
@@ -4980,7 +4906,7 @@ export const app = {
                 
                 // Adjust modal height after showing/hiding sections
                 setTimeout(() => {
-                    this.adjustSettingsModalHeight();
+        
                 }, 50);
             });
         });
