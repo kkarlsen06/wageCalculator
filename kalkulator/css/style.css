@@ -741,6 +741,42 @@ input[type="time"].form-control[value=""]:focus {
   color: var(--text-tertiary);
 }
 
+/* Date cell content wrapper for blue dot positioning */
+.date-cell-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Blue dot indicator for dates with shifts */
+.shift-indicator-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 1px solid var(--bg-secondary);
+  transition: all var(--speed-fast) var(--ease-default);
+  z-index: 1;
+}
+
+/* Hover state adjustments for blue dot */
+.date-cell:hover:not(.disabled) .shift-indicator-dot {
+  border-color: var(--accent3-alpha);
+  background: var(--accent3);
+}
+
+/* Selected state adjustments for blue dot */
+.date-cell.selected .shift-indicator-dot {
+  background: white;
+  border-color: var(--accent3-alpha);
+}
+
 /* Week number styling */
 .week-number {
   display: flex;

@@ -1057,6 +1057,18 @@ export const app = {
         startDate.setDate(startDate.getDate() - offset);
         dateGrid.innerHTML = '';
         
+        // Get shifts for the current month to show blue dots
+        const monthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === monthIdx &&
+            shift.date.getFullYear() === year
+        );
+        
+        // Create a lookup for dates with shifts
+        const shiftDates = new Set();
+        monthShifts.forEach(shift => {
+            shiftDates.add(shift.date.getDate());
+        });
+        
         // Add week number header
         const weekHeader = document.createElement('div');
         weekHeader.textContent = '';
@@ -1087,7 +1099,22 @@ export const app = {
             cellDate.setDate(startDate.getDate()+i);
             const cell = document.createElement('div');
             cell.className='date-cell';
-            cell.textContent = cellDate.getDate();
+            
+            // Create cell content wrapper
+            const cellContent = document.createElement('div');
+            cellContent.className = 'date-cell-content';
+            cellContent.textContent = cellDate.getDate();
+            
+            // Add blue dot if this date has shifts
+            if (cellDate.getMonth() === monthIdx && shiftDates.has(cellDate.getDate())) {
+                const dot = document.createElement('div');
+                dot.className = 'shift-indicator-dot';
+                cellContent.appendChild(dot);
+                cell.classList.add('has-shift');
+            }
+            
+            cell.appendChild(cellContent);
+            
             if (cellDate.getMonth()!==monthIdx) cell.classList.add('disabled');
             else cell.addEventListener('click',()=>{
                 document.querySelectorAll('.date-cell').forEach(c=>c.classList.remove('selected'));
@@ -4102,6 +4129,18 @@ export const app = {
         const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
         startDate.setDate(startDate.getDate() - offset);
         
+        // Get shifts for the current month to show blue dots
+        const monthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === month &&
+            shift.date.getFullYear() === year
+        );
+        
+        // Create a lookup for dates with shifts
+        const shiftDates = new Set();
+        monthShifts.forEach(shift => {
+            shiftDates.add(shift.date.getDate());
+        });
+        
         // Add week number header
         const weekHeader = document.createElement('div');
         weekHeader.textContent = '';
@@ -4132,7 +4171,21 @@ export const app = {
             cellDate.setDate(startDate.getDate() + i);
             const cell = document.createElement('div');
             cell.className = 'date-cell';
-            cell.textContent = cellDate.getDate();
+            
+            // Create cell content wrapper
+            const cellContent = document.createElement('div');
+            cellContent.className = 'date-cell-content';
+            cellContent.textContent = cellDate.getDate();
+            
+            // Add blue dot if this date has shifts
+            if (cellDate.getMonth() === month && shiftDates.has(cellDate.getDate())) {
+                const dot = document.createElement('div');
+                dot.className = 'shift-indicator-dot';
+                cellContent.appendChild(dot);
+                cell.classList.add('has-shift');
+            }
+            
+            cell.appendChild(cellContent);
             cell.dataset.day = cellDate.getDate();
             
             // Mark out-of-month cells as disabled (like main calendar)
