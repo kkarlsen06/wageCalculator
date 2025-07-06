@@ -1013,9 +1013,6 @@ export const app = {
                 return;
             }
             
-            // Update last active timestamp since user added a shift
-            await this.updateLastActiveTimestamp(user.id);
-            
             newShift.id = saved.id;
             
             // Add to userShifts array
@@ -4169,9 +4166,6 @@ export const app = {
                 return;
             }
             
-            // Update last active timestamp
-            await this.updateLastActiveTimestamp(user.id);
-            
             // Update local shift objects
             const originalShift = this.editingShift;
             originalShift.date = new Date(this.editSelectedDate);
@@ -4712,9 +4706,6 @@ export const app = {
             savedShifts.forEach((savedShift, index) => {
                 shifts[index].id = savedShift.id;
             });
-
-            // Update last active timestamp
-            await this.updateLastActiveTimestamp(user.id);
 
         } catch (error) {
             console.error('Error in saveImportedShiftsToSupabase:', error);
