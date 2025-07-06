@@ -1499,17 +1499,27 @@ export const app = {
             if (saved) {
                 const formState = JSON.parse(saved);
                 
-                // Restore selected date
+                // Restore selected date only if it's in the current displayed month
                 if (formState.selectedDate) {
-                    this.selectedDate = new Date(formState.selectedDate);
-                    // Find and select the corresponding date cell
-                    const dateDay = this.selectedDate.getDate();
-                    const dateCells = document.querySelectorAll('.date-cell');
-                    dateCells.forEach(cell => {
-                        if (cell.textContent == dateDay && !cell.classList.contains('disabled')) {
-                            cell.classList.add('selected');
-                        }
-                    });
+                    const savedDate = new Date(formState.selectedDate);
+                    const savedMonth = savedDate.getMonth() + 1; // Convert to 1-based month
+                    const savedYear = savedDate.getFullYear();
+                    
+                    // Only restore if the saved date is in the currently displayed month
+                    if (savedMonth === this.currentMonth && savedYear === this.YEAR) {
+                        this.selectedDate = savedDate;
+                        // Find and select the corresponding date cell
+                        const dateDay = this.selectedDate.getDate();
+                        const dateCells = document.querySelectorAll('.date-cell');
+                        dateCells.forEach(cell => {
+                            if (cell.textContent == dateDay && !cell.classList.contains('disabled')) {
+                                cell.classList.add('selected');
+                            }
+                        });
+                    } else {
+                        // Clear the selectedDate if it's from a different month
+                        this.selectedDate = null;
+                    }
                 }
                 
                 // Restore time selections
