@@ -3130,7 +3130,23 @@ input:checked + .slider:before {
 }
 
 #addShiftModal .date-grid {
-  margin-bottom: 20px;
+  margin-bottom: 8px;
+}
+
+.selected-dates-info {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--accent3-alpha);
+  border-radius: 6px;
+  border: 1px solid var(--accent3);
+}
+
+.selected-dates-info span {
+  font-weight: 600;
+  color: var(--accent3);
 }
 
 /* Edit Shift Modal Specific Styles */

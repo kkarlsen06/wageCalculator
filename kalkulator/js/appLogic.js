@@ -272,6 +272,9 @@ export const app = {
     emailHideTimeout: null, // Timeout for auto-hiding email
     initialAnimationComplete: false, // Track if initial progress bar animation is complete
     async init() {
+        // Initialize selectedDates array for multiple date selection
+        this.selectedDates = [];
+        
         // Reset progress bar to initial state
         const fill = document.querySelector('.progress-fill');
         if (fill) {
@@ -828,16 +831,37 @@ export const app = {
         // Show the modal
         document.getElementById('addShiftModal').style.display = 'block';
         
-        // Clear any previously selected date
-        this.selectedDate = null;
-        const dateButtons = document.querySelectorAll('#dateGrid .date-btn');
+        // Clear any previously selected dates
+        this.selectedDates = [];
+        const dateButtons = document.querySelectorAll('#dateGrid .date-cell');
         dateButtons.forEach(btn => btn.classList.remove('selected'));
+        
+        // Update the selected dates info
+        this.updateSelectedDatesInfo();
         
         // Reset form
         document.getElementById('shiftForm').reset();
         // Default to simple tab
         this.switchAddShiftTab('simple');
     },
+    
+    // Update the selected dates info display
+    updateSelectedDatesInfo() {
+        const infoElement = document.getElementById('selectedDatesInfo');
+        const countElement = document.getElementById('selectedDatesCount');
+        
+        if (!infoElement || !countElement) return;
+        
+        const count = this.selectedDates ? this.selectedDates.length : 0;
+        
+        if (count > 0) {
+            countElement.textContent = count;
+            infoElement.style.display = 'block';
+        } else {
+            infoElement.style.display = 'none';
+        }
+    },
+    
     // Switch between simple and recurring add shift tabs
     switchAddShiftTab(tab) {
         const modal = document.getElementById('addShiftModal');
@@ -945,8 +969,8 @@ export const app = {
             return;
         }
         try {
-            if (!this.selectedDate) {
-                alert('Vennligst velg en dato');
+            if (!this.selectedDates || this.selectedDates.length === 0) {
+                alert('Vennligst velg en eller flere datoer');
                 return;
             }
             
@@ -960,16 +984,6 @@ export const app = {
                 return;
             }
             
-            
-            const dayOfWeek = this.selectedDate.getDay();
-            const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
-            const newShift = {
-                date: new Date(this.selectedDate),
-                startTime: `${startHour}:${startMinute}`,
-                endTime: `${endHour}:${endMinute}`,
-                type
-            };
-            
             const { data: { user }, error: authError } = await window.supa.auth.getUser();
             if (authError) {
                 console.error('addShift: Authentication error:', authError);
@@ -981,41 +995,53 @@ export const app = {
                 return;
             }
             
-            const dateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
-            
-            // Validate that the selected date is in the current UI month
-            if (newShift.date.getMonth() + 1 !== this.currentMonth) {
-                // Correct the date to be in the current UI month
-                const correctedDate = new Date(this.YEAR, this.currentMonth - 1, this.selectedDate.getDate());
-                newShift.date = correctedDate;
-            }
-            
-            // Recalculate dateStr after potential correction
-            const finalDateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
-            
-            const insertData = {
-                user_id: user.id,
-                shift_date: finalDateStr,
-                start_time: newShift.startTime,
-                end_time: newShift.endTime,
-                shift_type: newShift.type
-            };
-            
-            const { data: saved, error } = await window.supa.from("user_shifts")
-                .insert(insertData)
-                .select()
-                .single();
+            // Process each selected date
+            const createdShifts = [];
+            for (const selectedDate of this.selectedDates) {
+                const dayOfWeek = selectedDate.getDay();
+                const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
+                const newShift = {
+                    date: new Date(selectedDate),
+                    startTime: `${startHour}:${startMinute}`,
+                    endTime: `${endHour}:${endMinute}`,
+                    type
+                };
                 
-            if (error) {
-                console.error('addShift: Database error when saving shift:', error);
-                alert(`Kunne ikke lagre vakt i databasen: ${error.message}`);
-                return;
+                // Validate that the selected date is in the current UI month
+                if (newShift.date.getMonth() + 1 !== this.currentMonth) {
+                    // Correct the date to be in the current UI month
+                    const correctedDate = new Date(this.YEAR, this.currentMonth - 1, selectedDate.getDate());
+                    newShift.date = correctedDate;
+                }
+                
+                // Create date string for database
+                const finalDateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
+                
+                const insertData = {
+                    user_id: user.id,
+                    shift_date: finalDateStr,
+                    start_time: newShift.startTime,
+                    end_time: newShift.endTime,
+                    shift_type: newShift.type
+                };
+                
+                const { data: saved, error } = await window.supa.from("user_shifts")
+                    .insert(insertData)
+                    .select()
+                    .single();
+                    
+                if (error) {
+                    console.error('addShift: Database error when saving shift:', error);
+                    alert(`Kunne ikke lagre vakt for ${finalDateStr}: ${error.message}`);
+                    continue; // Skip this date and continue with others
+                }
+                
+                newShift.id = saved.id;
+                
+                // Add to userShifts array
+                this.userShifts.push(newShift);
+                createdShifts.push(newShift);
             }
-            
-            newShift.id = saved.id;
-            
-            // Add to userShifts array
-            this.userShifts.push(newShift);
             
             // Update this.shifts
             this.shifts = [...this.userShifts];
@@ -1023,12 +1049,21 @@ export const app = {
             this.updateDisplay();
             
             document.getElementById('shiftForm').reset();
-            this.selectedDate = null;
+            this.selectedDates = [];
             document.querySelectorAll('.date-cell').forEach(cell => {
                 cell.classList.remove('selected');
             });
             
+            this.updateSelectedDatesInfo(); // Update the info display
             this.clearFormState();
+            
+            // Show success message
+            if (createdShifts.length > 0) {
+                const message = createdShifts.length === 1 ? 
+                    'Vakt lagt til' : 
+                    `${createdShifts.length} vakter lagt til`;
+                alert(message);
+            }
             
         } catch (e) {
             console.error('addShift: Critical error:', e);
@@ -1119,12 +1154,39 @@ export const app = {
             cell.appendChild(cellContent);
             
             if (cellDate.getMonth()!==monthIdx) cell.classList.add('disabled');
-            else cell.addEventListener('click',()=>{
-                document.querySelectorAll('.date-cell').forEach(c=>c.classList.remove('selected'));
-                cell.classList.add('selected');
-                this.selectedDate = new Date(cellDate);
-                this.saveFormState(); // Save form state when date is selected
-            });
+            else {
+                // Check if this date should be initially selected
+                if (this.selectedDates && this.selectedDates.length > 0) {
+                    const dateKey = cellDate.toDateString();
+                    const isSelected = this.selectedDates.some(d => d.toDateString() === dateKey);
+                    if (isSelected) {
+                        cell.classList.add('selected');
+                    }
+                }
+                
+                cell.addEventListener('click',()=>{
+                    // Initialize selectedDates array if it doesn't exist
+                    if (!this.selectedDates) {
+                        this.selectedDates = [];
+                    }
+                    
+                    const dateKey = cellDate.toDateString();
+                    const existingIndex = this.selectedDates.findIndex(d => d.toDateString() === dateKey);
+                    
+                    if (existingIndex >= 0) {
+                        // Date is already selected, remove it (deselect)
+                        this.selectedDates.splice(existingIndex, 1);
+                        cell.classList.remove('selected');
+                    } else {
+                        // Date is not selected, add it
+                        this.selectedDates.push(new Date(cellDate));
+                        cell.classList.add('selected');
+                    }
+                    
+                    this.updateSelectedDatesInfo(); // Update the info display
+                    this.saveFormState(); // Save form state when date selection changes
+                });
+            }
             dateGrid.appendChild(cell);
         }
     },
@@ -1505,7 +1567,7 @@ export const app = {
     // Save form state to preserve user input across page restarts
     saveFormState() {
         const formState = {
-            selectedDate: this.selectedDate ? this.selectedDate.toISOString() : null,
+            selectedDates: this.selectedDates ? this.selectedDates.map(date => date.toISOString()) : [],
             startHour: document.getElementById('startHour')?.value || '',
             startMinute: document.getElementById('startMinute')?.value || '',
             endHour: document.getElementById('endHour')?.value || '',
@@ -1524,26 +1586,49 @@ export const app = {
             if (saved) {
                 const formState = JSON.parse(saved);
                 
-                // Restore selected date only if it's in the current displayed month
-                if (formState.selectedDate) {
+                // Restore selected dates only if they're in the current displayed month
+                if (formState.selectedDates && formState.selectedDates.length > 0) {
+                    this.selectedDates = [];
+                    formState.selectedDates.forEach(dateString => {
+                        const savedDate = new Date(dateString);
+                        const savedMonth = savedDate.getMonth() + 1; // Convert to 1-based month
+                        const savedYear = savedDate.getFullYear();
+                        
+                        // Only restore if the saved date is in the currently displayed month
+                        if (savedMonth === this.currentMonth && savedYear === this.YEAR) {
+                            this.selectedDates.push(savedDate);
+                            // Find and select the corresponding date cell
+                            const dateDay = savedDate.getDate();
+                            const dateCells = document.querySelectorAll('.date-cell');
+                            dateCells.forEach(cell => {
+                                const cellContent = cell.querySelector('.date-cell-content');
+                                if (cellContent && cellContent.textContent == dateDay && !cell.classList.contains('disabled')) {
+                                    cell.classList.add('selected');
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    // Initialize empty array if no dates saved
+                    this.selectedDates = [];
+                }
+                
+                // Handle legacy selectedDate format for backward compatibility
+                if (formState.selectedDate && (!formState.selectedDates || formState.selectedDates.length === 0)) {
                     const savedDate = new Date(formState.selectedDate);
-                    const savedMonth = savedDate.getMonth() + 1; // Convert to 1-based month
+                    const savedMonth = savedDate.getMonth() + 1;
                     const savedYear = savedDate.getFullYear();
                     
-                    // Only restore if the saved date is in the currently displayed month
                     if (savedMonth === this.currentMonth && savedYear === this.YEAR) {
-                        this.selectedDate = savedDate;
-                        // Find and select the corresponding date cell
-                        const dateDay = this.selectedDate.getDate();
+                        this.selectedDates = [savedDate];
+                        const dateDay = savedDate.getDate();
                         const dateCells = document.querySelectorAll('.date-cell');
                         dateCells.forEach(cell => {
-                            if (cell.textContent == dateDay && !cell.classList.contains('disabled')) {
+                            const cellContent = cell.querySelector('.date-cell-content');
+                            if (cellContent && cellContent.textContent == dateDay && !cell.classList.contains('disabled')) {
                                 cell.classList.add('selected');
                             }
                         });
-                    } else {
-                        // Clear the selectedDate if it's from a different month
-                        this.selectedDate = null;
                     }
                 }
                 
@@ -1563,6 +1648,9 @@ export const app = {
                 // Remove currentMonth restoration - it should always default to current month on page load
                 
                 this.formState = formState;
+                
+                // Update the selected dates info display
+                this.updateSelectedDatesInfo();
             }
         } catch (e) {
             console.error('Error restoring form state:', e);
