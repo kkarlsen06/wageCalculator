@@ -42,6 +42,14 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
     fill.classList.remove('loading');
     
     if (shouldAnimate) {
+        // Prevent multiple animations by checking if already animating
+        if (fill.dataset.animating === 'true') {
+            return;
+        }
+        
+        // Mark as animating
+        fill.dataset.animating = 'true';
+        
         // Start animation from current position
         fill.style.transition = 'none';
         const currentWidth = fill.style.width || '0%';
@@ -56,14 +64,73 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         
         // Only trigger confetti when animation completes AND goal is reached
         if (percent >= 100) {
-            // Listen for the transition end event instead of using setTimeout
+            // Use both transitionend listener and setTimeout as fallback
+            let confettiTriggered = false;
+            
             const handleTransitionEnd = (event) => {
                 if (event.target === fill && event.propertyName === 'width') {
                     fill.removeEventListener('transitionend', handleTransitionEnd);
-                    triggerConfettiIfVisible();
+                    fill.dataset.animating = 'false';
+                    
+                    // Set initial animation complete flag if this is the first animation
+                    if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
+                        app.initialAnimationComplete = true;
+                    }
+                    
+                    if (!confettiTriggered) {
+                        confettiTriggered = true;
+                        triggerConfettiIfVisible();
+                    }
                 }
             };
+            
             fill.addEventListener('transitionend', handleTransitionEnd);
+            
+            // Fallback timeout in case transitionend doesn't fire (e.g., when already at 100%)
+            setTimeout(() => {
+                fill.dataset.animating = 'false';
+                
+                // Set initial animation complete flag if this is the first animation
+                if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
+                    app.initialAnimationComplete = true;
+                }
+                
+                if (!confettiTriggered) {
+                    confettiTriggered = true;
+                    triggerConfettiIfVisible();
+                }
+                
+                // Clean up event listener if it hasn't been called
+                fill.removeEventListener('transitionend', handleTransitionEnd);
+            }, 850); // Slightly longer than animation duration
+        } else {
+            // Animation without confetti - still need to clean up
+            const handleTransitionEnd = (event) => {
+                if (event.target === fill && event.propertyName === 'width') {
+                    fill.removeEventListener('transitionend', handleTransitionEnd);
+                    fill.dataset.animating = 'false';
+                    
+                    // Set initial animation complete flag if this is the first animation
+                    if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
+                        app.initialAnimationComplete = true;
+                    }
+                }
+            };
+            
+            fill.addEventListener('transitionend', handleTransitionEnd);
+            
+            // Fallback timeout
+            setTimeout(() => {
+                fill.dataset.animating = 'false';
+                
+                // Set initial animation complete flag if this is the first animation
+                if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
+                    app.initialAnimationComplete = true;
+                }
+                
+                // Clean up event listener if it hasn't been called
+                fill.removeEventListener('transitionend', handleTransitionEnd);
+            }, 850);
         }
     } else {
         // For immediate updates, set width without transition
