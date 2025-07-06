@@ -107,11 +107,7 @@
 
 /* Overachievement styling - when goal is exceeded */
 .progress-fill.overachievement {
-  background: linear-gradient(135deg,
-    var(--text-secondary) 0%,
-    var(--text-tertiary) 50%,
-    var(--border-light) 100%
-  );
+  background: var(--gradient-secondary);
   position: relative;
   overflow: hidden;
 }
@@ -123,35 +119,37 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 8px,
-    rgba(255,255,255,0.1) 8px,
-    rgba(255,255,255,0.1) 16px
-  );
-  animation: overachievementStripes 3s linear infinite;
+  background: transparent;
+  animation: none;
 }
 
-/* Add subtle border to indicate overachievement */
+/* Add glowing border to indicate overachievement */
 .progress-fill.overachievement::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
   border: 2px solid var(--accent);
-  border-radius: inherit;
-  opacity: 0.6;
+  border-radius: calc(16px + 2px);
+  opacity: 1;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.6), 
+              0 0 32px rgba(16, 185, 129, 0.4),
+              inset 0 0 16px rgba(16, 185, 129, 0.2);
+  animation: glowPulse 2s ease-in-out infinite alternate;
 }
 
-@keyframes overachievementStripes {
+@keyframes glowPulse {
   0% {
-    background-position: 0 0;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.6), 
+                0 0 32px rgba(16, 185, 129, 0.4),
+                inset 0 0 16px rgba(16, 185, 129, 0.2);
   }
   100% {
-    background-position: 32px 0;
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.8), 
+                0 0 48px rgba(16, 185, 129, 0.6),
+                inset 0 0 24px rgba(16, 185, 129, 0.3);
   }
 }
 
