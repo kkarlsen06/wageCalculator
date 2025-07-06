@@ -32,64 +32,127 @@ if (origOpenSettings) {
 window.pendingConfetti = false;
 // Oppdater fremdriftslinje for månedlig inntektsmål
 function updateProgressBar(current, goal, shouldAnimate = false) {
-    const percent = (goal > 0 ? (current / goal) * 100 : 0).toFixed(1);
     const fill = document.querySelector('.progress-fill');
     const label = document.querySelector('.progress-label');
     if (!fill || !label) return;
     
-    // Prevent multiple animations during initialization
-    if (shouldAnimate && fill.dataset.animating === 'true') {
-        return;
-    }
+    const percent = goal > 0 ? (current / goal) * 100 : 0;
     
-    // Calculate display width (capped at 100% for visual display)
-    const displayWidth = Math.min(parseFloat(percent), 100);
+    // Remove loading state if present
+    fill.classList.remove('loading');
     
-    // Set initial width to 0 if animating
     if (shouldAnimate) {
-        // Ensure progress bar starts at 0% with no transition
-        fill.classList.add('loading');
-        fill.style.width = '0%';
-        fill.style.transition = 'none';
+        // Prevent multiple animations by checking if already animating
+        if (fill.dataset.animating === 'true') {
+            return;
+        }
         
-        // Force reflow to ensure the 0% width is applied
+        // Mark as animating
+        fill.dataset.animating = 'true';
+        
+        // Start animation from current position
+        fill.style.transition = 'none';
+        const currentWidth = fill.style.width || '0%';
+        fill.style.width = currentWidth;
+        
+        // Force reflow
         fill.offsetHeight;
         
-        // Use requestAnimationFrame to ensure DOM is ready
-        requestAnimationFrame(() => {
-            // Remove loading class and re-enable transition
-            fill.classList.remove('loading');
-            fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        // Enable transition and animate to new value
+        fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        fill.style.width = Math.min(percent, 100) + '%';
+        
+        // Only trigger confetti when animation completes AND goal is reached
+        if (percent >= 100) {
+            // Use both transitionend listener and setTimeout as fallback
+            let confettiTriggered = false;
             
-            // Force another reflow to ensure transition is applied
-            fill.offsetHeight;
+            const handleTransitionEnd = (event) => {
+                if (event.target === fill && event.propertyName === 'width') {
+                    fill.removeEventListener('transitionend', handleTransitionEnd);
+                    fill.dataset.animating = 'false';
+                    
+                    // Set initial animation complete flag if this is the first animation
+                    if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
+                        app.initialAnimationComplete = true;
+                    }
+                    
+                    if (!confettiTriggered) {
+                        confettiTriggered = true;
+                        triggerConfettiIfVisible();
+                    }
+                }
+            };
             
-            // Start the width animation
-            fill.style.width = displayWidth + '%';
+            fill.addEventListener('transitionend', handleTransitionEnd);
             
-            // Set a flag to prevent immediate updates from overriding the animation
-            fill.dataset.animating = 'true';
+            // Fallback timeout in case transitionend doesn't fire (e.g., when already at 100%)
             setTimeout(() => {
                 fill.dataset.animating = 'false';
-                // Mark initial animation as complete
-                if (typeof app !== 'undefined') {
+                
+                // Set initial animation complete flag if this is the first animation
+                if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
                     app.initialAnimationComplete = true;
                 }
-            }, 1000); // Allow updates after animation completes
-        });
+                
+                if (!confettiTriggered) {
+                    confettiTriggered = true;
+                    triggerConfettiIfVisible();
+                }
+                
+                // Clean up event listener if it hasn't been called
+                fill.removeEventListener('transitionend', handleTransitionEnd);
+            }, 850); // Slightly longer than animation duration
+        } else {
+            // Animation without confetti - still need to clean up
+            const handleTransitionEnd = (event) => {
+                if (event.target === fill && event.propertyName === 'width') {
+                    fill.removeEventListener('transitionend', handleTransitionEnd);
+                    fill.dataset.animating = 'false';
+                    
+                    // Set initial animation complete flag if this is the first animation
+                    if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
+                        app.initialAnimationComplete = true;
+                    }
+                }
+            };
+            
+            fill.addEventListener('transitionend', handleTransitionEnd);
+            
+            // Fallback timeout
+            setTimeout(() => {
+                fill.dataset.animating = 'false';
+                
+                // Set initial animation complete flag if this is the first animation
+                if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
+                    app.initialAnimationComplete = true;
+                }
+                
+                // Clean up event listener if it hasn't been called
+                fill.removeEventListener('transitionend', handleTransitionEnd);
+            }, 850);
+        }
     } else {
-        // Only update if not currently animating
-        if (fill.dataset.animating !== 'true') {
-            // Remove animation for immediate updates
-            fill.style.transition = 'none';
-            fill.style.width = displayWidth + '%';
+        // For immediate updates, only proceed if no animation is in progress
+        if (fill.dataset.animating === 'true') {
+            return;
+        }
+        
+        // Set width without transition
+        fill.style.transition = 'none';
+        fill.style.width = Math.min(percent, 100) + '%';
+        // Force reflow
+        fill.offsetHeight;
+        // Re-enable transition for future animations
+        fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        
+        // Only trigger confetti for immediate updates if goal is reached
+        if (percent >= 100) {
+            triggerConfettiIfVisible();
         }
     }
     
-    const currencySuffix = window.app && window.app.currencyFormat ? ' NOK' : ' kr';
-    label.textContent = percent + '% av ' + goal.toLocaleString('no-NO') + currencySuffix;
-    fill.title = `${current.toLocaleString('no-NO')}${currencySuffix} av ${goal.toLocaleString('no-NO')}${currencySuffix}`;
-    
+    // Update classes based on progress
     if (percent >= 100) {
         fill.classList.add('full');
         // Add overachievement styling for values above 100%
@@ -99,21 +162,16 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         } else {
             if (progressCard) progressCard.classList.remove('overachievement');
         }
-        // Only trigger confetti when appropriate
-        if (shouldAnimate) {
-            // Wait for progress animation to complete before showing confetti
-            setTimeout(() => {
-                triggerConfettiIfVisible();
-            }, 1400); // Wait for progress animation (0.8s) + delay (0.5s) + small buffer
-        } else {
-            // For immediate updates (like adding shifts), check if we should show confetti
-            triggerConfettiIfVisible();
-        }
     } else {
         fill.classList.remove('full');
         const progressCard = fill.closest('.progress-card');
         if (progressCard) progressCard.classList.remove('overachievement');
     }
+    
+    // Update label text
+    const currencySuffix = window.app && window.app.currencyFormat ? ' NOK' : ' kr';
+    label.textContent = percent.toFixed(1) + '% av ' + goal.toLocaleString('no-NO') + currencySuffix;
+    fill.title = `${current.toLocaleString('no-NO')}${currencySuffix} av ${goal.toLocaleString('no-NO')}${currencySuffix}`;
 }
 
 // Konfetti-animasjon for når målet nås - kun når ingen modaler er åpne
@@ -138,8 +196,18 @@ function triggerConfettiIfVisible() {
 function checkPendingConfetti() {
     if (window.pendingConfetti) {
         const fill = document.querySelector('.progress-fill');
+        // Only trigger confetti if the progress bar is actually at 100%
         if (fill && fill.classList.contains('full')) {
-            triggerConfetti();
+            // Double-check that no modals are still open
+            const modals = ['addShiftModal', 'editShiftModal', 'settingsModal', 'breakdownModal'];
+            const isAnyModalOpen = modals.some(modalId => {
+                const modal = document.getElementById(modalId);
+                return modal && modal.style.display === 'block';
+            });
+            
+            if (!isAnyModalOpen) {
+                triggerConfetti();
+            }
         }
         window.pendingConfetti = false;
     }
@@ -147,7 +215,8 @@ function checkPendingConfetti() {
 
 // Konfetti-animasjon for når målet nås
 function triggerConfetti() {
-    const colors = ['#00d4aa', '#7c3aed', '#0891b2', '#10b981', '#ef4444', '#f59e0b', '#ec4899', '#8b5cf6'];
+    // Use design system colors that match the app's color scheme
+    const colors = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#818cf8', '#4f46e5'];
     const confettiCount = 60;
     
     // Create confetti in multiple bursts for more effect
