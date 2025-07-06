@@ -2100,7 +2100,10 @@ export const app = {
         
         // Determine how many cards we can actually display
         let maxCards = stats.length;
-        if (totalHeight > availableHeight) {
+        if (cardsPerRow === 0) {
+            // If container is too narrow to fit any cards horizontally, show no cards
+            maxCards = 0;
+        } else if (totalHeight > availableHeight) {
             const maxRows = Math.floor((availableHeight + gridGap) / (cardHeight + gridGap));
             maxCards = Math.max(0, maxRows * cardsPerRow);
         }
