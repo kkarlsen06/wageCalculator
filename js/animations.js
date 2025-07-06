@@ -363,42 +363,96 @@ function initMobileStats() {
     
     if (!heroStats) return;
     
-    // Handle viewport changes on mobile
-    function handleViewportChange() {
-        if (window.innerWidth <= 768) {
-            // Use the visual viewport API if available for better mobile support
-            if (window.visualViewport) {
-                const updateStatsPosition = () => {
-                    // Position stats relative to the visual viewport
-                    const offset = window.visualViewport.height < window.innerHeight ? 
-                        window.innerHeight - window.visualViewport.height : 0;
-                    
-                    heroStats.style.bottom = `calc(var(--space-md) + ${offset}px)`;
-                };
-                
-                window.visualViewport.addEventListener('resize', updateStatsPosition);
-                window.visualViewport.addEventListener('scroll', updateStatsPosition);
-                updateStatsPosition();
-            }
-            
-            // Hide stats when keyboard is open (heuristic: significant height reduction)
-            const initialHeight = window.innerHeight;
-            window.addEventListener('resize', debounce(() => {
-                const currentHeight = window.innerHeight;
-                const heightDiff = initialHeight - currentHeight;
-                
-                if (heightDiff > 150) {
-                    // Keyboard likely open
-                    heroStats.style.display = 'none';
-                } else {
-                    // Keyboard likely closed
-                    heroStats.style.display = 'flex';
-                }
-            }, 100));
-        }
-    }
+    // Store references to event listener functions to prevent memory leaks
+    let visualViewportResizeListener = null;
+    let visualViewportScrollListener = null;
+    let keyboardResizeListener = null;
+    let isMobile = false;
     
+    // Function to update stats position for mobile
+    const updateStatsPosition = () => {
+        if (window.visualViewport) {
+            const offset = window.visualViewport.height < window.innerHeight ? 
+                window.innerHeight - window.visualViewport.height : 0;
+            
+            heroStats.style.bottom = `calc(var(--space-md) + ${offset}px)`;
+        }
+    };
+    
+    // Function to handle keyboard detection
+    const initialHeight = window.innerHeight;
+    const handleKeyboardToggle = debounce(() => {
+        if (!isMobile) return;
+        
+        const currentHeight = window.innerHeight;
+        const heightDiff = initialHeight - currentHeight;
+        
+        if (heightDiff > 150) {
+            // Keyboard likely open
+            heroStats.style.display = 'none';
+        } else {
+            // Keyboard likely closed
+            heroStats.style.display = 'flex';
+        }
+    }, 100);
+    
+    // Function to clean up existing listeners
+    const removeExistingListeners = () => {
+        if (visualViewportResizeListener && window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', visualViewportResizeListener);
+            visualViewportResizeListener = null;
+        }
+        
+        if (visualViewportScrollListener && window.visualViewport) {
+            window.visualViewport.removeEventListener('scroll', visualViewportScrollListener);
+            visualViewportScrollListener = null;
+        }
+        
+        if (keyboardResizeListener) {
+            window.removeEventListener('resize', keyboardResizeListener);
+            keyboardResizeListener = null;
+        }
+    };
+    
+    // Function to add mobile-specific listeners
+    const addMobileListeners = () => {
+        if (window.visualViewport) {
+            visualViewportResizeListener = updateStatsPosition;
+            visualViewportScrollListener = updateStatsPosition;
+            
+            window.visualViewport.addEventListener('resize', visualViewportResizeListener);
+            window.visualViewport.addEventListener('scroll', visualViewportScrollListener);
+            updateStatsPosition();
+        }
+        
+        keyboardResizeListener = handleKeyboardToggle;
+        window.addEventListener('resize', keyboardResizeListener);
+    };
+    
+    // Handle viewport changes on mobile
+    const handleViewportChange = () => {
+        const shouldBeMobile = window.innerWidth <= 768;
+        
+        if (shouldBeMobile !== isMobile) {
+            // Clean up existing listeners before changing mode
+            removeExistingListeners();
+            
+            isMobile = shouldBeMobile;
+            
+            if (isMobile) {
+                addMobileListeners();
+            } else {
+                // Reset styles when switching back to desktop
+                heroStats.style.bottom = '';
+                heroStats.style.display = '';
+            }
+        }
+    };
+    
+    // Initial setup
     handleViewportChange();
+    
+    // Listen for viewport changes (but don't add duplicate listeners)
     window.addEventListener('resize', debounce(handleViewportChange, 100));
 }
 
