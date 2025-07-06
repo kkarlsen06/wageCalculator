@@ -368,6 +368,7 @@ function initMobileStats() {
     let visualViewportScrollListener = null;
     let keyboardResizeListener = null;
     let isMobile = false;
+    let initialHeight = 0; // Will be set when transitioning to mobile
     
     // Function to update stats position for mobile
     const updateStatsPosition = () => {
@@ -380,7 +381,6 @@ function initMobileStats() {
     };
     
     // Function to handle keyboard detection
-    const initialHeight = window.innerHeight;
     const handleKeyboardToggle = debounce(() => {
         if (!isMobile) return;
         
@@ -440,6 +440,8 @@ function initMobileStats() {
             isMobile = shouldBeMobile;
             
             if (isMobile) {
+                // Capture the initial height when transitioning to mobile
+                initialHeight = window.innerHeight;
                 addMobileListeners();
             } else {
                 // Reset styles when switching back to desktop
@@ -451,6 +453,11 @@ function initMobileStats() {
     
     // Initial setup
     handleViewportChange();
+    
+    // Capture initial height if we're starting on mobile
+    if (isMobile) {
+        initialHeight = window.innerHeight;
+    }
     
     // Listen for viewport changes (but don't add duplicate listeners)
     window.addEventListener('resize', debounce(handleViewportChange, 100));
