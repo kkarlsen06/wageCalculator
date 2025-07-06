@@ -3523,137 +3523,63 @@ input:checked + .slider:before {
   z-index: 1;
 }
 
-.shift-history-header .header-left,
-.shift-history-header .header-right {
-  flex: 1;
-}
-
-.shift-history-header .header-center {
-  flex: 1;
-  text-align: center;
+.shift-history-header .header-left {
+  flex: 0 0 auto;
 }
 
 .shift-history-header .header-right {
+  flex: 1;
   text-align: right;
 }
 
-/* Shift count display */
-.shift-count-display {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.shift-count-icon {
-  width: 40px;
-  height: 40px;
+/* Large calendar icon on the left */
+.calendar-icon-large {
+  width: 60px;
+  height: 60px;
   background: var(--gradient-primary);
-  border-radius: 10px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 12px -3px var(--shadow-accent);
+  box-shadow: 0 4px 16px -4px var(--shadow-accent);
   transition: all var(--speed-normal) var(--ease-default);
 }
 
-.shift-count-icon:hover {
+.calendar-icon-large:hover {
   transform: var(--lift-small) var(--scale-hover);
-  box-shadow: 0 6px 20px -3px var(--shadow-accent);
+  box-shadow: 0 6px 24px -3px var(--shadow-accent);
 }
 
-.shift-count-icon svg {
-  width: 20px;
-  height: 20px;
+.calendar-icon-large svg {
+  width: 28px;
+  height: 28px;
   color: white;
 }
 
-.shift-count-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.shift-count-text #headerShiftCount {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.shift-count-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Header center content */
-.shift-history-header .header-center h2 {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 4px 0;
-  letter-spacing: -0.02em;
-}
-
-.shift-history-header .header-subtitle {
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 400;
-  opacity: 0.8;
-}
-
-/* Last updated display */
-.last-updated {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.last-updated-icon {
-  width: 32px;
-  height: 32px;
-  background: rgba(99, 102, 241, 0.1);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--speed-fast) var(--ease-default);
-}
-
-.last-updated-icon:hover {
-  background: rgba(99, 102, 241, 0.15);
-  transform: var(--scale-hover);
-}
-
-.last-updated-icon svg {
-  width: 16px;
-  height: 16px;
-  color: var(--accent);
-}
-
-.last-updated-text {
+/* Header text content */
+.header-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
   align-items: flex-end;
 }
 
-.last-updated-label {
-  font-size: 11px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.header-text h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
-#lastUpdatedTime {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+.header-text .header-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 400;
+  opacity: 0.8;
 }
+
+
 
 /* Responsive adjustments for shift history header */
 @media (max-width: 768px) {
@@ -3662,48 +3588,22 @@ input:checked + .slider:before {
     margin-bottom: 20px;
   }
   
-  .shift-history-header .header-center h2 {
+  .calendar-icon-large {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .calendar-icon-large svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .header-text h2 {
     font-size: 20px;
   }
   
-  .shift-history-header .header-subtitle {
+  .header-text .header-subtitle {
     font-size: 12px;
-  }
-  
-  .shift-count-icon {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .shift-count-icon svg {
-    width: 18px;
-    height: 18px;
-  }
-  
-  .shift-count-text #headerShiftCount {
-    font-size: 18px;
-  }
-  
-  .shift-count-label {
-    font-size: 11px;
-  }
-  
-  .last-updated-icon {
-    width: 28px;
-    height: 28px;
-  }
-  
-  .last-updated-icon svg {
-    width: 14px;
-    height: 14px;
-  }
-  
-  #lastUpdatedTime {
-    font-size: 13px;
-  }
-  
-  .last-updated-label {
-    font-size: 10px;
   }
 }
 
@@ -3721,69 +3621,30 @@ input:checked + .slider:before {
     flex: none;
   }
   
-  .shift-history-header .header-center {
-    order: -1;
-  }
-  
   .shift-history-header .header-right {
     text-align: center;
   }
   
-  .shift-count-display {
-    justify-content: center;
-  }
-  
-  .last-updated {
-    justify-content: center;
-  }
-  
-  .last-updated-text {
+  .header-text {
     align-items: center;
   }
   
-  .shift-history-header .header-center h2 {
+  .calendar-icon-large {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .calendar-icon-large svg {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .header-text h2 {
     font-size: 18px;
-    margin-bottom: 2px;
   }
   
-  .shift-history-header .header-subtitle {
+  .header-text .header-subtitle {
     font-size: 11px;
-  }
-  
-  .shift-count-icon {
-    width: 32px;
-    height: 32px;
-  }
-  
-  .shift-count-icon svg {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .shift-count-text #headerShiftCount {
-    font-size: 16px;
-  }
-  
-  .shift-count-label {
-    font-size: 10px;
-  }
-  
-  .last-updated-icon {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .last-updated-icon svg {
-    width: 12px;
-    height: 12px;
-  }
-  
-  #lastUpdatedTime {
-    font-size: 12px;
-  }
-  
-  .last-updated-label {
-    font-size: 9px;
   }
 }
 
