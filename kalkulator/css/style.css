@@ -758,7 +758,7 @@ input[type="time"].form-control[value=""]:focus {
   right: -2px;
   width: 6px;
   height: 6px;
-  background: var(--accent);
+  background: var(--secondary);
   border-radius: 50%;
   border: 1px solid var(--bg-secondary);
   transition: all var(--speed-fast) var(--ease-default);
