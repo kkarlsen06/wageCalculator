@@ -3748,6 +3748,19 @@ input:checked + .slider:before {
   transform: rotate(180deg);
 }
 
+/* Responsive border radius for neste badge to match card */
+@media (max-width: 480px) {
+  .next-shift-badge {
+    border-radius: 0 20px 20px 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .next-shift-badge {
+    border-radius: 0 16px 16px 0;
+  }
+}
+
 /* Adjust shift-info padding to make room for the badge */
 .next-shift-card .shift-item .shift-info {
   padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
