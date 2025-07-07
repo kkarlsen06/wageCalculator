@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const viewportHeight = window.innerHeight;
       
       // Show floating bar when shift section is in view
-      const threshold = 0.5; // Show when 50% of viewport shows shift section
+      const threshold = 0.8; // Show when shift section top is above 80% of viewport
       const shouldBeVisible = rect.top < viewportHeight * threshold && rect.bottom > viewportHeight * 0.1;
       
       if (shouldBeVisible && !isVisible) {

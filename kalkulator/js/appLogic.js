@@ -1105,6 +1105,14 @@ export const app = {
                 cell.classList.add('has-shift');
             }
             
+            // Add current date class if this is today
+            const today = new Date();
+            if (cellDate.getDate() === today.getDate() && 
+                cellDate.getMonth() === today.getMonth() && 
+                cellDate.getFullYear() === today.getFullYear()) {
+                cell.classList.add('current-date');
+            }
+            
             cell.appendChild(cellContent);
             
             if (cellDate.getMonth()!==monthIdx) cell.classList.add('disabled');
@@ -2105,10 +2113,10 @@ export const app = {
             {
                 id: 'bestDay',
                 relevanceScore: 9,
-                label: bestDay.date
-                    ? `Beste dag ${bestDay.date.getDate()}.${bestDay.date.getMonth()+1}`
-                    : 'Beste dag',
-                value: this.formatCurrency(bestDay.total)
+                label: 'Beste dag',
+                value: bestDay.date
+                    ? `${this.formatCurrency(bestDay.total)} • ${bestDay.date.getDate().toString().padStart(2, '0')}.${(bestDay.date.getMonth()+1).toString().padStart(2, '0')}`
+                    : this.formatCurrency(bestDay.total)
             },
             {
                 id: 'totalHours',
@@ -2273,44 +2281,81 @@ export const app = {
             `;
             return;
         }
+        
+        // Sort shifts by date (newest first)
         const sortedShifts = monthShifts.sort((a, b) => b.date - a.date);
-        const shiftsHtml = sortedShifts.map(shift => {
-            const calc = this.calculateShift(shift);
-            const day = shift.date.getDate();
-            const weekday = this.WEEKDAYS[shift.date.getDay()];
-            const typeClass = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-            const seriesBadge = shift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+        
+        // Group shifts by week
+        const weekGroups = {};
+        sortedShifts.forEach(shift => {
+            const weekNumber = this.getISOWeekNumber(shift.date);
+            if (!weekGroups[weekNumber]) {
+                weekGroups[weekNumber] = [];
+            }
+            weekGroups[weekNumber].push(shift);
+        });
+        
+        // Create HTML with week separators
+        const shiftsHtml = [];
+        const weekNumbers = Object.keys(weekGroups).sort((a, b) => b - a); // Sort weeks descending (newest first)
+        
+        weekNumbers.forEach((weekNumber, weekIndex) => {
+            const weekShifts = weekGroups[weekNumber];
             
-            return `
-                <div class="shift-item ${typeClass}" data-shift-id="${shift.id}" style="cursor: pointer;">
-                    <div class="shift-info">
-                        <div class="shift-date">
-                            <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
-                            <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+            // Add week separator BEFORE each week's shifts as a header
+            shiftsHtml.push(`
+                <div class="week-separator">
+                    <div class="week-separator-line"></div>
+                    <div class="week-separator-content">
+                        <svg class="week-separator-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                        <span class="week-separator-week">Uke ${weekNumber}</span>
+                    </div>
+                    <div class="week-separator-line"></div>
+                </div>
+            `);
+            
+            // Add shifts for this week
+            weekShifts.forEach(shift => {
+                const calc = this.calculateShift(shift);
+                const day = shift.date.getDate();
+                const weekday = this.WEEKDAYS[shift.date.getDay()];
+                const typeClass = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
+                const seriesBadge = shift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+                
+                shiftsHtml.push(`
+                    <div class="shift-item ${typeClass}" data-shift-id="${shift.id}" style="cursor: pointer;">
+                        <div class="shift-info">
+                            <div class="shift-date">
+                                <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
+                                <span class="shift-date-separator"></span>
+                                <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                            </div>
+                            <div class="shift-details">
+                                <div class="shift-time-with-hours">
+                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    <span>${shift.startTime} - ${shift.endTime}</span>
+                                    <span class="shift-time-arrow">→</span>
+                                    <span>${this.formatHours(calc.hours)}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="shift-details">
-                            <div class="shift-time-with-hours">
-                                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                                <span>${shift.startTime} - ${shift.endTime}</span>
-                                <span class="shift-time-arrow">→</span>
-                                <span>${this.formatHours(calc.hours)}</span>
+                        <div class="shift-amount-wrapper">
+                            <div class="shift-total">${this.formatCurrency(calc.total)}</div>
+                            <div class="shift-breakdown">
+                                ${this.formatCurrencyShort(calc.baseWage)} + ${this.formatCurrencyShort(calc.bonus)}
                             </div>
                         </div>
                     </div>
-                    <div class="shift-amount-wrapper">
-                        <div class="shift-total">${this.formatCurrency(calc.total)}</div>
-                        <div class="shift-breakdown">
-                            ${this.formatCurrencyShort(calc.baseWage)} + ${this.formatCurrencyShort(calc.bonus)}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        shiftList.innerHTML = shiftsHtml;
+                `);
+            });
+        });
+        
+        shiftList.innerHTML = shiftsHtml.join('');
     },
 
     updateShiftCalendar() {
@@ -4290,6 +4335,14 @@ export const app = {
                 dot.className = 'shift-indicator-dot';
                 cellContent.appendChild(dot);
                 cell.classList.add('has-shift');
+            }
+            
+            // Add current date class if this is today
+            const today = new Date();
+            if (cellDate.getDate() === today.getDate() && 
+                cellDate.getMonth() === today.getMonth() && 
+                cellDate.getFullYear() === today.getFullYear()) {
+                cell.classList.add('current-date');
             }
             
             cell.appendChild(cellContent);

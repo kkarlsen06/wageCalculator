@@ -833,6 +833,18 @@ input[type="time"].form-control[value=""]:focus {
   border-color: var(--accent3-alpha);
 }
 
+/* Current date styling - subtle blue outline */
+.date-cell.current-date {
+  border: 1px solid var(--secondary);
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.3);
+}
+
+/* When current date is selected, maintain blue outline but blend with selection */
+.date-cell.current-date.selected {
+  border: 1px solid var(--secondary);
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.5);
+}
+
 /* Week number styling */
 .week-number {
   display: flex;
@@ -1482,6 +1494,62 @@ input:checked + .slider:before {
   gap: 12px;
 }
 
+/* Week separator for shift list */
+.week-separator {
+  display: flex;
+  align-items: center;
+  margin: 16px 0 8px 0;
+  position: relative;
+}
+
+.week-separator-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  position: relative;
+}
+
+.week-separator-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.week-separator-arrow {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+
+.week-separator-week {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+  .week-separator {
+    margin: 12px 0 6px 0;
+  }
+  
+  .week-separator-content {
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  
+  .week-separator-arrow {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 .shift-item {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   border: 1px solid var(--border);
@@ -1505,13 +1573,6 @@ input:checked + .slider:before {
 
 .shift-item.sunday {
   border-left: 4px solid var(--accent2);
-}
-
-.shift-item:hover {
-  transform: var(--lift-medium) var(--scale-hover);
-  box-shadow: var(--shadow-hover-accent);
-  border-color: var(--accent3);
-  background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
 }
 
 .shift-info {
@@ -2265,12 +2326,6 @@ input:checked + .slider:before {
   min-height: 80px;
   position: relative;
   overflow: hidden; /* Add overflow hidden to contain the badge */
-}
-
-.next-shift-card .shift-item:hover {
-  background: var(--gradient-secondary);
-  transform: var(--lift-small);
-  box-shadow: var(--shadow-hover-blue);
 }
 
 .next-shift-empty {
@@ -3270,6 +3325,67 @@ input:checked + .slider:before {
   margin-bottom: 8px;
 }
 
+/* Thumb-friendly positioning for add shift modal */
+#addShiftModal .modal-body {
+  padding-top: 60px; /* Push content down for thumb accessibility */
+}
+
+/* Add shift modal close button in content area */
+.modal-close-bottom {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 102, 153, 0.1);
+  border: 1px solid rgba(255, 102, 153, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--danger);
+  transition: all 0.2s var(--ease-default);
+  font-size: 24px;
+  font-weight: bold;
+  z-index: 10;
+  line-height: 1;
+  font-family: Arial, sans-serif;
+}
+
+.modal-close-bottom:hover {
+  background: var(--accent2-alpha);
+  border-color: var(--accent2);
+  transform: scale(1.1);
+  color: var(--accent2);
+}
+
+/* Make the close button more accessible on mobile */
+@media (max-width: 768px) {
+  .modal-close-bottom {
+    bottom: 16px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-close-bottom {
+    bottom: 16px;
+    right: 16px;
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+  }
+  
+  /* Increase top padding on mobile for better thumb reach */
+  #addShiftModal .modal-body {
+    padding-top: 80px;
+  }
+}
+
 .selected-dates-info {
   text-align: center;
   font-size: 13px;
@@ -3305,6 +3421,7 @@ input:checked + .slider:before {
     max-height: none;
     border-radius: 0;
     margin: 0;
+    position: relative; /* Ensure relative positioning for absolute close button */
   }
   
   #addShiftModal .modal-body,
@@ -3312,6 +3429,12 @@ input:checked + .slider:before {
     padding: 20px;
     height: calc(100vh - 120px); /* Account for header and form actions */
     overflow-y: auto;
+  }
+  
+  /* Override for add shift modal body padding */
+  #addShiftModal .modal-body {
+    padding: 80px 20px 20px 20px;
+    height: calc(100vh - 180px); /* Account for extra padding */
   }
 }
 
@@ -3549,22 +3672,7 @@ input:checked + .slider:before {
   padding-bottom: 100px; /* Add space for floating bar */
 }
 
-/* Visual separator between sections */
-.shift-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 1px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    var(--border) 20%, 
-    var(--border) 80%, 
-    transparent 100%
-  );
-}
+/* Visual separator between sections - removed, using header lines instead */
 
 .section-header {
   display: flex;
@@ -3586,35 +3694,40 @@ input:checked + .slider:before {
 .shift-history-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 16px;
   padding: 20px 24px;
-  margin-bottom: 24px;
-  background: linear-gradient(135deg, 
-    var(--bg-secondary) 0%, 
-    var(--bg-tertiary) 100%
-  );
-  border-radius: 16px;
-  box-shadow: 0 4px 16px -4px var(--shadow-blue), 
-              0 2px 8px -2px rgba(0, 0, 0, 0.1);
+  margin-bottom: 36px;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
   position: relative;
-  overflow: hidden;
-  border: 1px solid var(--border);
+  overflow: visible;
+  border: none;
 }
 
 .shift-history-header::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(99, 102, 241, 0.03) 0%, 
-    rgba(14, 165, 233, 0.05) 50%, 
-    rgba(16, 185, 129, 0.03) 100%
-  );
-  pointer-events: none;
+  top: -16px;
+  left: 50%;
+  width: 100vw;
+  height: 1px;
+  background: var(--border);
+  margin-left: -50vw;
+}
+
+.shift-history-header::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 45%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--border) 5%, var(--text-secondary) 50%, var(--border) 90%, transparent);
+  border-radius: 2px;
+  opacity: 0.8;
 }
 
 .shift-history-header > * {
@@ -3623,12 +3736,15 @@ input:checked + .slider:before {
 }
 
 .shift-history-header .header-left {
-  flex: 0 0 auto;
+  display: none;
 }
 
 .shift-history-header .header-right {
-  flex: 0 0 auto;
-  text-align: left;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 12px;
 }
 
 /* Large calendar icon on the left */
@@ -3642,7 +3758,7 @@ input:checked + .slider:before {
   justify-content: center;
   box-shadow: 0 4px 16px -4px var(--shadow-accent);
   transition: all var(--speed-normal) var(--ease-default);
-  margin-left: 16px;
+  margin-left: 0;
 }
 
 .calendar-icon-large:hover {
@@ -3684,9 +3800,13 @@ input:checked + .slider:before {
 /* Responsive adjustments for shift history header */
 @media (max-width: 768px) {
   .shift-history-header {
-    padding: 16px 20px;
+    padding: 20px 20px 16px;
     margin-bottom: 20px;
     gap: 14px;
+  }
+  
+  .shift-history-header .header-right {
+    padding-top: 8px;
   }
   
   .calendar-icon-large {
@@ -3710,22 +3830,25 @@ input:checked + .slider:before {
 
 @media (max-width: 480px) {
   .shift-history-header {
-    padding: 12px 16px;
+    padding: 16px 16px 12px;
     margin-bottom: 16px;
     gap: 12px;
   }
   
-  .shift-history-header .header-left,
-  .shift-history-header .header-right {
-    flex: none;
+  .shift-history-header .header-left {
+    display: none;
   }
   
   .shift-history-header .header-right {
-    text-align: left;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 6px;
   }
   
   .header-text {
-    align-items: flex-start;
+    align-items: center;
   }
   
   .calendar-icon-large {
