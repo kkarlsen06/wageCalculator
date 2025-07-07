@@ -97,6 +97,9 @@ function optimizeBuild() {
         { input: 'kalkulator/js/appLogic.js', output: 'kalkulator/js/appLogic.min.js' },
         { input: 'kalkulator/js/auth.js', output: 'kalkulator/js/auth.min.js' },
         { input: 'kalkulator/js/app.js', output: 'kalkulator/js/app.min.js' },
+        { input: 'kalkulator/js/logger.js', output: 'kalkulator/js/logger.min.js' },
+        { input: 'kalkulator/js/performance-monitor.js', output: 'kalkulator/js/performance-monitor.min.js' },
+        { input: 'kalkulator/js/dom-cache.js', output: 'kalkulator/js/dom-cache.min.js' },
         { input: 'js/animations.js', output: 'js/animations.min.js' },
         { input: 'js/loading-helpers.js', output: 'js/loading-helpers.min.js' },
         { input: 'js/error-handling.js', output: 'js/error-handling.min.js' }
