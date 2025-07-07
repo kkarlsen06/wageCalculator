@@ -116,7 +116,30 @@
             </div>
             
             <div class="hero-visual">
-                <!-- Floating card removed -->
+                <div class="floating-card">
+                    <div class="card-content">
+                        <div class="code-preview">
+                            <div class="code-header">
+                                <span class="code-dot red"></span>
+                                <span class="code-dot yellow"></span>
+                                <span class="code-dot green"></span>
+                            </div>
+                            <pre><code><span class="code-comment">// Beregn total lønn for alle måneder</span>
+<span class="code-variable">monthShifts</span>.<span class="code-function">forEach</span>((<span class="code-param">month</span>) => {
+  <span class="code-keyword">const</span> <span class="code-variable">totalHours</span> = <span class="code-param">month</span>.<span class="code-variable">shifts</span>.<span class="code-function">reduce</span>((<span class="code-param">sum</span>, <span class="code-param">shift</span>) => {
+    <span class="code-keyword">return</span> <span class="code-param">sum</span> + <span class="code-function">calculateHours</span>(<span class="code-param">shift</span>);
+  }, <span class="code-number">0</span>);
+  
+  <span class="code-keyword">const</span> <span class="code-variable">monthlyPay</span> = <span class="code-variable">totalHours</span> * <span class="code-variable">hourlyRate</span>;
+  <span class="code-keyword">const</span> <span class="code-variable">bonuses</span> = <span class="code-function">calculateBonuses</span>(<span class="code-param">month</span>.<span class="code-variable">shifts</span>);<span class="code-mobile-truncate">
+  
+  <span class="code-param">month</span>.<span class="code-variable">totalPay</span> = <span class="code-variable">monthlyPay</span> + <span class="code-variable">bonuses</span>;
+  
+  <span class="code-function">console</span>.<span class="code-function">log</span>(<span class="code-string">`${month.name}: ${month.totalPay} kr`</span>);
+});</span></code></pre>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
