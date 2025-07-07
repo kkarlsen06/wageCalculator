@@ -370,6 +370,17 @@ function initMobileStats() {
     let isMobile = false;
     let initialHeight = 0; // Will be set when transitioning to mobile
     
+    // Ensure immediate correct positioning on mobile - no animation delay
+    const ensureCorrectPositioning = () => {
+        if (window.innerWidth <= 768) {
+            heroStats.style.left = '50%';
+            heroStats.style.transform = 'translateX(-50%)';
+            heroStats.style.position = 'fixed';
+            heroStats.style.opacity = '1';
+            heroStats.style.display = 'flex';
+        }
+    };
+    
     // Function to update stats position for mobile
     const updateStatsPosition = () => {
         if (window.visualViewport) {
@@ -378,6 +389,8 @@ function initMobileStats() {
             
             heroStats.style.bottom = `calc(var(--space-md) + ${offset}px)`;
         }
+        // Ensure positioning stays correct during updates
+        ensureCorrectPositioning();
     };
     
     // Function to handle keyboard detection
@@ -442,11 +455,17 @@ function initMobileStats() {
             if (isMobile) {
                 // Capture the initial height when transitioning to mobile
                 initialHeight = window.innerHeight;
+                // Ensure immediate correct positioning before adding listeners
+                ensureCorrectPositioning();
                 addMobileListeners();
             } else {
                 // Reset styles when switching back to desktop
                 heroStats.style.bottom = '';
                 heroStats.style.display = '';
+                heroStats.style.left = '';
+                heroStats.style.transform = '';
+                heroStats.style.position = '';
+                heroStats.style.opacity = '';
             }
         }
     };
@@ -458,6 +477,9 @@ function initMobileStats() {
     if (isMobile) {
         initialHeight = window.innerHeight;
     }
+    
+    // Ensure immediate correct positioning on page load
+    ensureCorrectPositioning();
     
     // Listen for viewport changes (but don't add duplicate listeners)
     window.addEventListener('resize', debounce(handleViewportChange, 100));
@@ -561,3 +583,4 @@ if ('performance' in window) {
         console.log(`Page load time: ${pageLoadTime}ms`);
     });
 }
+

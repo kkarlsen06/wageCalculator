@@ -406,6 +406,8 @@ html {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-3xl);
     align-items: center;
+    /* Ensure stable layout from the start */
+    min-height: 500px;
 }
 
 .hero-badge {
@@ -600,6 +602,17 @@ html {
     display: flex;
     gap: var(--space-xl);
     animation: fadeInUp 1.4s ease-out;
+    /* Ensure proper initial positioning to prevent sliding from wrong position */
+    position: relative;
+    left: auto;
+    transform: none;
+}
+
+/* Mobile-specific animation fix */
+@media (max-width: 768px) {
+    .hero-stats {
+        animation: fadeInUpMobile 1.4s ease-out;
+    }
 }
 
 .stat {
@@ -622,6 +635,11 @@ html {
 .hero-visual {
     position: relative;
     animation: fadeIn 1.5s ease-out;
+    /* Ensure proper initial positioning and prevent layout shifts */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    will-change: opacity;
 }
 
 .floating-card {
@@ -630,7 +648,16 @@ html {
     border-radius: 16px;
     overflow: hidden;
     box-shadow: var(--shadow-xl);
-    animation: float-card 6s infinite ease-in-out;
+    animation: float-card 6s infinite ease-in-out 2s; /* 2s delay to allow layout to settle */
+    /* Ensure stable initial position and prevent layout shifts */
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    will-change: transform;
+    /* Force stable positioning from start */
+    position: relative;
+    left: 0;
+    right: 0;
 }
 
 @keyframes float-card {
@@ -1191,6 +1218,17 @@ html {
     }
 }
 
+@keyframes fadeInUpMobile {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
 /* ───────────────────────────────────────────────────────────────────────────
    RESPONSIVE
    ─────────────────────────────────────────────────────────────────────────── */
@@ -1360,7 +1398,7 @@ html {
         align-items: center;
         flex: 1;
         order: 3; /* Fourth section */
-        padding-bottom: var(--space-lg);
+        padding-bottom: calc(var(--space-lg) + 80px); /* Add space for fixed stats bar */
         width: 100%;
     }
     
@@ -1396,6 +1434,10 @@ html {
         margin: 0;
         justify-content: center;
         transition: bottom 0.3s ease, opacity 0.3s ease;
+        /* Ensure immediate correct positioning on mobile */
+        opacity: 1;
+                /* Prevent transform transitions that cause sliding from right */
+        transition-property: bottom, opacity;
     }
     
     .hero-stats .stat {
@@ -1431,7 +1473,12 @@ html {
         margin: 0 auto;
         width: 100%;
         max-width: none;
+        /* Disable floating animation on mobile for better performance */
         animation: none;
+        /* Ensure stable positioning on mobile */
+        position: static;
+        left: auto;
+        right: auto;
     }
     
     /* Project section */
@@ -1545,7 +1592,7 @@ html {
     .hero-bottom-section {
         order: 3;
         justify-content: flex-end;
-        padding-bottom: var(--space-lg);
+        padding-bottom: calc(var(--space-lg) + 90px); /* Extra space for fixed stats bar on small screens */
         width: 100%;
     }
     
@@ -1592,7 +1639,7 @@ html {
     
     .hero-cta {
         max-width: 320px;
-        margin-bottom: var(--space-md); /* More breathing room from bottom */
+        margin-bottom: var(--space-xl); /* Even more breathing room from bottom to avoid stats bar */
     }
     
     .hero-cta .btn {
@@ -1605,6 +1652,10 @@ html {
         padding: var(--space-xs) var(--space-sm);
         gap: var(--space-sm);
         max-width: calc(100vw - 2 * var(--space-sm));
+        /* Ensure immediate correct positioning - no animation delay */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        transition-property: bottom, opacity !important;
     }
     
     .hero-stats .stat-number {
@@ -1672,5 +1723,16 @@ html {
     
     .tech-card {
         padding: var(--space-md);
+    }
+}
+
+/* Extra small mobile screens - additional spacing for buttons */
+@media (max-width: 360px) {
+    .hero-bottom-section {
+        padding-bottom: calc(var(--space-lg) + 100px); /* Even more space on very small screens */
+    }
+    
+    .hero-cta {
+        margin-bottom: calc(var(--space-xl) + var(--space-sm)); /* Additional margin for very small screens */
     }
 }

@@ -343,14 +343,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       const isMobile = window.innerWidth <= 480;
       
       // Show floating bar when shift section is in view
-      // Consider it "in view" when at least 50% of viewport shows the shift section
-      const shouldBeVisible = rect.top < viewportHeight * 0.5 && rect.bottom > viewportHeight * 0.5;
+      // On mobile, be more generous about showing the floating bar
+      const threshold = isMobile ? 0.2 : 0.5; // Show when 20% on mobile, 50% on desktop
+      const shouldBeVisible = rect.top < viewportHeight * threshold && rect.bottom > viewportHeight * 0.1;
       
       if (shouldBeVisible && !isVisible) {
         // Show with fade in animation
         isVisible = true;
         clearTimeout(animationTimeout);
         floatingBar.style.display = 'flex';
+        // Clear any inline positioning that might override CSS, then force mobile positioning
+        floatingBar.style.bottom = '';
+        floatingBar.style.left = '';
+        floatingBar.style.transform = '';
+        floatingBar.style.position = '';
+        
+        // Force correct positioning on mobile
+        if (isMobile) {
+          setTimeout(() => {
+            floatingBar.style.bottom = '140px';
+            floatingBar.style.left = '50%';
+            floatingBar.style.transform = 'translateX(-50%)';
+            floatingBar.style.position = 'fixed';
+            floatingBar.style.zIndex = '9999';
+          }, 50); // Small delay to ensure CSS has been applied
+        }
+        
         // Use different animation for mobile since transform is different
         floatingBar.style.animation = isMobile ? 'fadeIn 0.3s ease-out forwards' : 'fadeInUp 0.3s ease-out forwards';
         floatingBar.style.opacity = '1';

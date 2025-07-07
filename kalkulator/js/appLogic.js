@@ -1,48 +1,69 @@
+// Hent og lagre månedlig mål fra localStorage eller default
+function getMonthlyGoal() {
+    // Try to get from window.app if available
+    if (typeof window !== 'undefined' && window.app && window.app.monthlyGoal) {
+        return window.app.monthlyGoal;
+    }
+    // Fallback to localStorage
+    const stored = localStorage.getItem('monthlyGoal');
+    return stored ? parseInt(stored, 10) : 20000;
+}
+
+async function setMonthlyGoal(goal) {
+    // Save to app object if available
+    if (typeof window !== 'undefined' && window.app) {
+        window.app.monthlyGoal = goal;
+        // Save to Supabase
+        if (window.app.saveSettingsToSupabase) {
+            await window.app.saveSettingsToSupabase();
+        }
+    }
+    // Also save to localStorage as backup
+    localStorage.setItem('monthlyGoal', goal);
+    // Update the progress bar immediately
+    if (typeof window !== 'undefined' && window.app && window.app.updateStats) {
+        window.app.updateStats();
+    }
+}
+
 // --- Månedlig mål UI-håndtering ---
 function setupMonthlyGoalInput() {
-    const input = document.getElementById('monthlyGoalInput');
-    const btn = document.getElementById('saveMonthlyGoalBtn');
-    if (!input || !btn) return;
-    // Sett nåværende mål i inputfeltet
-    input.value = getMonthlyGoal();
-    btn.onclick = function() {
-        const val = parseInt(input.value, 10);
-        if (!isNaN(val) && val > 0) {
-            setMonthlyGoal(val);
-            input.value = val;
-            btn.textContent = 'Lagret!';
-            setTimeout(()=>{btn.textContent='Lagre';}, 1200);
-        } else {
-            btn.textContent = 'Ugyldig';
-            setTimeout(()=>{btn.textContent='Lagre';}, 1200);
-        }
-    };
+    const monthlyGoalInput = document.getElementById('monthlyGoalInput');
+    if (monthlyGoalInput) {
+        monthlyGoalInput.value = getMonthlyGoal();
+        monthlyGoalInput.addEventListener('input', (e) => {
+            const goal = parseInt(e.target.value, 10);
+            if (!isNaN(goal) && goal > 0) {
+                setMonthlyGoal(goal);
+            }
+        });
+    }
 }
 
-// Kjør når innstillinger-modal åpnes
-const origOpenSettings = window.app && window.app.openSettings;
-if (origOpenSettings) {
-    window.app.openSettings = async function() {
-        if (typeof origOpenSettings === 'function') await origOpenSettings.apply(this, arguments);
+// Global initialization for monthly goal
+if (typeof window !== 'undefined') {
+    // Initialize pendingConfetti to avoid errors
+    window.pendingConfetti = false;
+    
+    // Set up the monthly goal input when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupMonthlyGoalInput);
+    } else {
         setupMonthlyGoalInput();
-    };
+    }
 }
 
-// Initialize pending confetti flag
-window.pendingConfetti = false;
-// Oppdater fremdriftslinje for månedlig inntektsmål
+// Progressbar update function
 function updateProgressBar(current, goal, shouldAnimate = false) {
     const fill = document.querySelector('.progress-fill');
     const label = document.querySelector('.progress-label');
+    
     if (!fill || !label) return;
-    
-    const percent = goal > 0 ? (current / goal) * 100 : 0;
-    
-    // Remove loading state if present
-    fill.classList.remove('loading');
+
+    const percent = Math.round((current / goal) * 100);
     
     if (shouldAnimate) {
-        // Prevent multiple animations by checking if already animating
+        // Check if already animating
         if (fill.dataset.animating === 'true') {
             return;
         }
@@ -50,36 +71,23 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         // Mark as animating
         fill.dataset.animating = 'true';
         
-        // Start animation from current position
-        fill.style.transition = 'none';
-        const currentWidth = fill.style.width || '0%';
-        fill.style.width = currentWidth;
-        
-        // Force reflow
-        fill.offsetHeight;
-        
-        // Enable transition and animate to new value
+        // Remove loading class and enable transition
+        fill.classList.remove('loading');
         fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        
+        // Set the target width
         fill.style.width = Math.min(percent, 100) + '%';
         
-        // Only trigger confetti when animation completes AND goal is reached
+        // If we're at 100%, handle animation cleanup
         if (percent >= 100) {
-            // Use both transitionend listener and setTimeout as fallback
-            let confettiTriggered = false;
-            
             const handleTransitionEnd = (event) => {
                 if (event.target === fill && event.propertyName === 'width') {
                     fill.removeEventListener('transitionend', handleTransitionEnd);
                     fill.dataset.animating = 'false';
                     
                     // Set initial animation complete flag if this is the first animation
-                    if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
-                        app.initialAnimationComplete = true;
-                    }
-                    
-                    if (!confettiTriggered) {
-                        confettiTriggered = true;
-                        triggerConfettiIfVisible();
+                    if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
+                        window.app.initialAnimationComplete = true;
                     }
                 }
             };
@@ -91,13 +99,8 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
                 fill.dataset.animating = 'false';
                 
                 // Set initial animation complete flag if this is the first animation
-                if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
-                    app.initialAnimationComplete = true;
-                }
-                
-                if (!confettiTriggered) {
-                    confettiTriggered = true;
-                    triggerConfettiIfVisible();
+                if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
+                    window.app.initialAnimationComplete = true;
                 }
                 
                 // Clean up event listener if it hasn't been called
@@ -111,8 +114,8 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
                     fill.dataset.animating = 'false';
                     
                     // Set initial animation complete flag if this is the first animation
-                    if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
-                        app.initialAnimationComplete = true;
+                    if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
+                        window.app.initialAnimationComplete = true;
                     }
                 }
             };
@@ -124,8 +127,8 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
                 fill.dataset.animating = 'false';
                 
                 // Set initial animation complete flag if this is the first animation
-                if (typeof app !== 'undefined' && !app.initialAnimationComplete) {
-                    app.initialAnimationComplete = true;
+                if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
+                    window.app.initialAnimationComplete = true;
                 }
                 
                 // Clean up event listener if it hasn't been called
@@ -145,11 +148,6 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         fill.offsetHeight;
         // Re-enable transition for future animations
         fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-        
-        // Only trigger confetti for immediate updates if goal is reached AND initial animation is complete
-        if (percent >= 100 && typeof app !== 'undefined' && app.initialAnimationComplete) {
-            triggerConfettiIfVisible();
-        }
     }
     
     // Update classes based on progress
@@ -174,133 +172,11 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
     fill.title = `${current.toLocaleString('no-NO')}${currencySuffix} av ${goal.toLocaleString('no-NO')}${currencySuffix}`;
 }
 
-// Konfetti-animasjon for når målet nås - kun når ingen modaler er åpne
-function triggerConfettiIfVisible() {
-    // Check if any modals are open
-    const modals = ['addShiftModal', 'editShiftModal', 'settingsModal', 'breakdownModal'];
-    const isAnyModalOpen = modals.some(modalId => {
-        const modal = document.getElementById(modalId);
-        return modal && modal.style.display === 'block';
-    });
-    
-    // Only show confetti if no modals are open
-    if (!isAnyModalOpen) {
-        triggerConfetti();
-    } else {
-        // Set a flag to trigger confetti when modal is closed
-        window.pendingConfetti = true;
-    }
-}
-
-// Check and trigger pending confetti when modals are closed
-function checkPendingConfetti() {
-    if (window.pendingConfetti) {
-        const fill = document.querySelector('.progress-fill');
-        // Only trigger confetti if the progress bar is actually at 100%
-        if (fill && fill.classList.contains('full')) {
-            // Double-check that no modals are still open
-            const modals = ['addShiftModal', 'editShiftModal', 'settingsModal', 'breakdownModal'];
-            const isAnyModalOpen = modals.some(modalId => {
-                const modal = document.getElementById(modalId);
-                return modal && modal.style.display === 'block';
-            });
-            
-            if (!isAnyModalOpen) {
-                triggerConfetti();
-            }
-        }
-        window.pendingConfetti = false;
-    }
-}
-
-// Konfetti-animasjon for når målet nås
-function triggerConfetti() {
-    // Use design system colors that match the app's color scheme
-    const colors = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#818cf8', '#4f46e5'];
-    const confettiCount = 60;
-    
-    // Create confetti in multiple bursts for more effect
-    for (let burst = 0; burst < 3; burst++) {
-        setTimeout(() => {
-            for (let i = 0; i < confettiCount / 3; i++) {
-                createConfettiPiece(colors[Math.floor(Math.random() * colors.length)]);
-            }
-        }, burst * 200);
-    }
-}
-
-function createConfettiPiece(color) {
-    const confetti = document.createElement('div');
-    const size = Math.random() * 6 + 4; // 4-10px
-    const shape = Math.random() > 0.5 ? '50%' : '20%'; // Mix of circles and rounded squares
-    
-    confetti.style.cssText = `
-        position: fixed;
-        width: ${size}px;
-        height: ${size}px;
-        background: ${color};
-        z-index: 10000;
-        pointer-events: none;
-        border-radius: ${shape};
-        animation: confetti-fall ${2.5 + Math.random() * 1.5}s linear forwards;
-    `;
-    
-    // Random starting position from the progress bar area
-    const progressCard = document.querySelector('.progress-card');
-    const rect = progressCard ? progressCard.getBoundingClientRect() : { left: 0, top: 100, width: window.innerWidth };
-    
-    const startX = rect.left + Math.random() * rect.width;
-    const startY = rect.top - 20;
-    const endX = startX + (Math.random() - 0.5) * 300; // More horizontal spread
-    const rotation = Math.random() * 720; // Multiple rotations
-    
-    confetti.style.left = startX + 'px';
-    confetti.style.top = startY + 'px';
-    confetti.style.setProperty('--end-x', endX + 'px');
-    confetti.style.setProperty('--rotation', rotation + 'deg');
-    
-    document.body.appendChild(confetti);
-    
-    // Remove after animation
-    setTimeout(() => {
-        if (confetti.parentNode) {
-            confetti.parentNode.removeChild(confetti);
-        }
-    }, 4000);
-}
-
-// Hent og lagre månedlig mål fra localStorage eller default
-function getMonthlyGoal() {
-    // First try to get from app object (loaded from Supabase)
-    if (typeof app !== 'undefined' && app.monthlyGoal) {
-        return app.monthlyGoal;
-    }
-    // Fallback to localStorage
-    const stored = localStorage.getItem('monthlyGoal');
-    return stored ? parseInt(stored, 10) : 20000;
-}
-
-async function setMonthlyGoal(goal) {
-    // Save to app object
-    if (typeof app !== 'undefined') {
-        app.monthlyGoal = goal;
-        // Save to Supabase
-        await app.saveSettingsToSupabase();
-    }
-    // Also save to localStorage as backup
-    localStorage.setItem('monthlyGoal', goal);
-    // Update the progress bar immediately
-    if (typeof app !== 'undefined' && app.updateStats) app.updateStats();
-}
-
 // Legg til i app-objektet for enkel tilgang fra innstillinger
 if (typeof window !== 'undefined') {
     window.updateProgressBar = updateProgressBar;
     window.getMonthlyGoal = getMonthlyGoal;
     window.setMonthlyGoal = setMonthlyGoal;
-    window.triggerConfettiIfVisible = triggerConfettiIfVisible;
-    window.checkPendingConfetti = checkPendingConfetti;
-    window.triggerConfetti = triggerConfetti;
 }
 export const app = {
     // Constants
@@ -332,7 +208,7 @@ export const app = {
             { from: "18:00", to: "23:59", rate: 110 }
         ],
         sunday: [
-            { from: "00:00", to: "23:59", rate: 100 }
+            { from: "00:00", to: "23:59", rate: 115 }
         ]
     },
     // State
@@ -969,10 +845,6 @@ export const app = {
     
     closeAddShiftModal() {
         document.getElementById('addShiftModal').style.display = 'none';
-        // Check for pending confetti after modal is closed
-        setTimeout(() => {
-            checkPendingConfetti();
-        }, 100);
     },
     async addShift() {
         // Handle recurring shifts
@@ -2025,11 +1897,6 @@ export const app = {
         if (modal) {
             modal.style.display = 'none';
         }
-        
-        // Check for pending confetti after modal is closed
-        setTimeout(() => {
-            checkPendingConfetti();
-        }, 100);
         
         // Save settings when closing modal
         this.saveSettingsToSupabase();
@@ -4167,11 +4034,6 @@ export const app = {
             document.querySelectorAll('#editDateGrid .date-cell').forEach(cell => {
                 cell.classList.remove('selected');
             });
-            
-            // Check for pending confetti after modal is closed
-            setTimeout(() => {
-                checkPendingConfetti();
-            }, 100);
         }
     },
     

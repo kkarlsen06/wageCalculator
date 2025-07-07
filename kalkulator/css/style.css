@@ -182,9 +182,10 @@ img, video, iframe, embed, object {
 }
 
 html {
-  overflow-x: hidden;
+  overflow: hidden; /* Completely prevent all scrolling */
   width: 100%;
-  max-width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 :root {
@@ -369,18 +370,18 @@ body {
   overflow: hidden;
   position: relative;
   width: 100%;
-  max-width: 100%;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 .app-container {
   padding-left: 20px;
   padding-right: 20px;
   max-width: 640px;
-  margin: 0 auto;
   width: 100%;
-  overflow-x: hidden;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Mobile adjustments for app-container */
@@ -622,17 +623,26 @@ body {
 
 /* Forms */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px; /* Major spacing between form sections */
 }
+
+/* Form group labels - clear hierarchy */
 .form-group label {
   display: block;
   font-size: 16px;
   color: var(--text-secondary);
-  margin-bottom: 4px;
+  margin-bottom: 8px; /* Comfortable spacing to related content */
+  font-weight: 500;
 }
 
-.tab-content label{
-  margin-top: 24px;
+/* Remove excessive top margin on tab content labels */
+.tab-content label {
+  margin-top: 0; /* Reset - spacing handled by form-group */
+}
+
+/* First form group in tab content - no extra spacing */
+.tab-content > .form-group:first-child {
+  margin-top: 0;
 }
 
 /* Add extra top margin to first form group in tab content for better separation */
@@ -640,12 +650,14 @@ body {
   margin-top: 0px;
   padding-top: 0px;
 }
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 0;
+  gap: 12px; /* Related spacing - components work together */
+  margin-bottom: 0; /* No extra spacing - handled by form-group */
 }
+
 .form-control {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
@@ -659,17 +671,20 @@ body {
   min-height: 44px; /* Touch-friendly minimum */
   min-width: 44px;
 }
+
 select.form-control {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b6c9d6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 40px;
 }
+
 .form-control:hover {
   transform: var(--lift-small);
   border-color: var(--accent3);
   box-shadow: 0 4px 12px -4px var(--shadow-accent);
 }
+
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
@@ -751,6 +766,7 @@ input[type="time"].form-control[value=""]:focus {
   gap: 2px;
   flex: 1;
 }
+
 .date-cell {
   aspect-ratio: 1;
   display: flex;
@@ -779,6 +795,7 @@ input[type="time"].form-control[value=""]:focus {
   color: var(--accent3);
   font-weight: 600;
 }
+
 .date-cell.disabled {
   background: var(--bg-secondary);
   opacity: 0.6;
@@ -873,19 +890,23 @@ input[type="time"].form-control[value=""]:focus {
   cursor: not-allowed;
   transform: none !important;
 }
+
 .btn:hover {
   transform: var(--lift-medium) var(--scale-hover);
   box-shadow: var(--shadow-hover-accent);
 }
+
 .btn:active {
   transform: var(--scale-active);
   transition-duration: 0.1s;
 }
+
 .btn-primary {
   background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent2));
   color: var(--bg-primary);
   width: 100%;
 }
+
 .btn-secondary {
   background: var(--bg-tertiary);
   color: var(--text-primary);
@@ -919,7 +940,11 @@ input[type="time"].form-control[value=""]:focus {
   transform: translateX(-2px);
 }
 
-.btn-danger { background: var(--danger); color: white; }
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
 .btn-icon {
   padding: 8px;
   width: 36px;
@@ -936,6 +961,7 @@ input[type="time"].form-control[value=""]:focus {
   padding: 40px 20px;
   color: var(--text-secondary);
 }
+
 .empty-icon {
   margin-bottom: 20px;
   opacity: 0.6;
@@ -953,7 +979,14 @@ input[type="time"].form-control[value=""]:focus {
   overflow: auto;
   background-color: rgba(0,0,0,0.6);
 }
-.modal.active { display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+
+.modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+
 .modal-content {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   margin: 0;
@@ -974,7 +1007,7 @@ input[type="time"].form-control[value=""]:focus {
     width: 90vw;
     height: auto;
     max-height: 90vh;
-    margin: 20px auto;
+    margin: 0;
     border-radius: 16px;
   }
 }
@@ -985,6 +1018,7 @@ input[type="time"].form-control[value=""]:focus {
   align-items: center !important;
   justify-content: center !important;
 }
+
 #settingsModal .modal-content {
   position: fixed;
   top: 50%;
@@ -1001,6 +1035,7 @@ input[type="time"].form-control[value=""]:focus {
   border-radius: 16px;
   box-shadow: 0 16px 48px -12px var(--shadow-accent);
 }
+
 @media (max-width: 600px) {
   #settingsModal .modal-content {
     width: 95vw;
@@ -1010,6 +1045,7 @@ input[type="time"].form-control[value=""]:focus {
     border-radius: 12px;
   }
 }
+
 @media (max-width: 480px) {
   #settingsModal .modal-content {
     width: 98vw;
@@ -1033,9 +1069,9 @@ input[type="time"].form-control[value=""]:focus {
   min-height: 0;
 }
 
-/* Ensure tab content area is scrollable */
+/* Tab content with consistent, hierarchical padding */
 #settingsModal .tab-content {
-  padding: 12px 16px 16px 16px;
+  padding: 24px 20px 20px 20px; /* Generous top padding, consistent sides */
 }
 
 /* Hide scrollbars in modals while keeping scroll functionality */
@@ -1043,6 +1079,7 @@ input[type="time"].form-control[value=""]:focus {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* Internet Explorer 10+ */
 }
+
 .modal-content::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
 }
@@ -1051,6 +1088,7 @@ input[type="time"].form-control[value=""]:focus {
 .breakdown-modal-custom::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
 }
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1060,25 +1098,30 @@ input[type="time"].form-control[value=""]:focus {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   z-index: 100;
 }
+
 .modal-title {
   font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
 }
+
 .modal-close {
   cursor: pointer;
   color: var(--text-secondary);
   transition: all var(--speed-normal) var(--ease-default);
 }
+
 .modal-close svg {
   fill: var(--text-secondary);
   stroke: var(--text-secondary);
   transition: all var(--speed-normal) var(--ease-default);
 }
+
 .modal-close:hover {
   color: var(--accent);
   /* Removed transform to prevent "flying" effect */
 }
+
 .modal-close:hover svg {
   fill: var(--accent);
   stroke: var(--accent);
@@ -1093,6 +1136,7 @@ input[type="time"].form-control[value=""]:focus {
   gap: 4px;
   flex-shrink: 0;
 }
+
 .tab-btn {
   flex: 1;
   padding: 12px 16px;
@@ -1106,19 +1150,23 @@ input[type="time"].form-control[value=""]:focus {
   transition: all var(--speed-normal) var(--ease-default);
   position: relative;
 }
+
 .tab-btn:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
 }
+
 .tab-btn.active {
   background: rgba(255, 255, 255, 0.02);
   color: var(--text-primary);
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border);
 }
+
 .tab-content {
   display: none;
 }
+
 .tab-content.active {
   display: block;
 }
@@ -1128,6 +1176,7 @@ input[type="time"].form-control[value=""]:focus {
   margin-left: auto;
   margin-right: 12px;
 }
+
 .view-toggle .tab-btn {
   padding: 8px 12px;
   font-size: 13px;
@@ -1212,11 +1261,13 @@ input[type="time"].form-control[value=""]:focus {
   width: 40px;
   height: 20px;
 }
+
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
+
 .slider {
   position: absolute;
   cursor: pointer;
@@ -1228,11 +1279,13 @@ input[type="time"].form-control[value=""]:focus {
   transition: all var(--speed-normal) var(--ease-default);
   border-radius: 20px;
 }
+
 .slider:hover {
   background-color: var(--accent3);
   transform: var(--lift-small);
   box-shadow: 0 4px 8px -2px var(--shadow-accent);
 }
+
 .slider:before {
   position: absolute;
   content: "";
@@ -1244,9 +1297,11 @@ input[type="time"].form-control[value=""]:focus {
   transition: .4s;
   border-radius: 50%;
 }
+
 input:checked + .slider {
   background-color: var(--accent);
 }
+
 input:checked + .slider:before {
   transform: translateX(20px);
 }
@@ -1256,9 +1311,9 @@ input:checked + .slider:before {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 16px; /* Comfortable spacing between text and toggle */
   min-height: auto;
-  margin-bottom: 4px;
+  margin-bottom: 8px; /* Close spacing - part of form group */
 }
 
 .switch-group span {
@@ -1268,7 +1323,7 @@ input:checked + .slider:before {
 
 .switch-group .switch {
   flex-shrink: 0;
-  margin-top: 2px; /* Slight adjustment for better visual alignment */
+  margin-top: 2px; /* Slight visual alignment adjustment */
 }
 
 /* Form hint for compact info */
@@ -1277,32 +1332,35 @@ input:checked + .slider:before {
   font-size: 12px;
   color: var(--text-secondary);
   opacity: 0.8;
-  margin-top: 0;
+  margin-top: 4px; /* Tight spacing - directly related to input above */
+  line-height: 1.4;
 }
 
 /* Form groups with hints should still have proper spacing */
 .form-group:has(.form-hint) {
-  margin-bottom: 20px;
+  margin-bottom: 24px; /* Maintain consistent major spacing */
 }
 
 /* Alternative approach for browsers that don't support :has() */
 .form-group-with-hint {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 /* Compact buttons in settings */
 .tab-content .btn {
   padding: 8px 16px;
   font-size: 14px;
+  margin-top: 0; /* Reset - spacing handled by parent */
 }
 
 /* Bonus Slots */
 .bonus-slots {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 8px; /* Close spacing - related components */
+  margin-bottom: 12px; /* Related spacing before buttons */
 }
+
 .bonus-slot {
   display: flex;
   align-items: flex-end;
@@ -1363,8 +1421,8 @@ input:checked + .slider:before {
   border: 1px solid;
   border-image: linear-gradient(135deg, var(--accent), var(--accent2)) 1;
   border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 16px;
+  padding: 12px 16px; /* Comfortable internal spacing */
+  margin-bottom: 20px; /* Major spacing - important content */
 }
 
 .info-icon {
@@ -1423,6 +1481,7 @@ input:checked + .slider:before {
   flex-direction: column;
   gap: 12px;
 }
+
 .shift-item {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   border: 1px solid var(--border);
@@ -1435,27 +1494,33 @@ input:checked + .slider:before {
   min-height: 80px;
   border-left: 4px solid var(--border);
 }
+
 .shift-item.weekday {
   border-left: 4px solid var(--text-secondary);
 }
+
 .shift-item.saturday {
   border-left: 4px solid var(--accent3);
 }
+
 .shift-item.sunday {
   border-left: 4px solid var(--accent2);
 }
+
 .shift-item:hover {
   transform: var(--lift-medium) var(--scale-hover);
   box-shadow: var(--shadow-hover-accent);
   border-color: var(--accent3);
   background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
 }
+
 .shift-info {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .shift-date {
   font-weight: 600;
   margin-bottom: 2px;
@@ -1480,27 +1545,32 @@ input:checked + .slider:before {
   font-size: 16px;
   font-weight: bold;
 }
+
 .shift-details {
   display: flex;
   align-items: center;
   font-size: 14px;
   color: var(--text-secondary);
 }
+
 .shift-time-with-hours {
   display: flex;
   align-items: center;
   gap: 5px;
 }
+
 .shift-time-arrow {
   margin: 0 8px;
   font-weight: bold;
   color: var(--accent3);
 }
+
 .shift-details > span {
   display: flex;
   align-items: center;
   gap: 5px;
 }
+
 .shift-type {
   display: inline-block;
   padding: 4px 8px;
@@ -1510,9 +1580,18 @@ input:checked + .slider:before {
   color: var(--text-primary);
   font-weight: 500;
 }
-.shift-type.saturday { background: var(--accent3); color: var(--bg-primary); }
-.shift-type.sunday { background: var(--accent3); color: var(--bg-primary); }
-.shift-amount { 
+
+.shift-type.saturday {
+  background: var(--accent3);
+  color: var(--bg-primary);
+}
+
+.shift-type.sunday {
+  background: var(--accent3);
+  color: var(--bg-primary);
+}
+
+.shift-amount {
   text-align: right;
   display: flex;
   flex-direction: column;
@@ -1521,6 +1600,7 @@ input:checked + .slider:before {
   margin-left: 16px;
   flex-shrink: 0;
 }
+
 .shift-amount-wrapper {
   text-align: right;
   display: flex;
@@ -1530,23 +1610,26 @@ input:checked + .slider:before {
   margin-left: 16px;
   flex-shrink: 0;
 }
-.shift-total { 
-  font-size: 18px; 
-  font-weight: 600; 
+
+.shift-total {
+  font-size: 18px;
+  font-weight: 600;
   background: linear-gradient(135deg, var(--accent3), var(--accent2));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1.2;
 }
-.shift-breakdown { 
-  font-size: 12px; 
+
+.shift-breakdown {
+  font-size: 12px;
   color: var(--text-secondary);
   white-space: nowrap;
 }
-.shift-actions { 
-  display: flex; 
-  gap: 8px; 
+
+.shift-actions {
+  display: flex;
+  gap: 8px;
   align-self: center;
   flex-shrink: 0;
 }
@@ -1565,6 +1648,7 @@ input:checked + .slider:before {
   align-items: stretch;
   margin: 0;
 }
+
 .login-card h2 {
   color: var(--text-primary);
   font-size: 22px;
@@ -1572,6 +1656,7 @@ input:checked + .slider:before {
   text-align: center;
   margin-bottom: 20px;
 }
+
 .login-card .btn {
   font-size: 16px;
   font-weight: 500;
@@ -1582,6 +1667,7 @@ input:checked + .slider:before {
   transition: all var(--speed-normal) var(--ease-default);
   border: none;
 }
+
 .login-card .btn-primary:hover,
 .login-card .btn-secondary:hover {
   transform: translateY(-2px);
@@ -1675,6 +1761,7 @@ input:checked + .slider:before {
   font-size: 14px;
   margin-bottom: 10px;
 }
+
 .total-amount {
   font-size: 48px;
   font-weight: 700;
@@ -1692,6 +1779,7 @@ input:checked + .slider:before {
   margin-top: 10px;
   font-weight: 500;
 }
+
 .breakdown-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1727,6 +1815,7 @@ input:checked + .slider:before {
     gap: 20px;
   }
 }
+
 .breakdown-card {
   background: var(--gradient-secondary);
   border-radius: 24px;
@@ -1827,6 +1916,7 @@ input:checked + .slider:before {
     font-size: 22px;
   }
 }
+
 .breakdown-label {
   font-size: 12px;
   color: var(--text-secondary);
@@ -2109,13 +2199,16 @@ input:checked + .slider:before {
   box-sizing: border-box;
   overflow-x: hidden;
 }
+
 .shift-calendar .calendar-cell,
 .shift-calendar .calendar-week-number {
   min-height: 72px;
 }
+
 .shift-calendar .calendar-cell {
   aspect-ratio: 0.8;
 }
+
 .calendar-breakdown {
   font-size: clamp(9px, 2.3vw, 13px);
   color: var(--text-secondary);
@@ -2123,6 +2216,7 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
 }
+
 .calendar-total {
   font-size: clamp(10px, 2.5vw, 14px);
   font-weight: 700;
@@ -2951,6 +3045,7 @@ input:checked + .slider:before {
 .name-part {
   white-space: nowrap;
 }
+
 @keyframes letter-in {
   from {
     opacity: 0;
@@ -2961,6 +3056,7 @@ input:checked + .slider:before {
     transform: translateX(0);
   }
 }
+
 @keyframes letter-out {
   from {
     opacity: 1;
@@ -2971,6 +3067,7 @@ input:checked + .slider:before {
     transform: scale(20);
   }
 }
+
 @keyframes fadeInDown {
   from {
     opacity: 0;
@@ -3138,8 +3235,9 @@ input:checked + .slider:before {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 16px;
+  margin-top: 32px; /* Extra large spacing - final section */
+  padding-top: 20px; /* Major spacing with subtle separator */
+  border-top: 1px solid var(--border);
 }
 
 .form-actions .btn {
@@ -3387,13 +3485,19 @@ input:checked + .slider:before {
   flex-shrink: 0;
 }
 
-/* Container for sections - no snap, just normal scrolling */
+/* Container for sections - hidden scrollbar but scrolling works */
 .snap-container {
   height: var(--app-height, 100vh);
   overflow-y: auto;
   position: relative;
-  /* Enable smooth scrolling */
-  -webkit-overflow-scrolling: touch;
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.snap-container::-webkit-scrollbar {
+  display: none;
 }
 
 /* Individual sections */
@@ -3409,6 +3513,7 @@ input:checked + .slider:before {
   min-height: var(--app-height, 100vh);
   height: auto;
   background: var(--bg-primary); /* Changed to match dashboard section */
+  padding-bottom: 100px; /* Add space for floating bar */
 }
 
 
@@ -3423,6 +3528,7 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100%; /* Ensure it doesn't grow beyond container */
 }
 
 .dashboard-content {
@@ -3757,6 +3863,7 @@ input:checked + .slider:before {
 @media (max-width: 360px) {
   .floating-action-bar {
     width: 90%; /* Even wider on very small screens */
+    bottom: 10px;
     gap: 6px;
     padding: 8px 10px;
   }
@@ -3789,9 +3896,13 @@ input:checked + .slider:before {
   }
 }
 
+
+
 .shift-section .shift-list {
   padding-bottom: 20px;
 }
+
+
 
 
 /* Ensure proper layout on mobile */
@@ -3839,6 +3950,7 @@ input:checked + .slider:before {
   cursor: pointer;
   transition: transform var(--speed-normal) var(--ease-default);
 }
+
 .stat-card:hover {
   transform: var(--lift-small);
 }
@@ -3915,66 +4027,401 @@ input:checked + .slider:before {
   padding-bottom: 15px;
 }
 
-/* Export period options styles */
+/* Export period options styles - 2x2 grid layout */
 .export-period-options {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
+  margin-bottom: 16px; /* Section spacing */
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Make the form-row container full width for export options */
+.form-group:has(.export-period-options) .form-row {
+  display: block; /* Override grid layout */
+  width: 100%;
+  margin: 0;
+}
+
+/* Ensure export period options use full modal width in settings */
+#settingsModal .export-period-options {
+  max-width: none;
+  width: 100%;
 }
 
 .radio-option {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px; /* Increased spacing between radio and text */
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-secondary);
-  transition: all var(--speed-fast) var(--ease-default);
+  padding: 14px 16px; /* Optimized padding for better alignment */
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  transition: all var(--speed-normal) var(--ease-default);
+  position: relative;
+  overflow: hidden;
+  min-height: 48px; /* Consistent height for proper alignment */
+}
+
+.radio-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  opacity: 0;
+  transition: opacity var(--speed-normal) var(--ease-default);
+  z-index: 0;
 }
 
 .radio-option:hover {
-  background: var(--bg-hover);
-  border-color: var(--accent);
+  transform: var(--lift-small);
+  border-color: var(--accent3);
+  box-shadow: 0 4px 16px -4px var(--shadow-accent);
 }
 
+.radio-option:hover::before {
+  opacity: 0.03;
+}
+
+/* Custom radio button styling */
 .radio-option input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
   margin: 0;
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg-primary);
+  position: relative;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  z-index: 1;
+  vertical-align: middle; /* Align with text baseline */
+  flex-shrink: 0; /* Prevent radio from shrinking */
+}
+
+.radio-option input[type="radio"]:hover {
+  border-color: var(--accent3);
+  transform: scale(1.05);
+}
+
+.radio-option input[type="radio"]:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.radio-option input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: 50%;
 }
 
 .radio-option span {
   font-size: 14px;
   color: var(--text-primary);
   font-weight: 500;
+  position: relative;
+  z-index: 1;
+  transition: color var(--speed-normal) var(--ease-default);
+  line-height: 1.2; /* Controlled line height */
+  vertical-align: middle; /* Align with radio button baseline */
 }
 
 .radio-option input[type="radio"]:checked + span {
   color: var(--accent);
+  font-weight: 600;
+}
+
+/* Selected state styling */
+.radio-option:has(input[type="radio"]:checked) {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(16, 185, 129, 0.05));
+  box-shadow: 0 4px 16px -4px var(--shadow-accent);
+}
+
+.radio-option:has(input[type="radio"]:checked)::before {
+  opacity: 0.1;
+}
+
+/* ============================================================================
+   EXPORT SECTION STYLING
+   ============================================================================ */
+
+/* Export section header */
+.export-section-header,
+.custom-period-header {
+  display: block;
+  font-size: 16px;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 12px;
+  margin-top: 0;
+}
+
+/* Export buttons container */
+.export-buttons-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px; /* Proper spacing from hint */
+}
+
+/* Custom period section spacing */
+#customPeriodSection .form-row {
+  margin-top: 16px; /* Same spacing as export buttons from hint */
+}
+
+/* Data export buttons styling */
+#exportOptionsSection .btn {
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+  border: 2px solid var(--border);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all var(--speed-normal) var(--ease-default);
+  position: relative;
+  overflow: hidden;
+}
+
+#exportOptionsSection .btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  opacity: 0;
+  transition: opacity var(--speed-normal) var(--ease-default);
+  z-index: 0;
+}
+
+#exportOptionsSection .btn:hover {
+  transform: var(--lift-medium);
+  border-color: var(--accent3);
+  box-shadow: 0 8px 24px -8px var(--shadow-accent);
+  color: var(--accent);
+}
+
+#exportOptionsSection .btn:hover::before {
+  opacity: 0.1;
+}
+
+#exportOptionsSection .btn:hover svg {
+  color: var(--accent);
+  transform: scale(1.1);
+}
+
+#exportOptionsSection .btn svg {
+  width: 18px;
+  height: 18px;
+  transition: all var(--speed-normal) var(--ease-default);
+  z-index: 1;
+  position: relative;
+}
+
+#exportOptionsSection .btn span,
+#exportOptionsSection .btn {
+  position: relative;
+  z-index: 1;
+}
+
+/* CSV button specific styling */
+#exportOptionsSection .btn:first-child {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(59, 130, 246, 0.05));
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+#exportOptionsSection .btn:first-child:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* PDF button specific styling */
+#exportOptionsSection .btn:last-child {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+#exportOptionsSection .btn:last-child:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+#exportOptionsSection .btn:last-child:hover svg {
+  color: #ef4444;
+}
+
+/* ============================================================================
+   IMPORT SECTION - TONED DOWN STYLING
+   ============================================================================ */
+
+/* Import file input - less attention-grabbing */
+input[type="file"].form-control {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 10px 12px;
+  transition: all var(--speed-fast) var(--ease-default);
+}
+
+input[type="file"].form-control:hover {
+  border-color: var(--text-secondary);
+  transform: none;
+  box-shadow: none;
+}
+
+input[type="file"].form-control:focus {
+  border-color: var(--accent3);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+  transform: none;
+}
+
+/* Import button - subtle styling */
+.form-group:has(input[type="file"]) .btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.form-group:has(input[type="file"]) .btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent3);
+  color: var(--text-primary);
+  transform: var(--lift-small);
+  box-shadow: 0 2px 8px -2px var(--shadow-accent);
 }
 
 /* Mobile responsive for export period options */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .export-period-options {
-    gap: 8px;
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: 6px;
   }
   
+  .export-buttons-container {
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
   .radio-option {
-    padding: 6px 8px;
+    padding: 12px 16px;
+    gap: 14px;
+    min-height: 48px;
   }
   
   .radio-option span {
     font-size: 13px;
   }
+  
+  .radio-option input[type="radio"] {
+    width: 16px;
+    height: 16px;
+  }
+  
+  #exportOptionsSection .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  #exportOptionsSection .btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .export-section-header {
+    font-size: 15px;
+  }
 }
 
 .switch-group .form-hint {
-  margin-top: 2px;
+  margin-top: 4px; /* Tight spacing - directly related to switch text */
   margin-bottom: 0;
-  display: block;
+}
+
+/* ============================================================================
+   SPECIALIZED FORM ELEMENTS AND SECTIONS
+   ============================================================================ */
+
+/* Form groups with borders/separators need extra spacing */
+.form-group[style*="border-top"] {
+  padding-top: 24px; /* Major spacing after separator */
+  margin-top: 24px; /* Major spacing before separator */
+}
+
+/* Wage level selector - part of larger form group */
+#wageSelect {
+  margin-bottom: 0; /* No extra spacing - part of form group */
+}
+
+/* Custom wage section - logical grouping */
+#customWageSection {
+  margin-top: 16px; /* Section spacing when visible */
+}
+
+/* Monthly goal input group - compact related elements */
+#monthlyGoalInput {
+  margin-bottom: 0; /* No extra spacing - part of switch group */
+}
+
+/* Special spacing for account tab separator */
+.form-group[style*="border-top"] .form-row {
+  margin-top: 0; /* No extra spacing - handled by form-group */
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS FOR MOBILE - SETTINGS MODAL SPACING
+   ============================================================================ */
+
+@media (max-width: 600px) {
+  #settingsModal .tab-content {
+    padding: 20px 16px 16px 16px; /* Slightly reduced padding on mobile */
+  }
+  
+  .form-group {
+    margin-bottom: 20px; /* Slightly tighter on mobile */
+  }
+  
+  .form-actions {
+    margin-top: 24px; /* Reduced final spacing on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  #settingsModal .tab-content {
+    padding: 16px 12px 12px 12px; /* Compact padding on small screens */
+  }
+  
+  .switch-group {
+    gap: 12px; /* Tighter spacing on mobile */
+  }
+  
+  .form-group {
+    margin-bottom: 16px; /* Tighter spacing on mobile */
+  }
 }
 
 /* Neste badge styling */

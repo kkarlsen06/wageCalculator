@@ -13,6 +13,18 @@ class ErrorHandler {
      * Initialize error handler
      */
     init() {
+        // Wait for DOM to be ready before creating container
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initContainer());
+        } else {
+            this.initContainer();
+        }
+    }
+    
+    /**
+     * Initialize the message container
+     */
+    initContainer() {
         // Create message container if it doesn't exist
         if (!document.querySelector('#error-messages')) {
             this.createMessageContainer();
