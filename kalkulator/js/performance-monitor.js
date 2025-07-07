@@ -142,7 +142,7 @@ class PerformanceMonitor {
         new PerformanceObserver((list) => {
             const entries = list.getEntries();
             entries.forEach(entry => {
-                log.info('FID:', `${entry.processingStart - entry.startTime.toFixed(2)}ms`);
+                log.info('FID:', `${(entry.processingStart - entry.startTime).toFixed(2)}ms`);
             });
         }).observe({ entryTypes: ['first-input'] });
 
