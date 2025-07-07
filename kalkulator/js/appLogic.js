@@ -789,10 +789,10 @@ export const app = {
         }
         if (!document.getElementById('dateGrid').childElementCount) {
             this.populateDateGrid(targetMonth, targetYear);
-        } else if (targetMonth !== null && targetYear !== null) {
-            // If we have a target month/year, repopulate the grid
+        } else if (targetMonth !== null || targetYear !== null) {
+            // If we have any target parameters, repopulate the grid
             this.populateDateGrid(targetMonth, targetYear);
-        } else if (targetMonth === null && targetYear === null) {
+        } else {
             // If no target parameters, always repopulate to show current month
             this.populateDateGrid(targetMonth, targetYear);
         }
