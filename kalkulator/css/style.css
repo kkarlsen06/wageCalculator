@@ -2210,6 +2210,38 @@ input:checked + .slider:before {
   box-shadow: 0 8px 20px var(--shadow-blue);
 }
 
+.calendar-cell.empty-date {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s var(--ease-default);
+  position: relative;
+}
+
+.calendar-cell.empty-date:hover {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px var(--shadow-blue);
+}
+
+.calendar-cell.empty-date:hover::after {
+  content: '+';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  color: var(--accent);
+  font-weight: 600;
+  opacity: 0.7;
+  z-index: 1;
+}
+
+.calendar-cell.empty-date:hover .calendar-day-number {
+  opacity: 0.6;
+}
+
 .calendar-day-number {
   font-weight: 600;
   color: var(--text-primary);

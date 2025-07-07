@@ -2637,6 +2637,16 @@ export const app = {
                             this.showShiftDetails(shiftsForDay[0].id);
                         }
                     };
+                } else {
+                    // Add click handler for empty cells in current month
+                    if (cellDate.getMonth() === monthIdx) {
+                        cell.classList.add('empty-date');
+                        cell.style.cursor = 'pointer';
+                        cell.onclick = (e) => {
+                            e.stopPropagation();
+                            this.openAddShiftModalWithDate(cellDate);
+                        };
+                    }
                 }
 
                 cell.appendChild(content);
@@ -5328,6 +5338,60 @@ export const app = {
         };
 
         reader.readAsText(file);
+    },
+
+    // New function to open add shift modal with pre-selected date
+    openAddShiftModalWithDate(date) {
+        if (!date) {
+            this.openAddShiftModal();
+            return;
+        }
+        
+        const targetDate = new Date(date);
+        
+        // First, ensure the modal's month and year are set to the target date's month and year
+        const targetMonth = targetDate.getMonth() + 1;
+        const targetYear = targetDate.getFullYear();
+        
+        // Store the current month/year to restore later if needed
+        const originalMonth = this.currentMonth;
+        const originalYear = this.currentYear;
+        
+        // Set the modal to show the target date's month/year
+        this.currentMonth = targetMonth;
+        this.currentYear = targetYear;
+        
+        // Now open the modal (this will populate the grid with the correct month)
+        this.openAddShiftModal();
+        
+        // Pre-select the specific date
+        this.selectedDates = [new Date(targetDate)];
+        
+        // Wait for the modal to be populated, then select the date
+        setTimeout(() => {
+            const dateButtons = document.querySelectorAll('#dateGrid .date-cell');
+            dateButtons.forEach(btn => {
+                btn.classList.remove('selected');
+                // Check if this button represents our target date
+                const cellContent = btn.querySelector('.date-cell-content');
+                if (cellContent) {
+                    const dayNumber = parseInt(cellContent.textContent);
+                    // More robust check: ensure we're in the correct month and not on a disabled cell
+                    if (dayNumber === targetDate.getDate() && 
+                        !btn.classList.contains('disabled')) {
+                        btn.classList.add('selected');
+                    }
+                }
+            });
+            
+            // Update the selected dates info
+            this.updateSelectedDatesInfo();
+            
+            // Restore the original month/year for the main calendar view
+            // This ensures the main calendar doesn't change when opening the modal
+            this.currentMonth = originalMonth;
+            this.currentYear = originalYear;
+        }, 50);
     }
 };
 
