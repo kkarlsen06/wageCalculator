@@ -63,17 +63,15 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
     const percent = Math.round((current / goal) * 100);
     
     if (shouldAnimate) {
-        // Check if already animating
-        if (fill.dataset.animating === 'true') {
-            return;
-        }
-        
-        // Mark as animating
-        fill.dataset.animating = 'true';
+        // Force clear any stuck animation state first
+        fill.dataset.animating = 'false';
         
         // Remove loading class and enable transition
         fill.classList.remove('loading');
         fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        
+        // Mark as animating after clearing stuck state
+        fill.dataset.animating = 'true';
         
         // Set the target width
         fill.style.width = Math.min(percent, 100) + '%';
@@ -136,10 +134,8 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
             }, 850);
         }
     } else {
-        // For immediate updates, only proceed if no animation is in progress
-        if (fill.dataset.animating === 'true') {
-            return;
-        }
+        // For immediate updates, force clear stuck animation state
+        fill.dataset.animating = 'false';
         
         // Set width without transition
         fill.style.transition = 'none';
@@ -1250,6 +1246,14 @@ export const app = {
     
     changeMonth(month) {
         this.currentMonth = month;
+        
+        // Reset progress bar state to ensure clean animation
+        const fill = document.querySelector('.progress-fill');
+        if (fill) {
+            fill.dataset.animating = 'false';
+            fill.classList.remove('loading');
+        }
+        
         this.updateDisplay(true); // Enable animation when switching months
         // Note: Don't save currentMonth to settings - it should always default to current month on page load
     },
