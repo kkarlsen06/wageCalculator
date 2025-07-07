@@ -820,8 +820,9 @@ input[type="time"].form-control[value=""]:focus {
 /* Blue dot indicator for dates with shifts */
 .shift-indicator-dot {
   position: absolute;
-  top: -2px;
-  right: -2px;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 6px;
   height: 6px;
   background: var(--secondary);
