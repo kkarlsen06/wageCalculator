@@ -166,6 +166,13 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         if (progressCard) progressCard.classList.remove('overachievement');
     }
     
+    // Add active class when nearing goal completion (80% or higher)
+    if (percent >= 80) {
+        fill.classList.add('active');
+    } else {
+        fill.classList.remove('active');
+    }
+    
     // Update label text
     const currencySuffix = window.app && window.app.currencyFormat ? ' NOK' : ' kr';
     label.textContent = percent.toFixed(1) + '% av ' + goal.toLocaleString('no-NO') + currencySuffix;
@@ -2466,8 +2473,13 @@ export const app = {
                 dateSuffix = ' (i morgen)';
             }
             
+            // Determine if the shift should be highlighted (active)
+            const isToday = shiftDate.toDateString() === today.toDateString();
+            const isTomorrow = shiftDate.toDateString() === tomorrow.toDateString();
+            const activeClass = (isToday || isTomorrow) ? ' active' : '';
+            
             nextShiftContent.innerHTML = `
-                <div class="shift-item ${typeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer; position: relative;">
+                <div class="shift-item ${typeClass}${activeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer; position: relative;">
                     <div class="next-shift-badge">Neste</div>
                     <div class="shift-info">
                         <div class="shift-date">

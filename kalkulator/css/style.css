@@ -1,11 +1,11 @@
 /* Progress card - hele kortet er progressbaren */
 .progress-card {
-  background: var(--gradient-progress-bg);
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 0;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  box-shadow: 0 8px 24px -4px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-blue);
   position: relative;
   overflow: hidden;
   height: 60px;
@@ -16,8 +16,7 @@
 }
 
 .progress-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px -4px var(--shadow-blue);
+  transform: var(--lift-small);
 }
 
 /* Removed shimmer animation from progress card to avoid conflicts with progress bar animation */
@@ -25,7 +24,7 @@
 /* Progress fill - den fargede delen som fyller kortet */
 .progress-fill {
   height: 100%;
-  background: var(--gradient-secondary);
+  background: var(--bg-tertiary);
   border-radius: 16px;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
   position: relative;
@@ -33,6 +32,11 @@
   /* Ensure initial state is 0% width for smooth animation */
   width: 0%;
   will-change: width;
+}
+
+/* Active progress fill - when nearing or completing goal */
+.progress-fill.active {
+  background: var(--gradient-secondary);
 }
 
 /* Initial loading state - ensures progress bar starts at 0% */
@@ -1878,13 +1882,13 @@ input:checked + .slider:before {
 }
 
 .breakdown-card {
-  background: var(--gradient-secondary);
+  background: var(--bg-card);
   border-radius: 24px;
   padding: 20px;
   text-align: center;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
-  box-shadow: 0 12px 40px -8px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-blue);
   position: relative;
   overflow: hidden;
   min-height: 120px;
@@ -1896,8 +1900,7 @@ input:checked + .slider:before {
 }
 
 .breakdown-card:hover {
-  transform: var(--lift-medium) var(--scale-hover);
-  box-shadow: var(--shadow-hover-blue);
+  transform: var(--lift-small);
 }
 
 /* Responsive padding for breakdown cards */
@@ -2316,16 +2319,22 @@ input:checked + .slider:before {
 
 /* Style the shift-item when it's inside the next-shift-card */
 .next-shift-card .shift-item {
-  background: var(--gradient-secondary);
+  background: var(--bg-card);
   border-radius: 24px; /* Fully rounded edges */
   padding: 18px;
   margin: 0;
   border: 1px solid var(--border);
   transition: all var(--speed-normal) var(--ease-default);
-  box-shadow: 0 12px 40px -8px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-blue);
   min-height: 80px;
   position: relative;
   overflow: hidden; /* Add overflow hidden to contain the badge */
+}
+
+/* Active next shift - when it's today or tomorrow */
+.next-shift-card .shift-item.active {
+  background: var(--gradient-secondary);
+  box-shadow: 0 12px 40px -8px var(--shadow-blue);
 }
 
 .next-shift-empty {
