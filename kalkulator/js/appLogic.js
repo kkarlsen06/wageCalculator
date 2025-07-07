@@ -1,3 +1,22 @@
+// Cache DOM elements to avoid repeated queries
+const domCache = {
+    progressFill: null,
+    progressLabel: null,
+    monthlyGoalInput: null,
+    
+    // Initialize cache
+    init() {
+        this.progressFill = document.querySelector('.progress-fill');
+        this.progressLabel = document.querySelector('.progress-label');
+        this.monthlyGoalInput = document.getElementById('monthlyGoalInput');
+    },
+    
+    // Refresh cache when DOM changes
+    refresh() {
+        this.init();
+    }
+};
+
 // Hent og lagre månedlig mål fra localStorage eller default
 function getMonthlyGoal() {
     // Try to get from window.app if available
@@ -28,7 +47,8 @@ async function setMonthlyGoal(goal) {
 
 // --- Månedlig mål UI-håndtering ---
 function setupMonthlyGoalInput() {
-    const monthlyGoalInput = document.getElementById('monthlyGoalInput');
+    // Use cached element or query if not cached
+    const monthlyGoalInput = domCache.monthlyGoalInput || document.getElementById('monthlyGoalInput');
     if (monthlyGoalInput) {
         monthlyGoalInput.value = getMonthlyGoal();
         monthlyGoalInput.addEventListener('input', (e) => {
@@ -47,129 +67,79 @@ if (typeof window !== 'undefined') {
     
     // Set up the monthly goal input when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setupMonthlyGoalInput);
+        document.addEventListener('DOMContentLoaded', () => {
+            domCache.init();
+            setupMonthlyGoalInput();
+        });
     } else {
+        domCache.init();
         setupMonthlyGoalInput();
     }
 }
 
-// Progressbar update function
+// Optimized progress bar update function
 function updateProgressBar(current, goal, shouldAnimate = false) {
-    const fill = document.querySelector('.progress-fill');
-    const label = document.querySelector('.progress-label');
+    // Use cached elements
+    const fill = domCache.progressFill || document.querySelector('.progress-fill');
+    const label = domCache.progressLabel || document.querySelector('.progress-label');
     
     if (!fill || !label) return;
 
     const percent = Math.round((current / goal) * 100);
     
+    // Clean up any existing animation state
+    if (fill.dataset.animating === 'true') {
+        fill.dataset.animating = 'false';
+    }
+    
     if (shouldAnimate) {
-        // Force clear any stuck animation state first
-        fill.dataset.animating = 'false';
-        
-        // Remove loading class and enable transition
-        fill.classList.remove('loading');
-        fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-        
-        // Mark as animating after clearing stuck state
-        fill.dataset.animating = 'true';
-        
-        // Set the target width
-        fill.style.width = Math.min(percent, 100) + '%';
-        
-        // If we're at 100%, handle animation cleanup
-        if (percent >= 100) {
-            const handleTransitionEnd = (event) => {
-                if (event.target === fill && event.propertyName === 'width') {
-                    fill.removeEventListener('transitionend', handleTransitionEnd);
-                    fill.dataset.animating = 'false';
-                    
-                    // Set initial animation complete flag if this is the first animation
-                    if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
-                        window.app.initialAnimationComplete = true;
-                    }
-                }
-            };
+        // Use single requestAnimationFrame for smooth animation
+        requestAnimationFrame(() => {
+            fill.classList.remove('loading');
+            fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            fill.dataset.animating = 'true';
+            fill.style.width = Math.min(percent, 100) + '%';
             
-            fill.addEventListener('transitionend', handleTransitionEnd);
-            
-            // Fallback timeout in case transitionend doesn't fire (e.g., when already at 100%)
+            // Single timeout for cleanup
             setTimeout(() => {
                 fill.dataset.animating = 'false';
-                
-                // Set initial animation complete flag if this is the first animation
                 if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
                     window.app.initialAnimationComplete = true;
                 }
-                
-                // Clean up event listener if it hasn't been called
-                fill.removeEventListener('transitionend', handleTransitionEnd);
-            }, 850); // Slightly longer than animation duration
-        } else {
-            // Animation without confetti - still need to clean up
-            const handleTransitionEnd = (event) => {
-                if (event.target === fill && event.propertyName === 'width') {
-                    fill.removeEventListener('transitionend', handleTransitionEnd);
-                    fill.dataset.animating = 'false';
-                    
-                    // Set initial animation complete flag if this is the first animation
-                    if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
-                        window.app.initialAnimationComplete = true;
-                    }
-                }
-            };
-            
-            fill.addEventListener('transitionend', handleTransitionEnd);
-            
-            // Fallback timeout
-            setTimeout(() => {
-                fill.dataset.animating = 'false';
-                
-                // Set initial animation complete flag if this is the first animation
-                if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
-                    window.app.initialAnimationComplete = true;
-                }
-                
-                // Clean up event listener if it hasn't been called
-                fill.removeEventListener('transitionend', handleTransitionEnd);
             }, 850);
-        }
+        });
     } else {
-        // For immediate updates, force clear stuck animation state
-        fill.dataset.animating = 'false';
-        
-        // Set width without transition
+        // Immediate update without animation
         fill.style.transition = 'none';
         fill.style.width = Math.min(percent, 100) + '%';
-        // Force reflow
+        // Force reflow once
         fill.offsetHeight;
-        // Re-enable transition for future animations
+        // Re-enable transition
         fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
     }
     
     // Update classes based on progress
+    const progressCard = fill.closest('.progress-card');
     if (percent >= 100) {
         fill.classList.add('full');
-        // Add overachievement styling for values above 100%
-        const progressCard = fill.closest('.progress-card');
-        if (percent > 100) {
-            if (progressCard) progressCard.classList.add('overachievement');
-        } else {
-            if (progressCard) progressCard.classList.remove('overachievement');
+        if (percent > 100 && progressCard) {
+            progressCard.classList.add('overachievement');
+        } else if (progressCard) {
+            progressCard.classList.remove('overachievement');
         }
     } else {
         fill.classList.remove('full');
-        const progressCard = fill.closest('.progress-card');
         if (progressCard) progressCard.classList.remove('overachievement');
     }
     
-    // Add active class when nearing goal completion (80% or higher)
+    // Add active class when nearing goal completion
     if (percent >= 80) {
         fill.classList.add('active');
     } else {
         fill.classList.remove('active');
     }
     
-    // Update label text
+    // Update label text (cache currency suffix)
     const currencySuffix = window.app && window.app.currencyFormat ? ' NOK' : ' kr';
     label.textContent = percent.toFixed(1) + '% av ' + goal.toLocaleString('no-NO') + currencySuffix;
     fill.title = `${current.toLocaleString('no-NO')}${currencySuffix} av ${goal.toLocaleString('no-NO')}${currencySuffix}`;
@@ -180,6 +150,7 @@ if (typeof window !== 'undefined') {
     window.updateProgressBar = updateProgressBar;
     window.getMonthlyGoal = getMonthlyGoal;
     window.setMonthlyGoal = setMonthlyGoal;
+    window.domCache = domCache;
 }
 export const app = {
     // Constants
@@ -229,14 +200,16 @@ export const app = {
     selectedDate: null,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
-    emailHideTimeout: null, // Timeout for auto-hiding email
     initialAnimationComplete: false, // Track if initial progress bar animation is complete
     async init() {
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
         
+        // Initialize DOM cache
+        domCache.init();
+        
         // Reset progress bar to initial state
-        const fill = document.querySelector('.progress-fill');
+        const fill = domCache.progressFill;
         if (fill) {
             fill.classList.add('loading');
             fill.style.width = '0%';
@@ -248,8 +221,7 @@ export const app = {
         this.populateMonthDropdown();
         this.populateYearDropdown();
         
-        // Display user email
-        await this.displayUserEmail();
+
         
         // Load backend or fallback
         try {
@@ -338,16 +310,8 @@ export const app = {
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 this.closeBreakdown();
-                // Also hide email if visible
-                this.hideEmailDisplay();
             }
         });
-        
-        // Clean up any existing timeout
-        if (this.emailHideTimeout) {
-            clearTimeout(this.emailHideTimeout);
-            this.emailHideTimeout = null;
-        }
         
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
@@ -401,228 +365,15 @@ export const app = {
         this.checkAndShowRecurringIntro();
     },
 
-    async displayUserEmail() {
-        try {
-            const { data: { user } } = await window.supa.auth.getUser();
-            if (user && user.email) {
-                const userEmailElement = document.getElementById('userEmail');
-                const userEmailContainer = document.getElementById('userEmailContainer');
-                const emailToggleBtn = document.getElementById('emailToggleBtn');
-                
-                if (userEmailElement && userEmailContainer) {
-                    userEmailElement.textContent = user.email;
-                    userEmailContainer.style.display = 'flex';
-                    
-                    // Add tooltip to email button showing full email
-                    if (emailToggleBtn) {
-                        emailToggleBtn.title = `Vis e-post: ${user.email}`;
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching user email:', error);
-            // Skjul email-elementet hvis det oppstår en feil
-            const userEmailContainer = document.getElementById('userEmailContainer');
-            if (userEmailContainer) {
-                userEmailContainer.style.display = 'none';
-            }
-        }
-    },
 
-    toggleEmailDisplay() {
-        const userEmailDisplay = document.getElementById('userEmailDisplay');
-        
-        if (!userEmailDisplay) return;
 
-        const isVisible = userEmailDisplay.style.display !== 'none';
-        
-        if (isVisible) {
-            this.hideEmailDisplay();
-        } else {
-            this.showEmailDisplay();
-        }
-    },
 
-    calculateSlideDistance(emailText) {
-        // Very simple approach: fixed slide distances based on screen size and email length
-        const isMobile = window.innerWidth <= 768;
-        const isSmallMobile = window.innerWidth <= 480;
-        
-        // Get email length category
-        const emailLength = emailText.length;
-        
-        let slideDistance = 0;
-        
-        if (isSmallMobile) {
-            // Small mobile: very conservative sliding to prevent overflow
-            if (emailLength > 20) slideDistance = 40;
-            else if (emailLength > 15) slideDistance = 30;
-            else if (emailLength > 10) slideDistance = 20;
-            else slideDistance = 15;
-        } else if (isMobile) {
-            // Mobile: moderate sliding
-            if (emailLength > 25) slideDistance = 70;
-            else if (emailLength > 20) slideDistance = 60;
-            else if (emailLength > 15) slideDistance = 50;
-            else if (emailLength > 10) slideDistance = 35;
-            else slideDistance = 25;
-        } else {
-            // Desktop: more generous sliding
-            if (emailLength > 30) slideDistance = 150;
-            else if (emailLength > 25) slideDistance = 120;
-            else if (emailLength > 20) slideDistance = 100;
-            else if (emailLength > 15) slideDistance = 80;
-            else if (emailLength > 10) slideDistance = 60;
-        }
-        
-        return -slideDistance; // Negative because we slide left
-    },
 
-    showEmailDisplay() {
-        const userEmailDisplay = document.getElementById('userEmailDisplay');
-        const userEmailContainer = document.getElementById('userEmailContainer');
-        const userEmail = document.getElementById('userEmail');
-        const monthSelector = document.querySelector('.month-selector');
-        const wageDisplay = document.getElementById('currentWage');
-        const emailToggleBtn = document.getElementById('emailToggleBtn');
-        
-        // Find the parent span elements using proper traversal
-        const monthSelectorSpan = monthSelector ? monthSelector.parentElement : null;
-        const wageSelectorSpan = wageDisplay ? wageDisplay.parentElement : null;
-        
-        // Calculate dynamic slide distance based on email length
-        const emailText = userEmail ? userEmail.textContent : '';
-        const slideDistance = this.calculateSlideDistance(emailText);
-        
-        // Set reasonable max-width based on screen size
-        const isMobile = window.innerWidth <= 768;
-        const isSmallMobile = window.innerWidth <= 480;
-        
-        let emailTextWidth;
-        if (isSmallMobile) {
-            emailTextWidth = Math.min(120, window.innerWidth * 0.35); // More conservative on small mobile
-        } else if (isMobile) {
-            emailTextWidth = Math.min(160, window.innerWidth * 0.45); // More conservative on mobile
-        } else {
-            emailTextWidth = 400; // Desktop default
-        }
-        
-        // Set dynamic slide distance on container
-        if (userEmailContainer) {
-            userEmailContainer.style.setProperty('--slide-distance', `${slideDistance}px`);
-        }
-        
-        // Set dynamic max-width for email text
-        if (userEmailDisplay) {
-            userEmailDisplay.style.setProperty('--email-max-width', `${emailTextWidth}px`);
-        }
-        
-        // Set same distance for month/wage elements to move synchronously
-        if (monthSelectorSpan) {
-            monthSelectorSpan.style.setProperty('--slide-distance', `${slideDistance}px`);
-        }
-        if (wageSelectorSpan) {
-            wageSelectorSpan.style.setProperty('--slide-distance', `${slideDistance}px`);
-        }
-        
-        // Hide month selector and wage with smooth transition (including icons)
-        if (monthSelectorSpan) {
-            monthSelectorSpan.classList.add('hidden');
-        }
-        
-        // Close month dropdown if open to avoid confusion during animation
-        this.closeMonthDropdown();
-        
-        if (wageSelectorSpan) {
-            wageSelectorSpan.classList.add('hidden');
-        }
-        
-        // Mark button as active
-        if (emailToggleBtn) {
-            emailToggleBtn.classList.add('active');
-        }
-        
-        // Start container slide-left animation
-        if (userEmailContainer) {
-            userEmailContainer.classList.add('slide-left');
-        }
-        
-        // Show email with smooth transition after short delay
-        setTimeout(() => {
-            if (userEmailDisplay) {
-                userEmailDisplay.style.display = 'inline-block';
-                // Add show class for smooth appearance
-                requestAnimationFrame(() => {
-                    userEmailDisplay.classList.add('show');
-                });
-            }
-        }, 100);
-        
-        // Auto-hide email after 2 seconds
-        clearTimeout(this.emailHideTimeout);
-        this.emailHideTimeout = setTimeout(() => {
-            this.hideEmailDisplay();
-        }, 2000);
-    },
 
-    hideEmailDisplay() {
-        const userEmailDisplay = document.getElementById('userEmailDisplay');
-        const userEmailContainer = document.getElementById('userEmailContainer');
-        const monthSelector = document.querySelector('.month-selector');
-        const wageDisplay = document.getElementById('currentWage');
-        const emailToggleBtn = document.getElementById('emailToggleBtn');
-        
-        // Find the parent span elements using proper traversal
-        const monthSelectorSpan = monthSelector ? monthSelector.parentElement : null;
-        const wageSelectorSpan = wageDisplay ? wageDisplay.parentElement : null;
-        
-        // Remove active status from button
-        if (emailToggleBtn) {
-            emailToggleBtn.classList.remove('active');
-        }
-        
-        // Hide email first
-        if (userEmailDisplay) {
-            userEmailDisplay.classList.remove('show');
-        }
-        
-        // Slide container back after short delay
-        setTimeout(() => {
-            if (userEmailContainer) {
-                userEmailContainer.classList.remove('slide-left');
-            }
-        }, 100);
-        
-        // Show month selector and wage back after container returns (including icons)
-        setTimeout(() => {
-            if (monthSelectorSpan) {
-                monthSelectorSpan.classList.remove('hidden');
-                monthSelectorSpan.style.removeProperty('--slide-distance');
-            }
-            
-            if (wageSelectorSpan) {
-                wageSelectorSpan.classList.remove('hidden');
-                wageSelectorSpan.style.removeProperty('--slide-distance');
-            }
-            
-            // Hide email element completely
-            if (userEmailDisplay) {
-                userEmailDisplay.style.display = 'none';
-                userEmailDisplay.style.removeProperty('--email-max-width');
-            }
-            
-            // Reset slide distance on container
-            if (userEmailContainer) {
-                userEmailContainer.style.removeProperty('--slide-distance');
-            }
-        }, 300);
-        
-        // Clear timeout
-        clearTimeout(this.emailHideTimeout);
-        this.emailHideTimeout = null;
-    },
 
-    // Removed setupMobileEmailSlideOut since we now use a simpler toggle function
+
+
+
 
     populateTimeSelects() {
         const startHour = document.getElementById('startHour');
@@ -1212,8 +963,6 @@ export const app = {
         // Close any other open modals first
         this.closeBreakdown();
         this.closeSettings();
-        // Close email display if visible
-        this.hideEmailDisplay();
         
         if (isActive) {
             dd.classList.remove('active');
