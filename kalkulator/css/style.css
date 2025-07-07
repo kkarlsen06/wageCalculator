@@ -3488,7 +3488,8 @@ input:checked + .slider:before {
 .shift-history-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 16px;
   padding: 20px 24px;
   margin-bottom: 24px;
   background: linear-gradient(135deg, 
@@ -3528,8 +3529,8 @@ input:checked + .slider:before {
 }
 
 .shift-history-header .header-right {
-  flex: 1;
-  text-align: right;
+  flex: 0 0 auto;
+  text-align: left;
 }
 
 /* Large calendar icon on the left */
@@ -3561,7 +3562,7 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .header-text h2 {
@@ -3586,6 +3587,7 @@ input:checked + .slider:before {
   .shift-history-header {
     padding: 16px 20px;
     margin-bottom: 20px;
+    gap: 14px;
   }
   
   .calendar-icon-large {
