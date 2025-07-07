@@ -3980,18 +3980,20 @@ export const app = {
                 return;
             }
         }
+        
+        const shiftToDelete = this.shifts[index];
+        if (!shiftToDelete || !shiftToDelete.id) return;
+        
+        // Show confirmation dialog IMMEDIATELY
+        if (!confirm('Er du sikker på at du vil slette denne vakten?')) return;
+        
         try {
-            
+            // THEN check authentication
             const { data: { user } } = await window.supa.auth.getUser();
             if (!user) {
                 alert("Du er ikke innlogget");
                 return;
             }
-            
-            const shiftToDelete = this.shifts[index];
-            if (!shiftToDelete || !shiftToDelete.id) return;
-            
-            if (!confirm('Er du sikker på at du vil slette denne vakten?')) return;
             
             const { error } = await window.supa
                 .from('user_shifts')
