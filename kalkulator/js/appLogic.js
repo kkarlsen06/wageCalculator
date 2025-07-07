@@ -779,7 +779,7 @@ export const app = {
         });
     },
     
-    openAddShiftModal() {
+    openAddShiftModal(targetMonth = null, targetYear = null) {
         // Populate form elements if they're empty
         const startHourElement = document.getElementById('startHour');
         if (startHourElement && startHourElement.tagName === 'SELECT' && !startHourElement.options.length) {
@@ -787,7 +787,15 @@ export const app = {
         } else if (!startHourElement) {
             this.populateTimeSelects();
         }
-        if (!document.getElementById('dateGrid').childElementCount) this.populateDateGrid();
+        if (!document.getElementById('dateGrid').childElementCount) {
+            this.populateDateGrid(targetMonth, targetYear);
+        } else if (targetMonth !== null || targetYear !== null) {
+            // If we have any target parameters, repopulate the grid
+            this.populateDateGrid(targetMonth, targetYear);
+        } else {
+            // If no target parameters, always repopulate to show current month
+            this.populateDateGrid(targetMonth, targetYear);
+        }
         
         // Show the modal
         document.getElementById('addShiftModal').style.display = 'block';
@@ -964,12 +972,8 @@ export const app = {
                     type
                 };
                 
-                // Validate that the selected date is in the current UI month
-                if (newShift.date.getMonth() + 1 !== this.currentMonth) {
-                    // Correct the date to be in the current UI month
-                    const correctedDate = new Date(this.currentYear, this.currentMonth - 1, selectedDate.getDate());
-                    newShift.date = correctedDate;
-                }
+                // Note: Removed date validation since the modal can now display different months
+                // The selected dates from the modal's date grid are already correct
                 
                 // Create date string for database
                 const finalDateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
@@ -1037,14 +1041,14 @@ export const app = {
         return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     },
     
-    populateDateGrid() {
+    populateDateGrid(targetMonth = null, targetYear = null) {
         const dateGrid = document.getElementById('dateGrid');
         if (!dateGrid) {
             // dateGrid element doesn't exist (modal not open), so skip population
             return;
         }
-        const year = this.currentYear;
-        const monthIdx = this.currentMonth - 1;
+        const year = targetYear !== null ? targetYear : this.currentYear;
+        const monthIdx = targetMonth !== null ? targetMonth - 1 : this.currentMonth - 1;
         const firstDay = new Date(year, monthIdx, 1);
         const lastDay = new Date(year, monthIdx+1, 0);
         const startDate = new Date(firstDay);
@@ -5348,26 +5352,17 @@ export const app = {
         }
         
         const targetDate = new Date(date);
-        
-        // First, ensure the modal's month and year are set to the target date's month and year
         const targetMonth = targetDate.getMonth() + 1;
         const targetYear = targetDate.getFullYear();
         
-        // Store the current month/year to restore later if needed
-        const originalMonth = this.currentMonth;
-        const originalYear = this.currentYear;
-        
-        // Set the modal to show the target date's month/year
-        this.currentMonth = targetMonth;
-        this.currentYear = targetYear;
-        
-        // Now open the modal (this will populate the grid with the correct month)
-        this.openAddShiftModal();
+        // Open the modal with the target month/year (no global state modification)
+        this.openAddShiftModal(targetMonth, targetYear);
         
         // Pre-select the specific date
         this.selectedDates = [new Date(targetDate)];
         
-        // Wait for the modal to be populated, then select the date
+        // Select the date in the UI after the modal is populated
+        // Use a small delay to ensure the DOM is updated
         setTimeout(() => {
             const dateButtons = document.querySelectorAll('#dateGrid .date-cell');
             dateButtons.forEach(btn => {
@@ -5386,12 +5381,7 @@ export const app = {
             
             // Update the selected dates info
             this.updateSelectedDatesInfo();
-            
-            // Restore the original month/year for the main calendar view
-            // This ensures the main calendar doesn't change when opening the modal
-            this.currentMonth = originalMonth;
-            this.currentYear = originalYear;
-        }, 50);
+        }, 10); // Reduced timeout since we no longer need to restore global state
     }
 };
 
