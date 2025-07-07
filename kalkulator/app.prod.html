@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vaktberegner</title>
   <!-- Critical CSS for above-the-fold content -->
-  <link rel="stylesheet" href="css/performance-critical.css">
+  <link rel="stylesheet" href="css/performance-critical.min.css">
   <!-- Full CSS loaded asynchronously -->
-  <link rel="preload" href="css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="css/style.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="css/style.css"></noscript>
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
@@ -637,9 +637,9 @@
     </div>
 
     <!-- Performance and utility scripts loaded first -->
-    <script src="js/logger.js"></script>
-    <script src="js/performance-monitor.js"></script>
-    <script src="js/dom-cache.js"></script>
+    <script src="js/logger.min.js"></script>
+    <script src="js/performance-monitor.min.js"></script>
+    <script src="js/dom-cache.min.js"></script>
     <script src="js/config.js"></script>
     
     <!-- UUID library for generating series IDs -->
@@ -658,6 +658,6 @@
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script defer src="../js/loading-helpers.js"></script>
     <script defer src="../js/error-handling.js"></script>
-    <script defer src="js/app.js?v=7"></script>
+    <script defer src="js/app.min.js?v=7"></script>
 </body>
 </html>

@@ -55,8 +55,8 @@ if (typeof window !== 'undefined') {
 
 // Progressbar update function
 function updateProgressBar(current, goal, shouldAnimate = false) {
-    const fill = document.querySelector('.progress-fill');
-    const label = document.querySelector('.progress-label');
+    const fill = $('.progress-fill');
+    const label = $('.progress-label');
     
     if (!fill || !label) return;
 
@@ -232,11 +232,13 @@ export const app = {
     emailHideTimeout: null, // Timeout for auto-hiding email
     initialAnimationComplete: false, // Track if initial progress bar animation is complete
     async init() {
+        log.mark('app-init-start');
+        
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
         
-        // Reset progress bar to initial state
-        const fill = document.querySelector('.progress-fill');
+        // Reset progress bar to initial state using cached DOM reference
+        const fill = $('.progress-fill');
         if (fill) {
             fill.classList.add('loading');
             fill.style.width = '0%';
@@ -255,30 +257,39 @@ export const app = {
         try {
             await this.loadFromSupabase();
         } catch (err) {
-            console.error('loadFromSupabase failed:', err);
+            log.error('loadFromSupabase failed:', err);
             this.loadFromLocalStorage();
         }
         // Set initial shifts
         this.shifts = [...this.userShifts];
-        // Bind pause toggle
-        document.getElementById('pauseDeductionToggle').addEventListener('change', e => {
+        // Bind pause toggle using cached DOM references
+        const pauseToggle = $id('pauseDeductionToggle');
+        const fullMinuteToggle = $id('fullMinuteRangeToggle');
+        const directTimeToggle = $id('directTimeInputToggle');
+        
+        pauseToggle?.addEventListener('change', e => {
             this.pauseDeduction = e.target.checked;
             this.updateDisplay();
             this.saveSettingsToSupabase();
         });
-        document.getElementById('fullMinuteRangeToggle').addEventListener('change', e => {
+        fullMinuteToggle?.addEventListener('change', e => {
             if (e.target.checked && this.directTimeInput) {
                 // Disable direct time input when full minute range is enabled
                 this.directTimeInput = false;
-                document.getElementById('directTimeInputToggle').checked = false;
+                if (directTimeToggle) directTimeToggle.checked = false;
             }
             this.fullMinuteRange = e.target.checked;
-            // Save current selections before repopulating
+            // Save current selections before repopulating using cached DOM references
+            const startHourEl = $id('startHour');
+            const startMinuteEl = $id('startMinute');
+            const endHourEl = $id('endHour');
+            const endMinuteEl = $id('endMinute');
+            
             const currentSelections = {
-                startHour: document.getElementById('startHour')?.value || '',
-                startMinute: document.getElementById('startMinute')?.value || '',
-                endHour: document.getElementById('endHour')?.value || '',
-                endMinute: document.getElementById('endMinute')?.value || ''
+                startHour: startHourEl?.value || '',
+                startMinute: startMinuteEl?.value || '',
+                endHour: endHourEl?.value || '',
+                endMinute: endMinuteEl?.value || ''
             };
             
             // Repopulate time selects with new format
@@ -286,28 +297,26 @@ export const app = {
             
             // Restore selections if they're still valid
             setTimeout(() => {
-                if (currentSelections.startHour) document.getElementById('startHour').value = currentSelections.startHour;
-                if (currentSelections.startMinute) {
-                    const startMinuteSelect = document.getElementById('startMinute');
-                    const option = startMinuteSelect.querySelector(`option[value="${currentSelections.startMinute}"]`);
-                    if (option) startMinuteSelect.value = currentSelections.startMinute;
+                if (currentSelections.startHour && startHourEl) startHourEl.value = currentSelections.startHour;
+                if (currentSelections.startMinute && startMinuteEl) {
+                    const option = startMinuteEl.querySelector(`option[value="${currentSelections.startMinute}"]`);
+                    if (option) startMinuteEl.value = currentSelections.startMinute;
                 }
-                if (currentSelections.endHour) document.getElementById('endHour').value = currentSelections.endHour;
-                if (currentSelections.endMinute) {
-                    const endMinuteSelect = document.getElementById('endMinute');
-                    const option = endMinuteSelect.querySelector(`option[value="${currentSelections.endMinute}"]`);
-                    if (option) endMinuteSelect.value = currentSelections.endMinute;
+                if (currentSelections.endHour && endHourEl) endHourEl.value = currentSelections.endHour;
+                if (currentSelections.endMinute && endMinuteEl) {
+                    const option = endMinuteEl.querySelector(`option[value="${currentSelections.endMinute}"]`);
+                    if (option) endMinuteEl.value = currentSelections.endMinute;
                 }
             }, 50);
             
             this.saveSettingsToSupabase();
         });
         
-        document.getElementById('directTimeInputToggle').addEventListener('change', e => {
+        directTimeToggle?.addEventListener('change', e => {
             if (e.target.checked && this.fullMinuteRange) {
                 // Disable full minute range when direct time input is enabled
                 this.fullMinuteRange = false;
-                document.getElementById('fullMinuteRangeToggle').checked = false;
+                if (fullMinuteToggle) fullMinuteToggle.checked = false;
             }
             this.directTimeInput = e.target.checked;
             this.populateTimeSelects();
@@ -399,6 +408,9 @@ export const app = {
         
         // Check if we should show the recurring feature introduction
         this.checkAndShowRecurringIntro();
+        
+        log.measure('app-init-complete', 'app-init-start');
+        log.debug('App initialization complete');
     },
 
     async displayUserEmail() {
@@ -420,9 +432,9 @@ export const app = {
                 }
             }
         } catch (error) {
-            console.error('Error fetching user email:', error);
+            log.error('Error fetching user email:', error);
             // Skjul email-elementet hvis det oppstår en feil
-            const userEmailContainer = document.getElementById('userEmailContainer');
+            const userEmailContainer = $id('userEmailContainer');
             if (userEmailContainer) {
                 userEmailContainer.style.display = 'none';
             }
@@ -430,7 +442,7 @@ export const app = {
     },
 
     toggleEmailDisplay() {
-        const userEmailDisplay = document.getElementById('userEmailDisplay');
+        const userEmailDisplay = $id('userEmailDisplay');
         
         if (!userEmailDisplay) return;
 
@@ -479,12 +491,12 @@ export const app = {
     },
 
     showEmailDisplay() {
-        const userEmailDisplay = document.getElementById('userEmailDisplay');
-        const userEmailContainer = document.getElementById('userEmailContainer');
-        const userEmail = document.getElementById('userEmail');
-        const monthSelector = document.querySelector('.month-selector');
-        const wageDisplay = document.getElementById('currentWage');
-        const emailToggleBtn = document.getElementById('emailToggleBtn');
+        const userEmailDisplay = $id('userEmailDisplay');
+        const userEmailContainer = $id('userEmailContainer');
+        const userEmail = $id('userEmail');
+        const monthSelector = $('.month-selector');
+        const wageDisplay = $id('currentWage');
+        const emailToggleBtn = $id('emailToggleBtn');
         
         // Find the parent span elements using proper traversal
         const monthSelectorSpan = monthSelector ? monthSelector.parentElement : null;
@@ -566,11 +578,11 @@ export const app = {
     },
 
     hideEmailDisplay() {
-        const userEmailDisplay = document.getElementById('userEmailDisplay');
-        const userEmailContainer = document.getElementById('userEmailContainer');
-        const monthSelector = document.querySelector('.month-selector');
-        const wageDisplay = document.getElementById('currentWage');
-        const emailToggleBtn = document.getElementById('emailToggleBtn');
+        const userEmailDisplay = $id('userEmailDisplay');
+        const userEmailContainer = $id('userEmailContainer');
+        const monthSelector = $('.month-selector');
+        const wageDisplay = $id('currentWage');
+        const emailToggleBtn = $id('emailToggleBtn');
         
         // Find the parent span elements using proper traversal
         const monthSelectorSpan = monthSelector ? monthSelector.parentElement : null;
@@ -625,16 +637,16 @@ export const app = {
     // Removed setupMobileEmailSlideOut since we now use a simpler toggle function
 
     populateTimeSelects() {
-        const startHour = document.getElementById('startHour');
-        const endHour = document.getElementById('endHour');
-        const startMinute = document.getElementById('startMinute');
-        const endMinute = document.getElementById('endMinute');
+        const startHour = $id('startHour');
+        const endHour = $id('endHour');
+        const startMinute = $id('startMinute');
+        const endMinute = $id('endMinute');
         
         // Also populate recurring time fields
-        const recurringStartHour = document.getElementById('recurringStartHour');
-        const recurringEndHour = document.getElementById('recurringEndHour');
-        const recurringStartMinute = document.getElementById('recurringStartMinute');
-        const recurringEndMinute = document.getElementById('recurringEndMinute');
+        const recurringStartHour = $id('recurringStartHour');
+        const recurringEndHour = $id('recurringEndHour');
+        const recurringStartMinute = $id('recurringStartMinute');
+        const recurringEndMinute = $id('recurringEndMinute');
         
         if (this.directTimeInput) {
             // Replace dropdowns with text inputs for direct time entry
@@ -915,7 +927,7 @@ export const app = {
                     series_id: seriesId
                 };
                 const { data: saved, error } = await window.supa.from('user_shifts').insert(insertData).select().single();
-                if (error) { console.error('Gjentakende feil:', error); continue; }
+                if (error) { log.error('Gjentakende feil:', error); continue; }
                 
                 this.userShifts.push({
                     id: saved.id,
@@ -951,7 +963,7 @@ export const app = {
             
             const { data: { user }, error: authError } = await window.supa.auth.getUser();
             if (authError) {
-                console.error('addShift: Authentication error:', authError);
+                log.error('addShift: Authentication error:', authError);
                 alert('Feil ved autentisering');
                 return;
             }
@@ -992,7 +1004,7 @@ export const app = {
                     .single();
                     
                 if (error) {
-                    console.error('addShift: Database error when saving shift:', error);
+                    log.error('addShift: Database error when saving shift:', error);
                     alert(`Kunne ikke lagre vakt for ${finalDateStr}: ${error.message}`);
                     continue; // Skip this date and continue with others
                 }
@@ -1009,9 +1021,10 @@ export const app = {
             
             this.updateDisplay();
             
-            document.getElementById('shiftForm').reset();
+            const shiftForm = $id('shiftForm');
+            if (shiftForm) shiftForm.reset();
             this.selectedDates = [];
-            document.querySelectorAll('.date-cell').forEach(cell => {
+            $all('.date-cell').forEach(cell => {
                 cell.classList.remove('selected');
             });
             
@@ -1027,7 +1040,7 @@ export const app = {
             }
             
         } catch (e) {
-            console.error('addShift: Critical error:', e);
+            log.error('addShift: Critical error:', e);
             alert(`En uventet feil oppstod: ${e.message}`);
         }
     },
@@ -1042,7 +1055,7 @@ export const app = {
     },
     
     populateDateGrid(targetMonth = null, targetYear = null) {
-        const dateGrid = document.getElementById('dateGrid');
+        const dateGrid = $id('dateGrid');
         if (!dateGrid) {
             // dateGrid element doesn't exist (modal not open), so skip population
             return;
@@ -1160,7 +1173,7 @@ export const app = {
         }
     },
     populateMonthDropdown() {
-        const dd = document.getElementById('monthDropdown');
+        const dd = $id('monthDropdown');
         dd.innerHTML = '';
         this.MONTHS.forEach((m,i)=>{
             const opt = document.createElement('div');
@@ -1176,7 +1189,7 @@ export const app = {
     },
 
     populateYearDropdown() {
-        const yearSelect = document.getElementById('yearSelect');
+        const yearSelect = $id('yearSelect');
         if (!yearSelect) return;
         
         yearSelect.innerHTML = '';
@@ -1206,7 +1219,7 @@ export const app = {
     },
     
     toggleMonthDropdown() {
-        const dd = document.getElementById('monthDropdown');
+        const dd = $id('monthDropdown');
         const isActive = dd.classList.contains('active');
         
         // Close any other open modals first
@@ -1230,7 +1243,7 @@ export const app = {
     },
     
     closeMonthDropdown() {
-        const dd = document.getElementById('monthDropdown');
+        const dd = $id('monthDropdown');
         dd.classList.remove('active');
         // Reset all positioning styles
         dd.style.zIndex = '';
@@ -1239,8 +1252,8 @@ export const app = {
     },
     
     positionMonthDropdown() {
-        const dd = document.getElementById('monthDropdown');
-        const monthButton = document.querySelector('.month-button');
+        const dd = $id('monthDropdown');
+        const monthButton = $('.month-button');
         if (dd && monthButton && dd.classList.contains('active')) {
             const rect = monthButton.getBoundingClientRect();
             dd.style.top = `${rect.bottom + 2}px`; // 2px below button
@@ -1252,7 +1265,7 @@ export const app = {
         this.currentMonth = month;
         
         // Reset progress bar state to ensure clean animation
-        const fill = document.querySelector('.progress-fill');
+        const fill = $('.progress-fill');
         if (fill) {
             fill.dataset.animating = 'false';
             fill.classList.remove('loading');
@@ -1277,7 +1290,7 @@ export const app = {
                 .eq('user_id', user.id);
 
             if (shiftsError) {
-                console.error('Error fetching shifts from Supabase:', shiftsError);
+                log.error('Error fetching shifts from Supabase:', shiftsError);
             } else {
                 // Map shifts to app format
                 this.userShifts = (shifts || []).map(s => {
@@ -1304,7 +1317,7 @@ export const app = {
                 .single();
 
             if (settingsError && settingsError.code !== 'PGRST116') {
-                console.error('Error fetching settings from Supabase:', settingsError);
+                log.error('Error fetching settings from Supabase:', settingsError);
                 // Set default values if no settings found
                 this.setDefaultSettings();
             } else if (settings) {
@@ -1345,7 +1358,7 @@ export const app = {
             this.populateMonthDropdown();
             // Don't call updateDisplay here - it will be called with animation in init()
         } catch (e) {
-            console.error('Error in loadFromSupabase:', e);
+            log.error('Error in loadFromSupabase:', e);
             this.setDefaultSettings();
         }
     },
@@ -1387,43 +1400,43 @@ export const app = {
     },
 
     updateSettingsUI() {
-        // Update UI elements to match loaded settings
-        const usePresetToggle = document.getElementById('usePresetToggle');
+        // Update UI elements to match loaded settings using cached DOM references
+        const usePresetToggle = $id('usePresetToggle');
         if (usePresetToggle) {
             usePresetToggle.checked = this.usePreset;
         }
 
-        const wageSelect = document.getElementById('wageSelect');
+        const wageSelect = $id('wageSelect');
         if (wageSelect) {
             wageSelect.value = this.currentWageLevel;
         }
 
-        const customWageInput = document.getElementById('customWageInput');
+        const customWageInput = $id('customWageInput');
         if (customWageInput) {
             customWageInput.value = this.customWage;
         }
 
-        const pauseDeductionToggle = document.getElementById('pauseDeductionToggle');
+        const pauseDeductionToggle = $id('pauseDeductionToggle');
         if (pauseDeductionToggle) {
             pauseDeductionToggle.checked = this.pauseDeduction;
         }
 
-        const fullMinuteRangeToggle = document.getElementById('fullMinuteRangeToggle');
+        const fullMinuteRangeToggle = $id('fullMinuteRangeToggle');
         if (fullMinuteRangeToggle) {
             fullMinuteRangeToggle.checked = this.fullMinuteRange;
         }
 
-        const directTimeInputToggle = document.getElementById('directTimeInputToggle');
+        const directTimeInputToggle = $id('directTimeInputToggle');
         if (directTimeInputToggle) {
             directTimeInputToggle.checked = this.directTimeInput;
         }
 
-        const currencyFormatToggle = document.getElementById('currencyFormatToggle');
+        const currencyFormatToggle = $id('currencyFormatToggle');
         if (currencyFormatToggle) {
             currencyFormatToggle.checked = this.currencyFormat;
         }
 
-        const compactViewToggle = document.getElementById('compactViewToggle');
+        const compactViewToggle = $id('compactViewToggle');
         if (compactViewToggle) {
             compactViewToggle.checked = this.compactView;
         }
@@ -1530,7 +1543,7 @@ export const app = {
                 .upsert(settingsData, { onConflict: 'user_id' });
 
             if (error) {
-                console.error('Error saving settings to Supabase:', error);
+                log.error('Error saving settings to Supabase:', error);
                 
                 // Try progressively smaller data sets
                 const minimalData = {
@@ -1543,11 +1556,11 @@ export const app = {
                     .upsert(minimalData, { onConflict: 'user_id' });
                     
                 if (minError) {
-                    console.error('Even minimal save failed:', minError);
+                    log.error('Even minimal save failed:', minError);
                 }
             }
         } catch (e) {
-            console.error('Error in saveSettingsToSupabase:', e);
+            log.error('Error in saveSettingsToSupabase:', e);
         }
     },
     loadFromLocalStorage() {
@@ -1573,7 +1586,7 @@ export const app = {
                 this.setDefaultSettings();
             }
         } catch (e) {
-            console.error('Error loading from localStorage:', e);
+            log.error('Error loading from localStorage:', e);
             this.setDefaultSettings();
         }
         // Don't call updateDisplay here - it will be called with animation in init()
@@ -1583,10 +1596,10 @@ export const app = {
     saveFormState() {
         const formState = {
             selectedDates: this.selectedDates ? this.selectedDates.map(date => date.toISOString()) : [],
-            startHour: document.getElementById('startHour')?.value || '',
-            startMinute: document.getElementById('startMinute')?.value || '',
-            endHour: document.getElementById('endHour')?.value || '',
-            endMinute: document.getElementById('endMinute')?.value || '',
+            startHour: $id('startHour')?.value || '',
+            startMinute: $id('startMinute')?.value || '',
+            endHour: $id('endHour')?.value || '',
+            endMinute: $id('endMinute')?.value || '',
             // Remove currentMonth from form state - it should always default to current month on page load
         };
         
@@ -1614,7 +1627,7 @@ export const app = {
                             this.selectedDates.push(savedDate);
                             // Find and select the corresponding date cell
                             const dateDay = savedDate.getDate();
-                            const dateCells = document.querySelectorAll('.date-cell');
+                            const dateCells = $all('.date-cell');
                             dateCells.forEach(cell => {
                                 const cellContent = cell.querySelector('.date-cell-content');
                                 if (cellContent && cellContent.textContent == dateDay && !cell.classList.contains('disabled')) {
@@ -1637,7 +1650,7 @@ export const app = {
                     if (savedMonth === this.currentMonth && savedYear === this.currentYear) {
                         this.selectedDates = [savedDate];
                         const dateDay = savedDate.getDate();
-                        const dateCells = document.querySelectorAll('.date-cell');
+                        const dateCells = $all('.date-cell');
                         dateCells.forEach(cell => {
                             const cellContent = cell.querySelector('.date-cell-content');
                             if (cellContent && cellContent.textContent == dateDay && !cell.classList.contains('disabled')) {
@@ -1649,10 +1662,10 @@ export const app = {
                 
                 // Restore time selections
                 setTimeout(() => {
-                    const startHour = document.getElementById('startHour');
-                    const startMinute = document.getElementById('startMinute');
-                    const endHour = document.getElementById('endHour');
-                    const endMinute = document.getElementById('endMinute');
+                    const startHour = $id('startHour');
+                    const startMinute = $id('startMinute');
+                    const endHour = $id('endHour');
+                    const endMinute = $id('endMinute');
                     
                     if (startHour && formState.startHour) startHour.value = formState.startHour;
                     if (startMinute && formState.startMinute) startMinute.value = formState.startMinute;
@@ -1668,7 +1681,7 @@ export const app = {
                 this.updateSelectedDatesInfo();
             }
         } catch (e) {
-            console.error('Error restoring form state:', e);
+            log.error('Error restoring form state:', e);
         }
     },
     
@@ -1683,7 +1696,7 @@ export const app = {
         const timeInputs = ['startHour', 'startMinute', 'endHour', 'endMinute'];
         
         timeInputs.forEach(inputId => {
-            const input = document.getElementById(inputId);
+            const input = $id(inputId);
             if (input) {
                 input.addEventListener('change', () => {
                     this.saveFormState();

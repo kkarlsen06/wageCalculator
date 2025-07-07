@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hjalmar Karlsen | Utvikler & Designer</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/style.min.css">
+    <link rel="icon" href="/assets/favicon.ico">
+    
+    <!-- Scripts -->
+    <script src="js/loading-helpers.min.js"></script>
+    <script src="js/error-handling.min.js"></script>
+    <script src="js/redirect.js"></script>
+    <script src="js/animations.min.js" defer></script>
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+    <!-- Skip links for accessibility -->
+    <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
+    
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" role="navigation" aria-label="Hovednavigasjon">
+        <div class="nav-container">
+            <a href="#" class="nav-logo" aria-label="Gå til toppen av siden">
+                <span class="logo-text">kkarlsen_06 • DEV</span>
+            </a>
+            <div class="nav-menu" role="menubar">
+                <a href="#hero" class="nav-link" role="menuitem">Hjem</a>
+                <a href="#project" class="nav-link" role="menuitem">Prosjekt</a>
+                <a href="#tech" class="nav-link" role="menuitem">Teknologi</a>
+                <a href="https://github.com/kkarlsen06" target="_blank" rel="noopener noreferrer" class="nav-link nav-github" role="menuitem" aria-label="Åpne GitHub-profil i ny fane">
+                    <i class="fab fa-github" aria-hidden="true"></i>
+                    <span>GitHub</span>
+                </a>
+            </div>
+            <button class="nav-toggle" aria-label="Åpne/lukk navigasjonsmeny" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content">
+        <!-- Hero Section -->
+        <section id="hero" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <!-- BADGE SECTION - Separate from title -->
+                <div class="hero-badge">
+                    <span class="badge-text">Tilgjengelig for oppdrag</span>
+                    <span class="badge-dot"></span>
+                </div>
+                
+                <!-- TITLE SECTION - Title and Description -->
+                <div class="hero-top-section">
+                    <h1 class="hero-title">
+                        <span class="hero-name">Hjalmar Karlsen</span>
+                        <span class="hero-subtitle">
+                            <span class="hero-subtitle-text">Alta, Norge</span>
+                        </span>
+                    </h1>
+                    
+                    <p class="hero-description">
+                        <span class="hero-description-short">Jeg brenner for å skape digitale løsninger som faktisk løser reelle problemer.</span>
+                        <span class="hero-description-full"> Spesialisert på moderne webutvikling med fokus på brukervennlighet og ytelse.</span>
+                    </p>
+                </div>
+                
+                <!-- BOTTOM THIRD - CTA and Stats -->
+                <div class="hero-bottom-section">
+                    <div class="hero-cta">
+                        <a href="/kalkulator" class="btn btn-primary btn-large">
+                            <i class="fas fa-calculator"></i>
+                            <span>Lønnskalkulator</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        <a href="#project" class="btn btn-secondary btn-large">
+                            <span>Mitt arbeid</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <span class="stat-number">100%</span>
+                            <span class="stat-label">Tariff-nøyaktig</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">5+</span>
+                            <span class="stat-label">Fornøyde brukere</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">24/7</span>
+                            <span class="stat-label">Tilgjengelig</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hero-visual">
+                <div class="floating-card">
+                    <div class="card-content">
+                        <div class="code-preview">
+                            <div class="code-header">
+                                <span class="code-dot red"></span>
+                                <span class="code-dot yellow"></span>
+                                <span class="code-dot green"></span>
+                            </div>
+                            <pre><code><span class="code-comment">// Beregn total lønn for alle måneder</span>
+<span class="code-variable">monthShifts</span>.<span class="code-function">forEach</span>((<span class="code-param">month</span>) => {
+  <span class="code-keyword">const</span> <span class="code-variable">totalHours</span> = <span class="code-param">month</span>.<span class="code-variable">shifts</span>.<span class="code-function">reduce</span>((<span class="code-param">sum</span>, <span class="code-param">shift</span>) => {
+    <span class="code-keyword">return</span> <span class="code-param">sum</span> + <span class="code-function">calculateHours</span>(<span class="code-param">shift</span>);
+  }, <span class="code-number">0</span>);
+  
+  <span class="code-keyword">const</span> <span class="code-variable">monthlyPay</span> = <span class="code-variable">totalHours</span> * <span class="code-variable">hourlyRate</span>;
+  <span class="code-keyword">const</span> <span class="code-variable">bonuses</span> = <span class="code-function">calculateBonuses</span>(<span class="code-param">month</span>.<span class="code-variable">shifts</span>);<span class="code-mobile-truncate">
+  
+  <span class="code-param">month</span>.<span class="code-variable">totalPay</span> = <span class="code-variable">monthlyPay</span> + <span class="code-variable">bonuses</span>;
+  
+  <span class="code-function">console</span>.<span class="code-function">log</span>(<span class="code-string">`${month.name}: ${month.totalPay} kr`</span>);
+});</span></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="scroll-indicator">
+            <div class="mouse">
+                <div class="wheel"></div>
+            </div>
+            <span class="scroll-text">Scroll for mer</span>
+        </div>
+    </section>
+
+    <!-- Main Project Section -->
+    <section id="project" class="project-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">Fremhevet prosjekt</span>
+                <h2 class="section-title">Lønnskalkulator</h2>
+                <p class="section-description">
+                    En komplett løsning for beregning av lønn, tillegg og kompensasjon. 
+                    Har du Virketariff? Denne kalkulatoren er laget for deg!
+                    <br> Eller legg inn lønn og tillegg selv.
+                </p>
+            </div>
+            
+            <div class="project-showcase">
+                <div class="showcase-content">
+                    <div class="showcase-features">
+                        <h3 class="features-title">Hovedfunksjoner</h3>
+                        <ul class="features-list">
+                            <li class="feature-item">
+                                <i class="fas fa-chart-line"></i>
+                                <div>
+                                    <h4>Avanserte beregninger</h4>
+                                    <p>Presise kalkulasjoner basert på gjeldende tariffavtaler</p>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-clock"></i>
+                                <div>
+                                    <h4>Sanntidsoppdateringer</h4>
+                                    <p>Se resultatene mens du fyller inn informasjon</p>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <div>
+                                    <h4>Sikker datalagring</h4>
+                                    <p>Dine data er trygge med Supabase-integrasjon</p>
+                                </div>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-mobile-alt"></i>
+                                <div>
+                                    <h4>Responsivt design</h4>
+                                    <p>Fungerer perfekt på alle enheter</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="showcase-preview">
+                        <div class="preview-window">
+                            <div class="window-header">
+                                <div class="window-controls">
+                                    <span class="control red"></span>
+                                    <span class="control yellow"></span>
+                                    <span class="control green"></span>
+                                </div>
+                                <span class="window-title">Lønnskalkulator</span>
+                            </div>
+                            <div class="window-content">
+                                <div class="preview-stats">
+                                    <div class="preview-stat">
+                                        <span class="stat-icon">$</span>
+                                        <span class="stat-value">45.750,-</span>
+                                        <span class="stat-label">Månedslønn</span>
+                                    </div>
+                                    <div class="preview-stat">
+                                        <span class="stat-icon">+</span>
+                                        <span class="stat-value">+18%</span>
+                                        <span class="stat-label">Tillegg</span>
+                                    </div>
+                                    <div class="preview-stat">
+                                        <span class="stat-icon">⏱</span>
+                                        <span class="stat-value">162.5t</span>
+                                        <span class="stat-label">Timer</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <a href="/kalkulator" class="showcase-cta">
+                            <span>Prøv kalkulatoren nå</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack Section -->
+    <section id="tech" class="tech-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">Teknologi</span>
+                <h2 class="section-title">Moderne stack</h2>
+                <p class="section-description">
+                    Bygget med de nyeste verktøyene for optimal ytelse og skalerbarhet
+                </p>
+            </div>
+            
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <div class="tech-icon">
+                        <i class="fab fa-html5"></i>
+                    </div>
+                    <h3>HTML5</h3>
+                    <p>Semantisk markup</p>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">
+                        <i class="fab fa-css3-alt"></i>
+                    </div>
+                    <h3>CSS3</h3>
+                    <p>Moderne styling</p>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">
+                        <i class="fab fa-js"></i>
+                    </div>
+                    <h3>JavaScript</h3>
+                    <p>ES2024 features</p>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3>Supabase</h3>
+                    <p>Backend & Auth</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <p>&copy; 2025 Hjalmar Kristensen-Karlsen</p>
+                <p>Laget med <span class="heart">❤️</span> i Norge</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/kkarlsen06" target="_blank" aria-label="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="mailto:kkarlsen06@kkarlsen.art" aria-label="Email">
+                    <i class="fas fa-envelope"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
