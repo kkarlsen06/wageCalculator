@@ -3472,11 +3472,6 @@ input:checked + .slider:before {
   .form-actions .btn {
     flex: 1;
     min-width: auto;
-    margin-right: 8px;
-  }
-  
-  .form-actions .btn:last-child {
-    margin-right: 0;
   }
 }
 
