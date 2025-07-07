@@ -30,8 +30,8 @@ function minifyJS(js) {
         .replace(/(?<!:)\/\/.*$/gm, '')
         // Remove multi-line comments
         .replace(/\/\*[\s\S]*?\*\//g, '')
-        // Remove console.log statements (production optimization)
-        .replace(/console\.(log|debug|info|warn|error)\([^)]*\);?\s*/g, '')
+        // Remove only standalone console.log calls (preserve essential logging in utility classes)
+        .replace(/(?<![\w.])console\.log\([^)]*\);?\s*/g, '')
         // Remove extra whitespace
         .replace(/\s+/g, ' ')
         // Remove whitespace around operators
