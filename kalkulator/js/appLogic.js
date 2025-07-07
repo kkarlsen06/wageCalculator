@@ -180,7 +180,6 @@ if (typeof window !== 'undefined') {
 }
 export const app = {
     // Constants
-    YEAR: 2025,
     PAUSE_THRESHOLD: 5.5,
     PAUSE_DEDUCTION: 0.5,
     MONTHS: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',
@@ -213,7 +212,8 @@ export const app = {
     },
     // State
     shifts: [],
-    currentMonth: new Date().getMonth() + 1, // Start in current month (June 2025)
+    currentMonth: new Date().getMonth() + 1, // Start in current month
+    currentYear: new Date().getFullYear(), // Start in current year
     currentWageLevel: 1,
     usePreset: true,
     customWage: 200,
@@ -243,6 +243,7 @@ export const app = {
         // Show UI elements
         this.populateTimeSelects();
         this.populateMonthDropdown();
+        this.populateYearDropdown();
         
         // Display user email
         await this.displayUserEmail();
@@ -963,7 +964,7 @@ export const app = {
                 // Validate that the selected date is in the current UI month
                 if (newShift.date.getMonth() + 1 !== this.currentMonth) {
                     // Correct the date to be in the current UI month
-                    const correctedDate = new Date(this.YEAR, this.currentMonth - 1, selectedDate.getDate());
+                    const correctedDate = new Date(this.currentYear, this.currentMonth - 1, selectedDate.getDate());
                     newShift.date = correctedDate;
                 }
                 
@@ -1039,7 +1040,7 @@ export const app = {
             // dateGrid element doesn't exist (modal not open), so skip population
             return;
         }
-        const year = this.YEAR;
+        const year = this.currentYear;
         const monthIdx = this.currentMonth - 1;
         const firstDay = new Date(year, monthIdx, 1);
         const lastDay = new Date(year, monthIdx+1, 0);
@@ -1149,7 +1150,7 @@ export const app = {
         this.MONTHS.forEach((m,i)=>{
             const opt = document.createElement('div');
             opt.className='month-option';
-            opt.textContent = `${m.charAt(0).toUpperCase() + m.slice(1)} ${this.YEAR}`;
+            opt.textContent = `${m.charAt(0).toUpperCase() + m.slice(1)} ${this.currentYear}`;
             if(i+1===this.currentMonth) opt.classList.add('current');
             opt.addEventListener('click',()=>{
                 this.changeMonth(i+1);
@@ -1157,6 +1158,36 @@ export const app = {
             });
             dd.appendChild(opt);
         });
+    },
+
+    populateYearDropdown() {
+        const yearSelect = document.getElementById('yearSelect');
+        if (!yearSelect) return;
+        
+        yearSelect.innerHTML = '';
+        
+        // Generate years from 2020 to current year + 5 years
+        const currentYear = new Date().getFullYear();
+        const startYear = 2020;
+        const endYear = currentYear + 5;
+        
+        for (let year = endYear; year >= startYear; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            
+            if (year === this.currentYear) {
+                option.selected = true;
+            }
+            
+            yearSelect.appendChild(option);
+        }
+    },
+
+    updateYear(year) {
+        this.currentYear = parseInt(year);
+        this.updateDisplay(true); // Enable animation when switching years
+        this.saveSettingsToSupabase(); // Save the new year to database
     },
     
     toggleMonthDropdown() {
@@ -1269,6 +1300,8 @@ export const app = {
                 };
                 // Always set to current month on page load
                 this.currentMonth = new Date().getMonth() + 1;
+                // Load selected year, default to current year if not set
+                this.currentYear = settings.current_year || new Date().getFullYear();
                     
                 this.pauseDeduction = settings.pause_deduction || false;
                 this.fullMinuteRange = settings.full_minute_range || false;
@@ -1304,6 +1337,7 @@ export const app = {
             sunday: []
         };
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
+        this.currentYear = new Date().getFullYear(); // Default to current year
         this.pauseDeduction = false;
         this.fullMinuteRange = false; // Default to 15-minute intervals
         this.directTimeInput = false; // Default to dropdown time selection
@@ -1378,6 +1412,9 @@ export const app = {
             document.body.classList.remove('compact-view');
         }
 
+        // Populate year dropdown to reflect loaded year
+        this.populateYearDropdown();
+
         // Toggle preset/custom sections
         this.togglePresetSections();
         
@@ -1437,6 +1474,7 @@ export const app = {
                 if ('current_wage_level' in existingSettings) settingsData.current_wage_level = this.currentWageLevel;
                 if ('custom_wage' in existingSettings) settingsData.custom_wage = this.customWage;
                 // Remove currentMonth from settings - it should always default to current month on page load
+                if ('current_year' in existingSettings) settingsData.current_year = this.currentYear;
                 if ('pause_deduction' in existingSettings) settingsData.pause_deduction = this.pauseDeduction;
                 if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
@@ -1453,6 +1491,7 @@ export const app = {
                 settingsData.wage_level = this.currentWageLevel;
                 settingsData.custom_wage = this.customWage;
                 // Remove currentMonth from settings - it should always default to current month on page load
+                settingsData.current_year = this.currentYear;
                 settingsData.pause_deduction = this.pauseDeduction;
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
@@ -1548,7 +1587,7 @@ export const app = {
                         const savedYear = savedDate.getFullYear();
                         
                         // Only restore if the saved date is in the currently displayed month
-                        if (savedMonth === this.currentMonth && savedYear === this.YEAR) {
+                        if (savedMonth === this.currentMonth && savedYear === this.currentYear) {
                             this.selectedDates.push(savedDate);
                             // Find and select the corresponding date cell
                             const dateDay = savedDate.getDate();
@@ -1572,7 +1611,7 @@ export const app = {
                     const savedMonth = savedDate.getMonth() + 1;
                     const savedYear = savedDate.getFullYear();
                     
-                    if (savedMonth === this.currentMonth && savedYear === this.YEAR) {
+                    if (savedMonth === this.currentMonth && savedYear === this.currentYear) {
                         this.selectedDates = [savedDate];
                         const dateDay = savedDate.getDate();
                         const dateCells = document.querySelectorAll('.date-cell');
@@ -1939,22 +1978,22 @@ export const app = {
     },
     updateDisplay(shouldAnimate = false) {
         this.updateHeader();
+        this.updateNextShiftCard(); // Move before updateStats to ensure correct viewport calculations
         this.updateStats(shouldAnimate);
         this.updateShiftList();
         this.updateShiftCalendar();
-        this.updateNextShiftCard();
         this.populateDateGrid();
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
-        document.getElementById('currentMonth').textContent = `${monthName} ${this.YEAR}`;
+        document.getElementById('currentMonth').textContent = `${monthName} ${this.currentYear}`;
         
         // Update the total card label to match selected month
         const totalLabel = document.querySelector('.total-label');
         if (totalLabel) {
             // Check if current month is the actual current month
             const now = new Date();
-            const isCurrentMonth = this.currentMonth === (now.getMonth() + 1) && this.YEAR === now.getFullYear();
+            const isCurrentMonth = this.currentMonth === (now.getMonth() + 1) && this.currentYear === now.getFullYear();
             
             if (isCurrentMonth) {
                 totalLabel.textContent = 'Brutto';
@@ -1972,7 +2011,7 @@ export const app = {
         let totalBonus = 0;
         const monthShifts = this.shifts.filter(shift =>
             shift.date.getMonth() === this.currentMonth - 1 &&
-            shift.date.getFullYear() === this.YEAR
+            shift.date.getFullYear() === this.currentYear
         );
         monthShifts.forEach(shift => {
             const calc = this.calculateShift(shift);
@@ -2000,7 +2039,7 @@ export const app = {
         const deltaLabelEl = document.querySelector('.total-label');
         if (deltaLabelEl) {
             const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
-            const prevYear = this.currentMonth === 1 ? this.YEAR - 1 : this.YEAR;
+            const prevYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
             const prevShifts = this.shifts.filter(s =>
                 s.date.getMonth() === prevMonth - 1 &&
                 s.date.getFullYear() === prevYear
@@ -2047,7 +2086,7 @@ export const app = {
         const avgPerShift = shiftCount > 0 ? totalAmount / shiftCount : 0;
 
         const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
-        const prevYear = this.currentMonth === 1 ? this.YEAR - 1 : this.YEAR;
+        const prevYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
         const prevShifts = this.shifts.filter(s =>
             s.date.getMonth() === prevMonth - 1 &&
             s.date.getFullYear() === prevYear
@@ -2118,10 +2157,18 @@ export const app = {
 
         container.innerHTML = '';
 
+        // Don't display stat cards if there are no shifts in the current month
+        const monthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === this.currentMonth - 1 &&
+            shift.date.getFullYear() === this.currentYear
+        );
+        
+        if (monthShifts.length === 0) {
+            return; // No shifts means no stat cards to display
+        }
+
         const viewport = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         const shiftSection = document.querySelector('.shift-section');
-        const header = document.querySelector('.header');
-        const headerHeight = header ? header.getBoundingClientRect().height : 0;
 
         // Account for the next shift card height when it's visible
         const nextShiftCard = document.getElementById('nextShiftCard');
@@ -2131,19 +2178,21 @@ export const app = {
             nextShiftCardHeight = nextShiftRect.height;
         }
 
-        // Calculate available space more accurately
+        // Calculate available space more simply and accurately
         const containerRect = container.getBoundingClientRect();
         const containerTop = containerRect.top;
         
-        // Calculate cutoff point - use shift section top as boundary
-        let cutoff = viewport - headerHeight;
+        // Calculate bottom boundary - either viewport bottom or start of shift section
+        let bottomBoundary = viewport;
         if (shiftSection) {
             const shiftSectionTop = shiftSection.getBoundingClientRect().top;
-            cutoff = Math.min(cutoff, shiftSectionTop - headerHeight);
+            bottomBoundary = Math.min(bottomBoundary, shiftSectionTop);
         }
         
-        // Account for next shift card height and add some padding
-        const availableHeight = cutoff - containerTop - nextShiftCardHeight - 20; // 20px padding
+        // Calculate available height: from container top to bottom boundary, minus next shift card height
+        // Be maximally aggressive - use ALL available space
+        const containerStyles = window.getComputedStyle(container);
+        const availableHeight = bottomBoundary - containerTop - nextShiftCardHeight;
         
         // Create a temporary card to measure dimensions
         const tempCard = document.createElement('div');
@@ -2152,17 +2201,16 @@ export const app = {
         tempCard.style.visibility = 'hidden';
         tempCard.style.position = 'absolute';
         tempCard.style.top = '-9999px';
-        document.body.appendChild(tempCard);
+        container.appendChild(tempCard); // Append to container for more accurate measurement
         
         // Force layout calculation
         const cardHeight = tempCard.getBoundingClientRect().height;
-        document.body.removeChild(tempCard);
+        container.removeChild(tempCard);
         
         // Get grid gap from computed styles
-        const containerStyles = window.getComputedStyle(container);
         const gridGap = parseInt(containerStyles.gap) || 15;
         
-        // Calculate how many cards can fit
+        // Calculate how many cards can fit horizontally
         const containerWidth = containerRect.width;
         const cardMinWidth = 160; // From CSS minmax(160px, 1fr)
         const cardsPerRow = Math.floor((containerWidth + gridGap) / (cardMinWidth + gridGap));
@@ -2172,14 +2220,18 @@ export const app = {
         const totalRows = cardsPerRow > 0 ? Math.ceil(stats.length / cardsPerRow) : 0;
         const totalHeight = totalRows * cardHeight + Math.max(0, totalRows - 1) * gridGap;
         
-        // Determine how many cards we can actually display
+        // Determine how many cards we can actually display - be more aggressive
         let maxCards = stats.length;
         if (cardsPerRow === 0) {
             // If container is too narrow to fit any cards horizontally, show no cards
             maxCards = 0;
         } else if (totalHeight > availableHeight) {
-            const maxRows = Math.floor((availableHeight + gridGap) / (cardHeight + gridGap));
+            // Be more aggressive - calculate exactly how many rows can fit
+            const maxRows = Math.floor(availableHeight / (cardHeight + gridGap)) + 1; // +1 to be more aggressive
             maxCards = Math.max(0, maxRows * cardsPerRow);
+            
+            // But don't exceed the total number of stats available
+            maxCards = Math.min(maxCards, stats.length);
         }
 
         // Add cards up to the limit
@@ -2201,7 +2253,7 @@ export const app = {
         const shiftList = document.getElementById('shiftList');
         const monthShifts = this.shifts.filter(shift =>
             shift.date.getMonth() === this.currentMonth - 1 &&
-            shift.date.getFullYear() === this.YEAR
+            shift.date.getFullYear() === this.currentYear
         );
         
         if (monthShifts.length === 0) {
@@ -2284,8 +2336,9 @@ export const app = {
 
         const now = new Date();
         const currentMonth = now.getMonth() + 1;
-        // Removed currentYear comparison to this.YEAR to avoid hiding the card when the hard-coded year differs from the actual year
-        if (this.currentMonth !== currentMonth) {
+        const currentYear = now.getFullYear();
+        // Hide the next shift card if we're not viewing the current month and year
+        if (this.currentMonth !== currentMonth || this.currentYear !== currentYear) {
             nextShiftCard.style.display = 'none';
             return;
         }
@@ -2412,7 +2465,7 @@ export const app = {
         const container = document.getElementById('shiftCalendar');
         if (!container) return;
 
-        const year = this.YEAR;
+        const year = this.currentYear;
         const monthIdx = this.currentMonth - 1;
         const firstDay = new Date(year, monthIdx, 1);
         const lastDay = new Date(year, monthIdx + 1, 0);
@@ -2695,7 +2748,7 @@ export const app = {
 
     // Create breakdown calendar view
     createBreakdownCalendar(container, type) {
-        const year = this.YEAR;
+        const year = this.currentYear;
         const monthIdx = this.currentMonth - 1;
         const firstDay = new Date(year, monthIdx, 1);
         const lastDay = new Date(year, monthIdx + 1, 0);
@@ -2735,7 +2788,7 @@ export const app = {
         // Get shifts for current month and create lookup by date
         const monthShifts = this.shifts.filter(s => 
             s.date.getMonth() === this.currentMonth - 1 && 
-            s.date.getFullYear() === this.YEAR
+            s.date.getFullYear() === this.currentYear
         );
         
         const shiftsByDate = {};
@@ -3275,7 +3328,7 @@ export const app = {
 
     // Create stat calendar view
     createStatCalendar(container, statId) {
-        const year = this.YEAR;
+        const year = this.currentYear;
         const monthIdx = this.currentMonth - 1;
         const firstDay = new Date(year, monthIdx, 1);
         const lastDay = new Date(year, monthIdx + 1, 0);
@@ -3315,7 +3368,7 @@ export const app = {
         // Get shifts for current month and create lookup by date
         const monthShifts = this.shifts.filter(s => 
             s.date.getMonth() === this.currentMonth - 1 && 
-            s.date.getFullYear() === this.YEAR
+            s.date.getFullYear() === this.currentYear
         );
         
         const shiftsByDate = {};
@@ -4175,7 +4228,7 @@ export const app = {
         
         grid.innerHTML = '';
         
-        const year = this.YEAR;
+        const year = this.currentYear;
         const month = this.currentMonth - 1; // Convert to 0-based
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
@@ -5073,7 +5126,7 @@ export const app = {
         const label = document.getElementById('currentMonthLabel');
         if (label) {
             const monthName = this.MONTHS[this.currentMonth - 1];
-            label.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${this.YEAR}`;
+            label.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${this.currentYear}`;
         }
     },
 
@@ -5095,7 +5148,7 @@ export const app = {
                 // Current month (from month picker)
                 filteredShifts = this.shifts.filter(shift =>
                     shift.date.getMonth() === this.currentMonth - 1 &&
-                    shift.date.getFullYear() === this.YEAR
+                    shift.date.getFullYear() === this.currentYear
                 );
             } else if (period === 'custom') {
                 // Custom period

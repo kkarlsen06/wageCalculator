@@ -340,11 +340,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     function checkFloatingBarVisibility() {
       const rect = shiftSection.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      const isMobile = window.innerWidth <= 480;
       
       // Show floating bar when shift section is in view
-      // On mobile, be more generous about showing the floating bar
-      const threshold = isMobile ? 0.2 : 0.5; // Show when 20% on mobile, 50% on desktop
+      const threshold = 0.5; // Show when 50% of viewport shows shift section
       const shouldBeVisible = rect.top < viewportHeight * threshold && rect.bottom > viewportHeight * 0.1;
       
       if (shouldBeVisible && !isVisible) {
@@ -352,31 +350,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         isVisible = true;
         clearTimeout(animationTimeout);
         floatingBar.style.display = 'flex';
-        // Clear any inline positioning that might override CSS, then force mobile positioning
-        floatingBar.style.bottom = '';
-        floatingBar.style.left = '';
-        floatingBar.style.transform = '';
-        floatingBar.style.position = '';
-        
-        // Force correct positioning on mobile
-        if (isMobile) {
-          setTimeout(() => {
-            floatingBar.style.bottom = '140px';
-            floatingBar.style.left = '50%';
-            floatingBar.style.transform = 'translateX(-50%)';
-            floatingBar.style.position = 'fixed';
-            floatingBar.style.zIndex = '9999';
-          }, 50); // Small delay to ensure CSS has been applied
-        }
-        
-        // Use different animation for mobile since transform is different
-        floatingBar.style.animation = isMobile ? 'fadeIn 0.3s ease-out forwards' : 'fadeInUp 0.3s ease-out forwards';
+        floatingBar.style.animation = 'fadeInUp 0.3s ease-out forwards';
         floatingBar.style.opacity = '1';
       } else if (!shouldBeVisible && isVisible) {
         // Hide with fade out animation
         isVisible = false;
         clearTimeout(animationTimeout);
-        floatingBar.style.animation = isMobile ? 'fadeOut 0.3s ease-out forwards' : 'fadeOutDown 0.3s ease-out forwards';
+        floatingBar.style.animation = 'fadeOutDown 0.3s ease-out forwards';
         floatingBar.style.opacity = '0';
         
         // Hide completely after animation completes

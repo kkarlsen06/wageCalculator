@@ -3642,6 +3642,7 @@ input:checked + .slider:before {
   justify-content: center;
   box-shadow: 0 4px 16px -4px var(--shadow-accent);
   transition: all var(--speed-normal) var(--ease-default);
+  margin-left: 16px;
 }
 
 .calendar-icon-large:hover {
@@ -3711,9 +3712,7 @@ input:checked + .slider:before {
   .shift-history-header {
     padding: 12px 16px;
     margin-bottom: 16px;
-    flex-direction: column;
     gap: 12px;
-    text-align: center;
   }
   
   .shift-history-header .header-left,
@@ -3722,11 +3721,11 @@ input:checked + .slider:before {
   }
   
   .shift-history-header .header-right {
-    text-align: center;
+    text-align: left;
   }
   
   .header-text {
-    align-items: center;
+    align-items: flex-start;
   }
   
   .calendar-icon-large {
