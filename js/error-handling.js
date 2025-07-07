@@ -245,11 +245,26 @@ class ErrorHandler {
         if (!messageElement || !messageElement.parentNode) return;
 
         messageElement.classList.add('message-exit');
+        
+        // Use transitionend event instead of setTimeout for better timing
+        const handleTransitionEnd = (event) => {
+            if (event.target === messageElement) {
+                messageElement.removeEventListener('transitionend', handleTransitionEnd);
+                if (messageElement.parentNode) {
+                    messageElement.parentNode.removeChild(messageElement);
+                }
+            }
+        };
+        
+        messageElement.addEventListener('transitionend', handleTransitionEnd);
+        
+        // Fallback timeout in case transition doesn't fire
         setTimeout(() => {
             if (messageElement.parentNode) {
+                messageElement.removeEventListener('transitionend', handleTransitionEnd);
                 messageElement.parentNode.removeChild(messageElement);
             }
-        }, 300);
+        }, 350);
     }
 
     /**

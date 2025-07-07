@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Enhanced authentication guard with retry logic
   let session = null;
   let retryCount = 0;
-  const maxRetries = 5;
+  const maxRetries = 3; // Reduced from 5 to 3
 
   // Create and show welcome screen
   async function showWelcomeScreen() {
@@ -106,12 +106,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       span.style.animation = `letter-in 0.5s forwards ${i * 0.1}s`;
     });
     const inDuration = 500 + allLetters.length * 100; // ms
-    await new Promise(res => setTimeout(res, inDuration + 100)); // Reduced from 300ms to 100ms
+    await new Promise(res => setTimeout(res, inDuration + 50)); // Reduced buffer
 
     // Animate whole text out
     welcomeContainer.style.transformOrigin = 'center center';
     welcomeContainer.style.animation = `text-out 0.5s forwards`;
-    await new Promise(res => setTimeout(res, 800));  // 0.5s animation + buffer
+    await new Promise(res => setTimeout(res, 600));  // Reduced buffer
 
     // Remove welcome overlay
     welcomeScreen.remove();
@@ -227,98 +227,92 @@ document.addEventListener('DOMContentLoaded', async () => {
   function addEventListeners() {
     if (eventListenersAdded) return; // Prevent duplicate listeners
     
-    // Use event delegation for shift items to handle dynamically generated content
+    // Consolidated click event delegation
     document.body.addEventListener('click', (event) => {
-      // Check if we clicked on any buttons first - if so, don't trigger shift details
-      if (event.target.closest('.delete-shift-btn') || 
-          event.target.closest('.edit-shift-btn') ||
-          event.target.closest('.btn')) {
-        return; // Let the button handlers take care of this
-      }
-      
-      const shiftItem = event.target.closest('[data-shift-id]');
-      if (shiftItem) {
-        const shiftId = shiftItem.getAttribute('data-shift-id');
-        console.log('Shift clicked, ID:', shiftId); // Debug log
-        app.showShiftDetails(shiftId);
-      }
-    });
-
-    // Use event delegation for delete shift buttons
-    document.body.addEventListener('click', (event) => {
+      // Delete shift buttons
       const deleteBtn = event.target.closest('.delete-shift-btn');
       if (deleteBtn) {
         event.stopPropagation();
         const shiftIndex = parseInt(deleteBtn.getAttribute('data-shift-index'));
         app.deleteShift(shiftIndex).then(() => {
-          // Close the shift details modal if it's open
           app.closeShiftDetails();
         });
+        return;
       }
-    });
 
-    // Use event delegation for edit shift buttons
-    document.body.addEventListener('click', (event) => {
+      // Edit shift buttons
       const editBtn = event.target.closest('.edit-shift-btn');
       if (editBtn) {
         event.stopPropagation();
         const shiftId = editBtn.getAttribute('data-shift-id');
         app.editShift(shiftId);
+        return;
       }
-    });
-    
-    eventListenersAdded = true;
 
-    // Use event delegation for close shift details button
-    document.body.addEventListener('click', (event) => {
+      // Close shift details button
       const closeBtn = event.target.closest('.close-shift-details');
       if (closeBtn) {
         event.stopPropagation();
         app.closeShiftDetails();
+        return;
       }
-    });
 
-    // Handle modal close when clicking outside modal content
-    document.body.addEventListener('click', (event) => {
-      const modal = event.target.closest('.modal');
-      if (modal && event.target === modal) {
-        // Clicked on modal overlay, close the modal
-        if (modal.id === 'addShiftModal') {
-          app.closeAddShiftModal();
-        } else if (modal.id === 'editShiftModal') {
-          app.closeEditShift();
-        } else if (modal.id === 'settingsModal') {
-          app.closeSettings();
-        } else if (modal.id === 'breakdownModal') {
-          app.closeBreakdown();
-        }
-      }
-    });
-
-    // Handle ESC key to close modals
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        // Check which modal is open and close it
-        if (document.getElementById('addShiftModal').style.display === 'block') {
-          app.closeAddShiftModal();
-        } else if (document.getElementById('editShiftModal').style.display === 'block') {
-          app.closeEditShift();
-        } else if (document.getElementById('settingsModal').style.display === 'block') {
-          app.closeSettings();
-        } else if (document.getElementById('breakdownModal').style.display === 'block') {
-          app.closeBreakdown();
-        }
-      }
-    });
-
-    // Handle remove bonus slot buttons using event delegation
-    document.body.addEventListener('click', (event) => {
+      // Remove bonus slot buttons
       const removeBtn = event.target.closest('.remove-bonus');
       if (removeBtn) {
         event.stopPropagation();
         app.removeBonusSlot(removeBtn);
+        return;
+      }
+
+      // Modal close when clicking outside modal content
+      const modal = event.target.closest('.modal');
+      if (modal && event.target === modal) {
+        const modalId = modal.id;
+        if (modalId === 'addShiftModal') {
+          app.closeAddShiftModal();
+        } else if (modalId === 'editShiftModal') {
+          app.closeEditShift();
+        } else if (modalId === 'settingsModal') {
+          app.closeSettings();
+        } else if (modalId === 'breakdownModal') {
+          app.closeBreakdown();
+        }
+                return;
+      }
+
+      // Shift items (should be last to avoid conflicts)
+      if (!event.target.closest('.btn')) {
+        const shiftItem = event.target.closest('[data-shift-id]');
+        if (shiftItem) {
+          const shiftId = shiftItem.getAttribute('data-shift-id');
+          app.showShiftDetails(shiftId);
+        }
       }
     });
+
+     // Handle ESC key to close modals
+     document.addEventListener('keydown', (event) => {
+       if (event.key === 'Escape') {
+         // Check which modal is open and close it
+         const modalActions = {
+           'addShiftModal': () => app.closeAddShiftModal(),
+           'editShiftModal': () => app.closeEditShift(),
+           'settingsModal': () => app.closeSettings(),
+           'breakdownModal': () => app.closeBreakdown()
+         };
+         
+         for (const [modalId, closeAction] of Object.entries(modalActions)) {
+           const modal = document.getElementById(modalId);
+           if (modal && modal.style.display === 'block') {
+             closeAction();
+             break;
+           }
+         }
+       }
+     });
+    
+    eventListenersAdded = true;
   }
 
   // Call addEventListeners once - event delegation handles dynamic content
@@ -336,6 +330,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     let isVisible = false;
     let animationTimeout = null;
+    let ticking = false;
     
     function checkFloatingBarVisibility() {
       const rect = shiftSection.getBoundingClientRect();
@@ -366,10 +361,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }, 300);
       }
+      
+      ticking = false;
     }
     
-    // Check on scroll
-    snapContainer.addEventListener('scroll', checkFloatingBarVisibility);
+    // Check on scroll with throttling
+    snapContainer.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(checkFloatingBarVisibility);
+        ticking = true;
+      }
+    });
+    
     // Check initially
     checkFloatingBarVisibility();
   }

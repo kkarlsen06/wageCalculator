@@ -13,38 +13,28 @@
         history.scrollRestoration = 'manual';
     }
     
-    // Force scroll to top immediately and repeatedly
+    // Single scroll to top function
     const scrollToTop = () => {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
     };
     
-    scrollToTop();
-    
     // Clear any hash from URL that might cause scrolling
     if (window.location.hash && window.location.hash !== '#') {
         history.replaceState(null, null, window.location.pathname + window.location.search);
-        scrollToTop();
     }
     
-    // Prevent any delayed scrolling
-    setTimeout(scrollToTop, 1);
-    setTimeout(scrollToTop, 10);
+    // Force scroll to top immediately
+    scrollToTop();
+    
+    // Single delayed scroll to top to handle any deferred scrolling
     setTimeout(scrollToTop, 50);
-    setTimeout(scrollToTop, 100);
 })();
 
 // Ensure page starts at top on beforeunload
 window.addEventListener('beforeunload', () => {
     window.scrollTo(0, 0);
-});
-
-// Additional scroll prevention on load
-window.addEventListener('load', () => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
 });
 
 // Prevent intersection observer from triggering scroll
@@ -54,21 +44,8 @@ setTimeout(() => {
 }, 500);
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Force scroll to top multiple times with delays
-    const forceTop = () => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    };
-    
-    forceTop();
-    setTimeout(forceTop, 0);
-    setTimeout(forceTop, 1);
-    setTimeout(forceTop, 10);
-    setTimeout(forceTop, 50);
-    setTimeout(forceTop, 100);
-    setTimeout(forceTop, 200);
-    setTimeout(forceTop, 500);
+    // Single scroll to top on DOM ready
+    window.scrollTo(0, 0);
     
     initNavbar();
     initScrollAnimations();
@@ -84,9 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // ───────────────────────────────────────────────────────────────────────────
 function initNavbar() {
     const navbar = document.querySelector('.navbar');
-    let lastScroll = 0;
+    if (!navbar) return;
     
-    window.addEventListener('scroll', () => {
+    let lastScroll = 0;
+    let ticking = false;
+    
+    const updateNavbar = () => {
         const currentScroll = window.pageYOffset;
         
         // Add background on scroll
@@ -106,6 +86,14 @@ function initNavbar() {
         }
         
         lastScroll = currentScroll;
+        ticking = false;
+    };
+    
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            requestAnimationFrame(updateNavbar);
+            ticking = true;
+        }
     });
     
     // Smooth scroll for nav links
@@ -160,31 +148,52 @@ function initScrollAnimations() {
 // ───────────────────────────────────────────────────────────────────────────
 function initParallax() {
     const orbs = document.querySelectorAll('.gradient-orb');
+    if (!orbs.length) return;
     
-    // Store initial positions and respect CSS animations
-    window.addEventListener('mousemove', (e) => {
+    let ticking = false;
+    
+    const updateParallax = (e) => {
         const x = e.clientX / window.innerWidth;
         const y = e.clientY / window.innerHeight;
         
         orbs.forEach((orb, i) => {
-            const speed = (i + 1) * 0.2; // Reduced speed for subtlety
-            const xPos = (x - 0.5) * speed * 30; // Reduced range
-            const yPos = (y - 0.5) * speed * 30; // Reduced range
+            const speed = (i + 1) * 0.2;
+            const xPos = (x - 0.5) * speed * 30;
+            const yPos = (y - 0.5) * speed * 30;
             
-            // Use CSS custom properties to avoid overriding CSS animations
             orb.style.setProperty('--mouse-x', `${xPos}px`);
             orb.style.setProperty('--mouse-y', `${yPos}px`);
         });
+        
+        ticking = false;
+    };
+    
+    window.addEventListener('mousemove', (e) => {
+        if (!ticking) {
+            requestAnimationFrame(() => updateParallax(e));
+            ticking = true;
+        }
     });
     
     // Subtle parallax on scroll
-    window.addEventListener('scroll', () => {
+    let scrollTicking = false;
+    
+    const updateScrollParallax = () => {
         const scrolled = window.pageYOffset;
         
         orbs.forEach((orb, i) => {
-            const speed = (i + 1) * 0.1; // Much more subtle scroll effect
+            const speed = (i + 1) * 0.1;
             orb.style.setProperty('--scroll-y', `${scrolled * speed}px`);
         });
+        
+        scrollTicking = false;
+    };
+    
+    window.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+            requestAnimationFrame(updateScrollParallax);
+            scrollTicking = true;
+        }
     });
 }
 
@@ -194,6 +203,8 @@ function initParallax() {
 function initTypingEffect() {
     const subtitle = document.querySelector('.hero-subtitle');
     const subtitleText = document.querySelector('.hero-subtitle-text');
+    if (!subtitle || !subtitleText) return;
+    
     const phrases = [
         'Utvikler med øye for detaljer',
         'Elsker å løse avanserte problemer',
@@ -209,26 +220,19 @@ function initTypingEffect() {
     let initialTextDeleted = false;
     
     function startScrollAnimation(futureText) {
-        // Temporarily set the text to measure what the width will be
         const currentText = subtitleText.textContent;
         subtitleText.textContent = futureText;
         
         const textWidth = subtitleText.scrollWidth;
         const containerWidth = subtitle.clientWidth;
         
-        // Restore the current text
         subtitleText.textContent = currentText;
         
         if (textWidth > containerWidth) {
             subtitle.classList.add('overflow-scroll');
-            
-            // Calculate how much we need to scroll left to keep the end visible
             const overflowAmount = textWidth - containerWidth;
             const scrollDistance = -overflowAmount;
-            
-            // Set scroll position BEFORE updating text
             subtitleText.style.transform = `translateX(${scrollDistance}px)`;
-            
         } else {
             subtitle.classList.remove('overflow-scroll');
             subtitleText.style.transform = 'translateX(0)';
@@ -236,25 +240,21 @@ function initTypingEffect() {
     }
     
     function updateText(text) {
-        // First, calculate and set scroll position for the new text
         startScrollAnimation(text);
-        
-        // Then update the text content
         subtitleText.textContent = text;
     }
     
     function type() {
-        // If we haven't deleted the initial "Alta, Norge" text yet
         if (!initialTextDeleted) {
             const currentText = subtitleText.textContent;
             if (currentText.length > 0) {
                 updateText(currentText.substring(0, currentText.length - 1));
-                setTimeout(type, 80); // Fast deletion speed
+                setTimeout(type, 80);
                 return;
             } else {
                 initialTextDeleted = true;
                 currentChar = 0;
-                typingSpeed = 500; // Pause before starting new phrases
+                typingSpeed = 500;
             }
         }
         
@@ -277,8 +277,7 @@ function initTypingEffect() {
             isDeleting = false;
             currentPhrase = (currentPhrase + 1) % phrases.length;
             typingSpeed = 500;
-            // Ensure there's always some content to maintain height
-            updateText('\u00A0'); // Non-breaking space
+            updateText('\u00A0');
         }
         
         setTimeout(type, typingSpeed);
@@ -289,8 +288,8 @@ function initTypingEffect() {
         startScrollAnimation(subtitleText.textContent);
     }, 100));
     
-    // Start after a longer delay to show "Alta, Norge" for more time
-    setTimeout(type, 4000); // Increased from 1500 to 4000ms (4 seconds)
+    // Start typing effect
+    setTimeout(type, 4000);
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -318,9 +317,8 @@ function initHoverEffects() {
     });
     
     // Card tilt effect - disabled on mobile
-    document.querySelectorAll('.tech-card, .floating-card').forEach(card => {
-        // Only enable tilt effect on desktop
-        if (window.innerWidth > 768) {
+    if (window.innerWidth > 768) {
+        document.querySelectorAll('.tech-card, .floating-card').forEach(card => {
             card.addEventListener('mousemove', (e) => {
                 const rect = card.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -338,8 +336,8 @@ function initHoverEffects() {
             card.addEventListener('mouseleave', () => {
                 card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
             });
-        }
-    });
+        });
+    }
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -349,10 +347,12 @@ function initMobileMenu() {
     const toggle = document.querySelector('.nav-toggle');
     const menu = document.querySelector('.nav-menu');
     
-    toggle?.addEventListener('click', () => {
-        menu.classList.toggle('active');
-        toggle.classList.toggle('active');
-    });
+    if (toggle && menu) {
+        toggle.addEventListener('click', () => {
+            menu.classList.toggle('active');
+            toggle.classList.toggle('active');
+        });
+    }
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -360,17 +360,14 @@ function initMobileMenu() {
 // ───────────────────────────────────────────────────────────────────────────
 function initMobileStats() {
     const heroStats = document.querySelector('.hero-stats');
-    
     if (!heroStats) return;
     
-    // Store references to event listener functions to prevent memory leaks
     let visualViewportResizeListener = null;
     let visualViewportScrollListener = null;
     let keyboardResizeListener = null;
     let isMobile = false;
-    let initialHeight = 0; // Will be set when transitioning to mobile
+    let initialHeight = 0;
     
-    // Ensure immediate correct positioning on mobile - no animation delay
     const ensureCorrectPositioning = () => {
         if (window.innerWidth <= 768) {
             heroStats.style.left = '50%';
@@ -381,7 +378,6 @@ function initMobileStats() {
         }
     };
     
-    // Function to update stats position for mobile
     const updateStatsPosition = () => {
         if (window.visualViewport) {
             const offset = window.visualViewport.height < window.innerHeight ? 
@@ -389,11 +385,9 @@ function initMobileStats() {
             
             heroStats.style.bottom = `calc(var(--space-md) + ${offset}px)`;
         }
-        // Ensure positioning stays correct during updates
         ensureCorrectPositioning();
     };
     
-    // Function to handle keyboard detection
     const handleKeyboardToggle = debounce(() => {
         if (!isMobile) return;
         
@@ -401,15 +395,12 @@ function initMobileStats() {
         const heightDiff = initialHeight - currentHeight;
         
         if (heightDiff > 150) {
-            // Keyboard likely open
             heroStats.style.display = 'none';
         } else {
-            // Keyboard likely closed
             heroStats.style.display = 'flex';
         }
     }, 100);
     
-    // Function to clean up existing listeners
     const removeExistingListeners = () => {
         if (visualViewportResizeListener && window.visualViewport) {
             window.visualViewport.removeEventListener('resize', visualViewportResizeListener);
@@ -427,7 +418,6 @@ function initMobileStats() {
         }
     };
     
-    // Function to add mobile-specific listeners
     const addMobileListeners = () => {
         if (window.visualViewport) {
             visualViewportResizeListener = updateStatsPosition;
@@ -442,24 +432,19 @@ function initMobileStats() {
         window.addEventListener('resize', keyboardResizeListener);
     };
     
-    // Handle viewport changes on mobile
     const handleViewportChange = () => {
         const shouldBeMobile = window.innerWidth <= 768;
         
         if (shouldBeMobile !== isMobile) {
-            // Clean up existing listeners before changing mode
             removeExistingListeners();
             
             isMobile = shouldBeMobile;
             
             if (isMobile) {
-                // Capture the initial height when transitioning to mobile
                 initialHeight = window.innerHeight;
-                // Ensure immediate correct positioning before adding listeners
                 ensureCorrectPositioning();
                 addMobileListeners();
             } else {
-                // Reset styles when switching back to desktop
                 heroStats.style.bottom = '';
                 heroStats.style.display = '';
                 heroStats.style.left = '';
@@ -470,18 +455,13 @@ function initMobileStats() {
         }
     };
     
-    // Initial setup
     handleViewportChange();
     
-    // Capture initial height if we're starting on mobile
     if (isMobile) {
         initialHeight = window.innerHeight;
     }
     
-    // Ensure immediate correct positioning on page load
     ensureCorrectPositioning();
-    
-    // Listen for viewport changes (but don't add duplicate listeners)
     window.addEventListener('resize', debounce(handleViewportChange, 100));
 }
 

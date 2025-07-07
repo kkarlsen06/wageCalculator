@@ -1,3 +1,22 @@
+// Cache DOM elements to avoid repeated queries
+const domCache = {
+    progressFill: null,
+    progressLabel: null,
+    monthlyGoalInput: null,
+    
+    // Initialize cache
+    init() {
+        this.progressFill = document.querySelector('.progress-fill');
+        this.progressLabel = document.querySelector('.progress-label');
+        this.monthlyGoalInput = document.getElementById('monthlyGoalInput');
+    },
+    
+    // Refresh cache when DOM changes
+    refresh() {
+        this.init();
+    }
+};
+
 // Hent og lagre månedlig mål fra localStorage eller default
 function getMonthlyGoal() {
     // Try to get from window.app if available
@@ -28,7 +47,8 @@ async function setMonthlyGoal(goal) {
 
 // --- Månedlig mål UI-håndtering ---
 function setupMonthlyGoalInput() {
-    const monthlyGoalInput = document.getElementById('monthlyGoalInput');
+    // Use cached element or query if not cached
+    const monthlyGoalInput = domCache.monthlyGoalInput || document.getElementById('monthlyGoalInput');
     if (monthlyGoalInput) {
         monthlyGoalInput.value = getMonthlyGoal();
         monthlyGoalInput.addEventListener('input', (e) => {
@@ -47,129 +67,79 @@ if (typeof window !== 'undefined') {
     
     // Set up the monthly goal input when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setupMonthlyGoalInput);
+        document.addEventListener('DOMContentLoaded', () => {
+            domCache.init();
+            setupMonthlyGoalInput();
+        });
     } else {
+        domCache.init();
         setupMonthlyGoalInput();
     }
 }
 
-// Progressbar update function
+// Optimized progress bar update function
 function updateProgressBar(current, goal, shouldAnimate = false) {
-    const fill = document.querySelector('.progress-fill');
-    const label = document.querySelector('.progress-label');
+    // Use cached elements
+    const fill = domCache.progressFill || document.querySelector('.progress-fill');
+    const label = domCache.progressLabel || document.querySelector('.progress-label');
     
     if (!fill || !label) return;
 
     const percent = Math.round((current / goal) * 100);
     
+    // Clean up any existing animation state
+    if (fill.dataset.animating === 'true') {
+        fill.dataset.animating = 'false';
+    }
+    
     if (shouldAnimate) {
-        // Force clear any stuck animation state first
-        fill.dataset.animating = 'false';
-        
-        // Remove loading class and enable transition
-        fill.classList.remove('loading');
-        fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-        
-        // Mark as animating after clearing stuck state
-        fill.dataset.animating = 'true';
-        
-        // Set the target width
-        fill.style.width = Math.min(percent, 100) + '%';
-        
-        // If we're at 100%, handle animation cleanup
-        if (percent >= 100) {
-            const handleTransitionEnd = (event) => {
-                if (event.target === fill && event.propertyName === 'width') {
-                    fill.removeEventListener('transitionend', handleTransitionEnd);
-                    fill.dataset.animating = 'false';
-                    
-                    // Set initial animation complete flag if this is the first animation
-                    if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
-                        window.app.initialAnimationComplete = true;
-                    }
-                }
-            };
+        // Use single requestAnimationFrame for smooth animation
+        requestAnimationFrame(() => {
+            fill.classList.remove('loading');
+            fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            fill.dataset.animating = 'true';
+            fill.style.width = Math.min(percent, 100) + '%';
             
-            fill.addEventListener('transitionend', handleTransitionEnd);
-            
-            // Fallback timeout in case transitionend doesn't fire (e.g., when already at 100%)
+            // Single timeout for cleanup
             setTimeout(() => {
                 fill.dataset.animating = 'false';
-                
-                // Set initial animation complete flag if this is the first animation
                 if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
                     window.app.initialAnimationComplete = true;
                 }
-                
-                // Clean up event listener if it hasn't been called
-                fill.removeEventListener('transitionend', handleTransitionEnd);
-            }, 850); // Slightly longer than animation duration
-        } else {
-            // Animation without confetti - still need to clean up
-            const handleTransitionEnd = (event) => {
-                if (event.target === fill && event.propertyName === 'width') {
-                    fill.removeEventListener('transitionend', handleTransitionEnd);
-                    fill.dataset.animating = 'false';
-                    
-                    // Set initial animation complete flag if this is the first animation
-                    if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
-                        window.app.initialAnimationComplete = true;
-                    }
-                }
-            };
-            
-            fill.addEventListener('transitionend', handleTransitionEnd);
-            
-            // Fallback timeout
-            setTimeout(() => {
-                fill.dataset.animating = 'false';
-                
-                // Set initial animation complete flag if this is the first animation
-                if (typeof window !== 'undefined' && window.app && !window.app.initialAnimationComplete) {
-                    window.app.initialAnimationComplete = true;
-                }
-                
-                // Clean up event listener if it hasn't been called
-                fill.removeEventListener('transitionend', handleTransitionEnd);
             }, 850);
-        }
+        });
     } else {
-        // For immediate updates, force clear stuck animation state
-        fill.dataset.animating = 'false';
-        
-        // Set width without transition
+        // Immediate update without animation
         fill.style.transition = 'none';
         fill.style.width = Math.min(percent, 100) + '%';
-        // Force reflow
+        // Force reflow once
         fill.offsetHeight;
-        // Re-enable transition for future animations
+        // Re-enable transition
         fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
     }
     
     // Update classes based on progress
+    const progressCard = fill.closest('.progress-card');
     if (percent >= 100) {
         fill.classList.add('full');
-        // Add overachievement styling for values above 100%
-        const progressCard = fill.closest('.progress-card');
-        if (percent > 100) {
-            if (progressCard) progressCard.classList.add('overachievement');
-        } else {
-            if (progressCard) progressCard.classList.remove('overachievement');
+        if (percent > 100 && progressCard) {
+            progressCard.classList.add('overachievement');
+        } else if (progressCard) {
+            progressCard.classList.remove('overachievement');
         }
     } else {
         fill.classList.remove('full');
-        const progressCard = fill.closest('.progress-card');
         if (progressCard) progressCard.classList.remove('overachievement');
     }
     
-    // Add active class when nearing goal completion (80% or higher)
+    // Add active class when nearing goal completion
     if (percent >= 80) {
         fill.classList.add('active');
     } else {
         fill.classList.remove('active');
     }
     
-    // Update label text
+    // Update label text (cache currency suffix)
     const currencySuffix = window.app && window.app.currencyFormat ? ' NOK' : ' kr';
     label.textContent = percent.toFixed(1) + '% av ' + goal.toLocaleString('no-NO') + currencySuffix;
     fill.title = `${current.toLocaleString('no-NO')}${currencySuffix} av ${goal.toLocaleString('no-NO')}${currencySuffix}`;
@@ -180,6 +150,7 @@ if (typeof window !== 'undefined') {
     window.updateProgressBar = updateProgressBar;
     window.getMonthlyGoal = getMonthlyGoal;
     window.setMonthlyGoal = setMonthlyGoal;
+    window.domCache = domCache;
 }
 export const app = {
     // Constants
@@ -235,8 +206,11 @@ export const app = {
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
         
+        // Initialize DOM cache
+        domCache.init();
+        
         // Reset progress bar to initial state
-        const fill = document.querySelector('.progress-fill');
+        const fill = domCache.progressFill;
         if (fill) {
             fill.classList.add('loading');
             fill.style.width = '0%';
@@ -444,35 +418,21 @@ export const app = {
     },
 
     calculateSlideDistance(emailText) {
-        // Very simple approach: fixed slide distances based on screen size and email length
-        const isMobile = window.innerWidth <= 768;
-        const isSmallMobile = window.innerWidth <= 480;
-        
-        // Get email length category
+        // Simplified approach: calculate slide distance based on screen size and email length
+        const width = window.innerWidth;
         const emailLength = emailText.length;
         
-        let slideDistance = 0;
+        let slideDistance;
         
-        if (isSmallMobile) {
-            // Small mobile: very conservative sliding to prevent overflow
-            if (emailLength > 20) slideDistance = 40;
-            else if (emailLength > 15) slideDistance = 30;
-            else if (emailLength > 10) slideDistance = 20;
-            else slideDistance = 15;
-        } else if (isMobile) {
+        if (width <= 480) {
+            // Small mobile: conservative sliding
+            slideDistance = Math.min(emailLength * 2, 40);
+        } else if (width <= 768) {
             // Mobile: moderate sliding
-            if (emailLength > 25) slideDistance = 70;
-            else if (emailLength > 20) slideDistance = 60;
-            else if (emailLength > 15) slideDistance = 50;
-            else if (emailLength > 10) slideDistance = 35;
-            else slideDistance = 25;
+            slideDistance = Math.min(emailLength * 2.5, 70);
         } else {
-            // Desktop: more generous sliding
-            if (emailLength > 30) slideDistance = 150;
-            else if (emailLength > 25) slideDistance = 120;
-            else if (emailLength > 20) slideDistance = 100;
-            else if (emailLength > 15) slideDistance = 80;
-            else if (emailLength > 10) slideDistance = 60;
+            // Desktop: generous sliding
+            slideDistance = Math.min(emailLength * 4, 150);
         }
         
         return -slideDistance; // Negative because we slide left
