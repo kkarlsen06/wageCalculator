@@ -146,8 +146,8 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         // Re-enable transition for future animations
         fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
         
-        // Only trigger confetti for immediate updates if goal is reached
-        if (percent >= 100) {
+        // Only trigger confetti for immediate updates if goal is reached AND initial animation is complete
+        if (percent >= 100 && typeof app !== 'undefined' && app.initialAnimationComplete) {
             triggerConfettiIfVisible();
         }
     }
