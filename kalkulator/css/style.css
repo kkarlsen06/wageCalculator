@@ -3366,64 +3366,29 @@ input:checked + .slider:before {
   margin-bottom: 8px;
 }
 
-/* Thumb-friendly positioning for add shift modal */
+/* Standard modal body padding for add shift modal */
 #addShiftModal .modal-body {
-  padding-top: 60px; /* Push content down for thumb accessibility */
+  padding-top: 20px;
 }
 
-/* Add shift modal close button in content area */
-.modal-close-bottom {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  width: 48px;
-  height: 48px;
+/* Add shift modal close button in form actions */
+.form-actions .modal-close-bottom {
   background: rgba(255, 102, 153, 0.1);
   border: 1px solid rgba(255, 102, 153, 0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
   color: var(--danger);
   transition: all 0.2s var(--ease-default);
-  font-size: 24px;
-  font-weight: bold;
-  z-index: 10;
-  line-height: 1;
-  font-family: Arial, sans-serif;
 }
 
-.modal-close-bottom:hover {
+.form-actions .modal-close-bottom:hover {
   background: var(--accent2-alpha);
   border-color: var(--accent2);
-  transform: scale(1.1);
   color: var(--accent2);
 }
 
-/* Make the close button more accessible on mobile */
-@media (max-width: 768px) {
-  .modal-close-bottom {
-    bottom: 16px;
-    right: 16px;
-    width: 56px;
-    height: 56px;
-    font-size: 28px;
-  }
-}
-
+/* Standard mobile padding for add shift modal */
 @media (max-width: 480px) {
-  .modal-close-bottom {
-    bottom: 16px;
-    right: 16px;
-    width: 60px;
-    height: 60px;
-    font-size: 30px;
-  }
-  
-  /* Increase top padding on mobile for better thumb reach */
   #addShiftModal .modal-body {
-    padding-top: 80px;
+    padding-top: 20px;
   }
 }
 
@@ -3474,8 +3439,8 @@ input:checked + .slider:before {
   
   /* Override for add shift modal body padding */
   #addShiftModal .modal-body {
-    padding: 80px 20px 20px 20px;
-    height: calc(100vh - 180px); /* Account for extra padding */
+    padding: 20px 20px 20px 20px;
+    height: calc(100vh - 120px); /* Account for header and form actions */
   }
 }
 
@@ -3492,19 +3457,26 @@ input:checked + .slider:before {
 /* Make modal buttons more accessible on mobile */
 @media (max-width: 480px) {
   .form-actions {
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    gap: 12px;
     position: sticky;
     bottom: 0;
     background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
     padding: 16px 20px;
     margin: 20px -20px -20px -20px;
     border-top: 1px solid var(--border);
+    justify-content: space-between;
+    align-items: center;
   }
   
   .form-actions .btn {
-    width: 100%;
+    flex: 1;
     min-width: auto;
+    margin-right: 8px;
+  }
+  
+  .form-actions .btn:last-child {
+    margin-right: 0;
   }
 }
 
