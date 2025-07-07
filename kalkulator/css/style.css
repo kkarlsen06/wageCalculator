@@ -773,10 +773,7 @@ input[type="time"].form-control[value=""]:focus {
   opacity: 0;
   animation: calendarCellFadeIn 0.3s var(--ease-default) forwards;
 }
-/* Removed hover effect to prevent conflicts with multiple date selection */
-.date-cell:hover:not(.disabled) {
-  /* No hover styling to avoid confusion with selected state */
-}
+
 .date-cell.selected {
   background: var(--accent3-alpha);
   color: var(--accent3);
@@ -811,11 +808,6 @@ input[type="time"].form-control[value=""]:focus {
   border: 1px solid var(--bg-secondary);
   transition: all var(--speed-fast) var(--ease-default);
   z-index: 1;
-}
-
-/* Removed hover effect for shift indicator dot to prevent conflicts with multiple date selection */
-.date-cell:hover:not(.disabled) .shift-indicator-dot {
-  /* No hover styling to avoid confusion with selected state */
 }
 
 /* Selected state adjustments for blue dot */
