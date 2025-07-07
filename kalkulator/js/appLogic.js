@@ -200,7 +200,6 @@ export const app = {
     selectedDate: null,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
-    emailHideTimeout: null, // Timeout for auto-hiding email
     initialAnimationComplete: false, // Track if initial progress bar animation is complete
     async init() {
         // Initialize selectedDates array for multiple date selection
@@ -222,8 +221,7 @@ export const app = {
         this.populateMonthDropdown();
         this.populateYearDropdown();
         
-        // Display user email
-        await this.displayUserEmail();
+
         
         // Load backend or fallback
         try {
@@ -312,16 +310,8 @@ export const app = {
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 this.closeBreakdown();
-                // Also hide email if visible
-                this.hideEmailDisplay();
             }
         });
-        
-        // Clean up any existing timeout
-        if (this.emailHideTimeout) {
-            clearTimeout(this.emailHideTimeout);
-            this.emailHideTimeout = null;
-        }
         
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
@@ -375,214 +365,15 @@ export const app = {
         this.checkAndShowRecurringIntro();
     },
 
-    async displayUserEmail() {
-        try {
-            const { data: { user } } = await window.supa.auth.getUser();
-            if (user && user.email) {
-                const userEmailElement = document.getElementById('userEmail');
-                const userEmailContainer = document.getElementById('userEmailContainer');
-                const emailToggleBtn = document.getElementById('emailToggleBtn');
-                
-                if (userEmailElement && userEmailContainer) {
-                    userEmailElement.textContent = user.email;
-                    userEmailContainer.style.display = 'flex';
-                    
-                    // Add tooltip to email button showing full email
-                    if (emailToggleBtn) {
-                        emailToggleBtn.title = `Vis e-post: ${user.email}`;
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching user email:', error);
-            // Skjul email-elementet hvis det oppstår en feil
-            const userEmailContainer = document.getElementById('userEmailContainer');
-            if (userEmailContainer) {
-                userEmailContainer.style.display = 'none';
-            }
-        }
-    },
 
-    toggleEmailDisplay() {
-        const userEmailDisplay = document.getElementById('userEmailDisplay');
-        
-        if (!userEmailDisplay) return;
 
-        const isVisible = userEmailDisplay.style.display !== 'none';
-        
-        if (isVisible) {
-            this.hideEmailDisplay();
-        } else {
-            this.showEmailDisplay();
-        }
-    },
 
-    calculateSlideDistance(emailText) {
-        // Simplified approach: calculate slide distance based on screen size and email length
-        const width = window.innerWidth;
-        const emailLength = emailText.length;
-        
-        let slideDistance;
-        
-        if (width <= 480) {
-            // Small mobile: conservative sliding
-            slideDistance = Math.min(emailLength * 2, 40);
-        } else if (width <= 768) {
-            // Mobile: moderate sliding
-            slideDistance = Math.min(emailLength * 2.5, 70);
-        } else {
-            // Desktop: generous sliding
-            slideDistance = Math.min(emailLength * 4, 150);
-        }
-        
-        return -slideDistance; // Negative because we slide left
-    },
 
-    showEmailDisplay() {
-        const userEmailDisplay = document.getElementById('userEmailDisplay');
-        const userEmailContainer = document.getElementById('userEmailContainer');
-        const userEmail = document.getElementById('userEmail');
-        const monthSelector = document.querySelector('.month-selector');
-        const wageDisplay = document.getElementById('currentWage');
-        const emailToggleBtn = document.getElementById('emailToggleBtn');
-        
-        // Find the parent span elements using proper traversal
-        const monthSelectorSpan = monthSelector ? monthSelector.parentElement : null;
-        const wageSelectorSpan = wageDisplay ? wageDisplay.parentElement : null;
-        
-        // Calculate dynamic slide distance based on email length
-        const emailText = userEmail ? userEmail.textContent : '';
-        const slideDistance = this.calculateSlideDistance(emailText);
-        
-        // Set reasonable max-width based on screen size
-        const isMobile = window.innerWidth <= 768;
-        const isSmallMobile = window.innerWidth <= 480;
-        
-        let emailTextWidth;
-        if (isSmallMobile) {
-            emailTextWidth = Math.min(120, window.innerWidth * 0.35); // More conservative on small mobile
-        } else if (isMobile) {
-            emailTextWidth = Math.min(160, window.innerWidth * 0.45); // More conservative on mobile
-        } else {
-            emailTextWidth = 400; // Desktop default
-        }
-        
-        // Set dynamic slide distance on container
-        if (userEmailContainer) {
-            userEmailContainer.style.setProperty('--slide-distance', `${slideDistance}px`);
-        }
-        
-        // Set dynamic max-width for email text
-        if (userEmailDisplay) {
-            userEmailDisplay.style.setProperty('--email-max-width', `${emailTextWidth}px`);
-        }
-        
-        // Set same distance for month/wage elements to move synchronously
-        if (monthSelectorSpan) {
-            monthSelectorSpan.style.setProperty('--slide-distance', `${slideDistance}px`);
-        }
-        if (wageSelectorSpan) {
-            wageSelectorSpan.style.setProperty('--slide-distance', `${slideDistance}px`);
-        }
-        
-        // Hide month selector and wage with smooth transition (including icons)
-        if (monthSelectorSpan) {
-            monthSelectorSpan.classList.add('hidden');
-        }
-        
-        // Close month dropdown if open to avoid confusion during animation
-        this.closeMonthDropdown();
-        
-        if (wageSelectorSpan) {
-            wageSelectorSpan.classList.add('hidden');
-        }
-        
-        // Mark button as active
-        if (emailToggleBtn) {
-            emailToggleBtn.classList.add('active');
-        }
-        
-        // Start container slide-left animation
-        if (userEmailContainer) {
-            userEmailContainer.classList.add('slide-left');
-        }
-        
-        // Show email with smooth transition after short delay
-        setTimeout(() => {
-            if (userEmailDisplay) {
-                userEmailDisplay.style.display = 'inline-block';
-                // Add show class for smooth appearance
-                requestAnimationFrame(() => {
-                    userEmailDisplay.classList.add('show');
-                });
-            }
-        }, 100);
-        
-        // Auto-hide email after 2 seconds
-        clearTimeout(this.emailHideTimeout);
-        this.emailHideTimeout = setTimeout(() => {
-            this.hideEmailDisplay();
-        }, 2000);
-    },
 
-    hideEmailDisplay() {
-        const userEmailDisplay = document.getElementById('userEmailDisplay');
-        const userEmailContainer = document.getElementById('userEmailContainer');
-        const monthSelector = document.querySelector('.month-selector');
-        const wageDisplay = document.getElementById('currentWage');
-        const emailToggleBtn = document.getElementById('emailToggleBtn');
-        
-        // Find the parent span elements using proper traversal
-        const monthSelectorSpan = monthSelector ? monthSelector.parentElement : null;
-        const wageSelectorSpan = wageDisplay ? wageDisplay.parentElement : null;
-        
-        // Remove active status from button
-        if (emailToggleBtn) {
-            emailToggleBtn.classList.remove('active');
-        }
-        
-        // Hide email first
-        if (userEmailDisplay) {
-            userEmailDisplay.classList.remove('show');
-        }
-        
-        // Slide container back after short delay
-        setTimeout(() => {
-            if (userEmailContainer) {
-                userEmailContainer.classList.remove('slide-left');
-            }
-        }, 100);
-        
-        // Show month selector and wage back after container returns (including icons)
-        setTimeout(() => {
-            if (monthSelectorSpan) {
-                monthSelectorSpan.classList.remove('hidden');
-                monthSelectorSpan.style.removeProperty('--slide-distance');
-            }
-            
-            if (wageSelectorSpan) {
-                wageSelectorSpan.classList.remove('hidden');
-                wageSelectorSpan.style.removeProperty('--slide-distance');
-            }
-            
-            // Hide email element completely
-            if (userEmailDisplay) {
-                userEmailDisplay.style.display = 'none';
-                userEmailDisplay.style.removeProperty('--email-max-width');
-            }
-            
-            // Reset slide distance on container
-            if (userEmailContainer) {
-                userEmailContainer.style.removeProperty('--slide-distance');
-            }
-        }, 300);
-        
-        // Clear timeout
-        clearTimeout(this.emailHideTimeout);
-        this.emailHideTimeout = null;
-    },
 
-    // Removed setupMobileEmailSlideOut since we now use a simpler toggle function
+
+
+
 
     populateTimeSelects() {
         const startHour = document.getElementById('startHour');
@@ -1172,8 +963,6 @@ export const app = {
         // Close any other open modals first
         this.closeBreakdown();
         this.closeSettings();
-        // Close email display if visible
-        this.hideEmailDisplay();
         
         if (isActive) {
             dd.classList.remove('active');
