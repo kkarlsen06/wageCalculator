@@ -2633,6 +2633,16 @@ export const app = {
                             this.showShiftDetails(shiftsForDay[0].id);
                         }
                     };
+                } else {
+                    // Add click handler for empty cells in current month
+                    if (cellDate.getMonth() === monthIdx) {
+                        cell.classList.add('empty-date');
+                        cell.style.cursor = 'pointer';
+                        cell.onclick = (e) => {
+                            e.stopPropagation();
+                            this.openAddShiftModalWithDate(cellDate);
+                        };
+                    }
                 }
 
                 cell.appendChild(content);
@@ -5322,6 +5332,37 @@ export const app = {
         };
 
         reader.readAsText(file);
+    },
+
+    // New function to open add shift modal with pre-selected date
+    openAddShiftModalWithDate(date) {
+        // First open the modal normally
+        this.openAddShiftModal();
+        
+        // Then pre-select the specific date
+        if (date) {
+            this.selectedDates = [new Date(date)];
+            
+            // Wait for the modal to be populated, then select the date
+            setTimeout(() => {
+                const dateButtons = document.querySelectorAll('#dateGrid .date-cell');
+                dateButtons.forEach(btn => {
+                    btn.classList.remove('selected');
+                    // Check if this button represents our target date
+                    const cellContent = btn.querySelector('.date-cell-content');
+                    if (cellContent) {
+                        const dayNumber = parseInt(cellContent.textContent);
+                        if (dayNumber === date.getDate() && 
+                            !btn.classList.contains('disabled')) {
+                            btn.classList.add('selected');
+                        }
+                    }
+                });
+                
+                // Update the selected dates info
+                this.updateSelectedDatesInfo();
+            }, 50);
+        }
     }
 };
 
