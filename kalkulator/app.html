@@ -529,11 +529,6 @@
                   <h2 class="modal-title">Legg til vakt</h2>
               </div>
               
-              <!-- Thumb-friendly close button -->
-              <button class="modal-close-bottom" onclick="app.closeAddShiftModal()">
-                  ×
-              </button>
-              
               <div class="modal-body">
                   <form id="shiftForm">
                       <div class="tab-nav" style="margin-bottom:16px;">
@@ -616,6 +611,13 @@
                                   <line x1="8" y1="12" x2="16" y2="12"></line>
                               </svg>
                               Legg til vakt
+                          </button>
+                          <button type="button" class="btn btn-secondary modal-close-bottom" onclick="app.closeAddShiftModal()">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                              Lukk
                           </button>
                       </div>
                   </form>
