@@ -431,6 +431,7 @@ body {
 .header-logo {
   width: 28px;
   height: 28px;
+  filter: grayscale(100%);
 }
 
 .header-logo-link {
