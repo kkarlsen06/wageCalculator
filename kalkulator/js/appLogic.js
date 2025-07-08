@@ -132,8 +132,8 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         if (progressCard) progressCard.classList.remove('overachievement');
     }
     
-    // Add active class when nearing goal completion
-    if (percent >= 80) {
+    // Add active class to show color when there's any progress
+    if (percent > 0) {
         fill.classList.add('active');
     } else {
         fill.classList.remove('active');
