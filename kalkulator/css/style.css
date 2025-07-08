@@ -2096,6 +2096,9 @@ input:checked + .slider:before {
   flex-direction: column;
   gap: 2px;
   padding: 0 4px;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .calendar-header {
@@ -2106,6 +2109,7 @@ input:checked + .slider:before {
   width: 100%;
   box-sizing: border-box;
   align-items: center; /* Vertically center week letters and week number header */
+  max-width: 100%;
 }
 
 .calendar-day-header {
@@ -2114,6 +2118,7 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   text-align: center;
   padding: 2px 2px; /* Reduced vertical padding for tighter spacing */
+  min-width: 0; /* Allow headers to shrink if needed */
 }
 
 .calendar-grid {
@@ -2124,6 +2129,7 @@ input:checked + .slider:before {
   flex: 1;
   width: 100%;
   box-sizing: border-box;
+  max-width: 100%;
 }
 
 .calendar-cell {
@@ -2295,6 +2301,7 @@ input:checked + .slider:before {
   padding: 0 4px 20px 4px;
   box-sizing: border-box;
   overflow-x: hidden;
+  width: 100%;
 }
 
 .shift-calendar .calendar-cell,
@@ -2303,7 +2310,9 @@ input:checked + .slider:before {
 }
 
 .shift-calendar .calendar-cell {
-  aspect-ratio: 0.7; /* Slightly taller ratio than 0.8 to provide more vertical space */
+  /* Remove aspect-ratio override to prevent horizontal overflow */
+  /* The default aspect-ratio: 1 from .calendar-cell will be used */
+  max-width: 100%;
 }
 
 .calendar-breakdown {
@@ -2451,6 +2460,14 @@ input:checked + .slider:before {
     min-height: 80px; /* Increased from 45px to accommodate more text on mobile */
   }
   
+  .shift-calendar {
+    padding: 0 2px 20px 2px; /* Reduce padding to prevent overflow */
+  }
+  
+  .shift-calendar .calendar-header, 
+  .shift-calendar .calendar-grid {
+    gap: 1px; /* Reduce gap to fit better on mobile */
+  }
   
   .calendar-amount {
     font-size: clamp(9px, 2.2vw, 12px);
@@ -2491,6 +2508,14 @@ input:checked + .slider:before {
     min-height: 70px; /* Increased from 40px to accommodate more text on small mobile */
   }
   
+  .shift-calendar {
+    padding: 0 1px 20px 1px; /* Further reduce padding for small screens */
+  }
+  
+  .shift-calendar .calendar-header, 
+  .shift-calendar .calendar-grid {
+    gap: 1px; /* Minimal gap for small screens */
+  }
   
   .calendar-amount {
     font-size: clamp(8px, 2vw, 10px);
@@ -2523,6 +2548,15 @@ input:checked + .slider:before {
   .shift-calendar .calendar-cell,
   .shift-calendar .calendar-week-number {
     min-height: 65px; /* Increased from 36px to accommodate more text on very small mobile */
+  }
+  
+  .shift-calendar {
+    padding: 0 1px 20px 1px; /* Minimal padding for very small screens */
+  }
+  
+  .shift-calendar .calendar-header, 
+  .shift-calendar .calendar-grid {
+    gap: 1px; /* Minimal gap for very small screens */
   }
   
   .week-number.header, .calendar-week-number.header {
