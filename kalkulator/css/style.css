@@ -2299,11 +2299,11 @@ input:checked + .slider:before {
 
 .shift-calendar .calendar-cell,
 .shift-calendar .calendar-week-number {
-  min-height: 72px;
+  min-height: 120px; /* Increased from 72px to accommodate more text */
 }
 
 .shift-calendar .calendar-cell {
-  aspect-ratio: 0.8;
+  aspect-ratio: 0.7; /* Slightly taller ratio than 0.8 to provide more vertical space */
 }
 
 .calendar-breakdown {
@@ -2448,7 +2448,7 @@ input:checked + .slider:before {
 
   .shift-calendar .calendar-cell,
   .shift-calendar .calendar-week-number {
-    min-height: 45px;
+    min-height: 80px; /* Increased from 45px to accommodate more text on mobile */
   }
   
   
@@ -2488,7 +2488,7 @@ input:checked + .slider:before {
 
   .shift-calendar .calendar-cell,
   .shift-calendar .calendar-week-number {
-    min-height: 40px;
+    min-height: 70px; /* Increased from 40px to accommodate more text on small mobile */
   }
   
   
@@ -2522,7 +2522,7 @@ input:checked + .slider:before {
 
   .shift-calendar .calendar-cell,
   .shift-calendar .calendar-week-number {
-    min-height: 36px;
+    min-height: 65px; /* Increased from 36px to accommodate more text on very small mobile */
   }
   
   .week-number.header, .calendar-week-number.header {
