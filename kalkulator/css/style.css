@@ -3694,6 +3694,7 @@ input:checked + .slider:before {
 @media (max-width: 768px) {
   .shift-history-header {
     padding: 20px 20px 16px;
+    margin-top: 0;
     margin-bottom: 20px;
     gap: 14px;
   }
@@ -3724,6 +3725,7 @@ input:checked + .slider:before {
 @media (max-width: 480px) {
   .shift-history-header {
     padding: 16px 16px 12px;
+    margin-top: 0;
     margin-bottom: 16px;
     gap: 12px;
   }
