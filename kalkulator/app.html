@@ -233,15 +233,65 @@
                   
                   <div class="form-group form-group-with-hint">
                       <label>Pausetrekk</label>
-                      <div class="switch-group">
-                        <div>
-                          <span class="text-secondary">Trekk fra betalt pause for vakter over 5,5 timer</span>
-                          <small class="form-hint">Følger standard arbeidsrett - påvirker lønnsberegningen</small>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="pauseDeductionToggle" checked>
-                            <span class="slider"></span>
-                        </label>
+                      <small class="form-hint">Konfigurerbart pausetrekk for mer presise lønnsberegninger</small>
+                      
+                      <div class="form-group" style="margin-top: 12px;">
+                          <label>Pausetrekk-modus</label>
+                          <select class="form-control" id="pauseModeSelect">
+                              <option value="simple">Enkel (30 min fra høyeste tillegg)</option>
+                              <option value="fixed">Fast tid (konfigurérbar varighet og tid)</option>
+                              <option value="individual">Individuell per vakt</option>
+                          </select>
+                      </div>
+                      
+                      <!-- Simple Mode Settings -->
+                      <div id="pauseSimpleSection" class="pause-mode-section">
+                          <div class="switch-group">
+                              <span>Aktiver enkel pausetrekk</span>
+                              <label class="switch">
+                                  <input type="checkbox" id="pauseSimpleToggle">
+                                  <span class="slider"></span>
+                              </label>
+                          </div>
+                          <small class="form-hint">Trekker 30 minutter fra vakter over 5,5 timer</small>
+                      </div>
+                      
+                      <!-- Fixed Mode Settings -->
+                      <div id="pauseFixedSection" class="pause-mode-section" style="display: none;">
+                          <div class="switch-group">
+                              <span>Aktiver fast pausetrekk</span>
+                              <label class="switch">
+                                  <input type="checkbox" id="pauseFixedToggle">
+                                  <span class="slider"></span>
+                              </label>
+                          </div>
+                          <div class="form-row" style="margin-top: 12px;">
+                              <div class="form-group" style="margin-right: 8px;">
+                                  <label>Pause varighet (timer)</label>
+                                  <input type="number" id="pauseFixedDuration" class="form-control" min="0" max="2" step="0.25" value="0.5">
+                              </div>
+                              <div class="form-group">
+                                  <label>Pause tidspunkt</label>
+                                  <input type="time" id="pauseFixedStartTime" class="form-control" value="12:00">
+                              </div>
+                          </div>
+                          <small class="form-hint">Trekker fra det spesifiserte tidspunktet for å vite hvilket tillegg som skal reduseres</small>
+                      </div>
+                      
+                      <!-- Individual Mode Settings -->
+                      <div id="pauseIndividualSection" class="pause-mode-section" style="display: none;">
+                          <div class="switch-group">
+                              <span>Aktiver individuell pausetrekk</span>
+                              <label class="switch">
+                                  <input type="checkbox" id="pauseIndividualToggle">
+                                  <span class="slider"></span>
+                              </label>
+                          </div>
+                          <div class="form-group" style="margin-top: 12px;">
+                              <label>Standard pause varighet (timer)</label>
+                              <input type="number" id="pauseIndividualDefault" class="form-control" min="0" max="2" step="0.25" value="0.5">
+                              <small class="form-hint">Standard verdi som forhåndsutfylles når du legger til nye vakter</small>
+                          </div>
                       </div>
                   </div>
                   
@@ -512,6 +562,12 @@
                           </div>
                       </div>
 
+                      <div class="form-group" id="editPauseDurationGroup" style="display: none;">
+                          <label>Pause varighet (timer)</label>
+                          <input type="number" id="editPauseDuration" class="form-control" min="0" max="2" step="0.25" placeholder="0.5">
+                          <small class="form-hint">Lar denne stå tom for å bruke standard pause innstilling</small>
+                      </div>
+
                       <div class="form-actions">
                           <button type="button" class="btn btn-primary" onclick="app.updateShift()">
                               <svg class="icon-sm"
@@ -568,6 +624,12 @@
                                   </select>
                               </div>
                           </div>
+
+                          <div class="form-group" id="pauseDurationGroup" style="display: none;">
+                              <label>Pause varighet (timer)</label>
+                              <input type="number" id="pauseDuration" class="form-control" min="0" max="2" step="0.25" placeholder="0.5">
+                              <small class="form-hint">Lar denne stå tom for å bruke standard pause innstilling</small>
+                          </div>
                       </div>
                       <div id="recurringFields" class="tab-content">
                           <div class="form-group" style="margin-bottom: 24px;">
@@ -605,6 +667,12 @@
                           <div class="form-group">
                               <label>Slutt (år)</label>
                               <input type="number" class="form-control" id="recurringDurationYears" step="0.5" min="0.5" max="3" value="1" />
+                          </div>
+                          
+                          <div class="form-group" id="recurringPauseDurationGroup" style="display: none;">
+                              <label>Pause varighet (timer)</label>
+                              <input type="number" id="recurringPauseDuration" class="form-control" min="0" max="2" step="0.25" placeholder="0.5">
+                              <small class="form-hint">Lar denne stå tom for å bruke standard pause innstilling</small>
                           </div>
                       </div>
 

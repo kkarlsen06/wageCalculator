@@ -4564,3 +4564,121 @@ input[type="file"].form-control:focus {
 .next-shift-card .shift-item .shift-info {
   padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
 }
+
+/* ============================================================================
+   ENHANCED PAUSE DEDUCTION SYSTEM STYLES
+   ============================================================================ */
+
+/* Pause mode section styling */
+.pause-mode-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.pause-mode-section:hover {
+  border-color: var(--accent3);
+  background: var(--bg-tertiary);
+}
+
+/* Pause mode section titles */
+.pause-mode-section .switch-group {
+  margin-bottom: 12px;
+}
+
+.pause-mode-section .form-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Fixed mode specific styling */
+#pauseFixedSection .form-row {
+  margin-top: 12px;
+  gap: 12px;
+}
+
+#pauseFixedSection .form-group {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+/* Individual mode styling */
+#pauseIndividualSection .form-group {
+  margin-bottom: 0;
+}
+
+/* Pause duration input styling */
+input[type="number"][id*="pause"] {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+input[type="number"][id*="pause"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Pause time input styling */
+input[type="time"][id*="pause"] {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+input[type="time"][id*="pause"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Pause mode select styling */
+#pauseModeSelect {
+  background: var(--bg-primary);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  transition: all var(--speed-normal) var(--ease-default);
+  font-weight: 500;
+}
+
+#pauseModeSelect:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+#pauseModeSelect:hover {
+  border-color: var(--accent3);
+}
+
+/* Responsive adjustments for pause settings */
+@media (max-width: 600px) {
+  .pause-mode-section {
+    padding: 12px;
+    margin-top: 8px;
+  }
+  
+  #pauseFixedSection .form-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  #pauseFixedSection .form-group {
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pause-mode-section {
+    padding: 10px;
+    border-radius: 8px;
+  }
+  
+  .pause-mode-section .form-hint {
+    font-size: 12px;
+  }
+}

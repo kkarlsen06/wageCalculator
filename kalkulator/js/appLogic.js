@@ -156,6 +156,11 @@ export const app = {
     // Constants
     PAUSE_THRESHOLD: 5.5,
     PAUSE_DEDUCTION: 0.5,
+    PAUSE_MODES: {
+        SIMPLE: 'simple',
+        FIXED: 'fixed', 
+        INDIVIDUAL: 'individual'
+    },
     MONTHS: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',
              'juli', 'august', 'september', 'oktober', 'november', 'desember'],
     WEEKDAYS: ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'],
@@ -193,6 +198,25 @@ export const app = {
     customWage: 200,
     customBonuses: {}, // Reset to empty - will be loaded from database
     pauseDeduction: true,
+    pauseMode: 'simple', // 'simple', 'fixed', or 'individual'
+    pauseSettings: {
+        simple: {
+            enabled: true,
+            duration: 0.5, // hours
+            threshold: 5.5 // hours
+        },
+        fixed: {
+            enabled: false,
+            duration: 0.5, // hours
+            startTime: '12:00', // when pause starts
+            threshold: 5.5 // hours
+        },
+        individual: {
+            enabled: false,
+            defaultDuration: 0.5, // hours - default for new shifts
+            threshold: 5.5 // hours
+        }
+    },
     fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
     directTimeInput: false, // Setting for using direct time input instead of dropdowns
     monthlyGoal: 20000, // Monthly income goal
@@ -232,12 +256,8 @@ export const app = {
         }
         // Set initial shifts
         this.shifts = [...this.userShifts];
-        // Bind pause toggle
-        document.getElementById('pauseDeductionToggle').addEventListener('change', e => {
-            this.pauseDeduction = e.target.checked;
-            this.updateDisplay();
-            this.saveSettingsToSupabase();
-        });
+        // Bind pause settings
+        this.setupPauseDeductionListeners();
         document.getElementById('fullMinuteRangeToggle').addEventListener('change', e => {
             if (e.target.checked && this.directTimeInput) {
                 // Disable direct time input when full minute range is enabled
@@ -451,6 +471,108 @@ export const app = {
         }
     },
     
+    setupPauseDeductionListeners() {
+        // Pause mode selector
+        const pauseModeSelect = document.getElementById('pauseModeSelect');
+        if (pauseModeSelect) {
+            pauseModeSelect.addEventListener('change', e => {
+                this.pauseMode = e.target.value;
+                this.updatePauseSettingsUI();
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
+        
+        // Simple mode toggle
+        const simpleToggle = document.getElementById('pauseSimpleToggle');
+        if (simpleToggle) {
+            simpleToggle.addEventListener('change', e => {
+                this.pauseSettings.simple.enabled = e.target.checked;
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
+        
+        // Fixed mode settings
+        const fixedToggle = document.getElementById('pauseFixedToggle');
+        if (fixedToggle) {
+            fixedToggle.addEventListener('change', e => {
+                this.pauseSettings.fixed.enabled = e.target.checked;
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
+        
+        const fixedDuration = document.getElementById('pauseFixedDuration');
+        if (fixedDuration) {
+            fixedDuration.addEventListener('change', e => {
+                this.pauseSettings.fixed.duration = parseFloat(e.target.value) || 0.5;
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
+        
+        const fixedStartTime = document.getElementById('pauseFixedStartTime');
+        if (fixedStartTime) {
+            fixedStartTime.addEventListener('change', e => {
+                this.pauseSettings.fixed.startTime = e.target.value;
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
+        
+        // Individual mode settings
+        const individualToggle = document.getElementById('pauseIndividualToggle');
+        if (individualToggle) {
+            individualToggle.addEventListener('change', e => {
+                this.pauseSettings.individual.enabled = e.target.checked;
+                this.updatePauseSettingsUI(); // Update pause field visibility
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
+        
+        const individualDefault = document.getElementById('pauseIndividualDefault');
+        if (individualDefault) {
+            individualDefault.addEventListener('change', e => {
+                this.pauseSettings.individual.defaultDuration = parseFloat(e.target.value) || 0.5;
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
+    },
+    
+    updatePauseSettingsUI() {
+        // Show/hide different pause setting sections based on selected mode
+        const sections = {
+            'pauseSimpleSection': this.pauseMode === 'simple',
+            'pauseFixedSection': this.pauseMode === 'fixed', 
+            'pauseIndividualSection': this.pauseMode === 'individual'
+        };
+        
+        Object.entries(sections).forEach(([id, show]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.style.display = show ? 'block' : 'none';
+            }
+        });
+        
+        // Show/hide pause duration fields in shift modals for individual mode
+        const showPauseFields = this.pauseMode === 'individual' && this.pauseSettings.individual.enabled;
+        const pauseFields = [
+            'pauseDurationGroup',
+            'recurringPauseDurationGroup', 
+            'editPauseDurationGroup'
+        ];
+        
+        pauseFields.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.style.display = showPauseFields ? 'block' : 'none';
+            }
+        });
+    },
+    
     replaceTimeDropdownsWithInputs() {
         const timeInputs = [
             { id: 'startHour', placeholder: 'Fra time (HH)' },
@@ -630,6 +752,15 @@ export const app = {
                 return;
             }
             
+            // Get pause duration for recurring shifts if individual mode is enabled
+            let recurringPauseDuration = null;
+            if (this.pauseMode === 'individual' && this.pauseSettings.individual.enabled) {
+                const pauseInput = document.getElementById('recurringPauseDuration');
+                if (pauseInput && pauseInput.value) {
+                    recurringPauseDuration = parseFloat(pauseInput.value);
+                }
+            }
+            
             const first = new Date(startDateStr);
             // Get weekday from the selected date (0=Sunday, 1=Monday, etc.)
             const weekday = first.getDay();
@@ -668,14 +799,21 @@ export const app = {
                 const { data: saved, error } = await window.supa.from('user_shifts').insert(insertData).select().single();
                 if (error) { console.error('Gjentakende feil:', error); continue; }
                 
-                this.userShifts.push({
+                const recurringShift = {
                     id: saved.id,
                     date: new Date(d),
                     startTime: `${startHour}:${startMinute}`,
                     endTime: `${endHour}:${endMinute}`,
                     type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
                     seriesId
-                });
+                };
+                
+                // Add pause duration if specified
+                if (recurringPauseDuration !== null) {
+                    recurringShift.pauseDuration = recurringPauseDuration;
+                }
+                
+                this.userShifts.push(recurringShift);
             }
             
             this.shifts = [...this.userShifts];
@@ -711,6 +849,15 @@ export const app = {
                 return;
             }
             
+            // Get pause duration if individual mode is enabled
+            let pauseDuration = null;
+            if (this.pauseMode === 'individual' && this.pauseSettings.individual.enabled) {
+                const pauseInput = document.getElementById('pauseDuration');
+                if (pauseInput && pauseInput.value) {
+                    pauseDuration = parseFloat(pauseInput.value);
+                }
+            }
+            
             // Process each selected date
             const createdShifts = [];
             for (const selectedDate of this.selectedDates) {
@@ -722,6 +869,11 @@ export const app = {
                     endTime: `${endHour}:${endMinute}`,
                     type
                 };
+                
+                // Add pause duration if specified
+                if (pauseDuration !== null) {
+                    newShift.pauseDuration = pauseDuration;
+                }
                 
                 // Note: Removed date validation since the modal can now display different months
                 // The selected dates from the modal's date grid are already correct
@@ -1076,6 +1228,12 @@ export const app = {
                 this.currentYear = settings.current_year || new Date().getFullYear();
                     
                 this.pauseDeduction = settings.pause_deduction || false;
+                this.pauseMode = settings.pause_mode || 'simple';
+                this.pauseSettings = settings.pause_settings || {
+                    simple: { enabled: this.pauseDeduction, duration: 0.5, threshold: 5.5 },
+                    fixed: { enabled: false, duration: 0.5, startTime: '12:00', threshold: 5.5 },
+                    individual: { enabled: false, defaultDuration: 0.5, threshold: 5.5 }
+                };
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
             this.monthlyGoal = settings.monthly_goal || 20000;
@@ -1090,6 +1248,8 @@ export const app = {
 
             // Update UI elements to reflect loaded settings
             this.updateSettingsUI();
+            // Update pause settings UI
+            this.updatePauseSettingsUI();
             // Update month dropdown to reflect potential reset of currentMonth
             this.populateMonthDropdown();
             // Don't call updateDisplay here - it will be called with animation in init()
@@ -1111,6 +1271,12 @@ export const app = {
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.currentYear = new Date().getFullYear(); // Default to current year
         this.pauseDeduction = false;
+        this.pauseMode = 'simple';
+        this.pauseSettings = {
+            simple: { enabled: false, duration: 0.5, threshold: 5.5 },
+            fixed: { enabled: false, duration: 0.5, startTime: '12:00', threshold: 5.5 },
+            individual: { enabled: false, defaultDuration: 0.5, threshold: 5.5 }
+        };
         this.fullMinuteRange = false; // Default to 15-minute intervals
         this.directTimeInput = false; // Default to dropdown time selection
         this.monthlyGoal = 20000; // Default monthly goal
@@ -1152,10 +1318,44 @@ export const app = {
             customWageInput.value = this.customWage;
         }
 
-        const pauseDeductionToggle = document.getElementById('pauseDeductionToggle');
-        if (pauseDeductionToggle) {
-            pauseDeductionToggle.checked = this.pauseDeduction;
+        // Update pause settings UI
+        const pauseModeSelect = document.getElementById('pauseModeSelect');
+        if (pauseModeSelect) {
+            pauseModeSelect.value = this.pauseMode;
         }
+        
+        const pauseSimpleToggle = document.getElementById('pauseSimpleToggle');
+        if (pauseSimpleToggle) {
+            pauseSimpleToggle.checked = this.pauseSettings.simple.enabled;
+        }
+        
+        const pauseFixedToggle = document.getElementById('pauseFixedToggle');
+        if (pauseFixedToggle) {
+            pauseFixedToggle.checked = this.pauseSettings.fixed.enabled;
+        }
+        
+        const pauseFixedDuration = document.getElementById('pauseFixedDuration');
+        if (pauseFixedDuration) {
+            pauseFixedDuration.value = this.pauseSettings.fixed.duration;
+        }
+        
+        const pauseFixedStartTime = document.getElementById('pauseFixedStartTime');
+        if (pauseFixedStartTime) {
+            pauseFixedStartTime.value = this.pauseSettings.fixed.startTime;
+        }
+        
+        const pauseIndividualToggle = document.getElementById('pauseIndividualToggle');
+        if (pauseIndividualToggle) {
+            pauseIndividualToggle.checked = this.pauseSettings.individual.enabled;
+        }
+        
+        const pauseIndividualDefault = document.getElementById('pauseIndividualDefault');
+        if (pauseIndividualDefault) {
+            pauseIndividualDefault.value = this.pauseSettings.individual.defaultDuration;
+        }
+        
+        // Update pause settings UI visibility
+        this.updatePauseSettingsUI();
 
         const fullMinuteRangeToggle = document.getElementById('fullMinuteRangeToggle');
         if (fullMinuteRangeToggle) {
@@ -1248,6 +1448,8 @@ export const app = {
                 // Remove currentMonth from settings - it should always default to current month on page load
                 if ('current_year' in existingSettings) settingsData.current_year = this.currentYear;
                 if ('pause_deduction' in existingSettings) settingsData.pause_deduction = this.pauseDeduction;
+                if ('pause_mode' in existingSettings) settingsData.pause_mode = this.pauseMode;
+                if ('pause_settings' in existingSettings) settingsData.pause_settings = this.pauseSettings;
                 if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
                 if ('monthly_goal' in existingSettings) settingsData.monthly_goal = this.monthlyGoal;
@@ -1265,6 +1467,8 @@ export const app = {
                 // Remove currentMonth from settings - it should always default to current month on page load
                 settingsData.current_year = this.currentYear;
                 settingsData.pause_deduction = this.pauseDeduction;
+                settingsData.pause_mode = this.pauseMode;
+                settingsData.pause_settings = this.pauseSettings;
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
                 settingsData.monthly_goal = this.monthlyGoal;
@@ -1310,6 +1514,12 @@ export const app = {
                 this.customBonuses = data.customBonuses || {};
                 this.currentMonth = new Date().getMonth() + 1; // Always default to current month
                 this.pauseDeduction = data.pauseDeduction !== false;
+                this.pauseMode = data.pauseMode || 'simple';
+                this.pauseSettings = data.pauseSettings || {
+                    simple: { enabled: this.pauseDeduction, duration: 0.5, threshold: 5.5 },
+                    fixed: { enabled: false, duration: 0.5, startTime: '12:00', threshold: 5.5 },
+                    individual: { enabled: false, defaultDuration: 0.5, threshold: 5.5 }
+                };
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
                 this.monthlyGoal = data.monthlyGoal || 20000;
@@ -1721,6 +1931,8 @@ export const app = {
                 customBonuses: this.customBonuses,
                 // Remove currentMonth from localStorage - it should always default to current month on page load
                 pauseDeduction: this.pauseDeduction,
+                pauseMode: this.pauseMode,
+                pauseSettings: this.pauseSettings,
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
                 hasSeenRecurringIntro: this.hasSeenRecurringIntro,
@@ -3547,11 +3759,52 @@ export const app = {
         
         let paidHours = durationHours;
         let adjustedEndMinutes = endMinutes;
+        let pauseDeducted = false;
+        let pauseDeduction = 0;
         
-        // Apply pause deduction if enabled
-        if (this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD) {
-            paidHours -= this.PAUSE_DEDUCTION;
-            adjustedEndMinutes -= this.PAUSE_DEDUCTION * 60;
+        // Apply enhanced pause deduction based on selected mode
+        const currentSettings = this.pauseSettings[this.pauseMode];
+        if (currentSettings && currentSettings.enabled && durationHours > currentSettings.threshold) {
+            switch (this.pauseMode) {
+                case 'simple':
+                    pauseDeduction = currentSettings.duration;
+                    paidHours -= pauseDeduction;
+                    adjustedEndMinutes -= pauseDeduction * 60;
+                    pauseDeducted = true;
+                    break;
+                    
+                case 'fixed':
+                    pauseDeduction = currentSettings.duration;
+                    const pauseStartMinutes = this.timeToMinutes(currentSettings.startTime);
+                    const pauseEndMinutes = pauseStartMinutes + (pauseDeduction * 60);
+                    
+                    // Check if pause time overlaps with shift
+                    const shiftOverlapsPause = this.calculateOverlap(startMinutes, endMinutes, pauseStartMinutes, pauseEndMinutes) > 0;
+                    
+                    if (shiftOverlapsPause) {
+                        paidHours -= pauseDeduction;
+                        // For fixed mode, we adjust based on when the pause occurs relative to bonus rates
+                        // This is more complex and may require bonus-aware deduction
+                        adjustedEndMinutes -= pauseDeduction * 60;
+                        pauseDeducted = true;
+                    }
+                    break;
+                    
+                case 'individual':
+                    // For individual mode, check if shift has specific pause settings
+                    if (shift.pauseDuration !== undefined) {
+                        pauseDeduction = shift.pauseDuration;
+                    } else {
+                        pauseDeduction = currentSettings.defaultDuration;
+                    }
+                    
+                    if (pauseDeduction > 0) {
+                        paidHours -= pauseDeduction;
+                        adjustedEndMinutes -= pauseDeduction * 60;
+                        pauseDeducted = true;
+                    }
+                    break;
+            }
         }
         
         const wageRate = this.getCurrentWageRate();
@@ -3575,7 +3828,8 @@ export const app = {
             hours: parseFloat(paidHours.toFixed(2)),
             totalHours: parseFloat(durationHours.toFixed(2)),
             paidHours: parseFloat(paidHours.toFixed(2)),
-            pauseDeducted: this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD,
+            pauseDeducted: pauseDeducted,
+            pauseDeduction: pauseDeduction,
             baseWage: baseWage,
             bonus: bonus,
             total: baseWage + bonus
@@ -3956,6 +4210,14 @@ export const app = {
         document.getElementById('editEndHour').value = endHour;
         document.getElementById('editEndMinute').value = endMinute || '00';
         
+        // Set pause duration if individual mode is enabled and shift has pause duration
+        if (this.pauseMode === 'individual' && this.pauseSettings.individual.enabled) {
+            const pauseInput = document.getElementById('editPauseDuration');
+            if (pauseInput) {
+                pauseInput.value = shift.pauseDuration || '';
+            }
+        }
+        
         // Highlight the selected date in the grid
         setTimeout(() => {
             const dateDay = shift.date.getDate();
@@ -4243,6 +4505,15 @@ export const app = {
                 return;
             }
             
+            // Get pause duration if individual mode is enabled
+            let editPauseDuration = null;
+            if (this.pauseMode === 'individual' && this.pauseSettings.individual.enabled) {
+                const pauseInput = document.getElementById('editPauseDuration');
+                if (pauseInput && pauseInput.value) {
+                    editPauseDuration = parseFloat(pauseInput.value);
+                }
+            }
+            
             // Update local shift objects
             const originalShift = this.editingShift;
             originalShift.date = new Date(this.editSelectedDate);
@@ -4250,6 +4521,14 @@ export const app = {
             originalShift.endTime = `${endHour}:${endMinute}`;
             originalShift.type = type;
             originalShift.seriesId = null; // Remove series ID from local object
+            
+            // Update pause duration
+            if (editPauseDuration !== null) {
+                originalShift.pauseDuration = editPauseDuration;
+            } else {
+                // Remove pause duration if cleared
+                delete originalShift.pauseDuration;
+            }
             
             // Update both userShifts and shifts arrays
             const userShiftIndex = this.userShifts.findIndex(s => s.id === originalShift.id);
