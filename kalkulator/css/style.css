@@ -1654,7 +1654,7 @@ input:checked + .slider:before {
 }
 
 .shift-type.sunday {
-  background: var(--accent3);
+  background: var(--accent2);
   color: var(--bg-primary);
 }
 
