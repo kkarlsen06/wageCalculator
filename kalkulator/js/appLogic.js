@@ -2834,37 +2834,7 @@ export const app = {
         titleContainer.appendChild(title);
         modal.appendChild(titleContainer);
 
-        // Create close button
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'close-btn';
-        closeBtn.innerHTML = '×';
-        closeBtn.style.cssText = `
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 102, 153, 0.1);
-            border: 1px solid rgba(255, 102, 153, 0.3);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--danger);
-            transition: all 0.2s var(--ease-default);
-            z-index: 21;
-            opacity: 0;
-            transform: scale(0.8);
-            animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
-            font-size: 18px;
-            font-weight: bold;
-        `;
-        closeBtn.onclick = (e) => {
-            e.stopPropagation();
-            this.closeShiftDetails();
-        };
-        modal.appendChild(closeBtn);
+        // Close button will be added to shift-actions instead of top-right
 
         // Create content container
         const contentContainer = document.createElement('div');
@@ -2915,22 +2885,31 @@ export const app = {
                 <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
             </div>
 
-            <div class="shift-actions" style="display: flex; gap: 12px; margin-top: 8px;">
-                <button class="btn btn-secondary edit-shift-btn" data-shift-id="${shift.id}" style="flex: 1; gap: 8px; padding: 12px;">
+            <div class="shift-actions" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px;">
+                <div class="action-buttons-center" style="display: flex; gap: 12px; flex: 1; justify-content: center;">
+                    <button class="btn btn-secondary edit-shift-btn" data-shift-id="${shift.id}" style="gap: 8px; padding: 12px;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Rediger
+                    </button>
+                    <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="gap: 8px; padding: 12px;">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4c0 1 1 2 2 2v2"></path>
+                        </svg>
+                        Slett
+                    </button>
+                    ${shift.seriesId ? `<button class="btn btn-warning delete-series-btn" style="gap: 8px; padding: 12px;">Slett serie</button>` : ''}
+                </div>
+                <button class="btn btn-secondary modal-close-bottom" style="gap: 8px; padding: 12px; margin-left: auto;">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
-                    Rediger
+                    Lukk
                 </button>
-                <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="flex: 1; gap: 8px; padding: 12px;">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    Slett
-                </button>
-                ${shift.seriesId ? `<button class="btn btn-warning delete-series-btn" style="flex: 1; gap: 8px; padding: 12px;">Slett serie</button>` : ''}
             </div>
         `;
 
@@ -2954,6 +2933,15 @@ export const app = {
                     }
                 });
             }
+        }
+        
+        // Attach handler for close button
+        const closeBtn = contentContainer.querySelector('.modal-close-bottom');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.closeShiftDetails();
+            });
         }
     },
     

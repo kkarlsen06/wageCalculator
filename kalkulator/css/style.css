@@ -3257,17 +3257,58 @@ input:checked + .slider:before {
 }
 
 /* Add shift modal close button in form actions */
-.form-actions .modal-close-bottom {
+.form-actions .modal-close-bottom,
+.modal-bottom-actions .modal-close-bottom {
   background: rgba(255, 102, 153, 0.1);
   border: 1px solid rgba(255, 102, 153, 0.3);
   color: var(--danger);
   transition: all 0.2s var(--ease-default);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.form-actions .modal-close-bottom:hover {
+.form-actions .modal-close-bottom:hover,
+.modal-bottom-actions .modal-close-bottom:hover {
   background: var(--accent2-alpha);
   border-color: var(--accent2);
   color: var(--accent2);
+  transform: translateY(-1px);
+}
+
+/* Bottom actions section for settings modal */
+.modal-bottom-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.bottom-buttons-center {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+
+/* Mobile responsiveness for modal bottom actions */
+@media (max-width: 480px) {
+  .modal-bottom-actions {
+    padding: 12px 16px;
+  }
+  
+  .modal-bottom-actions .modal-close-bottom {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
 }
 
 /* Standard mobile padding for add shift modal */
