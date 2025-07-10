@@ -1613,6 +1613,17 @@ input:checked + .slider:before {
   font-weight: bold;
 }
 
+/* Color weekday text to match left border colors for Saturday and Sunday shifts */
+.shift-item.saturday .shift-date-weekday {
+  color: var(--accent3);
+  font-weight: 600;
+}
+
+.shift-item.sunday .shift-date-weekday {
+  color: var(--accent2);
+  font-weight: 600;
+}
+
 .shift-details {
   display: flex;
   align-items: center;
