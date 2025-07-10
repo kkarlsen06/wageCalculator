@@ -1049,7 +1049,7 @@ input[type="time"].form-control[value=""]:focus {
   height: 85vh;
   max-height: 700px;
   min-height: 500px;
-  overflow-y: auto;
+  overflow: hidden;
   border-radius: 16px;
   box-shadow: 0 16px 48px -12px var(--shadow-accent);
 }
@@ -1085,6 +1085,7 @@ input[type="time"].form-control[value=""]:focus {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  padding-bottom: 80px; /* Add space for fixed footer */
 }
 
 /* Tab content with consistent, hierarchical padding */
@@ -3245,6 +3246,8 @@ input:checked + .slider:before {
 /* Add Shift Modal Specific Styles */
 #addShiftModal .modal-content {
   max-width: 600px;
+  position: relative;
+  overflow: hidden;
 }
 
 #addShiftModal .date-grid {
@@ -3254,6 +3257,8 @@ input:checked + .slider:before {
 /* Standard modal body padding for add shift modal */
 #addShiftModal .modal-body {
   padding-top: 20px;
+  padding-bottom: 80px; /* Add space for fixed footer */
+  overflow-y: auto;
 }
 
 /* Add shift modal close button in form actions */
@@ -3274,14 +3279,31 @@ input:checked + .slider:before {
 }
 
 .form-actions .modal-close-bottom:hover,
-.modal-bottom-actions .modal-close-bottom:hover {
+.modal-bottom-actions .modal-close-bottom:hover,
+.modal-fixed-footer .modal-close-bottom:hover {
   background: var(--accent2-alpha);
   border-color: var(--accent2);
   color: var(--accent2);
   transform: translateY(-1px);
 }
 
-/* Bottom actions section for settings modal */
+/* Fixed footer for modals */
+.modal-fixed-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 0 0 16px 16px;
+}
+
+/* Bottom actions section for settings modal - legacy (can be removed if not used elsewhere) */
 .modal-bottom-actions {
   display: flex;
   justify-content: space-between;
@@ -3302,11 +3324,13 @@ input:checked + .slider:before {
 
 /* Mobile responsiveness for modal bottom actions */
 @media (max-width: 480px) {
-  .modal-bottom-actions {
+  .modal-bottom-actions,
+  .modal-fixed-footer {
     padding: 12px 16px;
   }
   
-  .modal-bottom-actions .modal-close-bottom {
+  .modal-bottom-actions .modal-close-bottom,
+  .modal-fixed-footer .modal-close-bottom {
     padding: 10px 14px;
     font-size: 13px;
   }
