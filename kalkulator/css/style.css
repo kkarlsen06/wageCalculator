@@ -2900,12 +2900,12 @@ input:checked + .slider:before {
 .shift-detail-card .close-btn {
   position: absolute;
   top: 20px;
-  right: 20px;
+  right: 16px;  /* 16px from right edge */
   background: rgba(255, 102, 153, 0.1);
   border: 1px solid rgba(255, 102, 153, 0.3);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3275,18 +3275,22 @@ input:checked + .slider:before {
 /* Add shift modal close button in form actions */
 .form-actions .modal-close-bottom,
 .modal-bottom-actions .modal-close-bottom,
-.shift-actions .modal-close-bottom {
+.shift-actions .modal-close-bottom,
+.modal-fixed-footer .modal-close-bottom {
   background: rgba(255, 102, 153, 0.1);
   border: 1px solid rgba(255, 102, 153, 0.3);
   color: var(--danger);
   transition: all 0.2s var(--ease-default);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-radius: 8px;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   font-size: 14px;
   font-weight: 500;
+  padding: 0;
+  gap: 0;
 }
 
 .form-actions .modal-close-bottom:hover,
@@ -3295,7 +3299,18 @@ input:checked + .slider:before {
   background: var(--accent2-alpha);
   border-color: var(--accent2);
   color: var(--accent2);
-  transform: translateY(-1px);
+  transform: scale(1.1);
+}
+
+/* Hide text inside circular close buttons, keep only the X icon */
+.modal-fixed-footer .modal-close-bottom {
+  font-size: 0; /* Hide text */
+}
+
+.modal-fixed-footer .modal-close-bottom svg {
+  font-size: 16px; /* Ensure icon is visible */
+  width: 16px;
+  height: 16px;
 }
 
 /* Ensure buttons in modal footer have proper spacing and alignment */
