@@ -441,20 +441,17 @@
                       <small class="form-hint">Importer vaktdata fra CSV eller JSON-fil</small>
                   </div>
               </div>
-              
-              <!-- Bottom actions for settings modal -->
-              <div class="modal-bottom-actions">
-                  <div class="bottom-buttons-center">
-                      <!-- Other buttons can be added here if needed -->
-                  </div>
-                  <button class="btn btn-secondary modal-close-bottom" onclick="app.closeSettings()">
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                      Lukk
-                  </button>
-              </div>
+          
+          <!-- Fixed bottom close button for settings modal -->
+          <div class="modal-fixed-footer">
+              <button class="btn btn-secondary modal-close-bottom" onclick="app.closeSettings()">
+                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Lukk
+              </button>
+          </div>
           </div>
       </div>
   </div>
@@ -620,16 +617,20 @@
                               </svg>
                               Legg til vakt
                           </button>
-                          <button type="button" class="btn btn-secondary modal-close-bottom" onclick="app.closeAddShiftModal()">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                              </svg>
-                              Lukk
-                          </button>
                       </div>
                   </form>
               </div>
+          
+          <!-- Fixed bottom close button for add shift modal -->
+          <div class="modal-fixed-footer">
+              <button type="button" class="btn btn-secondary modal-close-bottom" onclick="app.closeAddShiftModal()">
+                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Lukk
+              </button>
+          </div>
           </div>
       </div>
 
