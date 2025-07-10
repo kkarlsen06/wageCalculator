@@ -659,7 +659,21 @@ export const app = {
                 dates.push(new Date(next));
             }
             
-            // Add confirmation with button animation instead of popup
+            // Show confirmation dialog for recurring shifts
+            const totalShifts = dates.length;
+            const confirmMessage = `Du er i ferd med å opprette ${totalShifts} gjentakende vakter.\n\nVil du fortsette?`;
+            
+            if (!confirm(confirmMessage)) {
+                // User cancelled, reset button state and return
+                const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+                if (modalAddButton) {
+                    modalAddButton.style.transform = 'scale(1)';
+                    modalAddButton.style.transition = 'transform 0.1s ease';
+                }
+                return;
+            }
+            
+            // Add confirmation with button animation after user confirms
             const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
             if (modalAddButton) {
                 modalAddButton.style.transform = 'scale(0.95)';
