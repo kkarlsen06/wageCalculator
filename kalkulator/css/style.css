@@ -1005,6 +1005,20 @@ input[type="time"].form-control[value=""]:focus {
   backdrop-filter: blur(5px);
 }
 
+/* Special positioning for add shift modal to account for navigation header */
+#addShiftModal.active {
+  align-items: flex-start;
+  padding-top: 0; /* Remove conflicting padding, use margin-top on content instead */
+}
+
+/* Mobile override for add shift modal positioning */
+@media (max-width: 768px) {
+  #addShiftModal.active {
+    padding-top: 0; /* Consistent with desktop */
+    align-items: flex-start;
+  }
+}
+
 .modal-content {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   margin: 0;
@@ -3259,6 +3273,9 @@ input:checked + .slider:before {
   max-width: 600px;
   position: relative;
   overflow: hidden;
+  /* Ensure modal doesn't extend below viewport when accounting for header */
+  max-height: calc(100vh - 100px); /* Account for header (80px) + some padding */
+  margin-top: 20px; /* Reduced from 50px to avoid conflict with desktop margin-top */
 }
 
 #addShiftModal .date-grid {
@@ -3270,6 +3287,8 @@ input:checked + .slider:before {
   padding-top: 20px;
   padding-bottom: 80px; /* Add space for fixed footer */
   overflow-y: auto;
+  /* Ensure modal body doesn't overflow when considering header and footer space */
+  max-height: calc(100vh - 220px); /* Account for header (80px) + modal margin (20px) + footer/padding (120px) */
 }
 
 /* Add shift modal close button in form actions */
@@ -3422,25 +3441,26 @@ input:checked + .slider:before {
   #addShiftModal .modal-content,
   #editShiftModal .modal-content {
     width: 100vw;
-    height: 100vh;
+    height: calc(100vh - 80px); /* Account for navigation header */
     max-width: none;
-    max-height: none;
+    max-height: calc(100vh - 80px);
     border-radius: 0;
     margin: 0;
+    margin-top: 80px; /* Position below the navigation header */
     position: relative; /* Ensure relative positioning for absolute close button */
   }
   
   #addShiftModal .modal-body,
   #editShiftModal .modal-body {
     padding: 20px;
-    height: calc(100vh - 120px); /* Account for header and form actions */
+    height: calc(100vh - 240px); /* Account for nav header (80px) + margin (80px) + footer space (80px) */
     overflow-y: auto;
   }
   
   /* Override for add shift modal body padding */
   #addShiftModal .modal-body {
     padding: 20px 20px 20px 20px;
-    height: calc(100vh - 120px); /* Account for header and form actions */
+    height: calc(100vh - 240px); /* Account for nav header (80px) + margin (80px) + footer space (80px) */
   }
 }
 
@@ -3450,7 +3470,14 @@ input:checked + .slider:before {
     max-width: 600px;
     width: 90vw;
     height: auto;
-    max-height: 90vh;
+    max-height: calc(90vh - 120px); /* Account for navigation header and margin */
+    margin-top: 8vh; /* Reduced to work with base margin-top: 20px */
+  }
+  
+  /* Adjust modal body for desktop to fit within content constraints */
+  #addShiftModal .modal-body,
+  #editShiftModal .modal-body {
+    max-height: calc(90vh - 240px); /* Account for header, margins, and footer space */
   }
 }
 
