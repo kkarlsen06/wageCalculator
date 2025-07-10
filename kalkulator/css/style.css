@@ -3258,7 +3258,8 @@ input:checked + .slider:before {
 
 /* Add shift modal close button in form actions */
 .form-actions .modal-close-bottom,
-.modal-bottom-actions .modal-close-bottom {
+.modal-bottom-actions .modal-close-bottom,
+.shift-actions .modal-close-bottom {
   background: rgba(255, 102, 153, 0.1);
   border: 1px solid rgba(255, 102, 153, 0.3);
   color: var(--danger);
