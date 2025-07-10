@@ -3320,6 +3320,12 @@ input:checked + .slider:before {
   gap: 8px;
 }
 
+/* Make the add shift button narrower */
+#addShiftModal .modal-fixed-footer .btn-primary {
+  max-width: 160px;
+  white-space: nowrap;
+}
+
 /* Fixed footer for modals */
 .modal-fixed-footer {
   position: absolute;
