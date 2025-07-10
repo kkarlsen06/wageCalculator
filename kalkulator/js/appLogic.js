@@ -3643,18 +3643,24 @@ export const app = {
                 break;
             case 'fixed':
                 // Deduct fixed pause time from all shifts
+                let fixedPauseTotal = 0;
+                
                 if (this.fixedPauseTime) {
-                    // If a specific time is set, don't deduct anything (time-based pause)
-                    // The time represents when the pause was taken, not a deduction
-                } else {
-                    // Deduct the fixed hours and minutes
-                    const fixedPauseTotal = (this.fixedPauseHours * 60) + this.fixedPauseMinutes;
-                    if (fixedPauseTotal > 0) {
-                        pauseMinutes = fixedPauseTotal;
-                        paidHours -= fixedPauseTotal / 60;
-                        adjustedEndMinutes -= fixedPauseTotal;
-                        pauseDeducted = true;
+                    // Parse time input (e.g., "00:30") as duration in minutes
+                    const [hours, minutes] = this.fixedPauseTime.split(':').map(Number);
+                    if (!isNaN(hours) && !isNaN(minutes)) {
+                        fixedPauseTotal = (hours * 60) + minutes;
                     }
+                } else {
+                    // Use the fixed hours and minutes from dropdowns
+                    fixedPauseTotal = (this.fixedPauseHours * 60) + this.fixedPauseMinutes;
+                }
+                
+                if (fixedPauseTotal > 0) {
+                    pauseMinutes = fixedPauseTotal;
+                    paidHours -= fixedPauseTotal / 60;
+                    adjustedEndMinutes -= fixedPauseTotal;
+                    pauseDeducted = true;
                 }
                 break;
             case 'individual':
