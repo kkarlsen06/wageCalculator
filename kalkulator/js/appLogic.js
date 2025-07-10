@@ -626,7 +626,17 @@ export const app = {
             const endMinute = document.getElementById('recurringEndMinute').value || '00';
             
             if (!startDateStr || !freq || !duration || !startHour || !endHour) {
-                alert('Vennligst fyll ut alle felt for gjentakende vakt');
+                // Show validation error with button animation
+                const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+                if (modalAddButton) {
+                    modalAddButton.style.background = 'var(--danger)';
+                    modalAddButton.style.transform = 'scale(0.95)';
+                    modalAddButton.style.transition = 'all 0.2s ease';
+                    setTimeout(() => {
+                        modalAddButton.style.background = '';
+                        modalAddButton.style.transform = 'scale(1)';
+                    }, 1000);
+                }
                 return;
             }
             
@@ -649,7 +659,29 @@ export const app = {
                 dates.push(new Date(next));
             }
             
-            if (!confirm(`Dette vil legge til ${dates.length} vakter fra ${startDateStr}. Fortsette?`)) return;
+            // Show confirmation dialog for recurring shifts
+            const totalShifts = dates.length;
+            const confirmMessage = `Du er i ferd med å opprette ${totalShifts} gjentakende vakter.\n\nVil du fortsette?`;
+            
+            if (!confirm(confirmMessage)) {
+                // User cancelled, reset button state and return
+                const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+                if (modalAddButton) {
+                    modalAddButton.style.transform = 'scale(1)';
+                    modalAddButton.style.transition = 'transform 0.1s ease';
+                }
+                return;
+            }
+            
+            // Add confirmation with button animation after user confirms
+            const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+            if (modalAddButton) {
+                modalAddButton.style.transform = 'scale(0.95)';
+                modalAddButton.style.transition = 'transform 0.1s ease';
+                setTimeout(() => {
+                    modalAddButton.style.transform = 'scale(1)';
+                }, 100);
+            }
             
             // Insert each shift
             const { data: { user }, error: authError } = await window.supa.auth.getUser();
@@ -681,12 +713,33 @@ export const app = {
             this.shifts = [...this.userShifts];
             this.updateDisplay();
             this.closeAddShiftModal();
-            alert(`La til ${dates.length} vakter`);
+            
+            // Show success animation instead of alert
+            const addButton = document.querySelector('.add-btn');
+            if (addButton) {
+                addButton.style.transform = 'scale(1.1)';
+                addButton.style.background = 'var(--success)';
+                addButton.style.transition = 'all 0.3s ease';
+                setTimeout(() => {
+                    addButton.style.transform = 'scale(1)';
+                    addButton.style.background = '';
+                }, 500);
+            }
             return;
         }
         try {
             if (!this.selectedDates || this.selectedDates.length === 0) {
-                alert('Vennligst velg en eller flere datoer');
+                // Show validation error with button animation
+                const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+                if (modalAddButton) {
+                    modalAddButton.style.background = 'var(--danger)';
+                    modalAddButton.style.transform = 'scale(0.95)';
+                    modalAddButton.style.transition = 'all 0.2s ease';
+                    setTimeout(() => {
+                        modalAddButton.style.background = '';
+                        modalAddButton.style.transform = 'scale(1)';
+                    }, 1000);
+                }
                 return;
             }
             
@@ -696,7 +749,17 @@ export const app = {
             const endMinute = document.getElementById('endMinute').value || '00';
             
             if (!startHour || !endHour) {
-                alert('Vennligst fyll ut arbeidstid');
+                // Show validation error with button animation
+                const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+                if (modalAddButton) {
+                    modalAddButton.style.background = 'var(--danger)';
+                    modalAddButton.style.transform = 'scale(0.95)';
+                    modalAddButton.style.transition = 'all 0.2s ease';
+                    setTimeout(() => {
+                        modalAddButton.style.background = '';
+                        modalAddButton.style.transform = 'scale(1)';
+                    }, 1000);
+                }
                 return;
             }
             
@@ -769,12 +832,18 @@ export const app = {
             this.updateSelectedDatesInfo(); // Update the info display
             this.clearFormState();
             
-            // Show success message
+            // Show success animation instead of alert
             if (createdShifts.length > 0) {
-                const message = createdShifts.length === 1 ? 
-                    'Vakt lagt til' : 
-                    `${createdShifts.length} vakter lagt til`;
-                alert(message);
+                const mainAddButton = document.querySelector('.add-btn');
+                if (mainAddButton) {
+                    mainAddButton.style.transform = 'scale(1.1)';
+                    mainAddButton.style.background = 'var(--success)';
+                    mainAddButton.style.transition = 'all 0.3s ease';
+                    setTimeout(() => {
+                        mainAddButton.style.transform = 'scale(1)';
+                        mainAddButton.style.background = '';
+                    }, 500);
+                }
             }
             
         } catch (e) {
@@ -2959,16 +3028,13 @@ export const app = {
             e.stopPropagation();
             const shiftId = e.target.closest('button').getAttribute('data-shift-id');
             this.editShift(shiftId);
-            this.closeShiftDetails();
         });
 
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const shiftIndex = parseInt(e.target.closest('button').getAttribute('data-shift-index'));
-            if (confirm('Er du sikker på at du vil slette denne vakten?')) {
-                this.deleteShift(shiftIndex);
-                this.closeShiftDetails();
-            }
+            this.deleteShift(shiftIndex);
+            this.closeShiftDetails();
         });
 
         leftButtons.appendChild(editBtn);
