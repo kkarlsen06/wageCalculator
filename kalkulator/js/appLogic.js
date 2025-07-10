@@ -3081,18 +3081,20 @@ export const app = {
             transition: all 0.2s var(--ease-default);
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 0;
             font-weight: 500;
+            padding: 0;
+            gap: 0;
         `;
         fixedCloseBtn.innerHTML = `
-            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
-            Lukk
         `;
         fixedCloseBtn.onclick = (e) => {
             e.stopPropagation();
@@ -3229,12 +3231,12 @@ export const app = {
         closeBtn.style.cssText = `
             position: absolute;
             top: 15px;
-            right: 15px;
+            right: 16px;
             background: rgba(255, 102, 153, 0.1);
             border: 1px solid rgba(255, 102, 153, 0.3);
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
