@@ -3059,11 +3059,13 @@ export const app = {
                 </svg>
                 Slett serie
             `;
-            seriesBtn.addEventListener('click', (e) => {
+            seriesBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (confirm('Vil du slette hele serien?')) {
-                    this.deleteSeries(shift.seriesId);
-                    this.closeShiftDetails();
+                    const deleteSuccess = await this.deleteSeries(shift.seriesId);
+                    if (deleteSuccess) {
+                        this.closeShiftDetails();
+                    }
                 }
             });
             leftButtons.appendChild(seriesBtn);
