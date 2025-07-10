@@ -2887,28 +2887,12 @@ export const app = {
                 <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
             </div>
 
-            <div class="shift-actions" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 8px;">
-                <button class="btn btn-secondary edit-shift-btn" data-shift-id="${shift.id}" style="gap: 8px; padding: 12px;">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                    Rediger
-                </button>
-                <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="gap: 8px; padding: 12px;">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4c0 1 1 2 2 2v2"></path>
-                    </svg>
-                    Slett
-                </button>
-                ${shift.seriesId ? `<button class="btn btn-warning delete-series-btn" style="gap: 8px; padding: 12px;">Slett serie</button>` : ''}
-            </div>
+
         `;
 
         modal.appendChild(contentContainer);
 
-        // Create fixed footer with close button
+        // Create fixed footer with all buttons
         const fixedFooter = document.createElement('div');
         fixedFooter.className = 'modal-fixed-footer';
         fixedFooter.style.cssText = `
@@ -2920,11 +2904,87 @@ export const app = {
             background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
             border-top: 1px solid var(--border);
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             z-index: 10;
+            border-radius: 0 0 16px 16px;
         `;
 
+        // Create left side buttons container
+        const leftButtons = document.createElement('div');
+        leftButtons.style.cssText = `
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        `;
+
+        // Create edit button
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-secondary edit-shift-btn';
+        editBtn.setAttribute('data-shift-id', shift.id);
+        editBtn.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+        `;
+        editBtn.innerHTML = `
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Rediger
+        `;
+
+        // Create delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger delete-shift-btn';
+        deleteBtn.setAttribute('data-shift-index', originalIndex);
+        deleteBtn.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+        `;
+        deleteBtn.innerHTML = `
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4c0 1 1 2 2 2v2"></path>
+            </svg>
+            Slett
+        `;
+
+        leftButtons.appendChild(editBtn);
+        leftButtons.appendChild(deleteBtn);
+
+        // Add series delete button if needed
+        if (shift.seriesId) {
+            const seriesBtn = document.createElement('button');
+            seriesBtn.className = 'btn btn-warning delete-series-btn';
+            seriesBtn.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 16px;
+            `;
+            seriesBtn.innerHTML = `
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4c0 1 1 2 2 2v2"></path>
+                </svg>
+                Slett serie
+            `;
+            seriesBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Vil du slette hele serien?')) {
+                    this.deleteSeries(shift.seriesId);
+                    this.closeShiftDetails();
+                }
+            });
+            leftButtons.appendChild(seriesBtn);
+        }
+
+        // Create close button (right-aligned, 16px from right)
         const fixedCloseBtn = document.createElement('button');
         fixedCloseBtn.className = 'btn btn-secondary modal-close-bottom';
         fixedCloseBtn.style.cssText = `
@@ -2952,6 +3012,7 @@ export const app = {
             this.closeShiftDetails();
         };
 
+        fixedFooter.appendChild(leftButtons);
         fixedFooter.appendChild(fixedCloseBtn);
         modal.appendChild(fixedFooter);
 
@@ -2961,19 +3022,7 @@ export const app = {
             modal.style.transform = 'translate(-50%, -50%) scale(1)';
         });
 
-        // Attach handler for delete-series button
-        if (shift.seriesId) {
-            const seriesBtn = contentContainer.querySelector('.delete-series-btn');
-            if (seriesBtn) {
-                seriesBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (confirm('Vil du slette hele serien?')) {
-                        this.deleteSeries(shift.seriesId);
-                        this.closeShiftDetails();
-                    }
-                });
-            }
-        }
+
         
 
     },

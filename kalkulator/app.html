@@ -530,9 +530,6 @@
       <!-- Add Shift Modal -->
       <div id="addShiftModal" class="modal">
           <div class="modal-content">
-              <div class="modal-header">
-                  <h2 class="modal-title">Legg til vakt</h2>
-              </div>
               
               <div class="modal-body">
                   <form id="shiftForm">
@@ -608,21 +605,20 @@
                           </div>
                       </div>
 
-                      <div class="form-actions">
-                          <button type="button" class="btn btn-primary" onclick="app.addShift()">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <circle cx="12" cy="12" r="10"></circle>
-                                  <line x1="12" y1="8" x2="12" y2="16"></line>
-                                  <line x1="8" y1="12" x2="16" y2="12"></line>
-                              </svg>
-                              Legg til vakt
-                          </button>
-                      </div>
+
                   </form>
               </div>
           
-          <!-- Fixed bottom close button for add shift modal -->
-          <div class="modal-fixed-footer">
+          <!-- Fixed bottom buttons for add shift modal -->
+          <div class="modal-fixed-footer" style="justify-content: space-between;">
+              <button type="button" class="btn btn-primary" onclick="app.addShift()">
+                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="16"></line>
+                      <line x1="8" y1="12" x2="16" y2="12"></line>
+                  </svg>
+                  Legg til vakt
+              </button>
               <button type="button" class="btn btn-secondary modal-close-bottom" onclick="app.closeAddShiftModal()">
                   <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
