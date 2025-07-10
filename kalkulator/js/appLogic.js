@@ -3030,11 +3030,13 @@ export const app = {
             this.editShift(shiftId);
         });
 
-        deleteBtn.addEventListener('click', (e) => {
+        deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const shiftIndex = parseInt(e.target.closest('button').getAttribute('data-shift-index'));
-            this.deleteShift(shiftIndex);
-            this.closeShiftDetails();
+            const deleted = await this.deleteShift(shiftIndex);
+            if (deleted) {
+                this.closeShiftDetails();
+            }
         });
 
         leftButtons.appendChild(editBtn);
@@ -3554,16 +3556,18 @@ export const app = {
             if (error) {
                 console.error('Feil ved sletting av serie:', error);
                 alert('Kunne ikke slette serien');
-                return;
+                return false;
             }
             // Remove from local arrays
             this.userShifts = this.userShifts.filter(s => s.seriesId !== seriesId);
             this.shifts = this.shifts.filter(s => s.seriesId !== seriesId);
             this.updateDisplay();
             alert('Serien er slettet');
+            return true;
         } catch (e) {
             console.error('deleteSeries error:', e);
             alert('En uventet feil oppstod');
+            return false;
         }
     },
 
@@ -3892,23 +3896,25 @@ export const app = {
         if (shift.seriesId) {
             // Ask if deleting entire series
             if (confirm('Denne vakten er del av en serie. Vil du slette hele serien?')) {
-                await this.deleteSeries(shift.seriesId);
-                return;
+                const deleteSeriesSuccess = await this.deleteSeries(shift.seriesId);
+                return deleteSeriesSuccess;
             }
+            // If user declines to delete series, continue to delete just this individual shift
+            // by falling through to the normal deletion logic below
         }
         
         const shiftToDelete = this.shifts[index];
-        if (!shiftToDelete || !shiftToDelete.id) return;
+        if (!shiftToDelete || !shiftToDelete.id) return false;
         
         // Show confirmation dialog IMMEDIATELY
-        if (!confirm('Er du sikker på at du vil slette denne vakten?')) return;
+        if (!confirm('Er du sikker på at du vil slette denne vakten?')) return false;
         
         try {
             // THEN check authentication
             const { data: { user } } = await window.supa.auth.getUser();
             if (!user) {
                 alert("Du er ikke innlogget");
-                return;
+                return false;
             }
             
             const { error } = await window.supa
@@ -3919,7 +3925,7 @@ export const app = {
             if (error) {
                 console.error('Error deleting shift:', error);
                 alert('Kunne ikke slette vakt fra databasen');
-                return;
+                return false;
             }
             
             // Remove from local arrays
@@ -3930,9 +3936,11 @@ export const app = {
             }
             
             this.updateDisplay();
+            return true;
         } catch (e) {
             console.error('Error in deleteShift:', e);
             alert('En feil oppstod ved sletting av vakt');
+            return false;
         }
     },
     
