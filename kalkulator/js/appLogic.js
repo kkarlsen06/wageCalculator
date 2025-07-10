@@ -2954,6 +2954,23 @@ export const app = {
             Slett
         `;
 
+        // Add event listeners for edit and delete buttons
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const shiftId = e.target.closest('button').getAttribute('data-shift-id');
+            this.editShift(shiftId);
+            this.closeShiftDetails();
+        });
+
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const shiftIndex = parseInt(e.target.closest('button').getAttribute('data-shift-index'));
+            if (confirm('Er du sikker på at du vil slette denne vakten?')) {
+                this.deleteShift(shiftIndex);
+                this.closeShiftDetails();
+            }
+        });
+
         leftButtons.appendChild(editBtn);
         leftButtons.appendChild(deleteBtn);
 
