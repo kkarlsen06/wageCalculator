@@ -3298,6 +3298,13 @@ input:checked + .slider:before {
   transform: translateY(-1px);
 }
 
+/* Ensure buttons in modal footer have proper spacing and alignment */
+.modal-fixed-footer .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Fixed footer for modals */
 .modal-fixed-footer {
   position: absolute;
@@ -3312,6 +3319,16 @@ input:checked + .slider:before {
   align-items: center;
   z-index: 10;
   border-radius: 0 0 16px 16px;
+}
+
+/* Modal footer with buttons on both sides */
+.modal-fixed-footer[style*="space-between"] {
+  justify-content: space-between;
+}
+
+/* Close button positioning - 16px from right edge */
+.modal-fixed-footer .modal-close-bottom {
+  margin-right: -8px; /* 16px from edge minus 8px existing padding */
 }
 
 /* Bottom actions section for settings modal - legacy (can be removed if not used elsewhere) */

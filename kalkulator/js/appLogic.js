@@ -626,7 +626,17 @@ export const app = {
             const endMinute = document.getElementById('recurringEndMinute').value || '00';
             
             if (!startDateStr || !freq || !duration || !startHour || !endHour) {
-                alert('Vennligst fyll ut alle felt for gjentakende vakt');
+                // Show validation error with button animation
+                const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+                if (modalAddButton) {
+                    modalAddButton.style.background = 'var(--danger)';
+                    modalAddButton.style.transform = 'scale(0.95)';
+                    modalAddButton.style.transition = 'all 0.2s ease';
+                    setTimeout(() => {
+                        modalAddButton.style.background = '';
+                        modalAddButton.style.transform = 'scale(1)';
+                    }, 1000);
+                }
                 return;
             }
             
@@ -649,7 +659,29 @@ export const app = {
                 dates.push(new Date(next));
             }
             
-            if (!confirm(`Dette vil legge til ${dates.length} vakter fra ${startDateStr}. Fortsette?`)) return;
+            // Show confirmation dialog for recurring shifts
+            const totalShifts = dates.length;
+            const confirmMessage = `Du er i ferd med å opprette ${totalShifts} gjentakende vakter.\n\nVil du fortsette?`;
+            
+            if (!confirm(confirmMessage)) {
+                // User cancelled, reset button state and return
+                const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+                if (modalAddButton) {
+                    modalAddButton.style.transform = 'scale(1)';
+                    modalAddButton.style.transition = 'transform 0.1s ease';
+                }
+                return;
+            }
+            
+            // Add confirmation with button animation after user confirms
+            const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+            if (modalAddButton) {
+                modalAddButton.style.transform = 'scale(0.95)';
+                modalAddButton.style.transition = 'transform 0.1s ease';
+                setTimeout(() => {
+                    modalAddButton.style.transform = 'scale(1)';
+                }, 100);
+            }
             
             // Insert each shift
             const { data: { user }, error: authError } = await window.supa.auth.getUser();
@@ -681,12 +713,33 @@ export const app = {
             this.shifts = [...this.userShifts];
             this.updateDisplay();
             this.closeAddShiftModal();
-            alert(`La til ${dates.length} vakter`);
+            
+            // Show success animation instead of alert
+            const addButton = document.querySelector('.add-btn');
+            if (addButton) {
+                addButton.style.transform = 'scale(1.1)';
+                addButton.style.background = 'var(--success)';
+                addButton.style.transition = 'all 0.3s ease';
+                setTimeout(() => {
+                    addButton.style.transform = 'scale(1)';
+                    addButton.style.background = '';
+                }, 500);
+            }
             return;
         }
         try {
             if (!this.selectedDates || this.selectedDates.length === 0) {
-                alert('Vennligst velg en eller flere datoer');
+                // Show validation error with button animation
+                const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+                if (modalAddButton) {
+                    modalAddButton.style.background = 'var(--danger)';
+                    modalAddButton.style.transform = 'scale(0.95)';
+                    modalAddButton.style.transition = 'all 0.2s ease';
+                    setTimeout(() => {
+                        modalAddButton.style.background = '';
+                        modalAddButton.style.transform = 'scale(1)';
+                    }, 1000);
+                }
                 return;
             }
             
@@ -696,7 +749,17 @@ export const app = {
             const endMinute = document.getElementById('endMinute').value || '00';
             
             if (!startHour || !endHour) {
-                alert('Vennligst fyll ut arbeidstid');
+                // Show validation error with button animation
+                const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+                if (modalAddButton) {
+                    modalAddButton.style.background = 'var(--danger)';
+                    modalAddButton.style.transform = 'scale(0.95)';
+                    modalAddButton.style.transition = 'all 0.2s ease';
+                    setTimeout(() => {
+                        modalAddButton.style.background = '';
+                        modalAddButton.style.transform = 'scale(1)';
+                    }, 1000);
+                }
                 return;
             }
             
@@ -769,12 +832,18 @@ export const app = {
             this.updateSelectedDatesInfo(); // Update the info display
             this.clearFormState();
             
-            // Show success message
+            // Show success animation instead of alert
             if (createdShifts.length > 0) {
-                const message = createdShifts.length === 1 ? 
-                    'Vakt lagt til' : 
-                    `${createdShifts.length} vakter lagt til`;
-                alert(message);
+                const mainAddButton = document.querySelector('.add-btn');
+                if (mainAddButton) {
+                    mainAddButton.style.transform = 'scale(1.1)';
+                    mainAddButton.style.background = 'var(--success)';
+                    mainAddButton.style.transition = 'all 0.3s ease';
+                    setTimeout(() => {
+                        mainAddButton.style.transform = 'scale(1)';
+                        mainAddButton.style.background = '';
+                    }, 500);
+                }
             }
             
         } catch (e) {
@@ -2887,28 +2956,12 @@ export const app = {
                 <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
             </div>
 
-            <div class="shift-actions" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 8px;">
-                <button class="btn btn-secondary edit-shift-btn" data-shift-id="${shift.id}" style="gap: 8px; padding: 12px;">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                    Rediger
-                </button>
-                <button class="btn btn-danger delete-shift-btn" data-shift-index="${originalIndex}" style="gap: 8px; padding: 12px;">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4c0 1 1 2 2 2v2"></path>
-                    </svg>
-                    Slett
-                </button>
-                ${shift.seriesId ? `<button class="btn btn-warning delete-series-btn" style="gap: 8px; padding: 12px;">Slett serie</button>` : ''}
-            </div>
+
         `;
 
         modal.appendChild(contentContainer);
 
-        // Create fixed footer with close button
+        // Create fixed footer with all buttons
         const fixedFooter = document.createElement('div');
         fixedFooter.className = 'modal-fixed-footer';
         fixedFooter.style.cssText = `
@@ -2920,11 +2973,105 @@ export const app = {
             background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
             border-top: 1px solid var(--border);
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             z-index: 10;
+            border-radius: 0 0 16px 16px;
         `;
 
+        // Create left side buttons container
+        const leftButtons = document.createElement('div');
+        leftButtons.style.cssText = `
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        `;
+
+        // Create edit button
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-secondary edit-shift-btn';
+        editBtn.setAttribute('data-shift-id', shift.id);
+        editBtn.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+        `;
+        editBtn.innerHTML = `
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Rediger
+        `;
+
+        // Create delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger delete-shift-btn';
+        deleteBtn.setAttribute('data-shift-index', originalIndex);
+        deleteBtn.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+        `;
+        deleteBtn.innerHTML = `
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4c0 1 1 2 2 2v2"></path>
+            </svg>
+            Slett
+        `;
+
+        // Add event listeners for edit and delete buttons
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const shiftId = e.target.closest('button').getAttribute('data-shift-id');
+            this.editShift(shiftId);
+        });
+
+        deleteBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const shiftIndex = parseInt(e.target.closest('button').getAttribute('data-shift-index'));
+            const deleted = await this.deleteShift(shiftIndex);
+            if (deleted) {
+                this.closeShiftDetails();
+            }
+        });
+
+        leftButtons.appendChild(editBtn);
+        leftButtons.appendChild(deleteBtn);
+
+        // Add series delete button if needed
+        if (shift.seriesId) {
+            const seriesBtn = document.createElement('button');
+            seriesBtn.className = 'btn btn-warning delete-series-btn';
+            seriesBtn.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 16px;
+            `;
+            seriesBtn.innerHTML = `
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4c0 1 1 2 2 2v2"></path>
+                </svg>
+                Slett serie
+            `;
+            seriesBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (confirm('Vil du slette hele serien?')) {
+                    const deleteSuccess = await this.deleteSeries(shift.seriesId);
+                    if (deleteSuccess) {
+                        this.closeShiftDetails();
+                    }
+                }
+            });
+            leftButtons.appendChild(seriesBtn);
+        }
+
+        // Create close button (right-aligned, 16px from right)
         const fixedCloseBtn = document.createElement('button');
         fixedCloseBtn.className = 'btn btn-secondary modal-close-bottom';
         fixedCloseBtn.style.cssText = `
@@ -2952,6 +3099,7 @@ export const app = {
             this.closeShiftDetails();
         };
 
+        fixedFooter.appendChild(leftButtons);
         fixedFooter.appendChild(fixedCloseBtn);
         modal.appendChild(fixedFooter);
 
@@ -2961,19 +3109,7 @@ export const app = {
             modal.style.transform = 'translate(-50%, -50%) scale(1)';
         });
 
-        // Attach handler for delete-series button
-        if (shift.seriesId) {
-            const seriesBtn = contentContainer.querySelector('.delete-series-btn');
-            if (seriesBtn) {
-                seriesBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (confirm('Vil du slette hele serien?')) {
-                        this.deleteSeries(shift.seriesId);
-                        this.closeShiftDetails();
-                    }
-                });
-            }
-        }
+
         
 
     },
@@ -3422,16 +3558,18 @@ export const app = {
             if (error) {
                 console.error('Feil ved sletting av serie:', error);
                 alert('Kunne ikke slette serien');
-                return;
+                return false;
             }
             // Remove from local arrays
             this.userShifts = this.userShifts.filter(s => s.seriesId !== seriesId);
             this.shifts = this.shifts.filter(s => s.seriesId !== seriesId);
             this.updateDisplay();
             alert('Serien er slettet');
+            return true;
         } catch (e) {
             console.error('deleteSeries error:', e);
             alert('En uventet feil oppstod');
+            return false;
         }
     },
 
@@ -3760,23 +3898,25 @@ export const app = {
         if (shift.seriesId) {
             // Ask if deleting entire series
             if (confirm('Denne vakten er del av en serie. Vil du slette hele serien?')) {
-                await this.deleteSeries(shift.seriesId);
-                return;
+                const deleteSeriesSuccess = await this.deleteSeries(shift.seriesId);
+                return deleteSeriesSuccess;
             }
+            // If user declines to delete series, continue to delete just this individual shift
+            // by falling through to the normal deletion logic below
         }
         
         const shiftToDelete = this.shifts[index];
-        if (!shiftToDelete || !shiftToDelete.id) return;
+        if (!shiftToDelete || !shiftToDelete.id) return false;
         
         // Show confirmation dialog IMMEDIATELY
-        if (!confirm('Er du sikker på at du vil slette denne vakten?')) return;
+        if (!confirm('Er du sikker på at du vil slette denne vakten?')) return false;
         
         try {
             // THEN check authentication
             const { data: { user } } = await window.supa.auth.getUser();
             if (!user) {
                 alert("Du er ikke innlogget");
-                return;
+                return false;
             }
             
             const { error } = await window.supa
@@ -3787,7 +3927,7 @@ export const app = {
             if (error) {
                 console.error('Error deleting shift:', error);
                 alert('Kunne ikke slette vakt fra databasen');
-                return;
+                return false;
             }
             
             // Remove from local arrays
@@ -3798,9 +3938,11 @@ export const app = {
             }
             
             this.updateDisplay();
+            return true;
         } catch (e) {
             console.error('Error in deleteShift:', e);
             alert('En feil oppstod ved sletting av vakt');
+            return false;
         }
     },
     
