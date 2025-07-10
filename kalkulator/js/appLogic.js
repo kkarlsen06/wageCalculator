@@ -3556,16 +3556,18 @@ export const app = {
             if (error) {
                 console.error('Feil ved sletting av serie:', error);
                 alert('Kunne ikke slette serien');
-                return;
+                return false;
             }
             // Remove from local arrays
             this.userShifts = this.userShifts.filter(s => s.seriesId !== seriesId);
             this.shifts = this.shifts.filter(s => s.seriesId !== seriesId);
             this.updateDisplay();
             alert('Serien er slettet');
+            return true;
         } catch (e) {
             console.error('deleteSeries error:', e);
             alert('En uventet feil oppstod');
+            return false;
         }
     },
 
@@ -3894,10 +3896,11 @@ export const app = {
         if (shift.seriesId) {
             // Ask if deleting entire series
             if (confirm('Denne vakten er del av en serie. Vil du slette hele serien?')) {
-                await this.deleteSeries(shift.seriesId);
-                return true;
+                const deleteSeriesSuccess = await this.deleteSeries(shift.seriesId);
+                return deleteSeriesSuccess;
             }
-            return false;
+            // If user declines to delete series, continue to delete just this individual shift
+            // by falling through to the normal deletion logic below
         }
         
         const shiftToDelete = this.shifts[index];
