@@ -4068,7 +4068,7 @@ input:checked + .slider:before {
 }
 
 .stat-value {
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-size: 18px;
   font-weight: 600;
 }
