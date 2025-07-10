@@ -233,15 +233,38 @@
                   
                   <div class="form-group form-group-with-hint">
                       <label>Pausetrekk</label>
-                      <div class="switch-group">
-                        <div>
-                          <span class="text-secondary">Trekk fra betalt pause for vakter over 5,5 timer</span>
-                          <small class="form-hint">Følger standard arbeidsrett - påvirker lønnsberegningen</small>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="pauseDeductionToggle" checked>
-                            <span class="slider"></span>
-                        </label>
+                      <div class="pause-settings-section">
+                          <div class="form-row">
+                              <select class="form-control" id="pauseType" onchange="app.updatePauseType(this.value)">
+                                  <option value="disabled">Ingen pausetrekk</option>
+                                  <option value="standard" selected>Standard (30 min fra lengste vakt)</option>
+                                  <option value="fixed">Fast pausetid</option>
+                                  <option value="individual">Individuell per vakt</option>
+                              </select>
+                          </div>
+                          
+                          <div id="fixedPauseSettings" class="pause-subsetting" style="display: none;">
+                              <div class="form-row">
+                                  <label class="pause-sublabel">Pausetid:</label>
+                                  <select class="form-control pause-time-input" id="fixedPauseHours" onchange="app.updateFixedPauseSettings()">
+                                      <option value="0">0 timer</option>
+                                      <option value="1">1 time</option>
+                                  </select>
+                                  <select class="form-control pause-time-input" id="fixedPauseMinutes" onchange="app.updateFixedPauseSettings()">
+                                      <option value="0">0 min</option>
+                                      <option value="15">15 min</option>
+                                      <option value="30" selected>30 min</option>
+                                      <option value="45">45 min</option>
+                                  </select>
+                              </div>
+                              <div class="form-row">
+                                  <label class="pause-sublabel">Alternativ:</label>
+                                  <input type="time" class="form-control pause-time-input" id="fixedPauseTime" placeholder="f.eks. 12:00" onchange="app.updateFixedPauseSettings()">
+                                  <small class="form-hint">Eller velg fast tidspunkt på dagen</small>
+                              </div>
+                          </div>
+                          
+                          <small class="form-hint" id="pauseTypeHint">Velg hvordan pauser skal trekkes fra lønnsberegningen</small>
                       </div>
                   </div>
                   

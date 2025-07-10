@@ -192,7 +192,11 @@ export const app = {
     usePreset: true,
     customWage: 200,
     customBonuses: {}, // Reset to empty - will be loaded from database
-    pauseDeduction: true,
+    pauseDeduction: true, // Keep for backwards compatibility
+    pauseType: 'standard', // New pause system: 'disabled', 'standard', 'fixed', 'individual'
+    fixedPauseHours: 0,
+    fixedPauseMinutes: 30,
+    fixedPauseTime: '', // Alternative fixed time (e.g., "12:00")
     fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
     directTimeInput: false, // Setting for using direct time input instead of dropdowns
     monthlyGoal: 20000, // Monthly income goal
@@ -232,12 +236,16 @@ export const app = {
         }
         // Set initial shifts
         this.shifts = [...this.userShifts];
-        // Bind pause toggle
-        document.getElementById('pauseDeductionToggle').addEventListener('change', e => {
-            this.pauseDeduction = e.target.checked;
-            this.updateDisplay();
-            this.saveSettingsToSupabase();
-        });
+        // Bind pause settings (backwards compatibility check)
+        const pauseToggle = document.getElementById('pauseDeductionToggle');
+        if (pauseToggle) {
+            pauseToggle.addEventListener('change', e => {
+                this.pauseDeduction = e.target.checked;
+                this.pauseType = e.target.checked ? 'standard' : 'disabled';
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
         document.getElementById('fullMinuteRangeToggle').addEventListener('change', e => {
             if (e.target.checked && this.directTimeInput) {
                 // Disable direct time input when full minute range is enabled
@@ -1036,7 +1044,8 @@ export const app = {
                         startTime: s.start_time,
                         endTime: s.end_time,
                         type: s.shift_type,
-                        seriesId: s.series_id || null
+                        seriesId: s.series_id || null,
+                        customPauseMinutes: s.custom_pause_minutes || 0
                     };
                     return mappedShift;
                 });
@@ -1076,6 +1085,10 @@ export const app = {
                 this.currentYear = settings.current_year || new Date().getFullYear();
                     
                 this.pauseDeduction = settings.pause_deduction || false;
+            this.pauseType = settings.pause_type || (settings.pause_deduction ? 'standard' : 'disabled');
+            this.fixedPauseHours = settings.fixed_pause_hours || 0;
+            this.fixedPauseMinutes = settings.fixed_pause_minutes || 30;
+            this.fixedPauseTime = settings.fixed_pause_time || '';
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
             this.monthlyGoal = settings.monthly_goal || 20000;
@@ -1152,9 +1165,32 @@ export const app = {
             customWageInput.value = this.customWage;
         }
 
+        // Update pause settings UI
         const pauseDeductionToggle = document.getElementById('pauseDeductionToggle');
         if (pauseDeductionToggle) {
             pauseDeductionToggle.checked = this.pauseDeduction;
+        }
+        
+        // Update new pause settings
+        const pauseTypeSelect = document.getElementById('pauseType');
+        if (pauseTypeSelect) {
+            pauseTypeSelect.value = this.pauseType || 'standard';
+            this.updatePauseTypeVisibility();
+        }
+        
+        const fixedPauseHours = document.getElementById('fixedPauseHours');
+        if (fixedPauseHours) {
+            fixedPauseHours.value = this.fixedPauseHours || 0;
+        }
+        
+        const fixedPauseMinutes = document.getElementById('fixedPauseMinutes');
+        if (fixedPauseMinutes) {
+            fixedPauseMinutes.value = this.fixedPauseMinutes || 30;
+        }
+        
+        const fixedPauseTime = document.getElementById('fixedPauseTime');
+        if (fixedPauseTime) {
+            fixedPauseTime.value = this.fixedPauseTime || '';
         }
 
         const fullMinuteRangeToggle = document.getElementById('fullMinuteRangeToggle');
@@ -1248,6 +1284,10 @@ export const app = {
                 // Remove currentMonth from settings - it should always default to current month on page load
                 if ('current_year' in existingSettings) settingsData.current_year = this.currentYear;
                 if ('pause_deduction' in existingSettings) settingsData.pause_deduction = this.pauseDeduction;
+            if ('pause_type' in existingSettings) settingsData.pause_type = this.pauseType;
+            if ('fixed_pause_hours' in existingSettings) settingsData.fixed_pause_hours = this.fixedPauseHours;
+            if ('fixed_pause_minutes' in existingSettings) settingsData.fixed_pause_minutes = this.fixedPauseMinutes;
+            if ('fixed_pause_time' in existingSettings) settingsData.fixed_pause_time = this.fixedPauseTime;
                 if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
                 if ('monthly_goal' in existingSettings) settingsData.monthly_goal = this.monthlyGoal;
@@ -1265,6 +1305,10 @@ export const app = {
                 // Remove currentMonth from settings - it should always default to current month on page load
                 settingsData.current_year = this.currentYear;
                 settingsData.pause_deduction = this.pauseDeduction;
+            settingsData.pause_type = this.pauseType;
+            settingsData.fixed_pause_hours = this.fixedPauseHours;
+            settingsData.fixed_pause_minutes = this.fixedPauseMinutes;
+            settingsData.fixed_pause_time = this.fixedPauseTime;
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
                 settingsData.monthly_goal = this.monthlyGoal;
@@ -1310,6 +1354,10 @@ export const app = {
                 this.customBonuses = data.customBonuses || {};
                 this.currentMonth = new Date().getMonth() + 1; // Always default to current month
                 this.pauseDeduction = data.pauseDeduction !== false;
+        this.pauseType = data.pauseType || (data.pauseDeduction ? 'standard' : 'disabled');
+        this.fixedPauseHours = data.fixedPauseHours || 0;
+        this.fixedPauseMinutes = data.fixedPauseMinutes || 30;
+        this.fixedPauseTime = data.fixedPauseTime || '';
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
                 this.monthlyGoal = data.monthlyGoal || 20000;
@@ -1721,6 +1769,10 @@ export const app = {
                 customBonuses: this.customBonuses,
                 // Remove currentMonth from localStorage - it should always default to current month on page load
                 pauseDeduction: this.pauseDeduction,
+                pauseType: this.pauseType,
+                fixedPauseHours: this.fixedPauseHours,
+                fixedPauseMinutes: this.fixedPauseMinutes,
+                fixedPauseTime: this.fixedPauseTime,
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
                 hasSeenRecurringIntro: this.hasSeenRecurringIntro,
@@ -2882,6 +2934,31 @@ export const app = {
             </div>
             ` : ''}
             
+            ${this.pauseType === 'individual' ? `
+            <div class="detail-section pause-edit-section">
+                <div class="detail-label">Pause</div>
+                <div class="pause-edit-inputs">
+                    <input type="number" 
+                           id="customPauseHours-${shift.id}" 
+                           min="0" 
+                           max="8" 
+                           value="${Math.floor((shift.customPauseMinutes || 0) / 60)}" 
+                           placeholder="0">
+                    <span>t</span>
+                    <input type="number" 
+                           id="customPauseMinutes-${shift.id}" 
+                           min="0" 
+                           max="59" 
+                           value="${(shift.customPauseMinutes || 0) % 60}" 
+                           placeholder="0">
+                    <span>min</span>
+                    <button class="btn btn-secondary" onclick="app.updateShiftPause('${shift.id}')">
+                        Lagre
+                    </button>
+                </div>
+            </div>
+            ` : ''}
+            
             <div class="detail-section total">
                 <div class="detail-label">Total</div>
                 <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
@@ -3547,11 +3624,48 @@ export const app = {
         
         let paidHours = durationHours;
         let adjustedEndMinutes = endMinutes;
+        let pauseDeducted = false;
+        let pauseMinutes = 0;
         
-        // Apply pause deduction if enabled
-        if (this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD) {
-            paidHours -= this.PAUSE_DEDUCTION;
-            adjustedEndMinutes -= this.PAUSE_DEDUCTION * 60;
+        // Apply new pause deduction logic based on pause type
+        switch (this.pauseType) {
+            case 'disabled':
+                // No pause deduction
+                break;
+            case 'standard':
+                // Old behavior: deduct 30 min from shifts over 5.5 hours
+                if (durationHours > this.PAUSE_THRESHOLD) {
+                    pauseMinutes = this.PAUSE_DEDUCTION * 60; // 30 minutes
+                    paidHours -= this.PAUSE_DEDUCTION;
+                    adjustedEndMinutes -= pauseMinutes;
+                    pauseDeducted = true;
+                }
+                break;
+            case 'fixed':
+                // Deduct fixed pause time from all shifts
+                if (this.fixedPauseTime) {
+                    // If a specific time is set, don't deduct anything (time-based pause)
+                    // The time represents when the pause was taken, not a deduction
+                } else {
+                    // Deduct the fixed hours and minutes
+                    const fixedPauseTotal = (this.fixedPauseHours * 60) + this.fixedPauseMinutes;
+                    if (fixedPauseTotal > 0) {
+                        pauseMinutes = fixedPauseTotal;
+                        paidHours -= fixedPauseTotal / 60;
+                        adjustedEndMinutes -= fixedPauseTotal;
+                        pauseDeducted = true;
+                    }
+                }
+                break;
+            case 'individual':
+                // Individual pause handling - check if shift has custom pause
+                if (shift.customPauseMinutes !== undefined && shift.customPauseMinutes > 0) {
+                    pauseMinutes = shift.customPauseMinutes;
+                    paidHours -= pauseMinutes / 60;
+                    adjustedEndMinutes -= pauseMinutes;
+                    pauseDeducted = true;
+                }
+                break;
         }
         
         const wageRate = this.getCurrentWageRate();
@@ -3575,7 +3689,8 @@ export const app = {
             hours: parseFloat(paidHours.toFixed(2)),
             totalHours: parseFloat(durationHours.toFixed(2)),
             paidHours: parseFloat(paidHours.toFixed(2)),
-            pauseDeducted: this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD,
+            pauseDeducted: pauseDeducted,
+            pauseMinutes: pauseMinutes,
             baseWage: baseWage,
             bonus: bonus,
             total: baseWage + bonus
@@ -3636,6 +3751,121 @@ export const app = {
         this.customWage = parseFloat(wage) || 200;
         this.updateDisplay();
         this.saveSettingsToSupabase();
+    },
+    
+    // New pause type management
+    updatePauseType(type) {
+        this.pauseType = type;
+        this.pauseDeduction = (type === 'standard'); // Backwards compatibility
+        this.updatePauseTypeVisibility();
+        this.updateDisplay();
+        this.saveSettingsToSupabase();
+    },
+    
+    updatePauseTypeVisibility() {
+        const fixedPauseSettings = document.getElementById('fixedPauseSettings');
+        const pauseTypeHint = document.getElementById('pauseTypeHint');
+        
+        if (fixedPauseSettings) {
+            fixedPauseSettings.style.display = this.pauseType === 'fixed' ? 'block' : 'none';
+        }
+        
+        if (pauseTypeHint) {
+            let hintText = '';
+            switch (this.pauseType) {
+                case 'disabled':
+                    hintText = 'Ingen pauser trekkes fra lønnsberegningen';
+                    break;
+                case 'standard':
+                    hintText = 'Trekk 30 minutter fra vakter over 5,5 timer';
+                    break;
+                case 'fixed':
+                    hintText = 'Trekk fast pausetid fra alle vakter';
+                    break;
+                case 'individual':
+                    hintText = 'Sett pausetid individuelt for hver vakt';
+                    break;
+                default:
+                    hintText = 'Velg hvordan pauser skal trekkes fra lønnsberegningen';
+            }
+            pauseTypeHint.textContent = hintText;
+        }
+    },
+    
+    updateFixedPauseSettings() {
+        const hours = parseInt(document.getElementById('fixedPauseHours')?.value) || 0;
+        const minutes = parseInt(document.getElementById('fixedPauseMinutes')?.value) || 0;
+        const time = document.getElementById('fixedPauseTime')?.value || '';
+        
+        this.fixedPauseHours = hours;
+        this.fixedPauseMinutes = minutes;
+        this.fixedPauseTime = time;
+        
+        this.updateDisplay();
+        this.saveSettingsToSupabase();
+    },
+    
+    // Update individual shift pause time
+    async updateShiftPause(shiftId) {
+        const shift = this.shifts.find(s => s.id === shiftId);
+        if (!shift) {
+            console.error('Shift not found:', shiftId);
+            return;
+        }
+        
+        const hoursInput = document.getElementById(`customPauseHours-${shiftId}`);
+        const minutesInput = document.getElementById(`customPauseMinutes-${shiftId}`);
+        
+        if (!hoursInput || !minutesInput) {
+            console.error('Pause input elements not found');
+            return;
+        }
+        
+        const hours = parseInt(hoursInput.value) || 0;
+        const minutes = parseInt(minutesInput.value) || 0;
+        const totalMinutes = (hours * 60) + minutes;
+        
+        // Update the shift object
+        shift.customPauseMinutes = totalMinutes;
+        
+        // Update in userShifts as well
+        const userShiftIndex = this.userShifts.findIndex(s => s.id === shiftId);
+        if (userShiftIndex !== -1) {
+            this.userShifts[userShiftIndex].customPauseMinutes = totalMinutes;
+        }
+        
+        try {
+            // Save to database
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) {
+                alert("Du er ikke innlogget");
+                return;
+            }
+            
+            const { error } = await window.supa
+                .from('user_shifts')
+                .update({ custom_pause_minutes: totalMinutes })
+                .eq('id', shiftId);
+                
+            if (error) {
+                console.error('Error updating shift pause:', error);
+                alert('Kunne ikke lagre pausetid');
+                return;
+            }
+            
+            // Update display
+            this.updateDisplay();
+            
+            // Close and reopen shift details to show updated calculation
+            this.closeShiftDetails();
+            setTimeout(() => {
+                this.showShiftDetails(shiftId);
+            }, 300);
+            
+        } catch (e) {
+            console.error('Error in updateShiftPause:', e);
+            alert('En feil oppstod ved lagring av pausetid');
+        }
     },
     
     // Capture custom bonuses from UI form elements

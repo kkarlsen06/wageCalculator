@@ -4564,3 +4564,113 @@ input[type="file"].form-control:focus {
 .next-shift-card .shift-item .shift-info {
   padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
 }
+
+/* ============================================================================
+   PAUSE SETTINGS STYLING
+   ============================================================================ */
+
+.pause-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pause-subsetting {
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 12px;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.pause-subsetting:hover {
+  border-color: var(--accent3);
+  background: var(--bg-secondary);
+}
+
+.pause-sublabel {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.pause-time-input {
+  max-width: 120px;
+  margin-right: 8px;
+}
+
+.pause-time-input:last-child {
+  margin-right: 0;
+}
+
+#pauseType {
+  font-weight: 500;
+}
+
+#fixedPauseSettings .form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+#fixedPauseSettings .form-row:last-child {
+  margin-bottom: 0;
+}
+
+#fixedPauseSettings .form-hint {
+  margin-top: 4px;
+  margin-left: 120px;
+  font-size: 12px;
+}
+
+/* Pause edit section in shift details modal */
+.pause-edit-section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.pause-edit-section .detail-label {
+  margin-bottom: 8px;
+}
+
+.pause-edit-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pause-edit-inputs input {
+  max-width: 80px;
+  font-size: 14px;
+}
+
+.pause-edit-inputs .btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+@media (max-width: 480px) {
+  .pause-subsetting {
+    padding: 12px;
+  }
+  
+  #fixedPauseSettings .form-hint {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+  
+  .pause-edit-inputs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .pause-edit-inputs input {
+    max-width: none;
+  }
+}
