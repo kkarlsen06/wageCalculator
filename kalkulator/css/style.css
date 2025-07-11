@@ -3302,7 +3302,7 @@ input:checked + .slider:before {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-color: rgba(255, 102, 153, 0.6);
-  color: var(--accent2);
+  color: white;
   transform: scale(1.1);
 }
 
