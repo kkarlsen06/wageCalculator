@@ -69,6 +69,12 @@ document.addEventListener('DOMContentLoaded', () => {
         cleanupFunctions.push(mobileStatsCleanup);
     }
     
+    // Store cleanup function from initCountingAnimations
+    const countingCleanup = initCountingAnimations();
+    if (countingCleanup) {
+        cleanupFunctions.push(countingCleanup);
+    }
+    
     // Global cleanup function if needed
     window.cleanupAnimations = () => {
         cleanupFunctions.forEach(cleanup => cleanup());
@@ -78,65 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // ───────────────────────────────────────────────────────────────────────────
 // COUNTING ANIMATIONS
 // ───────────────────────────────────────────────────────────────────────────
-function initCountingAnimations() {
-    const stats = document.querySelectorAll('.stat-number, .preview-stat .stat-value');
-    
-    const animateCount = (element, target, duration = 2000) => {
-        const start = 0;
-        const increment = target / (duration / 16);
-        let current = start;
-        
-        const updateCount = () => {
-            current += increment;
-            if (current < target) {
-                // Format based on content type
-                if (element.textContent.includes('%')) {
-                    element.textContent = Math.floor(current) + '%';
-                } else if (element.textContent.includes('+')) {
-                    element.textContent = '+' + Math.floor(current) + '%';
-                } else if (element.textContent.includes('t')) {
-                    element.textContent = Math.floor(current) + 't';
-                } else if (element.textContent.includes('kr') || element.textContent.includes(',')) {
-                    element.textContent = Math.floor(current).toLocaleString('no-NO') + ',-';
-                } else {
-                    element.textContent = Math.floor(current);
-                }
-                requestAnimationFrame(updateCount);
-            } else {
-                // Set final value
-                element.textContent = element.getAttribute('data-final-value') || element.textContent;
-            }
-        };
-        
-        // Store original value and start animation
-        element.setAttribute('data-final-value', element.textContent);
-        element.textContent = '0';
-        requestAnimationFrame(updateCount);
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const element = entry.target;
-                const text = element.textContent;
-                
-                // Extract numeric value
-                let value = 0;
-                if (text.includes('100%')) value = 100;
-                else if (text.includes('5+')) value = 5;
-                else if (text.includes('24/7')) value = 24;
-                else if (text.includes('45.750')) value = 45750;
-                else if (text.includes('18%')) value = 18;
-                else if (text.includes('162.5')) value = 162.5;
-                
-                animateCount(element, value);
-                observer.unobserve(element);
-            }
-        });
-    }, { threshold: 0.5 });
-    
-    stats.forEach(stat => observer.observe(stat));
-}
 
 // ───────────────────────────────────────────────────────────────────────────
 // VISUAL HIERARCHY & ATTENTION GUIDANCE
@@ -391,48 +338,23 @@ function initTypingEffect() {
     let currentTypingTimeout = null;
     let isActive = true;
     
-    function startScrollAnimation(futureText) {
-        const currentText = subtitleText.textContent;
-        subtitleText.textContent = futureText;
-        
-        const textWidth = subtitleText.scrollWidth;
-        const containerWidth = subtitle.clientWidth;
-        
-        subtitleText.textContent = currentText;
-        
-        if (textWidth > containerWidth) {
-            subtitle.classList.add('overflow-scroll');
-            const overflowAmount = textWidth - containerWidth;
-            const scrollDistance = -overflowAmount;
-            subtitleText.style.transform = `translateX(${scrollDistance}px)`;
-        } else {
-            subtitle.classList.remove('overflow-scroll');
-            subtitleText.style.transform = 'translateX(0)';
-        }
-    }
-    
-    function updateText(text) {
-        startScrollAnimation(text);
-        subtitleText.textContent = text;
-    }
-    
     function type() {
         if (!isActive) return; // Stop if cleanup was called
         
         if (!initialTextDeleted) {
-            const currentText = subtitleText.textContent;
+            const currentText = heroName.textContent;
             if (currentText.length > 0) {
-                updateText(currentText.substring(0, currentText.length - 1));
+                heroName.textContent = currentText.substring(0, currentText.length - 1);
                 currentTypingTimeout = setTimeout(type, 80);
                 return;
             } else {
                 initialTextDeleted = true;
-                currentChar = 0;
+                currentCharIndex = 0;
                 typingSpeed = 500;
             }
         }
         
-        const phrase = phrases[currentPhrase];
+        const currentText = texts[currentTextIndex];
         
         if (isDeleting) {
             heroName.textContent = currentText.substring(0, currentCharIndex - 1);
@@ -456,14 +378,6 @@ function initTypingEffect() {
         currentTypingTimeout = setTimeout(type, typingSpeed);
     }
     
-    // Store debounced resize handler for cleanup
-    const debouncedResizeHandler = debounce(() => {
-        startScrollAnimation(subtitleText.textContent);
-    }, 100);
-    
-    // Listen for window resize to restart scroll animation
-    window.addEventListener('resize', debouncedResizeHandler);
-    
     // Store timeout ID for cleanup
     let typingTimeout = setTimeout(type, 4000);
     
@@ -472,7 +386,6 @@ function initTypingEffect() {
         isActive = false;
         clearTimeout(typingTimeout);
         clearTimeout(currentTypingTimeout);
-        window.removeEventListener('resize', debouncedResizeHandler);
     };
 }
 
@@ -622,6 +535,19 @@ function initMobileStats() {
 // Global observer instance to prevent memory leaks
 let countingObserver = null;
 
+/**
+ * Initializes counting animations for stat elements
+ * 
+ * This function:
+ * 1. Creates an IntersectionObserver to watch for stat elements entering the viewport
+ * 2. Extracts numeric values from stat text (percentages, currency, time values, etc.)
+ * 3. Animates the values from 0 to their target values when elements become visible
+ * 4. Handles various text formats: "100%", "45.750,-", "+18%", "162.5t", "24/7", "5+"
+ * 5. Prevents re-animation of already animated elements
+ * 6. Returns a cleanup function for proper memory management
+ * 
+ * Note: Mobile stats positioning is handled separately in initMobileStats()
+ */
 function initCountingAnimations() {
     // Clean up existing observer to prevent memory leaks
     if (countingObserver) {
@@ -631,10 +557,10 @@ function initCountingAnimations() {
     
     // Robust value extraction function
     const extractNumericValue = (text) => {
-        if (!text) return null;
+        if (!text || typeof text !== 'string') return null;
         
-        // Remove any non-numeric characters except decimal points, plus signs, and slashes
         const cleanText = text.trim();
+        if (!cleanText) return null;
         
         // Handle percentage values (e.g., "100%")
         if (cleanText.includes('%')) {
@@ -661,7 +587,7 @@ function initCountingAnimations() {
     
     // Animation function
     const animateValue = (element, targetValue, duration = 2000) => {
-        if (!element || targetValue === null) return;
+        if (!element || targetValue === null || isNaN(targetValue)) return;
         
         const startValue = 0;
         const startTime = performance.now();
@@ -733,20 +659,35 @@ function initCountingAnimations() {
     
     // Create observer with proper options
     const observerOptions = {
-        threshold: 0.5,
-        rootMargin: '0px 0px -50px 0px'
+        threshold: 0.1,
+        rootMargin: '0px 0px -100px 0px'
     };
     
-    ensureCorrectPositioning();
+    // Create and store the observer (this properly instantiates the observer)
+    countingObserver = new IntersectionObserver(handleIntersection, observerOptions);
     
-    // Store the debounced handler so we can remove it later
-    const debouncedHandleViewportChange = debounce(handleViewportChange, 100);
-    window.addEventListener('resize', debouncedHandleViewportChange);
+    // Observe all stat elements (this properly observes the elements)
+    const stats = document.querySelectorAll('.stat-number, .preview-stat .stat-value');
+    
+    // Check if elements were found
+    if (stats.length === 0) {
+        console.warn('No stat elements found for counting animation');
+        return () => {
+            if (countingObserver) {
+                countingObserver.disconnect();
+                countingObserver = null;
+            }
+        };
+    }
+    
+    stats.forEach(stat => countingObserver.observe(stat));
     
     // Return cleanup function
     return () => {
-        removeExistingListeners();
-        window.removeEventListener('resize', debouncedHandleViewportChange);
+        if (countingObserver) {
+            countingObserver.disconnect();
+            countingObserver = null;
+        }
     };
 }
 
