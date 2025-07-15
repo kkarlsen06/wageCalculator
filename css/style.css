@@ -857,11 +857,6 @@ html {
 .feature-item i {
     font-size: var(--font-size-xl);
     color: var(--primary);
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background: rgba(99, 102, 241, 0.1);
     border-radius: 8px;
     flex-shrink: 0;
