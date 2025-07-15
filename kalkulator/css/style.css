@@ -3380,9 +3380,9 @@ input:checked + .slider:before {
   justify-content: space-between;
 }
 
-/* Close button positioning - 16px from right edge */
+/* Close button positioning - removed negative margin for centered layout */
 .modal-fixed-footer .modal-close-bottom {
-  margin-right: -8px; /* 16px from edge minus 8px existing padding */
+  /* Negative margin removed to work with centered modal-button-group */
 }
 
 /* Bottom actions section for settings modal - legacy (can be removed if not used elsewhere) */
