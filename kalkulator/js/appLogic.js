@@ -201,6 +201,7 @@ export const app = {
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
     initialAnimationComplete: false, // Track if initial progress bar animation is complete
+    nextShiftTimer: null, // Timer for updating next shift countdown
     async init() {
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
@@ -306,13 +307,6 @@ export const app = {
             }
         });
         
-        // Close breakdown on Escape key
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                this.closeBreakdown();
-            }
-        });
-        
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
         
@@ -363,6 +357,11 @@ export const app = {
         
         // Check if we should show the recurring feature introduction
         this.checkAndShowRecurringIntro();
+        
+        // Add cleanup listener for page unload
+        window.addEventListener('beforeunload', () => {
+            this.cleanup();
+        });
     },
 
 
@@ -408,9 +407,8 @@ export const app = {
                 recurringEndMinute.innerHTML = '<option value="">Til minutt</option>';
             }
             
-            // Only allow shifts starting between 06 and 23
-            // to match the validation rules below
-            for (let h = 6; h <= 23; h++) {
+            // Allow all hours from 00 to 23
+            for (let h = 0; h <= 23; h++) {
                 const hh = String(h).padStart(2,'0');
                 startHour.innerHTML += `<option value="${hh}">${hh}</option>`;
                 endHour.innerHTML += `<option value="${hh}">${hh}</option>`;
@@ -483,9 +481,9 @@ export const app = {
                     if (value.length > 2) value = value.slice(0, 2);
                     
                     if (input.id.includes('Hour')) {
-                        // Validate hours (06-23)
+                        // Validate hours (00-23)
                         const hour = parseInt(value);
-                        if (value.length === 2 && (hour < 6 || hour > 23)) {
+                        if (value.length === 2 && hour > 23) {
                             value = value.slice(0, 1);
                         }
                     } else {
@@ -531,6 +529,10 @@ export const app = {
     },
     
     openAddShiftModal(targetMonth = null, targetYear = null) {
+        // Close any existing expanded views first
+        this.closeShiftDetails();
+        this.closeSettings();
+        
         // Populate form elements if they're empty
         const startHourElement = document.getElementById('startHour');
         if (startHourElement && startHourElement.tagName === 'SELECT' && !startHourElement.options.length) {
@@ -1030,7 +1032,6 @@ export const app = {
         const isActive = dd.classList.contains('active');
         
         // Close any other open modals first
-        this.closeBreakdown();
         this.closeSettings();
         
         if (isActive) {
@@ -1743,7 +1744,6 @@ export const app = {
     
     async openSettings() {
         // Close any existing expanded views
-        this.closeBreakdown();
         this.closeShiftDetails();
         
         const modal = document.getElementById('settingsModal');
@@ -1824,6 +1824,7 @@ export const app = {
         this.updateShiftList();
         this.updateShiftCalendar();
         this.populateDateGrid();
+        this.startNextShiftTimer(); // Start the countdown timer
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
@@ -2218,10 +2219,40 @@ export const app = {
         // Hide the next shift card if we're not viewing the current month and year
         if (this.currentMonth !== currentMonth || this.currentYear !== currentYear) {
             nextShiftCard.style.display = 'none';
+            this.stopNextShiftTimer(); // Stop timer when not viewing current month
             return;
         }
         
         nextShiftCard.style.display = 'block';
+        
+        // Check if there's a current shift happening right now
+        const currentShift = this.shifts.find(shift => {
+            const shiftDate = new Date(shift.date);
+            if (shiftDate.toDateString() === now.toDateString()) {
+                const [startHour, startMinute] = shift.startTime.split(':').map(Number);
+                const [endHour, endMinute] = shift.endTime.split(':').map(Number);
+                
+                const shiftStartTime = new Date(shiftDate);
+                shiftStartTime.setHours(startHour, startMinute, 0, 0);
+                
+                const shiftEndTime = new Date(shiftDate);
+                shiftEndTime.setHours(endHour, endMinute, 0, 0);
+                
+                // Handle shifts that cross midnight
+                if (shiftEndTime < shiftStartTime) {
+                    shiftEndTime.setDate(shiftEndTime.getDate() + 1);
+                }
+                
+                return now >= shiftStartTime && now <= shiftEndTime;
+            }
+            return false;
+        });
+        
+        // If there's a current shift, show current shift info
+        if (currentShift) {
+            this.displayCurrentShiftCard(currentShift, now);
+            return;
+        }
         
         // Get all shifts from now onwards
         const upcomingShifts = this.shifts.filter(shift => {
@@ -2267,6 +2298,7 @@ export const app = {
             // No upcoming shifts
             nextShiftContent.style.display = 'none';
             nextShiftEmpty.style.display = 'flex';
+            this.stopNextShiftTimer(); // Stop timer when no upcoming shifts
         } else {
             // Show next shift details
             nextShiftContent.style.display = 'flex';
@@ -2291,10 +2323,30 @@ export const app = {
             const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
             const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
             
-            // Add "i dag" or "i morgen" to the date display
+            // Add time remaining for today's shifts or "i morgen" for tomorrow's shifts
             let dateSuffix = '';
             if (shiftDate.toDateString() === today.toDateString()) {
-                dateSuffix = ' (i dag)';
+                // Calculate time remaining until shift starts
+                const [startHour, startMinute] = nextShift.startTime.split(':').map(Number);
+                const shiftStartTime = new Date(shiftDate);
+                shiftStartTime.setHours(startHour, startMinute, 0, 0);
+                
+                const timeDifference = shiftStartTime - now;
+                const hoursRemaining = Math.floor(timeDifference / (1000 * 60 * 60));
+                const minutesRemaining = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+                const secondsRemaining = Math.floor((timeDifference % (1000 * 60)) / 1000);
+                
+                if (hoursRemaining > 0) {
+                    dateSuffix = ` <span class="countdown-wrapper">(<span class="countdown-hours">${hoursRemaining}t</span> <span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-hours">${hoursRemaining}t</span> <span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span></span>`;
+                } else if (minutesRemaining > 0) {
+                    dateSuffix = ` <span class="countdown-wrapper">(<span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span></span>`;
+                } else if (secondsRemaining > 0) {
+                    dateSuffix = ` <span class="countdown-wrapper">(<span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-seconds">${secondsRemaining}s</span></span>`;
+                } else {
+                    dateSuffix = ' <span class="countdown-wrapper">(starter nå)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens">starter nå</span>';
+                    // Stop timer when shift starts
+                    this.stopNextShiftTimer();
+                }
             } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
                 dateSuffix = ' (i morgen)';
             }
@@ -2311,7 +2363,8 @@ export const app = {
                         <div class="shift-date">
                             <span class="shift-date-number">${day}. ${month}</span>
                             <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${weekday}${dateSuffix}${seriesBadge}</span>
+                            <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                            <span class="shift-countdown-timer">${dateSuffix}</span>
                         </div>
                         <div class="shift-details">
                             <div class="shift-time-with-hours">
@@ -2342,6 +2395,174 @@ export const app = {
                 });
             }
         }
+    },
+
+    displayCurrentShiftCard(currentShift, now) {
+        const nextShiftContent = document.getElementById('nextShiftContent');
+        const nextShiftEmpty = document.getElementById('nextShiftEmpty');
+        
+        nextShiftContent.style.display = 'flex';
+        nextShiftEmpty.style.display = 'none';
+        
+        // Calculate earnings so far
+        const currentEarnings = this.calculateCurrentShiftEarnings(currentShift, now);
+        
+        // Calculate full shift duration (like other shift cards)
+        const fullShiftCalculation = this.calculateShift(currentShift);
+        
+        // Format date
+        const shiftDate = new Date(currentShift.date);
+        const weekday = this.WEEKDAYS[shiftDate.getDay()];
+        const day = shiftDate.getDate();
+        const month = this.MONTHS[shiftDate.getMonth()];
+        
+        // Calculate time worked so far
+        const [startHour, startMinute] = currentShift.startTime.split(':').map(Number);
+        const shiftStartTime = new Date(shiftDate);
+        shiftStartTime.setHours(startHour, startMinute, 0, 0);
+        
+        const timeWorked = now - shiftStartTime;
+        const hoursWorked = Math.floor(timeWorked / (1000 * 60 * 60));
+        const minutesWorked = Math.floor((timeWorked % (1000 * 60 * 60)) / (1000 * 60));
+        const secondsWorked = Math.floor((timeWorked % (1000 * 60)) / 1000);
+        
+        let timeWorkedText = '';
+        if (hoursWorked > 0) {
+            timeWorkedText = `<span class="countdown-wrapper">(<span class="countdown-hours">${hoursWorked}t</span> <span class="countdown-minutes">${minutesWorked}m</span> <span class="countdown-seconds">${secondsWorked}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-hours">${hoursWorked}t</span> <span class="countdown-minutes">${minutesWorked}m</span> <span class="countdown-seconds">${secondsWorked}s</span></span>`;
+        } else if (minutesWorked > 0) {
+            timeWorkedText = `<span class="countdown-wrapper">(<span class="countdown-minutes">${minutesWorked}m</span> <span class="countdown-seconds">${secondsWorked}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-minutes">${minutesWorked}m</span> <span class="countdown-seconds">${secondsWorked}s</span></span>`;
+        } else {
+            timeWorkedText = `<span class="countdown-wrapper">(<span class="countdown-seconds">${secondsWorked}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-seconds">${secondsWorked}s</span></span>`;
+        }
+        
+        const typeClass = currentShift.type === 0 ? 'weekday' : (currentShift.type === 1 ? 'saturday' : 'sunday');
+        const seriesBadge = currentShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+        
+        nextShiftContent.innerHTML = `
+            <div class="shift-item ${typeClass} active" data-shift-id="${currentShift.id}" style="cursor: pointer; position: relative;">
+                <div class="next-shift-badge">NÅ</div>
+                <div class="shift-info">
+                    <div class="shift-date">
+                        <span class="shift-date-number">${day}. ${month}</span>
+                        <span class="shift-date-separator"></span>
+                        <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                        <span class="shift-countdown-timer"> ${timeWorkedText}</span>
+                    </div>
+                    <div class="shift-details">
+                        <div class="shift-time-with-hours">
+                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>${currentShift.startTime} - ${currentShift.endTime}</span>
+                            <span class="shift-time-arrow">→</span>
+                            <span>${this.formatHours(fullShiftCalculation.hours)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="shift-amount-wrapper">
+                    <div class="shift-total">${this.formatCurrencyDetailed(currentEarnings.totalEarned)}</div>
+                    <div class="shift-breakdown">
+                        ${this.formatCurrencyDetailed(currentEarnings.baseEarned)} + ${this.formatCurrencyDetailed(currentEarnings.bonusEarned)}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add click handler to show shift details
+        const shiftItem = nextShiftContent.querySelector('.shift-item');
+        if (shiftItem) {
+            shiftItem.addEventListener('click', () => {
+                this.showShiftDetails(currentShift.id);
+            });
+        }
+    },
+
+    calculateCurrentShiftEarnings(shift, now) {
+        const shiftDate = new Date(shift.date);
+        const [startHour, startMinute] = shift.startTime.split(':').map(Number);
+        const shiftStartTime = new Date(shiftDate);
+        shiftStartTime.setHours(startHour, startMinute, 0, 0);
+        
+        // Calculate time worked so far in hours
+        const timeWorked = now - shiftStartTime;
+        const hoursWorked = timeWorked / (1000 * 60 * 60);
+        
+        // Get wage rate and bonuses
+        const wageRate = this.getCurrentWageRate();
+        const bonuses = this.getCurrentBonuses();
+        const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
+        const bonusSegments = bonuses[bonusType] || [];
+        
+        // Calculate base earnings so far
+        const baseEarned = hoursWorked * wageRate;
+        
+        // Calculate bonus earnings so far
+        const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        const bonusEarned = this.calculateBonus(shift.startTime, currentTimeStr, bonusSegments);
+        
+        return {
+            totalHours: hoursWorked,
+            baseEarned: baseEarned,
+            bonusEarned: bonusEarned,
+            totalEarned: baseEarned + bonusEarned
+        };
+    },
+
+    startNextShiftTimer() {
+        // Clear any existing timer
+        this.stopNextShiftTimer();
+        
+        // Only start timer if we're viewing the current month and year
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        
+        if (this.currentMonth === currentMonth && this.currentYear === currentYear) {
+            // Check if there's a current shift or upcoming shifts today that need real-time updates
+            const today = new Date();
+            const todayShifts = this.shifts.filter(shift => {
+                const shiftDate = new Date(shift.date);
+                if (shiftDate.toDateString() === today.toDateString()) {
+                    const [startHour, startMinute] = shift.startTime.split(':').map(Number);
+                    const [endHour, endMinute] = shift.endTime.split(':').map(Number);
+                    
+                    const shiftStartTime = new Date(shiftDate);
+                    shiftStartTime.setHours(startHour, startMinute, 0, 0);
+                    
+                    const shiftEndTime = new Date(shiftDate);
+                    shiftEndTime.setHours(endHour, endMinute, 0, 0);
+                    
+                    // Handle shifts that cross midnight
+                    if (shiftEndTime < shiftStartTime) {
+                        shiftEndTime.setDate(shiftEndTime.getDate() + 1);
+                    }
+                    
+                    // Include current shifts (happening now) or upcoming shifts (not started yet)
+                    return (now >= shiftStartTime && now <= shiftEndTime) || shiftStartTime > now;
+                }
+                return false;
+            });
+            
+            // Start timer if there are current shifts or upcoming shifts today
+            if (todayShifts.length > 0) {
+                this.nextShiftTimer = setInterval(() => {
+                    this.updateNextShiftCard();
+                }, 1000); // Update every second
+            }
+        }
+    },
+
+    stopNextShiftTimer() {
+        if (this.nextShiftTimer) {
+            clearInterval(this.nextShiftTimer);
+            this.nextShiftTimer = null;
+        }
+    },
+
+    // Clean up timers when page is about to unload
+    cleanup() {
+        this.stopNextShiftTimer();
     },
 
     renderShiftCalendar() {
@@ -2441,7 +2662,7 @@ export const app = {
                     
                     const breakdown = document.createElement('div');
                     breakdown.className = 'calendar-breakdown';
-                    breakdown.innerHTML = `${this.formatCurrencyShort(base)}<br>+${this.formatCurrencyShort(bonus)}`;
+                    breakdown.innerHTML = `<div class="calendar-base-amount">${this.formatCurrencyShort(base)}</div><div class="calendar-bonus-line">+<span class="calendar-bonus-amount">${this.formatCurrencyShort(bonus)}</span></div>`;
                     
                     const totalDisplay = document.createElement('div');
                     totalDisplay.className = 'calendar-total';
@@ -2501,321 +2722,98 @@ export const app = {
             cal.style.display = 'none';
         }
     },
-        // Show breakdown modal
-    showBreakdown(type) {
-        this.closeBreakdown();
-        this.closeStatDetails();
+        // Show breakdown in calendar view (replaces modal)
+    showBreakdownInCalendar(type) {
+        // Close any open modals first
         this.closeSettings();
-
-        const header = document.querySelector('.header');
-        if (header) header.classList.add('hidden');
-
-        const backdrop = document.createElement('div');
-        backdrop.className = 'backdrop-blur';
-        backdrop.onclick = () => this.closeBreakdown();
-        document.body.appendChild(backdrop);
-        backdrop.offsetHeight;
-        backdrop.classList.add('active');
-
-        this.breakdownKeydownHandler = (e) => {
-            if (e.key === 'Escape') {
-                this.closeBreakdown();
-            }
-        };
-        document.addEventListener('keydown', this.breakdownKeydownHandler);
-
-        // Create modal container
-        const modal = document.createElement('div');
-        modal.className = 'breakdown-modal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            width: min(95vw, 600px);
-            max-height: 85vh;
-            background: var(--bg-primary);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px var(--shadow-blue);
-            z-index: 1200;
-            opacity: 0;
-            transition: all 0.4s var(--ease-default);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        `;
-
-        // Create title container
-        const titleContainer = document.createElement('div');
-        titleContainer.className = 'breakdown-title-container';
-        titleContainer.style.cssText = `
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding: 24px 24px 0 24px;
-            flex-shrink: 0;
-        `;
-
-        // Create icon based on type
-        const icon = document.createElement('div');
-        icon.className = 'breakdown-title-icon';
-        icon.innerHTML = type === 'base' ? 
-            '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>' :
-            '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
-        icon.style.cssText = `
-            color: var(--accent3);
-            opacity: 0.8;
-        `;
-
-        // Create title
-        const title = document.createElement('h3');
-        title.className = 'breakdown-title';
-        title.textContent = type === 'base' ? 'Grunnlønn' : 'Tillegg';
-        title.style.cssText = `
-            color: var(--accent3);
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-        `;
-
-        titleContainer.appendChild(icon);
-        titleContainer.appendChild(title);
-        modal.appendChild(titleContainer);
-
-        // Create close button
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'close-btn';
-        closeBtn.innerHTML = '×';
-        closeBtn.style.cssText = `
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 102, 153, 0.1);
-            border: 1px solid rgba(255, 102, 153, 0.3);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--danger);
-            transition: all 0.2s var(--ease-default);
-            z-index: 21;
-            opacity: 0;
-            transform: scale(0.8);
-            animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
-            font-size: 18px;
-            font-weight: bold;
-        `;
-        closeBtn.onclick = (e) => {
-            e.stopPropagation();
-            this.closeBreakdown();
-        };
-        modal.appendChild(closeBtn);
-
-        // Create calendar container
-        const calendarContainer = document.createElement('div');
-        calendarContainer.className = 'breakdown-calendar';
-        calendarContainer.style.cssText = `
-            opacity: 0;
-            animation: slideInFromBottom 0.6s var(--ease-default) 0.3s forwards;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 0 24px 24px 24px;
-        `;
-        modal.appendChild(calendarContainer);
-
-        // Create the breakdown calendar
-        this.createBreakdownCalendar(calendarContainer, type);
-
-        document.body.appendChild(modal);
-        requestAnimationFrame(() => {
-            modal.style.opacity = '1';
-            modal.style.transform = 'translate(-50%, -50%) scale(1)';
-        });
-    },
-
-    // Create breakdown calendar view
-    createBreakdownCalendar(container, type) {
-        const year = this.currentYear;
-        const monthIdx = this.currentMonth - 1;
-        const firstDay = new Date(year, monthIdx, 1);
-        const lastDay = new Date(year, monthIdx + 1, 0);
-        const startDate = new Date(firstDay);
-        const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-        startDate.setDate(startDate.getDate() - offset);
-
-        container.innerHTML = '';
-
-        // Add calendar header with day names (with animation)
-        const header = document.createElement('div');
-        header.className = 'calendar-header';
-        header.style.cssText = `
-            opacity: 0;
-            animation: slideInFromTop 0.4s var(--ease-default) 0.2s forwards;
-        `;
+        this.closeShiftDetails();
+        this.closeStatDetails();
         
-        // Add week number header
-        const weekHeader = document.createElement('div');
-        weekHeader.textContent = '';
-        weekHeader.className = 'calendar-week-number header';
-        header.appendChild(weekHeader);
-        
-        // Add day headers
-        ['M', 'T', 'O', 'T', 'F', 'L', 'S'].forEach(day => {
-            const dayHeader = document.createElement('div');
-            dayHeader.textContent = day;
-            dayHeader.className = 'calendar-day-header';
-            header.appendChild(dayHeader);
-        });
-        container.appendChild(header);
-
-        // Create calendar grid
-        const grid = document.createElement('div');
-        grid.className = 'calendar-grid';
-
-        // Get shifts for current month and create lookup by date
-        const monthShifts = this.shifts.filter(s => 
-            s.date.getMonth() === this.currentMonth - 1 && 
-            s.date.getFullYear() === this.currentYear
-        );
-        
-        const shiftsByDate = {};
-        monthShifts.forEach(shift => {
-            const dateKey = shift.date.getDate();
-            if (!shiftsByDate[dateKey]) {
-                shiftsByDate[dateKey] = [];
-            }
-            shiftsByDate[dateKey].push(shift);
-        });
-
-        // Calculate how many weeks we need to show
-        // Start from the first day of the month and go to the last day
-        const endDate = new Date(lastDay);
-        const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        const totalWeeks = Math.ceil(totalDays / 7);
-
-        for (let week = 0; week < totalWeeks; week++) {
-            // Add week number at the start of each row
-            const weekDate = new Date(startDate);
-            weekDate.setDate(startDate.getDate() + (week * 7));
-            const weekNum = this.getISOWeekNumber(weekDate);
-            const weekCell = document.createElement('div');
-            weekCell.className = 'calendar-week-number';
-            weekCell.textContent = weekNum;
-            
-            // Calculate animation delay for week number
-            const weekAnimationDelay = 0.3 + (week * 7) * 0.035;
-            weekCell.style.animationDelay = `${weekAnimationDelay}s`;
-            
-            grid.appendChild(weekCell);
-
-            // Add 7 days for this week
-            for (let day = 0; day < 7; day++) {
-                const cellDate = new Date(startDate);
-                cellDate.setDate(startDate.getDate() + (week * 7) + day);
-                
-                const cell = document.createElement('div');
-                cell.className = 'calendar-cell';
-                
-                // Calculate animation delay based on row and column position
-                // Row by row, left to right animation - start while modal is opening
-                // Account for week number column by adding 1 to the base position
-                const col = day;
-                const animationDelay = 0.3 + (week * 8 + col + 1) * 0.035; // 8 columns now (week + 7 days), +1 for week number offset
-                cell.style.animationDelay = `${animationDelay}s`;
-                
-                // Create content wrapper and day number
-                const content = document.createElement('div');
-                content.className = 'calendar-cell-content';
-                
-                const dayNumber = document.createElement('div');
-                dayNumber.className = 'calendar-day-number';
-                dayNumber.textContent = cellDate.getDate();
-                content.appendChild(dayNumber);
-                
-                // Style for current month vs other months
-                if (cellDate.getMonth() !== monthIdx) {
-                    cell.classList.add('other-month');
-                    // Set custom animation for other-month cells that ends with opacity 0.3
-                    cell.style.setProperty('--final-opacity', '0.3');
-                }
-
-                const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
-                let totalAmount = 0;
-                
-                // Calculate total amount for this day
-                shiftsForDay.forEach(shift => {
-                    if (cellDate.getMonth() === monthIdx) { // Only for current month
-                        const calc = this.calculateShift(shift);
-                        const amount = type === 'base' ? calc.baseWage : calc.bonus;
-                        totalAmount += amount;
-                    }
-                });
-
-                if (totalAmount > 0) {
-                    // Create wrapper for shift data
-                    const shiftData = document.createElement('div');
-                    shiftData.className = 'calendar-shift-data';
-                    
-                    const amountDisplay = document.createElement('div');
-                    amountDisplay.className = 'calendar-amount';
-                    amountDisplay.textContent = this.formatCurrencyCalendar(totalAmount);
-                    
-                    shiftData.appendChild(amountDisplay);
-                    content.appendChild(shiftData);
-                    
-                    cell.classList.add('has-shifts');
-                    
-                    // Make clickable if there are shifts
-                    cell.style.cursor = 'pointer';
-                    cell.onclick = (e) => {
-                        e.stopPropagation();
-                        // If multiple shifts, show first one (or we could show a summary)
-                        if (shiftsForDay.length > 0) {
-                            this.showShiftDetails(shiftsForDay[0].id);
-                        }
-                    };
-                }
-
-                cell.appendChild(content);
-                grid.appendChild(cell);
-            }
+        // Switch to calendar view if not already selected
+        if (this.shiftView !== 'calendar') {
+            this.switchShiftView('calendar');
         }
-
-        container.appendChild(grid);
+        
+        // Scroll to shift section
+        const shiftSection = document.querySelector('.shift-section');
+        if (shiftSection) {
+            shiftSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+        
+        // Add shimmer effect to calendar numbers
+        this.triggerCalendarShimmer(type);
+        
+        // Optional: Add a brief visual indicator to show which type was selected
+        // You could add a temporary highlight to the relevant data in the calendar
+        this.highlightBreakdownType(type);
     },
     
-    // Close breakdown modal
-    closeBreakdown() {
-        const modal = document.querySelector('.breakdown-modal');
-        const backdrop = document.querySelector('.backdrop-blur');
-        const header = document.querySelector('.header');
-
-        if (header) header.classList.remove('hidden');
-
-        if (this.breakdownKeydownHandler) {
-            document.removeEventListener('keydown', this.breakdownKeydownHandler);
-            this.breakdownKeydownHandler = null;
+    // Trigger shimmer animations on calendar elements
+    triggerCalendarShimmer(type) {
+        let selector = '';
+        
+        if (type === 'base') {
+            selector = '.calendar-base-amount';
+        } else if (type === 'bonus') {
+            selector = '.calendar-bonus-amount';
+        } else if (type === 'total') {
+            // For total, only shimmer the total sum numbers
+            selector = '.calendar-total';
         }
-
-        if (modal) {
-            modal.style.opacity = '0';
-            modal.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            setTimeout(() => { if (modal.parentNode) modal.remove(); }, 300);
-        }
-
-        if (backdrop) {
-            setTimeout(() => {
-                backdrop.classList.remove('active');
-                setTimeout(() => { if (backdrop.parentNode) backdrop.remove(); }, 350);
-            }, 100);
+        
+        if (selector) {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach((element) => {
+                // Remove any existing shimmer class first
+                element.classList.remove('shimmer');
+                // Force reflow to ensure class removal is processed
+                element.offsetHeight;
+                // Add shimmer class - all at once, no staggering
+                element.classList.add('shimmer');
+                
+                // Remove shimmer class after animation completes (2s)
+                setTimeout(() => {
+                    element.classList.remove('shimmer');
+                    // Reset any text styling that might have been applied with a slight delay
+                    setTimeout(() => {
+                        element.style.webkitTextFillColor = '';
+                        element.style.backgroundClip = '';
+                        element.style.webkitBackgroundClip = '';
+                    }, 50);
+                }, 2000);
+            });
         }
     },
+
+    // Helper function to briefly highlight the selected breakdown type
+    highlightBreakdownType(type) {
+        if (type === 'total') {
+            // For total type, highlight both breakdown cards
+            const breakdownCards = document.querySelectorAll('.breakdown-card');
+            breakdownCards.forEach(card => {
+                card.style.transform = 'scale(1.05)';
+                card.style.transition = 'transform 0.2s ease';
+                setTimeout(() => {
+                    card.style.transform = 'scale(1)';
+                }, 200);
+            });
+        } else {
+            // Add a brief visual feedback by highlighting the relevant breakdown card
+            const breakdownCard = document.querySelector(`[data-type="${type}"]`);
+            if (breakdownCard) {
+                breakdownCard.style.transform = 'scale(1.05)';
+                breakdownCard.style.transition = 'transform 0.2s ease';
+                setTimeout(() => {
+                    breakdownCard.style.transform = 'scale(1)';
+                }, 200);
+            }
+        }
+    },
+
+
     // Show detailed shift information in expanded view
     showShiftDetails(shiftId) {
         // Find the shift by ID
@@ -2823,7 +2821,6 @@ export const app = {
         if (!shift) return;
         
         // Close any existing expanded views
-        this.closeBreakdown();
         this.closeStatDetails();
         this.closeSettings();
         
@@ -2976,7 +2973,7 @@ export const app = {
             justify-content: space-between;
             align-items: center;
             z-index: 10;
-            border-radius: 0 0 16px 16px;
+            border-radius: 0 0 24px 24px;
         `;
 
         // Create left side buttons container
@@ -3146,7 +3143,6 @@ export const app = {
     // Show details for a statistic card
     showStatDetails(statId) {
         this.closeStatDetails();
-        this.closeBreakdown();
         this.closeSettings();
 
         const header = document.querySelector('.header');
@@ -3759,6 +3755,10 @@ export const app = {
     },
     formatCurrencyCalendar(amount) {
         return Math.round(amount).toLocaleString('nb-NO');
+    },
+    formatCurrencyDetailed(amount) {
+        const currencySuffix = this.currencyFormat ? ' NOK' : ' kr';
+        return amount.toFixed(2).replace('.', ',') + currencySuffix;
     },
     formatHours(hours) {
         return hours.toFixed(2).replace('.', ',') + ' timer';
@@ -4423,7 +4423,6 @@ export const app = {
     showRecurringIntroduction() {
         // Close any open modals first
         this.closeSettings();
-        this.closeBreakdown();
         this.closeAddShiftModal();
         this.closeEditShift();
         
@@ -5069,15 +5068,9 @@ export const app = {
         // Setup event listeners for radio buttons
         const periodRadios = document.querySelectorAll('input[name="exportPeriod"]');
         const customSection = document.getElementById('customPeriodSection');
-        const exportOptionsSection = document.getElementById('exportOptionsSection');
         
         periodRadios.forEach(radio => {
             radio.addEventListener('change', () => {
-                // Show export options when any period is selected
-                if (exportOptionsSection) {
-                    exportOptionsSection.style.display = 'block';
-                }
-                
                 // Handle custom period section
                 if (radio.value === 'custom') {
                     customSection.style.display = 'block';
@@ -5103,19 +5096,9 @@ export const app = {
         // Initialize visibility based on current selection
         const checkedRadio = document.querySelector('input[name="exportPeriod"]:checked');
         if (checkedRadio) {
-            // Show export options if a period is already selected
-            if (exportOptionsSection) {
-                exportOptionsSection.style.display = 'block';
-            }
-            
             // Show custom section if custom period is selected
             if (checkedRadio.value === 'custom') {
                 customSection.style.display = 'block';
-            }
-        } else {
-            // Hide export options if no period is selected
-            if (exportOptionsSection) {
-                exportOptionsSection.style.display = 'none';
             }
         }
     },

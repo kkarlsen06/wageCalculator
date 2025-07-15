@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vaktberegner</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=2">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
   <meta name="theme-color" content="#000000">
@@ -51,7 +51,7 @@
                   </div>
 
                   <div class="content dashboard-content">
-                      <div class="total-card">
+                      <div class="total-card" onclick="app.showBreakdownInCalendar('total')">
                           <div class="total-label">Brutto</div>
                           <div class="total-amount" id="totalAmount">0 kr</div>
                           <div class="total-hours">
@@ -65,11 +65,11 @@
                       </div>
 
                       <div class="breakdown-cards">
-                          <div class="breakdown-card" data-type="base" onclick="app.showBreakdown('base')">
+                          <div class="breakdown-card" data-type="base" onclick="app.showBreakdownInCalendar('base')">
                               <div class="breakdown-value" id="baseAmount">0 kr</div>
                               <div class="breakdown-label">Grunnlønn</div>
                           </div>
-                          <div class="breakdown-card" data-type="bonus" onclick="app.showBreakdown('bonus')">
+                          <div class="breakdown-card" data-type="bonus" onclick="app.showBreakdownInCalendar('bonus')">
                               <div class="breakdown-value" id="bonusAmount">0 kr</div>
                               <div class="breakdown-label">Tillegg</div>
                           </div>
@@ -93,6 +93,8 @@
 
           <!-- Shift List Section -->
           <section class="snap-section shift-section" role="complementary" aria-label="Vaktliste">
+              <!-- Backdrop blur for floating action bar -->
+              <div class="floating-action-bar-backdrop"></div>
               <div class="app-container">
                   <div class="section-header shift-history-header">
                       <div class="header-left">
@@ -150,16 +152,6 @@
       <!-- Settings Modal -->
       <div id="settingsModal" class="modal">
           <div class="modal-content">
-              <div class="modal-header">
-                  <h2 class="modal-title">Innstillinger</h2>
-                  <span class="modal-close" onclick="app.closeSettings()">
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                  </span>
-              </div>
-              
               <div class="tab-nav">
                   <button class="tab-btn active" onclick="app.switchSettingsTabSync('wage')">Lønn</button>
                   <button class="tab-btn" onclick="app.switchSettingsTabSync('interface')">UI</button>
@@ -373,42 +365,38 @@
               </div>
 
               <div id="dataTab" class="tab-content">
-                  <div class="form-group">
-                      <label>Dataeksport</label>
-                      <div class="form-row">
-                          <div class="export-period-options">
-                              <label class="radio-option">
-                                  <input type="radio" name="exportPeriod" value="all">
-                                  <span>Alle data</span>
-                              </label>
-                              <label class="radio-option">
-                                  <input type="radio" name="exportPeriod" value="current">
-                                  <span id="currentMonthLabel">Inneværende måned</span>
-                              </label>
-                              <label class="radio-option">
-                                  <input type="radio" name="exportPeriod" value="year">
-                                  <span>Hele året</span>
-                              </label>
-                              <label class="radio-option">
-                                  <input type="radio" name="exportPeriod" value="custom">
-                                  <span>Egendefinert periode</span>
-                              </label>
+                  <div id="exportOptionsSection" class="form-group form-group-with-hint">
+                      <label class="export-section-header">Dataeksport</label>
+                      <small class="form-hint">Last ned dine vaktdata for regnskapsføring eller backup</small>
+                      
+                      <div class="export-period-options">
+                          <label class="radio-option">
+                              <input type="radio" name="exportPeriod" value="all">
+                              <span>Alle data</span>
+                          </label>
+                          <label class="radio-option">
+                              <input type="radio" name="exportPeriod" value="current">
+                              <span id="currentMonthLabel">Inneværende måned</span>
+                          </label>
+                          <label class="radio-option">
+                              <input type="radio" name="exportPeriod" value="year">
+                              <span>Hele året</span>
+                          </label>
+                          <label class="radio-option">
+                              <input type="radio" name="exportPeriod" value="custom">
+                              <span>Egendefinert</span>
+                          </label>
+                      </div>
+                      
+                      <div id="customPeriodSection" style="display: none;">
+                          <label class="custom-period-header">Velg tidsperiode</label>
+                          <small class="form-hint">Velg start- og sluttdato for eksporten</small>
+                          <div class="form-row">
+                              <input type="date" id="exportStartDate" class="form-control" style="margin-right: 8px;" placeholder="Fra dato">
+                              <input type="date" id="exportEndDate" class="form-control" placeholder="Til dato">
                           </div>
                       </div>
-                  </div>
-                  
-                  <div id="customPeriodSection" class="form-group" style="display: none;">
-                      <label class="custom-period-header">Velg tidsperiode</label>
-                      <small class="form-hint">Velg start- og sluttdato for eksporten</small>
-                      <div class="form-row">
-                          <input type="date" id="exportStartDate" class="form-control" style="margin-right: 8px;" placeholder="Fra dato">
-                          <input type="date" id="exportEndDate" class="form-control" placeholder="Til dato">
-                      </div>
-                  </div>
-                  
-                  <div id="exportOptionsSection" class="form-group form-group-with-hint" style="display: none;">
-                      <label class="export-section-header">Velg filformat</label>
-                      <small class="form-hint">Last ned dine vaktdata for regnskapsføring eller backup</small>
+                      
                       <div class="export-buttons-container">
                           <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('csv')">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -462,21 +450,7 @@
   </div>
 
   
-      <!-- Breakdown Modal -->
-      <div id="breakdownModal" class="modal">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <h2 class="modal-title" id="breakdownTitle">Detaljer</h2>
-                  <span class="modal-close" onclick="app.closeBreakdown()">
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                  </span>
-              </div>
-              <div class="breakdown-list" id="breakdownList"></div>
-          </div>
-      </div>
+
 
       <!-- Edit Shift Modal -->
       <div id="editShiftModal" class="modal">
@@ -535,16 +509,6 @@
       <!-- Add Shift Modal -->
       <div id="addShiftModal" class="modal">
           <div class="modal-content">
-              <div class="modal-header">
-                  <h2 class="modal-title">Legg til vakt</h2>
-                  <span class="modal-close" onclick="app.closeAddShiftModal()">
-                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                  </span>
-              </div>
-              
               <div class="modal-body">
                   <form id="shiftForm">
                       <div class="tab-nav" style="margin-bottom:16px;">

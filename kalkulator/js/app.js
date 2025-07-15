@@ -275,10 +275,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           app.closeEditShift();
         } else if (modalId === 'settingsModal') {
           app.closeSettings();
-        } else if (modalId === 'breakdownModal') {
-          app.closeBreakdown();
         }
-                return;
+        return;
       }
 
       // Shift items (should be last to avoid conflicts)
@@ -298,8 +296,7 @@ document.addEventListener('DOMContentLoaded', async () => {
          const modalActions = {
            'addShiftModal': () => app.closeAddShiftModal(),
            'editShiftModal': () => app.closeEditShift(),
-           'settingsModal': () => app.closeSettings(),
-           'breakdownModal': () => app.closeBreakdown()
+           'settingsModal': () => app.closeSettings()
          };
          
          for (const [modalId, closeAction] of Object.entries(modalActions)) {
@@ -321,12 +318,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Handle floating action bar visibility based on scroll position
   const snapContainer = document.querySelector('.snap-container');
   const floatingBar = document.querySelector('.floating-action-bar');
+  const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
   const shiftSection = document.querySelector('.shift-section');
   
-  if (snapContainer && floatingBar && shiftSection) {
-    // Initially hide the floating bar
+  if (snapContainer && floatingBar && floatingBarBackdrop && shiftSection) {
+    // Initially hide the floating bar and backdrop
     floatingBar.style.display = 'none';
     floatingBar.style.opacity = '0';
+    floatingBarBackdrop.style.opacity = '0';
     
     let isVisible = false;
     let animationTimeout = null;
@@ -347,12 +346,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         floatingBar.style.display = 'flex';
         floatingBar.style.animation = 'fadeInUp 0.3s ease-out forwards';
         floatingBar.style.opacity = '1';
+        floatingBarBackdrop.style.opacity = '1';
       } else if (!shouldBeVisible && isVisible) {
         // Hide with fade out animation
         isVisible = false;
         clearTimeout(animationTimeout);
         floatingBar.style.animation = 'fadeOutDown 0.3s ease-out forwards';
         floatingBar.style.opacity = '0';
+        floatingBarBackdrop.style.opacity = '0';
         
         // Hide completely after animation completes
         animationTimeout = setTimeout(() => {
