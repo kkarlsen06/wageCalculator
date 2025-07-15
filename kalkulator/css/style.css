@@ -3521,7 +3521,6 @@ input:checked + .slider:before {
   /* Override for add shift modal body padding */
   #addShiftModal .modal-body {
     padding: 20px 20px 20px 20px;
-    height: calc(100vh - 240px); /* Account for nav header (80px) + margin (80px) + footer space (80px) */
   }
 }
 
