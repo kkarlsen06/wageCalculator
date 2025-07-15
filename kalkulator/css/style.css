@@ -1238,6 +1238,74 @@ input[type="time"].form-control[value=""]:focus {
   font-size: 13px;
 }
 
+/* Calendar display toggle */
+.calendar-display-toggle {
+  display: flex;
+  justify-content: center;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.calendar-toggle-nav {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.calendar-toggle-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  min-width: 80px;
+}
+
+.calendar-toggle-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.calendar-toggle-btn.active {
+  background: var(--accent-color);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Calendar hours display styling */
+.calendar-hours-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.calendar-hours-total {
+  color: var(--accent-color);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Responsive adjustments for calendar toggle */
+@media (max-width: 768px) {
+  .calendar-display-toggle {
+    padding: 12px 16px;
+  }
+  
+  .calendar-toggle-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    min-width: 70px;
+  }
+}
+
 /* Recurring Feature Introduction Modal */
 #recurringIntroModal {
   display: flex;

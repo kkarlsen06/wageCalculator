@@ -197,6 +197,7 @@ export const app = {
     directTimeInput: false, // Setting for using direct time input instead of dropdowns
     monthlyGoal: 20000, // Monthly income goal
     shiftView: 'list',
+    calendarDisplayMode: 'money', // 'money' or 'hours'
     selectedDate: null,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
@@ -2641,29 +2642,46 @@ export const app = {
                 const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
                 let base = 0;
                 let bonus = 0;
+                let totalHours = 0;
                 shiftsForDay.forEach(shift => {
                     if (cellDate.getMonth() === monthIdx) {
                         const calc = this.calculateShift(shift);
                         base += calc.baseWage;
                         bonus += calc.bonus;
+                        totalHours += calc.totalHours;
                     }
                 });
 
-                if (base + bonus > 0) {
+                if ((this.calendarDisplayMode === 'money' && base + bonus > 0) || 
+                    (this.calendarDisplayMode === 'hours' && totalHours > 0)) {
                     // Create wrapper for shift data
                     const shiftData = document.createElement('div');
                     shiftData.className = 'calendar-shift-data';
                     
-                    const breakdown = document.createElement('div');
-                    breakdown.className = 'calendar-breakdown';
-                    breakdown.innerHTML = `<div class="calendar-base-amount">${this.formatCurrencyShort(base)}</div><div class="calendar-bonus-line">+<span class="calendar-bonus-amount">${this.formatCurrencyShort(bonus)}</span></div>`;
+                    if (this.calendarDisplayMode === 'money') {
+                        const breakdown = document.createElement('div');
+                        breakdown.className = 'calendar-breakdown';
+                        breakdown.innerHTML = `<div class="calendar-base-amount">${this.formatCurrencyShort(base)}</div><div class="calendar-bonus-line">+<span class="calendar-bonus-amount">${this.formatCurrencyShort(bonus)}</span></div>`;
+                        
+                        const totalDisplay = document.createElement('div');
+                        totalDisplay.className = 'calendar-total';
+                        totalDisplay.textContent = this.formatCurrencyCalendar(base + bonus);
+                        
+                        shiftData.appendChild(breakdown);
+                        shiftData.appendChild(totalDisplay);
+                    } else {
+                        // Display hours
+                        const hoursDisplay = document.createElement('div');
+                        hoursDisplay.className = 'calendar-hours-display';
+                        
+                        const totalDisplay = document.createElement('div');
+                        totalDisplay.className = 'calendar-total calendar-hours-total';
+                        totalDisplay.textContent = this.formatHours(totalHours);
+                        
+                        shiftData.appendChild(hoursDisplay);
+                        shiftData.appendChild(totalDisplay);
+                    }
                     
-                    const totalDisplay = document.createElement('div');
-                    totalDisplay.className = 'calendar-total';
-                    totalDisplay.textContent = this.formatCurrencyCalendar(base + bonus);
-                    
-                    shiftData.appendChild(breakdown);
-                    shiftData.appendChild(totalDisplay);
                     content.appendChild(shiftData);
                     
                     cell.classList.add('has-shifts');
@@ -2705,15 +2723,33 @@ export const app = {
 
         const list = document.getElementById('shiftList');
         const cal = document.getElementById('shiftCalendar');
+        const toggle = document.querySelector('.calendar-display-toggle');
         if (!list || !cal) return;
 
         if (view === 'calendar') {
             list.style.display = 'none';
             cal.style.display = 'flex';
+            if (toggle) toggle.style.display = 'flex';
             this.renderShiftCalendar();
         } else {
             list.style.display = 'flex';
             cal.style.display = 'none';
+            if (toggle) toggle.style.display = 'none';
+        }
+    },
+
+    switchCalendarDisplay(mode) {
+        this.calendarDisplayMode = mode;
+        const btns = document.querySelectorAll('.calendar-toggle-btn');
+        btns.forEach(btn => {
+            const isActive = (mode === 'money' && btn.textContent === 'Lønn') || 
+                           (mode === 'hours' && btn.textContent === 'Varighet');
+            btn.classList.toggle('active', isActive);
+        });
+        
+        // Re-render calendar with new display mode
+        if (this.shiftView === 'calendar') {
+            this.renderShiftCalendar();
         }
     },
         // Show breakdown in calendar view (replaces modal)
