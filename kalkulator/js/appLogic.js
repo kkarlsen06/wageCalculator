@@ -2387,13 +2387,8 @@ export const app = {
                 </div>
             `;
             
-            // Add click handler to show shift details
-            const shiftItem = nextShiftContent.querySelector('.shift-item');
-            if (shiftItem) {
-                shiftItem.addEventListener('click', () => {
-                    this.showShiftDetails(nextShift.id);
-                });
-            }
+            // Click handler is handled by global event delegation in app.js
+            // No need for direct event listener here
         }
     },
 
@@ -2469,13 +2464,8 @@ export const app = {
             </div>
         `;
         
-        // Add click handler to show shift details
-        const shiftItem = nextShiftContent.querySelector('.shift-item');
-        if (shiftItem) {
-            shiftItem.addEventListener('click', () => {
-                this.showShiftDetails(currentShift.id);
-            });
-        }
+                // Click handler is handled by global event delegation in app.js
+        // No need for direct event listener here
     },
 
     calculateCurrentShiftEarnings(shift, now) {
