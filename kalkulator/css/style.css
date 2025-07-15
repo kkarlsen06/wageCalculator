@@ -973,38 +973,37 @@ input[type="time"].form-control[value=""]:focus {
 
 /* Special positioning for add shift modal to account for navigation header */
 #addShiftModal.active {
-  align-items: center; /* Change from flex-start to center */
-  padding-top: 0; /* Remove conflicting padding, use margin-top on content instead */
+  align-items: center !important; /* Force center alignment, override general modal rules */
+  justify-content: center !important; /* Force center justification */
+  padding-top: 0 !important; /* Remove conflicting padding */
+  display: flex !important; /* Ensure flex display */
 }
 
 /* Mobile override for add shift modal positioning */
 @media (max-width: 768px) {
   #addShiftModal.active {
-    padding-top: 0; /* Consistent with desktop */
-    align-items: center; /* Change from flex-start to center */
-    justify-content: center;
+    padding-top: 0 !important; /* Consistent with desktop */
+    align-items: center !important; /* Force center alignment */
+    justify-content: center !important;
+    display: flex !important;
   }
 }
 
 /* Desktop - center add shift modal within content viewport */
 @media (min-width: 769px) {
   #addShiftModal.active {
-    justify-content: center;
-    align-items: center; /* Change from flex-start to center */
-    padding-top: 0; /* Remove fixed padding */
-    /* Override default flexbox centering to center within content area */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center !important;
+    align-items: center !important; /* Force center alignment */
+    padding-top: 0 !important; /* Remove fixed padding */
+    display: flex !important;
   }
   
   #addShiftModal .modal-content {
     margin: 0 auto;
     position: relative;
-    max-width: 600px;
-    width: min(90vw, 600px); /* Constrain to content width */
-    /* Center within the content area max-width constraint */
-    max-width: min(600px, 90vw);
+    max-width: 600px !important;
+    width: min(90vw, 600px) !important; /* Constrain to content width */
+    height: auto !important; /* Ensure height is not forced to 100vh */
   }
 }
 
@@ -1030,6 +1029,41 @@ input[type="time"].form-control[value=""]:focus {
     max-height: 90vh;
     margin: 0;
     border-radius: 24px;
+  }
+}
+
+/* ADD SHIFT MODAL OVERRIDES - Must come after general modal rules */
+/* Force add shift modal to be centered and larger */
+#addShiftModal .modal-content {
+  height: auto !important;
+  max-height: calc(95vh - 20px) !important;
+  width: min(90vw, 600px) !important;
+  max-width: 600px !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+}
+
+#addShiftModal .modal-body {
+  max-height: calc(95vh - 160px) !important;
+  overflow-y: auto !important;
+  padding-bottom: 80px !important;
+}
+
+@media (min-width: 769px) {
+  #addShiftModal .modal-content {
+    height: auto !important;
+    max-height: calc(95vh - 20px) !important;
+    width: min(90vw, 600px) !important;
+    max-width: 600px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #addShiftModal .modal-content {
+    height: auto !important;
+    max-height: 95vh !important;
+    width: 100vw !important;
+    margin: 0 !important;
   }
 }
 
@@ -3312,11 +3346,12 @@ input:checked + .slider:before {
 
 /* Add Shift Modal Specific Styles */
 #addShiftModal .modal-content {
-  max-width: 600px;
+  max-width: 600px !important;
   position: relative;
-  overflow: hidden;
+  overflow: hidden !important; /* Prevent scrolling on modal-content, should be on modal-body */
   /* Ensure modal doesn't extend below viewport - no top bar assumptions */
-  max-height: calc(90vh - 40px); /* Allow for some margin */
+  max-height: calc(95vh - 20px) !important; /* Increased from 90vh-40px to allow more content */
+  height: auto !important; /* Override general modal height: 100vh */
   margin-top: 0; /* Remove fixed margin */
   margin-bottom: 0;
 }
@@ -3329,9 +3364,9 @@ input:checked + .slider:before {
 #addShiftModal .modal-body {
   padding-top: 20px;
   padding-bottom: 80px; /* Add space for fixed footer */
-  overflow-y: auto;
+  overflow-y: auto !important; /* Force scrolling on modal body */
   /* Ensure modal body doesn't overflow when considering header and footer space */
-  max-height: calc(100vh - 220px); /* Account for header (80px) + modal margin (20px) + footer/padding (120px) */
+  max-height: calc(95vh - 160px) !important; /* Increased height, account for modal margins and footer space */
 }
 
 /* Add shift modal close button in form actions */
@@ -3500,16 +3535,17 @@ input:checked + .slider:before {
   }
   
   #addShiftModal .modal-content {
-    height: auto; /* Change from fixed height to auto */
-    max-height: 90vh; /* Use viewport height without top bar assumptions */
-    margin-top: 0;
-    margin-bottom: 0;
+    height: auto !important; /* Force auto height, override general modal styles */
+    max-height: 95vh !important; /* Increased from 90vh to allow more content */
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    overflow: hidden !important; /* Prevent scrolling on modal-content */
   }
   
   #addShiftModal .modal-body {
     padding: 20px;
-    max-height: calc(90vh - 200px); /* Account for header and footer */
-    overflow-y: auto;
+    max-height: calc(95vh - 160px) !important; /* Increased height, account for header and footer */
+    overflow-y: auto !important; /* Ensure scrolling works on modal body */
   }
   
   #editShiftModal .modal-body {
@@ -3520,7 +3556,9 @@ input:checked + .slider:before {
   
   /* Override for add shift modal body padding */
   #addShiftModal .modal-body {
-    padding: 20px 20px 20px 20px;
+    padding: 20px 20px 80px 20px !important; /* Keep footer space on mobile */
+    max-height: calc(95vh - 160px) !important; /* Consistent height calculation */
+    overflow-y: auto !important; /* Ensure scrolling works */
   }
 }
 

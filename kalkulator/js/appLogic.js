@@ -551,7 +551,9 @@ export const app = {
         }
         
         // Show the modal
-        document.getElementById('addShiftModal').style.display = 'block';
+        const modal = document.getElementById('addShiftModal');
+        modal.style.display = 'flex';
+        modal.classList.add('active');
         
         // Clear any previously selected dates
         this.selectedDates = [];
@@ -609,7 +611,9 @@ export const app = {
     },
     
     closeAddShiftModal() {
-        document.getElementById('addShiftModal').style.display = 'none';
+        const modal = document.getElementById('addShiftModal');
+        modal.style.display = 'none';
+        modal.classList.remove('active');
     },
     async addShift() {
         // Handle recurring shifts
