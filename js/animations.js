@@ -55,8 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
     initMobileStats();
     initCountingAnimations();
-    initVisualHierarchy();
-    initLoadingAnimations();
 });
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -537,6 +535,139 @@ function initMobileStats() {
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(handleViewportChange, 250);
+    });
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// COUNTING ANIMATIONS
+// ───────────────────────────────────────────────────────────────────────────
+
+// Global observer instance to prevent memory leaks
+let countingObserver = null;
+
+function initCountingAnimations() {
+    // Clean up existing observer to prevent memory leaks
+    if (countingObserver) {
+        countingObserver.disconnect();
+        countingObserver = null;
+    }
+    
+    // Robust value extraction function
+    const extractNumericValue = (text) => {
+        if (!text) return null;
+        
+        // Remove any non-numeric characters except decimal points, plus signs, and slashes
+        const cleanText = text.trim();
+        
+        // Handle percentage values (e.g., "100%")
+        if (cleanText.includes('%')) {
+            const match = cleanText.match(/(\d+(?:\.\d+)?)%/);
+            return match ? parseFloat(match[1]) : null;
+        }
+        
+        // Handle time values (e.g., "24/7", "162.5t")
+        if (cleanText.includes('/') || cleanText.includes('t')) {
+            const match = cleanText.match(/(\d+(?:\.\d+)?)/);
+            return match ? parseFloat(match[1]) : null;
+        }
+        
+        // Handle currency values (e.g., "45.750,-")
+        if (cleanText.includes(',') || cleanText.includes('.')) {
+            const match = cleanText.match(/(\d+(?:\.\d+)?)/);
+            return match ? parseFloat(match[1]) : null;
+        }
+        
+        // Handle simple numbers with plus signs (e.g., "+18%", "5+")
+        const match = cleanText.match(/(\+?\d+(?:\.\d+)?)/);
+        return match ? parseFloat(match[1]) : null;
+    };
+    
+    // Animation function
+    const animateValue = (element, targetValue, duration = 2000) => {
+        if (!element || targetValue === null) return;
+        
+        const startValue = 0;
+        const startTime = performance.now();
+        
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function for smooth animation
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            const currentValue = startValue + (targetValue - startValue) * easeOutQuart;
+            
+            // Format the value based on the original text
+            const originalText = element.getAttribute('data-original-text') || element.textContent;
+            let formattedValue;
+            
+            if (originalText.includes('%')) {
+                formattedValue = `${Math.round(currentValue)}%`;
+            } else if (originalText.includes('/')) {
+                formattedValue = `${Math.round(currentValue)}/7`;
+            } else if (originalText.includes('t')) {
+                formattedValue = `${currentValue.toFixed(1)}t`;
+            } else if (originalText.includes(',') || originalText.includes('.')) {
+                formattedValue = `${Math.round(currentValue).toLocaleString('no-NO')},-`;
+            } else if (originalText.includes('+')) {
+                formattedValue = `+${Math.round(currentValue)}`;
+            } else {
+                formattedValue = Math.round(currentValue).toString();
+            }
+            
+            element.textContent = formattedValue;
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        requestAnimationFrame(animate);
+    };
+    
+    // Observer callback
+    const handleIntersection = (entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const element = entry.target;
+                
+                // Skip if already animated
+                if (element.classList.contains('counting-animated')) {
+                    return;
+                }
+                
+                // Store original text for formatting
+                const originalText = element.textContent;
+                element.setAttribute('data-original-text', originalText);
+                
+                // Extract numeric value
+                const targetValue = extractNumericValue(originalText);
+                
+                if (targetValue !== null) {
+                    // Mark as animated to prevent re-triggering
+                    element.classList.add('counting-animated');
+                    
+                    // Start animation
+                    animateValue(element, targetValue);
+                }
+            }
+        });
+    };
+    
+    // Create observer with proper options
+    const observerOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    countingObserver = new IntersectionObserver(handleIntersection, observerOptions);
+    
+    // Observe all stat elements
+    const statElements = document.querySelectorAll('.stat-number, .preview-stat .stat-value');
+    statElements.forEach(element => {
+        // Reset animation state
+        element.classList.remove('counting-animated');
+        countingObserver.observe(element);
     });
 }
 
