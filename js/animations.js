@@ -75,6 +75,18 @@ document.addEventListener('DOMContentLoaded', () => {
         cleanupFunctions.push(countingCleanup);
     }
     
+    // Store cleanup function from initVisualHierarchy
+    const visualHierarchyCleanup = initVisualHierarchy();
+    if (visualHierarchyCleanup) {
+        cleanupFunctions.push(visualHierarchyCleanup);
+    }
+    
+    // Store cleanup function from initLoadingAnimations
+    const loadingAnimationsCleanup = initLoadingAnimations();
+    if (loadingAnimationsCleanup) {
+        cleanupFunctions.push(loadingAnimationsCleanup);
+    }
+    
     // Global cleanup function if needed
     window.cleanupAnimations = () => {
         cleanupFunctions.forEach(cleanup => cleanup());
@@ -105,29 +117,52 @@ function initVisualHierarchy() {
     
     // Add focus indicators for key elements
     const focusElements = document.querySelectorAll('.btn-primary, .hero-stats, .showcase-cta');
+    const focusEventListeners = [];
     
     focusElements.forEach(element => {
-        element.addEventListener('mouseenter', () => {
+        const mouseenterHandler = () => {
             element.style.transform = 'scale(1.02)';
             element.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.3)';
-        });
+        };
         
-        element.addEventListener('mouseleave', () => {
+        const mouseleaveHandler = () => {
             element.style.transform = 'scale(1)';
             element.style.boxShadow = '';
-        });
+        };
+        
+        element.addEventListener('mouseenter', mouseenterHandler);
+        element.addEventListener('mouseleave', mouseleaveHandler);
+        
+        // Store listeners for cleanup
+        focusEventListeners.push({ element, mouseenterHandler, mouseleaveHandler });
     });
     
     // Add pulsing animation to primary CTA
     const primaryCTA = document.querySelector('.btn-primary');
+    let pulseInterval = null;
+    
     if (primaryCTA) {
-        setInterval(() => {
+        pulseInterval = setInterval(() => {
             primaryCTA.style.animation = 'pulse-glow 2s ease-in-out';
             setTimeout(() => {
                 primaryCTA.style.animation = '';
             }, 2000);
         }, 8000);
     }
+    
+    // Return cleanup function
+    return () => {
+        // Clear pulse interval
+        if (pulseInterval) {
+            clearInterval(pulseInterval);
+        }
+        
+        // Remove focus event listeners
+        focusEventListeners.forEach(({ element, mouseenterHandler, mouseleaveHandler }) => {
+            element.removeEventListener('mouseenter', mouseenterHandler);
+            element.removeEventListener('mouseleave', mouseleaveHandler);
+        });
+    };
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -139,7 +174,7 @@ function initLoadingAnimations() {
     body.classList.add('loading');
     
     // Simulate content loading
-    setTimeout(() => {
+    const loadingTimeout = setTimeout(() => {
         body.classList.remove('loading');
         body.classList.add('loaded');
         
@@ -172,6 +207,23 @@ function initLoadingAnimations() {
         }
         progressBarInner.style.width = progress + '%';
     }, 100);
+    
+    // Return cleanup function
+    return () => {
+        // Clear loading timeout
+        clearTimeout(loadingTimeout);
+        
+        // Clear progress interval
+        clearInterval(interval);
+        
+        // Remove progress bar if it exists
+        if (progressBar && progressBar.parentNode) {
+            progressBar.remove();
+        }
+        
+        // Remove loading classes
+        body.classList.remove('loading', 'loaded');
+    };
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -319,15 +371,15 @@ function initParallax() {
 // TYPING EFFECT
 // ───────────────────────────────────────────────────────────────────────────
 function initTypingEffect() {
-    const heroName = document.querySelector('.hero-name');
-    if (!heroName) return;
+    const heroSubtitle = document.querySelector('.hero-subtitle-text');
+    if (!heroSubtitle) return;
     
-    const originalText = heroName.textContent;
+    const originalText = heroSubtitle.textContent;
     const texts = [
-        'Hjalmar Karlsen',
         'Utvikler',
         'Designer',
-        'Problemløser'
+        'Problemløser',
+        'Alta, Norge'
     ];
     
     let currentTextIndex = 0;
@@ -342,9 +394,9 @@ function initTypingEffect() {
         if (!isActive) return; // Stop if cleanup was called
         
         if (!initialTextDeleted) {
-            const currentText = heroName.textContent;
+            const currentText = heroSubtitle.textContent;
             if (currentText.length > 0) {
-                heroName.textContent = currentText.substring(0, currentText.length - 1);
+                heroSubtitle.textContent = currentText.substring(0, currentText.length - 1);
                 currentTypingTimeout = setTimeout(type, 80);
                 return;
             } else {
@@ -357,11 +409,11 @@ function initTypingEffect() {
         const currentText = texts[currentTextIndex];
         
         if (isDeleting) {
-            heroName.textContent = currentText.substring(0, currentCharIndex - 1);
+            heroSubtitle.textContent = currentText.substring(0, currentCharIndex - 1);
             currentCharIndex--;
             typingSpeed = 50;
         } else {
-            heroName.textContent = currentText.substring(0, currentCharIndex + 1);
+            heroSubtitle.textContent = currentText.substring(0, currentCharIndex + 1);
             currentCharIndex++;
             typingSpeed = 100;
         }
