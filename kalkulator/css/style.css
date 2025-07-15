@@ -3383,7 +3383,6 @@ input:checked + .slider:before {
 /* Close button positioning - removed negative margin for centered layout */
 .modal-fixed-footer .modal-close-bottom {
   /* Negative margin removed to work with centered modal-button-group */
-}
 
 /* Bottom actions section for settings modal - legacy (can be removed if not used elsewhere) */
 .modal-bottom-actions {
