@@ -3126,6 +3126,12 @@ export const app = {
             this.shiftDetailsKeydownHandler = null;
         }
 
+        // Immediately disable pointer events on backdrop to prevent double-tap
+        if (backdrop) {
+            backdrop.style.pointerEvents = 'none';
+            backdrop.onclick = null; // Remove click handler
+        }
+
         if (modal) {
             modal.style.opacity = '0';
             modal.style.transform = 'translate(-50%, -50%) scale(0.8)';
