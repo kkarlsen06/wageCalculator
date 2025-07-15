@@ -1118,20 +1118,15 @@ html {
 }
 
 .tech-icon svg {
-    width: 48px;
-    height: 48px;
+    width: 3rem;
+    height: 3rem;
+    color: var(--primary);
     transition: all var(--transition-base);
 }
 
 .tech-card:hover .tech-icon svg {
     transform: scale(1.1);
     color: var(--primary-light);
-}
-
-.tech-icon svg {
-    width: 3rem;
-    height: 3rem;
-    color: var(--primary);
 }
 
 .tech-card h3 {
