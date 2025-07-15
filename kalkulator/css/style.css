@@ -4185,6 +4185,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   /* Keep countdown timer visible but hide seconds */
   .next-shift-card .shift-countdown-timer {
     display: inline !important; /* Keep countdown timer visible */
+    white-space: nowrap; /* Prevent line breaks */
     /* Remove font-size reduction - keep same size as other text */
   }
   
@@ -4246,6 +4247,12 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 
 .next-shift-card .countdown-no-parens {
   display: none; /* Hide non-parentheses version */
+}
+
+/* Prevent countdown timer from wrapping to new line */
+.next-shift-card .shift-countdown-timer {
+  white-space: nowrap; /* Prevent line breaks */
+  display: inline-block; /* Keep it inline but prevent wrapping */
 }
 
 
