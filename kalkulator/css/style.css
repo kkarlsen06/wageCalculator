@@ -1,11 +1,11 @@
 /* Progress card - hele kortet er progressbaren */
 .progress-card {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 24px;
   padding: 0;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  box-shadow: 0 4px 16px -4px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-soft);
   position: relative;
   overflow: hidden;
   height: 60px;
@@ -13,6 +13,7 @@
   align-items: center;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  opacity: 0.9;
 }
 
 .progress-card:hover {
@@ -25,7 +26,7 @@
 .progress-fill {
   height: 100%;
   background: var(--bg-tertiary);
-  border-radius: 16px;
+  border-radius: 24px 0 0 24px;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -57,7 +58,7 @@
     transparent 0%,
     rgba(0,0,0,0.03) 100%
   );
-  border-radius: 0 16px 16px 0;
+  border-radius: 0 24px 24px 0;
 }
 
 /* Removed progress bar shimmer to avoid conflicts with width animation */
@@ -94,6 +95,10 @@
   text-align: center;
 }
 
+.progress-fill.full {
+  border-radius: 24px;
+}
+
 .progress-fill.full::before {
   background: linear-gradient(90deg,
     transparent 0%,
@@ -111,53 +116,10 @@
 
 /* Overachievement styling - when goal is exceeded */
 .progress-fill.overachievement {
-  background: var(--gradient-secondary);
-  position: relative;
-  overflow: hidden;
+  background: var(--gradient-neon);
 }
 
-.progress-fill.overachievement::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: transparent;
-  animation: none;
-}
-
-/* Add glowing border to indicate overachievement - positioned on the progress card */
-.progress-card.overachievement::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border: 2px solid var(--accent);
-  border-radius: calc(16px + 2px);
-  opacity: 1;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.6), 
-              0 0 32px rgba(16, 185, 129, 0.4),
-              inset 0 0 16px rgba(16, 185, 129, 0.2);
-  animation: glowPulse 2s ease-in-out infinite alternate;
-  pointer-events: none;
-  z-index: 1;
-}
-
-@keyframes glowPulse {
-  0% {
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.6), 
-                0 0 32px rgba(16, 185, 129, 0.4),
-                inset 0 0 16px rgba(16, 185, 129, 0.2);
-  }
-  100% {
-    box-shadow: 0 0 24px rgba(16, 185, 129, 0.8), 
-                0 0 48px rgba(16, 185, 129, 0.6),
-                inset 0 0 24px rgba(16, 185, 129, 0.3);
-  }
-}
+/* Removed glowing border for overachievement - cleaner look */
 
 @keyframes goalCelebrate {
   0% { 
@@ -172,6 +134,8 @@
     transform: scale(1);
   }
 }
+
+
 * {
   margin: 0;
   padding: 0;
@@ -193,41 +157,41 @@ html {
 }
 
 :root {
-  /* Unified color system - aligned with portfolio */
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --primary-light: #818cf8;
-  --secondary: #0ea5e9;
-  --accent: #10b981;
+  /* Modern Dark Theme with Neon Blue - aligned with landing page */
+  --primary: #3ABEF6;
+  --primary-dark: #2A8FD6;
+  --primary-light: #5AC8FF;
+  --secondary: #00D4FF;
+  --accent: #00F5FF;
   
   /* Semantic colors */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --info: #0ea5e9;
+  --success: #00FF88;
+  --warning: #FFB800;
+  --error: #FF4757;
+  --info: #3ABEF6;
   
   /* Background colors */
-  --bg-primary: #0a0a0b;
-  --bg-secondary: #111113;
-  --bg-tertiary: #1a1a1d;
-  --bg-card: #1a1a1d;
-  --bg-hover: #252529;
+  --bg-primary: #121212;
+  --bg-secondary: #1A1A1A;
+  --bg-tertiary: #1E1E1E;
+  --bg-card: #1E1E1E;
+  --bg-hover: #2A2A2A;
   
   /* Text colors */
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --text-tertiary: #6b7280;
-  --text-muted: #6b7280;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-tertiary: #808080;
+  --text-muted: #808080;
   
   /* Legacy support - map old colors to new system */
   --accent2: var(--primary);
   --accent3: var(--secondary);
   --accent4: var(--info);
-  --accent-light: rgba(16, 185, 129, 0.1);
-  --accent-alpha: rgba(16, 185, 129, 0.15);
-  --accent2-alpha: rgba(99, 102, 241, 0.15);
-  --accent3-alpha: rgba(14, 165, 233, 0.15);
-  --accent4-alpha: rgba(14, 165, 233, 0.15);
+  --accent-light: rgba(58, 190, 246, 0.1);
+  --accent-alpha: rgba(58, 190, 246, 0.15);
+  --accent2-alpha: rgba(58, 190, 246, 0.15);
+  --accent3-alpha: rgba(0, 212, 255, 0.15);
+  --accent4-alpha: rgba(58, 190, 246, 0.15);
   --danger: var(--error);
   
   /* Border colors */
@@ -237,12 +201,12 @@ html {
   
   /* Shadow colors */
   --shadow: rgba(0, 0, 0, 0.4);
-  --shadow-accent: rgba(16, 185, 129, 0.15);
+  --shadow-accent: rgba(0, 0, 0, 0.15);
   --shadow-soft: rgba(0, 0, 0, 0.1);
-  --shadow-blue: rgba(8, 47, 73, 0.6);
   --shadow-hover: 0 12px 32px -8px rgba(0, 0, 0, 0.3);
   --shadow-hover-accent: 0 16px 40px -12px var(--shadow-accent);
-  --shadow-hover-blue: 0 16px 40px -12px var(--shadow-blue);
+  
+  /* Glow effects removed */
   /* Spacing - 8px grid system */
   --space-1: 0.5rem;   /* 8px */
   --space-2: 1rem;     /* 16px */
@@ -269,10 +233,11 @@ html {
     var(--accent3-alpha) 50%,
     var(--accent2-alpha) 100%);
   --gradient-progress-bg: linear-gradient(135deg,
-    rgba(0, 212, 170, 0.08) 0%,
-    rgba(8, 145, 178, 0.08) 50%,
-    rgba(124, 58, 237, 0.08) 100%);
+    rgba(0, 245, 255, 0.08) 0%,
+    rgba(0, 212, 255, 0.08) 50%,
+    rgba(58, 190, 246, 0.08) 100%);
   --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
+  --gradient-neon: linear-gradient(135deg, #3ABEF6 0%, #00D4FF 100%);
   --speed-fast: 0.15s;
   --speed-normal: 0.3s;
   --speed-slow: 0.5s;
@@ -401,7 +366,7 @@ body {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   padding: 20px;
   border-bottom: 1px solid var(--border);
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 24px 24px;
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
   overflow: visible;
   min-height: 80px; /* Fixed minimum height to prevent layout shift */
@@ -920,9 +885,10 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent2));
+  background: var(--primary);
   color: var(--bg-primary);
   width: 100%;
+  opacity: 0.9;
 }
 
 .btn-secondary {
@@ -1019,10 +985,32 @@ input[type="time"].form-control[value=""]:focus {
   }
 }
 
+/* Desktop - center add shift modal within content viewport */
+@media (min-width: 769px) {
+  #addShiftModal.active {
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 10vh; /* Center vertically in available space */
+    /* Override default flexbox centering to center within content area */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  #addShiftModal .modal-content {
+    margin: 0 auto;
+    position: relative;
+    max-width: 600px;
+    width: min(90vw, 600px); /* Constrain to content width */
+    /* Center within the content area max-width constraint */
+    max-width: min(600px, 90vw);
+  }
+}
+
 .modal-content {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   margin: 0;
-  border-radius: 16px;
+  border-radius: 24px;
   max-width: 600px;
   width: 100vw;
   height: 100vh;
@@ -1040,7 +1028,7 @@ input[type="time"].form-control[value=""]:focus {
     height: auto;
     max-height: 90vh;
     margin: 0;
-    border-radius: 16px;
+    border-radius: 24px;
   }
 }
 
@@ -1064,7 +1052,7 @@ input[type="time"].form-control[value=""]:focus {
   max-height: 700px;
   min-height: 500px;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 24px;
   box-shadow: 0 16px 48px -12px var(--shadow-accent);
 }
 
@@ -1074,7 +1062,7 @@ input[type="time"].form-control[value=""]:focus {
     height: 90vh;
     max-height: 650px;
     min-height: 450px;
-    border-radius: 12px;
+    border-radius: 24px;
   }
 }
 
@@ -1084,7 +1072,7 @@ input[type="time"].form-control[value=""]:focus {
     height: 92vh;
     max-height: 600px;
     min-height: 400px;
-    border-radius: 10px;
+    border-radius: 24px;
   }
 }
 
@@ -1179,7 +1167,7 @@ input[type="time"].form-control[value=""]:focus {
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 24px;
   transition: all var(--speed-normal) var(--ease-default);
   position: relative;
 }
@@ -1244,7 +1232,7 @@ input[type="time"].form-control[value=""]:focus {
   #recurringIntroModal .modal-content {
     width: 95vw;
     max-height: 80vh;
-    border-radius: 12px;
+    border-radius: 24px;
   }
 }
 
@@ -1572,9 +1560,9 @@ input:checked + .slider:before {
 }
 
 .shift-item {
-  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 24px;
   padding: 18px;
   display: flex;
   justify-content: space-between;
@@ -1582,6 +1570,7 @@ input:checked + .slider:before {
   transition: all var(--speed-normal) var(--ease-default);
   min-height: 80px;
   border-left: 4px solid var(--border);
+  opacity: 0.9;
 }
 
 .shift-item.weekday {
@@ -1655,7 +1644,7 @@ input:checked + .slider:before {
 .shift-time-arrow {
   margin: 0 8px;
   font-weight: bold;
-  color: var(--accent3);
+  color: var(--text-secondary);
 }
 
 .shift-details > span {
@@ -1707,11 +1696,9 @@ input:checked + .slider:before {
 .shift-total {
   font-size: 18px;
   font-weight: 600;
-  background: linear-gradient(135deg, var(--accent3), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   line-height: 1.2;
+  opacity: 0.8;
 }
 
 .shift-breakdown {
@@ -1820,9 +1807,15 @@ input:checked + .slider:before {
   text-align: center;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  box-shadow: 0 12px 40px -8px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-soft);
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.total-card:hover {
+  transform: var(--lift-small);
 }
 
 .total-card::before {
@@ -1849,6 +1842,51 @@ input:checked + .slider:before {
   100% { left: 100%; }
 }
 
+/* Calendar shimmer animations - text-based shimmer without layout changes */
+.calendar-base-amount,
+.calendar-bonus-line,
+.calendar-bonus-amount,
+.calendar-total {
+  /* Reset all possible styling to ensure no layout changes */
+  all: unset;
+  /* Only keep the essential text properties */
+  font: inherit;
+  color: inherit;
+}
+
+.calendar-base-amount,
+.calendar-bonus-line {
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: 1.1;
+}
+
+.calendar-bonus-amount {
+  display: inline;
+}
+
+    .calendar-base-amount.shimmer,
+  .calendar-bonus-line.shimmer,
+  .calendar-bonus-amount.shimmer,
+  .calendar-total.shimmer {
+    background: linear-gradient(90deg, currentColor 0%, rgba(255,255,255,0.8) 50%, currentColor 100%);
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: text-shimmer 2s ease-in-out forwards;
+  }
+
+@keyframes text-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .total-label {
   color: var(--text-secondary);
   font-size: 14px;
@@ -1858,7 +1896,7 @@ input:checked + .slider:before {
 .total-amount {
   font-size: 48px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent2));
+  background: var(--gradient-neon);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1868,9 +1906,8 @@ input:checked + .slider:before {
 
 .total-hours {
   color: var(--text-secondary);
-  font-size: 16px;
+  font-size: 14px;
   margin-top: 10px;
-  font-weight: 500;
 }
 
 .breakdown-cards {
@@ -1916,7 +1953,7 @@ input:checked + .slider:before {
   text-align: center;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
-  box-shadow: 0 4px 16px -4px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-soft);
   position: relative;
   overflow: hidden;
   min-height: 120px;
@@ -1969,10 +2006,7 @@ input:checked + .slider:before {
   font-size: 32px;
   font-weight: 600;
   margin: 0;
-  background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   position: relative;
   z-index: 1;
   line-height: 1.1;
@@ -1982,6 +2016,7 @@ input:checked + .slider:before {
   align-items: center;
   width: 100%;
   flex-shrink: 0;
+  opacity: 0.9;
 }
 
 /* Responsive font sizes for breakdown values */
@@ -2010,7 +2045,7 @@ input:checked + .slider:before {
 }
 
 .breakdown-label {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-secondary);
   position: relative;
   z-index: 1;
@@ -2025,19 +2060,19 @@ input:checked + .slider:before {
 /* Responsive font sizes for breakdown labels */
 @media (max-width: 360px) {
   .breakdown-label {
-    font-size: 11px;
+    font-size: 13px;
   }
 }
 
 @media (max-width: 320px) {
   .breakdown-label {
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 
 @media (max-width: 280px) {
   .breakdown-label {
-    font-size: 9px;
+    font-size: 11px;
   }
 }
 
@@ -2235,7 +2270,7 @@ input:checked + .slider:before {
   background: var(--gradient-primary);
   border: 1px solid var(--accent);
   transform: scale(1.05);
-  box-shadow: 0 8px 20px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-soft);
 }
 
 .calendar-cell.empty-date {
@@ -2250,7 +2285,7 @@ input:checked + .slider:before {
   background: var(--bg-secondary);
   border: 1px solid var(--accent);
   transform: scale(1.02);
-  box-shadow: 0 4px 12px var(--shadow-blue);
+  box-shadow: 0 4px 12px var(--shadow-soft);
 }
 
 .calendar-cell.empty-date:hover::after {
@@ -2279,6 +2314,12 @@ input:checked + .slider:before {
   flex-shrink: 0; /* Prevent date from shrinking */
 }
 
+/* Smaller date numbers in shift calendar for more space */
+.shift-calendar .calendar-day-number {
+  font-size: clamp(12px, 3.5vw, 16px);
+  margin-bottom: 3px;
+}
+
 /* Container for shift data that will be centered in remaining space */
 .calendar-shift-data {
   flex: 1;
@@ -2302,7 +2343,7 @@ input:checked + .slider:before {
 .calendar-amount {
   font-size: clamp(10px, 2.5vw, 14px);
   font-weight: 700;
-  color: var(--accent4);
+  color: var(--text-secondary);
   text-align: center;
   line-height: 1;
   word-break: break-all;
@@ -2344,7 +2385,7 @@ input:checked + .slider:before {
 .calendar-total {
   font-size: clamp(10px, 2.5vw, 14px);
   font-weight: 700;
-  color: var(--accent4);
+  color: var(--text-secondary);
   line-height: 1;
 }
 
@@ -2385,7 +2426,7 @@ input:checked + .slider:before {
   margin: 0;
   border: 1px solid var(--border);
   transition: all var(--speed-normal) var(--ease-default);
-  box-shadow: 0 4px 16px -4px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-soft);
   min-height: 80px;
   position: relative;
   overflow: hidden; /* Add overflow hidden to contain the badge */
@@ -2394,7 +2435,7 @@ input:checked + .slider:before {
 /* Active next shift - when it's today or tomorrow */
 .next-shift-card .shift-item.active {
   background: var(--gradient-secondary);
-  box-shadow: 0 12px 40px -8px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-soft);
 }
 
 .next-shift-empty {
@@ -2431,7 +2472,7 @@ input:checked + .slider:before {
   
   .next-shift-card .shift-item {
     padding: 16px;
-    border-radius: 20px; /* Fully rounded edges */
+    border-radius: 24px; /* Fully rounded edges */
     min-height: 80px;
   }
   
@@ -2457,7 +2498,7 @@ input:checked + .slider:before {
   
   .next-shift-card .shift-item {
     padding: 14px;
-    border-radius: 16px; /* Fully rounded edges */
+    border-radius: 24px; /* Fully rounded edges */
     min-height: 80px;
   }
   
@@ -3356,15 +3397,12 @@ input:checked + .slider:before {
   left: 0;
   right: 0;
   padding: 16px 24px;
-  background: linear-gradient(135deg, rgba(17, 17, 19, 0.9), rgba(26, 26, 29, 0.9));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(42, 42, 47, 0.3);
+  background: var(--bg-card);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 10;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 24px 24px;
 }
 
 /* Modal button group for centered buttons */
@@ -3453,7 +3491,7 @@ input:checked + .slider:before {
     height: calc(100vh - 80px); /* Account for navigation header */
     max-width: none;
     max-height: calc(100vh - 80px);
-    border-radius: 0;
+    border-radius: 24px;
     margin: 0;
     margin-top: 80px; /* Position below the navigation header */
     position: relative; /* Ensure relative positioning for absolute close button */
@@ -3631,7 +3669,7 @@ input:checked + .slider:before {
   padding: 18px 10px;
   font-size: 14px;
   border-top: 1px solid var(--border);
-  border-radius: 16px 16px 0 0;
+  border-radius: 24px 24px 0 0;
   max-width: 600px;
   margin: 0 auto;
   position: fixed;
@@ -3822,7 +3860,8 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
 }
 
 .header-text h2 {
@@ -3925,7 +3964,7 @@ input:checked + .slider:before {
   transform: translateX(-50%);
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 12px 16px;
   display: flex;
   align-items: center;
@@ -3939,6 +3978,50 @@ input:checked + .slider:before {
   background: rgba(26, 26, 29, 0.95);
   transition: opacity 0.3s ease-out;
   box-sizing: border-box;
+}
+
+/* Backdrop blur box behind floating action bar */
+.floating-action-bar-backdrop {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  height: 110px; /* Action bar height (~60px) + bottom spacing (20px) + extra height (30px) */
+  background: linear-gradient(to top, 
+    rgba(18, 18, 18, 0.3) 0%, 
+    rgba(18, 18, 18, 0.2) 40%, 
+    rgba(18, 18, 18, 0.1) 70%, 
+    transparent 100%
+  );
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  mask: linear-gradient(to top, 
+    rgba(0, 0, 0, 1) 0%, 
+    rgba(0, 0, 0, 0.8) 30%, 
+    rgba(0, 0, 0, 0.4) 60%, 
+    rgba(0, 0, 0, 0) 100%
+  );
+  -webkit-mask: linear-gradient(to top, 
+    rgba(0, 0, 0, 1) 0%, 
+    rgba(0, 0, 0, 0.8) 30%, 
+    rgba(0, 0, 0, 0.4) 60%, 
+    rgba(0, 0, 0, 0) 100%
+  );
+  z-index: 50; /* Below action bar (100) but above content, below modals (1200) */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+/* Backdrop is hidden by default and controlled by JavaScript */
+.shift-section .floating-action-bar-backdrop {
+  opacity: 0;
+}
+
+/* Hide backdrop in compact/calendar view */
+body.compact-view .shift-section .floating-action-bar-backdrop {
+  opacity: 0;
 }
 
 /* Ensure all child elements can size properly */
@@ -3960,7 +4043,7 @@ input:checked + .slider:before {
 .floating-action-bar .view-toggle .tab-btn {
   padding: 8px 16px;
   font-size: 14px;
-  border-radius: 10px;
+  border-radius: 24px;
   white-space: nowrap;
   flex: 1 1 auto; /* Allow buttons to grow/shrink equally */
   min-width: 0; /* Allow shrinking below content width */
@@ -3969,7 +4052,7 @@ input:checked + .slider:before {
 
 /* Ensure active state maintains rounded corners */
 .floating-action-bar .view-toggle .tab-btn.active {
-  border-radius: 10px;
+  border-radius: 24px;
 }
 
 /* Add button in floating bar */
@@ -4026,6 +4109,11 @@ input:checked + .slider:before {
     width: 16px;
     height: 16px;
   }
+  
+  /* Adjust backdrop height for mobile */
+  .floating-action-bar-backdrop {
+    height: 95px; /* Smaller action bar height + 10px bottom + extra height for coverage */
+  }
 }
 
 /* Extra small screens */
@@ -4065,6 +4153,101 @@ input:checked + .slider:before {
   }
 }
 
+/* Narrow screens - simplify cards when content would overflow */
+@media (max-width: 400px) {
+  /* Simplify shift cards when space is constrained - show only date */
+  .shift-item .shift-details {
+    display: none; /* Hide time and duration info */
+  }
+  
+  .shift-item .shift-breakdown {
+    display: none; /* Hide "grunnlønn + tillegg" breakdown */
+  }
+  
+  /* Simplify next shift card when space is constrained */
+  .next-shift-card .shift-item .shift-details {
+    display: none; /* Hide shift time and duration info */
+  }
+  
+  .next-shift-card .shift-item .shift-breakdown {
+    display: none; /* Hide breakdown info */
+  }
+  
+  /* For next shift card - hide weekday and show only hours:minutes */
+  .next-shift-card .shift-date-weekday {
+    display: none; /* Hide weekday on narrow screens */
+  }
+  
+  .next-shift-card .shift-date-separator {
+    display: none; /* Hide separator since weekday is hidden */
+  }
+  
+  /* Keep countdown timer visible but hide seconds */
+  .next-shift-card .shift-countdown-timer {
+    display: inline !important; /* Keep countdown timer visible */
+    /* Remove font-size reduction - keep same size as other text */
+  }
+  
+  /* On narrow screens: show dot separator format, hide parentheses format */
+  .next-shift-card .countdown-wrapper {
+    display: none !important; /* Hide parentheses version */
+  }
+  
+  .next-shift-card .countdown-dot-separator {
+    display: inline !important; /* Show dot separator */
+    margin-left: 4px; /* Add space before dot on narrow screens */
+  }
+  
+  .next-shift-card .countdown-no-parens {
+    display: inline !important; /* Show non-parentheses version */
+  }
+  
+  /* Hide seconds in countdown timer on narrow screens */
+  .next-shift-card .countdown-no-parens .countdown-seconds {
+    display: none; /* Hide seconds portion */
+  }
+  
+  /* Make NESTE badge text smaller on narrow screens */
+  .next-shift-badge {
+    font-size: 9px; /* Smaller text */
+    letter-spacing: 0.3px; /* Adjust letter spacing */
+  }
+  
+  /* Adjust shift-info layout when details are hidden */
+  .shift-item .shift-info {
+    gap: 0; /* Remove gap since we only have date */
+    justify-content: center; /* Center the date */
+  }
+  
+  /* Make shift cards more compact when showing only date */
+  .shift-item {
+    min-height: 60px; /* Reduce height since we have less content */
+    align-items: center; /* Center content vertically */
+  }
+  
+  .next-shift-card .shift-item {
+    min-height: 60px; /* Reduce height for next shift card too */
+  }
+}
+
+/* Add proper spacing between weekday and countdown on wider screens */
+.next-shift-card .shift-date-weekday {
+  margin-right: 4px; /* Add space before countdown on wider screens */
+}
+
+/* Default format for wider screens: show parentheses, hide dot separator */
+.next-shift-card .countdown-wrapper {
+  display: inline; /* Show parentheses version */
+}
+
+.next-shift-card .countdown-dot-separator {
+  display: none; /* Hide dot separator */
+}
+
+.next-shift-card .countdown-no-parens {
+  display: none; /* Hide non-parentheses version */
+}
+
 
 
 .shift-section .shift-list {
@@ -4095,7 +4278,7 @@ input:checked + .slider:before {
 .snap-section .header {
   position: relative;
   top: 0;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 24px 24px;
 }
 
 /* Stat cards */
@@ -4108,10 +4291,10 @@ input:checked + .slider:before {
 
 .stat-card {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 24px;
   padding: 16px;
   text-align: center;
-  box-shadow: 0 4px 16px -4px var(--shadow-blue);
+  box-shadow: 0 4px 16px -4px var(--shadow-soft);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -4162,6 +4345,14 @@ input:checked + .slider:before {
   font-size: 28px;
 }
 
+.compact-view .total-label {
+  font-size: 11px;
+}
+
+.compact-view .total-hours {
+  font-size: 11px;
+}
+
 .compact-view .breakdown-card {
   padding: 12px;
 }
@@ -4171,7 +4362,7 @@ input:checked + .slider:before {
 }
 
 .compact-view .breakdown-label {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .compact-view .stat-card {
@@ -4223,6 +4414,7 @@ input:checked + .slider:before {
 .radio-option {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 16px; /* Increased spacing between radio and text */
   cursor: pointer;
   padding: 14px 16px; /* Optimized padding for better alignment */
@@ -4631,6 +4823,152 @@ input[type="file"].form-control:focus {
 @media (max-width: 360px) {
   .next-shift-badge {
     border-radius: 0 16px 16px 0;
+  }
+}
+
+/* ============================================================================
+   DATA TAB SPECIFIC STYLING - IMPROVED LAYOUT AND PADDING
+   ============================================================================ */
+
+/* Data tab gets more generous padding due to complex content structure */
+#dataTab {
+  padding: 32px 24px 24px 24px !important; /* More top padding for breathing room */
+}
+
+/* Data tab section headers need more prominent styling */
+#dataTab .form-group > label {
+  font-size: 18px;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+
+/* Export options section - combined container for all export functionality */
+#exportOptionsSection {
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 32px; /* More space before import section */
+  margin-top: 16px;
+}
+
+#exportOptionsSection .export-section-header {
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+#exportOptionsSection > .form-hint {
+  margin-bottom: 20px; /* More space before period options */
+  margin-top: 0;
+}
+
+/* Export period options within the combined container */
+#exportOptionsSection .export-period-options {
+  margin-top: 0;
+  margin-bottom: 20px; /* Space before custom period or buttons */
+}
+
+/* Custom period section within the combined container */
+#exportOptionsSection #customPeriodSection {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  margin-top: 16px;
+}
+
+#exportOptionsSection #customPeriodSection .custom-period-header {
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+#exportOptionsSection #customPeriodSection .form-hint {
+  margin-bottom: 16px;
+  margin-top: 0;
+}
+
+#exportOptionsSection #customPeriodSection .form-row {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Export buttons within the combined container */
+#exportOptionsSection .export-buttons-container {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Import section - better visual separation at bottom */
+#dataTab .form-group:last-child {
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 0;
+  margin-top: 24px;
+}
+
+#dataTab .form-group:last-child > label {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 8px;
+}
+
+#dataTab .form-group:last-child .form-hint {
+  margin-bottom: 0;
+}
+
+#dataTab .form-group:last-child .form-row {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+/* Mobile responsive adjustments for data tab */
+@media (max-width: 600px) {
+  #dataTab {
+    padding: 24px 16px 16px 16px !important;
+  }
+  
+  #exportOptionsSection,
+  #dataTab .form-group:last-child {
+    padding: 16px;
+    margin-left: -4px;
+    margin-right: -4px;
+  }
+  
+  #exportOptionsSection #customPeriodSection {
+    padding: 12px;
+    margin-left: -4px;
+    margin-right: -4px;
+  }
+  
+  #dataTab .form-group > label {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  #dataTab {
+    padding: 20px 12px 12px 12px !important;
+  }
+  
+  #exportOptionsSection,
+  #dataTab .form-group:last-child {
+    padding: 12px;
+    margin-left: -8px;
+    margin-right: -8px;
+  }
+  
+  #exportOptionsSection #customPeriodSection {
+    padding: 8px;
+    margin-left: -4px;
+    margin-right: -4px;
   }
 }
 
