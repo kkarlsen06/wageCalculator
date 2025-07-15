@@ -981,7 +981,8 @@ input[type="time"].form-control[value=""]:focus {
 @media (max-width: 768px) {
   #addShiftModal.active {
     padding-top: 0; /* Consistent with desktop */
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
   }
 }
 

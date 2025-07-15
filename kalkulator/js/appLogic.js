@@ -3095,6 +3095,7 @@ export const app = {
         `;
         fixedCloseBtn.onclick = (e) => {
             e.stopPropagation();
+            e.preventDefault();
             this.closeShiftDetails();
         };
 
@@ -3248,6 +3249,7 @@ export const app = {
         `;
         closeBtn.onclick = (e) => {
             e.stopPropagation();
+            e.preventDefault();
             this.closeStatDetails();
         };
         modal.appendChild(closeBtn);
