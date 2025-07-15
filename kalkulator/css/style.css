@@ -1911,63 +1911,66 @@ input:checked + .slider:before {
 
 .breakdown-card {
   background: var(--bg-card);
-  border-radius: 24px;
-  padding: 20px;
+  border-radius: 16px;
+  padding: 16px;
   text-align: center;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
-  box-shadow: 0 4px 16px -4px var(--shadow-blue);
+  box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
-  min-height: 120px;
+  min-height: 100px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  border: 1px solid var(--border);
 }
 
 .breakdown-card:hover {
-  transform: var(--lift-small);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent);
 }
 
 /* Responsive padding for breakdown cards */
 @media (max-width: 480px) {
   .breakdown-card {
-    padding: 16px;
-    min-height: 110px;
-    border-radius: 20px;
+    padding: 12px;
+    min-height: 90px;
+    border-radius: 12px;
   }
 }
 
 @media (max-width: 360px) {
   .breakdown-card {
-    padding: 14px;
-    min-height: 100px;
-    border-radius: 16px;
+    padding: 10px;
+    min-height: 80px;
+    border-radius: 10px;
   }
 }
 
 @media (max-width: 280px) {
   .breakdown-card {
-    padding: 12px;
-    min-height: 90px;
-    border-radius: 14px;
+    padding: 8px;
+    min-height: 70px;
+    border-radius: 8px;
   }
 }
 
 /* For larger screens - enhanced styling */
 @media (min-width: 768px) {
   .breakdown-card {
-    padding: 24px;
-    min-height: 130px;
-    border-radius: 28px;
+    padding: 20px;
+    min-height: 110px;
+    border-radius: 20px;
   }
 }
 
 .breakdown-value {
-  font-size: 32px;
-  font-weight: 600;
+  font-size: 36px;
+  font-weight: 800;
   margin: 0;
   background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent2));
   -webkit-background-clip: text;
@@ -2010,8 +2013,8 @@ input:checked + .slider:before {
 }
 
 .breakdown-label {
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: 11px;
+  color: var(--text-muted);
   position: relative;
   z-index: 1;
   line-height: 1.3;
@@ -2020,6 +2023,7 @@ input:checked + .slider:before {
   width: 100%;
   margin: 0;
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 /* Responsive font sizes for breakdown labels */
@@ -4107,37 +4111,41 @@ input:checked + .slider:before {
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 15px;
+  gap: 12px;
   width: 100%;
 }
 
 .stat-card {
   background: var(--bg-card);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 12px;
   text-align: center;
-  box-shadow: 0 4px 16px -4px var(--shadow-blue);
+  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 4px;
   cursor: pointer;
-  transition: transform var(--speed-normal) var(--ease-default);
+  transition: all var(--speed-normal) var(--ease-default);
+  border: 1px solid var(--border);
 }
 
 .stat-card:hover {
-  transform: var(--lift-small);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent);
 }
 
 .stat-value {
-  color: var(--text-secondary);
-  font-size: 18px;
-  font-weight: 600;
+  color: var(--primary);
+  font-size: 20px;
+  font-weight: 800;
 }
 
 .stat-label {
-  color: var(--text-secondary);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 /* Compact view styles - applied when body has .compact-view class */
@@ -4180,15 +4188,15 @@ input:checked + .slider:before {
 }
 
 .compact-view .stat-card {
-  padding: 12px;
+  padding: 8px;
 }
 
 .compact-view .stat-value {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .compact-view .stat-label {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .compact-view .gap-20 {
