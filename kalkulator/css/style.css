@@ -1283,7 +1283,7 @@ input[type="time"].form-control[value=""]:focus {
 .calendar-hours-display {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
 }
 
@@ -1291,7 +1291,7 @@ input[type="time"].form-control[value=""]:focus {
   color: var(--accent-color);
   font-weight: 600;
   font-size: 13px;
-  text-align: center;
+  text-align: left;
   line-height: 1.2;
 }
 
