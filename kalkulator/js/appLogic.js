@@ -2497,9 +2497,9 @@ export const app = {
         // Calculate base earnings so far
         const baseEarned = hoursWorked * wageRate;
         
-        // Calculate bonus earnings so far
-        const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        const bonusEarned = this.calculateBonus(shift.startTime, currentTimeStr, bonusSegments);
+        // Calculate bonus earnings so far - include seconds for real-time updates
+        const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        const bonusEarned = this.calculateBonusWithSeconds(shift.startTime, currentTimeStr, bonusSegments);
         
         return {
             totalHours: hoursWorked,
@@ -3727,6 +3727,16 @@ export const app = {
         const [hours, minutes] = timeStr.split(':').map(Number);
         return hours * 60 + minutes;
     },
+    
+    // New function to handle seconds for real-time bonus calculations
+    timeToSeconds(timeStr) {
+        const parts = timeStr.split(':').map(Number);
+        const hours = parts[0];
+        const minutes = parts[1];
+        const seconds = parts[2] || 0; // Default to 0 if no seconds provided
+        return hours * 3600 + minutes * 60 + seconds;
+    },
+    
     calculateBonus(startTime, endTime, bonusSegments) {
         let totalBonus = 0;
         const startMinutes = this.timeToMinutes(startTime);
@@ -3747,6 +3757,30 @@ export const app = {
         }
         return totalBonus;
     },
+    
+    // New function for second-precise bonus calculations
+    calculateBonusWithSeconds(startTime, endTime, bonusSegments) {
+        let totalBonus = 0;
+        const startSeconds = this.timeToSeconds(startTime);
+        let endSeconds = this.timeToSeconds(endTime);
+        
+        // Handle shifts that continue past midnight
+        if (endSeconds <= startSeconds) {
+            endSeconds += 24 * 3600; // Add 24 hours in seconds
+        }
+        
+        for (const segment of bonusSegments) {
+            const segStart = this.timeToSeconds(segment.from);
+            let segEnd = this.timeToSeconds(segment.to);
+            if (segEnd <= segStart) {
+                segEnd += 24 * 3600; // Add 24 hours in seconds
+            }
+            const overlap = this.calculateOverlap(startSeconds, endSeconds, segStart, segEnd);
+            totalBonus += (overlap / 3600) * segment.rate; // Convert seconds to hours
+        }
+        return totalBonus;
+    },
+    
     calculateOverlap(startA, endA, startB, endB) {
         const start = Math.max(startA, startB);
         const end = Math.min(endA, endB);
