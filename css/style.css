@@ -636,24 +636,11 @@ html {
 .stat-number {
     font-size: var(--font-size-2xl);
     font-weight: 700;
-    color: var(--primary);
-    text-shadow: var(--glow-primary);
-    position: relative;
-}
 
-.stat-number::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--gradient-neon);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    opacity: 0.8;
-    z-index: -1;
 }
 
 .stat-label {
@@ -988,24 +975,10 @@ html {
 .stat-value {
     font-size: var(--font-size-xl);
     font-weight: 700;
-    color: var(--primary);
-    text-shadow: var(--glow-primary);
-    position: relative;
-}
-
-.stat-value::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--gradient-neon);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    opacity: 0.8;
-    z-index: -1;
 }
 
 .stat-label {

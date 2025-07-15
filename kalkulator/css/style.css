@@ -3367,13 +3367,12 @@ input:checked + .slider:before {
   border-radius: 0 0 16px 16px;
 }
 
-/* Modal button group for space-between layout */
+/* Modal button group for centered buttons */
 .modal-button-group {
   display: flex;
   gap: 16px;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  width: 100%;
 }
 
 /* Modal footer with buttons on both sides */
@@ -3381,10 +3380,9 @@ input:checked + .slider:before {
   justify-content: space-between;
 }
 
-/* Close button positioning - restore negative margin for space-between layout */
+/* Close button positioning - removed negative margin for centered layout */
 .modal-fixed-footer .modal-close-bottom {
-  margin-right: -8px;
-}
+  /* Negative margin removed to work with centered modal-button-group */
 
 /* Bottom actions section for settings modal - legacy (can be removed if not used elsewhere) */
 .modal-bottom-actions {
