@@ -455,6 +455,11 @@ html {
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: -0.02em;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.5));
 }
 
 .hero-subtitle {
