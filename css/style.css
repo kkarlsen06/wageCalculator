@@ -900,14 +900,11 @@ html {
     width: 48px;
     height: 48px;
     flex-shrink: 0;
-}
-
-/* Icon container styling */
-.feature-item svg {
-    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: rgba(99, 102, 241, 0.1);
     border-radius: 8px;
-    flex-shrink: 0;
     transition: all var(--transition-base);
 }
 
@@ -940,13 +937,6 @@ html {
 
 .nav-github:active svg {
     transform: scale(1);
-}
-
-.feature-item svg {
-    width: 24px;
-    height: 24px;
-    background: none;
-    border-radius: 0;
 }
 
 .feature-item h4 {
