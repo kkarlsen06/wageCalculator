@@ -1291,6 +1291,8 @@ input[type="time"].form-control[value=""]:focus {
   color: var(--accent-color);
   font-weight: 600;
   font-size: 13px;
+  text-align: center;
+  line-height: 1.2;
 }
 
 /* Responsive adjustments for calendar toggle */

@@ -2653,7 +2653,7 @@ export const app = {
                 });
 
                 if ((this.calendarDisplayMode === 'money' && base + bonus > 0) || 
-                    (this.calendarDisplayMode === 'hours' && totalHours > 0)) {
+                    (this.calendarDisplayMode === 'hours' && shiftsForDay.length > 0)) {
                     // Create wrapper for shift data
                     const shiftData = document.createElement('div');
                     shiftData.className = 'calendar-shift-data';
@@ -2670,16 +2670,27 @@ export const app = {
                         shiftData.appendChild(breakdown);
                         shiftData.appendChild(totalDisplay);
                     } else {
-                        // Display hours
+                        // Display time range
                         const hoursDisplay = document.createElement('div');
                         hoursDisplay.className = 'calendar-hours-display';
                         
-                        const totalDisplay = document.createElement('div');
-                        totalDisplay.className = 'calendar-total calendar-hours-total';
-                        totalDisplay.textContent = this.formatHours(totalHours);
+                        // Get the first shift's start and last shift's end time
+                        // Sort shifts by start time to get proper range
+                        const sortedShifts = shiftsForDay.sort((a, b) => {
+                            const aTime = this.timeToMinutes(a.startTime);
+                            const bTime = this.timeToMinutes(b.startTime);
+                            return aTime - bTime;
+                        });
+                        
+                        const firstShift = sortedShifts[0];
+                        const lastShift = sortedShifts[sortedShifts.length - 1];
+                        
+                        const timeRange = document.createElement('div');
+                        timeRange.className = 'calendar-total calendar-hours-total';
+                        timeRange.innerHTML = `${this.formatTimeShort(firstShift.startTime)} -<br>${this.formatTimeShort(lastShift.endTime)}`;
                         
                         shiftData.appendChild(hoursDisplay);
-                        shiftData.appendChild(totalDisplay);
+                        shiftData.appendChild(timeRange);
                     }
                     
                     content.appendChild(shiftData);
@@ -3832,6 +3843,15 @@ export const app = {
     },
     formatHours(hours) {
         return hours.toFixed(2).replace('.', ',') + ' timer';
+    },
+    
+    formatTimeShort(timeString) {
+        // Format time string (HH:MM) to remove :00 for whole hours
+        const [hours, minutes] = timeString.split(':');
+        if (minutes === '00') {
+            return hours;
+        }
+        return timeString;
     },
     
     // Settings management methods
