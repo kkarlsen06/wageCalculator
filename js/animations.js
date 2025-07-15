@@ -47,14 +47,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Single scroll to top on DOM ready
     window.scrollTo(0, 0);
     
+    // Store cleanup functions
+    const cleanupFunctions = [];
+    
     initNavbar();
     initScrollAnimations();
     initParallax();
-    initTypingEffect();
+    
+    // Store cleanup function from initTypingEffect
+    const typingCleanup = initTypingEffect();
+    if (typingCleanup) {
+        cleanupFunctions.push(typingCleanup);
+    }
+    
     initHoverEffects();
     initMobileMenu();
-    initMobileStats();
-    initCountingAnimations();
+    
+    // Store cleanup function from initMobileStats
+    const mobileStatsCleanup = initMobileStats();
+    if (mobileStatsCleanup) {
+        cleanupFunctions.push(mobileStatsCleanup);
+    }
+    
+    // Global cleanup function if needed
+    window.cleanupAnimations = () => {
+        cleanupFunctions.forEach(cleanup => cleanup());
+    };
 });
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -369,9 +387,52 @@ function initTypingEffect() {
     let currentCharIndex = 0;
     let isDeleting = false;
     let typingSpeed = 100;
+    let initialTextDeleted = false;
+    let currentTypingTimeout = null;
+    let isActive = true;
+    
+    function startScrollAnimation(futureText) {
+        const currentText = subtitleText.textContent;
+        subtitleText.textContent = futureText;
+        
+        const textWidth = subtitleText.scrollWidth;
+        const containerWidth = subtitle.clientWidth;
+        
+        subtitleText.textContent = currentText;
+        
+        if (textWidth > containerWidth) {
+            subtitle.classList.add('overflow-scroll');
+            const overflowAmount = textWidth - containerWidth;
+            const scrollDistance = -overflowAmount;
+            subtitleText.style.transform = `translateX(${scrollDistance}px)`;
+        } else {
+            subtitle.classList.remove('overflow-scroll');
+            subtitleText.style.transform = 'translateX(0)';
+        }
+    }
+    
+    function updateText(text) {
+        startScrollAnimation(text);
+        subtitleText.textContent = text;
+    }
     
     function type() {
-        const currentText = texts[currentTextIndex];
+        if (!isActive) return; // Stop if cleanup was called
+        
+        if (!initialTextDeleted) {
+            const currentText = subtitleText.textContent;
+            if (currentText.length > 0) {
+                updateText(currentText.substring(0, currentText.length - 1));
+                currentTypingTimeout = setTimeout(type, 80);
+                return;
+            } else {
+                initialTextDeleted = true;
+                currentChar = 0;
+                typingSpeed = 500;
+            }
+        }
+        
+        const phrase = phrases[currentPhrase];
         
         if (isDeleting) {
             heroName.textContent = currentText.substring(0, currentCharIndex - 1);
@@ -392,11 +453,27 @@ function initTypingEffect() {
             typingSpeed = 500; // Pause before next word
         }
         
-        setTimeout(type, typingSpeed);
+        currentTypingTimeout = setTimeout(type, typingSpeed);
     }
     
-    // Start typing effect after initial load
-    setTimeout(type, 1000);
+    // Store debounced resize handler for cleanup
+    const debouncedResizeHandler = debounce(() => {
+        startScrollAnimation(subtitleText.textContent);
+    }, 100);
+    
+    // Listen for window resize to restart scroll animation
+    window.addEventListener('resize', debouncedResizeHandler);
+    
+    // Store timeout ID for cleanup
+    let typingTimeout = setTimeout(type, 4000);
+    
+    // Return cleanup function
+    return () => {
+        isActive = false;
+        clearTimeout(typingTimeout);
+        clearTimeout(currentTypingTimeout);
+        window.removeEventListener('resize', debouncedResizeHandler);
+    };
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -660,15 +737,17 @@ function initCountingAnimations() {
         rootMargin: '0px 0px -50px 0px'
     };
     
-    countingObserver = new IntersectionObserver(handleIntersection, observerOptions);
+    ensureCorrectPositioning();
     
-    // Observe all stat elements
-    const statElements = document.querySelectorAll('.stat-number, .preview-stat .stat-value');
-    statElements.forEach(element => {
-        // Reset animation state
-        element.classList.remove('counting-animated');
-        countingObserver.observe(element);
-    });
+    // Store the debounced handler so we can remove it later
+    const debouncedHandleViewportChange = debounce(handleViewportChange, 100);
+    window.addEventListener('resize', debouncedHandleViewportChange);
+    
+    // Return cleanup function
+    return () => {
+        removeExistingListeners();
+        window.removeEventListener('resize', debouncedHandleViewportChange);
+    };
 }
 
 // ───────────────────────────────────────────────────────────────────────────
