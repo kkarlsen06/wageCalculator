@@ -2629,6 +2629,11 @@ export const app = {
                 if (cellDate.getMonth() !== monthIdx) {
                     cell.classList.add('other-month');
                 }
+                
+                // Add hours-mode class if in hours display mode
+                if (this.calendarDisplayMode === 'hours') {
+                    cell.classList.add('hours-mode');
+                }
 
                 // --- WRAP ALL CONTENT IN .calendar-cell-content ---
                 const content = document.createElement('div');

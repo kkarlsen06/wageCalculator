@@ -1285,6 +1285,7 @@ input[type="time"].form-control[value=""]:focus {
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+  width: 100%;
 }
 
 .calendar-hours-total {
@@ -1293,6 +1294,22 @@ input[type="time"].form-control[value=""]:focus {
   font-size: 13px;
   text-align: left;
   line-height: 1.2;
+  width: 100%;
+}
+
+/* Override centering for calendar cells in hours mode */
+.calendar-cell.hours-mode {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.calendar-cell.hours-mode .calendar-cell-content {
+  align-items: flex-start;
+}
+
+.calendar-cell.hours-mode .calendar-day-number {
+  text-align: left;
+  width: 100%;
 }
 
 /* Responsive adjustments for calendar toggle */
