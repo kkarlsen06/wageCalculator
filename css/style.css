@@ -68,6 +68,14 @@
     --font-size-4xl: 3rem;
     --font-size-5xl: 4rem;
     
+    /* Font weights for typography hierarchy */
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+    
     /* Animations */
     --transition-fast: 150ms ease;
     --transition-base: 300ms ease;
@@ -313,7 +321,7 @@ html {
 
 .logo-text {
     font-size: var(--font-size-xl);
-    font-weight: 800;
+    font-weight: var(--font-weight-extrabold);
     background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -331,7 +339,7 @@ html {
     color: var(--text-secondary);
     text-decoration: none;
     font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     transition: all var(--transition-base);
     position: relative;
 }
@@ -424,6 +432,7 @@ html {
 
 .badge-text {
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-light);
     color: var(--text-secondary);
 }
 
@@ -452,7 +461,7 @@ html {
 .hero-name {
     display: block;
     font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 800;
+    font-weight: var(--font-weight-extrabold);
     line-height: 1.1;
     letter-spacing: -0.02em;
 }
@@ -460,7 +469,7 @@ html {
 .hero-subtitle {
     display: block;
     font-size: clamp(1.5rem, 3vw, 2.5rem);
-    font-weight: 300;
+    font-weight: var(--font-weight-light);
     color: var(--text-secondary);
     margin-top: var(--space-1);
     min-height: 3rem; /* Fixed height to prevent layout shift during typing effect */
@@ -493,6 +502,7 @@ html {
 
 .hero-description {
     font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-regular);
     color: var(--text-secondary);
     margin-bottom: var(--space-xl);
     max-width: 600px;
@@ -522,7 +532,7 @@ html {
     padding: 0 var(--space-4);
     height: 44px; /* Touch-friendly minimum */
     font-size: var(--font-size-base);
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     text-decoration: none;
     border-radius: 8px;
     transition: all 150ms ease;
@@ -622,12 +632,13 @@ html {
 
 .stat-number {
     font-size: var(--font-size-2xl);
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     color: var(--primary);
 }
 
 .stat-label {
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-light);
     color: var(--text-secondary);
 }
 
@@ -773,7 +784,7 @@ html {
 .section-label {
     display: inline-block;
     font-size: var(--font-size-sm);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     color: var(--primary);
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -782,13 +793,14 @@ html {
 
 .section-title {
     font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 800;
+    font-weight: var(--font-weight-extrabold);
     margin-bottom: var(--space-md);
     letter-spacing: -0.02em;
 }
 
 .section-description {
     font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-regular);
     color: var(--text-secondary);
     max-width: 600px;
     margin: 0 auto;
@@ -828,6 +840,7 @@ html {
 
 .features-title {
     font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
     margin-bottom: var(--space-lg);
 }
 
@@ -869,11 +882,13 @@ html {
 
 .feature-item h4 {
     font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
     margin-bottom: 0.25rem;
 }
 
 .feature-item p {
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-light);
     color: var(--text-secondary);
 }
 
@@ -955,12 +970,13 @@ html {
 
 .stat-value {
     font-size: var(--font-size-xl);
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     color: var(--primary);
 }
 
 .stat-label {
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-light);
     color: var(--text-secondary);
     margin-left: auto;
 }
@@ -1039,6 +1055,7 @@ html {
 
 .tech-card h3 {
     font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
     margin-bottom: var(--space-xs);
     position: relative;
     z-index: 1;
@@ -1047,6 +1064,7 @@ html {
 .tech-card p {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-light);
     position: relative;
     z-index: 1;
 }
@@ -1117,7 +1135,7 @@ html {
 .form-label {
     display: block;
     margin-bottom: var(--space-1);
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     color: var(--text-primary);
 }
 
