@@ -47,13 +47,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Single scroll to top on DOM ready
     window.scrollTo(0, 0);
     
+    // Store cleanup functions
+    const cleanupFunctions = [];
+    
     initNavbar();
     initScrollAnimations();
     initParallax();
-    initTypingEffect();
+    
+    // Store cleanup function from initTypingEffect
+    const typingCleanup = initTypingEffect();
+    if (typingCleanup) {
+        cleanupFunctions.push(typingCleanup);
+    }
+    
     initHoverEffects();
     initMobileMenu();
-    initMobileStats();
+    
+    // Store cleanup function from initMobileStats
+    const mobileStatsCleanup = initMobileStats();
+    if (mobileStatsCleanup) {
+        cleanupFunctions.push(mobileStatsCleanup);
+    }
+    
+    // Global cleanup function if needed
+    window.cleanupAnimations = () => {
+        cleanupFunctions.forEach(cleanup => cleanup());
+    };
 });
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -218,6 +237,8 @@ function initTypingEffect() {
     let isDeleting = false;
     let typingSpeed = 100;
     let initialTextDeleted = false;
+    let currentTypingTimeout = null;
+    let isActive = true;
     
     function startScrollAnimation(futureText) {
         const currentText = subtitleText.textContent;
@@ -245,11 +266,13 @@ function initTypingEffect() {
     }
     
     function type() {
+        if (!isActive) return; // Stop if cleanup was called
+        
         if (!initialTextDeleted) {
             const currentText = subtitleText.textContent;
             if (currentText.length > 0) {
                 updateText(currentText.substring(0, currentText.length - 1));
-                setTimeout(type, 80);
+                currentTypingTimeout = setTimeout(type, 80);
                 return;
             } else {
                 initialTextDeleted = true;
@@ -280,16 +303,27 @@ function initTypingEffect() {
             updateText('\u00A0');
         }
         
-        setTimeout(type, typingSpeed);
+        currentTypingTimeout = setTimeout(type, typingSpeed);
     }
     
-    // Listen for window resize to restart scroll animation
-    window.addEventListener('resize', debounce(() => {
+    // Store debounced resize handler for cleanup
+    const debouncedResizeHandler = debounce(() => {
         startScrollAnimation(subtitleText.textContent);
-    }, 100));
+    }, 100);
     
-    // Start typing effect
-    setTimeout(type, 4000);
+    // Listen for window resize to restart scroll animation
+    window.addEventListener('resize', debouncedResizeHandler);
+    
+    // Store timeout ID for cleanup
+    let typingTimeout = setTimeout(type, 4000);
+    
+    // Return cleanup function
+    return () => {
+        isActive = false;
+        clearTimeout(typingTimeout);
+        clearTimeout(currentTypingTimeout);
+        window.removeEventListener('resize', debouncedResizeHandler);
+    };
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -462,7 +496,16 @@ function initMobileStats() {
     }
     
     ensureCorrectPositioning();
-    window.addEventListener('resize', debounce(handleViewportChange, 100));
+    
+    // Store the debounced handler so we can remove it later
+    const debouncedHandleViewportChange = debounce(handleViewportChange, 100);
+    window.addEventListener('resize', debouncedHandleViewportChange);
+    
+    // Return cleanup function
+    return () => {
+        removeExistingListeners();
+        window.removeEventListener('resize', debouncedHandleViewportChange);
+    };
 }
 
 // ───────────────────────────────────────────────────────────────────────────
