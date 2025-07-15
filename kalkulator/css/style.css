@@ -1032,6 +1032,41 @@ input[type="time"].form-control[value=""]:focus {
   }
 }
 
+/* ADD SHIFT MODAL OVERRIDES - Must come after general modal rules */
+/* Force add shift modal to be centered and larger */
+#addShiftModal .modal-content {
+  height: auto !important;
+  max-height: calc(95vh - 20px) !important;
+  width: min(90vw, 600px) !important;
+  max-width: 600px !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+}
+
+#addShiftModal .modal-body {
+  max-height: calc(95vh - 160px) !important;
+  overflow-y: auto !important;
+  padding-bottom: 80px !important;
+}
+
+@media (min-width: 769px) {
+  #addShiftModal .modal-content {
+    height: auto !important;
+    max-height: calc(95vh - 20px) !important;
+    width: min(90vw, 600px) !important;
+    max-width: 600px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #addShiftModal .modal-content {
+    height: auto !important;
+    max-height: 95vh !important;
+    width: 100vw !important;
+    margin: 0 !important;
+  }
+}
+
 /* Center settings modal on screen */
 #settingsModal.active {
   display: flex !important;
