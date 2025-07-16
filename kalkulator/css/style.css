@@ -1249,34 +1249,40 @@ input[type="time"].form-control[value=""]:focus {
 
 .calendar-toggle-nav {
   display: flex;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 4px;
-  gap: 2px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  gap: 4px;
 }
 
 .calendar-toggle-btn {
+  flex: 1;
   padding: 8px 16px;
+  background: var(--bg-secondary);
   border: none;
-  background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
+  cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all var(--transition-base);
+  border-radius: 24px;
+  transition: all var(--speed-normal) var(--ease-default);
+  position: relative;
   min-width: 80px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .calendar-toggle-btn:hover {
-  color: var(--text-primary);
   background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .calendar-toggle-btn.active {
-  background: var(--accent-color);
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border);
+  border-radius: 24px;
 }
 
 /* Calendar hours display styling */
