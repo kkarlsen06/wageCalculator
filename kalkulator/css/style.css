@@ -4231,7 +4231,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 .floating-action-bar .add-btn {
   background: var(--accent);
   border: none;
-  border-radius: 12px;
+  border-radius: 24px;
   padding: 8px 16px;
   color: white;
   cursor: pointer;
