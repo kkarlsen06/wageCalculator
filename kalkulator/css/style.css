@@ -973,17 +973,17 @@ input[type="time"].form-control[value=""]:focus {
 
 /* Special positioning for add shift modal to account for navigation header */
 #addShiftModal.active {
-  align-items: center !important; /* Force center alignment, override general modal rules */
-  justify-content: center !important; /* Force center justification */
-  padding-top: 0 !important; /* Remove conflicting padding */
-  display: flex !important; /* Ensure flex display */
+  align-items: flex-start !important; /* Allow tall modals to start from top for scrolling */
+  justify-content: center !important; /* Keep horizontal centering */
+  padding-top: 0 !important;
+  display: flex !important;
 }
 
 /* Mobile override for add shift modal positioning */
 @media (max-width: 768px) {
   #addShiftModal.active {
-    padding-top: 0 !important; /* Consistent with desktop */
-    align-items: center !important; /* Force center alignment */
+    padding-top: 0 !important;
+    align-items: flex-start !important; /* Allow tall modals to start from top */
     justify-content: center !important;
     display: flex !important;
   }
@@ -993,8 +993,8 @@ input[type="time"].form-control[value=""]:focus {
 @media (min-width: 769px) {
   #addShiftModal.active {
     justify-content: center !important;
-    align-items: center !important; /* Force center alignment */
-    padding-top: 0 !important; /* Remove fixed padding */
+    align-items: flex-start !important; /* Allow tall modals to start from top */
+    padding-top: 0 !important;
     display: flex !important;
   }
   
@@ -1038,12 +1038,12 @@ input[type="time"].form-control[value=""]:focus {
   height: auto !important;
   width: min(90vw, 600px) !important;
   max-width: 600px !important;
-  margin: 0 auto !important;
-  overflow: hidden !important;
+  margin: 20px auto !important;
+  overflow: visible !important;
   display: flex !important;
   flex-direction: column !important;
-  /* Only constrain height when content would overflow viewport */
-  max-height: calc(100vh - 20px) !important;
+  /* Remove height constraints completely - let modal grow with content */
+  max-height: none !important;
 }
 
 #addShiftModal .modal-body {
@@ -1065,8 +1065,9 @@ input[type="time"].form-control[value=""]:focus {
     height: auto !important;
     width: min(90vw, 600px) !important;
     max-width: 600px !important;
-    /* Allow more height on desktop - only constrain when truly necessary */
-    max-height: calc(100vh - 8vh) !important; /* Account for margin-top: 8vh */
+    margin: 20px auto !important;
+    /* Remove height constraints to allow modal to grow with content */
+    max-height: none !important;
   }
 }
 
@@ -1074,9 +1075,9 @@ input[type="time"].form-control[value=""]:focus {
   #addShiftModal .modal-content {
     height: auto !important;
     width: 100vw !important;
-    margin: 0 !important;
-    /* Account for mobile navigation on smaller screens */
-    max-height: calc(100vh - 20px) !important;
+    margin: 10px 0 !important;
+    /* Remove height constraints to allow modal to grow with content */
+    max-height: none !important;
   }
 }
 
@@ -3546,13 +3547,12 @@ input:checked + .slider:before {
   
   #addShiftModal .modal-content {
     height: auto !important; /* Force auto height, override general modal styles */
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    overflow: hidden !important; /* Prevent scrolling on modal-content */
+    margin: 10px 0 !important;
+    overflow: visible !important; /* Allow modal to grow beyond viewport if needed */
     display: flex !important;
     flex-direction: column !important;
-    /* Only constrain when content would overflow */
-    max-height: calc(100vh - 20px) !important;
+    /* Remove height constraints to allow modal to grow with content */
+    max-height: none !important;
   }
   
   #addShiftModal .modal-body {
@@ -3587,8 +3587,8 @@ input:checked + .slider:before {
   #addShiftModal .modal-content {
     display: flex !important;
     flex-direction: column !important;
-    /* Only constrain when content would overflow viewport */
-    max-height: calc(100vh - 8vh) !important; /* Account for margin-top: 8vh */
+    /* Remove height constraints to allow modal to grow with content */
+    max-height: none !important;
   }
   
   #addShiftModal .modal-body {
