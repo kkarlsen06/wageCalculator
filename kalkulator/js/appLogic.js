@@ -2679,23 +2679,33 @@ export const app = {
                         const hoursDisplay = document.createElement('div');
                         hoursDisplay.className = 'calendar-hours-display';
                         
-                        // Get the first shift's start and last shift's end time
-                        // Sort shifts by start time to get proper range
-                        const sortedShifts = shiftsForDay.sort((a, b) => {
-                            const aTime = this.timeToMinutes(a.startTime);
-                            const bTime = this.timeToMinutes(b.startTime);
-                            return aTime - bTime;
-                        });
+                        // Find the absolute earliest start time and latest end time across all shifts
+                        let earliestStartMinutes = Infinity;
+                        let latestEndMinutes = -Infinity;
+                        let earliestStartTime = '';
+                        let latestEndTime = '';
                         
-                        const firstShift = sortedShifts[0];
-                        const lastShift = sortedShifts[sortedShifts.length - 1];
+                        shiftsForDay.forEach(shift => {
+                            const startMinutes = this.timeToMinutes(shift.startTime);
+                            const endMinutes = this.timeToMinutes(shift.endTime);
+                            
+                            if (startMinutes < earliestStartMinutes) {
+                                earliestStartMinutes = startMinutes;
+                                earliestStartTime = shift.startTime;
+                            }
+                            
+                            if (endMinutes > latestEndMinutes) {
+                                latestEndMinutes = endMinutes;
+                                latestEndTime = shift.endTime;
+                            }
+                        });
                         
                         const timeRange = document.createElement('div');
                         timeRange.className = 'calendar-total calendar-hours-total';
-                        timeRange.innerHTML = `${this.formatTimeShort(firstShift.startTime)} -<br>${this.formatTimeShort(lastShift.endTime)}`;
+                        timeRange.innerHTML = `${this.formatTimeShort(earliestStartTime)} -<br>${this.formatTimeShort(latestEndTime)}`;
                         
+                        hoursDisplay.appendChild(timeRange);
                         shiftData.appendChild(hoursDisplay);
-                        shiftData.appendChild(timeRange);
                     }
                     
                     content.appendChild(shiftData);
