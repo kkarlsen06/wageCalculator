@@ -1286,6 +1286,8 @@ input[type="time"].form-control[value=""]:focus {
   align-items: flex-start;
   gap: 2px;
   width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 .calendar-hours-total {
@@ -1295,21 +1297,36 @@ input[type="time"].form-control[value=""]:focus {
   text-align: left;
   line-height: 1.2;
   width: 100%;
+  font-family: 'Courier New', monospace;
+  white-space: pre;
+  padding: 0;
+  margin: 0;
+  display: block;
 }
 
 /* Override centering for calendar cells in hours mode */
 .calendar-cell.hours-mode {
   align-items: flex-start;
   text-align: left;
+  padding: 8px 2px 8px 2px;
 }
 
 .calendar-cell.hours-mode .calendar-cell-content {
   align-items: flex-start;
+  padding: 0;
 }
 
 .calendar-cell.hours-mode .calendar-day-number {
   text-align: left;
   width: 100%;
+  font-family: 'Courier New', monospace;
+  padding: 0;
+  margin: 0;
+}
+
+.calendar-cell.hours-mode .calendar-shift-data {
+  width: 100%;
+  text-align: left;
 }
 
 /* Responsive adjustments for calendar toggle */
