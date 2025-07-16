@@ -4215,7 +4215,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 .floating-action-bar .view-toggle .tab-btn {
   padding: 8px 16px;
   font-size: 14px;
-  border-radius: 24px;
+  border-radius: 16px;
   white-space: nowrap;
   flex: 1 1 auto; /* Allow buttons to grow/shrink equally */
   min-width: 0; /* Allow shrinking below content width */
@@ -4224,14 +4224,14 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 
 /* Ensure active state maintains rounded corners */
 .floating-action-bar .view-toggle .tab-btn.active {
-  border-radius: 24px;
+  border-radius: 16px;
 }
 
 /* Add button in floating bar */
 .floating-action-bar .add-btn {
   background: var(--accent);
   border: none;
-  border-radius: 24px;
+  border-radius: 16px;
   padding: 8px 16px;
   color: white;
   cursor: pointer;
