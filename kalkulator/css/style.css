@@ -1284,7 +1284,7 @@ input[type="time"].form-control[value=""]:focus {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: 1px;
   width: 100%;
   padding: 0;
   margin: 0;
@@ -1293,40 +1293,51 @@ input[type="time"].form-control[value=""]:focus {
 .calendar-hours-total {
   color: var(--accent-color);
   font-weight: 600;
-  font-size: 13px;
-  text-align: left;
+  font-size: 12px;
+  text-align: left !important;
   line-height: 1.2;
   width: 100%;
-  font-family: 'Courier New', monospace;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
   white-space: pre;
-  padding: 0;
-  margin: 0;
+  padding: 0 !important;
+  margin: 0 !important;
   display: block;
+  letter-spacing: 0;
+  position: relative;
+  left: 0;
 }
 
 /* Override centering for calendar cells in hours mode */
 .calendar-cell.hours-mode {
   align-items: flex-start;
   text-align: left;
-  padding: 8px 2px 8px 2px;
+  padding: 8px 4px 8px 4px;
 }
 
 .calendar-cell.hours-mode .calendar-cell-content {
   align-items: flex-start;
   padding: 0;
+  width: 100%;
 }
 
 .calendar-cell.hours-mode .calendar-day-number {
-  text-align: left;
+  text-align: center;
   width: 100%;
-  font-family: 'Courier New', monospace;
-  padding: 0;
-  margin: 0;
 }
 
 .calendar-cell.hours-mode .calendar-shift-data {
   width: 100%;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Ensure time text is fully left-aligned */
+.calendar-cell.hours-mode .calendar-hours-total {
+  text-align: left !important;
+  justify-self: flex-start;
+  align-self: flex-start;
 }
 
 /* Responsive adjustments for calendar toggle */
