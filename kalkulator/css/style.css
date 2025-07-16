@@ -1043,7 +1043,7 @@ input[type="time"].form-control[value=""]:focus {
   display: flex !important;
   flex-direction: column !important;
   /* Only constrain height when content would overflow viewport */
-  max-height: calc(100vh - 40px) !important;
+  max-height: calc(100vh - 20px) !important;
 }
 
 #addShiftModal .modal-body {
@@ -1066,7 +1066,7 @@ input[type="time"].form-control[value=""]:focus {
     width: min(90vw, 600px) !important;
     max-width: 600px !important;
     /* Allow more height on desktop - only constrain when truly necessary */
-    max-height: calc(100vh - 20px) !important;
+    max-height: calc(100vh - 8vh) !important; /* Account for margin-top: 8vh */
   }
 }
 
@@ -3588,7 +3588,7 @@ input:checked + .slider:before {
     display: flex !important;
     flex-direction: column !important;
     /* Only constrain when content would overflow viewport */
-    max-height: calc(100vh - 16vh) !important; /* Account for margin-top */
+    max-height: calc(100vh - 8vh) !important; /* Account for margin-top: 8vh */
   }
   
   #addShiftModal .modal-body {
