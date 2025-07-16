@@ -1297,7 +1297,7 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .calendar-hours-total {
-  color: var(--accent-color);
+  color: var(--accent);
   font-weight: 600;
   font-size: 12px;
   text-align: left !important;
