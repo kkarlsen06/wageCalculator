@@ -2712,11 +2712,14 @@ export const app = {
                         // Format the end time display, showing next day indicator if needed
                         let endTimeDisplay = this.formatTimeShort(latestEndTime);
                         if (latestEndCrossedMidnight) {
-                            endTimeDisplay += '+1';
+                            endTimeDisplay += '*';
                         }
                         
                         const timeRange = document.createElement('div');
                         timeRange.className = 'calendar-total calendar-hours-total';
+                        if (latestEndCrossedMidnight) {
+                            timeRange.title = '* indicates the shift ends the next day';
+                        }
                         timeRange.innerHTML = `${this.formatTimeShort(earliestStartTime)} -<br>${endTimeDisplay}`;
                         
                         hoursDisplay.appendChild(timeRange);
