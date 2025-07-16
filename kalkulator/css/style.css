@@ -1202,7 +1202,7 @@ input[type="time"].form-control[value=""]:focus {
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  border-radius: 24px;
+  border-radius: 16px;
   transition: all var(--speed-normal) var(--ease-default);
   position: relative;
 }
@@ -4224,7 +4224,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 
 /* Ensure active state maintains rounded corners */
 .floating-action-bar .view-toggle .tab-btn.active {
-  border-radius: 24px;
+  border-radius: 16px;
 }
 
 /* Add button in floating bar */
