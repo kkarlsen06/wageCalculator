@@ -2687,7 +2687,12 @@ export const app = {
                         
                         shiftsForDay.forEach(shift => {
                             const startMinutes = this.timeToMinutes(shift.startTime);
-                            const endMinutes = this.timeToMinutes(shift.endTime);
+                            let endMinutes = this.timeToMinutes(shift.endTime);
+                            
+                            // Adjust endMinutes for shifts that cross midnight
+                            if (endMinutes < startMinutes) {
+                                endMinutes += 24 * 60; // Add 24 hours in minutes
+                            }
                             
                             if (startMinutes < earliestStartMinutes) {
                                 earliestStartMinutes = startMinutes;
