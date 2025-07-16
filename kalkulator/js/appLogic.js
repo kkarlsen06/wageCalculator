@@ -2684,14 +2684,17 @@ export const app = {
                         let latestEndMinutes = -Infinity;
                         let earliestStartTime = '';
                         let latestEndTime = '';
+                        let latestEndCrossedMidnight = false;
                         
                         shiftsForDay.forEach(shift => {
                             const startMinutes = this.timeToMinutes(shift.startTime);
                             let endMinutes = this.timeToMinutes(shift.endTime);
+                            let endCrossedMidnight = false;
                             
                             // Adjust endMinutes for shifts that cross midnight
                             if (endMinutes < startMinutes) {
                                 endMinutes += 24 * 60; // Add 24 hours in minutes
+                                endCrossedMidnight = true;
                             }
                             
                             if (startMinutes < earliestStartMinutes) {
@@ -2702,12 +2705,19 @@ export const app = {
                             if (endMinutes > latestEndMinutes) {
                                 latestEndMinutes = endMinutes;
                                 latestEndTime = shift.endTime;
+                                latestEndCrossedMidnight = endCrossedMidnight;
                             }
                         });
                         
+                        // Format the end time display, showing next day indicator if needed
+                        let endTimeDisplay = this.formatTimeShort(latestEndTime);
+                        if (latestEndCrossedMidnight) {
+                            endTimeDisplay += '+1';
+                        }
+                        
                         const timeRange = document.createElement('div');
                         timeRange.className = 'calendar-total calendar-hours-total';
-                        timeRange.innerHTML = `${this.formatTimeShort(earliestStartTime)} -<br>${this.formatTimeShort(latestEndTime)}`;
+                        timeRange.innerHTML = `${this.formatTimeShort(earliestStartTime)} -<br>${endTimeDisplay}`;
                         
                         hoursDisplay.appendChild(timeRange);
                         shiftData.appendChild(hoursDisplay);
@@ -3787,6 +3797,14 @@ export const app = {
     timeToMinutes(timeStr) {
         const [hours, minutes] = timeStr.split(':').map(Number);
         return hours * 60 + minutes;
+    },
+    
+    minutesToTime(minutes) {
+        // Convert minutes back to time string, handling values >= 24 hours
+        const adjustedMinutes = minutes % (24 * 60);
+        const hours = Math.floor(adjustedMinutes / 60);
+        const mins = adjustedMinutes % 60;
+        return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
     },
     
     // New function to handle seconds for real-time bonus calculations
