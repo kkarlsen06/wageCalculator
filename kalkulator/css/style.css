@@ -596,6 +596,28 @@ body {
   margin-bottom: 24px; /* Major spacing between form sections */
 }
 
+.form-group-inline {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.form-group-inline > div {
+  flex: 1;
+}
+
+.form-group-inline label {
+  display: block;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.form-group-inline select {
+  width: 100%;
+}
+
 /* Form group labels - clear hierarchy */
 .form-group label {
   display: block;
@@ -1962,6 +1984,41 @@ input:checked + .slider:before {
   font-weight: 500;
   margin-left: 8px;
   vertical-align: middle;
+}
+
+/* Pause Badge */
+.pause-badge {
+  display: inline-block;
+  background: #ff6b35;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 8px;
+  vertical-align: middle;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Pause Section */
+.pause-section {
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.pause-section h4 {
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
 }
 
 /* Content section with proper spacing from header */

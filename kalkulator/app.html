@@ -250,6 +250,32 @@
                         </label>
                       </div>
                   </div>
+
+                  <div class="form-group">
+                      <label>Standard pausetid</label>
+                      <div class="form-group-inline">
+                          <div>
+                              <label>Pause starter etter</label>
+                              <select id="pauseStartHours">
+                                  <option value="1.5">1,5 timer</option>
+                                  <option value="2.0">2 timer</option>
+                                  <option value="2.5" selected>2,5 timer</option>
+                                  <option value="3.0">3 timer</option>
+                                  <option value="4.0">4 timer</option>
+                              </select>
+                          </div>
+                          <div>
+                              <label>Varighet</label>
+                              <select id="pauseDuration">
+                                  <option value="0.25">15 min</option>
+                                  <option value="0.5" selected>30 min</option>
+                                  <option value="0.75">45 min</option>
+                                  <option value="1.0">1 time</option>
+                              </select>
+                          </div>
+                      </div>
+                      <small class="form-hint">Standardverdier for nye vakter. Kan justeres per vakt.</small>
+                  </div>
                   
                   <div class="form-group form-group-with-hint">
                       <label for="monthlyGoalInput">Månedlig inntektsmål</label>
@@ -495,6 +521,30 @@
                               </select>
                               <select class="form-control" id="editEndMinute">
                                   <option value="">Til minutt</option>
+                              </select>
+                          </div>
+                      </div>
+
+                      <div class="pause-section">
+                          <h4>Pauseinnstillinger</h4>
+                          <div class="form-group">
+                              <label>Pause starter etter</label>
+                              <select id="editPauseStart" class="form-control">
+                                  <option value="">Ingen pause</option>
+                                  <option value="1.5">1,5 timer</option>
+                                  <option value="2.0">2 timer</option>
+                                  <option value="2.5">2,5 timer</option>
+                                  <option value="3.0">3 timer</option>
+                                  <option value="4.0">4 timer</option>
+                              </select>
+                          </div>
+                          <div class="form-group">
+                              <label>Pause-varighet</label>
+                              <select id="editPauseDuration" class="form-control">
+                                  <option value="0.25">15 minutter</option>
+                                  <option value="0.5">30 minutter</option>
+                                  <option value="0.75">45 minutter</option>
+                                  <option value="1.0">1 time</option>
                               </select>
                           </div>
                       </div>
