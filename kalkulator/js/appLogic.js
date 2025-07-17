@@ -156,6 +156,8 @@ export const app = {
     // Constants
     PAUSE_THRESHOLD: 5.5,
     PAUSE_DEDUCTION: 0.5,
+    DEFAULT_PAUSE_START_HOURS: 2.5,    // Standard pause starter etter 2,5 timer
+    DEFAULT_PAUSE_DURATION: 0.5,       // Standard pause er 30 minutter
     MONTHS: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',
              'juli', 'august', 'september', 'oktober', 'november', 'desember'],
     WEEKDAYS: ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'],
@@ -193,6 +195,8 @@ export const app = {
     customWage: 200,
     customBonuses: {}, // Reset to empty - will be loaded from database
     pauseDeduction: true,
+    pauseStartHours: 2.5,    // Timer etter vaktstart
+    pauseDuration: 0.5,      // Pause-varighet i timer
     fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
     directTimeInput: false, // Setting for using direct time input instead of dropdowns
     monthlyGoal: 20000, // Monthly income goal
@@ -237,6 +241,19 @@ export const app = {
         // Bind pause toggle
         document.getElementById('pauseDeductionToggle').addEventListener('change', e => {
             this.pauseDeduction = e.target.checked;
+            this.updateDisplay();
+            this.saveSettingsToSupabase();
+        });
+        
+        // Bind pause settings
+        document.getElementById('pauseStartHours').addEventListener('change', e => {
+            this.pauseStartHours = parseFloat(e.target.value);
+            this.updateDisplay();
+            this.saveSettingsToSupabase();
+        });
+        
+        document.getElementById('pauseDuration').addEventListener('change', e => {
+            this.pauseDuration = parseFloat(e.target.value);
             this.updateDisplay();
             this.saveSettingsToSupabase();
         });
@@ -702,6 +719,8 @@ export const app = {
                     start_time: `${startHour}:${startMinute}`,
                     end_time: `${endHour}:${endMinute}`,
                     shift_type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
+                    pause_start_hours: this.pauseStartHours,
+                    pause_duration_hours: this.pauseDuration,
                     series_id: seriesId
                 };
                 const { data: saved, error } = await window.supa.from('user_shifts').insert(insertData).select().single();
@@ -713,6 +732,8 @@ export const app = {
                     startTime: `${startHour}:${startMinute}`,
                     endTime: `${endHour}:${endMinute}`,
                     type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
+                    pauseStartHours: this.pauseStartHours,
+                    pauseDuration: this.pauseDuration,
                     seriesId
                 });
             }
@@ -804,7 +825,9 @@ export const app = {
                     shift_date: finalDateStr,
                     start_time: newShift.startTime,
                     end_time: newShift.endTime,
-                    shift_type: newShift.type
+                    shift_type: newShift.type,
+                    pause_start_hours: this.pauseStartHours,
+                    pause_duration_hours: this.pauseDuration
                 };
                 
                 const { data: saved, error } = await window.supa.from("user_shifts")
@@ -819,6 +842,8 @@ export const app = {
                 }
                 
                 newShift.id = saved.id;
+                newShift.pauseStartHours = this.pauseStartHours;
+                newShift.pauseDuration = this.pauseDuration;
                 
                 // Add to userShifts array
                 this.userShifts.push(newShift);
@@ -1111,6 +1136,8 @@ export const app = {
                         startTime: s.start_time,
                         endTime: s.end_time,
                         type: s.shift_type,
+                        pauseStartHours: s.pause_start_hours,
+                        pauseDuration: s.pause_duration_hours || 0.5,
                         seriesId: s.series_id || null
                     };
                     return mappedShift;
@@ -1151,6 +1178,8 @@ export const app = {
                 this.currentYear = settings.current_year || new Date().getFullYear();
                     
                 this.pauseDeduction = settings.pause_deduction || false;
+                this.pauseStartHours = settings.pause_start_hours || this.DEFAULT_PAUSE_START_HOURS;
+                this.pauseDuration = settings.pause_duration || this.DEFAULT_PAUSE_DURATION;
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
             this.monthlyGoal = settings.monthly_goal || 20000;
@@ -1186,6 +1215,8 @@ export const app = {
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.currentYear = new Date().getFullYear(); // Default to current year
         this.pauseDeduction = false;
+        this.pauseStartHours = this.DEFAULT_PAUSE_START_HOURS;
+        this.pauseDuration = this.DEFAULT_PAUSE_DURATION;
         this.fullMinuteRange = false; // Default to 15-minute intervals
         this.directTimeInput = false; // Default to dropdown time selection
         this.monthlyGoal = 20000; // Default monthly goal
@@ -1230,6 +1261,16 @@ export const app = {
         const pauseDeductionToggle = document.getElementById('pauseDeductionToggle');
         if (pauseDeductionToggle) {
             pauseDeductionToggle.checked = this.pauseDeduction;
+        }
+
+        const pauseStartHours = document.getElementById('pauseStartHours');
+        if (pauseStartHours) {
+            pauseStartHours.value = this.pauseStartHours;
+        }
+
+        const pauseDuration = document.getElementById('pauseDuration');
+        if (pauseDuration) {
+            pauseDuration.value = this.pauseDuration;
         }
 
         const fullMinuteRangeToggle = document.getElementById('fullMinuteRangeToggle');
@@ -1323,6 +1364,8 @@ export const app = {
                 // Remove currentMonth from settings - it should always default to current month on page load
                 if ('current_year' in existingSettings) settingsData.current_year = this.currentYear;
                 if ('pause_deduction' in existingSettings) settingsData.pause_deduction = this.pauseDeduction;
+                if ('pause_start_hours' in existingSettings) settingsData.pause_start_hours = this.pauseStartHours;
+                if ('pause_duration' in existingSettings) settingsData.pause_duration = this.pauseDuration;
                 if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
                 if ('monthly_goal' in existingSettings) settingsData.monthly_goal = this.monthlyGoal;
@@ -1340,6 +1383,8 @@ export const app = {
                 // Remove currentMonth from settings - it should always default to current month on page load
                 settingsData.current_year = this.currentYear;
                 settingsData.pause_deduction = this.pauseDeduction;
+                settingsData.pause_start_hours = this.pauseStartHours;
+                settingsData.pause_duration = this.pauseDuration;
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
                 settingsData.monthly_goal = this.monthlyGoal;
@@ -1385,6 +1430,8 @@ export const app = {
                 this.customBonuses = data.customBonuses || {};
                 this.currentMonth = new Date().getMonth() + 1; // Always default to current month
                 this.pauseDeduction = data.pauseDeduction !== false;
+                this.pauseStartHours = data.pauseStartHours || this.DEFAULT_PAUSE_START_HOURS;
+                this.pauseDuration = data.pauseDuration || this.DEFAULT_PAUSE_DURATION;
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
                 this.monthlyGoal = data.monthlyGoal || 20000;
@@ -1795,6 +1842,8 @@ export const app = {
                 customBonuses: this.customBonuses,
                 // Remove currentMonth from localStorage - it should always default to current month on page load
                 pauseDeduction: this.pauseDeduction,
+                pauseStartHours: this.pauseStartHours,
+                pauseDuration: this.pauseDuration,
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
                 hasSeenRecurringIntro: this.hasSeenRecurringIntro,
@@ -2436,6 +2485,9 @@ export const app = {
         }
         
         const typeClass = currentShift.type === 0 ? 'weekday' : (currentShift.type === 1 ? 'saturday' : 'sunday');
+        
+        // Create pause badge and series badge
+        const pauseBadge = currentEarnings.isInPause ? '<span class="pause-badge">Pause</span>' : '';
         const seriesBadge = currentShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
         
         nextShiftContent.innerHTML = `
@@ -2445,7 +2497,7 @@ export const app = {
                     <div class="shift-date">
                         <span class="shift-date-number">${day}. ${month}</span>
                         <span class="shift-date-separator"></span>
-                        <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                        <span class="shift-date-weekday">${weekday}${pauseBadge}${seriesBadge}</span>
                         <span class="shift-countdown-timer"> ${timeWorkedText}</span>
                     </div>
                     <div class="shift-details">
@@ -2481,7 +2533,21 @@ export const app = {
         
         // Calculate time worked so far in hours
         const timeWorked = now - shiftStartTime;
-        const hoursWorked = timeWorked / (1000 * 60 * 60);
+        let hoursWorked = timeWorked / (1000 * 60 * 60);
+        
+        // Check if currently in pause
+        const pauseStart = shift.pauseStartHours || this.pauseStartHours;
+        const pauseDuration = shift.pauseDuration || this.pauseDuration;
+        const isInPause = hoursWorked >= pauseStart && hoursWorked <= (pauseStart + pauseDuration);
+        
+        // Adjust hours worked if pause has been completed
+        let paidHours = hoursWorked;
+        if (hoursWorked > (pauseStart + pauseDuration)) {
+            paidHours = hoursWorked - pauseDuration;
+        } else if (isInPause) {
+            // During pause - stop at pause start time
+            paidHours = pauseStart;
+        }
         
         // Get wage rate and bonuses
         const wageRate = this.getCurrentWageRate();
@@ -2489,8 +2555,8 @@ export const app = {
         const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
         const bonusSegments = bonuses[bonusType] || [];
         
-        // Calculate base earnings so far
-        const baseEarned = hoursWorked * wageRate;
+        // Calculate base earnings on paid hours
+        const baseEarned = paidHours * wageRate;
         
         // Calculate bonus earnings so far - include seconds for real-time updates
         const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
@@ -2498,6 +2564,10 @@ export const app = {
         
         return {
             totalHours: hoursWorked,
+            paidHours: paidHours,
+            isInPause: isInPause,
+            pauseStart: pauseStart,
+            pauseDuration: pauseDuration,
             baseEarned: baseEarned,
             bonusEarned: bonusEarned,
             totalEarned: baseEarned + bonusEarned
@@ -3764,10 +3834,13 @@ export const app = {
         let paidHours = durationHours;
         let adjustedEndMinutes = endMinutes;
         
-        // Apply pause deduction if enabled
-        if (this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD) {
-            paidHours -= this.PAUSE_DEDUCTION;
-            adjustedEndMinutes -= this.PAUSE_DEDUCTION * 60;
+        // Use stored pause data instead of fixed deduction
+        if (shift.pauseStartHours && durationHours > shift.pauseStartHours) {
+            const pauseDuration = shift.pauseDuration || 0.5;
+            if (durationHours >= (shift.pauseStartHours + pauseDuration)) {
+                paidHours -= pauseDuration;
+                adjustedEndMinutes -= pauseDuration * 60;
+            }
         }
         
         const wageRate = this.getCurrentWageRate();
@@ -3791,7 +3864,7 @@ export const app = {
             hours: parseFloat(paidHours.toFixed(2)),
             totalHours: parseFloat(durationHours.toFixed(2)),
             paidHours: parseFloat(paidHours.toFixed(2)),
-            pauseDeducted: this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD,
+            pauseDeducted: shift.pauseStartHours && durationHours >= (shift.pauseStartHours + (shift.pauseDuration || 0.5)),
             baseWage: baseWage,
             bonus: bonus,
             total: baseWage + bonus
@@ -4231,6 +4304,10 @@ export const app = {
         document.getElementById('editEndHour').value = endHour;
         document.getElementById('editEndMinute').value = endMinute || '00';
         
+        // Populate pause fields
+        document.getElementById('editPauseStart').value = shift.pauseStartHours || '';
+        document.getElementById('editPauseDuration').value = shift.pauseDuration || this.pauseDuration;
+        
         // Highlight the selected date in the grid
         setTimeout(() => {
             const dateDay = shift.date.getDate();
@@ -4500,6 +4577,8 @@ export const app = {
                 start_time: `${startHour}:${startMinute}`,
                 end_time: `${endHour}:${endMinute}`,
                 shift_type: type,
+                pause_start_hours: document.getElementById('editPauseStart').value || null,
+                pause_duration_hours: parseFloat(document.getElementById('editPauseDuration').value),
                 series_id: null // Remove series ID when editing a shift
             };
             
@@ -4524,6 +4603,8 @@ export const app = {
             originalShift.startTime = `${startHour}:${startMinute}`;
             originalShift.endTime = `${endHour}:${endMinute}`;
             originalShift.type = type;
+            originalShift.pauseStartHours = document.getElementById('editPauseStart').value || null;
+            originalShift.pauseDuration = parseFloat(document.getElementById('editPauseDuration').value) || 0.5;
             originalShift.seriesId = null; // Remove series ID from local object
             
             // Update both userShifts and shifts arrays
