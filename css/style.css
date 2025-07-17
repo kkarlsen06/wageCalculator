@@ -311,6 +311,19 @@ html {
     transition: all var(--transition-base);
 }
 
+.navbar::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: rgba(18, 18, 18, 0.7);
+    backdrop-filter: blur(15px);
+    z-index: -1;
+    transition: all var(--transition-base);
+}
+
 .nav-container {
     max-width: 1200px;
     margin: 0 auto;
