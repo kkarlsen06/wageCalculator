@@ -4578,7 +4578,7 @@ export const app = {
                 end_time: `${endHour}:${endMinute}`,
                 shift_type: type,
                 pause_start_hours: document.getElementById('editPauseStart').value || null,
-                pause_duration_hours: parseFloat(document.getElementById('editPauseDuration').value),
+                pause_duration_hours: parseFloat(document.getElementById('editPauseDuration').value) || 0.5,
                 series_id: null // Remove series ID when editing a shift
             };
             
