@@ -2179,7 +2179,7 @@ export const app = {
                                     </svg>
                                     <span>${shift.startTime} - ${shift.endTime}</span>
                                     <span class="shift-time-arrow">→</span>
-                                    <span>${this.formatHours(calc.hours)}</span>
+                                    <span>${this.formatHours(calc.totalHours)}</span>
                                 </div>
                             </div>
                         </div>
@@ -2379,7 +2379,7 @@ export const app = {
                                 </svg>
                                 <span>${nextShift.startTime} - ${nextShift.endTime}</span>
                                 <span class="shift-time-arrow">→</span>
-                                <span>${this.formatHours(calculation.hours)}</span>
+                                <span>${this.formatHours(calculation.totalHours)}</span>
                             </div>
                         </div>
                     </div>
@@ -2456,7 +2456,7 @@ export const app = {
                             </svg>
                             <span>${currentShift.startTime} - ${currentShift.endTime}</span>
                             <span class="shift-time-arrow">→</span>
-                            <span>${this.formatHours(fullShiftCalculation.hours)}</span>
+                            <span>${this.formatHours(fullShiftCalculation.totalHours)}</span>
                         </div>
                     </div>
                 </div>
