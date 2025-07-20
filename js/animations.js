@@ -201,9 +201,8 @@ function initParallax() {
 // TYPING EFFECT
 // ───────────────────────────────────────────────────────────────────────────
 function initTypingEffect() {
-    const subtitle = document.querySelector('.hero-subtitle');
-    const subtitleText = document.querySelector('.hero-subtitle-text');
-    if (!subtitle || !subtitleText) return;
+    // Typing effect disabled - using static subtitle now
+    return;
     
     const phrases = [
         'Utvikler med øye for detaljer',
