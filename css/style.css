@@ -520,7 +520,7 @@ html {
 
 .hero-cta {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     margin-bottom: var(--space-2xl);
     animation: fadeInUp 1.2s ease-out;
 }
