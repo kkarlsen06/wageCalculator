@@ -103,15 +103,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Animate letters in
     allLetters.forEach((span, i) => {
-      span.style.animation = `letter-in 0.5s forwards ${i * 0.1}s`;
+      span.style.animation = `letter-in 0.3s forwards ${i * 0.05}s`;
     });
-    const inDuration = 500 + allLetters.length * 100; // ms
-    await new Promise(res => setTimeout(res, inDuration + 50)); // Reduced buffer
+    const inDuration = 300 + allLetters.length * 50; // Reduced timing
+    await new Promise(res => setTimeout(res, inDuration + 25)); // Reduced buffer
 
     // Animate whole text out
     welcomeContainer.style.transformOrigin = 'center center';
-    welcomeContainer.style.animation = `text-out 0.5s forwards`;
-    await new Promise(res => setTimeout(res, 600));  // Reduced buffer
+    welcomeContainer.style.animation = `text-out 0.3s forwards`; // Reduced from 0.5s
+    await new Promise(res => setTimeout(res, 350));  // Reduced buffer
 
     // Remove welcome overlay
     welcomeScreen.remove();
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const children = Array.from(container.children);
     children.forEach((el, idx) => {
       el.style.opacity = '0';
-      el.style.animation = `fadeInDown 0.6s forwards ${idx * 0.1}s`;
+      el.style.animation = `fadeInDown 0.4s forwards ${idx * 0.05}s`; // Reduced from 0.6s and 0.1s
     });
   }
 

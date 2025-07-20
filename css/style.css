@@ -476,7 +476,7 @@ html {
 
 .hero-title {
     margin-bottom: var(--space-md);
-    animation: fadeInUp 0.8s ease-out;
+    animation: fadeInUp 0.5s ease-out; /* Reduced from 0.8s */
 }
 
 .hero-name {
