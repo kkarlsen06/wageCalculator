@@ -2164,15 +2164,16 @@ export const app = {
                 const day = shift.date.getDate();
                 const weekday = this.WEEKDAYS[shift.date.getDay()];
                 const typeClass = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-                const seriesBadge = shift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+                const seriesBadge = shift.seriesId ? '<div class="series-badge-left">Serie</div>' : '';
                 
                 shiftsHtml.push(`
-                    <div class="shift-item ${typeClass}" data-shift-id="${shift.id}" style="cursor: pointer;">
+                    <div class="shift-item ${typeClass}" data-shift-id="${shift.id}" style="cursor: pointer; position: relative;">
+                        ${seriesBadge}
                         <div class="shift-info">
                             <div class="shift-date">
                                 <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
                                 <span class="shift-date-separator"></span>
-                                <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                                <span class="shift-date-weekday">${weekday}</span>
                             </div>
                             <div class="shift-details">
                                 <div class="shift-time-with-hours">
@@ -2337,7 +2338,7 @@ export const app = {
             
             // Create the shift item using the exact same structure as in the shift list
             const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
-            const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+            const seriesBadge = nextShift.seriesId ? '<div class="series-badge-left">Serie</div>' : '';
             
             // Add time remaining for today's shifts or "i morgen" for tomorrow's shifts
             let dateSuffix = '';
@@ -2375,11 +2376,12 @@ export const app = {
             nextShiftContent.innerHTML = `
                 <div class="shift-item ${typeClass}${activeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer; position: relative;">
                     <div class="next-shift-badge">Neste</div>
+                    ${seriesBadge}
                     <div class="shift-info">
                         <div class="shift-date">
                             <span class="shift-date-number">${day}. ${month}</span>
                             <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                            <span class="shift-date-weekday">${weekday}</span>
                             <span class="shift-countdown-timer">${dateSuffix}</span>
                         </div>
                         <div class="shift-details">
@@ -2447,16 +2449,17 @@ export const app = {
         }
         
         const typeClass = currentShift.type === 0 ? 'weekday' : (currentShift.type === 1 ? 'saturday' : 'sunday');
-        const seriesBadge = currentShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+        const seriesBadge = currentShift.seriesId ? '<div class="series-badge-left">Serie</div>' : '';
         
         nextShiftContent.innerHTML = `
             <div class="shift-item ${typeClass} active" data-shift-id="${currentShift.id}" style="cursor: pointer; position: relative;">
                 <div class="next-shift-badge">NÅ</div>
+                ${seriesBadge}
                 <div class="shift-info">
                     <div class="shift-date">
                         <span class="shift-date-number">${day}. ${month}</span>
                         <span class="shift-date-separator"></span>
-                        <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                        <span class="shift-date-weekday">${weekday}</span>
                         <span class="shift-countdown-timer"> ${timeWorkedText}</span>
                     </div>
                     <div class="shift-details">

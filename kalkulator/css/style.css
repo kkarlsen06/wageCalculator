@@ -1964,6 +1964,40 @@ input:checked + .slider:before {
   vertical-align: middle;
 }
 
+/* Series Badge Left - positioned like next shift badge */
+.series-badge-left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: var(--gradient-progress-bg);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Create flat left edges, rounded right edge (reversed due to 180deg rotation) */
+  border-radius: 0 24px 24px 0;
+  
+  /* Text rotation - bottom facing inward */
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
+/* When both next-shift-badge and series-badge-left are present, adjust positioning */
+.shift-item:has(.next-shift-badge):has(.series-badge-left) .series-badge-left {
+  left: 32px; /* Position series badge to the right of the next shift badge */
+  border-radius: 0 24px 24px 0; /* Keep the same border radius */
+}
+
 /* Content section with proper spacing from header */
 .content {
   padding-top: 0;
@@ -5033,6 +5067,29 @@ input[type="file"].form-control:focus {
   }
 }
 
+/* Responsive border radius for series badge left to match card */
+@media (max-width: 480px) {
+  .series-badge-left {
+    border-radius: 0 20px 20px 0;
+  }
+  
+  /* When both badges are present, adjust positioning for smaller screens */
+  .shift-item:has(.next-shift-badge):has(.series-badge-left) .series-badge-left {
+    left: 28px; /* Slightly smaller spacing on mobile */
+  }
+}
+
+@media (max-width: 360px) {
+  .series-badge-left {
+    border-radius: 0 16px 16px 0;
+  }
+  
+  /* When both badges are present, adjust positioning for very small screens */
+  .shift-item:has(.next-shift-badge):has(.series-badge-left) .series-badge-left {
+    left: 24px; /* Even smaller spacing on very small screens */
+  }
+}
+
 /* ============================================================================
    DATA TAB SPECIFIC STYLING - IMPROVED LAYOUT AND PADDING
    ============================================================================ */
@@ -5182,4 +5239,14 @@ input[type="file"].form-control:focus {
 /* Adjust shift-info padding to make room for the badge */
 .next-shift-card .shift-item .shift-info {
   padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
+}
+
+/* Adjust shift-info padding when series badge is present */
+.shift-item:has(.series-badge-left) .shift-info {
+  padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
+}
+
+/* Adjust shift-info padding when both badges are present */
+.shift-item:has(.next-shift-badge):has(.series-badge-left) .shift-info {
+  padding-left: 64px; /* Add extra padding to prevent overlap with both badges (32px + 32px) */
 }
