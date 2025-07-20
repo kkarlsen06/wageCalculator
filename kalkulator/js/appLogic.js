@@ -2338,7 +2338,7 @@ export const app = {
             
             // Create the shift item using the exact same structure as in the shift list
             const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
-            const seriesBadge = nextShift.seriesId ? '<div class="series-badge-left">Serie</div>' : '';
+            const seriesBadge = ''; // Never show series badge in next shift card
             
             // Add time remaining for today's shifts or "i morgen" for tomorrow's shifts
             let dateSuffix = '';
@@ -2449,7 +2449,7 @@ export const app = {
         }
         
         const typeClass = currentShift.type === 0 ? 'weekday' : (currentShift.type === 1 ? 'saturday' : 'sunday');
-        const seriesBadge = currentShift.seriesId ? '<div class="series-badge-left">Serie</div>' : '';
+        const seriesBadge = ''; // Never show series badge in current shift card
         
         nextShiftContent.innerHTML = `
             <div class="shift-item ${typeClass} active" data-shift-id="${currentShift.id}" style="cursor: pointer; position: relative;">
