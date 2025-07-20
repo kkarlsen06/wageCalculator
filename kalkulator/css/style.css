@@ -1970,7 +1970,7 @@ input:checked + .slider:before {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 24px;
+  width: 16px;
   background: var(--bg-card);
   color: var(--text-secondary);
   font-size: 11px;
@@ -5243,10 +5243,10 @@ input[type="file"].form-control:focus {
 
 /* Adjust shift-info padding when series badge is present */
 .shift-item:has(.series-badge-left) .shift-info {
-  padding-left: 24px; /* Add extra padding to prevent overlap with badge (24px width + 6px spacing) */
+  padding-left: 16px; /* Add extra padding to prevent overlap with badge (16px width + 6px spacing) */
 }
 
 /* Adjust shift-info padding when both badges are present */
 .shift-item:has(.next-shift-badge):has(.series-badge-left) .shift-info {
-  padding-left: 56px; /* Add extra padding to prevent overlap with both badges (32px + 24px) */
+  padding-left: 48px; /* Add extra padding to prevent overlap with both badges (32px + 16px) */
 }
