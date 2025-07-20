@@ -2777,6 +2777,21 @@ export const app = {
         const cells = document.querySelectorAll('.calendar-cell');
         const monthIdx = this.currentMonth - 1;
         const year = this.currentYear;
+        
+        // Filter shifts for current month only (consistent with renderShiftCalendar)
+        const monthShifts = this.shifts.filter(s =>
+            s.date.getMonth() === monthIdx &&
+            s.date.getFullYear() === year
+        );
+        
+        // Create shifts by date lookup for current month
+        const shiftsByDate = {};
+        monthShifts.forEach(shift => {
+            const key = shift.date.getDate();
+            if (!shiftsByDate[key]) shiftsByDate[key] = [];
+            shiftsByDate[key].push(shift);
+        });
+        
         cells.forEach(cell => {
             const dateStr = cell.getAttribute('data-date');
             if (!dateStr) return;
@@ -2790,11 +2805,12 @@ export const app = {
 
             cell.classList.remove('has-shifts', 'empty-date');
 
-            const shiftsForDay = this.shifts.filter(s =>
-                s.date.getFullYear() === cellDate.getFullYear() &&
-                s.date.getMonth() === cellDate.getMonth() &&
-                s.date.getDate() === cellDate.getDate()
-            );
+            // Get shifts for this specific day (only from current month)
+            const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
+            
+            // For other-month cells, only show shifts if they're in the current month
+            const isCurrentMonth = cellDate.getMonth() === monthIdx;
+            const shiftsToDisplay = isCurrentMonth ? shiftsForDay : [];
 
             // Toggle hours-mode class
             if (this.calendarDisplayMode === 'hours') {
@@ -2806,17 +2822,15 @@ export const app = {
             let base = 0;
             let bonus = 0;
             let totalHours = 0;
-            shiftsForDay.forEach(shift => {
-                if (cellDate.getMonth() === monthIdx) {
-                    const calc = this.calculateShift(shift);
-                    base += calc.baseWage;
-                    bonus += calc.bonus;
-                    totalHours += calc.totalHours;
-                }
+            shiftsToDisplay.forEach(shift => {
+                const calc = this.calculateShift(shift);
+                base += calc.baseWage;
+                bonus += calc.bonus;
+                totalHours += calc.totalHours;
             });
 
             if ((this.calendarDisplayMode === 'money' && base + bonus > 0) ||
-                (this.calendarDisplayMode === 'hours' && shiftsForDay.length > 0)) {
+                (this.calendarDisplayMode === 'hours' && shiftsToDisplay.length > 0)) {
                 const shiftData = document.createElement('div');
                 shiftData.className = 'calendar-shift-data';
 
@@ -2841,7 +2855,7 @@ export const app = {
                     let latestEndTime = '';
                     let latestEndCrossedMidnight = false;
 
-                    shiftsForDay.forEach(shift => {
+                    shiftsToDisplay.forEach(shift => {
                         const startMinutes = this.timeToMinutes(shift.startTime);
                         let endMinutes = this.timeToMinutes(shift.endTime);
                         let endCrossedMidnight = false;
@@ -2882,9 +2896,27 @@ export const app = {
                 content.appendChild(shiftData);
                 cell.classList.add('has-shifts');
                 cell.style.cursor = 'pointer';
-            } else if (cellDate.getMonth() === monthIdx) {
+                
+                // Set up click handler for cells with shifts
+                cell.onclick = (e) => {
+                    e.stopPropagation();
+                    if (shiftsToDisplay.length > 0) {
+                        this.showShiftDetails(shiftsToDisplay[0].id);
+                    }
+                };
+            } else if (isCurrentMonth) {
                 cell.classList.add('empty-date');
                 cell.style.cursor = 'pointer';
+                
+                // Set up click handler for empty cells in current month
+                cell.onclick = (e) => {
+                    e.stopPropagation();
+                    this.openAddShiftModalWithDate(cellDate);
+                };
+            } else {
+                // Remove click handlers for other-month cells without shifts
+                cell.onclick = null;
+                cell.style.cursor = 'default';
             }
         });
     },
