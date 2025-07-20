@@ -754,10 +754,10 @@ input[type="time"].form-control[value=""]:focus {
   line-height: 1;
   text-align: center;
   min-height: 45px;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition: all var(--speed-fast) var(--ease-default); /* Changed from --speed-normal to --speed-fast */
   /* Initially hidden for animation */
   opacity: 0;
-  animation: calendarCellFadeIn 0.3s var(--ease-default) forwards;
+  animation: calendarCellFadeIn 0.2s var(--ease-default) forwards; /* Reduced from 0.3s */
 }
 
 .date-cell.selected {
@@ -2368,14 +2368,14 @@ input:checked + .slider:before {
   border-radius: 16px;
   padding: 8px 2px 8px 2px;
   font-size: 12px;
-  transition: all 0.3s var(--ease-default);
+  transition: all 0.2s var(--ease-default); /* Reduced from 0.3s */
   position: relative;
   min-height: 45px;
   text-align: center;
   outline: none;
   /* Initially hidden for animation */
   opacity: 0;
-  animation: calendarCellFadeIn 0.3s var(--ease-default) forwards;
+  animation: calendarCellFadeIn 0.2s var(--ease-default) forwards; /* Reduced from 0.3s */
 }
 
 .calendar-cell-content {
