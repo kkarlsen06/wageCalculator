@@ -1970,7 +1970,7 @@ input:checked + .slider:before {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 32px;
+  width: 24px;
   background: var(--bg-card);
   color: var(--text-secondary);
   font-size: 11px;
@@ -1990,16 +1990,12 @@ input:checked + .slider:before {
   writing-mode: vertical-rl;
   text-orientation: mixed;
   transform: rotate(180deg);
-  
-  /* Add a subtle border to separate from the rest of the card */
-  border-right: 1px solid var(--border);
 }
 
 /* When both next-shift-badge and series-badge-left are present, adjust positioning */
 .shift-item:has(.next-shift-badge):has(.series-badge-left) .series-badge-left {
   left: 32px; /* Position series badge to the right of the next shift badge */
   border-radius: 0 24px 24px 0; /* Keep the same border radius */
-  border-right: 1px solid var(--border); /* Maintain the border */
 }
 
 /* Content section with proper spacing from header */
@@ -5247,10 +5243,10 @@ input[type="file"].form-control:focus {
 
 /* Adjust shift-info padding when series badge is present */
 .shift-item:has(.series-badge-left) .shift-info {
-  padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
+  padding-left: 24px; /* Add extra padding to prevent overlap with badge (24px width + 6px spacing) */
 }
 
 /* Adjust shift-info padding when both badges are present */
 .shift-item:has(.next-shift-badge):has(.series-badge-left) .shift-info {
-  padding-left: 64px; /* Add extra padding to prevent overlap with both badges (32px + 32px) */
+  padding-left: 56px; /* Add extra padding to prevent overlap with both badges (32px + 24px) */
 }
