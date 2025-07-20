@@ -492,39 +492,15 @@ html {
     filter: drop-shadow(0 0 20px rgba(58, 190, 246, 0.5));
 }
 
-.hero-subtitle {
+.hero-subtitle-static {
     display: block;
     font-size: clamp(1.5rem, 3vw, 2.5rem);
     font-weight: var(--font-weight-light);
     color: var(--text-secondary);
     margin-top: var(--space-1);
-    min-height: 3rem; /* Fixed height to prevent layout shift during typing effect */
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    overflow: hidden;
-    white-space: nowrap;
-    position: relative;
-    max-width: 100%; /* Responsive width */
-    width: 100%;
-    flex-shrink: 0; /* Prevent flex shrinking */
 }
 
-.hero-subtitle-text {
-    display: inline-block;
-    white-space: nowrap;
-    transition: transform 0.1s ease-out;
-}
 
-/* Debug helper - uncomment to see container bounds */
-/*
-.hero-subtitle {
-    border: 1px solid red !important;
-}
-.hero-subtitle-text {
-    border: 1px solid blue !important;
-}
-*/
 
 .hero-description {
     font-size: var(--font-size-lg);
@@ -586,6 +562,37 @@ html {
 .btn-large {
     padding: 1rem 2rem;
     font-size: var(--font-size-lg);
+}
+
+.btn-hero {
+    padding: 1.5rem 3rem;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    border-radius: 16px;
+    box-shadow: var(--shadow-xl), var(--glow-primary);
+    transform: scale(1.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-hero:hover::before {
+    left: 100%;
+}
+
+.btn-hero:hover:not(:disabled) {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: var(--shadow-xl), 0 0 40px rgba(58, 190, 246, 0.6);
 }
 
 .btn-primary {
@@ -1503,8 +1510,8 @@ html {
 
 /* Tablet - adjust subtitle height */
 @media (max-width: 1024px) and (min-width: 769px) {
-    .hero-subtitle {
-        min-height: 2.8rem;
+    .hero-subtitle-static {
+        font-size: clamp(1.25rem, 3vw, 2rem);
     }
 }
 
@@ -1560,14 +1567,10 @@ html {
         display: inline;
     }
     
-    /* Fixed height for subtitle to prevent layout shift */
-    .hero-subtitle {
-        min-height: 2.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 90vw; /* Use viewport width on mobile */
-        max-width: 400px; /* Cap the maximum width */
+    /* Mobile subtitle styling */
+    .hero-subtitle-static {
+        font-size: clamp(1.125rem, 4vw, 1.5rem);
+        text-align: center;
     }
     
     /* Hero section - Mobile layout reorganization */
@@ -1663,6 +1666,16 @@ html {
         width: 100%;
         justify-content: center;
         text-align: center;
+    }
+
+    .btn-hero {
+        padding: 1.25rem 2.5rem;
+        font-size: var(--font-size-lg);
+        transform: scale(1.02);
+    }
+
+    .btn-hero:hover:not(:disabled) {
+        transform: scale(1.05) translateY(-1px);
     }
     
     /* Show stats on mobile with fixed positioning */
@@ -1874,14 +1887,9 @@ html {
         font-size: clamp(2rem, 8vw, 3rem);
     }
     
-    .hero-subtitle {
-        font-size: clamp(1.125rem, 5vw, 1.5rem);
-        min-height: 2.5rem; /* Fixed height for mobile */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 85vw; /* Use viewport width on small mobile */
-        max-width: 320px; /* Cap the maximum width */
+    .hero-subtitle-static {
+        font-size: clamp(1rem, 4vw, 1.25rem);
+        text-align: center;
     }
     
     .hero-description {
