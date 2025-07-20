@@ -203,6 +203,9 @@ export const app = {
     formState: {}, // Store form state to preserve across page restarts
     initialAnimationComplete: false, // Track if initial progress bar animation is complete
     nextShiftTimer: null, // Timer for updating next shift countdown
+    lastRenderedMonth: null,
+    lastRenderedYear: null,
+    lastRenderedShiftsKey: '',
     async init() {
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
@@ -2199,7 +2202,15 @@ export const app = {
 
     updateShiftCalendar() {
         if (this.shiftView !== 'calendar') return;
-        this.renderShiftCalendar();
+
+        const currentKey = this.getMonthShiftsKey();
+        if (this.lastRenderedMonth !== this.currentMonth ||
+            this.lastRenderedYear !== this.currentYear ||
+            this.lastRenderedShiftsKey !== currentKey) {
+            this.renderShiftCalendar();
+        } else {
+            this.updateCalendarCells();
+        }
     },
 
     updateLastUpdatedTime() {
@@ -2626,6 +2637,8 @@ export const app = {
 
                 const cell = document.createElement('div');
                 cell.className = 'calendar-cell';
+                const dateStr = `${cellDate.getFullYear()}-${String(cellDate.getMonth()+1).padStart(2,'0')}-${String(cellDate.getDate()).padStart(2,'0')}`;
+                cell.setAttribute('data-date', dateStr);
                 if (cellDate.getMonth() !== monthIdx) {
                     cell.classList.add('other-month');
                 }
@@ -2754,6 +2767,126 @@ export const app = {
         }
 
         container.appendChild(grid);
+
+        this.lastRenderedMonth = this.currentMonth;
+        this.lastRenderedYear = this.currentYear;
+        this.lastRenderedShiftsKey = this.getMonthShiftsKey();
+    },
+
+    updateCalendarCells() {
+        const cells = document.querySelectorAll('.calendar-cell');
+        const monthIdx = this.currentMonth - 1;
+        const year = this.currentYear;
+        cells.forEach(cell => {
+            const dateStr = cell.getAttribute('data-date');
+            if (!dateStr) return;
+            const [y,m,d] = dateStr.split('-').map(n => parseInt(n,10));
+            const cellDate = new Date(y, m - 1, d);
+
+            const content = cell.querySelector('.calendar-cell-content');
+            if (!content) return;
+            const oldData = content.querySelector('.calendar-shift-data');
+            if (oldData) oldData.remove();
+
+            cell.classList.remove('has-shifts', 'empty-date');
+
+            const shiftsForDay = this.shifts.filter(s =>
+                s.date.getFullYear() === cellDate.getFullYear() &&
+                s.date.getMonth() === cellDate.getMonth() &&
+                s.date.getDate() === cellDate.getDate()
+            );
+
+            // Toggle hours-mode class
+            if (this.calendarDisplayMode === 'hours') {
+                cell.classList.add('hours-mode');
+            } else {
+                cell.classList.remove('hours-mode');
+            }
+
+            let base = 0;
+            let bonus = 0;
+            let totalHours = 0;
+            shiftsForDay.forEach(shift => {
+                if (cellDate.getMonth() === monthIdx) {
+                    const calc = this.calculateShift(shift);
+                    base += calc.baseWage;
+                    bonus += calc.bonus;
+                    totalHours += calc.totalHours;
+                }
+            });
+
+            if ((this.calendarDisplayMode === 'money' && base + bonus > 0) ||
+                (this.calendarDisplayMode === 'hours' && shiftsForDay.length > 0)) {
+                const shiftData = document.createElement('div');
+                shiftData.className = 'calendar-shift-data';
+
+                if (this.calendarDisplayMode === 'money') {
+                    const breakdown = document.createElement('div');
+                    breakdown.className = 'calendar-breakdown';
+                    breakdown.innerHTML = `<div class="calendar-base-amount">${this.formatCurrencyShort(base)}</div><div class="calendar-bonus-line">+<span class="calendar-bonus-amount">${this.formatCurrencyShort(bonus)}</span></div>`;
+
+                    const totalDisplay = document.createElement('div');
+                    totalDisplay.className = 'calendar-total';
+                    totalDisplay.textContent = this.formatCurrencyCalendar(base + bonus);
+
+                    shiftData.appendChild(breakdown);
+                    shiftData.appendChild(totalDisplay);
+                } else {
+                    const hoursDisplay = document.createElement('div');
+                    hoursDisplay.className = 'calendar-hours-display';
+
+                    let earliestStartMinutes = Infinity;
+                    let latestEndMinutes = -Infinity;
+                    let earliestStartTime = '';
+                    let latestEndTime = '';
+                    let latestEndCrossedMidnight = false;
+
+                    shiftsForDay.forEach(shift => {
+                        const startMinutes = this.timeToMinutes(shift.startTime);
+                        let endMinutes = this.timeToMinutes(shift.endTime);
+                        let endCrossedMidnight = false;
+
+                        if (endMinutes < startMinutes) {
+                            endMinutes += 24 * 60;
+                            endCrossedMidnight = true;
+                        }
+
+                        if (startMinutes < earliestStartMinutes) {
+                            earliestStartMinutes = startMinutes;
+                            earliestStartTime = shift.startTime;
+                        }
+
+                        if (endMinutes > latestEndMinutes) {
+                            latestEndMinutes = endMinutes;
+                            latestEndTime = shift.endTime;
+                            latestEndCrossedMidnight = endCrossedMidnight;
+                        }
+                    });
+
+                    let endTimeDisplay = this.formatTimeShort(latestEndTime);
+                    if (latestEndCrossedMidnight) {
+                        endTimeDisplay += '*';
+                    }
+
+                    const timeRange = document.createElement('div');
+                    timeRange.className = 'calendar-total calendar-hours-total';
+                    if (latestEndCrossedMidnight) {
+                        timeRange.title = '* indicates the shift ends the next day';
+                    }
+                    timeRange.innerHTML = `${this.formatTimeShort(earliestStartTime)} -<br>${endTimeDisplay}`;
+
+                    hoursDisplay.appendChild(timeRange);
+                    shiftData.appendChild(hoursDisplay);
+                }
+
+                content.appendChild(shiftData);
+                cell.classList.add('has-shifts');
+                cell.style.cursor = 'pointer';
+            } else if (cellDate.getMonth() === monthIdx) {
+                cell.classList.add('empty-date');
+                cell.style.cursor = 'pointer';
+            }
+        });
     },
 
     switchShiftView(view) {
@@ -2791,9 +2924,9 @@ export const app = {
             btn.classList.toggle('active', isActive);
         });
         
-        // Re-render calendar with new display mode
+        // Update calendar cells when in calendar view
         if (this.shiftView === 'calendar') {
-            this.renderShiftCalendar();
+            this.updateCalendarCells();
         }
     },
         // Show breakdown in calendar view (replaces modal)
@@ -5019,6 +5152,16 @@ export const app = {
     createShiftKey(shift) {
         const dateStr = `${shift.date.getFullYear()}-${(shift.date.getMonth() + 1).toString().padStart(2, '0')}-${shift.date.getDate().toString().padStart(2, '0')}`;
         return `${dateStr}_${shift.startTime}_${shift.endTime}_${shift.type}`;
+    },
+
+    getMonthShiftsKey() {
+        const monthIdx = this.currentMonth - 1;
+        const year = this.currentYear;
+        const monthShifts = this.shifts.filter(s =>
+            s.date.getMonth() === monthIdx &&
+            s.date.getFullYear() === year
+        );
+        return monthShifts.map(s => this.createShiftKey(s)).join('|');
     },
 
     // Save imported shifts to Supabase database
