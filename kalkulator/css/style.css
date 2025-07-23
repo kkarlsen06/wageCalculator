@@ -3958,8 +3958,7 @@ input:checked + .slider:before {
   background: var(--bg-primary); /* Changed from var(--bg-secondary) to match dashboard */
   padding-top: 20px;
   min-height: var(--app-height, 100vh);
-  padding-bottom: 100px; /* Add space for floating bar */
-  /* Add backdrop blur for system nav bar area */
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0)); /* Add space for floating bar and safe area */
   position: relative;
 }
 
@@ -4212,7 +4211,7 @@ input:checked + .slider:before {
   left: 0;
   right: 0;
   width: 100vw;
-  height: 110px; /* Action bar height (~60px) + bottom spacing (20px) + extra height (30px) */
+  height: calc(110px + env(safe-area-inset-bottom, 0));
   background: linear-gradient(to top, 
     rgba(18, 18, 18, 0.3) 0%, 
     rgba(18, 18, 18, 0.2) 40%, 
@@ -4235,7 +4234,7 @@ input:checked + .slider:before {
   );
   z-index: 50; /* Below action bar (100) but above content, below modals (1200) */
   pointer-events: none;
-  opacity: 0;
+  opacity: 1;
   transition: opacity 0.3s ease-out;
   /* Handle safe area insets for iPhone */
   height: calc(110px + env(safe-area-inset-bottom, 0));
@@ -4485,7 +4484,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 
 
 .shift-section .shift-list {
-  padding-bottom: 20px;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0));
 }
 
 
