@@ -120,6 +120,11 @@ body {
     -moz-osx-font-smoothing: grayscale;
     padding-top: 0;
     scroll-behavior: auto; /* Override smooth scrolling on load */
+    /* Handle safe area insets for iPhone */
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
 }
 
 /* Prevent auto-focus scrolling */
@@ -309,6 +314,9 @@ html {
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-color);
     transition: all var(--transition-base);
+    /* Handle safe area insets for iPhone */
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
 }
 
 .navbar::after {
