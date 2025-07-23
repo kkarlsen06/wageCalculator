@@ -342,6 +342,11 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /* Handle safe area insets for iPhone */
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
 }
 
 .app-container {
@@ -3919,6 +3924,8 @@ input:checked + .slider:before {
   height: auto;
   background: var(--bg-primary); /* Changed to match dashboard section */
   padding-bottom: 100px; /* Add space for floating bar */
+  /* Extend under system nav bar on iPhone */
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0));
 }
 
 
@@ -3952,6 +3959,22 @@ input:checked + .slider:before {
   padding-top: 20px;
   min-height: var(--app-height, 100vh);
   padding-bottom: 100px; /* Add space for floating bar */
+  /* Add backdrop blur for system nav bar area */
+  position: relative;
+}
+
+/* Backdrop blur for system nav bar area */
+.shift-section::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-bottom, 0);
+  background: rgba(18, 18, 18, 0.8);
+  backdrop-filter: blur(20px);
+  z-index: 999;
+  pointer-events: none;
 }
 
 /* Visual separator between sections - removed, using header lines instead */
@@ -4178,6 +4201,8 @@ input:checked + .slider:before {
   background: rgba(26, 26, 29, 0.95);
   transition: opacity 0.3s ease-out;
   box-sizing: border-box;
+  /* Handle safe area insets for iPhone */
+  bottom: calc(20px + env(safe-area-inset-bottom, 0));
 }
 
 /* Backdrop blur box behind floating action bar */
@@ -4212,6 +4237,8 @@ input:checked + .slider:before {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.3s ease-out;
+  /* Handle safe area insets for iPhone */
+  height: calc(110px + env(safe-area-inset-bottom, 0));
 }
 
 /* Backdrop is hidden by default and controlled by JavaScript */
@@ -4286,7 +4313,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 @media (max-width: 480px) {
   .floating-action-bar {
     width: 85%; /* Slightly wider on mobile */
-    bottom: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0));
     padding: 10px 12px;
     gap: 8px;
   }
@@ -4312,7 +4339,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   
   /* Adjust backdrop height for mobile */
   .floating-action-bar-backdrop {
-    height: 95px; /* Smaller action bar height + 10px bottom + extra height for coverage */
+    height: calc(95px + env(safe-area-inset-bottom, 0)); /* Smaller action bar height + 10px bottom + extra height for coverage */
   }
 }
 
@@ -4320,7 +4347,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 @media (max-width: 360px) {
   .floating-action-bar {
     width: 90%; /* Even wider on very small screens */
-    bottom: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0));
     gap: 6px;
     padding: 8px 10px;
   }
