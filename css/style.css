@@ -517,7 +517,7 @@ html {
 
 .hero-title {
     margin-bottom: var(--space-md);
-    animation: fadeInUp 0.8s ease-out;
+    animation: fadeInUp 0.5s ease-out; /* Reduced from 0.8s */
 }
 
 .hero-name {
@@ -533,39 +533,15 @@ html {
     filter: drop-shadow(0 0 20px rgba(58, 190, 246, 0.5));
 }
 
-.hero-subtitle {
+.hero-subtitle-static {
     display: block;
     font-size: clamp(1.5rem, 3vw, 2.5rem);
     font-weight: var(--font-weight-light);
     color: var(--text-secondary);
     margin-top: var(--space-1);
-    min-height: 3rem; /* Fixed height to prevent layout shift during typing effect */
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    overflow: hidden;
-    white-space: nowrap;
-    position: relative;
-    max-width: 100%; /* Responsive width */
-    width: 100%;
-    flex-shrink: 0; /* Prevent flex shrinking */
 }
 
-.hero-subtitle-text {
-    display: inline-block;
-    white-space: nowrap;
-    transition: transform 0.1s ease-out;
-}
 
-/* Debug helper - uncomment to see container bounds */
-/*
-.hero-subtitle {
-    border: 1px solid red !important;
-}
-.hero-subtitle-text {
-    border: 1px solid blue !important;
-}
-*/
 
 .hero-description {
     font-size: var(--font-size-lg);
@@ -585,10 +561,9 @@ html {
 
 .hero-cta {
     display: flex;
-    gap: var(--space-md);
+    justify-content: flex-start;
     margin-bottom: var(--space-2xl);
     animation: fadeInUp 1.2s ease-out;
-    align-items: stretch;
 }
 
 /* Buttons - Improved accessibility and consistency */
@@ -631,6 +606,37 @@ html {
 .btn-large {
     padding: 1rem 2rem;
     font-size: var(--font-size-lg);
+}
+
+.btn-hero {
+    padding: 1.5rem 3rem;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    border-radius: 16px;
+    box-shadow: var(--shadow-xl), var(--glow-primary);
+    transform: scale(1.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-hero:hover::before {
+    left: 100%;
+}
+
+.btn-hero:hover:not(:disabled) {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: var(--shadow-xl), 0 0 40px rgba(58, 190, 246, 0.6);
 }
 
 .btn-primary {
@@ -1081,6 +1087,190 @@ html {
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
+   DEVELOPER SECTION
+   ─────────────────────────────────────────────────────────────────────────── */
+.developer-section {
+    padding: var(--space-3xl) 0;
+    background: var(--bg-primary);
+}
+
+.developer-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-3xl);
+    margin-top: var(--space-2xl);
+}
+
+.developer-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+}
+
+.developer-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-xl);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+}
+
+.developer-avatar {
+    flex-shrink: 0;
+}
+
+.avatar-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary);
+    box-shadow: var(--glow-primary);
+}
+
+.developer-details h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+}
+
+.developer-location {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-1);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.developer-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--success);
+    font-weight: var(--font-weight-medium);
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--success);
+    animation: pulse 2s infinite;
+}
+
+.developer-bio,
+.developer-skills {
+    padding: var(--space-xl);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+}
+
+.developer-bio h4,
+.developer-skills h4 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+}
+
+.developer-bio p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+}
+
+.developer-bio p:last-child {
+    margin-bottom: 0;
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+}
+
+.skill-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+}
+
+.skill-item i {
+    color: var(--primary);
+    font-size: var(--font-size-lg);
+}
+
+.developer-contact {
+    padding: var(--space-xl);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+}
+
+.developer-contact h4 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+}
+
+.contact-methods {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: var(--transition-base);
+}
+
+.contact-item:hover {
+    border-color: var(--primary);
+    box-shadow: var(--glow-primary);
+    transform: translateY(-2px);
+}
+
+.contact-item i {
+    color: var(--primary);
+    font-size: var(--font-size-xl);
+    width: 24px;
+    text-align: center;
+}
+
+.contact-item div {
+    display: flex;
+    flex-direction: column;
+}
+
+.contact-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    font-weight: var(--font-weight-medium);
+}
+
+.contact-value {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
    TECH SECTION
    ─────────────────────────────────────────────────────────────────────────── */
 .tech-section {
@@ -1298,6 +1488,16 @@ html {
 /* ───────────────────────────────────────────────────────────────────────────
    ANIMATIONS
    ─────────────────────────────────────────────────────────────────────────── */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -1354,8 +1554,8 @@ html {
 
 /* Tablet - adjust subtitle height */
 @media (max-width: 1024px) and (min-width: 769px) {
-    .hero-subtitle {
-        min-height: 2.8rem;
+    .hero-subtitle-static {
+        font-size: clamp(1.25rem, 3vw, 2rem);
     }
 }
 
@@ -1411,14 +1611,10 @@ html {
         display: inline;
     }
     
-    /* Fixed height for subtitle to prevent layout shift */
-    .hero-subtitle {
-        min-height: 2.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 90vw; /* Use viewport width on mobile */
-        max-width: 400px; /* Cap the maximum width */
+    /* Mobile subtitle styling */
+    .hero-subtitle-static {
+        font-size: clamp(1.125rem, 4vw, 1.5rem);
+        text-align: center;
     }
     
     /* Hero section - Mobile layout reorganization */
@@ -1503,9 +1699,7 @@ html {
     }
     
     .hero-cta {
-        flex-direction: column;
-        align-items: center;
-        gap: var(--space-sm);
+        justify-content: center;
         width: 100%;
         margin-bottom: var(--space-lg);
     }
@@ -1514,6 +1708,16 @@ html {
         width: 100%;
         justify-content: center;
         text-align: center;
+    }
+
+    .btn-hero {
+        padding: 1.25rem 2.5rem;
+        font-size: var(--font-size-lg);
+        transform: scale(1.02);
+    }
+
+    .btn-hero:hover:not(:disabled) {
+        transform: scale(1.05) translateY(-1px);
     }
     
     /* Show stats on mobile with fixed positioning */
@@ -1613,6 +1817,26 @@ html {
         padding: var(--space-lg);
     }
     
+    /* Developer section */
+    .developer-section {
+        padding: var(--space-2xl) 0;
+    }
+
+    .developer-content {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+    }
+
+    .developer-card {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--space-lg);
+    }
+
+    .skills-grid {
+        grid-template-columns: 1fr;
+    }
+
     /* Tech section */
     .tech-section {
         padding: var(--space-2xl) 0;
@@ -1705,14 +1929,9 @@ html {
         font-size: clamp(2rem, 8vw, 3rem);
     }
     
-    .hero-subtitle {
-        font-size: clamp(1.125rem, 5vw, 1.5rem);
-        min-height: 2.5rem; /* Fixed height for mobile */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 85vw; /* Use viewport width on small mobile */
-        max-width: 320px; /* Cap the maximum width */
+    .hero-subtitle-static {
+        font-size: clamp(1rem, 4vw, 1.25rem);
+        text-align: center;
     }
     
     .hero-description {

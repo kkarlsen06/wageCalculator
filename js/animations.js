@@ -261,9 +261,8 @@ function initParallax() {
 // TYPING EFFECT
 // ───────────────────────────────────────────────────────────────────────────
 function initTypingEffect() {
-    const subtitle = document.querySelector('.hero-subtitle');
-    const subtitleText = document.querySelector('.hero-subtitle-text');
-    if (!subtitle || !subtitleText) return;
+    // Typing effect disabled - using static subtitle now
+    return;
     
     const phrases = [
         'Utvikler med øye for detaljer',
@@ -276,7 +275,7 @@ function initTypingEffect() {
     let currentPhrase = 0;
     let currentChar = 0;
     let isDeleting = false;
-    let typingSpeed = 100;
+    let typingSpeed = 80; // Reduced from 100ms to 80ms
     let initialTextDeleted = false;
     
     function startScrollAnimation(futureText) {
@@ -327,7 +326,7 @@ function initTypingEffect() {
         } else {
             updateText(phrase.substring(0, currentChar + 1));
             currentChar++;
-            typingSpeed = 100;
+            typingSpeed = 80; // Reduced from 100ms to 80ms
         }
         
         if (!isDeleting && currentChar === phrase.length) {
@@ -349,7 +348,7 @@ function initTypingEffect() {
     }, 100));
     
     // Start typing effect
-    setTimeout(type, 4000);
+    setTimeout(type, 2000); // Reduced from 4000ms to 2000ms
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -557,20 +556,20 @@ const animationStyles = `
     .animate-element {
         opacity: 0;
         transform: translateY(30px);
-        transition: all 0.8s ease-out;
+        transition: all 0.4s ease-out; /* Reduced from 0.8s */
     }
-    
+
     .animate-element.animate-in {
         opacity: 1;
         transform: translateY(0);
     }
-    
+
     .animate-child {
         opacity: 0;
         transform: translateX(-20px);
-        transition: all 0.6s ease-out;
+        transition: all 0.3s ease-out; /* Reduced from 0.6s */
     }
-    
+
     .animate-child.animate-in {
         opacity: 1;
         transform: translateX(0);

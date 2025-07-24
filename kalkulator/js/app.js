@@ -111,6 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Animate whole text out with better timing
     welcomeContainer.style.transformOrigin = 'center center';
+
     welcomeContainer.style.animation = `text-out 0.6s forwards`;
     await new Promise(res => setTimeout(res, 700));  // Longer buffer for smoother app entrance
 
