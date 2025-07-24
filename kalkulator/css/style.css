@@ -4622,7 +4622,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   border-radius: 24px;
   padding: 16px;
   text-align: center;
-  box-shadow: 0 4px 16px -4px var(--shadow-soft);
+  box-shadow: inset 0 4px 16px -4px var(--shadow-soft);
   display: flex;
   flex-direction: column;
   justify-content: center;
