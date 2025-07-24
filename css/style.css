@@ -145,6 +145,37 @@ html {
     }
 }
 
+/* Performance optimizations for animations */
+* {
+    /* Optimize animations for better performance */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    perspective: 1000;
+}
+
+/* Elements that will be animated should declare will-change */
+.animate-element,
+.animate-child,
+.btn,
+.tech-card,
+.floating-card,
+.gradient-orb {
+    will-change: transform, opacity;
+}
+
+/* Optimize gradient orbs for better performance */
+.gradient-orb {
+    transform: translate3d(0, 0, 0); /* Force hardware acceleration */
+    backface-visibility: hidden;
+}
+
+/* Remove will-change after animations complete */
+.animate-element.animate-in,
+.animate-child.animate-in {
+    will-change: auto;
+}
+
 /* Accessibility - Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
     * {
@@ -152,13 +183,23 @@ html {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-    
+
     .gradient-orb {
         animation: none !important;
     }
-    
+
     .floating-card {
         animation: none !important;
+    }
+
+    /* Disable will-change for reduced motion */
+    .animate-element,
+    .animate-child,
+    .btn,
+    .tech-card,
+    .floating-card,
+    .gradient-orb {
+        will-change: auto;
     }
 }
 
@@ -561,7 +602,11 @@ html {
     font-weight: var(--font-weight-medium);
     text-decoration: none;
     border-radius: 8px;
-    transition: all 150ms ease;
+    /* Optimized transitions - only animate specific properties */
+    transition: transform 150ms ease,
+                background-color 150ms ease,
+                box-shadow 150ms ease,
+                opacity 150ms ease;
     cursor: pointer;
     border: none;
     position: relative;

@@ -3,6 +3,37 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ───────────────────────────────────────────────────────────────────────────
+// PERFORMANCE UTILITIES
+// ───────────────────────────────────────────────────────────────────────────
+
+// Throttle function for performance-critical animations
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    }
+}
+
+// Debounce function for resize events
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // INITIALIZATION
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -46,15 +77,38 @@ setTimeout(() => {
 document.addEventListener('DOMContentLoaded', () => {
     // Single scroll to top on DOM ready
     window.scrollTo(0, 0);
-    
-    initNavbar();
-    initScrollAnimations();
-    initParallax();
-    initTypingEffect();
-    initHoverEffects();
-    initMobileMenu();
-    initMobileStats();
+
+    // Initialize animations with proper sequencing to prevent stuttering
+    initAnimationsSequentially();
 });
+
+// Initialize animations with staggered timing to prevent performance issues
+async function initAnimationsSequentially() {
+    // Start with essential functionality first
+    initNavbar();
+
+    // Small delay before starting visual animations
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Initialize scroll animations (most important for UX)
+    initScrollAnimations();
+
+    // Stagger the remaining animations to prevent simultaneous execution
+    await new Promise(resolve => setTimeout(resolve, 150));
+    initParallax();
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+    initTypingEffect();
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+    initHoverEffects();
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+    initMobileMenu();
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+    initMobileStats();
+}
 
 // ───────────────────────────────────────────────────────────────────────────
 // NAVBAR FUNCTIONALITY
@@ -123,14 +177,20 @@ function initScrollAnimations() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-                
-                // Stagger animations for child elements
-                const children = entry.target.querySelectorAll('.animate-child');
-                children.forEach((child, i) => {
-                    setTimeout(() => {
-                        child.classList.add('animate-in');
-                    }, i * 100);
+                // Use requestAnimationFrame for smoother animations
+                requestAnimationFrame(() => {
+                    entry.target.classList.add('animate-in');
+
+                    // Stagger animations for child elements with reduced timing
+                    const children = entry.target.querySelectorAll('.animate-child');
+                    children.forEach((child, i) => {
+                        // Reduced stagger time from 100ms to 60ms for smoother flow
+                        setTimeout(() => {
+                            requestAnimationFrame(() => {
+                                child.classList.add('animate-in');
+                            });
+                        }, i * 60);
+                    });
                 });
             }
         });
@@ -316,25 +376,35 @@ function initHoverEffects() {
         });
     });
     
-    // Card tilt effect - disabled on mobile
+    // Card tilt effect - disabled on mobile, optimized for performance
     if (window.innerWidth > 768) {
         document.querySelectorAll('.tech-card, .floating-card').forEach(card => {
+            let isAnimating = false;
+
             card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                
-                const rotateX = (y - centerY) / 10;
-                const rotateY = (centerX - x) / 10;
-                
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                if (isAnimating) return; // Throttle animation calls
+
+                isAnimating = true;
+                requestAnimationFrame(() => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const rotateX = (y - centerY) / 10;
+                    const rotateY = (centerX - x) / 10;
+
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                    isAnimating = false;
+                });
             });
-            
+
             card.addEventListener('mouseleave', () => {
-                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                requestAnimationFrame(() => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                });
             });
         });
     }

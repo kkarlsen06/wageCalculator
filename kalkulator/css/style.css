@@ -247,6 +247,42 @@ html {
   --border-radius-large: 20px;
 }
 
+/* Performance optimizations for animations */
+* {
+  /* Optimize animations for better performance */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Elements that will be animated should declare will-change */
+.progress-fill,
+.modal-content,
+.breakdown-card,
+.shift-item,
+.calendar-cell,
+.btn,
+.tab-btn {
+  will-change: transform, opacity;
+}
+
+/* Force hardware acceleration for performance-critical elements */
+.progress-fill,
+.modal-content,
+.breakdown-card {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Remove will-change after animations complete */
+.progress-fill[data-animating="false"],
+.modal-content.modal-open,
+.breakdown-card.expanded,
+.calendar-cell.animate-complete {
+  will-change: auto;
+}
+
 /* Accessibility - Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -254,10 +290,21 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   /* Exception for progress bar animation - this is important for user feedback */
   .progress-fill {
     transition-duration: 0.8s !important;
+  }
+
+  /* Disable will-change for reduced motion */
+  .progress-fill,
+  .modal-content,
+  .breakdown-card,
+  .shift-item,
+  .calendar-cell,
+  .btn,
+  .tab-btn {
+    will-change: auto;
   }
 }
 
@@ -636,7 +683,10 @@ body {
   color: var(--text-primary);
   font-size: 16px; /* Prevents zoom on iOS */
   width: 100%;
-  transition: all var(--speed-normal) var(--ease-default);
+  /* Optimized transitions - only animate specific properties */
+  transition: border-color var(--speed-normal) var(--ease-default),
+              box-shadow var(--speed-normal) var(--ease-default),
+              background-color var(--speed-normal) var(--ease-default);
   appearance: none;
   min-height: 44px; /* Touch-friendly minimum */
   min-width: 44px;
@@ -851,7 +901,11 @@ input[type="time"].form-control[value=""]:focus {
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--speed-normal) var(--ease-default);
+  /* Optimized transitions - only animate specific properties */
+  transition: transform var(--speed-normal) var(--ease-default),
+              background-color var(--speed-normal) var(--ease-default),
+              box-shadow var(--speed-normal) var(--ease-default),
+              opacity var(--speed-normal) var(--ease-default);
   position: relative;
   overflow: hidden;
   display: inline-flex;
