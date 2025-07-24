@@ -156,6 +156,17 @@ html {
   box-sizing: border-box;
 }
 
+/* Allow scrolling when auth forms are visible */
+html:has(.auth-center),
+html.auth-mode {
+  overflow: auto;
+}
+
+body:has(.auth-center),
+body.auth-mode {
+  overflow: auto;
+}
+
 :root {
   /* Modern Dark Theme with Neon Blue - aligned with landing page */
   --primary: #3ABEF6;
@@ -1951,6 +1962,45 @@ input:checked + .slider:before {
   flex-direction: column;
   align-items: stretch;
   margin: 0;
+  /* Ensure card doesn't exceed viewport height and is always accessible */
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  /* Ensure minimum spacing from viewport edges */
+  min-height: fit-content;
+}
+
+/* Responsive adjustments for login card */
+@media (max-height: 600px) {
+  .login-card {
+    padding: 24px 20px 20px 20px;
+    max-height: calc(100vh - 20px);
+  }
+
+  .login-card h2 {
+    margin-bottom: 16px;
+    font-size: 20px;
+  }
+}
+
+@media (max-height: 500px) {
+  .login-card {
+    padding: 20px 16px 16px 16px;
+    border-radius: 12px;
+  }
+
+  .login-card h2 {
+    margin-bottom: 12px;
+    font-size: 18px;
+  }
+
+  .login-card .form-control {
+    margin-bottom: 8px;
+  }
+
+  .login-card .btn {
+    padding: 10px 0;
+    font-size: 15px;
+  }
 }
 
 .login-card h2 {
@@ -1977,21 +2027,38 @@ input:checked + .slider:before {
   transform: translateY(-2px);
 }
 
-/* Center for auth modals */
+/* Center for auth modals - fixed positioning for laptops */
 .auth-center {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
   max-width: 400px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  padding: 0 20px;
-  min-height: unset;
+  padding: 20px;
+  min-height: 100vh;
   box-sizing: border-box;
+  /* Ensure form stays within viewport bounds */
+  overflow-y: auto;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-height: 600px) {
+  .auth-center {
+    padding: 15px;
+  }
+}
+
+@media (max-height: 500px) {
+  .auth-center {
+    padding: 10px;
+  }
 }
 
 /* Preset Badge */
