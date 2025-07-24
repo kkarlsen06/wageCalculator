@@ -2098,15 +2098,32 @@ input:checked + .slider:before {
   text-align: center;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  box-shadow: 0 4px 16px -4px var(--shadow-soft);
+  /* Fabric-pushing effect - card appears to bulge through surface from behind */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),           /* Large, soft shadow for fabric displacement */
+    0 4px 16px rgba(0, 0, 0, 0.2),            /* Medium shadow for elevation */
+    0 2px 8px rgba(0, 0, 0, 0.25),            /* Close shadow for definition */
+    0 16px 48px rgba(0, 0, 0, 0.08),          /* Very large, soft shadow for fabric stretch */
+    0 -2px 8px rgba(255, 255, 255, 0.03);     /* Subtle top highlight for fabric tension */
+  /* Subtle border to simulate fabric edge tension */
+  border: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
   overflow: hidden;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
+  /* Slight transform to simulate initial fabric bulge */
+  transform: translateY(-1px);
 }
 
 .total-card:hover {
-  transform: var(--lift-small);
+  /* Increase the fabric-pushing effect on hover */
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.18),          /* Larger, softer shadow for more displacement */
+    0 6px 24px rgba(0, 0, 0, 0.25),           /* Deeper medium shadow */
+    0 3px 12px rgba(0, 0, 0, 0.3),            /* Deeper close shadow */
+    0 24px 64px rgba(0, 0, 0, 0.1),           /* Even larger fabric stretch shadow */
+    0 -3px 12px rgba(255, 255, 255, 0.04);    /* Brighter top highlight for more tension */
 }
 
 .total-card::before {
@@ -2244,7 +2261,15 @@ input:checked + .slider:before {
   text-align: center;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
-  box-shadow: 0 4px 16px -4px var(--shadow-soft);
+  /* Fabric-pushing effect - smaller scale than total-card but same principle */
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.12),           /* Large, soft shadow for fabric displacement */
+    0 3px 12px rgba(0, 0, 0, 0.18),           /* Medium shadow for elevation */
+    0 1px 6px rgba(0, 0, 0, 0.22),            /* Close shadow for definition */
+    0 12px 36px rgba(0, 0, 0, 0.06),          /* Large, soft shadow for fabric stretch */
+    0 -1px 6px rgba(255, 255, 255, 0.025);    /* Subtle top highlight for fabric tension */
+  /* Subtle border to simulate fabric edge tension */
+  border: 1px solid rgba(255, 255, 255, 0.03);
   position: relative;
   overflow: hidden;
   min-height: 120px;
@@ -2253,10 +2278,19 @@ input:checked + .slider:before {
   justify-content: center;
   align-items: center;
   gap: 8px;
+  /* Slight transform to simulate initial fabric bulge */
+  transform: translateY(-0.5px);
 }
 
 .breakdown-card:hover {
-  transform: var(--lift-small);
+  /* Increase the fabric-pushing effect on hover */
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),           /* Larger, softer shadow for more displacement */
+    0 4px 16px rgba(0, 0, 0, 0.22),           /* Deeper medium shadow */
+    0 2px 8px rgba(0, 0, 0, 0.28),            /* Deeper close shadow */
+    0 16px 48px rgba(0, 0, 0, 0.08),          /* Larger fabric stretch shadow */
+    0 -2px 8px rgba(255, 255, 255, 0.035);    /* Brighter top highlight for more tension */
 }
 
 /* Responsive padding for breakdown cards */
@@ -4622,35 +4656,43 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   border-radius: 24px;
   padding: 16px;
   text-align: center;
-  /* Multi-layered inset shadows for realistic depth */
+  /* Smooth, curved depression with gradual transitions - like a bowl carved into fabric */
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.6),        /* Top shadow (darker) */
-    inset 0 -1px 2px rgba(255, 255, 255, 0.02), /* Bottom highlight (subtle) */
-    inset 2px 0 4px rgba(0, 0, 0, 0.4),        /* Left shadow */
-    inset -1px 0 2px rgba(255, 255, 255, 0.01), /* Right highlight */
-    inset 0 0 8px rgba(0, 0, 0, 0.3);          /* Overall depth shadow */
-  /* Subtle border to simulate the "lip" of recessed surface */
-  border: 1px solid rgba(0, 0, 0, 0.4);
+    inset 0 8px 32px rgba(0, 0, 0, 0.15),      /* Large, soft top shadow for curved edge */
+    inset 0 4px 16px rgba(0, 0, 0, 0.25),      /* Medium top shadow for depth */
+    inset 0 2px 8px rgba(0, 0, 0, 0.35),       /* Small, darker top shadow for definition */
+    inset 0 -4px 16px rgba(255, 255, 255, 0.02), /* Soft bottom highlight */
+    inset 8px 0 32px rgba(0, 0, 0, 0.12),      /* Large, soft left shadow */
+    inset 4px 0 16px rgba(0, 0, 0, 0.2),       /* Medium left shadow */
+    inset -4px 0 16px rgba(255, 255, 255, 0.015), /* Soft right highlight */
+    inset 0 0 24px rgba(0, 0, 0, 0.2),         /* Central depression shadow */
+    inset 0 0 48px rgba(0, 0, 0, 0.1);         /* Large, very soft overall depth */
+  /* Very subtle border for surface continuity */
+  border: 1px solid rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 4px;
   cursor: pointer;
-  /* Reduced transition - no transform on hover for recessed elements */
+  /* Smooth transitions for natural material feel */
   transition: box-shadow var(--speed-normal) var(--ease-default),
               background-color var(--speed-normal) var(--ease-default);
   position: relative;
 }
 
 .stat-card:hover {
-  /* Instead of lifting, slightly deepen the recess on hover */
+  /* Deepen the carved depression naturally on hover */
   background: #141414;
   box-shadow:
-    inset 0 3px 6px rgba(0, 0, 0, 0.7),        /* Deeper top shadow */
-    inset 0 -1px 2px rgba(255, 255, 255, 0.03), /* Slightly brighter bottom highlight */
-    inset 3px 0 6px rgba(0, 0, 0, 0.5),        /* Deeper left shadow */
-    inset -1px 0 2px rgba(255, 255, 255, 0.02), /* Slightly brighter right highlight */
-    inset 0 0 12px rgba(0, 0, 0, 0.4);         /* Deeper overall shadow */
+    inset 0 10px 40px rgba(0, 0, 0, 0.18),     /* Deeper, softer top shadow */
+    inset 0 5px 20px rgba(0, 0, 0, 0.3),       /* Deeper medium top shadow */
+    inset 0 2px 10px rgba(0, 0, 0, 0.4),       /* Deeper small top shadow */
+    inset 0 -5px 20px rgba(255, 255, 255, 0.025), /* Slightly brighter bottom highlight */
+    inset 10px 0 40px rgba(0, 0, 0, 0.15),     /* Deeper, softer left shadow */
+    inset 5px 0 20px rgba(0, 0, 0, 0.25),      /* Deeper medium left shadow */
+    inset -5px 0 20px rgba(255, 255, 255, 0.02), /* Brighter right highlight */
+    inset 0 0 30px rgba(0, 0, 0, 0.25),        /* Deeper central depression */
+    inset 0 0 60px rgba(0, 0, 0, 0.12);        /* Deeper overall depth */
 }
 
 .stat-value {
