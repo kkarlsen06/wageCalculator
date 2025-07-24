@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // Make supa available globally
   window.supa = supa;
+
+  // Enable auth mode for proper scrolling
+  document.documentElement.classList.add('auth-mode');
+  document.body.classList.add('auth-mode');
   
   // Check if Supabase has processed the URL automatically
   await new Promise(resolve => setTimeout(resolve, 100)); // Give Supabase time to process

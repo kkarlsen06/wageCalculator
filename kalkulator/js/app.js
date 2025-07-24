@@ -101,30 +101,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const allLetters = [...heiLetters, ...nameLetters];
 
-    // Animate letters in
+    // Animate letters in with improved timing
     allLetters.forEach((span, i) => {
-      span.style.animation = `letter-in 0.3s forwards ${i * 0.05}s`;
+      // Reduced stagger time from 0.1s to 0.08s for smoother flow
+      span.style.animation = `letter-in 0.4s forwards ${i * 0.08}s`;
     });
-    const inDuration = 300 + allLetters.length * 50; // Reduced timing
-    await new Promise(res => setTimeout(res, inDuration + 25)); // Reduced buffer
+    const inDuration = 400 + allLetters.length * 80; // Reduced timing
+    await new Promise(res => setTimeout(res, inDuration + 100)); // Slightly longer buffer for smoother transition
 
-    // Animate whole text out
+    // Animate whole text out with better timing
     welcomeContainer.style.transformOrigin = 'center center';
-    welcomeContainer.style.animation = `text-out 0.3s forwards`; // Reduced from 0.5s
-    await new Promise(res => setTimeout(res, 350));  // Reduced buffer
+
+    welcomeContainer.style.animation = `text-out 0.6s forwards`;
+    await new Promise(res => setTimeout(res, 700));  // Longer buffer for smoother app entrance
 
     // Remove welcome overlay
     welcomeScreen.remove();
   }
 
-  // Animate main app elements
+  // Animate main app elements with improved sequencing
   function animateAppEntries() {
     const container = document.querySelector('.app-container');
     if (!container) return;
     const children = Array.from(container.children);
-    children.forEach((el, idx) => {
-      el.style.opacity = '0';
-      el.style.animation = `fadeInDown 0.4s forwards ${idx * 0.05}s`; // Reduced from 0.6s and 0.1s
+
+    // Use requestAnimationFrame for smoother animations
+    requestAnimationFrame(() => {
+      children.forEach((el, idx) => {
+        el.style.opacity = '0';
+        // Reduced stagger time from 0.1s to 0.08s and longer duration for smoother animation
+        el.style.animation = `fadeInDown 0.8s forwards ${idx * 0.08}s`;
+      });
     });
   }
 

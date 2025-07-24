@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Performance Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0a0a0b;
+            color: white;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin: 40px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+        
+        .performance-metrics {
+            background: #1a1a1b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+        
+        .test-button {
+            background: #ff6699;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 150ms ease, background-color 150ms ease;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            background: #ff4d88;
+        }
+        
+        .animation-test-area {
+            height: 200px;
+            background: #2a2a2b;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .test-element {
+            width: 50px;
+            height: 50px;
+            background: #00ff88;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            will-change: transform;
+        }
+        
+        .animate {
+            animation: slideAcross 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes slideAcross {
+            from { left: 0; }
+            to { left: calc(100% - 50px); }
+        }
+        
+        .fps-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="fps-counter" id="fpsCounter">FPS: --</div>
+    
+    <div class="test-container">
+        <h1>Animation Performance Test</h1>
+        <p>This page tests the performance improvements made to UI animations.</p>
+        
+        <div class="test-section">
+            <h2>Performance Metrics</h2>
+            <div class="performance-metrics" id="metrics">
+                <div class="metric">
+                    <span>Frame Rate:</span>
+                    <span id="frameRate">Calculating...</span>
+                </div>
+                <div class="metric">
+                    <span>Animation Smoothness:</span>
+                    <span id="smoothness">Good</span>
+                </div>
+                <div class="metric">
+                    <span>Memory Usage:</span>
+                    <span id="memoryUsage">--</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Animation Tests</h2>
+            <button class="test-button" onclick="startAnimationTest()">Start Animation Test</button>
+            <button class="test-button" onclick="stopAnimationTest()">Stop Animation Test</button>
+            <button class="test-button" onclick="testMultipleAnimations()">Test Multiple Elements</button>
+            
+            <div class="animation-test-area" id="testArea">
+                <div class="test-element" id="testElement"></div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Button Performance Test</h2>
+            <p>Hover over these buttons to test transition performance:</p>
+            <button class="test-button">Optimized Button 1</button>
+            <button class="test-button">Optimized Button 2</button>
+            <button class="test-button">Optimized Button 3</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Results</h2>
+            <div id="testResults">
+                <p>Run tests to see performance results...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // FPS Counter
+        let fps = 0;
+        let lastTime = performance.now();
+        let frameCount = 0;
+        
+        function updateFPS() {
+            const now = performance.now();
+            frameCount++;
+            
+            if (now - lastTime >= 1000) {
+                fps = Math.round((frameCount * 1000) / (now - lastTime));
+                document.getElementById('fpsCounter').textContent = `FPS: ${fps}`;
+                document.getElementById('frameRate').textContent = `${fps} FPS`;
+                
+                // Update smoothness indicator
+                const smoothness = fps >= 55 ? 'Excellent' : fps >= 45 ? 'Good' : fps >= 30 ? 'Fair' : 'Poor';
+                document.getElementById('smoothness').textContent = smoothness;
+                
+                frameCount = 0;
+                lastTime = now;
+            }
+            
+            requestAnimationFrame(updateFPS);
+        }
+        
+        updateFPS();
+        
+        // Memory usage (if available)
+        if (performance.memory) {
+            setInterval(() => {
+                const used = Math.round(performance.memory.usedJSHeapSize / 1048576);
+                document.getElementById('memoryUsage').textContent = `${used} MB`;
+            }, 2000);
+        }
+        
+        // Animation tests
+        function startAnimationTest() {
+            const element = document.getElementById('testElement');
+            element.classList.add('animate');
+            
+            logResult('Single element animation started');
+        }
+        
+        function stopAnimationTest() {
+            const element = document.getElementById('testElement');
+            element.classList.remove('animate');
+            
+            logResult('Animation stopped');
+        }
+        
+        function testMultipleAnimations() {
+            const testArea = document.getElementById('testArea');
+            
+            // Clear existing elements
+            testArea.innerHTML = '';
+            
+            // Create multiple animated elements
+            for (let i = 0; i < 10; i++) {
+                const element = document.createElement('div');
+                element.className = 'test-element animate';
+                element.style.top = `${20 + i * 15}px`;
+                element.style.animationDelay = `${i * 0.1}s`;
+                testArea.appendChild(element);
+            }
+            
+            logResult('Multiple element animation test started (10 elements)');
+        }
+        
+        function logResult(message) {
+            const results = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML += `<p>[${timestamp}] ${message}</p>`;
+        }
+        
+        // Log initial performance
+        setTimeout(() => {
+            logResult('Performance test page loaded');
+            logResult(`Initial FPS: ${fps}`);
+        }, 2000);
+    </script>
+</body>
+</html>
