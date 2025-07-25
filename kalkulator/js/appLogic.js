@@ -4316,23 +4316,24 @@ export const app = {
     openEditModal(shift) {
         const editModal = document.getElementById('editShiftModal');
         if (editModal) {
-            editModal.style.display = 'block';
-            
+            editModal.style.display = 'flex';
+            editModal.classList.add('active');
+
             // Populate the edit form with current shift data
             this.populateEditForm(shift);
-            
+
             // Hide header
             const header = document.querySelector('.header');
             if (header) {
                 header.classList.add('hidden');
             }
-            
+
             // Add backdrop click handler
             const backdrop = editModal.querySelector('.modal-backdrop');
             if (backdrop) {
                 backdrop.onclick = () => this.closeEditShift();
             }
-            
+
             // Add keyboard support
             const keydownHandler = (e) => {
                 if (e.key === 'Escape') {
@@ -4348,13 +4349,14 @@ export const app = {
         const editModal = document.getElementById('editShiftModal');
         if (editModal) {
             editModal.style.display = 'none';
-            
+            editModal.classList.remove('active');
+
             // Show header again
             const header = document.querySelector('.header');
             if (header) {
                 header.classList.remove('hidden');
             }
-            
+
             // Remove keyboard listener
             if (editModal.dataset.keydownHandler) {
                 document.removeEventListener('keydown', (e) => {
@@ -4364,14 +4366,14 @@ export const app = {
                 });
                 delete editModal.dataset.keydownHandler;
             }
-            
+
             // Clear editing state
             this.editingShift = null;
             this.editSelectedDate = null;
-            
+
             // Clear form
             document.getElementById('editShiftForm').reset();
-            
+
             // Remove selected state from date grid
             document.querySelectorAll('#editDateGrid .date-cell').forEach(cell => {
                 cell.classList.remove('selected');

@@ -3802,12 +3802,92 @@ input:checked + .slider:before {
 }
 
 /* Edit Shift Modal Specific Styles */
+/* Apply the same styling overrides as Add Shift Modal for consistency */
 #editShiftModal .modal-content {
-  max-width: 600px;
+  height: auto !important;
+  width: min(90vw, 600px) !important;
+  max-width: 600px !important;
+  margin: 20px auto !important;
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: column !important;
+  /* Remove height constraints completely - let modal grow with content */
+  max-height: none !important;
+}
+
+#editShiftModal .modal-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding-bottom: 80px !important; /* Provide space for fixed footer */
+  /* Allow natural content sizing unless overflow occurs */
+  max-height: none !important;
+}
+
+/* Ensure fixed footer doesn't interfere with content sizing */
+#editShiftModal .modal-fixed-footer {
+  flex-shrink: 0 !important;
+  margin-top: auto !important;
 }
 
 #editShiftModal .date-grid {
   margin-bottom: 20px;
+}
+
+/* EDIT SHIFT MODAL OVERRIDES - Must come after general modal rules */
+/* Force edit shift modal to be centered and fit content naturally */
+@media (min-width: 769px) {
+  #editShiftModal .modal-content {
+    height: auto !important;
+    width: min(90vw, 600px) !important;
+    max-width: 600px !important;
+    margin: 20px auto !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    /* Remove height constraints completely - let modal grow with content */
+    max-height: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #editShiftModal .modal-content {
+    height: auto !important;
+    width: 100vw !important;
+    margin: 10px 0 !important;
+    /* Remove height constraints to allow modal to grow with content */
+    max-height: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
+/* Ensure edit shift modal displays centered like add shift modal */
+#editShiftModal.active {
+  align-items: center !important;
+  justify-content: center !important;
+  padding-top: 0 !important;
+  display: flex !important;
+}
+
+/* Mobile override for edit shift modal positioning */
+@media (max-width: 768px) {
+  #editShiftModal.active {
+    padding-top: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    display: flex !important;
+  }
+}
+
+/* Desktop - center edit shift modal within content viewport */
+@media (min-width: 769px) {
+  #editShiftModal.active {
+    justify-content: center !important;
+    align-items: center !important;
+    padding-top: 0 !important;
+    display: flex !important;
+  }
 }
 
 /* Full screen modals on mobile, constrained on desktop */
@@ -3820,7 +3900,7 @@ input:checked + .slider:before {
     margin: 0;
     position: relative; /* Ensure relative positioning for absolute close button */
   }
-  
+
   #addShiftModal .modal-content {
     height: auto !important; /* Force auto height, override general modal styles */
     margin: 10px 0 !important;
@@ -3830,24 +3910,29 @@ input:checked + .slider:before {
     /* Remove height constraints to allow modal to grow with content */
     max-height: none !important;
   }
-  
+
   #addShiftModal .modal-body {
     padding: 20px;
     overflow-y: auto !important;
     flex: 1 !important; /* Allow natural growth */
     padding-bottom: 80px !important; /* Prevent footer overlap */
   }
-  
+
   #editShiftModal .modal-content {
-    height: calc(100vh - 80px); /* Account for navigation header */
-    max-height: calc(100vh - 80px);
-    margin-top: 80px; /* Position below the navigation header */
+    height: auto !important; /* Force auto height, override general modal styles */
+    margin: 10px 0 !important;
+    overflow: visible !important; /* Allow modal to grow beyond viewport if needed */
+    display: flex !important;
+    flex-direction: column !important;
+    /* Remove height constraints to allow modal to grow with content */
+    max-height: none !important;
   }
-  
+
   #editShiftModal .modal-body {
     padding: 20px;
-    height: calc(100vh - 240px); /* Account for nav header (80px) + margin (80px) + footer space (80px) */
-    overflow-y: auto;
+    overflow-y: auto !important;
+    flex: 1 !important; /* Allow natural growth */
+    padding-bottom: 80px !important; /* Prevent footer overlap */
   }
 }
 
@@ -3859,27 +3944,31 @@ input:checked + .slider:before {
     height: auto;
     margin-top: 8vh; /* Reduced to work with base margin-top: 20px */
   }
-  
+
   #addShiftModal .modal-content {
     display: flex !important;
     flex-direction: column !important;
     /* Remove height constraints to allow modal to grow with content */
     max-height: none !important;
   }
-  
+
   #addShiftModal .modal-body {
     flex: 1 !important;
     overflow-y: auto !important;
     padding-bottom: 80px !important;
   }
-  
+
   #editShiftModal .modal-content {
-    max-height: calc(90vh - 120px); /* Account for navigation header and margin */
+    display: flex !important;
+    flex-direction: column !important;
+    /* Remove height constraints to allow modal to grow with content */
+    max-height: none !important;
   }
-  
-  /* Adjust modal body for desktop to fit within content constraints */
+
   #editShiftModal .modal-body {
-    max-height: calc(90vh - 240px); /* Account for header, margins, and footer space */
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding-bottom: 80px !important;
   }
 }
 
