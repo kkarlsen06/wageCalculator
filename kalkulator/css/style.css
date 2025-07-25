@@ -865,16 +865,17 @@ input[type="time"].form-control[value=""]:focus {
   border-color: var(--accent3-alpha);
 }
 
-/* Current date styling - subtle blue outline */
+/* Current date styling - very subtle highlight */
 .date-cell.current-date {
-  border: 1px solid var(--secondary);
-  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.3);
+  background: rgba(14, 165, 233, 0.08);
+  border: 2px solid rgba(14, 165, 233, 0.2);
 }
 
-/* When current date is selected, maintain blue outline but blend with selection */
+/* When current date is selected, maintain subtle highlight but blend with selection */
 .date-cell.current-date.selected {
-  border: 1px solid var(--secondary);
-  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.5);
+  background: var(--accent3-alpha);
+  border: 2px solid rgba(14, 165, 233, 0.3);
+  color: var(--accent3);
 }
 
 /* Week number styling */
@@ -2550,6 +2551,18 @@ input:checked + .slider:before {
   border: 1px solid var(--border);
   /* Use special animation that ends with opacity 0.3 */
   animation: calendarCellFadeInOtherMonth 0.3s var(--ease-default) forwards;
+}
+
+/* Current date styling for calendar cells - very subtle highlight */
+.calendar-cell.current-date {
+  background: rgba(14, 165, 233, 0.06);
+  border: 2px solid rgba(14, 165, 233, 0.15);
+}
+
+/* When current date has shifts, maintain subtle highlight but blend with shift styling */
+.calendar-cell.current-date.has-shifts {
+  background: var(--gradient-secondary);
+  border: 2px solid rgba(14, 165, 233, 0.25);
 }
 
 /* Calendar week number styling */

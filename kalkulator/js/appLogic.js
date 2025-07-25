@@ -2648,6 +2648,14 @@ export const app = {
                     cell.classList.add('hours-mode');
                 }
 
+                // Add current date class if this is today
+                const today = new Date();
+                if (cellDate.getDate() === today.getDate() &&
+                    cellDate.getMonth() === today.getMonth() &&
+                    cellDate.getFullYear() === today.getFullYear()) {
+                    cell.classList.add('current-date');
+                }
+
                 // --- WRAP ALL CONTENT IN .calendar-cell-content ---
                 const content = document.createElement('div');
                 content.className = 'calendar-cell-content';
@@ -3652,6 +3660,14 @@ export const app = {
                 if (cellDate.getMonth() !== monthIdx) {
                     cell.classList.add('other-month');
                     cell.style.setProperty('--final-opacity', '0.3');
+                }
+
+                // Add current date class if this is today
+                const today = new Date();
+                if (cellDate.getDate() === today.getDate() &&
+                    cellDate.getMonth() === today.getMonth() &&
+                    cellDate.getFullYear() === today.getFullYear()) {
+                    cell.classList.add('current-date');
                 }
 
                 const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
