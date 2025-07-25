@@ -327,25 +327,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   const floatingBar = document.querySelector('.floating-action-bar');
   const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
   const shiftSection = document.querySelector('.shift-section');
-  
+
   if (snapContainer && floatingBar && floatingBarBackdrop && shiftSection) {
     // Initially hide the floating bar and backdrop
     floatingBar.style.display = 'none';
     floatingBar.style.opacity = '0';
     floatingBarBackdrop.style.opacity = '0';
-    
+
     let isVisible = false;
     let animationTimeout = null;
     let ticking = false;
-    
+
     function checkFloatingBarVisibility() {
       const rect = shiftSection.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      
-      // Show floating bar when shift section is in view
-      const threshold = 0.8; // Show when shift section top is above 80% of viewport
-      const shouldBeVisible = rect.top < viewportHeight * threshold && rect.bottom > viewportHeight * 0.1;
-      
+
+      // Show floating bar when any part of the shift section is visible
+      // This ensures the bar is always visible when user is in the shift section
+      const shouldBeVisible = rect.top < viewportHeight && rect.bottom > 0;
+
       if (shouldBeVisible && !isVisible) {
         // Show with fade in animation
         isVisible = true;
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         floatingBar.style.animation = 'fadeOutDown 0.3s ease-out forwards';
         floatingBar.style.opacity = '0';
         floatingBarBackdrop.style.opacity = '0';
-        
+
         // Hide completely after animation completes
         animationTimeout = setTimeout(() => {
           if (!isVisible) {
@@ -369,10 +369,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }, 300);
       }
-      
+
       ticking = false;
     }
-    
+
     // Check on scroll with throttling
     snapContainer.addEventListener('scroll', () => {
       if (!ticking) {
@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ticking = true;
       }
     });
-    
+
     // Check initially
     checkFloatingBarVisibility();
   }
