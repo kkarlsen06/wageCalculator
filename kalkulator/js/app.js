@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Call addEventListeners once - event delegation handles dynamic content
   addEventListeners();
 
-  // Handle floating action bar visibility based on scroll position
+  // Handle floating action bar visibility when viewing shifts section
   const snapContainer = document.querySelector('.snap-container');
   const floatingBar = document.querySelector('.floating-action-bar');
   const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
@@ -342,9 +342,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const rect = shiftSection.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
 
-      // Show floating bar when any part of the shift section is visible
-      // This ensures the bar is always visible when user is in the shift section
-      const shouldBeVisible = rect.top < viewportHeight && rect.bottom > 0;
+      // Show floating bar when shift section is visible (any part of it)
+      // This accounts for the section being tall and extending beyond viewport
+      const shouldBeVisible = rect.top < viewportHeight * 0.9 && rect.bottom > viewportHeight * 0.1;
 
       if (shouldBeVisible && !isVisible) {
         // Show with fade in animation

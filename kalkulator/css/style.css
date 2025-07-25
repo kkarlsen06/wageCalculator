@@ -4326,7 +4326,7 @@ input:checked + .slider:before {
   justify-content: space-between; /* Distribute space evenly */
   gap: 12px;
   box-shadow: 0 8px 32px -4px var(--shadow);
-  z-index: 100;
+  z-index: 1000;
   width: 70%; /* Fixed percentage of viewport */
   max-width: 600px; /* Cap maximum width for large screens */
   backdrop-filter: blur(10px);
@@ -4342,7 +4342,7 @@ input:checked + .slider:before {
   left: 0;
   right: 0;
   width: 100vw;
-  height: 110px; /* Action bar height (~60px) + bottom spacing (20px) + extra height (30px) */
+  height: 160px; /* Action bar height (~60px) + bottom spacing (20px) + extra height (80px) */
   background: linear-gradient(to top, 
     rgba(18, 18, 18, 0.3) 0%, 
     rgba(18, 18, 18, 0.2) 40%, 
@@ -4363,7 +4363,7 @@ input:checked + .slider:before {
     rgba(0, 0, 0, 0.4) 60%, 
     rgba(0, 0, 0, 0) 100%
   );
-  z-index: 50; /* Below action bar (100) but above content, below modals (1200) */
+  z-index: 999; /* Below action bar (1000) but above content, below modals (1200) */
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.3s ease-out;
@@ -4467,7 +4467,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   
   /* Adjust backdrop height for mobile */
   .floating-action-bar-backdrop {
-    height: 95px; /* Smaller action bar height + 10px bottom + extra height for coverage */
+    height: 130px; /* Smaller action bar height + 10px bottom + extra height for coverage */
   }
 }
 
