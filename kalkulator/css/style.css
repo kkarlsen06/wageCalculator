@@ -669,10 +669,10 @@ body {
   margin-bottom: 24px;
   padding-top: 24px;
   padding-bottom: 20px;
-  border-bottom: 2px solid var(--border);
+  border-top: 2px solid var(--border);
   background: var(--bg-primary);
-  /* Rounded corners on bottom only for smooth visual transition */
-  border-radius: 0 0 16px 16px;
+  /* Rounded corners on all sides for polished, consistent styling */
+  border-radius: 16px;
   /* Ensure proper z-index to avoid conflicts with floating elements */
   z-index: 50;
   /* Add subtle shadow for visual separation */
