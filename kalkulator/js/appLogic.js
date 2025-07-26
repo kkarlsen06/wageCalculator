@@ -356,6 +356,8 @@ export const app = {
             }
         });
 
+        // Month navigation is now a static section header - no positioning needed
+
         // Setup monthly goal input after everything is loaded
         setupMonthlyGoalInput();
         
@@ -1077,17 +1079,63 @@ export const app = {
     
     changeMonth(month) {
         this.currentMonth = month;
-        
+
         // Reset progress bar state to ensure clean animation
         const fill = document.querySelector('.progress-fill');
         if (fill) {
             fill.dataset.animating = 'false';
             fill.classList.remove('loading');
         }
-        
+
         this.updateDisplay(true); // Enable animation when switching months
         // Note: Don't save currentMonth to settings - it should always default to current month on page load
     },
+
+    navigateToPreviousMonth() {
+        let newMonth = this.currentMonth - 1;
+        let newYear = this.currentYear;
+
+        if (newMonth < 1) {
+            newMonth = 12;
+            newYear = this.currentYear - 1;
+        }
+
+        this.currentMonth = newMonth;
+        this.currentYear = newYear;
+
+        // Reset progress bar state to ensure clean animation
+        const fill = document.querySelector('.progress-fill');
+        if (fill) {
+            fill.dataset.animating = 'false';
+            fill.classList.remove('loading');
+        }
+
+        this.updateDisplay(true); // Enable animation when switching months
+    },
+
+    navigateToNextMonth() {
+        let newMonth = this.currentMonth + 1;
+        let newYear = this.currentYear;
+
+        if (newMonth > 12) {
+            newMonth = 1;
+            newYear = this.currentYear + 1;
+        }
+
+        this.currentMonth = newMonth;
+        this.currentYear = newYear;
+
+        // Reset progress bar state to ensure clean animation
+        const fill = document.querySelector('.progress-fill');
+        if (fill) {
+            fill.dataset.animating = 'false';
+            fill.classList.remove('loading');
+        }
+
+        this.updateDisplay(true); // Enable animation when switching months
+    },
+
+    // Month navigation positioning function removed - now using static section header
     async loadFromSupabase() {
         const { data: { user } } = await window.supa.auth.getUser();
         if (!user) {
@@ -1837,14 +1885,20 @@ export const app = {
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
         document.getElementById('currentMonth').textContent = `${monthName} ${this.currentYear}`;
-        
+
+        // Update the month navigation display (now in shift section header)
+        const monthNavDisplay = document.getElementById('monthNavDisplayHeader');
+        if (monthNavDisplay) {
+            monthNavDisplay.textContent = `${monthName} ${this.currentYear}`;
+        }
+
         // Update the total card label to match selected month
         const totalLabel = document.querySelector('.total-label');
         if (totalLabel) {
             // Check if current month is the actual current month
             const now = new Date();
             const isCurrentMonth = this.currentMonth === (now.getMonth() + 1) && this.currentYear === now.getFullYear();
-            
+
             if (isCurrentMonth) {
                 totalLabel.textContent = 'Brutto';
             } else {
