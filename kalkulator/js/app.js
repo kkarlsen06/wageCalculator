@@ -2,7 +2,28 @@ function setAppHeight() {
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   document.documentElement.style.setProperty('--app-height', h + 'px');
 }
+
+function setThemeColor() {
+  // Ensure theme color is set to black for browser chrome
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeColorMeta) {
+    themeColorMeta.setAttribute('content', '#000000');
+  }
+
+  // Also set for different color schemes
+  const lightThemeMeta = document.querySelector('meta[name="theme-color"][media*="light"]');
+  if (lightThemeMeta) {
+    lightThemeMeta.setAttribute('content', '#000000');
+  }
+
+  const darkThemeMeta = document.querySelector('meta[name="theme-color"][media*="dark"]');
+  if (darkThemeMeta) {
+    darkThemeMeta.setAttribute('content', '#000000');
+  }
+}
+
 setAppHeight();
+setThemeColor();
 window.addEventListener('resize', setAppHeight);
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', setAppHeight);

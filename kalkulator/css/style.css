@@ -254,6 +254,8 @@ html {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+  /* Ensure browser chrome uses dark theme */
+  color-scheme: dark;
 }
 
 /* Allow scrolling when auth forms are visible */
@@ -745,6 +747,8 @@ body {
   height: var(--app-height, 100vh);
   overflow: hidden;
   position: relative;
+  /* Ensure browser chrome uses dark theme */
+  color-scheme: dark;
   width: 100%;
   margin: 0;
   padding: 0;
