@@ -41,14 +41,20 @@ class ImageUtils {
     }
 
     /**
-     * Compresses and resizes an image file
-     * @param {File} file - The image file to compress
+     * Compresses and resizes an image file or canvas
+     * @param {File|HTMLCanvasElement} source - The image file or canvas to compress
      * @param {Function} progressCallback - Optional callback for progress updates
      * @returns {Promise<Blob>} - Compressed image blob
      */
-    async compressImage(file, progressCallback = null) {
+    async compressImage(source, progressCallback = null) {
+        // Handle canvas input directly
+        if (source instanceof HTMLCanvasElement) {
+            return this.compressCanvas(source, progressCallback);
+        }
+
+        // Handle file input (existing logic)
         return new Promise((resolve, reject) => {
-            const validation = this.validateFile(file);
+            const validation = this.validateFile(source);
             if (!validation.valid) {
                 reject(new Error(validation.error));
                 return;
@@ -212,6 +218,169 @@ class ImageUtils {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    /**
+     * Compresses a canvas directly
+     * @param {HTMLCanvasElement} canvas - The canvas to compress
+     * @param {Function} progressCallback - Optional callback for progress updates
+     * @returns {Promise<Blob>} - Compressed image blob
+     */
+    async compressCanvas(canvas, progressCallback = null) {
+        return new Promise((resolve, reject) => {
+            if (progressCallback) progressCallback(25);
+
+            // Calculate new dimensions while maintaining aspect ratio
+            const { width, height } = this.calculateDimensions(
+                canvas.width,
+                canvas.height,
+                this.maxWidth,
+                this.maxHeight
+            );
+
+            if (progressCallback) progressCallback(50);
+
+            // Create new canvas with target dimensions
+            const targetCanvas = document.createElement('canvas');
+            const ctx = targetCanvas.getContext('2d');
+
+            targetCanvas.width = width;
+            targetCanvas.height = height;
+
+            // Enable image smoothing for better quality
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // Draw the resized image
+            ctx.drawImage(canvas, 0, 0, width, height);
+
+            if (progressCallback) progressCallback(75);
+
+            // Convert to blob with compression
+            targetCanvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        reject(new Error('Kunne ikke komprimere bildet'));
+                        return;
+                    }
+
+                    if (progressCallback) progressCallback(100);
+
+                    // Check if compressed size is acceptable
+                    if (blob.size <= this.maxFileSize) {
+                        resolve(blob);
+                    } else {
+                        // If still too large, try with lower quality
+                        this.compressWithLowerQuality(targetCanvas, resolve, reject);
+                    }
+                },
+                'image/jpeg',
+                this.quality
+            );
+        });
+    }
+
+    /**
+     * Creates a cropped canvas from an image element using crop data
+     * @param {HTMLImageElement} imageElement - The image element
+     * @param {Object} cropData - Crop data from Cropper.js
+     * @param {number} outputSize - Desired output size (square)
+     * @returns {HTMLCanvasElement} - Cropped canvas
+     */
+    createCroppedCanvas(imageElement, cropData, outputSize = 400) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = outputSize;
+        canvas.height = outputSize;
+
+        // Enable image smoothing for better quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // Draw the cropped portion
+        ctx.drawImage(
+            imageElement,
+            cropData.x,
+            cropData.y,
+            cropData.width,
+            cropData.height,
+            0,
+            0,
+            outputSize,
+            outputSize
+        );
+
+        return canvas;
+    }
+
+    /**
+     * Creates a preview canvas for real-time crop feedback
+     * @param {HTMLImageElement} imageElement - The image element
+     * @param {Object} cropData - Crop data from Cropper.js
+     * @param {number} previewSize - Preview size (square)
+     * @returns {HTMLCanvasElement} - Preview canvas
+     */
+    createPreviewCanvas(imageElement, cropData, previewSize = 120) {
+        return this.createCroppedCanvas(imageElement, cropData, previewSize);
+    }
+
+    /**
+     * Converts a File to an Image element for cropping
+     * Note: This method creates a temporary image for validation/processing
+     * The blob URL is revoked after loading, so don't use img.src after resolution
+     * @param {File} file - The image file
+     * @returns {Promise<HTMLImageElement>} - Image element (with revoked src)
+     */
+    async fileToImage(file) {
+        return new Promise((resolve, reject) => {
+            const validation = this.validateFile(file);
+            if (!validation.valid) {
+                reject(new Error(validation.error));
+                return;
+            }
+
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+
+            const cleanup = () => {
+                URL.revokeObjectURL(url);
+            };
+
+            img.onload = () => {
+                cleanup();
+                resolve(img);
+            };
+
+            img.onerror = (event) => {
+                cleanup();
+                console.error('Image load error:', event);
+                reject(new Error('Kunne ikke laste bildet'));
+            };
+
+            // Set a timeout to prevent hanging
+            setTimeout(() => {
+                if (img.complete === false) {
+                    cleanup();
+                    reject(new Error('Bildet tok for lang tid å laste'));
+                }
+            }, 10000); // 10 second timeout
+
+            img.src = url;
+        });
+    }
+
+    /**
+     * Creates a blob URL for a file (caller responsible for cleanup)
+     * @param {File} file - The image file
+     * @returns {string} - Blob URL (must be revoked by caller)
+     */
+    createBlobUrl(file) {
+        const validation = this.validateFile(file);
+        if (!validation.valid) {
+            throw new Error(validation.error);
+        }
+        return URL.createObjectURL(file);
     }
 
     /**

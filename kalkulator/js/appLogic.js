@@ -4197,14 +4197,8 @@ export const app = {
             const img = document.createElement('img');
             img.src = imageUrl;
             img.alt = 'Profilbilde';
-            img.className = 'profile-icon profile-picture-img';
+            img.className = 'profile-picture-img';
             img.style.cssText = `
-                width: 32px !important;
-                height: 32px !important;
-                border-radius: 50%;
-                object-fit: cover;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                background: rgba(255, 255, 255, 0.05);
                 transition: all var(--speed-normal) var(--ease-default);
                 opacity: 0;
             `;
@@ -4254,53 +4248,75 @@ export const app = {
         if (!file) return;
 
         try {
-            // Show progress
-            this.showProfilePictureProgress(true);
-            this.updateProfilePictureProgress(0, 'Validerer bilde...');
+            // Check if cropping is available (Cropper library loaded)
+            if (typeof Cropper === 'undefined') {
+                console.warn('Cropper library not available, falling back to direct upload');
+                await this.fallbackDirectUpload(file);
+                return;
+            }
 
-            // Validate and compress the image
-            const compressedBlob = await window.imageUtils.compressImage(file, (progress) => {
-                this.updateProfilePictureProgress(progress * 0.5, 'Komprimerer bilde...');
-            });
-
-            this.updateProfilePictureProgress(50, 'Laster opp...');
-
-            // Upload to Supabase Storage
-            const imageUrl = await this.uploadProfilePictureToStorage(compressedBlob);
-
-            this.updateProfilePictureProgress(90, 'Oppdaterer profil...');
-
-            // Update user settings with the new image URL
-            await this.saveProfilePictureUrl(imageUrl);
-
-            this.updateProfilePictureProgress(100, 'Fullført!');
-
-            // Update UI
-            this.updateProfilePicturePreview(imageUrl);
-            this.updateTopBarProfilePicture(imageUrl);
-
-            // Hide progress after a short delay
-            setTimeout(() => {
-                this.showProfilePictureProgress(false);
-            }, 1000);
-
+            // Show cropping modal
+            await this.showCroppingModal(file);
         } catch (error) {
-            console.error('Error uploading profile picture:', error);
-            this.showProfilePictureProgress(false);
+            console.error('Error handling profile picture:', error);
 
-            // Show error message
-            const msgElement = document.getElementById('profile-update-msg');
-            if (msgElement) {
-                msgElement.style.color = 'var(--danger)';
-                msgElement.textContent = 'Feil ved opplasting: ' + error.message;
-                setTimeout(() => {
-                    msgElement.textContent = '';
-                }, 5000);
+            // Fallback to direct upload if cropping fails
+            console.log('Falling back to direct upload due to error');
+            try {
+                await this.fallbackDirectUpload(file);
+            } catch (fallbackError) {
+                console.error('Fallback upload also failed:', fallbackError);
+                this.showUploadError('Kunne ikke laste opp bildet: ' + fallbackError.message);
             }
         }
 
         // Clear the input
         event.target.value = '';
+    },
+
+    async fallbackDirectUpload(file) {
+        // Show progress
+        this.showProfilePictureProgress(true);
+        this.updateProfilePictureProgress(0, 'Validerer bilde...');
+
+        // Validate and compress the image
+        const compressedBlob = await window.imageUtils.compressImage(file, (progress) => {
+            this.updateProfilePictureProgress(progress * 0.5, 'Komprimerer bilde...');
+        });
+
+        this.updateProfilePictureProgress(50, 'Laster opp...');
+
+        // Upload to Supabase Storage
+        const imageUrl = await this.uploadProfilePictureToStorage(compressedBlob);
+
+        this.updateProfilePictureProgress(90, 'Oppdaterer profil...');
+
+        // Update user settings with the new image URL
+        await this.saveProfilePictureUrl(imageUrl);
+
+        this.updateProfilePictureProgress(100, 'Fullført!');
+
+        // Update UI
+        this.updateProfilePicturePreview(imageUrl);
+        this.updateTopBarProfilePicture(imageUrl);
+
+        // Hide progress after a short delay
+        setTimeout(() => {
+            this.showProfilePictureProgress(false);
+        }, 1000);
+    },
+
+    showUploadError(message) {
+        this.showProfilePictureProgress(false);
+
+        const msgElement = document.getElementById('profile-update-msg');
+        if (msgElement) {
+            msgElement.style.color = 'var(--danger)';
+            msgElement.textContent = message;
+            setTimeout(() => {
+                msgElement.textContent = '';
+            }, 5000);
+        }
     },
 
     async uploadProfilePictureToStorage(blob) {
@@ -4433,6 +4449,491 @@ export const app = {
             input.addEventListener('change', (event) => {
                 this.handleProfilePictureChange(event);
             });
+        }
+    },
+
+    // Image Cropping Methods
+    async showCroppingModal(file) {
+        try {
+            // Validate file first
+            const validation = window.imageUtils.validateFile(file);
+            if (!validation.valid) {
+                throw new Error(validation.error);
+            }
+
+            // Store the file for later use
+            this.currentCropFile = file;
+
+            // Create blob URL for cropping modal (will be cleaned up in cancelCrop)
+            this.currentCropBlobUrl = URL.createObjectURL(file);
+
+            // Set up the cropping modal
+            const cropModal = document.getElementById('cropModal');
+            const cropImage = document.getElementById('cropImage');
+
+            if (!cropModal || !cropImage) {
+                throw new Error('Cropping modal elements not found');
+            }
+
+            // Set up event handlers before setting src
+            cropImage.onload = () => {
+                cropImage.classList.add('loaded');
+                this.initializeCropper(cropImage);
+            };
+
+            // Handle image load error - no infinite loop
+            cropImage.onerror = (event) => {
+                console.error('Failed to load image for cropping:', event);
+                this.handleCropImageError('Kunne ikke laste bildet for beskjæring');
+            };
+
+            // Set the image source using the blob URL
+            cropImage.src = this.currentCropBlobUrl;
+
+            // Show the modal
+            cropModal.classList.add('active');
+
+        } catch (error) {
+            console.error('Error showing cropping modal:', error);
+            // Clean up on error
+            this.cleanupCropResources();
+            // Show user-friendly error message instead of throwing
+            this.showCropError(error.message);
+        }
+    },
+
+    initializeCropper(imageElement) {
+        try {
+            // Destroy existing cropper if any
+            if (this.cropper) {
+                this.cropper.destroy();
+            }
+
+            // Detect if mobile for touch-optimized settings
+            const isMobile = window.innerWidth <= 768;
+
+            // Initialize Cropper.js with mobile-optimized settings
+            this.cropper = new Cropper(imageElement, {
+                aspectRatio: 1, // Square crop by default
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: isMobile ? 0.9 : 0.8, // Larger crop area on mobile
+                restore: false,
+                guides: !isMobile, // Hide guides on mobile for cleaner interface
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                responsive: true,
+                checkOrientation: false,
+                modal: true,
+                background: true,
+                // Mobile-optimized touch settings
+                wheelZoomRatio: isMobile ? 0.05 : 0.1, // Slower zoom on mobile
+                minContainerWidth: isMobile ? 200 : 300,
+                minContainerHeight: isMobile ? 200 : 300,
+                crop: (event) => {
+                    this.updateCropPreview(event.detail);
+                },
+                cropend: (event) => {
+                    // Force preview update when crop ends (mobile sync fix)
+                    if (window.innerWidth <= 768) {
+                        setTimeout(() => {
+                            this.updateCropPreview(event.detail);
+                        }, 50);
+                    }
+                },
+                ready: () => {
+                    // Add mobile touch enhancements after cropper is ready
+                    if (isMobile) {
+                        this.addMobileTouchEnhancements();
+                    }
+
+                    // Test cropper methods to ensure they work
+                    this.testCropperMethods();
+                },
+                error: (event) => {
+                    console.error('Cropper initialization error:', event);
+                    this.handleCropImageError('Feil ved initialisering av beskjæring');
+                }
+            });
+
+            // Cropper initialized successfully
+
+        } catch (error) {
+            console.error('Error initializing cropper:', error);
+            this.handleCropImageError('Kunne ikke initialisere beskjæring');
+        }
+    },
+
+    testCropperMethods() {
+        if (!this.cropper) return;
+
+        try {
+            // Test essential methods
+            const imageData = this.cropper.getImageData();
+            const cropData = this.cropper.getData();
+            const testCanvas = this.cropper.getCroppedCanvas({
+                width: 100,
+                height: 100
+            });
+
+            console.log('Cropper methods test passed:', {
+                imageData: !!imageData,
+                cropData: !!cropData,
+                canvas: !!testCanvas
+            });
+
+        } catch (error) {
+            console.error('Cropper methods test failed:', error);
+            this.handleCropImageError('Beskjæringsfunksjonalitet ikke tilgjengelig');
+        }
+    },
+
+    updateCropPreview(cropData) {
+        if (!this.cropper) return;
+
+        const previewContainer = document.getElementById('cropPreview');
+        if (!previewContainer) return;
+
+        // Throttle preview updates on mobile for better performance
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            if (this.previewUpdateTimeout) {
+                clearTimeout(this.previewUpdateTimeout);
+            }
+
+            this.previewUpdateTimeout = setTimeout(() => {
+                this.performCropPreviewUpdate(isMobile);
+            }, 100); // 100ms throttle on mobile
+        } else {
+            // Update immediately on desktop
+            this.performCropPreviewUpdate(false);
+        }
+    },
+
+    performCropPreviewUpdate(isMobile = false) {
+        if (!this.cropper) return;
+
+        const previewContainer = document.getElementById('cropPreview');
+        if (!previewContainer) return;
+
+        try {
+            // Mobile-optimized preview settings
+            const previewSize = isMobile ? 80 : 120;
+            const quality = isMobile ? 'medium' : 'high';
+
+            // Get the cropped canvas directly from Cropper.js
+            const croppedCanvas = this.cropper.getCroppedCanvas({
+                width: previewSize,
+                height: previewSize,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: quality,
+                // Mobile optimization: reduce fill color processing
+                fillColor: isMobile ? undefined : '#fff'
+            });
+
+            if (!croppedCanvas) {
+                console.warn('Could not get cropped canvas for preview');
+                return;
+            }
+
+            // Clear previous preview
+            previewContainer.innerHTML = '';
+
+            // Add new preview with mobile-specific styling
+            if (isMobile) {
+                croppedCanvas.style.width = '100%';
+                croppedCanvas.style.height = '100%';
+                croppedCanvas.style.objectFit = 'cover';
+            }
+
+            previewContainer.appendChild(croppedCanvas);
+
+            // Force a repaint on mobile to ensure sync
+            if (isMobile) {
+                previewContainer.style.transform = 'translateZ(0)';
+                requestAnimationFrame(() => {
+                    previewContainer.style.transform = '';
+                });
+            }
+
+        } catch (error) {
+            console.error('Error updating crop preview:', error);
+
+            // Fallback: show a placeholder on mobile if preview fails
+            if (isMobile) {
+                previewContainer.innerHTML = '<div style="width: 100%; height: 100%; background: var(--bg-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 12px;">Forhåndsvisning</div>';
+            }
+        }
+    },
+
+
+
+    setCropZoom(value) {
+        if (this.cropper) {
+            this.cropper.zoomTo(parseFloat(value));
+        }
+    },
+
+    adjustCropZoom(delta) {
+        if (this.cropper) {
+            const currentZoom = this.cropper.getImageData().ratio;
+            const newZoom = Math.max(0.1, Math.min(3, currentZoom + delta));
+            this.cropper.zoomTo(newZoom);
+
+            // Update slider
+            const slider = document.getElementById('cropZoomSlider');
+            if (slider) {
+                slider.value = newZoom;
+            }
+        }
+    },
+
+    async confirmCrop() {
+        if (!this.cropper || !this.currentCropFile) {
+            console.error('No cropper or file available');
+            this.showCropError('Ingen beskjæring tilgjengelig');
+            return;
+        }
+
+        try {
+            // Get cropped canvas directly from Cropper.js
+            const croppedCanvas = this.cropper.getCroppedCanvas({
+                width: 400,
+                height: 400,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+
+            if (!croppedCanvas) {
+                throw new Error('Kunne ikke lage beskjært bilde');
+            }
+
+            // Close cropping modal
+            this.cancelCrop();
+
+            // Show progress
+            this.showProfilePictureProgress(true);
+            this.updateProfilePictureProgress(0, 'Beskjærer bilde...');
+
+            // Compress the cropped canvas
+            const compressedBlob = await window.imageUtils.compressImage(croppedCanvas, (progress) => {
+                this.updateProfilePictureProgress(progress * 0.5, 'Komprimerer bilde...');
+            });
+
+            this.updateProfilePictureProgress(50, 'Laster opp...');
+
+            // Upload to Supabase Storage
+            const imageUrl = await this.uploadProfilePictureToStorage(compressedBlob);
+
+            this.updateProfilePictureProgress(90, 'Oppdaterer profil...');
+
+            // Update user settings with the new image URL
+            await this.saveProfilePictureUrl(imageUrl);
+
+            this.updateProfilePictureProgress(100, 'Fullført!');
+
+            // Update UI
+            this.updateProfilePicturePreview(imageUrl);
+            this.updateTopBarProfilePicture(imageUrl);
+
+            // Hide progress after a short delay
+            setTimeout(() => {
+                this.showProfilePictureProgress(false);
+            }, 1000);
+
+        } catch (error) {
+            console.error('Error confirming crop:', error);
+            this.showProfilePictureProgress(false);
+
+            // Show error message
+            const msgElement = document.getElementById('profile-update-msg');
+            if (msgElement) {
+                msgElement.style.color = 'var(--danger)';
+                msgElement.textContent = 'Feil ved opplasting: ' + error.message;
+                setTimeout(() => {
+                    msgElement.textContent = '';
+                }, 5000);
+            }
+        }
+    },
+
+    cancelCrop() {
+        // Clean up resources
+        this.cleanupCropResources();
+
+        // Hide modal
+        const cropModal = document.getElementById('cropModal');
+        if (cropModal) {
+            cropModal.classList.remove('active');
+        }
+
+        // Clear image source and classes
+        const cropImage = document.getElementById('cropImage');
+        if (cropImage) {
+            cropImage.src = '';
+            cropImage.classList.remove('loaded');
+            cropImage.onload = null;
+            cropImage.onerror = null;
+        }
+
+        // Clear preview
+        const previewContainer = document.getElementById('cropPreview');
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+        }
+
+        // Reset zoom slider
+        const slider = document.getElementById('cropZoomSlider');
+        if (slider) {
+            slider.value = 1;
+        }
+    },
+
+    cleanupCropResources() {
+        // Clean up mobile touch enhancements
+        this.removeMobileTouchEnhancements();
+
+        // Clean up preview update timeout
+        if (this.previewUpdateTimeout) {
+            clearTimeout(this.previewUpdateTimeout);
+            this.previewUpdateTimeout = null;
+        }
+
+        // Destroy cropper
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+
+        // Clean up blob URL to prevent memory leaks
+        if (this.currentCropBlobUrl) {
+            URL.revokeObjectURL(this.currentCropBlobUrl);
+            this.currentCropBlobUrl = null;
+        }
+
+        // Clear stored file
+        this.currentCropFile = null;
+    },
+
+    handleCropImageError(message) {
+        console.error('Crop image error:', message);
+        this.cleanupCropResources();
+        this.showCropError(message);
+    },
+
+    showCropError(message) {
+        // Hide cropping modal
+        const cropModal = document.getElementById('cropModal');
+        if (cropModal) {
+            cropModal.classList.remove('active');
+        }
+
+        // Show error in profile modal
+        const msgElement = document.getElementById('profile-update-msg');
+        if (msgElement) {
+            msgElement.style.color = 'var(--danger)';
+            msgElement.textContent = 'Feil ved bildebeskjæring: ' + message;
+            setTimeout(() => {
+                msgElement.textContent = '';
+            }, 5000);
+        }
+    },
+
+    addMobileTouchEnhancements() {
+        if (!this.cropper) return;
+
+        const cropperContainer = this.cropper.getContainerElement();
+        if (!cropperContainer) return;
+
+        let lastTouchDistance = 0;
+        let isZooming = false;
+
+        // Add pinch-to-zoom support
+        const handleTouchStart = (e) => {
+            if (e.touches.length === 2) {
+                isZooming = true;
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                lastTouchDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+                e.preventDefault();
+            }
+        };
+
+        const handleTouchMove = (e) => {
+            if (isZooming && e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+
+                if (lastTouchDistance > 0) {
+                    const ratio = currentDistance / lastTouchDistance;
+                    const currentZoom = this.cropper.getImageData().ratio;
+                    const newZoom = Math.max(0.1, Math.min(3, currentZoom * ratio));
+                    this.cropper.zoomTo(newZoom);
+
+                    // Update zoom slider
+                    const slider = document.getElementById('cropZoomSlider');
+                    if (slider) {
+                        slider.value = newZoom;
+                    }
+                }
+
+                lastTouchDistance = currentDistance;
+                e.preventDefault();
+            }
+        };
+
+        const handleTouchEnd = (e) => {
+            if (e.touches.length < 2) {
+                isZooming = false;
+                lastTouchDistance = 0;
+            }
+        };
+
+        // Add touch event listeners
+        cropperContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+        cropperContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+        cropperContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+        // Store event listeners for cleanup
+        this.touchEventListeners = {
+            touchstart: handleTouchStart,
+            touchmove: handleTouchMove,
+            touchend: handleTouchEnd,
+            element: cropperContainer
+        };
+
+        // Add haptic feedback for mobile interactions (if supported)
+        if ('vibrate' in navigator) {
+            const originalCrop = this.cropper.crop.bind(this.cropper);
+            this.cropper.crop = (...args) => {
+                navigator.vibrate(10); // Short vibration for feedback
+                return originalCrop(...args);
+            };
+        }
+
+        // Optimize touch responsiveness
+        cropperContainer.style.touchAction = 'none';
+        cropperContainer.style.userSelect = 'none';
+        cropperContainer.style.webkitUserSelect = 'none';
+    },
+
+    removeMobileTouchEnhancements() {
+        if (this.touchEventListeners) {
+            const { element, touchstart, touchmove, touchend } = this.touchEventListeners;
+            element.removeEventListener('touchstart', touchstart);
+            element.removeEventListener('touchmove', touchmove);
+            element.removeEventListener('touchend', touchend);
+            this.touchEventListeners = null;
         }
     },
 

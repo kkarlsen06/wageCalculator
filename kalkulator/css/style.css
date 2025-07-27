@@ -937,11 +937,20 @@ body {
 /* Profile picture image in top bar */
 .profile-picture-img {
   stroke: none !important; /* Remove stroke for images */
+  padding: 0 !important; /* Remove any inherited padding */
+  background: transparent !important; /* Remove background that might show through */
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display: block !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-sizing: border-box !important; /* Ensure border is included in dimensions */
 }
 
 .user-profile-btn:hover .profile-picture-img {
   border-color: rgba(99, 102, 241, 0.6) !important;
-  background: rgba(99, 102, 241, 0.1) !important;
   transform: scale(1.05);
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
@@ -4612,6 +4621,470 @@ input:checked + .slider:before {
     padding: 6px 10px;
     font-size: 12px;
   }
+}
+
+/* Image Cropping Modal Styles */
+#cropModal .modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  z-index: 1300;
+  max-width: 800px;
+  width: 95vw;
+  height: auto;
+  max-height: 90vh;
+  min-height: 600px;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.crop-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.crop-container {
+  flex: 1;
+  min-height: 300px;
+  max-height: 400px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+.crop-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+}
+
+.crop-preview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.crop-preview-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+}
+
+.crop-preview-container {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  background: var(--bg-primary);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.crop-preview-container:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.12),
+    inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.crop-preview {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.crop-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.crop-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.crop-control-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 60px;
+  letter-spacing: -0.01em;
+}
+
+.zoom-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.zoom-btn {
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.zoom-btn:hover {
+  background: var(--bg-hover);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+}
+
+.zoom-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+  outline: none;
+  border: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.zoom-slider::-webkit-slider-thumb:hover {
+  background: var(--primary-light);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(58, 190, 246, 0.3);
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.zoom-slider::-moz-range-thumb:hover {
+  background: var(--primary-light);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(58, 190, 246, 0.3);
+}
+
+/* Mobile responsiveness for cropping modal */
+@media (max-width: 768px) {
+  #cropModal .modal-content {
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+
+  .crop-modal-body {
+    padding: 16px;
+    gap: 16px;
+    padding-bottom: 80px; /* Space for fixed footer */
+  }
+
+  .crop-container {
+    min-height: 250px;
+    max-height: 300px;
+  }
+
+  .crop-controls {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .crop-zoom-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .crop-control-label {
+    min-width: auto;
+    text-align: center;
+  }
+
+  .crop-preview-container {
+    width: 100px;
+    height: 100px;
+  }
+
+  /* Mobile-specific preview optimizations */
+  .crop-preview-section {
+    order: -1; /* Move preview to top on mobile */
+    margin-bottom: 8px;
+  }
+
+  /* Ensure modal footer is properly positioned */
+  #cropModal .modal-fixed-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    z-index: 1400;
+  }
+}
+
+@media (max-width: 480px) {
+  .crop-modal-body {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .crop-container {
+    min-height: 200px;
+    max-height: 250px;
+  }
+
+  .zoom-btn {
+    padding: 6px;
+  }
+
+  .crop-preview-container {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* Modal Footer Buttons Styling */
+.modal-footer-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* Ensure buttons are properly sized and spaced */
+.modal-footer-buttons .btn {
+  flex: 1;
+  max-width: 200px;
+  min-width: 120px;
+  justify-content: center;
+}
+
+/* Mobile specific modal footer button styling */
+@media (max-width: 768px) {
+  .modal-footer-buttons {
+    gap: 10px;
+    padding: 0;
+  }
+
+  .modal-footer-buttons .btn {
+    flex: 1;
+    min-width: 100px;
+    max-width: none;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  /* Ensure buttons stay horizontal on mobile */
+  #cropModal .modal-footer-buttons {
+    flex-direction: row !important;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-footer-buttons {
+    gap: 8px;
+  }
+
+  .modal-footer-buttons .btn {
+    padding: 10px 12px;
+    font-size: 13px;
+    min-width: 80px;
+  }
+
+  /* Reduce button text on very small screens */
+  #cropModal .modal-footer-buttons .btn {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Custom Cropper.js styling to match design system */
+.cropper-container {
+  background: var(--bg-primary) !important;
+}
+
+.cropper-view-box {
+  outline: 2px solid var(--primary) !important;
+  outline-color: rgba(58, 190, 246, 0.8) !important;
+  box-shadow: 0 0 20px rgba(58, 190, 246, 0.3) !important;
+}
+
+.cropper-face {
+  background: rgba(58, 190, 246, 0.1) !important;
+}
+
+.cropper-line {
+  background: var(--primary) !important;
+  opacity: 0.8 !important;
+}
+
+.cropper-point {
+  background: var(--primary) !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  border: 2px solid white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  opacity: 1 !important;
+}
+
+.cropper-point:hover {
+  background: var(--primary-light) !important;
+  transform: scale(1.2) !important;
+  transition: all var(--speed-normal) var(--ease-default) !important;
+}
+
+.cropper-modal {
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(2px) !important;
+}
+
+.cropper-bg {
+  background-image: repeating-conic-gradient(
+    var(--bg-tertiary) 0% 25%,
+    var(--bg-secondary) 25% 50%
+  ) !important;
+  background-size: 20px 20px !important;
+  opacity: 0.8 !important;
+}
+
+/* Enhance cropper responsiveness */
+@media (max-width: 768px) {
+  .cropper-point {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .cropper-line {
+    background: var(--primary) !important;
+    opacity: 1 !important;
+  }
+
+  .cropper-view-box {
+    outline-width: 3px !important;
+  }
+}
+
+/* Loading state for crop image */
+.crop-image {
+  opacity: 0;
+  transition: opacity var(--speed-normal) var(--ease-default);
+}
+
+.crop-image.loaded {
+  opacity: 1;
+}
+
+/* Enhance modal backdrop for cropping */
+#cropModal.active {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Add subtle animation to crop preview */
+.crop-preview canvas {
+  transition: all var(--speed-normal) var(--ease-default);
+  border-radius: inherit;
+}
+
+.crop-preview:hover canvas {
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(58, 190, 246, 0.2);
+}
+
+/* Improve zoom slider track styling */
+.zoom-slider::-webkit-slider-track {
+  background: linear-gradient(to right,
+    var(--bg-tertiary) 0%,
+    var(--primary) 50%,
+    var(--bg-tertiary) 100%
+  );
+  height: 6px;
+  border-radius: 3px;
+}
+
+.zoom-slider::-moz-range-track {
+  background: linear-gradient(to right,
+    var(--bg-tertiary) 0%,
+    var(--primary) 50%,
+    var(--bg-tertiary) 100%
+  );
+  height: 6px;
+  border-radius: 3px;
+  border: none;
+}
+
+/* Add focus states for accessibility */
+.zoom-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.zoom-slider:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
 }
 
 .modal .form-group label {
