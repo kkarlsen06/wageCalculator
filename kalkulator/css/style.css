@@ -1,23 +1,33 @@
 /* Progress card - hele kortet er progressbaren */
 .progress-card {
   background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 0;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  box-shadow: 0 4px 16px -4px var(--shadow-soft);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   position: relative;
   overflow: hidden;
   height: 60px;
   display: flex;
   align-items: center;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all var(--speed-normal) var(--ease-default);
   opacity: 0.9;
 }
 
 .progress-card:hover {
-  transform: var(--lift-small);
+  background-color: rgba(255, 255, 255, 0.02);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* Removed shimmer animation from progress card to avoid conflicts with progress bar animation */
@@ -25,7 +35,7 @@
 /* Progress fill - den fargede delen som fyller kortet */
 .progress-fill {
   height: 100%;
-  background: var(--bg-tertiary);
+  background: var(--gradient-secondary);
   border-radius: 24px 0 0 24px;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
   position: relative;
@@ -85,14 +95,15 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
+  color: var(--text-primary); /* Use primary text color for better visibility against progress bar */
+  font-size: var(--text-lg); /* 18px - Same size as .total-hours text */
+  font-weight: var(--font-weight-medium); /* 500 - Consistent with supporting text elements */
   pointer-events: none;
   white-space: nowrap;
   z-index: 3;
   width: 100%;
   text-align: center;
+  letter-spacing: -0.005em; /* Subtle negative tracking for better readability */
 }
 
 .progress-fill.full {
@@ -122,16 +133,14 @@
 /* Removed glowing border for overachievement - cleaner look */
 
 @keyframes goalCelebrate {
-  0% { 
-    filter: brightness(1.3) drop-shadow(0 0 16px rgba(34,197,94,0.4));
-    transform: scale(1.02);
+  0% {
+    filter: brightness(1.3);
   }
   50% {
-    filter: brightness(1.4) drop-shadow(0 0 20px rgba(34,197,94,0.5));
+    filter: brightness(1.4);
   }
-  100% { 
+  100% {
     filter: none;
-    transform: scale(1);
   }
 }
 
@@ -140,7 +149,19 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-primary);
+}
+
+/* Base Body Styling with Inter optimizations */
+body {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-normal); /* 400 - Base text weight */
+  font-size: var(--text-base);
+  line-height: 1.6;
+  letter-spacing: -0.01em; /* Slight negative tracking for Inter */
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Apply max-width only to specific elements that need it */
@@ -168,10 +189,31 @@ body.auth-mode {
 }
 
 :root {
+  /* Typography - Inter Font System */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+
+  /* Font Weight Scale for Visual Hierarchy */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+
   /* Modern Dark Theme with Neon Blue - aligned with landing page */
-  --primary: #3ABEF6;
+  --primary: #4AC8FF;
   --primary-dark: #2A8FD6;
-  --primary-light: #5AC8FF;
+  --primary-light: #6AD4FF;
   --secondary: #00D4FF;
   --accent: #00F5FF;
   
@@ -181,17 +223,17 @@ body.auth-mode {
   --error: #FF4757;
   --info: #3ABEF6;
   
-  /* Background colors */
+  /* Background colors with improved integration */
   --bg-primary: #121212;
-  --bg-secondary: #1A1A1A;
-  --bg-tertiary: #1E1E1E;
-  --bg-card: #1E1E1E;
-  --bg-hover: #2A2A2A;
+  --bg-secondary: rgba(26, 26, 26, 0.95);
+  --bg-tertiary: rgba(30, 30, 30, 0.92);
+  --bg-card: rgba(30, 30, 30, 0.85);
+  --bg-hover: rgba(42, 42, 42, 0.9);
   
-  /* Text colors */
+  /* Text colors with improved contrast */
   --text-primary: #FFFFFF;
-  --text-secondary: #B0B0B0;
-  --text-tertiary: #808080;
+  --text-secondary: #C0C0C0;
+  --text-tertiary: #909090;
   --text-muted: #808080;
   
   /* Legacy support - map old colors to new system */
@@ -210,12 +252,7 @@ body.auth-mode {
   --border-light: #3a3a3f;
   --border-color: var(--border);
   
-  /* Shadow colors */
-  --shadow: rgba(0, 0, 0, 0.4);
-  --shadow-accent: rgba(0, 0, 0, 0.15);
-  --shadow-soft: rgba(0, 0, 0, 0.1);
-  --shadow-hover: 0 12px 32px -8px rgba(0, 0, 0, 0.3);
-  --shadow-hover-accent: 0 16px 40px -12px var(--shadow-accent);
+  /* Shadow colors - removed for flat design */
   
   /* Glow effects removed */
   /* Spacing - 8px grid system */
@@ -229,12 +266,7 @@ body.auth-mode {
   --space-10: 5rem;    /* 80px */
   --space-12: 6rem;    /* 96px */
   
-  /* Animations */
-  --lift-small: translateY(-3px);
-  --lift-medium: translateY(-5px);
-  --lift-large: translateY(-8px);
-  --scale-hover: scale(1.02);
-  --scale-active: scale(0.98);
+  /* Animations - removed for flat design */
   --gradient-primary: linear-gradient(135deg, 
     var(--accent) 0%, 
     var(--accent3) 50%, 
@@ -256,6 +288,186 @@ body.auth-mode {
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
   --border-radius: 12px;
   --border-radius-large: 20px;
+}
+
+/* Typography Styles - Optimized for Inter */
+
+/* Heading Styles */
+h1 {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-bold); /* 700 - Strong emphasis for main headings */
+  font-size: var(--text-4xl);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+h2 {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-semibold); /* 600 - Moderate emphasis for subheadings */
+  font-size: var(--text-3xl);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+}
+
+h3 {
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: var(--text-2xl);
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+h4 {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: var(--text-xl);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+h5, h6 {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: var(--text-lg);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+/* Body Text Variations */
+p {
+  font-family: var(--font-primary);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+/* Small Text */
+.text-small {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+/* Large Text */
+.text-large {
+  font-size: var(--text-lg);
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Numerical Data Styling (Perfect for Calculator) */
+.number-display {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: var(--text-xl);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums; /* Monospaced numbers */
+}
+
+/* Form Labels */
+label {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Input Fields */
+input, select, textarea {
+  font-family: var(--font-primary);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+/* Button Text */
+button {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for interactive elements */
+  font-size: var(--text-base);
+  line-height: 1.5;
+  letter-spacing: 0.025em; /* Positive tracking for better button readability */
+}
+
+/* Typography Utility Classes */
+.text-primary { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-tertiary { color: var(--text-tertiary) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+.font-light { font-weight: var(--font-weight-light) !important; }
+.font-normal { font-weight: var(--font-weight-normal) !important; }
+.font-medium { font-weight: var(--font-weight-medium) !important; }
+.font-semibold { font-weight: var(--font-weight-semibold) !important; }
+.font-bold { font-weight: var(--font-weight-bold) !important; }
+.font-extrabold { font-weight: var(--font-weight-extrabold) !important; }
+
+.text-xs { font-size: var(--text-xs) !important; }
+.text-sm { font-size: var(--text-sm) !important; }
+.text-base { font-size: var(--text-base) !important; }
+.text-lg { font-size: var(--text-lg) !important; }
+.text-xl { font-size: var(--text-xl) !important; }
+.text-2xl { font-size: var(--text-2xl) !important; }
+.text-3xl { font-size: var(--text-3xl) !important; }
+.text-4xl { font-size: var(--text-4xl) !important; }
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  :root {
+    --text-4xl: 2rem;     /* 32px on mobile */
+    --text-3xl: 1.75rem;  /* 28px on mobile */
+    --text-2xl: 1.375rem; /* 22px on mobile */
+  }
+
+  body {
+    font-size: var(--text-sm); /* Slightly smaller base on mobile */
+  }
+
+  .total-amount {
+    font-size: 3rem; /* 48px on mobile - smaller than desktop but still prominent */
+    font-weight: var(--font-weight-extrabold); /* Maintain maximum prominence on mobile */
+    letter-spacing: -0.02em; /* Consistent letter spacing */
+  }
+
+  .total-label {
+    font-weight: var(--font-weight-semibold); /* Consistent with desktop */
+    letter-spacing: 0.025em; /* Maintain label styling */
+    text-transform: uppercase;
+  }
+
+  .total-hours {
+    font-weight: var(--font-weight-medium); /* Consistent with desktop */
+    font-size: var(--text-base); /* 16px on mobile - appropriate for supporting text */
+    letter-spacing: -0.005em;
+  }
+}
+
+/* High DPI Display Optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 /* Performance optimizations for animations */
@@ -336,7 +548,7 @@ body.auth-mode {
   text-decoration: none;
   border-radius: 4px;
   z-index: 9999;
-  font-size: 14px;
+  font-size: var(--text-sm);
   border: 1px solid var(--border-color);
 }
 
@@ -358,11 +570,9 @@ body.auth-mode {
 @keyframes calendarCellFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.8) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
   }
 }
 
@@ -370,11 +580,9 @@ body.auth-mode {
 @keyframes weekNumberFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.8) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
   }
 }
 
@@ -382,16 +590,19 @@ body.auth-mode {
 @keyframes calendarCellFadeInOtherMonth {
   from {
     opacity: 0;
-    transform: scale(0.8) translateY(-10px);
   }
   to {
     opacity: 0.3;
-    transform: scale(1) translateY(0);
   }
 }
 
 body {
-  background: var(--bg-primary);
+  /* Simple top-to-bottom gradient: black at top, gray at bottom */
+  background: linear-gradient(to bottom,
+    #0a0a0a 0%,     /* Black at top */
+    #1a1a1a 100%    /* Gray at bottom */
+  );
+  background-attachment: fixed;
   color: var(--text-primary);
   height: var(--app-height, 100vh);
   overflow: hidden;
@@ -422,9 +633,12 @@ body {
 
 .header {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   padding: 20px;
   border-bottom: 1px solid var(--border);
   border-radius: 0 0 24px 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
   overflow: visible;
   min-height: 80px; /* Fixed minimum height to prevent layout shift */
@@ -464,7 +678,7 @@ body {
 }
 
 .header-logo-link:hover {
-  transform: scale(1.05);
+  opacity: 0.8;
 }
 
 .header-right {
@@ -478,7 +692,7 @@ body {
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  font-size: 14px;
+  font-size: var(--text-sm);
   padding: 8px 12px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
@@ -489,17 +703,17 @@ body {
 }
 
 .header-back-btn:hover {
-  transform: var(--lift-small) var(--scale-hover);
-  box-shadow: var(--shadow-hover-accent);
-  border-color: var(--accent);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .header-back-btn svg {
-  transition: transform var(--speed-normal) var(--ease-default);
+  transition: color var(--speed-normal) var(--ease-default);
 }
 
 .header-back-btn:hover svg {
-  transform: translateX(-2px);
+  color: rgba(99, 102, 241, 0.7);
 }
 
 .header-content {
@@ -510,8 +724,9 @@ body {
 }
 
 .header h1 {
-  font-size: 24px;
+  font-size: var(--text-2xl);
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .settings-btn {
@@ -521,7 +736,7 @@ body {
   padding: 8px 12px;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--text-sm);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -529,9 +744,9 @@ body {
 }
 
 .settings-btn:hover {
-  transform: var(--lift-small) var(--scale-hover);
-  box-shadow: var(--shadow-hover-accent);
-  border-color: var(--accent);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .settings-btn:hover svg {
@@ -563,7 +778,7 @@ body {
 .header-info {
   display: flex;
   gap: 15px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   align-items: center;
   width: 100%;
@@ -579,188 +794,73 @@ body {
   gap: 5px;
 }
 
-.month-selector {
-  position: relative;
-  display: inline-block;
-  z-index: 300;
-  margin-left: 12px; /* push month picker away from the logo */
-}
-
-.month-button {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
+/* Month navigation container - positioned above shift list */
+.month-navigation-container {
   display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
-  border-radius: 16px;
-  transition: all var(--speed-normal) var(--ease-default);
-  font-size: 14px;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding-top: 6px;
 }
 
-.month-button:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  transform: var(--lift-small);
-  box-shadow: var(--shadow-hover);
-}
-
-.month-dropdown {
-  display: none;
-  position: fixed; /* Changed to fixed positioning to escape stacking context */
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.3);
-  z-index: 9999; /* Even higher z-index since we're using fixed positioning */
-  min-width: 150px;
-  max-height: 300px;
-  overflow-y: auto;
-  /* Removed transform since positioning is handled by JavaScript */
-}
-
-.month-dropdown.active {
-  display: block;
-}
-
-.month-option {
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all var(--speed-fast);
-  font-size: 14px;
-  border-bottom: 1px solid var(--border);
-}
-
-.month-option:last-child {
-  border-bottom: none;
-}
-
-.month-option:hover {
-  background: var(--bg-tertiary);
-  transform: var(--lift-small);
-  padding-left: 16px;
-}
-
-.month-option.current {
-  background: var(--accent);
-  color: var(--bg-primary);
-  font-weight: 600;
-}
-
-/* Month Navigation Component - Now as Section Header */
 .month-navigation {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 20px 0 16px 0;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 100;
-}
-
-/* Specific styling for month navigation as shift section header */
-.month-navigation.shift-section-header {
-  margin-top: 0;
-  margin-bottom: 24px;
-  padding-top: 24px;
-  padding-bottom: 20px;
-  border-top: 2px solid var(--border);
-  background: var(--bg-primary);
-  /* Rounded corners on all sides for polished, consistent styling */
-  border-radius: 16px;
-  /* Ensure proper z-index to avoid conflicts with floating elements */
-  z-index: 50;
-  /* Add subtle shadow for visual separation */
-  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+  gap: 16px;
+  z-index: 300;
 }
 
 .month-nav-btn {
+  /* Apply consistent button styling with circular shape */
   background: var(--bg-tertiary);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  color: var(--text-primary);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  color: var(--text-secondary);
+  padding: 0;
+  font-size: var(--text-base);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
   transition: all var(--speed-normal) var(--ease-default);
-  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
 }
 
 .month-nav-btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--accent3);
-  color: var(--text-primary);
-  transform: var(--lift-small);
-  box-shadow: 0 2px 8px -2px var(--shadow-accent);
+  border-color: rgba(99, 102, 241, 0.3);
+  background-color: rgba(255, 255, 255, 0.02);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
 .month-nav-btn:active {
-  transform: var(--scale-active);
+  transform: translateY(0);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
-.month-nav-btn .icon-sm {
-  width: 16px;
-  height: 16px;
-}
-
-.month-nav-display {
-  font-size: 16px;
-  font-weight: 600;
+.month-display {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-medium); /* 500 - Moderate emphasis for navigation */
   color: var(--text-primary);
   min-width: 120px;
   text-align: center;
-  flex-shrink: 0;
+  letter-spacing: -0.01em; /* Subtle negative tracking for better readability */
 }
 
-/* Legacy placeholder - no longer needed since month navigation is now a section header */
-.month-navigation-placeholder {
-  display: none;
-}
 
-/* Responsive adjustments for month navigation */
-@media (max-width: 768px) {
-  .month-navigation.shift-section-header {
-    padding-top: 20px;
-    padding-bottom: 18px;
-    margin-bottom: 22px;
-  }
-}
 
-@media (max-width: 480px) {
-  .month-navigation {
-    gap: 16px;
-    padding: 16px 0 12px 0;
-  }
+/* Legacy month navigation styles - removed since navigation moved to floating action bar */
 
-  .month-navigation.shift-section-header {
-    padding-top: 20px;
-    padding-bottom: 16px;
-    margin-bottom: 20px;
-  }
 
-  .month-nav-btn {
-    width: 32px;
-    height: 32px;
-  }
-
-  .month-nav-btn .icon-sm {
-    width: 14px;
-    height: 14px;
-  }
-
-  .month-nav-display {
-    font-size: 14px;
-    min-width: 100px;
-  }
-}
 
 /* Forms */
 .form-group {
@@ -770,7 +870,7 @@ body {
 /* Form group labels - clear hierarchy */
 .form-group label {
   display: block;
-  font-size: 16px;
+  font-size: var(--text-base);
   color: var(--text-secondary);
   margin-bottom: 8px; /* Comfortable spacing to related content */
   font-weight: 500;
@@ -801,12 +901,17 @@ body {
 
 .form-control {
   background: var(--bg-tertiary);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 12px;
   color: var(--text-primary);
-  font-size: 16px; /* Prevents zoom on iOS */
+  font-size: var(--text-base); /* Prevents zoom on iOS */
   width: 100%;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
   /* Optimized transitions - only animate specific properties */
   transition: border-color var(--speed-normal) var(--ease-default),
               box-shadow var(--speed-normal) var(--ease-default),
@@ -824,16 +929,18 @@ select.form-control {
 }
 
 .form-control:hover {
-  transform: var(--lift-small);
-  border-color: var(--accent3);
-  box-shadow: 0 4px 12px -4px var(--shadow-accent);
+  border-color: rgba(99, 102, 241, 0.3);
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .form-control:focus {
   outline: none;
-  border-color: var(--primary);
-  transform: var(--lift-small);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 6px 16px -6px var(--shadow-hover-accent);
+  border-color: rgba(99, 102, 241, 0.6);
+  background-color: rgba(255, 255, 255, 0.03);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 0 0 3px rgba(99, 102, 241, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .form-control:focus-visible {
@@ -899,8 +1006,8 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .time-input:invalid:focus {
-  border-color: var(--danger);
-  box-shadow: 0 6px 16px -6px rgba(255, 107, 129, 0.3);
+  border-color: rgba(255, 107, 129, 0.6);
+  background-color: rgba(255, 107, 129, 0.05);
 }
 
 /* Date Grid */
@@ -922,7 +1029,7 @@ input[type="time"].form-control[value=""]:focus {
   border-radius: 16px;
   padding: 4px 2px;
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1;
@@ -999,7 +1106,7 @@ input[type="time"].form-control[value=""]:focus {
   background: transparent;
   border: none;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-secondary);
   writing-mode: vertical-rl;
@@ -1011,7 +1118,7 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .week-number.header {
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 500;
   writing-mode: horizontal-tb;
   text-orientation: initial;
@@ -1023,9 +1130,14 @@ input[type="time"].form-control[value=""]:focus {
   padding: 12px 24px;
   border: none;
   border-radius: 16px;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for buttons */
   cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   /* Optimized transitions - only animate specific properties */
   transition: transform var(--speed-normal) var(--ease-default),
               background-color var(--speed-normal) var(--ease-default),
@@ -1040,6 +1152,7 @@ input[type="time"].form-control[value=""]:focus {
   min-height: 44px; /* Touch-friendly minimum */
   min-width: 44px;
   line-height: 1;
+  letter-spacing: 0.025em; /* Positive tracking for button text */
 }
 
 .btn:focus-visible {
@@ -1050,16 +1163,15 @@ input[type="time"].form-control[value=""]:focus {
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none !important;
 }
 
 .btn:hover {
-  transform: var(--lift-medium) var(--scale-hover);
-  box-shadow: var(--shadow-hover-accent);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 .btn:active {
-  transform: var(--scale-active);
+  background-color: rgba(255, 255, 255, 0.05);
   transition-duration: 0.1s;
 }
 
@@ -1078,21 +1190,19 @@ input[type="time"].form-control[value=""]:focus {
 
 /* Styling for tilbake-knapper */
 .btn-secondary:hover {
-  transform: translateY(-1px);
-  border-color: var(--accent3);
-  box-shadow: 0 4px 12px -4px var(--shadow-accent);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
-/* Remove "flying" hover effects from buttons inside settings modal */
+/* Settings modal button styling */
 #settingsModal .btn:hover {
-  transform: none; /* Override general button hover transform */
-  box-shadow: var(--shadow-hover-accent); /* Keep shadow but remove movement */
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 #settingsModal .btn-secondary:hover {
-  transform: none; /* Override secondary button hover transform */
-  border-color: var(--accent3);
-  box-shadow: 0 4px 12px -4px var(--shadow-accent);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .btn-secondary svg {
@@ -1100,7 +1210,7 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .btn-secondary:hover svg {
-  transform: translateX(-2px);
+  color: rgba(99, 102, 241, 0.6);
 }
 
 .btn-danger {
@@ -1188,6 +1298,8 @@ input[type="time"].form-control[value=""]:focus {
 
 .modal-content {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   margin: 0;
   border-radius: 24px;
   max-width: 600px;
@@ -1196,8 +1308,10 @@ input[type="time"].form-control[value=""]:focus {
   overflow-y: auto;
   position: relative;
   border: 1px solid var(--border);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   animation: gradientSlide 0.5s ease;
-  box-shadow: 0 16px 48px -12px var(--shadow-accent);
 }
 
 /* Desktop sizing - make modal not full screen on larger screens */
@@ -1281,7 +1395,7 @@ input[type="time"].form-control[value=""]:focus {
   min-height: 500px;
   overflow: hidden;
   border-radius: 24px;
-  box-shadow: 0 16px 48px -12px var(--shadow-accent);
+  border: 2px solid var(--border);
 }
 
 @media (max-width: 600px) {
@@ -1349,7 +1463,7 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .modal-title {
-  font-size: 20px;
+  font-size: var(--text-xl);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -1367,8 +1481,8 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .modal-close:hover {
-  color: var(--accent);
-  /* Removed transform to prevent "flying" effect */
+  color: rgba(99, 102, 241, 0.7);
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .modal-close:hover svg {
@@ -1393,11 +1507,12 @@ input[type="time"].form-control[value=""]:focus {
   border: none;
   color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium); /* 500 - Moderate emphasis for tabs */
   border-radius: 16px;
   transition: all var(--speed-normal) var(--ease-default);
   position: relative;
+  letter-spacing: 0.01em; /* Slight positive tracking for tab readability */
 }
 
 .tab-btn:hover {
@@ -1408,8 +1523,9 @@ input[type="time"].form-control[value=""]:focus {
 .tab-btn.active {
   background: rgba(255, 255, 255, 0.02);
   color: var(--text-primary);
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border);
+  font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for active tabs */
+  border: 1px solid var(--border);
+  letter-spacing: 0.015em; /* Slightly more tracking for active state */
 }
 
 .tab-content {
@@ -1428,7 +1544,7 @@ input[type="time"].form-control[value=""]:focus {
 
 .view-toggle .tab-btn {
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 
 /* Calendar display toggle */
@@ -1437,12 +1553,12 @@ input[type="time"].form-control[value=""]:focus {
   justify-content: center;
   padding: 16px 20px;
   border-top: 1px solid var(--border-color);
-  background: var(--bg-primary);
+  background: transparent;
 }
 
 .calendar-toggle-nav {
   display: flex;
-  background: var(--bg-secondary);
+  background: transparent;
   border-radius: 24px;
   padding: 4px;
   gap: 4px;
@@ -1456,7 +1572,7 @@ input[type="time"].form-control[value=""]:focus {
   border: none;
   color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 500;
   border-radius: 24px;
   transition: all var(--speed-normal) var(--ease-default);
@@ -1475,14 +1591,14 @@ input[type="time"].form-control[value=""]:focus {
   background: rgba(255, 255, 255, 0.02);
   color: var(--text-primary);
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border);
+  border: 1px solid var(--border);
 }
 
 /* Calendar hours display styling */
 .calendar-hours-display {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 1px;
   width: 100%;
   padding: 0;
@@ -1492,10 +1608,10 @@ input[type="time"].form-control[value=""]:focus {
 .calendar-hours-total {
   color: var(--accent);
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--text-xs);
   text-align: left !important;
   line-height: 1.2;
-  width: 100%;
+  width: auto;
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
   white-space: pre;
   padding: 0 !important;
@@ -1532,11 +1648,11 @@ input[type="time"].form-control[value=""]:focus {
   align-items: flex-start;
 }
 
-/* Ensure time text is fully left-aligned */
+/* Ensure time lines are left-aligned relative to each other within the centered container */
 .calendar-cell.hours-mode .calendar-hours-total {
   text-align: left !important;
-  justify-self: flex-start;
-  align-self: flex-start;
+  justify-self: center;
+  align-self: center;
 }
 
 /* Responsive adjustments for calendar toggle */
@@ -1547,7 +1663,7 @@ input[type="time"].form-control[value=""]:focus {
   
   .calendar-toggle-btn {
     padding: 6px 12px;
-    font-size: 13px;
+    font-size: var(--text-xs);
     min-width: 70px;
   }
 }
@@ -1566,7 +1682,6 @@ input[type="time"].form-control[value=""]:focus {
   max-height: 85vh;
   height: auto;
   border: 2px solid var(--accent);
-  box-shadow: 0 20px 60px -12px var(--shadow-accent);
   text-align: center;
   overflow-y: auto;
   margin: 0;
@@ -1586,7 +1701,7 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 #recurringIntroModal .modal-title {
-  font-size: 22px;
+  font-size: var(--text-xl);
   background: linear-gradient(135deg, var(--accent), var(--accent3));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1599,7 +1714,7 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 #recurringIntroModal .modal-body h4 {
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--accent);
   text-align: center;
@@ -1651,9 +1766,7 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .slider:hover {
-  background-color: var(--accent3);
-  transform: var(--lift-small);
-  box-shadow: 0 4px 8px -2px var(--shadow-accent);
+  background-color: rgba(99, 102, 241, 0.3);
 }
 
 .slider:before {
@@ -1699,8 +1812,9 @@ input:checked + .slider:before {
 /* Form hint for compact info */
 .form-hint {
   display: block;
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--text-tertiary);
   opacity: 0.8;
   margin-top: 4px; /* Tight spacing - directly related to input above */
   line-height: 1.4;
@@ -1719,7 +1833,7 @@ input:checked + .slider:before {
 /* Compact buttons in settings */
 .tab-content .btn {
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   margin-top: 0; /* Reset - spacing handled by parent */
 }
 
@@ -1750,7 +1864,7 @@ input:checked + .slider:before {
 }
 
 .time-label {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   font-weight: 500;
   margin-bottom: 2px;
@@ -1778,8 +1892,8 @@ input:checked + .slider:before {
 }
 
 .bonus-slot .remove-bonus:hover {
-  background: rgba(255, 107, 129, 0.1);
-  transform: scale(1.1);
+  background: rgba(255, 107, 129, 0.06);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Info Box */
@@ -1801,7 +1915,8 @@ input:checked + .slider:before {
 }
 
 .info-content {
-  font-size: 14px;
+  font-size: var(--text-sm);
+  font-weight: 400;
   line-height: 1.4;
   color: var(--text-primary);
 }
@@ -1813,7 +1928,7 @@ input:checked + .slider:before {
 /* Shift Toggle */
 .add-shift-button {
   background: var(--gradient-secondary);
-  border: none;
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 16px 24px;
   margin: 0 0 20px 0;
@@ -1824,20 +1939,21 @@ input:checked + .slider:before {
   gap: 8px;
   transition: all var(--speed-normal) var(--ease-default);
   color: var(--text-secondary);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for action buttons */
   width: 100%;
-  box-shadow: 0 4px 16px -4px var(--shadow-accent);
+  letter-spacing: 0.025em; /* Positive tracking for action buttons */
+  text-transform: uppercase; /* Modern action button styling */
 }
 
 .add-shift-button:hover {
-  transform: var(--lift-small);
-  box-shadow: var(--shadow-hover-accent);
-  filter: brightness(1.1);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .add-shift-button:active {
-  transform: var(--scale-active);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .add-shift-button .icon {
@@ -1872,7 +1988,7 @@ input:checked + .slider:before {
   align-items: center;
   gap: 8px;
   padding: 0 16px;
-  background: var(--bg-primary);
+  background: transparent;
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
@@ -1910,6 +2026,8 @@ input:checked + .slider:before {
 
 .shift-item {
   background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 24px;
   padding: 18px;
@@ -1919,6 +2037,9 @@ input:checked + .slider:before {
   transition: all var(--speed-normal) var(--ease-default);
   min-height: 80px;
   border-left: 4px solid var(--border);
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
   opacity: 0.9;
 }
 
@@ -1942,11 +2063,12 @@ input:checked + .slider:before {
 }
 
 .shift-date {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold); /* 600 - Same as stat-value for consistency */
   margin-bottom: 2px;
-  font-size: 16px;
+  font-size: var(--text-lg); /* 18px - Same size as stat-value */
+  color: var(--text-primary);
   line-height: 1.2;
-  letter-spacing: 0.5px;
+  letter-spacing: -0.005em; /* Subtle negative tracking */
   display: flex;
   align-items: center;
 }
@@ -1962,7 +2084,7 @@ input:checked + .slider:before {
 .shift-date-separator::before {
   content: '•';
   color: var(--text-secondary);
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: bold;
 }
 
@@ -1980,8 +2102,10 @@ input:checked + .slider:before {
 .shift-details {
   display: flex;
   align-items: center;
-  font-size: 14px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-normal); /* 400 - General text weight */
   color: var(--text-secondary);
+  letter-spacing: -0.005em; /* Subtle negative tracking for better readability */
 }
 
 .shift-time-with-hours {
@@ -2006,7 +2130,7 @@ input:checked + .slider:before {
   display: inline-block;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   background: var(--bg-tertiary);
   color: var(--text-primary);
   font-weight: 500;
@@ -2043,16 +2167,18 @@ input:checked + .slider:before {
 }
 
 .shift-total {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold); /* 700 - Strong emphasis for shift amounts */
   color: var(--text-primary);
   line-height: 1.2;
   opacity: 0.8;
+  letter-spacing: -0.01em; /* Slight negative tracking for numbers */
 }
 
 .shift-breakdown {
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--text-tertiary);
   white-space: nowrap;
 }
 
@@ -2067,7 +2193,6 @@ input:checked + .slider:before {
 .login-card {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   border-radius: 16px;
-  box-shadow: 0 8px 32px -8px var(--shadow-accent);
   padding: 32px 28px 24px 28px;
   max-width: 350px;
   width: 100%;
@@ -2119,26 +2244,29 @@ input:checked + .slider:before {
 
 .login-card h2 {
   color: var(--text-primary);
-  font-size: 22px;
+  font-size: var(--text-xl);
   font-weight: 600;
   text-align: center;
   margin-bottom: 20px;
 }
 
 .login-card .btn {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for login actions */
   border-radius: 16px;
   padding: 12px 0;
   width: 100%;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
   border: none;
+  letter-spacing: 0.025em; /* Positive tracking for button text */
+  text-transform: uppercase; /* Modern button styling */
 }
 
 .login-card .btn-primary:hover,
 .login-card .btn-secondary:hover {
-  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 /* Center for auth modals - fixed positioning for laptops */
@@ -2207,37 +2335,30 @@ input:checked + .slider:before {
 /* Overview Section Adjustments */
 .total-card {
   background: var(--gradient-secondary);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 30px;
   text-align: center;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  /* Fabric-pushing effect - card appears to bulge through surface from behind */
+  border: 1px solid var(--border);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.15),           /* Large, soft shadow for fabric displacement */
-    0 4px 16px rgba(0, 0, 0, 0.2),            /* Medium shadow for elevation */
-    0 2px 8px rgba(0, 0, 0, 0.25),            /* Close shadow for definition */
-    0 16px 48px rgba(0, 0, 0, 0.08),          /* Very large, soft shadow for fabric stretch */
-    0 -2px 8px rgba(255, 255, 255, 0.03);     /* Subtle top highlight for fabric tension */
-  /* Subtle border to simulate fabric edge tension */
-  border: 1px solid rgba(255, 255, 255, 0.05);
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   position: relative;
   overflow: hidden;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
-  /* Slight transform to simulate initial fabric bulge */
-  transform: translateY(-1px);
 }
 
 .total-card:hover {
-  /* Increase the fabric-pushing effect on hover */
-  transform: translateY(-3px);
+  background-color: rgba(255, 255, 255, 0.02);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
   box-shadow:
-    0 12px 48px rgba(0, 0, 0, 0.18),          /* Larger, softer shadow for more displacement */
-    0 6px 24px rgba(0, 0, 0, 0.25),           /* Deeper medium shadow */
-    0 3px 12px rgba(0, 0, 0, 0.3),            /* Deeper close shadow */
-    0 24px 64px rgba(0, 0, 0, 0.1),           /* Even larger fabric stretch shadow */
-    0 -3px 12px rgba(255, 255, 255, 0.04);    /* Brighter top highlight for more tension */
+    0 12px 40px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .total-card::before {
@@ -2311,25 +2432,33 @@ input:checked + .slider:before {
 
 .total-label {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold); /* 600 - Subtle emphasis for section labels */
   margin-bottom: 10px;
+  letter-spacing: 0.025em; /* Slight positive tracking for labels */
+  text-transform: uppercase; /* Modern label styling */
 }
 
 .total-amount {
-  font-size: 48px;
-  font-weight: 700;
+  font-size: 3.5rem; /* 56px - More balanced size, less cartoonish */
+  font-weight: var(--font-weight-extrabold); /* 800 - Maximum prominence for total pay */
   background: var(--gradient-neon);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
   z-index: 1;
+  line-height: 1.1;
+  margin: 8px 0; /* Add some vertical spacing to accommodate larger size */
+  letter-spacing: -0.02em; /* Tighter letter spacing for large amounts */
 }
 
 .total-hours {
-  color: var(--text-secondary);
-  font-size: 14px;
+  color: var(--text-primary); /* White color to match progress label */
+  font-size: var(--text-lg); /* 18px - same size as progress label */
+  font-weight: var(--font-weight-medium); /* 500 - Supporting text weight */
   margin-top: 10px;
+  letter-spacing: -0.005em; /* Subtle negative tracking */
 }
 
 .breakdown-cards {
@@ -2370,20 +2499,18 @@ input:checked + .slider:before {
 
 .breakdown-card {
   background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 20px;
   text-align: center;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
-  /* Fabric-pushing effect - smaller scale than total-card but same principle */
+  border: 1px solid var(--border);
   box-shadow:
-    0 6px 24px rgba(0, 0, 0, 0.12),           /* Large, soft shadow for fabric displacement */
-    0 3px 12px rgba(0, 0, 0, 0.18),           /* Medium shadow for elevation */
-    0 1px 6px rgba(0, 0, 0, 0.22),            /* Close shadow for definition */
-    0 12px 36px rgba(0, 0, 0, 0.06),          /* Large, soft shadow for fabric stretch */
-    0 -1px 6px rgba(255, 255, 255, 0.025);    /* Subtle top highlight for fabric tension */
-  /* Subtle border to simulate fabric edge tension */
-  border: 1px solid rgba(255, 255, 255, 0.03);
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   position: relative;
   overflow: hidden;
   min-height: 120px;
@@ -2392,19 +2519,16 @@ input:checked + .slider:before {
   justify-content: center;
   align-items: center;
   gap: 8px;
-  /* Slight transform to simulate initial fabric bulge */
-  transform: translateY(-0.5px);
 }
 
 .breakdown-card:hover {
-  /* Increase the fabric-pushing effect on hover */
+  background-color: rgba(255, 255, 255, 0.02);
+  border-color: rgba(99, 102, 241, 0.3);
   transform: translateY(-2px);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.15),           /* Larger, softer shadow for more displacement */
-    0 4px 16px rgba(0, 0, 0, 0.22),           /* Deeper medium shadow */
-    0 2px 8px rgba(0, 0, 0, 0.28),            /* Deeper close shadow */
-    0 16px 48px rgba(0, 0, 0, 0.08),          /* Larger fabric stretch shadow */
-    0 -2px 8px rgba(255, 255, 255, 0.035);    /* Brighter top highlight for more tension */
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* Responsive padding for breakdown cards */
@@ -2442,10 +2566,10 @@ input:checked + .slider:before {
 }
 
 .breakdown-value {
-  font-size: 32px;
-  font-weight: 600;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold); /* 700 - Strong emphasis for card numbers */
   margin: 0;
-  color: var(--text-primary);
+  color: var(--text-secondary); /* Grey color for less important values */
   position: relative;
   z-index: 1;
   line-height: 1.1;
@@ -2456,35 +2580,37 @@ input:checked + .slider:before {
   width: 100%;
   flex-shrink: 0;
   opacity: 0.9;
+  letter-spacing: -0.015em; /* Slight negative tracking for better readability */
 }
 
 /* Responsive font sizes for breakdown values */
 @media (max-width: 480px) {
   .breakdown-value {
-    font-size: 28px;
+    font-size: var(--text-2xl);
   }
 }
 
 @media (max-width: 360px) {
   .breakdown-value {
-    font-size: 26px;
+    font-size: var(--text-xl);
   }
 }
 
 @media (max-width: 320px) {
   .breakdown-value {
-    font-size: 24px;
+    font-size: var(--text-lg);
   }
 }
 
 @media (max-width: 280px) {
   .breakdown-value {
-    font-size: 22px;
+    font-size: var(--text-base);
   }
 }
 
 .breakdown-label {
-  font-size: 14px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium); /* 500 - Consistent with supporting text */
   color: var(--text-secondary);
   position: relative;
   z-index: 1;
@@ -2494,24 +2620,25 @@ input:checked + .slider:before {
   width: 100%;
   margin: 0;
   flex-shrink: 0;
+  letter-spacing: 0.01em; /* Slight positive tracking for readability */
 }
 
 /* Responsive font sizes for breakdown labels */
 @media (max-width: 360px) {
   .breakdown-label {
-    font-size: 13px;
+    font-size: var(--text-xs);
   }
 }
 
 @media (max-width: 320px) {
   .breakdown-label {
-    font-size: 12px;
+    font-size: var(--text-xs);
   }
 }
 
 @media (max-width: 280px) {
   .breakdown-label {
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
 }
 
@@ -2572,11 +2699,9 @@ input:checked + .slider:before {
 
 @keyframes iconPulse {
   0%, 100% {
-    transform: scale(1);
     opacity: 0.8;
   }
   50% {
-    transform: scale(1.05);
     opacity: 1;
   }
 }
@@ -2718,10 +2843,8 @@ input:checked + .slider:before {
 }
 
 .calendar-cell.has-shifts:hover {
-  background: var(--gradient-primary);
-  border: 1px solid var(--accent);
-  transform: scale(1.05);
-  box-shadow: 0 4px 16px -4px var(--shadow-soft);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
 .calendar-cell.empty-date {
@@ -2733,10 +2856,8 @@ input:checked + .slider:before {
 }
 
 .calendar-cell.empty-date:hover {
-  background: var(--bg-secondary);
-  border: 1px solid var(--accent);
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px var(--shadow-soft);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
 .calendar-cell.empty-date:hover::after {
@@ -2872,12 +2993,16 @@ input:checked + .slider:before {
 /* Style the shift-item when it's inside the next-shift-card */
 .next-shift-card .shift-item {
   background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 24px; /* Fully rounded edges */
   padding: 18px;
   margin: 0;
   border: 1px solid var(--border);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   transition: all var(--speed-normal) var(--ease-default);
-  box-shadow: 0 4px 16px -4px var(--shadow-soft);
   min-height: 80px;
   position: relative;
   overflow: hidden; /* Add overflow hidden to contain the badge */
@@ -2886,7 +3011,7 @@ input:checked + .slider:before {
 /* Active next shift - when it's today or tomorrow */
 .next-shift-card .shift-item.active {
   background: var(--gradient-secondary);
-  box-shadow: 0 4px 16px -4px var(--shadow-soft);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 .next-shift-empty {
@@ -3110,12 +3235,11 @@ input:checked + .slider:before {
   color: var(--text-primary);
   text-align: left;
   opacity: 0;
-  transform: translateY(30px) scale(0.95);
   animation: slideUpFadeIn 0.6s var(--ease-default) forwards;
   padding: 18px 24px;
   margin: 0 0 14px 0;
-  background: var(--shadow-accent);
-  border: 1px solid var(--shadow-accent);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
   border-radius: 14px;
   display: flex;
   justify-content: space-between;
@@ -3126,10 +3250,8 @@ input:checked + .slider:before {
 }
 
 .breakdown-card .details li:hover {
-  background: var(--shadow-accent);
-  border-color: var(--accent);
-  transform: translateX(4px) scale(1.02);
-  box-shadow: 0 4px 12px var(--shadow-accent);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .breakdown-card .details li .date {
@@ -3168,29 +3290,24 @@ input:checked + .slider:before {
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.8);
   }
   to {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
 @keyframes slideUpFadeIn {
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -3215,22 +3332,18 @@ input:checked + .slider:before {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
   }
 }
 
 @keyframes fadeOutDown {
   from {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
   }
   to {
     opacity: 0;
-    transform: translateX(-50%) translateY(20px);
   }
 }
 
@@ -3238,33 +3351,27 @@ input:checked + .slider:before {
 @keyframes slideInFromTop {
   from {
     opacity: 0;
-    transform: translateY(-20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 @keyframes slideInFromBottom {
   from {
     opacity: 0;
-    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 @keyframes scaleInDelayed {
   from {
     opacity: 0;
-    transform: scale(0.8);
   }
   to {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -3272,22 +3379,18 @@ input:checked + .slider:before {
 @keyframes shiftDetailEnter {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
   }
 }
 
 @keyframes shiftDetailExit {
   from {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
   }
   to {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
   }
 }
 
@@ -3296,9 +3399,6 @@ input:checked + .slider:before {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   border: 1px solid var(--border);
   border-radius: 20px;
-  box-shadow: 
-    0 32px 64px var(--shadow-accent),
-    0 16px 32px rgba(0, 0, 0, 0.3);
   animation: shiftDetailEnter 0.4s var(--ease-default) forwards;
 }
 
@@ -3423,10 +3523,9 @@ input:checked + .slider:before {
 }
 
 .shift-detail-card .close-btn:hover {
-  background: var(--accent2-alpha);
-  border-color: var(--accent2);
-  transform: scale(1.1);
-  color: var(--accent2);
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: rgba(16, 185, 129, 0.8);
 }
 
 /* Responsive adjustments for shift detail modal */
@@ -3464,7 +3563,9 @@ input:checked + .slider:before {
     width: calc(100vw - 20px) !important;
     left: 10px !important;
     right: 10px !important;
-    transform: translateX(0) translateY(-50%) !important;
+    top: 50% !important;
+    left: 10px !important;
+    right: 10px !important;
     margin: 0;
     padding: 16px !important;
     border-radius: 16px;
@@ -3586,7 +3687,7 @@ input:checked + .slider:before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--bg-primary);
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -3665,33 +3766,27 @@ input:checked + .slider:before {
 @keyframes letter-in {
   from {
     opacity: 0;
-    transform: translateX(100%);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
   }
 }
 
 @keyframes letter-out {
   from {
     opacity: 1;
-    transform: scale(1);
   }
   to {
     opacity: 0;
-    transform: scale(20);
   }
 }
 
 @keyframes fadeInDown {
   from {
     opacity: 0;
-    transform: translateY(-20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -3811,12 +3906,11 @@ input:checked + .slider:before {
 .form-actions .modal-close-bottom:hover,
 .modal-bottom-actions .modal-close-bottom:hover,
 .modal-fixed-footer .modal-close-bottom:hover {
-  background: rgba(255, 102, 153, 0.25);
+  background: rgba(255, 102, 153, 0.12);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-color: rgba(255, 102, 153, 0.6);
-  color: white;
-  transform: scale(1.1);
+  border-color: rgba(255, 102, 153, 0.4);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Hide text inside circular close buttons, keep only the X icon */
@@ -4287,7 +4381,7 @@ input:checked + .slider:before {
 .snap-section.shift-section {
   min-height: var(--app-height, 100vh);
   height: auto;
-  background: var(--bg-primary); /* Changed to match dashboard section */
+  background: transparent;
   padding-bottom: 100px; /* Add space for floating bar */
 }
 
@@ -4295,7 +4389,7 @@ input:checked + .slider:before {
 
 /* Dashboard section styling */
 .dashboard-section {
-  background: var(--bg-primary);
+  background: transparent;
 }
 
 .dashboard-section .app-container {
@@ -4314,11 +4408,12 @@ input:checked + .slider:before {
   padding-top: 20px;
   padding-bottom: 20px;
   gap: 20px;
+  position: relative;
 }
 
 /* Shift section styling */
 .shift-section {
-  background: var(--bg-primary); /* Changed from var(--bg-secondary) to match dashboard */
+  background: transparent;
   padding-top: 20px;
   min-height: var(--app-height, 100vh);
   padding-bottom: 100px; /* Add space for floating bar */
@@ -4409,14 +4504,14 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px -4px var(--shadow-accent);
+  border: 1px solid var(--border);
   transition: all var(--speed-normal) var(--ease-default);
   margin-left: 0;
 }
 
 .calendar-icon-large:hover {
-  transform: var(--lift-small) var(--scale-hover);
-  box-shadow: 0 6px 24px -3px var(--shadow-accent);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 .calendar-icon-large svg {
@@ -4532,7 +4627,9 @@ input:checked + .slider:before {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--bg-card);
+  background: rgba(26, 26, 29, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
   border-radius: 24px;
   padding: 12px 16px;
@@ -4540,12 +4637,12 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: space-between; /* Distribute space evenly */
   gap: 12px;
-  box-shadow: 0 8px 32px -4px var(--shadow);
   z-index: 1000;
   width: 70%; /* Fixed percentage of viewport */
   max-width: 600px; /* Cap maximum width for large screens */
-  backdrop-filter: blur(10px);
-  background: rgba(26, 26, 29, 0.95);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: opacity 0.3s ease-out;
   box-sizing: border-box;
 }
@@ -4634,22 +4731,77 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   color: white;
   cursor: pointer;
   font-size: 14px;
+  font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for primary actions */
   display: flex;
   align-items: center;
   gap: 8px;
   transition: all var(--speed-normal) var(--ease-default);
   flex: 0 0 auto; /* Don't grow/shrink */
   white-space: nowrap;
+  letter-spacing: 0.025em; /* Positive tracking for action buttons */
+  text-transform: uppercase; /* Modern action button styling */
 }
 
 .floating-action-bar .add-btn:hover {
-  transform: var(--scale-hover);
-  box-shadow: 0 4px 16px -2px var(--shadow-accent);
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(99, 102, 241, 0.4);
 }
 
 .floating-action-bar .add-btn svg {
   width: 18px;
   height: 18px;
+}
+
+/* Month Navigation in Floating Action Bar */
+.month-navigation-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 0 0 auto; /* Don't grow/shrink */
+}
+
+.month-nav-btn-nav {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--speed-normal) var(--ease-default);
+  flex-shrink: 0;
+}
+
+.month-nav-btn-nav:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: rgba(255, 255, 255, 0.85);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.month-nav-btn-nav:active {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(0);
+}
+
+.month-nav-btn-nav .icon-sm {
+  width: 14px;
+  height: 14px;
+}
+
+.month-nav-display-nav {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 80px;
+  text-align: center;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Responsive adjustments - much simpler! */
@@ -4678,6 +4830,26 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   .floating-action-bar .add-btn svg {
     width: 16px;
     height: 16px;
+  }
+
+  /* Month navigation responsive adjustments */
+  .month-navigation-nav {
+    gap: 8px;
+  }
+
+  .month-nav-btn-nav {
+    width: 28px;
+    height: 28px;
+  }
+
+  .month-nav-btn-nav .icon-sm {
+    width: 12px;
+    height: 12px;
+  }
+
+  .month-nav-display-nav {
+    font-size: var(--text-xs);
+    min-width: 70px;
   }
   
   /* Adjust backdrop height for mobile */
@@ -4710,6 +4882,26 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     width: 14px;
     height: 14px;
   }
+
+  /* Month navigation for extra small screens */
+  .month-navigation-nav {
+    gap: 6px;
+  }
+
+  .month-nav-btn-nav {
+    width: 26px;
+    height: 26px;
+  }
+
+  .month-nav-btn-nav .icon-sm {
+    width: 11px;
+    height: 11px;
+  }
+
+  .month-nav-display-nav {
+    font-size: var(--text-xs);
+    min-width: 60px;
+  }
 }
 
 /* Very small screens - hide button text if needed */
@@ -4720,6 +4912,26 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   
   .floating-action-bar .add-btn {
     padding: 6px 10px; /* Square-ish button when icon only */
+  }
+
+  /* Month navigation for very small screens */
+  .month-navigation-nav {
+    gap: 4px;
+  }
+
+  .month-nav-btn-nav {
+    width: 24px;
+    height: 24px;
+  }
+
+  .month-nav-btn-nav .icon-sm {
+    width: 10px;
+    height: 10px;
+  }
+
+  .month-nav-display-nav {
+    font-size: 11px;
+    min-width: 50px;
   }
 }
 
@@ -4840,14 +5052,32 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     padding-top: 15px;
     padding-bottom: 15px;
   }
-  
+
   .section-header {
     padding: 15px 0;
     margin-bottom: 15px;
   }
-  
+
   .section-header h2 {
     font-size: 20px;
+  }
+
+  .compact-view .total-amount {
+    font-size: 2rem; /* 32px on mobile compact view */
+    font-weight: var(--font-weight-extrabold); /* Maintain prominence in compact view */
+    letter-spacing: -0.02em; /* Consistent letter spacing */
+  }
+
+  .compact-view .total-label {
+    font-weight: var(--font-weight-semibold); /* Consistent hierarchy */
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+  }
+
+  .compact-view .total-hours {
+    font-weight: var(--font-weight-medium); /* Consistent hierarchy */
+    font-size: 14px; /* Increased from default for mobile compact view */
+    letter-spacing: -0.005em;
   }
 }
 
@@ -4867,76 +5097,46 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 }
 
 .stat-card {
-  background: #161616; /* Slightly darker than --bg-card for recessed effect */
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 16px;
   text-align: center;
-  /* Realistic carved depression with curved rim transition */
+  border: 1px solid var(--border);
   box-shadow:
-    /* Outset shadow for surrounding surface elevation before rim */
-    0 0 4px rgba(0, 0, 0, 0.08),              /* Very subtle outset shadow for surface elevation */
-    /* Sharp rim definition where surface begins to curve down */
-    inset 0 1px 2px rgba(0, 0, 0, 0.6),       /* Sharp top rim shadow (minimal blur) */
-    inset 1px 0 2px rgba(0, 0, 0, 0.5),       /* Sharp left rim shadow */
-    /* Rim highlight - light catching the curved edge */
-    inset 0 2px 1px rgba(255, 255, 255, 0.04), /* Rim highlight just inside the edge */
-    inset 2px 1px 1px rgba(255, 255, 255, 0.02), /* Corner rim highlight */
-    /* Smooth curved depression below the rim */
-    inset 0 8px 32px rgba(0, 0, 0, 0.15),      /* Large, soft top shadow for curved slope */
-    inset 0 4px 16px rgba(0, 0, 0, 0.25),      /* Medium top shadow for depth */
-    inset 0 2px 8px rgba(0, 0, 0, 0.35),       /* Small, darker top shadow for definition */
-    inset 0 -4px 16px rgba(255, 255, 255, 0.02), /* Soft bottom highlight */
-    inset 8px 0 32px rgba(0, 0, 0, 0.12),      /* Large, soft left shadow */
-    inset 4px 0 16px rgba(0, 0, 0, 0.2),       /* Medium left shadow */
-    inset -4px 0 16px rgba(255, 255, 255, 0.015), /* Soft right highlight */
-    inset 0 0 24px rgba(0, 0, 0, 0.2),         /* Central depression shadow */
-    inset 0 0 48px rgba(0, 0, 0, 0.1);         /* Large, very soft overall depth */
-  /* Subtle border for rim definition */
-  border: 1px solid rgba(0, 0, 0, 0.3);
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 4px;
   cursor: pointer;
-  /* Smooth transitions for natural material feel */
-  transition: box-shadow var(--speed-normal) var(--ease-default),
-              background-color var(--speed-normal) var(--ease-default);
+  transition: all var(--speed-normal) var(--ease-default);
   position: relative;
 }
 
 .stat-card:hover {
-  /* Deepen the carved depression naturally on hover while maintaining rim */
-  background: #141414;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
   box-shadow:
-    /* Maintain outset shadow for surrounding surface */
-    0 0 6px rgba(0, 0, 0, 0.1),               /* Slightly stronger outset shadow */
-    /* Enhanced rim definition on hover */
-    inset 0 1px 2px rgba(0, 0, 0, 0.7),       /* Sharper top rim shadow */
-    inset 1px 0 2px rgba(0, 0, 0, 0.6),       /* Sharper left rim shadow */
-    /* Brighter rim highlight on hover */
-    inset 0 2px 1px rgba(255, 255, 255, 0.05), /* Brighter rim highlight */
-    inset 2px 1px 1px rgba(255, 255, 255, 0.03), /* Brighter corner rim highlight */
-    /* Deeper curved depression below the rim */
-    inset 0 10px 40px rgba(0, 0, 0, 0.18),     /* Deeper, softer top shadow */
-    inset 0 5px 20px rgba(0, 0, 0, 0.3),       /* Deeper medium top shadow */
-    inset 0 2px 10px rgba(0, 0, 0, 0.4),       /* Deeper small top shadow */
-    inset 0 -5px 20px rgba(255, 255, 255, 0.025), /* Slightly brighter bottom highlight */
-    inset 10px 0 40px rgba(0, 0, 0, 0.15),     /* Deeper, softer left shadow */
-    inset 5px 0 20px rgba(0, 0, 0, 0.25),      /* Deeper medium left shadow */
-    inset -5px 0 20px rgba(255, 255, 255, 0.02), /* Brighter right highlight */
-    inset 0 0 30px rgba(0, 0, 0, 0.25),        /* Deeper central depression */
-    inset 0 0 60px rgba(0, 0, 0, 0.12);        /* Deeper overall depth */
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .stat-value {
-  color: var(--text-secondary);
-  font-size: 18px;
+  color: var(--text-secondary); /* Grey color for less important values */
+  font-size: var(--text-lg);
   font-weight: 600;
 }
 
 .stat-label {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
 /* Compact view styles - applied when body has .compact-view class */
@@ -4963,15 +5163,22 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 }
 
 .compact-view .total-amount {
-  font-size: 28px;
+  font-size: 2.5rem; /* 40px - proportionally larger than previous 28px */
+  font-weight: var(--font-weight-extrabold); /* Maintain prominence in compact view */
+  letter-spacing: -0.02em; /* Consistent letter spacing */
 }
 
 .compact-view .total-label {
   font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
 }
 
 .compact-view .total-hours {
-  font-size: 11px;
+  font-size: 16px; /* Increased from 11px to be more prominent in compact view */
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.005em;
 }
 
 .compact-view .breakdown-card {
@@ -5062,9 +5269,8 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 }
 
 .radio-option:hover {
-  transform: var(--lift-small);
-  border-color: var(--accent3);
-  box-shadow: 0 4px 16px -4px var(--shadow-accent);
+  border-color: rgba(99, 102, 241, 0.3);
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .radio-option:hover::before {
@@ -5090,14 +5296,12 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 }
 
 .radio-option input[type="radio"]:hover {
-  border-color: var(--accent3);
-  transform: scale(1.05);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .radio-option input[type="radio"]:checked {
-  border-color: var(--accent);
-  background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.8);
+  background: rgba(99, 102, 241, 0.8);
 }
 
 .radio-option input[type="radio"]:checked::after {
@@ -5132,7 +5336,6 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 .radio-option:has(input[type="radio"]:checked) {
   border-color: var(--accent);
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(16, 185, 129, 0.05));
-  box-shadow: 0 4px 16px -4px var(--shadow-accent);
 }
 
 .radio-option:has(input[type="radio"]:checked)::before {
@@ -5198,10 +5401,9 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 }
 
 #exportOptionsSection .btn:hover {
-  transform: var(--lift-medium);
-  border-color: var(--accent3);
-  box-shadow: 0 8px 24px -8px var(--shadow-accent);
-  color: var(--accent);
+  border-color: rgba(99, 102, 241, 0.3);
+  background-color: rgba(255, 255, 255, 0.02);
+  color: rgba(99, 102, 241, 0.8);
 }
 
 #exportOptionsSection .btn:hover::before {
@@ -5209,8 +5411,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 }
 
 #exportOptionsSection .btn:hover svg {
-  color: var(--accent);
-  transform: scale(1.1);
+  color: rgba(99, 102, 241, 0.8);
 }
 
 #exportOptionsSection .btn svg {
@@ -5268,15 +5469,13 @@ input[type="file"].form-control {
 }
 
 input[type="file"].form-control:hover {
-  border-color: var(--text-secondary);
-  transform: none;
-  box-shadow: none;
+  border-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 input[type="file"].form-control:focus {
-  border-color: var(--accent3);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-  transform: none;
+  border-color: rgba(99, 102, 241, 0.4);
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 /* Import button - subtle styling */
@@ -5288,11 +5487,9 @@ input[type="file"].form-control:focus {
 }
 
 .form-group:has(input[type="file"]) .btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--accent3);
-  color: var(--text-primary);
-  transform: var(--lift-small);
-  box-shadow: 0 2px 8px -2px var(--shadow-accent);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* Mobile responsive for export period options */
@@ -5415,7 +5612,7 @@ input[type="file"].form-control:focus {
   width: 32px;
   background: var(--gradient-progress-bg);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;

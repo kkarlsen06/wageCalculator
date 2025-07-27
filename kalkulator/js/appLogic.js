@@ -223,7 +223,6 @@ export const app = {
         
         // Show UI elements
         this.populateTimeSelects();
-        this.populateMonthDropdown();
         this.populateYearDropdown();
         
 
@@ -290,26 +289,7 @@ export const app = {
             this.populateTimeSelects();
             this.saveSettingsToSupabase();
         });
-        // Close month dropdown when clicking outside
-        document.addEventListener('click', e => {
-            const monthSelector = document.querySelector('.month-selector');
-            if (!monthSelector.contains(e.target)) this.closeMonthDropdown();
-        });
-        
-        // Reposition month dropdown on window resize/scroll
-        window.addEventListener('resize', () => {
-            const dd = document.getElementById('monthDropdown');
-            if (dd.classList.contains('active')) {
-                this.positionMonthDropdown();
-            }
-        });
-        
-        window.addEventListener('scroll', () => {
-            const dd = document.getElementById('monthDropdown');
-            if (dd.classList.contains('active')) {
-                this.positionMonthDropdown();
-            }
-        });
+
         
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
@@ -991,21 +971,7 @@ export const app = {
             dateGrid.appendChild(cell);
         }
     },
-    populateMonthDropdown() {
-        const dd = document.getElementById('monthDropdown');
-        dd.innerHTML = '';
-        this.MONTHS.forEach((m,i)=>{
-            const opt = document.createElement('div');
-            opt.className='month-option';
-            opt.textContent = `${m.charAt(0).toUpperCase() + m.slice(1)} ${this.currentYear}`;
-            if(i+1===this.currentMonth) opt.classList.add('current');
-            opt.addEventListener('click',()=>{
-                this.changeMonth(i+1);
-                this.closeMonthDropdown();
-            });
-            dd.appendChild(opt);
-        });
-    },
+
 
     populateYearDropdown() {
         const yearSelect = document.getElementById('yearSelect');
@@ -1037,45 +1003,9 @@ export const app = {
         this.saveSettingsToSupabase(); // Save the new year to database
     },
     
-    toggleMonthDropdown() {
-        const dd = document.getElementById('monthDropdown');
-        const isActive = dd.classList.contains('active');
-        
-        // Close any other open modals first
-        this.closeSettings();
-        
-        if (isActive) {
-            dd.classList.remove('active');
-        } else {
-            dd.classList.add('active');
-            this.populateMonthDropdown();
-            
-            // Position dropdown using fixed positioning relative to button
-            this.positionMonthDropdown();
-            
-            // Ensure dropdown is visible with high z-index
-            dd.style.zIndex = '9999';
-        }
-    },
+
     
-    closeMonthDropdown() {
-        const dd = document.getElementById('monthDropdown');
-        dd.classList.remove('active');
-        // Reset all positioning styles
-        dd.style.zIndex = '';
-        dd.style.top = '';
-        dd.style.left = '';
-    },
-    
-    positionMonthDropdown() {
-        const dd = document.getElementById('monthDropdown');
-        const monthButton = document.querySelector('.month-button');
-        if (dd && monthButton && dd.classList.contains('active')) {
-            const rect = monthButton.getBoundingClientRect();
-            dd.style.top = `${rect.bottom + 2}px`; // 2px below button
-            dd.style.left = `${rect.left}px`; // Align left edge with button
-        }
-    },
+
     
     changeMonth(month) {
         this.currentMonth = month;
@@ -1216,8 +1146,6 @@ export const app = {
 
             // Update UI elements to reflect loaded settings
             this.updateSettingsUI();
-            // Update month dropdown to reflect potential reset of currentMonth
-            this.populateMonthDropdown();
             // Don't call updateDisplay here - it will be called with animation in init()
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
@@ -1886,10 +1814,10 @@ export const app = {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
         document.getElementById('currentMonth').textContent = `${monthName} ${this.currentYear}`;
 
-        // Update the month navigation display (now in shift section header)
-        const monthNavDisplay = document.getElementById('monthNavDisplayHeader');
-        if (monthNavDisplay) {
-            monthNavDisplay.textContent = `${monthName} ${this.currentYear}`;
+        // Update the month navigation display in the floating action bar
+        const monthNavDisplayNav = document.getElementById('monthNavDisplayNav');
+        if (monthNavDisplayNav) {
+            monthNavDisplayNav.textContent = `${monthName} ${this.currentYear}`;
         }
 
         // Update the total card label to match selected month

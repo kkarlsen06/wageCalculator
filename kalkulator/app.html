@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vaktberegner</title>
-  <link rel="stylesheet" href="css/style.css?v=2">
+  <!-- Google Fonts - Inter for modern, professional typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=4">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
   <meta name="theme-color" content="#000000">
@@ -29,14 +33,7 @@
                               <a href="../index.html" class="header-logo-link">
                                   <img src="../assets/kkarlsen_ikon_clean.png" class="header-logo" alt="kkarlsen logo">
                               </a>
-                              <div class="month-selector">
-                                                                <button class="month-button" onclick="app.toggleMonthDropdown()" aria-label="Velg måned" aria-expanded="false" aria-haspopup="listbox">
-                                  <span id="currentMonth">Mai 2025</span>
-                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                      <polyline points="6 9 12 15 18 9"></polyline>
-                                  </svg>
-                              </button>
-                              </div>
+
                           </div>
                           <div class="header-right">
                                 <button class="settings-btn" onclick="app.openSettings()" aria-label="Åpne innstillinger">
@@ -94,19 +91,21 @@
           <!-- Shift List Section -->
           <section class="snap-section shift-section" role="complementary" aria-label="Vaktliste">
               <div class="app-container">
-                  <!-- Month Navigation as Section Header -->
-                  <div class="month-navigation shift-section-header" id="monthNavigationHeader">
-                      <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
-                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                              <polyline points="15 18 9 12 15 6"></polyline>
-                          </svg>
-                      </button>
-                      <span class="month-nav-display" id="monthNavDisplayHeader">Mai 2025</span>
-                      <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
-                          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                              <polyline points="9 18 15 12 9 6"></polyline>
-                          </svg>
-                      </button>
+                  <!-- Month Navigation with arrow buttons -->
+                  <div class="month-navigation-container">
+                      <div class="month-navigation">
+                          <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                  <polyline points="15 18 9 12 15 6"></polyline>
+                              </svg>
+                          </button>
+                          <span class="month-display" id="currentMonth">Mai 2025</span>
+                          <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                  <polyline points="9 6 15 12 9 18"></polyline>
+                              </svg>
+                          </button>
+                      </div>
                   </div>
 
                   <div class="shift-list" id="shiftList">
@@ -621,10 +620,7 @@
 
 
 
-    <!-- Month dropdown positioned outside header to avoid interference -->
-    <div class="month-dropdown" id="monthDropdown">
-        <!-- Dynamisk innhold genereres av JavaScript -->
-    </div>
+
 
     <!-- Last applikasjonslogikk -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
