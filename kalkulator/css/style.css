@@ -1943,18 +1943,28 @@ input[type="time"].form-control[value=""]:focus {
 .calendar-hours-total {
   color: var(--accent);
   font-weight: 600;
-  font-size: var(--text-xs);
+  font-size: clamp(9px, 2.5vw, 12px);
   text-align: left !important;
   line-height: 1.2;
   width: auto;
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
   white-space: pre;
-  padding: 0 !important;
+  padding: 0 2px 0 0 !important;
   margin: 0 !important;
   display: block;
   letter-spacing: 0;
   position: relative;
   left: 0;
+  word-break: keep-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Balanced sizing for shift calendar hours totals */
+.shift-calendar .calendar-hours-total {
+  font-size: clamp(10px, 2.8vw, 13px);
 }
 
 /* Override centering for calendar cells in hours mode */
@@ -3240,9 +3250,9 @@ input:checked + .slider:before {
   flex-shrink: 0; /* Prevent date from shrinking */
 }
 
-/* Smaller date numbers in shift calendar for more space */
+/* Enhanced date numbers in shift calendar for better readability */
 .shift-calendar .calendar-day-number {
-  font-size: clamp(12px, 3.5vw, 16px);
+  font-size: clamp(15px, 4.2vw, 20px);
   margin-bottom: 3px;
 }
 
@@ -3350,10 +3360,26 @@ input:checked + .slider:before {
 }
 
 .calendar-total {
-  font-size: clamp(10px, 2.5vw, 14px);
+  font-size: clamp(10px, 2.8vw, 13px);
   font-weight: 700;
   color: var(--text-secondary);
   line-height: 1;
+  padding: 0 3px;
+  text-align: center;
+  word-break: keep-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Balanced dynamic sizing for shift calendar totals */
+.shift-calendar .calendar-total {
+  font-size: clamp(11px, 3.2vw, 15px);
+  padding: 0 2px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 /* Next Shift Card Styling */
@@ -3517,6 +3543,15 @@ input:checked + .slider:before {
   .calendar-amount {
     font-size: clamp(9px, 2.2vw, 12px);
   }
+
+  .shift-calendar .calendar-total {
+    font-size: clamp(10px, 3.0vw, 14px);
+    padding: 0 1px;
+  }
+
+  .shift-calendar .calendar-hours-total {
+    font-size: clamp(9px, 2.6vw, 12px);
+  }
   
   .calendar-day-header {
     font-size: 11px;
@@ -3585,6 +3620,15 @@ input:checked + .slider:before {
   .calendar-amount {
     font-size: clamp(8px, 2vw, 10px);
   }
+
+  .shift-calendar .calendar-total {
+    font-size: clamp(9px, 2.8vw, 13px);
+    padding: 0 1px;
+  }
+
+  .shift-calendar .calendar-hours-total {
+    font-size: clamp(8px, 2.4vw, 11px);
+  }
   
   .week-number, .calendar-week-number {
     font-size: 9px;
@@ -3646,6 +3690,15 @@ input:checked + .slider:before {
   .week-number.header, .calendar-week-number.header {
     font-size: 6px;
     padding: 4px 2px;
+  }
+
+  .shift-calendar .calendar-total {
+    font-size: clamp(8px, 2.6vw, 12px);
+    padding: 0 1px;
+  }
+
+  .shift-calendar .calendar-hours-total {
+    font-size: clamp(7px, 2.2vw, 10px);
   }
   
   .date-grid {
