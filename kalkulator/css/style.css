@@ -3071,6 +3071,14 @@ input:checked + .slider:before {
   width: 100%;
   box-sizing: border-box;
   align-items: center; /* Vertically center week letters and week number header */
+  padding: 0 20px;
+}
+
+/* Special header layout for shift calendar */
+.shift-calendar .calendar-header {
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0 10px;
+  gap: 1px;
 }
 
 .calendar-day-header {
@@ -3083,12 +3091,19 @@ input:checked + .slider:before {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: 32px repeat(7, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   grid-auto-rows: minmax(45px, auto);
   gap: 2px;
   flex: 1;
   width: 100%;
   box-sizing: border-box;
+  padding: 0 20px;
+}
+
+/* Special grid layout for shift calendar */
+.shift-calendar .calendar-grid {
+  padding: 0 10px;
+  gap: 1px;
 }
 
 .calendar-cell {
@@ -3270,19 +3285,60 @@ input:checked + .slider:before {
 .shift-calendar {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 0 4px 20px 4px;
+  gap: 0;
+  padding: 0 0 20px 0;
   box-sizing: border-box;
   overflow-x: hidden;
-}
-
-.shift-calendar .calendar-cell,
-.shift-calendar .calendar-week-number {
-  min-height: 72px;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  position: relative;
 }
 
 .shift-calendar .calendar-cell {
+  min-height: 72px;
   aspect-ratio: 0.8;
+}
+
+/* Week separator styling */
+.week-separator {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  margin: 24px 0 20px 0;
+  display: flex;
+  align-items: center;
+}
+
+.week-separator::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    transparent 15px,
+    var(--border) 120px,
+    var(--border) 100%
+  );
+  opacity: 0.4;
+}
+
+/* Week number positioned on separator line */
+.week-number-on-separator {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-radius: 6px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  z-index: 2;
 }
 
 .calendar-breakdown {
@@ -3429,9 +3485,32 @@ input:checked + .slider:before {
     padding: 6px 4px 6px 4px;
   }
 
-  .shift-calendar .calendar-cell,
-  .shift-calendar .calendar-week-number {
+  .shift-calendar .calendar-cell {
     min-height: 45px;
+  }
+
+  .week-number-on-separator {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+
+  .week-separator {
+    margin: 20px 0 16px 0;
+  }
+
+  .shift-calendar .calendar-header,
+  .shift-calendar .calendar-grid {
+    padding: 0 5px;
+  }
+
+  .week-separator::before {
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      transparent 12px,
+      var(--border) 90px,
+      var(--border) 100%
+    );
   }
   
   
@@ -3461,6 +3540,11 @@ input:checked + .slider:before {
   .calendar-header, .calendar-grid {
     grid-template-columns: 28px repeat(7, 1fr);
   }
+
+  .shift-calendar .calendar-header,
+  .shift-calendar .calendar-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
 }
 
 @media (max-width: 360px) {
@@ -3469,9 +3553,32 @@ input:checked + .slider:before {
     padding: 5px 4px 5px 4px;
   }
 
-  .shift-calendar .calendar-cell,
-  .shift-calendar .calendar-week-number {
+  .shift-calendar .calendar-cell {
     min-height: 40px;
+  }
+
+  .week-number-on-separator {
+    font-size: 11px;
+    padding: 3px 9px;
+  }
+
+  .week-separator {
+    margin: 18px 0 14px 0;
+  }
+
+  .shift-calendar .calendar-header,
+  .shift-calendar .calendar-grid {
+    padding: 0 5px;
+  }
+
+  .week-separator::before {
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      transparent 10px,
+      var(--border) 75px,
+      var(--border) 100%
+    );
   }
   
   
@@ -3496,6 +3603,11 @@ input:checked + .slider:before {
   .calendar-header, .calendar-grid {
     grid-template-columns: 24px repeat(7, 1fr);
   }
+
+  .shift-calendar .calendar-header,
+  .shift-calendar .calendar-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
 }
 
 @media (max-width: 320px) {
@@ -3503,9 +3615,32 @@ input:checked + .slider:before {
     font-size: 8px;
   }
 
-  .shift-calendar .calendar-cell,
-  .shift-calendar .calendar-week-number {
+  .shift-calendar .calendar-cell {
     min-height: 36px;
+  }
+
+  .week-number-on-separator {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .week-separator {
+    margin: 16px 0 12px 0;
+  }
+
+  .shift-calendar .calendar-header,
+  .shift-calendar .calendar-grid {
+    padding: 0 5px;
+  }
+
+  .week-separator::before {
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      transparent 8px,
+      var(--border) 60px,
+      var(--border) 100%
+    );
   }
   
   .week-number.header, .calendar-week-number.header {
@@ -3519,6 +3654,11 @@ input:checked + .slider:before {
   
   .calendar-header, .calendar-grid {
     grid-template-columns: 20px repeat(7, 1fr);
+  }
+
+  .shift-calendar .calendar-header,
+  .shift-calendar .calendar-grid {
+    grid-template-columns: repeat(7, 1fr);
   }
 }
 

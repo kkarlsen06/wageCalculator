@@ -2174,18 +2174,6 @@ export const app = {
                     : this.formatCurrency(bestDay.total)
             },
             {
-                id: 'totalHours',
-                relevanceScore: 8,
-                label: 'Timer totalt',
-                value: this.formatHours(totalHours)
-            },
-            {
-                id: 'shiftCount',
-                relevanceScore: 7,
-                label: 'Antall vakter',
-                value: shiftCount
-            },
-            {
                 id: 'bonusTotal',
                 relevanceScore: totalBonus > 0 ? 6 : 2,
                 label: 'Tillegg/UB',
@@ -2816,9 +2804,6 @@ export const app = {
         const header = document.createElement('div');
         header.className = 'calendar-header';
 
-        const weekHeader = document.createElement('div');
-        weekHeader.className = 'calendar-week-number header';
-        header.appendChild(weekHeader);
         ['M','T','O','T','F','L','S'].forEach(day => {
             const h = document.createElement('div');
             h.textContent = day;
@@ -2826,9 +2811,6 @@ export const app = {
             header.appendChild(h);
         });
         container.appendChild(header);
-
-        const grid = document.createElement('div');
-        grid.className = 'calendar-grid';
 
         const monthShifts = this.shifts.filter(s =>
             s.date.getMonth() === monthIdx &&
@@ -2849,14 +2831,24 @@ export const app = {
         const totalWeeks = Math.ceil(totalDays / 7);
 
         for (let week = 0; week < totalWeeks; week++) {
-            // Add week number at the start of each row
+            // Create week separator with week number
             const weekDate = new Date(startDate);
             weekDate.setDate(startDate.getDate() + (week * 7));
             const weekNum = this.getISOWeekNumber(weekDate);
-            const weekCell = document.createElement('div');
-            weekCell.className = 'calendar-week-number';
-            weekCell.textContent = weekNum;
-            grid.appendChild(weekCell);
+
+            const weekSeparator = document.createElement('div');
+            weekSeparator.className = 'week-separator';
+
+            const weekNumber = document.createElement('div');
+            weekNumber.className = 'week-number-on-separator';
+            weekNumber.textContent = weekNum;
+            weekSeparator.appendChild(weekNumber);
+
+            container.appendChild(weekSeparator);
+
+            // Create grid for this week's days
+            const weekGrid = document.createElement('div');
+            weekGrid.className = 'calendar-grid';
 
             // Add 7 days for this week
             for (let day = 0; day < 7; day++) {
@@ -2998,11 +2990,12 @@ export const app = {
                 }
 
                 cell.appendChild(content);
-                grid.appendChild(cell);
+                weekGrid.appendChild(cell);
             }
-        }
 
-        container.appendChild(grid);
+            // Append this week's grid to the container
+            container.appendChild(weekGrid);
+        }
 
         this.lastRenderedMonth = this.currentMonth;
         this.lastRenderedYear = this.currentYear;
@@ -3762,8 +3755,6 @@ export const app = {
     getStatIcon(statId) {
         const icons = {
             'avgHourly': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
-            'totalHours': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
-            'shiftCount': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
             'bonusTotal': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
             'longestShift': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
             'avgPerShift': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
@@ -3777,8 +3768,6 @@ export const app = {
     getStatTitle(statId) {
         const titles = {
             'avgHourly': 'Snittlønn/time',
-            'totalHours': 'Timer totalt',
-            'shiftCount': 'Antall vakter',
             'bonusTotal': 'Tillegg/UB',
             'longestShift': 'Lengste vakt',
             'avgPerShift': 'Snitt per vakt',
@@ -3954,17 +3943,7 @@ export const app = {
                 const avg = hours > 0 ? total / hours : 0;
                 return this.formatCurrencyCalendar(avg);
             }
-            case 'totalHours': {
-                let hours = 0;
-                shiftsForDay.forEach(shift => {
-                    const calc = this.calculateShift(shift);
-                    hours += calc.paidHours;
-                });
-                return hours > 0 ? `${hours.toFixed(1)}t` : '';
-            }
-            case 'shiftCount': {
-                return shiftsForDay.length > 0 ? '●' : '';
-            }
+
             case 'bonusTotal': {
                 let bonus = 0;
                 shiftsForDay.forEach(shift => {
