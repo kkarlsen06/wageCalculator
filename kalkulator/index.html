@@ -29,13 +29,15 @@
 
   <main id="main-content">
     <div id="auth-box" class="auth-center">
-      <div class="login-card" role="form" aria-labelledby="login-heading">
-        <h2 id="login-heading" class="mb-20">Logg inn</h2>
-        <label for="email" class="form-label">E-post</label>
-        <input id="email" type="email" placeholder="E-post" required class="form-control mb-12" aria-describedby="auth-msg" />
-        <label for="password" class="form-label">Passord</label>
-        <input id="password" type="password" placeholder="Passord" required class="form-control mb-18" aria-describedby="auth-msg" />
-        <button id="login-btn" class="btn btn-primary mb-12">Logg inn</button>
+      <div class="login-card" aria-labelledby="login-heading">
+        <form id="login-form" novalidate>
+          <h2 id="login-heading" class="mb-20">Logg inn</h2>
+          <label for="email" class="form-label">E-post</label>
+          <input id="email" name="email" type="email" placeholder="E-post" required class="form-control mb-12" aria-describedby="auth-msg" autocomplete="email" />
+          <label for="password" class="form-label">Passord</label>
+          <input id="password" name="password" type="password" placeholder="Passord" required class="form-control mb-18" aria-describedby="auth-msg" autocomplete="current-password" />
+          <button id="login-btn" type="submit" class="btn btn-primary mb-12">Logg inn</button>
+        </form>
         <button id="signup-btn" class="btn btn-secondary mb-12">Opprett ny konto</button>
         <button id="forgot-btn" class="mt-4" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;" aria-label="Tilbakestill passord">Glemt passord?</button>
         <div id="auth-msg" role="alert" aria-live="polite" style="color: var(--error); min-height: 24px; text-align: center; font-size: 15px;"></div>
@@ -44,11 +46,16 @@
 
   <div id="signup-card" class="auth-center" style="display:none;">
     <div class="login-card">
-      <h2 class="mb-20">Opprett ny konto</h2>
-      <input id="signup-email" type="email" placeholder="E-post" required class="form-control mb-12" />
-      <input id="signup-password" type="password" placeholder="Passord" required class="form-control mb-12" />
-      <input id="signup-name" type="text" placeholder="Fornavn" required class="form-control mb-18" />
-      <button id="create-account-btn" class="btn btn-primary mb-12">Opprett konto</button>
+      <form id="signup-form" novalidate>
+        <h2 class="mb-20">Opprett ny konto</h2>
+        <label for="signup-email" class="form-label">E-post</label>
+        <input id="signup-email" name="email" type="email" placeholder="E-post" required class="form-control mb-12" autocomplete="email" />
+        <label for="signup-password" class="form-label">Passord</label>
+        <input id="signup-password" name="password" type="password" placeholder="Passord" required class="form-control mb-12" autocomplete="new-password" />
+        <label for="signup-name" class="form-label">Fornavn</label>
+        <input id="signup-name" name="given-name" type="text" placeholder="Fornavn" required class="form-control mb-18" autocomplete="given-name" />
+        <button id="create-account-btn" type="submit" class="btn btn-primary mb-12">Opprett konto</button>
+      </form>
       <button id="back-login-signup-btn" class="btn btn-secondary">Tilbake til innlogging</button>
       <p id="signup-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
     </div>
@@ -56,9 +63,12 @@
 
   <div id="forgot-card" class="auth-center" style="display:none;">
     <div class="login-card">
-      <h2 class="mb-20">Tilbakestill passord</h2>
-      <input id="forgot-email" type="email" placeholder="E-post" required class="form-control mb-18" />
-      <button id="send-reset-btn" class="btn btn-primary mb-12">Send tilbakestillings-link</button>
+      <form id="forgot-form" novalidate>
+        <h2 class="mb-20">Tilbakestill passord</h2>
+        <label for="forgot-email" class="form-label">E-post</label>
+        <input id="forgot-email" name="email" type="email" placeholder="E-post" required class="form-control mb-18" autocomplete="email" />
+        <button id="send-reset-btn" type="submit" class="btn btn-primary mb-12">Send tilbakestillings-link</button>
+      </form>
       <button id="send-magic-link-btn" class="btn btn-secondary mb-12" style="display: none;">Send magisk lenke</button>
       <button id="back-login-btn" class="btn btn-secondary">Tilbake</button>
       <p id="forgot-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
@@ -67,12 +77,15 @@
 
   <div id="complete-profile-card" class="auth-center" style="display:none;">
     <div class="login-card">
-      <h2 class="mb-20">Fullfør profilen din</h2>
-      <p style="margin-bottom: 20px; color: var(--text-secondary); text-align: center;">
-        Vennligst oppgi ditt fornavn for å fullføre profilen din.
-      </p>
-      <input id="complete-name" type="text" placeholder="Fornavn" required class="form-control mb-18" />
-      <button id="complete-profile-btn" class="btn btn-primary mb-12">Fullfør profil</button>
+      <form id="complete-profile-form" novalidate>
+        <h2 class="mb-20">Fullfør profilen din</h2>
+        <p style="margin-bottom: 20px; color: var(--text-secondary); text-align: center;">
+          Vennligst oppgi ditt fornavn for å fullføre profilen din.
+        </p>
+        <label for="complete-name" class="form-label">Fornavn</label>
+        <input id="complete-name" name="given-name" type="text" placeholder="Fornavn" required class="form-control mb-18" autocomplete="given-name" />
+        <button id="complete-profile-btn" type="submit" class="btn btn-primary mb-12">Fullfør profil</button>
+      </form>
       <button id="skip-profile-btn" class="btn btn-secondary">Hopp over (kan gjøres senere)</button>
       <p id="complete-profile-msg" style="color: var(--error); min-height: 24px; text-align: center; font-size: 15px;"></p>
     </div>

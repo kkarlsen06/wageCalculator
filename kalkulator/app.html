@@ -436,21 +436,23 @@
                   <h2 class="modal-title">Min profil</h2>
               </div>
               <div class="modal-body">
-                  <div class="form-group form-group-with-hint">
-                      <label>Fornavn</label>
-                      <input type="text" id="profileName" class="form-control" placeholder="Fornavn">
-                      <small class="form-hint">Vises i velkomstskjermen og rapporter</small>
-                  </div>
+                  <form id="profile-form" novalidate>
+                      <div class="form-group form-group-with-hint">
+                          <label for="profileName">Fornavn</label>
+                          <input type="text" id="profileName" name="given-name" class="form-control" placeholder="Fornavn" autocomplete="given-name">
+                          <small class="form-hint">Vises i velkomstskjermen og rapporter</small>
+                      </div>
 
-                  <div class="form-group form-group-with-hint">
-                      <label>E-post</label>
-                      <input type="email" id="profileEmail" class="form-control" placeholder="E-post" disabled>
-                      <small class="form-hint">E-postadressen kan ikke endres etter registrering</small>
-                  </div>
+                      <div class="form-group form-group-with-hint">
+                          <label for="profileEmail">E-post</label>
+                          <input type="email" id="profileEmail" name="email" class="form-control" placeholder="E-post" disabled autocomplete="email">
+                          <small class="form-hint">E-postadressen kan ikke endres etter registrering</small>
+                      </div>
 
-                  <div class="form-group">
-                      <button class="btn btn-primary" onclick="app.updateProfile()">Oppdater profil</button>
-                  </div>
+                      <div class="form-group">
+                          <button type="submit" class="btn btn-primary" onclick="app.updateProfile()">Oppdater profil</button>
+                      </div>
+                  </form>
 
                   <p id="profile-update-msg" style="color: var(--success); min-height: 24px; text-align: center; font-size: 14px;"></p>
 

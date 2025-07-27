@@ -145,6 +145,39 @@ function setupEventListeners() {
   if (createAccountBtn) createAccountBtn.onclick = () => signUpWithDetails();
   if (backLoginSignupBtn) backLoginSignupBtn.onclick = () => showLoginForm();
 
+  // Form submission handlers
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      signIn(emailInp.value, passInp.value);
+    });
+  }
+
+  const signupForm = document.getElementById('signup-form');
+  if (signupForm) {
+    signupForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      signUpWithDetails();
+    });
+  }
+
+  const forgotForm = document.getElementById('forgot-form');
+  if (forgotForm) {
+    forgotForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      sendResetLink(forgotEmailInp.value);
+    });
+  }
+
+  const completeProfileForm = document.getElementById('complete-profile-form');
+  if (completeProfileForm) {
+    completeProfileForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      completeProfile();
+    });
+  }
+
   // Profile completion actions
   if (completeProfileBtn) completeProfileBtn.onclick = () => completeProfile();
   if (skipProfileBtn) skipProfileBtn.onclick = () => skipProfileCompletion();
@@ -567,10 +600,14 @@ function createPasswordResetForm() {
     resetForm.className = 'auth-center';
     resetForm.innerHTML = `
         <div class="login-card">
-            <h2 style="margin-bottom: 20px;">Sett nytt passord</h2>
-            <input id="new-password" type="password" placeholder="Nytt passord" required class="form-control" style="margin-bottom: 12px;" />
-            <input id="confirm-password" type="password" placeholder="Bekreft passord" required class="form-control" style="margin-bottom: 18px;" />
-            <button id="update-password-btn" class="btn btn-primary" style="margin-bottom: 12px;">Oppdater passord</button>
+            <form id="reset-password-form-element" novalidate>
+                <h2 style="margin-bottom: 20px;">Sett nytt passord</h2>
+                <label for="new-password" class="form-label">Nytt passord</label>
+                <input id="new-password" name="new-password" type="password" placeholder="Nytt passord" required class="form-control" style="margin-bottom: 12px;" autocomplete="new-password" />
+                <label for="confirm-password" class="form-label">Bekreft passord</label>
+                <input id="confirm-password" name="confirm-password" type="password" placeholder="Bekreft passord" required class="form-control" style="margin-bottom: 18px;" autocomplete="new-password" />
+                <button id="update-password-btn" type="submit" class="btn btn-primary" style="margin-bottom: 12px;">Oppdater passord</button>
+            </form>
             <button id="cancel-reset-btn" class="btn btn-secondary">Avbryt</button>
             <p id="reset-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
         </div>
@@ -581,9 +618,18 @@ function createPasswordResetForm() {
     const cancelBtn = resetForm.querySelector('#cancel-reset-btn');
     const newPasswordInp = resetForm.querySelector('#new-password');
     const confirmPasswordInp = resetForm.querySelector('#confirm-password');
-    
+    const resetFormElement = resetForm.querySelector('#reset-password-form-element');
+
     updateBtn.onclick = () => updatePassword(newPasswordInp.value, confirmPasswordInp.value);
     cancelBtn.onclick = () => cancelPasswordReset();
+
+    // Add form submission handler
+    if (resetFormElement) {
+        resetFormElement.addEventListener('submit', function(event) {
+            event.preventDefault();
+            updatePassword(newPasswordInp.value, confirmPasswordInp.value);
+        });
+    }
     
     // Add enter key support for password reset form
     newPasswordInp.addEventListener('keypress', function(event) {
