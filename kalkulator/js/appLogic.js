@@ -1010,6 +1010,9 @@ export const app = {
     changeMonth(month) {
         this.currentMonth = month;
 
+        // Refresh DOM cache to ensure fresh element references
+        domCache.refresh();
+
         // Reset progress bar state to ensure clean animation
         const fill = document.querySelector('.progress-fill');
         if (fill) {
@@ -1033,6 +1036,9 @@ export const app = {
         this.currentMonth = newMonth;
         this.currentYear = newYear;
 
+        // Refresh DOM cache to ensure fresh element references
+        domCache.refresh();
+
         // Reset progress bar state to ensure clean animation
         const fill = document.querySelector('.progress-fill');
         if (fill) {
@@ -1054,6 +1060,9 @@ export const app = {
 
         this.currentMonth = newMonth;
         this.currentYear = newYear;
+
+        // Refresh DOM cache to ensure fresh element references
+        domCache.refresh();
 
         // Reset progress bar state to ensure clean animation
         const fill = document.querySelector('.progress-fill');
@@ -1994,10 +2003,21 @@ export const app = {
             shift.date.getMonth() === this.currentMonth - 1 &&
             shift.date.getFullYear() === this.currentYear
         );
-        
+
         if (monthShifts.length === 0) {
             return; // No shifts means no stat cards to display
         }
+
+        // Use requestAnimationFrame to ensure DOM has updated before measuring
+        // This fixes the bug where switching months uses stale measurements
+        requestAnimationFrame(() => {
+            this._performStatCardCalculation(stats, container);
+        });
+    },
+
+    _performStatCardCalculation(stats, container) {
+        // Force a layout recalculation to ensure fresh measurements
+        container.offsetHeight; // Trigger reflow
 
         const viewport = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         const shiftSection = document.querySelector('.shift-section');
@@ -2006,6 +2026,8 @@ export const app = {
         const nextShiftCard = document.getElementById('nextShiftCard');
         let nextShiftCardHeight = 0;
         if (nextShiftCard && nextShiftCard.style.display !== 'none') {
+            // Force layout recalculation for next shift card
+            nextShiftCard.offsetHeight;
             const nextShiftRect = nextShiftCard.getBoundingClientRect();
             nextShiftCardHeight = nextShiftRect.height;
         }
@@ -2013,14 +2035,16 @@ export const app = {
         // Calculate available space more simply and accurately
         const containerRect = container.getBoundingClientRect();
         const containerTop = containerRect.top;
-        
+
         // Calculate bottom boundary - either viewport bottom or start of shift section
         let bottomBoundary = viewport;
         if (shiftSection) {
+            // Force layout recalculation for shift section
+            shiftSection.offsetHeight;
             const shiftSectionTop = shiftSection.getBoundingClientRect().top;
             bottomBoundary = Math.min(bottomBoundary, shiftSectionTop);
         }
-        
+
         // Calculate available height: from container top to bottom boundary, minus next shift card height
         // Be maximally aggressive - use ALL available space
         const containerStyles = window.getComputedStyle(container);
