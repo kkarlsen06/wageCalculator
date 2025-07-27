@@ -95,15 +95,39 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: var(--text-primary); /* Use primary text color for better visibility against progress bar */
-  font-size: var(--text-lg); /* 18px - Same size as .total-hours text */
-  font-weight: var(--font-weight-medium); /* 500 - Consistent with supporting text elements */
+
+  /* Enhanced typography for better readability */
+  color: var(--text-primary);
+  font-size: var(--text-base); /* 16px - Slightly smaller for better balance */
+  font-weight: var(--font-weight-semibold); /* 600 - Stronger emphasis for better visibility */
+  font-family: var(--font-primary);
+
+  /* Typography smoothing for crisp text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
+
+  /* Improved positioning and layout */
   pointer-events: none;
   white-space: nowrap;
-  z-index: 3;
+  z-index: 4; /* Higher z-index to ensure visibility above progress fill effects */
   width: 100%;
   text-align: center;
-  letter-spacing: -0.005em; /* Subtle negative tracking for better readability */
+  letter-spacing: 0.01em; /* Slight positive tracking for better readability at smaller size */
+  line-height: 1.2; /* Tighter line height for better vertical centering */
+
+  /* Enhanced text shadow for better contrast against varying backgrounds */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 0 8px rgba(0, 0, 0, 0.2);
+
+  /* Smooth transitions for any text changes */
+  transition: all var(--speed-normal) var(--ease-default);
+
+  /* Ensure consistent rendering across browsers */
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
 .progress-fill.full {
@@ -123,6 +147,61 @@
     transparent 0%,
     rgba(16,120,59,0.08) 100%
   );
+}
+
+/* Enhanced progress label states for better contrast optimization */
+.progress-label.low-progress {
+  /* When progress is low (0-25%), ensure good contrast against unfilled background */
+  color: var(--text-primary);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.progress-label.medium-progress {
+  /* When progress is medium (25-75%), optimize for mixed background */
+  color: var(--text-primary);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 8px rgba(0, 0, 0, 0.4),
+    0 0 16px rgba(255, 255, 255, 0.1);
+}
+
+.progress-label.high-progress {
+  /* When progress is high (75-100%), ensure visibility against filled background */
+  color: #FFFFFF;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.6),
+    0 0 10px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.progress-label.overachievement {
+  /* Special styling for overachievement state with neon background */
+  color: #FFFFFF;
+  font-weight: var(--font-weight-bold); /* 700 - Extra emphasis for achievement */
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.7),
+    0 0 12px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(58, 190, 246, 0.3);
+  animation: subtle-glow 2s ease-in-out infinite alternate;
+}
+
+/* Subtle glow animation for overachievement text */
+@keyframes subtle-glow {
+  0% {
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.5),
+      0 0 24px rgba(58, 190, 246, 0.3);
+  }
+  100% {
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.5),
+      0 0 24px rgba(58, 190, 246, 0.5),
+      0 0 32px rgba(58, 190, 246, 0.2);
+  }
 }
 
 /* Overachievement styling - when goal is exceeded */
@@ -459,6 +538,51 @@ button {
     font-weight: var(--font-weight-medium); /* Consistent with desktop */
     font-size: var(--text-base); /* 16px on mobile - appropriate for supporting text */
     letter-spacing: -0.005em;
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Space between icon and text */
+    justify-content: center; /* Center the content horizontally */
+  }
+
+  /* Enhanced mobile progress label styling */
+  .progress-label {
+    font-size: var(--text-sm); /* 14px on mobile for better fit */
+    font-weight: var(--font-weight-bold); /* 700 - Stronger weight for mobile visibility */
+    letter-spacing: 0.02em; /* Slightly more tracking for mobile readability */
+
+    /* Enhanced text shadow for mobile screens */
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.4),
+      0 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Mobile-specific progress label states */
+  .progress-label.low-progress {
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.5),
+      0 0 14px rgba(0, 0, 0, 0.4);
+  }
+
+  .progress-label.medium-progress {
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.6),
+      0 0 10px rgba(0, 0, 0, 0.5),
+      0 0 18px rgba(255, 255, 255, 0.15);
+  }
+
+  .progress-label.high-progress {
+    text-shadow:
+      0 1px 4px rgba(0, 0, 0, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.5),
+      0 0 22px rgba(0, 0, 0, 0.3);
+  }
+
+  .progress-label.overachievement {
+    font-weight: var(--font-weight-extrabold); /* 800 - Maximum emphasis on mobile */
+    text-shadow:
+      0 1px 4px rgba(0, 0, 0, 0.8),
+      0 0 14px rgba(0, 0, 0, 0.6),
+      0 0 26px rgba(58, 190, 246, 0.4);
   }
 }
 
@@ -517,6 +641,20 @@ button {
   /* Exception for progress bar animation - this is important for user feedback */
   .progress-fill {
     transition-duration: 0.8s !important;
+  }
+
+  /* Simplified progress label animations for reduced motion */
+  .progress-label {
+    transition: color 0.2s ease !important;
+    animation: none !important;
+  }
+
+  .progress-label.overachievement {
+    animation: none !important;
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.5),
+      0 0 24px rgba(58, 190, 246, 0.4);
   }
 
   /* Disable will-change for reduced motion */
@@ -643,6 +781,7 @@ body {
   overflow: visible;
   min-height: 80px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
+  z-index: 10000; /* Ensure header is above dashboard content */
 }
 
 .header.hidden {
@@ -683,8 +822,9 @@ body {
 
 .header-right {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
+  justify-content: flex-end;
 }
 
 .header-back-btn {
@@ -729,33 +869,123 @@ body {
   color: var(--text-primary);
 }
 
-.settings-btn {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: var(--text-sm);
+/* User Profile Button and Dropdown */
+.user-profile-container {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all var(--speed-normal) var(--ease-default);
+  z-index: 10002; /* Ensure container is above all other elements */
 }
 
-.settings-btn:hover {
+.user-profile-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 24px; /* Pill-like appearance to complement circular profile icon */
+  color: var(--text-primary);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium); /* 500 - Medium emphasis for secondary actions */
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  min-width: auto;
+  max-width: fit-content;
+  min-height: 44px; /* Larger height to accommodate bigger icon */
+}
+
+.user-profile-btn:hover {
   background-color: rgba(255, 255, 255, 0.03);
   border-color: rgba(99, 102, 241, 0.4);
   color: rgba(255, 255, 255, 0.9);
 }
 
-.settings-btn:hover svg {
-  animation: spin 2s linear infinite;
+.user-nickname {
+  font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for user identity */
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.profile-icon {
+  stroke: var(--text-secondary);
+  transition: all var(--speed-normal) var(--ease-default);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  padding: 6px;
+  width: 32px !important; /* Override icon-sm class */
+  height: 32px !important; /* Override icon-sm class */
+  flex-shrink: 0;
+}
+
+.user-profile-btn:hover .profile-icon {
+  stroke: rgba(99, 102, 241, 0.8);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: scale(1.05);
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(16px);
+  z-index: 99999; /* Maximum z-index to ensure it's on top */
+  min-width: 100%;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: all var(--speed-normal) var(--ease-default);
+  pointer-events: none;
+}
+
+.profile-dropdown.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium); /* 500 - Medium emphasis for menu items */
+  cursor: pointer;
+  transition: all var(--speed-fast) var(--ease-default);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dropdown-item.logout-item {
+  color: var(--danger);
+  font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for destructive action */
+}
+
+.dropdown-item.logout-item:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ff6b6b;
 }
 
 /* Make SVG icons in top bar buttons grey */
-.header-back-btn svg,
-.settings-btn svg {
+.header-back-btn svg {
   stroke: var(--text-secondary);
 }
 
@@ -1406,6 +1636,11 @@ input[type="time"].form-control[value=""]:focus {
     min-height: 450px;
     border-radius: 24px;
   }
+
+  /* Medium screen settings modal footer */
+  #settingsModal .modal-fixed-footer {
+    padding: 14px 20px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1415,6 +1650,11 @@ input[type="time"].form-control[value=""]:focus {
     max-height: 600px;
     min-height: 400px;
     border-radius: 24px;
+  }
+
+  /* Mobile specific settings modal footer */
+  #settingsModal .modal-fixed-footer {
+    padding: 12px 16px;
   }
 }
 
@@ -1430,6 +1670,23 @@ input[type="time"].form-control[value=""]:focus {
   overflow-y: auto;
   min-height: 0;
   padding-bottom: 80px; /* Add space for fixed footer */
+}
+
+/* Settings modal specific fixed footer positioning */
+#settingsModal .modal-fixed-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px;
+  background: var(--bg-card);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20; /* Higher than general modal content */
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 /* Tab content with consistent, hierarchical padding */
@@ -1459,6 +1716,7 @@ input[type="time"].form-control[value=""]:focus {
   padding: 20px 20px;
   flex-shrink: 0;
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border-bottom: 1px solid var(--border);
   z-index: 100;
 }
 
@@ -1466,6 +1724,83 @@ input[type="time"].form-control[value=""]:focus {
   font-size: var(--text-xl);
   font-weight: 600;
   color: var(--text-primary);
+}
+
+/* Profile Modal Styling */
+#profileModal.active {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#profileModal .modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  z-index: 1300;
+  max-width: 480px;
+  width: 92vw;
+  height: auto;
+  max-height: 80vh;
+  min-height: 400px;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+#profileModal .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 20px;
+  padding-bottom: 80px; /* Add space for fixed footer */
+}
+
+#profileModal .modal-fixed-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  #profileModal .modal-content {
+    width: 95vw;
+    max-height: 85vh;
+    min-height: 350px;
+    border-radius: 24px;
+  }
+
+  #profileModal .modal-fixed-footer {
+    padding: 14px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  #profileModal .modal-content {
+    width: 98vw;
+    max-height: 90vh;
+    min-height: 300px;
+    border-radius: 24px;
+  }
+
+  #profileModal .modal-fixed-footer {
+    padding: 12px 16px;
+  }
 }
 
 .modal-close {
@@ -2459,6 +2794,10 @@ input:checked + .slider:before {
   font-weight: var(--font-weight-medium); /* 500 - Supporting text weight */
   margin-top: 10px;
   letter-spacing: -0.005em; /* Subtle negative tracking */
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Space between icon and text */
+  justify-content: center; /* Center the content horizontally */
 }
 
 .breakdown-cards {
@@ -5078,6 +5417,10 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     font-weight: var(--font-weight-medium); /* Consistent hierarchy */
     font-size: 14px; /* Increased from default for mobile compact view */
     letter-spacing: -0.005em;
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Space between icon and text */
+    justify-content: center; /* Center the content horizontally */
   }
 }
 
@@ -5179,6 +5522,10 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   font-size: 16px; /* Increased from 11px to be more prominent in compact view */
   font-weight: var(--font-weight-medium);
   letter-spacing: -0.005em;
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Space between icon and text */
+  justify-content: center; /* Center the content horizontally */
 }
 
 .compact-view .breakdown-card {

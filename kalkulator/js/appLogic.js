@@ -77,29 +77,38 @@ if (typeof window !== 'undefined') {
     }
 }
 
-// Optimized progress bar update function
+// Enhanced progress bar update function with improved text presentation
 function updateProgressBar(current, goal, shouldAnimate = false) {
     // Use cached elements
     const fill = domCache.progressFill || document.querySelector('.progress-fill');
     const label = domCache.progressLabel || document.querySelector('.progress-label');
-    
+
     if (!fill || !label) return;
 
     const percent = Math.round((current / goal) * 100);
-    
+    const clampedPercent = Math.min(percent, 100);
+
     // Clean up any existing animation state
     if (fill.dataset.animating === 'true') {
         fill.dataset.animating = 'false';
     }
-    
+
+    // Enhanced animation with smoother text transitions
     if (shouldAnimate) {
         // Use single requestAnimationFrame for smooth animation
         requestAnimationFrame(() => {
             fill.classList.remove('loading');
+
+            // Smooth transition for both fill and text
             fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            label.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+
             fill.dataset.animating = 'true';
-            fill.style.width = Math.min(percent, 100) + '%';
-            
+            fill.style.width = clampedPercent + '%';
+
+            // Update text styling classes immediately for smooth transition
+            updateProgressLabelStyling(label, percent);
+
             // Single timeout for cleanup
             setTimeout(() => {
                 fill.dataset.animating = 'false';
@@ -111,13 +120,20 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
     } else {
         // Immediate update without animation
         fill.style.transition = 'none';
-        fill.style.width = Math.min(percent, 100) + '%';
+        label.style.transition = 'none';
+        fill.style.width = clampedPercent + '%';
+
         // Force reflow once
         fill.offsetHeight;
-        // Re-enable transition
+
+        // Re-enable transitions
         fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        label.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+
+        // Update text styling immediately
+        updateProgressLabelStyling(label, percent);
     }
-    
+
     // Update classes based on progress
     const progressCard = fill.closest('.progress-card');
     if (percent >= 100) {
@@ -131,18 +147,53 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         fill.classList.remove('full');
         if (progressCard) progressCard.classList.remove('overachievement');
     }
-    
+
     // Add active class to show color when there's any progress
     if (percent > 0) {
         fill.classList.add('active');
     } else {
         fill.classList.remove('active');
     }
-    
-    // Update label text (cache currency suffix)
+
+    // Update label text with improved formatting
     const currencySuffix = window.app && window.app.currencyFormat ? ' NOK' : ' kr';
-    label.textContent = percent.toFixed(1) + '% av ' + goal.toLocaleString('no-NO') + currencySuffix;
+    const formattedPercent = percent < 10 ? percent.toFixed(1) : Math.round(percent);
+    label.textContent = `${formattedPercent}% av ${goal.toLocaleString('no-NO')}${currencySuffix}`;
     fill.title = `${current.toLocaleString('no-NO')}${currencySuffix} av ${goal.toLocaleString('no-NO')}${currencySuffix}`;
+}
+
+// Enhanced function to update progress label styling based on progress percentage
+function updateProgressLabelStyling(label, percent) {
+    // Remove all existing progress state classes
+    label.classList.remove('low-progress', 'medium-progress', 'high-progress', 'overachievement');
+
+    // Apply appropriate styling class based on progress percentage
+    if (percent > 100) {
+        label.classList.add('overachievement');
+        // Add ARIA attributes for accessibility
+        label.setAttribute('aria-label', `Mål oppnådd! ${percent.toFixed(1)}% av målet`);
+    } else if (percent >= 75) {
+        label.classList.add('high-progress');
+        label.setAttribute('aria-label', `Nær målet: ${percent.toFixed(1)}% av målet`);
+    } else if (percent >= 25) {
+        label.classList.add('medium-progress');
+        label.setAttribute('aria-label', `Fremdrift: ${percent.toFixed(1)}% av målet`);
+    } else {
+        label.classList.add('low-progress');
+        label.setAttribute('aria-label', `Tidlig fremdrift: ${percent.toFixed(1)}% av målet`);
+    }
+
+    // Ensure text remains properly centered during transitions
+    requestAnimationFrame(() => {
+        // Force a reflow to ensure proper text positioning
+        label.offsetHeight;
+
+        // Verify text is still centered (defensive programming)
+        const computedStyle = window.getComputedStyle(label);
+        if (computedStyle.textAlign !== 'center') {
+            label.style.textAlign = 'center';
+        }
+    });
 }
 
 // Legg til i app-objektet for enkel tilgang fra innstillinger
@@ -343,7 +394,10 @@ export const app = {
         
         // Check if we should show the recurring feature introduction
         this.checkAndShowRecurringIntro();
-        
+
+        // Load user profile data for header display
+        this.loadUserNickname();
+
         // Add cleanup listener for page unload
         window.addEventListener('beforeunload', () => {
             this.cleanup();
@@ -515,9 +569,11 @@ export const app = {
     },
     
     openAddShiftModal(targetMonth = null, targetYear = null) {
-        // Close any existing expanded views first
+        // Close any existing expanded views, dropdowns, and modals first
         this.closeShiftDetails();
         this.closeSettings();
+        this.closeProfile();
+        this.closeProfileDropdown();
         
         // Populate form elements if they're empty
         const startHourElement = document.getElementById('startHour');
@@ -1508,10 +1564,9 @@ export const app = {
         // Get current active tab before switching (within settings modal only)
         const settingsModal = document.getElementById('settingsModal');
         const currentActiveTab = settingsModal?.querySelector('.tab-btn.active');
-        const currentTab = currentActiveTab ? 
-            (currentActiveTab.textContent === 'Lønn' ? 'wage' : 
-             currentActiveTab.textContent === 'UI' ? 'interface' : 
-             currentActiveTab.textContent === 'Konto' ? 'account' :
+        const currentTab = currentActiveTab ?
+            (currentActiveTab.textContent === 'Lønn' ? 'wage' :
+             currentActiveTab.textContent === 'UI' ? 'interface' :
              currentActiveTab.textContent === 'Data' ? 'data' :
              'wage') : null;
         
@@ -1520,7 +1575,7 @@ export const app = {
             await this.saveCustomBonusesSilent();
         }
         
-        const tabs = ['wage', 'interface', 'account', 'data'];
+        const tabs = ['wage', 'interface', 'data'];
         const btns = settingsModal?.querySelectorAll('.tab-nav .tab-btn') || [];
         tabs.forEach((t, i) => {
             const btn = btns[i];
@@ -1540,12 +1595,7 @@ export const app = {
             }, 100);
         }
         
-        // When switching to account tab, load profile data
-        if (tab === 'account') {
-            setTimeout(() => {
-                this.loadProfileData();
-            }, 100);
-        }
+
         
         // When switching to data tab, setup export period options
         if (tab === 'data') {
@@ -1736,27 +1786,29 @@ export const app = {
     },
     
     async openSettings() {
-        // Close any existing expanded views
+        // Close any existing expanded views, dropdowns, and modals
         this.closeShiftDetails();
-        
+        this.closeProfileDropdown();
+        this.closeProfile();
+
         const modal = document.getElementById('settingsModal');
         if (modal) {
             // Update UI to match current state
             this.updateSettingsUI();
-            
+
             // Set active tab to wage (most important settings first)
             this.switchSettingsTabSync('wage');
-            
+
             // Show the modal
             modal.style.display = 'flex';
-            
+
             // Ensure custom bonus slots are populated if custom mode is active
             if (!this.usePreset) {
                 setTimeout(() => {
                     this.populateCustomBonusSlots();
                 }, 100);
             }
-            
+
 
         }
     },
@@ -1765,14 +1817,184 @@ export const app = {
         if (!this.usePreset) {
             await this.saveCustomBonusesSilent();
         }
-        
+
         const modal = document.getElementById('settingsModal');
         if (modal) {
             modal.style.display = 'none';
         }
-        
+
+        // Close profile dropdown if open
+        this.closeProfileDropdown();
+
         // Save settings when closing modal
         this.saveSettingsToSupabase();
+    },
+
+    // Profile dropdown functionality
+    toggleProfileDropdown() {
+        const dropdown = document.getElementById('profileDropdown');
+        if (!dropdown) return;
+
+        const isVisible = dropdown.classList.contains('show');
+
+        if (isVisible) {
+            this.closeProfileDropdown();
+        } else {
+            this.openProfileDropdown();
+        }
+    },
+
+    openProfileDropdown() {
+        const dropdown = document.getElementById('profileDropdown');
+        if (!dropdown) return;
+
+        // Close any other open dropdowns or modals first
+        this.closeShiftDetails();
+
+        // Show dropdown with animation
+        dropdown.style.display = 'block';
+        // Force reflow to ensure display change is applied
+        dropdown.offsetHeight;
+        dropdown.classList.add('show');
+
+        // Add click outside listener and keyboard support
+        setTimeout(() => {
+            document.addEventListener('click', this.handleClickOutside.bind(this));
+            document.addEventListener('keydown', this.handleDropdownKeydown.bind(this));
+        }, 0);
+    },
+
+    closeProfileDropdown() {
+        const dropdown = document.getElementById('profileDropdown');
+        if (!dropdown) return;
+
+        dropdown.classList.remove('show');
+
+        // Hide after animation completes
+        setTimeout(() => {
+            if (!dropdown.classList.contains('show')) {
+                dropdown.style.display = 'none';
+            }
+        }, 200);
+
+        // Remove event listeners
+        document.removeEventListener('click', this.handleClickOutside.bind(this));
+        document.removeEventListener('keydown', this.handleDropdownKeydown.bind(this));
+    },
+
+    handleClickOutside(event) {
+        const dropdown = document.getElementById('profileDropdown');
+        const profileBtn = document.querySelector('.user-profile-btn');
+
+        if (!dropdown || !profileBtn) return;
+
+        // Check if click is outside both the dropdown and the profile button
+        if (!dropdown.contains(event.target) && !profileBtn.contains(event.target)) {
+            this.closeProfileDropdown();
+        }
+    },
+
+    handleDropdownKeydown(event) {
+        const dropdown = document.getElementById('profileDropdown');
+        if (!dropdown || !dropdown.classList.contains('show')) return;
+
+        if (event.key === 'Escape') {
+            this.closeProfileDropdown();
+            // Focus back to the profile button
+            const profileBtn = document.querySelector('.user-profile-btn');
+            if (profileBtn) profileBtn.focus();
+        }
+    },
+
+    // Profile modal functionality
+    openProfile() {
+        // Close dropdown first
+        this.closeProfileDropdown();
+
+        // Close any other open modals
+        this.closeSettings();
+        this.closeShiftDetails();
+
+        const modal = document.getElementById('profileModal');
+        if (modal) {
+            // Load profile data
+            this.loadProfileData();
+
+            // Show the modal
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+
+            // Add keyboard support
+            const keydownHandler = (e) => {
+                if (e.key === 'Escape') {
+                    this.closeProfile();
+                }
+            };
+            document.addEventListener('keydown', keydownHandler);
+            modal.keydownHandler = keydownHandler; // Store for cleanup
+
+            // Add click outside handler
+            const clickOutsideHandler = (e) => {
+                if (e.target === modal) {
+                    this.closeProfile();
+                }
+            };
+            modal.addEventListener('click', clickOutsideHandler);
+            modal.clickOutsideHandler = clickOutsideHandler; // Store for cleanup
+        }
+    },
+
+    closeProfile() {
+        const modal = document.getElementById('profileModal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+
+            // Remove event listeners
+            if (modal.keydownHandler) {
+                document.removeEventListener('keydown', modal.keydownHandler);
+                modal.keydownHandler = null;
+            }
+            if (modal.clickOutsideHandler) {
+                modal.removeEventListener('click', modal.clickOutsideHandler);
+                modal.clickOutsideHandler = null;
+            }
+        }
+    },
+
+    // Logout handler
+    handleLogout() {
+        // Close dropdown first
+        this.closeProfileDropdown();
+
+        // Call the global logout function
+        if (typeof window.logout === 'function') {
+            window.logout();
+        }
+    },
+
+    // Load user nickname for header display
+    async loadUserNickname() {
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+
+            const nicknameElement = document.getElementById('userNickname');
+            if (nicknameElement) {
+                // Use first name if available, otherwise use first part of email
+                const nickname = user.user_metadata?.first_name ||
+                                user.email?.split('@')[0] ||
+                                'Bruker';
+                nicknameElement.textContent = nickname;
+            }
+        } catch (err) {
+            console.error('Error loading user nickname:', err);
+            // Fallback to default
+            const nicknameElement = document.getElementById('userNickname');
+            if (nicknameElement) {
+                nicknameElement.textContent = 'Bruker';
+            }
+        }
     },
     saveToLocalStorage() {
         try {
@@ -3900,6 +4122,9 @@ export const app = {
                     msgElement.textContent = '';
                 }, 3000);
             }
+
+            // Update the nickname in the header
+            this.loadUserNickname();
 
         } catch (err) {
             console.error('Error updating profile:', err);
