@@ -786,6 +786,9 @@ body {
   min-height: 80px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
+  /* Ensure header and profile elements are immediately visible */
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .header.hidden {
@@ -879,6 +882,9 @@ body {
   display: flex;
   align-items: center;
   z-index: 10002; /* Ensure container is above all other elements */
+  /* Ensure profile elements are immediately visible after greeting */
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .user-profile-btn {

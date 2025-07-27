@@ -42,6 +42,102 @@ document.addEventListener('DOMContentLoaded', async () => {
   let retryCount = 0;
   const maxRetries = 3; // Reduced from 5 to 3
 
+  // Load and display profile information immediately after greeting
+  async function loadAndDisplayProfileInfo() {
+    try {
+      const { data: { user } } = await supa.auth.getUser();
+      if (!user) return;
+
+      // Load nickname
+      const nicknameElement = document.getElementById('userNickname');
+      if (nicknameElement) {
+        // Use first name if available, otherwise use first part of email
+        const nickname = user.user_metadata?.first_name ||
+                        user.email?.split('@')[0] ||
+                        'Bruker';
+        nicknameElement.textContent = nickname;
+      }
+
+      // Load profile picture
+      try {
+        const { data: settings } = await supa
+          .from('user_settings')
+          .select('profile_picture_url')
+          .eq('user_id', user.id)
+          .single();
+
+        const profilePictureUrl = settings?.profile_picture_url;
+        updateTopBarProfilePicture(profilePictureUrl);
+      } catch (profileErr) {
+        // If there's an error loading profile picture, just show placeholder
+        console.log('No profile picture found or error loading:', profileErr);
+        updateTopBarProfilePicture(null);
+      }
+
+    } catch (err) {
+      console.error('Error loading profile info:', err);
+      // Fallback to default
+      const nicknameElement = document.getElementById('userNickname');
+      if (nicknameElement) {
+        nicknameElement.textContent = 'Bruker';
+      }
+      // Show placeholder profile picture
+      updateTopBarProfilePicture(null);
+    }
+  }
+
+  // Helper function to update top bar profile picture
+  function updateTopBarProfilePicture(imageUrl) {
+    const profileIcon = document.querySelector('.profile-icon');
+    if (!profileIcon) return;
+
+    const profileBtn = profileIcon.closest('.user-profile-btn');
+    if (!profileBtn) return;
+
+    if (imageUrl) {
+      // Replace SVG with image
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      img.alt = 'Profilbilde';
+      img.className = 'profile-picture-img';
+      img.style.cssText = `
+        transition: all var(--speed-normal) var(--ease-default);
+        opacity: 0;
+      `;
+
+      // Fade in when loaded
+      img.onload = () => {
+        img.style.opacity = '1';
+      };
+
+      // Handle image load error
+      img.onerror = () => {
+        console.log('Profile picture failed to load, showing placeholder');
+        updateTopBarProfilePicture(null);
+      };
+
+      profileIcon.replaceWith(img);
+    } else {
+      // Show placeholder SVG
+      if (profileIcon.tagName === 'IMG') {
+        const svg = document.createElement('svg');
+        svg.className = 'icon-sm profile-icon';
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.innerHTML = `
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        `;
+        profileIcon.replaceWith(svg);
+      }
+    }
+  }
+
   // Create and show welcome screen
   async function showWelcomeScreen() {
     // Fetch user for name
@@ -149,6 +245,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Use requestAnimationFrame for smoother animations
     requestAnimationFrame(() => {
       children.forEach((el, idx) => {
+        // Skip animating the header since profile info should be immediately visible
+        if (el.classList.contains('header')) {
+          return;
+        }
+
         el.style.opacity = '0';
         // Reduced stagger time from 0.1s to 0.08s and longer duration for smoother animation
         el.style.animation = `fadeInDown 0.8s forwards ${idx * 0.08}s`;
@@ -184,6 +285,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.app = app;
 
   await showWelcomeScreen();
+
+  // Load and display profile information immediately after greeting
+  await loadAndDisplayProfileInfo();
+
   await app.init();
 
   // Display the app container and animate entries

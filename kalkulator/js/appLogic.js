@@ -397,10 +397,7 @@ export const app = {
         // Check if we should show the recurring feature introduction
         this.checkAndShowRecurringIntro();
 
-        // Load user profile data for header display
-        this.loadUserNickname();
-
-        // Initialize profile picture functionality
+        // Initialize profile picture functionality (profile data already loaded earlier)
         this.initProfilePictureListeners();
 
         // Add cleanup listener for page unload
