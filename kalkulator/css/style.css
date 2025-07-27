@@ -2670,6 +2670,28 @@ input:checked + .slider:before {
   border-color: rgba(99, 102, 241, 0.4);
 }
 
+/* Center crop modal within available viewport space */
+#cropModal.active {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  /* Account for header height and floating action bar */
+  padding: 80px 20px 100px 20px;
+}
+
+/* Desktop crop modal positioning - center within content area */
+@media (min-width: 769px) {
+  #cropModal.active {
+    padding: 40px 20px 40px 20px;
+  }
+
+  #cropModal .modal-content {
+    /* Ensure modal is properly constrained on desktop */
+    max-height: calc(100vh - 200px);
+    min-height: 500px;
+  }
+}
+
 /* Center for auth modals - fixed positioning for laptops */
 .auth-center {
   position: fixed;
@@ -4640,8 +4662,9 @@ input:checked + .slider:before {
   max-width: 800px;
   width: 95vw;
   height: auto;
-  max-height: 90vh;
-  min-height: 600px;
+  /* Calculate available height accounting for header (80px) and floating action bar (80px) with padding */
+  max-height: calc(100vh - 160px);
+  min-height: 500px;
   overflow: hidden;
   border-radius: 24px;
   border: 2px solid var(--border);
@@ -4831,9 +4854,14 @@ input:checked + .slider:before {
   #cropModal .modal-content {
     width: 100vw;
     height: 100vh;
+    /* Ensure modal doesn't exceed viewport on mobile */
     max-height: 100vh;
     border-radius: 0;
     border: none;
+    /* Position modal to account for mobile browser UI */
+    top: 0;
+    left: 0;
+    transform: none;
   }
 
   .crop-modal-body {
@@ -4876,7 +4904,7 @@ input:checked + .slider:before {
 
   /* Ensure modal footer is properly positioned */
   #cropModal .modal-fixed-footer {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
@@ -4884,10 +4912,16 @@ input:checked + .slider:before {
     border-top: 1px solid var(--border);
     padding: 12px 16px;
     z-index: 1400;
+    border-radius: 0 0 24px 24px;
   }
 }
 
 @media (max-width: 480px) {
+  #cropModal.active {
+    /* Adjust padding for smaller screens */
+    padding: 60px 10px 80px 10px;
+  }
+
   .crop-modal-body {
     padding: 12px;
     gap: 12px;
@@ -5199,6 +5233,15 @@ input:checked + .slider:before {
   align-items: center;
   z-index: 10;
   border-radius: 0 0 24px 24px;
+}
+
+/* Crop modal specific footer positioning */
+#cropModal .modal-fixed-footer {
+  background: var(--bg-secondary);
+  z-index: 1400; /* Ensure it's above modal content */
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 /* Modal button group for centered buttons */

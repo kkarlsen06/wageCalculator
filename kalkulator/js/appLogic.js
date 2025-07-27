@@ -257,6 +257,11 @@ export const app = {
     lastRenderedMonth: null,
     lastRenderedYear: null,
     lastRenderedShiftsKey: '',
+    // Performance optimization for month navigation
+    monthNavigationTimeout: null, // Debounce timer for month navigation
+    statCardRenderFrame: null, // Track pending stat card render frame
+    isRenderingStatCards: false, // Track if stat card rendering is in progress
+    lastStatCardRenderKey: '', // Cache key for stat card render optimization
     async init() {
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
@@ -1040,17 +1045,8 @@ export const app = {
     changeMonth(month) {
         this.currentMonth = month;
 
-        // Refresh DOM cache to ensure fresh element references
-        domCache.refresh();
-
-        // Reset progress bar state to ensure clean animation
-        const fill = document.querySelector('.progress-fill');
-        if (fill) {
-            fill.dataset.animating = 'false';
-            fill.classList.remove('loading');
-        }
-
-        this.updateDisplay(true); // Enable animation when switching months
+        // Use debounced update to prevent excessive rendering on rapid navigation
+        this.debouncedUpdateDisplay(true);
         // Note: Don't save currentMonth to settings - it should always default to current month on page load
     },
 
@@ -1066,17 +1062,8 @@ export const app = {
         this.currentMonth = newMonth;
         this.currentYear = newYear;
 
-        // Refresh DOM cache to ensure fresh element references
-        domCache.refresh();
-
-        // Reset progress bar state to ensure clean animation
-        const fill = document.querySelector('.progress-fill');
-        if (fill) {
-            fill.dataset.animating = 'false';
-            fill.classList.remove('loading');
-        }
-
-        this.updateDisplay(true); // Enable animation when switching months
+        // Use debounced update to prevent excessive rendering on rapid navigation
+        this.debouncedUpdateDisplay(true);
     },
 
     navigateToNextMonth() {
@@ -1091,6 +1078,23 @@ export const app = {
         this.currentMonth = newMonth;
         this.currentYear = newYear;
 
+        // Use debounced update to prevent excessive rendering on rapid navigation
+        this.debouncedUpdateDisplay(true);
+    },
+
+    // Debounced update display to prevent excessive rendering during rapid month navigation
+    debouncedUpdateDisplay(shouldAnimate = false) {
+        // Clear any pending navigation update
+        if (this.monthNavigationTimeout) {
+            clearTimeout(this.monthNavigationTimeout);
+        }
+
+        // Cancel any pending stat card render
+        if (this.statCardRenderFrame) {
+            cancelAnimationFrame(this.statCardRenderFrame);
+            this.statCardRenderFrame = null;
+        }
+
         // Refresh DOM cache to ensure fresh element references
         domCache.refresh();
 
@@ -1101,7 +1105,15 @@ export const app = {
             fill.classList.remove('loading');
         }
 
-        this.updateDisplay(true); // Enable animation when switching months
+        // Debounce the actual update to prevent excessive calls
+        // Use shorter delay on mobile for better responsiveness
+        const isMobile = window.innerWidth <= 768;
+        const debounceDelay = isMobile ? 150 : 100; // Slightly longer on mobile for better performance
+
+        this.monthNavigationTimeout = setTimeout(() => {
+            this.updateDisplay(shouldAnimate);
+            this.monthNavigationTimeout = null;
+        }, debounceDelay);
     },
 
     // Month navigation positioning function removed - now using static section header
@@ -2209,6 +2221,24 @@ export const app = {
         const container = document.getElementById('statCards');
         if (!container) return;
 
+        // Create a cache key for this render to avoid unnecessary re-renders
+        const renderKey = `${this.currentMonth}-${this.currentYear}-${stats.length}-${JSON.stringify(stats.map(s => s.id + s.value))}`;
+
+        // Skip render if we're already rendering the same content
+        if (this.isRenderingStatCards && this.lastStatCardRenderKey === renderKey) {
+            return;
+        }
+
+        // Cancel any pending stat card render to prevent overlapping renders
+        if (this.statCardRenderFrame) {
+            cancelAnimationFrame(this.statCardRenderFrame);
+            this.statCardRenderFrame = null;
+        }
+
+        // Mark as rendering and store cache key
+        this.isRenderingStatCards = true;
+        this.lastStatCardRenderKey = renderKey;
+
         container.innerHTML = '';
 
         // Don't display stat cards if there are no shifts in the current month
@@ -2218,13 +2248,23 @@ export const app = {
         );
 
         if (monthShifts.length === 0) {
+            this.isRenderingStatCards = false;
             return; // No shifts means no stat cards to display
         }
 
         // Use requestAnimationFrame to ensure DOM has updated before measuring
-        // This fixes the bug where switching months uses stale measurements
-        requestAnimationFrame(() => {
-            this._performStatCardCalculation(stats, container);
+        // Track the frame ID to allow cancellation
+        this.statCardRenderFrame = requestAnimationFrame(() => {
+            // Clear the frame ID since we're now executing
+            this.statCardRenderFrame = null;
+
+            // Double-check we should still render (in case month changed during frame delay)
+            if (this.lastStatCardRenderKey === renderKey) {
+                this._performStatCardCalculation(stats, container);
+            }
+
+            // Mark rendering as complete
+            this.isRenderingStatCards = false;
         });
     },
 
@@ -2788,6 +2828,33 @@ export const app = {
     // Clean up timers when page is about to unload
     cleanup() {
         this.stopNextShiftTimer();
+
+        // Clean up month navigation performance optimization timers
+        if (this.monthNavigationTimeout) {
+            clearTimeout(this.monthNavigationTimeout);
+            this.monthNavigationTimeout = null;
+        }
+
+        if (this.statCardRenderFrame) {
+            cancelAnimationFrame(this.statCardRenderFrame);
+            this.statCardRenderFrame = null;
+        }
+
+        // Reset render state
+        this.isRenderingStatCards = false;
+        this.lastStatCardRenderKey = '';
+    },
+
+    // Performance monitoring for debugging (can be called from console)
+    getPerformanceStats() {
+        return {
+            monthNavigationActive: !!this.monthNavigationTimeout,
+            statCardRenderPending: !!this.statCardRenderFrame,
+            isRenderingStatCards: this.isRenderingStatCards,
+            lastRenderKey: this.lastStatCardRenderKey,
+            currentMonth: this.currentMonth,
+            currentYear: this.currentYear
+        };
     },
 
     renderShiftCalendar() {
