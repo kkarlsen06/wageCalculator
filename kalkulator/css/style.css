@@ -934,6 +934,18 @@ body {
   transform: scale(1.05);
 }
 
+/* Profile picture image in top bar */
+.profile-picture-img {
+  stroke: none !important; /* Remove stroke for images */
+}
+
+.user-profile-btn:hover .profile-picture-img {
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  background: rgba(99, 102, 241, 0.1) !important;
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
 /* Profile Dropdown */
 .profile-dropdown {
   position: absolute;
@@ -3128,9 +3140,10 @@ input:checked + .slider:before {
   padding: 2px 2px; /* Reduced vertical padding for tighter spacing */
 }
 
-.calendar-grid {
+/* Default calendar grid for stat cards (breakdown calendar) */
+.breakdown-calendar .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 32px repeat(7, 1fr);
   grid-auto-rows: minmax(45px, auto);
   gap: 2px;
   flex: 1;
@@ -3139,10 +3152,16 @@ input:checked + .slider:before {
   padding: 0 20px;
 }
 
-/* Special grid layout for shift calendar */
+/* Shift calendar grid - uses separate week grids, no week numbers in grid */
 .shift-calendar .calendar-grid {
-  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(45px, auto);
   gap: 1px;
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 20px;
 }
 
 .calendar-cell {
@@ -3605,7 +3624,7 @@ input:checked + .slider:before {
     grid-template-columns: 28px repeat(7, 1fr);
   }
   
-  .calendar-header, .calendar-grid {
+  .calendar-header, .breakdown-calendar .calendar-grid {
     grid-template-columns: 28px repeat(7, 1fr);
   }
 
@@ -3679,7 +3698,7 @@ input:checked + .slider:before {
     grid-template-columns: 24px repeat(7, 1fr);
   }
   
-  .calendar-header, .calendar-grid {
+  .calendar-header, .breakdown-calendar .calendar-grid {
     grid-template-columns: 24px repeat(7, 1fr);
   }
 
@@ -3742,7 +3761,7 @@ input:checked + .slider:before {
     grid-template-columns: 20px repeat(7, 1fr);
   }
   
-  .calendar-header, .calendar-grid {
+  .calendar-header, .breakdown-calendar .calendar-grid {
     grid-template-columns: 20px repeat(7, 1fr);
   }
 
@@ -4411,6 +4430,188 @@ input:checked + .slider:before {
 /* Modal Body Styling */
 .modal-body {
   padding: 20px;
+}
+
+/* Profile Picture Upload Component */
+.profile-picture-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+.profile-picture-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-picture-current {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.profile-picture-current img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-placeholder-icon {
+  width: 40px;
+  height: 40px;
+  stroke: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.profile-picture-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.profile-picture-status {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.profile-picture-size {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.profile-picture-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.profile-picture-controls .btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  min-height: auto;
+}
+
+.profile-picture-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-picture-progress .progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.profile-picture-progress .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent3));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.profile-picture-progress .progress-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Profile picture hover effects */
+.profile-picture-current:hover {
+  border-color: var(--accent);
+  transform: scale(1.02);
+  transition: all var(--speed-normal) var(--ease-default);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Ensure profile picture images in modal have proper styling */
+.profile-picture-current img {
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.profile-picture-current:hover img {
+  transform: scale(1.02);
+}
+
+/* Loading state for profile picture */
+.profile-picture-current.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.profile-picture-current.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid var(--accent);
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mobile responsiveness for profile picture upload */
+@media (max-width: 480px) {
+  .profile-picture-upload-container {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .profile-picture-preview {
+    gap: 12px;
+  }
+
+  .profile-picture-current {
+    width: 60px;
+    height: 60px;
+  }
+
+  .profile-placeholder-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .profile-picture-controls {
+    gap: 8px;
+  }
+
+  .profile-picture-controls .btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
 }
 
 .modal .form-group label {

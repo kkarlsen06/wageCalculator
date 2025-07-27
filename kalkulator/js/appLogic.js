@@ -274,7 +274,6 @@ export const app = {
         
         // Show UI elements
         this.populateTimeSelects();
-        this.populateYearDropdown();
         
 
         
@@ -355,6 +354,9 @@ export const app = {
         setTimeout(() => {
             this.updateDisplay(true); // Animate progress bar on initial load
         }, 100);
+
+        // Apply the user's preferred default shifts view
+        this.shiftView = this.defaultShiftsView;
         this.switchShiftView(this.shiftView);
 
         window.addEventListener('resize', () => {
@@ -397,6 +399,9 @@ export const app = {
 
         // Load user profile data for header display
         this.loadUserNickname();
+
+        // Initialize profile picture functionality
+        this.initProfilePictureListeners();
 
         // Add cleanup listener for page unload
         window.addEventListener('beforeunload', () => {
@@ -1029,35 +1034,7 @@ export const app = {
     },
 
 
-    populateYearDropdown() {
-        const yearSelect = document.getElementById('yearSelect');
-        if (!yearSelect) return;
-        
-        yearSelect.innerHTML = '';
-        
-        // Generate years from 2020 to current year + 5 years
-        const currentYear = new Date().getFullYear();
-        const startYear = 2020;
-        const endYear = currentYear + 5;
-        
-        for (let year = endYear; year >= startYear; year--) {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            
-            if (year === this.currentYear) {
-                option.selected = true;
-            }
-            
-            yearSelect.appendChild(option);
-        }
-    },
 
-    updateYear(year) {
-        this.currentYear = parseInt(year);
-        this.updateDisplay(true); // Enable animation when switching years
-        this.saveSettingsToSupabase(); // Save the new year to database
-    },
     
 
     
@@ -1203,6 +1180,7 @@ export const app = {
                             this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
                 this.currencyFormat = settings.currency_format || false;
                 this.compactView = settings.compact_view || false;
+                this.defaultShiftsView = settings.default_shifts_view || 'list';
                 
             } else {
                 // No settings found, set defaults
@@ -1236,6 +1214,7 @@ export const app = {
         this.hasSeenRecurringIntro = false; // Track if user has seen recurring feature intro
         this.currencyFormat = false; // Default to "kr" instead of "NOK"
         this.compactView = false; // Default to normal view
+        this.defaultShiftsView = 'list'; // Default to list view for shifts
     },
 
     // Helper function to test custom bonuses
@@ -1296,6 +1275,11 @@ export const app = {
             compactViewToggle.checked = this.compactView;
         }
 
+        const defaultShiftsViewToggle = document.getElementById('defaultShiftsViewToggle');
+        if (defaultShiftsViewToggle) {
+            defaultShiftsViewToggle.checked = this.defaultShiftsView === 'calendar';
+        }
+
         // Apply compact view CSS class to body if setting is enabled
         if (this.compactView) {
             document.body.classList.add('compact-view');
@@ -1303,8 +1287,7 @@ export const app = {
             document.body.classList.remove('compact-view');
         }
 
-        // Populate year dropdown to reflect loaded year
-        this.populateYearDropdown();
+
 
         // Toggle preset/custom sections
         this.togglePresetSections();
@@ -1373,6 +1356,7 @@ export const app = {
                 if ('has_seen_recurring_intro' in existingSettings) settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 if ('currency_format' in existingSettings) settingsData.currency_format = this.currencyFormat;
                 if ('compact_view' in existingSettings) settingsData.compact_view = this.compactView;
+                if ('default_shifts_view' in existingSettings) settingsData.default_shifts_view = this.defaultShiftsView;
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
@@ -1390,6 +1374,7 @@ export const app = {
                 settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 settingsData.currency_format = this.currencyFormat;
                 settingsData.compact_view = this.compactView;
+                settingsData.default_shifts_view = this.defaultShiftsView;
                 settingsData.custom_bonuses = this.customBonuses || {};
             }
 
@@ -1435,6 +1420,7 @@ export const app = {
                 this.hasSeenRecurringIntro = data.hasSeenRecurringIntro || false;
                 this.currencyFormat = data.currencyFormat || false;
                 this.compactView = data.compactView || false;
+                this.defaultShiftsView = data.defaultShiftsView || 'list';
                 
                 this.updateSettingsUI();
             } else {
@@ -1973,7 +1959,7 @@ export const app = {
         }
     },
 
-    // Load user nickname for header display
+    // Load user nickname and profile picture for header display
     async loadUserNickname() {
         try {
             const { data: { user } } = await window.supa.auth.getUser();
@@ -1987,6 +1973,23 @@ export const app = {
                                 'Bruker';
                 nicknameElement.textContent = nickname;
             }
+
+            // Also load the profile picture for the top bar
+            try {
+                const { data: settings } = await window.supa
+                    .from('user_settings')
+                    .select('profile_picture_url')
+                    .eq('user_id', user.id)
+                    .single();
+
+                const profilePictureUrl = settings?.profile_picture_url;
+                this.updateTopBarProfilePicture(profilePictureUrl);
+            } catch (profileErr) {
+                // If there's an error loading profile picture, just show placeholder
+                console.log('No profile picture found or error loading:', profileErr);
+                this.updateTopBarProfilePicture(null);
+            }
+
         } catch (err) {
             console.error('Error loading user nickname:', err);
             // Fallback to default
@@ -1994,6 +1997,8 @@ export const app = {
             if (nicknameElement) {
                 nicknameElement.textContent = 'Bruker';
             }
+            // Show placeholder profile picture
+            this.updateTopBarProfilePicture(null);
         }
     },
     saveToLocalStorage() {
@@ -2009,7 +2014,8 @@ export const app = {
                 directTimeInput: this.directTimeInput,
                 hasSeenRecurringIntro: this.hasSeenRecurringIntro,
                 currencyFormat: this.currencyFormat,
-                compactView: this.compactView
+                compactView: this.compactView,
+                defaultShiftsView: this.defaultShiftsView
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
         } catch (e) {
@@ -4054,6 +4060,9 @@ export const app = {
             if (nameField) nameField.value = user.user_metadata?.first_name || '';
             if (emailField) emailField.value = user.email || '';
 
+            // Load profile picture
+            await this.loadProfilePicture();
+
         } catch (err) {
             console.error('Error loading profile data:', err);
         }
@@ -4112,6 +4121,318 @@ export const app = {
                 msgElement.style.color = 'var(--danger)';
                 msgElement.textContent = 'Kunne ikke oppdatere profil';
             }
+        }
+    },
+
+    // Profile Picture Management Methods
+    async loadProfilePicture() {
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+
+            // Get profile picture URL from user settings
+            const { data: settings } = await window.supa
+                .from('user_settings')
+                .select('profile_picture_url')
+                .eq('user_id', user.id)
+                .single();
+
+            const profilePictureUrl = settings?.profile_picture_url;
+
+            // Update the profile modal preview
+            this.updateProfilePicturePreview(profilePictureUrl);
+
+            // Update the top bar profile picture
+            this.updateTopBarProfilePicture(profilePictureUrl);
+
+        } catch (err) {
+            console.error('Error loading profile picture:', err);
+            // Show placeholder if error
+            this.updateProfilePicturePreview(null);
+            this.updateTopBarProfilePicture(null);
+        }
+    },
+
+    updateProfilePicturePreview(imageUrl) {
+        const currentElement = document.getElementById('profilePictureCurrent');
+        const statusElement = document.getElementById('profilePictureStatus');
+        const sizeElement = document.getElementById('profilePictureSize');
+        const removeBtn = document.getElementById('removeProfilePictureBtn');
+
+        if (!currentElement) return;
+
+        if (imageUrl) {
+            // Show the uploaded image
+            currentElement.innerHTML = `<img src="${imageUrl}" alt="Profilbilde" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="profile-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>`;
+
+            if (statusElement) statusElement.textContent = 'Profilbilde lastet';
+            if (sizeElement) sizeElement.textContent = '';
+            if (removeBtn) removeBtn.style.display = 'inline-flex';
+        } else {
+            // Show placeholder
+            currentElement.innerHTML = `<svg class="profile-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>`;
+
+            if (statusElement) statusElement.textContent = 'Ingen profilbilde';
+            if (sizeElement) sizeElement.textContent = '';
+            if (removeBtn) removeBtn.style.display = 'none';
+        }
+    },
+
+    updateTopBarProfilePicture(imageUrl) {
+        const profileIcon = document.querySelector('.profile-icon');
+        if (!profileIcon) return;
+
+        const profileBtn = profileIcon.closest('.user-profile-btn');
+        if (!profileBtn) return;
+
+        if (imageUrl) {
+            // Replace SVG with image
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = 'Profilbilde';
+            img.className = 'profile-icon profile-picture-img';
+            img.style.cssText = `
+                width: 32px !important;
+                height: 32px !important;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: rgba(255, 255, 255, 0.05);
+                transition: all var(--speed-normal) var(--ease-default);
+                opacity: 0;
+            `;
+
+            // Handle image load success
+            img.onload = () => {
+                img.style.opacity = '1';
+            };
+
+            // Handle image load error
+            img.onerror = () => {
+                console.log('Profile picture failed to load, showing placeholder');
+                this.updateTopBarProfilePicture(null);
+            };
+
+            profileIcon.replaceWith(img);
+        } else {
+            // Show placeholder SVG
+            if (profileIcon.tagName === 'IMG') {
+                const svg = document.createElement('svg');
+                svg.className = 'icon-sm profile-icon';
+                svg.setAttribute('viewBox', '0 0 24 24');
+                svg.setAttribute('fill', 'none');
+                svg.setAttribute('stroke', 'currentColor');
+                svg.setAttribute('stroke-width', '2');
+                svg.setAttribute('stroke-linecap', 'round');
+                svg.setAttribute('stroke-linejoin', 'round');
+                svg.setAttribute('aria-hidden', 'true');
+                svg.innerHTML = `
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                `;
+                profileIcon.replaceWith(svg);
+            }
+        }
+    },
+
+    selectProfilePicture() {
+        const input = document.getElementById('profilePictureInput');
+        if (input) {
+            input.click();
+        }
+    },
+
+    async handleProfilePictureChange(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+            // Show progress
+            this.showProfilePictureProgress(true);
+            this.updateProfilePictureProgress(0, 'Validerer bilde...');
+
+            // Validate and compress the image
+            const compressedBlob = await window.imageUtils.compressImage(file, (progress) => {
+                this.updateProfilePictureProgress(progress * 0.5, 'Komprimerer bilde...');
+            });
+
+            this.updateProfilePictureProgress(50, 'Laster opp...');
+
+            // Upload to Supabase Storage
+            const imageUrl = await this.uploadProfilePictureToStorage(compressedBlob);
+
+            this.updateProfilePictureProgress(90, 'Oppdaterer profil...');
+
+            // Update user settings with the new image URL
+            await this.saveProfilePictureUrl(imageUrl);
+
+            this.updateProfilePictureProgress(100, 'Fullført!');
+
+            // Update UI
+            this.updateProfilePicturePreview(imageUrl);
+            this.updateTopBarProfilePicture(imageUrl);
+
+            // Hide progress after a short delay
+            setTimeout(() => {
+                this.showProfilePictureProgress(false);
+            }, 1000);
+
+        } catch (error) {
+            console.error('Error uploading profile picture:', error);
+            this.showProfilePictureProgress(false);
+
+            // Show error message
+            const msgElement = document.getElementById('profile-update-msg');
+            if (msgElement) {
+                msgElement.style.color = 'var(--danger)';
+                msgElement.textContent = 'Feil ved opplasting: ' + error.message;
+                setTimeout(() => {
+                    msgElement.textContent = '';
+                }, 5000);
+            }
+        }
+
+        // Clear the input
+        event.target.value = '';
+    },
+
+    async uploadProfilePictureToStorage(blob) {
+        const { data: { user } } = await window.supa.auth.getUser();
+        if (!user) throw new Error('Ikke innlogget');
+
+        // Generate unique filename
+        const filename = window.imageUtils.generateProfilePictureFilename(user.id, 'jpg');
+
+        // Upload to Supabase Storage
+        const { data, error } = await window.supa.storage
+            .from('profile-pictures')
+            .upload(filename, blob, {
+                cacheControl: '3600',
+                upsert: false
+            });
+
+        if (error) {
+            throw new Error('Kunne ikke laste opp bilde: ' + error.message);
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = window.supa.storage
+            .from('profile-pictures')
+            .getPublicUrl(filename);
+
+        return publicUrl;
+    },
+
+    async saveProfilePictureUrl(imageUrl) {
+        const { data: { user } } = await window.supa.auth.getUser();
+        if (!user) throw new Error('Ikke innlogget');
+
+        const { error } = await window.supa
+            .from('user_settings')
+            .upsert({
+                user_id: user.id,
+                profile_picture_url: imageUrl,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' });
+
+        if (error) {
+            throw new Error('Kunne ikke lagre profilbilde-URL: ' + error.message);
+        }
+    },
+
+    async removeProfilePicture() {
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+
+            // Get current profile picture URL
+            const { data: settings } = await window.supa
+                .from('user_settings')
+                .select('profile_picture_url')
+                .eq('user_id', user.id)
+                .single();
+
+            const currentUrl = settings?.profile_picture_url;
+
+            // Remove from storage if exists
+            if (currentUrl && currentUrl.includes('profile-pictures')) {
+                const filename = currentUrl.split('/').pop();
+                await window.supa.storage
+                    .from('profile-pictures')
+                    .remove([`${user.id}/${filename}`]);
+            }
+
+            // Update user settings to remove URL
+            await window.supa
+                .from('user_settings')
+                .upsert({
+                    user_id: user.id,
+                    profile_picture_url: null,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+
+            // Update UI
+            this.updateProfilePicturePreview(null);
+            this.updateTopBarProfilePicture(null);
+
+            // Show success message
+            const msgElement = document.getElementById('profile-update-msg');
+            if (msgElement) {
+                msgElement.style.color = 'var(--success)';
+                msgElement.textContent = 'Profilbilde fjernet';
+                setTimeout(() => {
+                    msgElement.textContent = '';
+                }, 3000);
+            }
+
+        } catch (error) {
+            console.error('Error removing profile picture:', error);
+
+            const msgElement = document.getElementById('profile-update-msg');
+            if (msgElement) {
+                msgElement.style.color = 'var(--danger)';
+                msgElement.textContent = 'Kunne ikke fjerne profilbilde';
+                setTimeout(() => {
+                    msgElement.textContent = '';
+                }, 5000);
+            }
+        }
+    },
+
+    showProfilePictureProgress(show) {
+        const progressElement = document.getElementById('profilePictureProgress');
+        if (progressElement) {
+            progressElement.style.display = show ? 'flex' : 'none';
+        }
+    },
+
+    updateProfilePictureProgress(percentage, text) {
+        const fillElement = document.getElementById('profilePictureProgressFill');
+        const textElement = document.getElementById('profilePictureProgressText');
+
+        if (fillElement) {
+            fillElement.style.width = percentage + '%';
+        }
+
+        if (textElement) {
+            textElement.textContent = text;
+        }
+    },
+
+    // Initialize profile picture event listeners
+    initProfilePictureListeners() {
+        const input = document.getElementById('profilePictureInput');
+        if (input) {
+            input.addEventListener('change', (event) => {
+                this.handleProfilePictureChange(event);
+            });
         }
     },
 
@@ -5585,13 +5906,24 @@ export const app = {
                 this.compactView = compactViewToggle.checked;
                 this.saveSettingsToSupabase();
                 this.updateDisplay(); // Refresh display with new view
-                
+
                 // Add/remove compact class to body
                 if (this.compactView) {
                     document.body.classList.add('compact-view');
                 } else {
                     document.body.classList.remove('compact-view');
                 }
+            });
+        }
+
+        // Default shifts view toggle
+        const defaultShiftsViewToggle = document.getElementById('defaultShiftsViewToggle');
+        if (defaultShiftsViewToggle) {
+            defaultShiftsViewToggle.addEventListener('change', () => {
+                this.defaultShiftsView = defaultShiftsViewToggle.checked ? 'calendar' : 'list';
+                this.saveSettingsToSupabase();
+                // Note: We don't immediately switch the view here - this is just the default preference
+                // The actual view switching is still controlled by the user's manual selection
             });
         }
     },

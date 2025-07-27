@@ -285,14 +285,6 @@
               </div>
 
               <div id="interfaceTab" class="tab-content">
-                  <div class="form-group">
-                      <label>År</label>
-                      <select class="form-control" id="yearSelect" onchange="app.updateYear(this.value)">
-                          <!-- Years will be populated dynamically -->
-                      </select>
-                      <small class="form-hint">Velg hvilket år du vil vise data for</small>
-                  </div>
-                  
                   <div class="form-group form-group-with-hint">
                       <label>Tidsinnskriving</label>
                       <div class="switch-group">
@@ -344,6 +336,20 @@
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="compactViewToggle">
+                            <span class="slider"></span>
+                        </label>
+                      </div>
+                  </div>
+
+                  <div class="form-group form-group-with-hint">
+                      <label>Standard vaktvisning</label>
+                      <div class="switch-group">
+                        <div>
+                          <span class="text-secondary">Kalender som standardvisning i stedet for liste</span>
+                          <small class="form-hint">Velg hvilken visning som skal vises når du åpner appen</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="defaultShiftsViewToggle">
                             <span class="slider"></span>
                         </label>
                       </div>
@@ -455,6 +461,54 @@
                           <label for="profileEmail">E-post</label>
                           <input type="email" id="profileEmail" name="email" class="form-control" placeholder="E-post" disabled autocomplete="email">
                           <small class="form-hint">E-postadressen kan ikke endres etter registrering</small>
+                      </div>
+
+                      <!-- Profile Picture Upload Section -->
+                      <div class="form-group form-group-with-hint">
+                          <label for="profilePictureInput">Profilbilde</label>
+                          <div class="profile-picture-upload-container">
+                              <!-- Current Profile Picture Preview -->
+                              <div class="profile-picture-preview">
+                                  <div class="profile-picture-current" id="profilePictureCurrent">
+                                      <svg class="profile-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                          <circle cx="12" cy="7" r="4"></circle>
+                                      </svg>
+                                  </div>
+                                  <div class="profile-picture-info">
+                                      <span class="profile-picture-status" id="profilePictureStatus">Ingen profilbilde</span>
+                                      <span class="profile-picture-size" id="profilePictureSize"></span>
+                                  </div>
+                              </div>
+
+                              <!-- File Input and Upload Controls -->
+                              <div class="profile-picture-controls">
+                                  <input type="file" id="profilePictureInput" accept="image/jpeg,image/jpg,image/png,image/webp" style="display: none;">
+                                  <button type="button" class="btn btn-secondary btn-sm" onclick="app.selectProfilePicture()">
+                                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+                                          <circle cx="12" cy="13" r="3"></circle>
+                                      </svg>
+                                      Velg bilde
+                                  </button>
+                                  <button type="button" class="btn btn-danger btn-sm" id="removeProfilePictureBtn" onclick="app.removeProfilePicture()" style="display: none;">
+                                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <polyline points="3 6 5 6 21 6"></polyline>
+                                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                      </svg>
+                                      Fjern
+                                  </button>
+                              </div>
+
+                              <!-- Upload Progress -->
+                              <div class="profile-picture-progress" id="profilePictureProgress" style="display: none;">
+                                  <div class="progress-bar">
+                                      <div class="progress-fill" id="profilePictureProgressFill"></div>
+                                  </div>
+                                  <span class="progress-text" id="profilePictureProgressText">Laster opp...</span>
+                              </div>
+                          </div>
+                          <small class="form-hint">JPG, PNG eller WebP. Maksimal størrelse: 10MB. Bildet vil bli komprimert til 400x400px.</small>
                       </div>
 
                       <div class="form-group">
@@ -674,6 +728,8 @@
     <script src="../js/error-handling.js"></script>
     <!-- Load configuration first -->
     <script src="js/config.js"></script>
+    <!-- Image utilities for profile picture compression -->
+    <script src="js/imageUtils.js"></script>
     <!-- UUID library for generating series IDs -->
     <script>
         // Simple UUID v4 generator function
