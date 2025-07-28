@@ -2413,6 +2413,21 @@ export const app = {
         // Force reflow to ensure animations trigger properly
         chartBars.offsetHeight;
 
+        // Store reference to currently active tooltip bar (shared across all bars)
+        let activeTooltipBar = null;
+
+        // Global tooltip functions
+        const hideTooltip = () => {
+            chartTooltip.classList.remove('show');
+            if (activeTooltipBar) {
+                activeTooltipBar.classList.remove('tooltip-active');
+                activeTooltipBar = null;
+            }
+        };
+
+        // Store hideTooltip function for global access
+        this.hideChartTooltip = hideTooltip;
+
         // Create bars and labels
         sortedWeeks.forEach((weekNumber, index) => {
             const weekData = weeklyData[weekNumber] || { hours: 0, earnings: 0, shifts: [] };
@@ -2456,38 +2471,101 @@ export const app = {
             barValue.textContent = hours > 0 ? `${hours.toFixed(1)}t` : '';
             bar.appendChild(barValue);
 
-            // Add hover events for enhanced tooltip - only for bars with data
+            // Add interactive events for enhanced tooltip - only for bars with data
             if (hours > 0) {
-                bar.addEventListener('mouseenter', (e) => {
+
+                // Function to show tooltip
+                const showTooltip = (e) => {
+                    const barValueElement = bar.querySelector('.chart-bar-value');
                     const rect = bar.getBoundingClientRect();
-                    const containerRect = chartBars.getBoundingClientRect();
+
+                    // Use the tooltip's parent container for positioning context
+                    const tooltipParent = chartTooltip.parentElement;
+                    const containerRect = tooltipParent.getBoundingClientRect();
+
+
 
                     const tooltipContent = document.getElementById('tooltipContent');
                     if (tooltipContent) {
-                        const isCurrentWeek = isCurrentMonth && weekNumber === currentWeekNumber;
-                        const weekLabel = isCurrentWeek ? `Uke ${weekNumber} (Inneværende uke)` : `Uke ${weekNumber}`;
+                        // Remove current week indicator - just show week number
+                        const weekLabel = `Uke ${weekNumber}`;
 
                         tooltipContent.innerHTML = `
                             <span class="chart-tooltip-line">${weekLabel}</span>
-                            <span class="chart-tooltip-line">${hours.toFixed(1)} timer</span>
-                            <span class="chart-tooltip-line">${monthlyPercent.toFixed(1)}% av måneden</span>
+                            <span class="chart-tooltip-line">${hours.toFixed(1).replace('.', ',')} timer</span>
+                            <span class="chart-tooltip-line">${monthlyPercent.toFixed(1).replace('.', ',')}% av måneden</span>
                             <span class="chart-tooltip-line">${this.formatCurrency(earnings)}</span>
                         `;
                     }
 
-                    // Position tooltip with bounds checking
-                    const tooltipLeft = Math.max(10, Math.min(
-                        rect.left - containerRect.left + rect.width / 2,
-                        containerRect.width - 140 // tooltip min-width + padding
-                    ));
+                    // Position tooltip over the hour value text inside the bar
+                    const tooltipWidth = 140; // Approximate tooltip width
+                    const tooltipHeight = 80; // Approximate tooltip height
+                    const padding = 8;
+
+                    // Get the position of the hour value element if it exists
+                    let barValueRect = null;
+                    if (barValueElement) {
+                        barValueRect = barValueElement.getBoundingClientRect();
+                    }
+
+                    // Calculate horizontal position - center on hour value text or bar center
+                    let tooltipLeft;
+                    if (barValueRect) {
+                        // Center on the hour value text
+                        tooltipLeft = barValueRect.left - containerRect.left + barValueRect.width / 2 - tooltipWidth / 2;
+                    } else {
+                        // Fallback to bar center
+                        tooltipLeft = rect.left - containerRect.left + rect.width / 2 - tooltipWidth / 2;
+                    }
+
+                    // Ensure tooltip stays within container bounds
+                    tooltipLeft = Math.max(padding, Math.min(tooltipLeft, containerRect.width - tooltipWidth - padding));
+
+                    // Calculate vertical position - position over the hour value text
+                    let tooltipTop;
+                    if (barValueRect) {
+                        // Position directly above the hour value text (which is at the bottom of the bar)
+                        tooltipTop = barValueRect.top - containerRect.top - tooltipHeight - padding;
+                    } else {
+                        // Fallback to above the bar
+                        tooltipTop = rect.top - containerRect.top - tooltipHeight - padding;
+                    }
+
+                    // If tooltip would go above container, position it below the hour value
+                    if (tooltipTop < padding) {
+                        if (barValueRect) {
+                            tooltipTop = barValueRect.bottom - containerRect.top + padding;
+                        } else {
+                            tooltipTop = rect.bottom - containerRect.top + padding;
+                        }
+                    }
 
                     chartTooltip.style.left = `${tooltipLeft}px`;
-                    chartTooltip.style.top = `${rect.top - containerRect.top - 8}px`;
+                    chartTooltip.style.top = `${tooltipTop}px`;
                     chartTooltip.classList.add('show');
-                });
 
-                bar.addEventListener('mouseleave', () => {
-                    chartTooltip.classList.remove('show');
+                    // Mark this bar as having active tooltip
+                    bar.classList.add('tooltip-active');
+                    activeTooltipBar = bar;
+                };
+
+                // Click/tap event for mobile and desktop (no hover functionality)
+                bar.addEventListener('click', (e) => {
+                    e.stopPropagation();
+
+                    // If this bar already has active tooltip, hide it
+                    if (bar.classList.contains('tooltip-active')) {
+                        hideTooltip();
+                        return;
+                    }
+
+                    // Hide any existing tooltip first
+                    if (activeTooltipBar && activeTooltipBar !== bar) {
+                        activeTooltipBar.classList.remove('tooltip-active');
+                    }
+
+                    showTooltip(e);
                 });
             }
 
@@ -2520,6 +2598,30 @@ export const app = {
             chartBars.appendChild(emptyMessage);
         }
 
+        // Add global click listener to hide tooltip when clicking outside
+        if (!this.chartTooltipGlobalListener) {
+            const self = this; // Store reference to maintain context
+            this.chartTooltipGlobalListener = (e) => {
+                // Check if click is outside chart area and not on a chart bar
+                const chartContainer = document.querySelector('.chart-container');
+                const clickedBar = e.target.closest('.chart-bar');
+                const clickedTooltip = e.target.closest('.chart-tooltip');
+
+                // Don't hide if clicking on the tooltip itself or on a chart bar
+                if (clickedTooltip || clickedBar) {
+                    return;
+                }
+
+                // Hide tooltip if clicking outside the chart container
+                if (chartContainer && !chartContainer.contains(e.target)) {
+                    if (self.hideChartTooltip) {
+                        self.hideChartTooltip();
+                    }
+                }
+            };
+
+            document.addEventListener('click', this.chartTooltipGlobalListener);
+        }
 
     },
 
@@ -3209,6 +3311,11 @@ export const app = {
             this.monthNavigationTimeout = null;
         }
 
+        // Clean up chart tooltip global listener
+        if (this.chartTooltipGlobalListener) {
+            document.removeEventListener('click', this.chartTooltipGlobalListener);
+            this.chartTooltipGlobalListener = null;
+        }
 
     },
 
