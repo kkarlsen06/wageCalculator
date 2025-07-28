@@ -1061,15 +1061,15 @@ body {
 
 /* Month navigation container when positioned in dashboard */
 .dashboard-content .month-navigation-container {
-  flex: 1;
+  flex: 0 0 auto; /* Don't grow, position naturally after stat cards */
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 0;
-  margin-top: auto; /* Push the month picker down */
-  padding-top: 40px; /* Add explicit top padding for spacing */
-  padding-bottom: 40px; /* Add explicit bottom padding for spacing */
-  min-height: 120px; /* Ensure minimum height for proper spacing */
+  margin-top: 0; /* Remove auto margin to position directly after stat cards */
+  padding-top: 0; /* Remove top padding for immediate positioning */
+  padding-bottom: 0; /* Remove bottom padding for compact layout */
+  min-height: auto; /* Remove fixed height constraint */
   position: relative;
 }
 
@@ -1122,15 +1122,23 @@ body {
     display: flex;
     opacity: 1;
     justify-content: center;
-    margin-top: 24px;
+    margin-top: 0; /* No margin - position immediately after stat cards */
     margin-bottom: 0;
-    padding-top: 20px;
-    padding-bottom: 20px;
+    padding-top: 8px; /* Minimal padding for immediate positioning */
+    padding-bottom: 8px; /* Minimal padding for immediate positioning */
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     margin-left: -16px;
     margin-right: -16px;
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  /* Override any mobile rules that might interfere with desktop positioning */
+  .dashboard-content .month-navigation-container {
+    padding-top: 0 !important; /* Force no top padding on desktop */
+    padding-bottom: 0 !important; /* Force no bottom padding on desktop */
+    min-height: auto !important; /* Force auto height on desktop */
+    margin-top: 0 !important; /* Force no top margin on desktop */
   }
 
   .shift-section .month-navigation-container {
@@ -1280,9 +1288,18 @@ body {
 /* Desktop-range devices with moderate screen sizes */
 @media (min-width: 1024px) and (max-width: 1200px) {
   .dashboard-month-nav {
-    margin-top: 20px;
-    padding-top: 16px;
-    padding-bottom: 16px;
+    margin-top: 0; /* No margin - immediate positioning */
+    padding-top: 6px; /* Ultra-minimal padding */
+    padding-bottom: 6px; /* Ultra-minimal padding */
+  }
+}
+
+/* Large desktop screens - optimize spacing for abundant screen real estate */
+@media (min-width: 1201px) {
+  .dashboard-month-nav {
+    margin-top: 0; /* No margin - immediate positioning */
+    padding-top: 4px; /* Ultra-minimal padding for maximum efficiency */
+    padding-bottom: 4px; /* Ultra-minimal padding for maximum efficiency */
   }
 }
 
@@ -5588,6 +5605,13 @@ input:checked + .slider:before {
   /* Ensure the content can fill the full height */
   min-height: 0;
   height: 100%;
+}
+
+/* Override gap specifically for desktop to reduce spacing before month picker */
+@media (min-width: 1024px) {
+  .dashboard-content {
+    gap: 16px; /* Reduced gap on desktop for tighter layout */
+  }
 }
 
 /* Shift section styling */
