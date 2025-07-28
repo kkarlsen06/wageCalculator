@@ -1222,14 +1222,12 @@ body {
 
 /* Dashboard month navigation specific styling */
 .dashboard-month-nav .month-navigation {
-  background: rgba(255, 255, 255, 0.02);
   border-radius: 16px;
   padding: 12px 20px;
   transition: all 0.3s ease;
 }
 
 .dashboard-month-nav .month-navigation:hover {
-  background: rgba(255, 255, 255, 0.04);
   transform: translateY(-1px);
 }
 
@@ -1245,7 +1243,6 @@ body {
 @media (orientation: landscape) and (min-height: 400px) and (max-width: 1023px),
       (min-width: 430px) and (max-width: 1023px) and (orientation: portrait) {
   .dashboard-month-nav .month-navigation {
-    background: rgba(255, 255, 255, 0.015);
     border-radius: 14px;
     padding: 10px 16px;
   }
@@ -3506,7 +3503,7 @@ input:checked + .slider:before {
   border-radius: 24px; /* Fully rounded edges */
   padding: 18px;
   margin: 0;
-  border: 1px solid var(--border);
+  border: none;
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -6989,14 +6986,8 @@ input[type="file"].form-control:focus {
   max-height: 180px;
   gap: 4px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.02);
   position: relative;
   width: 100%;
-  /* Grid lines for 10-hour intervals */
-  background-image:
-    linear-gradient(to right, rgba(30, 30, 30, 0.3) 1px, transparent 1px),
-    linear-gradient(to top, rgba(30, 30, 30, 0.3) 1px, transparent 1px);
-  background-size: 100% 25%; /* Grid lines every 25% of height (roughly 10-hour intervals) */
   /* Standard height behavior */
   height: auto;
 }
@@ -7072,6 +7063,46 @@ input[type="file"].form-control:focus {
     inset 1px 0 1px rgba(255, 255, 255, 0.1),
     inset 0 -1px 2px rgba(0, 0, 0, 0.25),
     inset -1px 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Current week highlighting - clean accent color */
+.chart-bar.current-week {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.2),
+    inset 1px 0 1px rgba(255, 255, 255, 0.15),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2),
+    inset -1px 0 1px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+/* Current week hover state */
+.chart-bar.current-week:hover {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.25),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Current week bar value styling */
+.chart-bar.current-week .chart-bar-value {
+  color: var(--bg-primary);
+  font-weight: var(--font-weight-bold);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+
+
+/* Special styling when current week is also the highest week */
+.chart-bar.current-week.highest {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #0A2A3A 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.25),
+    inset 1px 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.25),
+    inset -1px 0 1px rgba(0, 0, 0, 0.15);
 }
 
 .chart-bar-value {
@@ -7187,6 +7218,8 @@ input[type="file"].form-control:focus {
     font-weight: 700;
     transform: none;
   }
+
+  /* Current week mobile adjustments - no changes needed, uses base styling */
 }
 
 @media (max-width: 360px) {
@@ -7228,6 +7261,8 @@ input[type="file"].form-control:focus {
     font-weight: 700;
     transform: none;
   }
+
+  /* Current week very small mobile adjustments - no changes needed, uses base styling */
 }
 
 /* Large mobile devices and small tablets - balance between mobile and desktop */
@@ -7301,6 +7336,8 @@ input[type="file"].form-control:focus {
     font-weight: 700;
     transform: none;
   }
+
+  /* Current week desktop enhancements - no changes needed, uses base styling */
 }
 
 /* Handle very short viewports (mobile browser UI expanded) */

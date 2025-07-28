@@ -2239,6 +2239,13 @@ export const app = {
 
         const maxHours = Math.max(...sortedWeeks.map(week => weeklyData[week]?.hours || 0), 1);
 
+        // Get current week number for highlighting
+        const today = new Date();
+        const currentWeekNumber = this.getISOWeekNumber(today);
+
+        // Check if we're viewing the current month/year
+        const isCurrentMonth = this.currentMonth === (today.getMonth() + 1) && this.currentYear === today.getFullYear();
+
         // Find the week with the most hours for highlighting
         const highestWeek = sortedWeeks.reduce((highest, week) => {
             const currentHours = weeklyData[week]?.hours || 0;
@@ -2275,6 +2282,14 @@ export const app = {
                 bar.classList.add('highest');
             }
 
+            // Add current week class for highlighting
+            if (isCurrentMonth && weekNumber === currentWeekNumber) {
+                bar.classList.add('current-week');
+                bar.setAttribute('aria-label', `Uke ${weekNumber} (Inneværende uke): ${hours.toFixed(1)} timer, ${this.formatCurrency(earnings)}`);
+            } else {
+                bar.setAttribute('aria-label', `Uke ${weekNumber}: ${hours.toFixed(1)} timer, ${this.formatCurrency(earnings)}`);
+            }
+
             // Set CSS custom property for animation
             bar.style.setProperty('--bar-height', `${heightPercent}%`);
             bar.setAttribute('data-week', weekNumber);
@@ -2296,8 +2311,11 @@ export const app = {
 
                     const tooltipContent = document.getElementById('tooltipContent');
                     if (tooltipContent) {
+                        const isCurrentWeek = isCurrentMonth && weekNumber === currentWeekNumber;
+                        const weekLabel = isCurrentWeek ? `Uke ${weekNumber} (Inneværende uke)` : `Uke ${weekNumber}`;
+
                         tooltipContent.innerHTML = `
-                            <span class="chart-tooltip-line">Uke ${weekNumber}</span>
+                            <span class="chart-tooltip-line">${weekLabel}</span>
                             <span class="chart-tooltip-line">${hours.toFixed(1)} timer</span>
                             <span class="chart-tooltip-line">${monthlyPercent.toFixed(1)}% av måneden</span>
                             <span class="chart-tooltip-line">${this.formatCurrency(earnings)}</span>
