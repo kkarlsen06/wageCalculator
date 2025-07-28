@@ -3245,14 +3245,20 @@ input:checked + .slider:before {
 
 /* Current date styling for calendar cells - very subtle highlight */
 .calendar-cell.current-date {
-  background: rgba(14, 165, 233, 0.06);
-  border: 2px solid rgba(14, 165, 233, 0.15);
+  background: rgba(14, 165, 233, 0.06) !important;
+  border: 2px solid rgba(14, 165, 233, 0.15) !important;
 }
 
 /* When current date has shifts, maintain subtle highlight but blend with shift styling */
 .calendar-cell.current-date.has-shifts {
-  background: var(--gradient-secondary);
-  border: 2px solid rgba(14, 165, 233, 0.25);
+  background: var(--gradient-secondary) !important;
+  border: 2px solid rgba(14, 165, 233, 0.25) !important;
+}
+
+/* When current date is empty (no shifts), ensure current-date styling takes precedence */
+.calendar-cell.current-date.empty-date {
+  background: rgba(14, 165, 233, 0.06) !important;
+  border: 2px solid rgba(14, 165, 233, 0.15) !important;
 }
 
 /* Calendar week number styling */
@@ -3375,7 +3381,9 @@ input:checked + .slider:before {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
 }
 
@@ -3411,27 +3419,23 @@ input:checked + .slider:before {
 .week-separator::before {
   content: '';
   position: absolute;
-  left: 10px;
+  left: 80px;
   right: 10px;
   height: 1px;
   background: linear-gradient(
     to right,
     var(--border) 0%,
-    var(--border) 40%,
-    transparent 45%,
-    transparent 55%,
-    var(--border) 60%,
     var(--border) 100%
   );
   opacity: 0.4;
 }
 
-/* Week number positioned on separator line */
+/* Week number positioned on left side of separator line */
 .week-number-on-separator {
   position: absolute;
-  left: 50%;
+  left: 20px;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
   padding: 4px 12px;
   font-size: 13px;
   font-weight: 700;
@@ -3456,6 +3460,9 @@ input:checked + .slider:before {
   text-overflow: ellipsis;
   max-width: 100%;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Balanced dynamic sizing for shift calendar totals */
@@ -3614,15 +3621,17 @@ input:checked + .slider:before {
   }
 
   .week-separator::before {
+    left: 70px;
+    right: 10px;
     background: linear-gradient(
       to right,
       var(--border) 0%,
-      var(--border) 40%,
-      transparent 45%,
-      transparent 55%,
-      var(--border) 60%,
       var(--border) 100%
     );
+  }
+
+  .week-number-on-separator {
+    left: 15px;
   }
 
 
@@ -3693,15 +3702,17 @@ input:checked + .slider:before {
   }
 
   .week-separator::before {
+    left: 65px;
+    right: 10px;
     background: linear-gradient(
       to right,
       var(--border) 0%,
-      var(--border) 40%,
-      transparent 45%,
-      transparent 55%,
-      var(--border) 60%,
       var(--border) 100%
     );
+  }
+
+  .week-number-on-separator {
+    left: 12px;
   }
 
 
@@ -3766,15 +3777,17 @@ input:checked + .slider:before {
   }
 
   .week-separator::before {
+    left: 60px;
+    right: 10px;
     background: linear-gradient(
       to right,
       var(--border) 0%,
-      var(--border) 40%,
-      transparent 45%,
-      transparent 55%,
-      var(--border) 60%,
       var(--border) 100%
     );
+  }
+
+  .week-number-on-separator {
+    left: 10px;
   }
 
   .week-number.header, .calendar-week-number.header {
