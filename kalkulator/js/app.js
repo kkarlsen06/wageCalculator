@@ -29,6 +29,22 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', setAppHeight);
 }
 
+// Also listen for orientation changes that might affect mobile browser UI
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    setAppHeight();
+  }, 100); // Delay to ensure orientation change is complete
+});
+
+// Listen for scroll events that might trigger mobile browser UI changes
+let scrollTimeout;
+window.addEventListener('scroll', () => {
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    setAppHeight();
+  }, 50); // Debounced scroll handler
+});
+
 // Initialize Supabase client
 document.addEventListener('DOMContentLoaded', async () => {
   const supa = window.supabase.createClient(
@@ -277,7 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Expose logout
+  // Expose logout function
   window.logout = async () => { await supa.auth.signOut(); window.location.href = './'; };
 
   // After ensuring session, show welcome, init app, and display
@@ -296,6 +312,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (appEl) {
     appEl.style.display = 'block';
     animateAppEntries();
+
+
   }
 
   // Etter init og visning av app

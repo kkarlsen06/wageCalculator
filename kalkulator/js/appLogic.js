@@ -3,14 +3,17 @@ const domCache = {
     progressFill: null,
     progressLabel: null,
     monthlyGoalInput: null,
-    
+
     // Initialize cache
     init() {
-        this.progressFill = document.querySelector('.progress-fill');
-        this.progressLabel = document.querySelector('.progress-label');
+        // Check for integrated progress bar first, then fallback to old progress bar
+        this.progressFill = document.querySelector('.chart-progress-fill') ||
+                           document.querySelector('.progress-fill');
+        this.progressLabel = document.querySelector('.chart-progress-label') ||
+                            document.querySelector('.progress-label');
         this.monthlyGoalInput = document.getElementById('monthlyGoalInput');
     },
-    
+
     // Refresh cache when DOM changes
     refresh() {
         this.init();
@@ -79,9 +82,13 @@ if (typeof window !== 'undefined') {
 
 // Enhanced progress bar update function with improved text presentation
 function updateProgressBar(current, goal, shouldAnimate = false) {
-    // Use cached elements
-    const fill = domCache.progressFill || document.querySelector('.progress-fill');
-    const label = domCache.progressLabel || document.querySelector('.progress-label');
+    // Use cached elements - check for both old and new integrated progress bar
+    const fill = domCache.progressFill ||
+                 document.querySelector('.chart-progress-fill') ||
+                 document.querySelector('.progress-fill');
+    const label = domCache.progressLabel ||
+                  document.querySelector('.chart-progress-label') ||
+                  document.querySelector('.progress-label');
 
     if (!fill || !label) return;
 
@@ -135,7 +142,7 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
     }
 
     // Update classes based on progress
-    const progressCard = fill.closest('.progress-card');
+    const progressCard = fill.closest('.progress-card') || fill.closest('.chart-progress-bar');
     if (percent >= 100) {
         fill.classList.add('full');
         if (percent > 100 && progressCard) {
@@ -259,9 +266,6 @@ export const app = {
     lastRenderedShiftsKey: '',
     // Performance optimization for month navigation
     monthNavigationTimeout: null, // Debounce timer for month navigation
-    statCardRenderFrame: null, // Track pending stat card render frame
-    isRenderingStatCards: false, // Track if stat card rendering is in progress
-    lastStatCardRenderKey: '', // Cache key for stat card render optimization
     async init() {
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
@@ -1089,17 +1093,14 @@ export const app = {
             clearTimeout(this.monthNavigationTimeout);
         }
 
-        // Cancel any pending stat card render
-        if (this.statCardRenderFrame) {
-            cancelAnimationFrame(this.statCardRenderFrame);
-            this.statCardRenderFrame = null;
-        }
+
 
         // Refresh DOM cache to ensure fresh element references
         domCache.refresh();
 
         // Reset progress bar state to ensure clean animation
-        const fill = document.querySelector('.progress-fill');
+        const fill = document.querySelector('.chart-progress-fill') ||
+                     document.querySelector('.progress-fill');
         if (fill) {
             fill.dataset.animating = 'false';
             fill.classList.remove('loading');
@@ -1957,6 +1958,37 @@ export const app = {
         }
     },
 
+    // Close stat details (placeholder method for removed stat card functionality)
+    closeStatDetails() {
+        // This method was called by showBreakdownInCalendar and showShiftDetails
+        // but the actual stat details functionality appears to have been removed.
+        // Keeping this as a no-op method to prevent JavaScript errors.
+
+        // If there are any stat detail modals or expanded views, close them
+        const statModal = document.querySelector('.stat-detail-modal');
+        const statExpanded = document.querySelector('.stat-expanded');
+        const statBackdrop = document.querySelector('.stat-backdrop');
+
+        if (statModal) {
+            statModal.style.display = 'none';
+            statModal.remove();
+        }
+
+        if (statExpanded) {
+            statExpanded.classList.remove('expanded');
+        }
+
+        if (statBackdrop) {
+            statBackdrop.remove();
+        }
+
+        // Remove any stat-related event listeners
+        if (this.statDetailsKeydownHandler) {
+            document.removeEventListener('keydown', this.statDetailsKeydownHandler);
+            this.statDetailsKeydownHandler = null;
+        }
+    },
+
     // Logout handler
     handleLogout() {
         // Close dropdown first
@@ -2051,6 +2083,7 @@ export const app = {
         this.updateHeader();
         this.updateNextShiftCard(); // Move before updateStats to ensure correct viewport calculations
         this.updateStats(shouldAnimate);
+        this.updateWeeklyHoursChart(); // Update the weekly hours chart
         this.updateShiftList();
         this.updateShiftCalendar();
         this.populateDateGrid();
@@ -2100,8 +2133,6 @@ export const app = {
         const totalAmount = totalBase + totalBonus;
         document.getElementById('totalAmount').textContent = this.formatCurrency(totalAmount);
         document.getElementById('totalHours').textContent = this.formatHours(totalHours);
-        document.getElementById('baseAmount').textContent = this.formatCurrency(totalBase);
-        document.getElementById('bonusAmount').textContent = this.formatCurrency(totalBonus);
         document.getElementById('shiftCount').textContent = monthShifts.length;
         
         // Update header shift count
@@ -2136,224 +2167,184 @@ export const app = {
         const monthlyGoal = getMonthlyGoal();
         updateProgressBar(totalAmount, monthlyGoal, shouldAnimate);
 
-        const stats = this.calculateStatCards(monthShifts, {
-            totalHours,
-            totalBase,
-            totalBonus,
-            totalAmount
-        });
-        this.renderStatCards(stats);
+
     },
 
-    calculateStatCards(monthShifts, totals) {
-        const { totalHours, totalBase, totalBonus, totalAmount } = totals;
-        let longest = 0;
-        let bestDay = { date: null, total: 0 };
+    updateWeeklyHoursChart() {
+        const chartBars = document.getElementById('chartBars');
+        const chartLabels = document.getElementById('chartLabels');
+        const chartTooltip = document.getElementById('chartTooltip');
 
-        monthShifts.forEach(shift => {
-            const calc = this.calculateShift(shift);
-            const duration = calc.totalHours;
-            if (duration > longest) longest = duration;
-            if (calc.total > bestDay.total) {
-                bestDay = { date: shift.date, total: calc.total };
-            }
-        });
+        if (!chartBars || !chartLabels) return;
 
-        const shiftCount = monthShifts.length;
-        const avgHourly = totalHours > 0 ? totalAmount / totalHours : 0;
-        const avgPerShift = shiftCount > 0 ? totalAmount / shiftCount : 0;
-
-        const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
-        const prevYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
-        const prevShifts = this.shifts.filter(s =>
-            s.date.getMonth() === prevMonth - 1 &&
-            s.date.getFullYear() === prevYear
-        );
-        let prevTotal = 0;
-        prevShifts.forEach(s => { prevTotal += this.calculateShift(s).total; });
-        const diff = totalAmount - prevTotal;
-
-        const stats = [
-            {
-                id: 'avgHourly',
-                relevanceScore: 10,
-                label: 'Snittlønn/time',
-                value: avgHourly ? this.formatCurrency(avgHourly) : this.formatCurrency(0)
-            },
-            {
-                id: 'bestDay',
-                relevanceScore: 9,
-                label: 'Beste dag',
-                value: bestDay.date
-                    ? `${this.formatCurrency(bestDay.total)} • ${bestDay.date.getDate().toString().padStart(2, '0')}.${(bestDay.date.getMonth()+1).toString().padStart(2, '0')}`
-                    : this.formatCurrency(bestDay.total)
-            },
-            {
-                id: 'bonusTotal',
-                relevanceScore: totalBonus > 0 ? 6 : 2,
-                label: 'Tillegg/UB',
-                value: this.formatCurrency(totalBonus)
-            },
-            {
-                id: 'longestShift',
-                relevanceScore: 6,
-                label: 'Lengste vakt',
-                value: this.formatHours(longest)
-            },
-            {
-                id: 'avgPerShift',
-                relevanceScore: 8,
-                label: 'Snitt per vakt',
-                value: this.formatCurrency(avgPerShift)
-            },
-            {
-                id: 'monthCompare',
-                relevanceScore: 5,
-                label: 'Endring fra forrige mnd',
-                value: (diff >= 0 ? '+' : '') + this.formatCurrency(diff)
-            }
-        ];
-
-        return stats.sort((a, b) => b.relevanceScore - a.relevanceScore);
-    },
-
-    renderStatCards(stats) {
-        const container = document.getElementById('statCards');
-        if (!container) return;
-
-        // Create a cache key for this render to avoid unnecessary re-renders
-        const renderKey = `${this.currentMonth}-${this.currentYear}-${stats.length}-${JSON.stringify(stats.map(s => s.id + s.value))}`;
-
-        // Skip render if we're already rendering the same content
-        if (this.isRenderingStatCards && this.lastStatCardRenderKey === renderKey) {
-            return;
-        }
-
-        // Cancel any pending stat card render to prevent overlapping renders
-        if (this.statCardRenderFrame) {
-            cancelAnimationFrame(this.statCardRenderFrame);
-            this.statCardRenderFrame = null;
-        }
-
-        // Mark as rendering and store cache key
-        this.isRenderingStatCards = true;
-        this.lastStatCardRenderKey = renderKey;
-
-        container.innerHTML = '';
-
-        // Don't display stat cards if there are no shifts in the current month
+        // Get shifts for current month
         const monthShifts = this.shifts.filter(shift =>
             shift.date.getMonth() === this.currentMonth - 1 &&
             shift.date.getFullYear() === this.currentYear
         );
 
-        if (monthShifts.length === 0) {
-            this.isRenderingStatCards = false;
-            return; // No shifts means no stat cards to display
+        // Group shifts by week and calculate hours and earnings
+        const weeklyData = {};
+        let totalMonthlyHours = 0;
+
+        monthShifts.forEach(shift => {
+            const weekNumber = this.getISOWeekNumber(shift.date);
+            if (!weeklyData[weekNumber]) {
+                weeklyData[weekNumber] = {
+                    hours: 0,
+                    earnings: 0,
+                    shifts: []
+                };
+            }
+            const calc = this.calculateShift(shift);
+            weeklyData[weekNumber].hours += calc.hours;
+            weeklyData[weekNumber].earnings += calc.total;
+            weeklyData[weekNumber].shifts.push(shift);
+            totalMonthlyHours += calc.hours;
+        });
+
+        // Get all weeks in the current month (including partial weeks)
+        const firstDay = new Date(this.currentYear, this.currentMonth - 1, 1);
+        const lastDay = new Date(this.currentYear, this.currentMonth, 0);
+        const allWeeks = new Set();
+
+        // Add weeks that contain days from the current month
+        for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+            allWeeks.add(this.getISOWeekNumber(date));
         }
 
-        // Use requestAnimationFrame to ensure DOM has updated before measuring
-        // Track the frame ID to allow cancellation
-        this.statCardRenderFrame = requestAnimationFrame(() => {
-            // Clear the frame ID since we're now executing
-            this.statCardRenderFrame = null;
+        const sortedWeeks = Array.from(allWeeks).sort((a, b) => a - b);
 
-            // Double-check we should still render (in case month changed during frame delay)
-            if (this.lastStatCardRenderKey === renderKey) {
-                this._performStatCardCalculation(stats, container);
+        // If no weeks found, generate week numbers for the current month
+        if (sortedWeeks.length === 0) {
+            const firstOfMonth = new Date(this.currentYear, this.currentMonth - 1, 1);
+            const lastOfMonth = new Date(this.currentYear, this.currentMonth, 0);
+
+            // Add all weeks that contain days from the current month
+            for (let date = new Date(firstOfMonth); date <= lastOfMonth; date.setDate(date.getDate() + 1)) {
+                const weekNum = this.getISOWeekNumber(date);
+                if (!sortedWeeks.includes(weekNum)) {
+                    sortedWeeks.push(weekNum);
+                }
+            }
+            sortedWeeks.sort((a, b) => a - b);
+        }
+
+        const maxHours = Math.max(...sortedWeeks.map(week => weeklyData[week]?.hours || 0), 1);
+
+        // Find the week with the most hours for highlighting
+        const highestWeek = sortedWeeks.reduce((highest, week) => {
+            const currentHours = weeklyData[week]?.hours || 0;
+            const highestHours = weeklyData[highest]?.hours || 0;
+            return currentHours > highestHours ? week : highest;
+        }, sortedWeeks[0]);
+
+        // Clear existing content
+        chartBars.innerHTML = '';
+        chartLabels.innerHTML = '';
+
+        // Force reflow to ensure animations trigger properly
+        chartBars.offsetHeight;
+
+        // Create bars and labels
+        sortedWeeks.forEach((weekNumber, index) => {
+            const weekData = weeklyData[weekNumber] || { hours: 0, earnings: 0, shifts: [] };
+            const hours = weekData.hours;
+            const earnings = weekData.earnings;
+            const heightPercent = maxHours > 0 ? (hours / maxHours) * 100 : 0;
+            const monthlyPercent = totalMonthlyHours > 0 ? (hours / totalMonthlyHours) * 100 : 0;
+
+            // Create bar
+            const bar = document.createElement('div');
+            bar.className = 'chart-bar';
+
+            // Add has-data class for bars with actual hours
+            if (hours > 0) {
+                bar.classList.add('has-data');
             }
 
-            // Mark rendering as complete
-            this.isRenderingStatCards = false;
+            // Add highest class for the week with most hours
+            if (weekNumber === highestWeek && hours > 0) {
+                bar.classList.add('highest');
+            }
+
+            // Set CSS custom property for animation
+            bar.style.setProperty('--bar-height', `${heightPercent}%`);
+            bar.setAttribute('data-week', weekNumber);
+            bar.setAttribute('data-hours', hours.toFixed(1));
+            bar.setAttribute('data-earnings', earnings.toFixed(0));
+            bar.setAttribute('data-percentage', monthlyPercent.toFixed(1));
+
+            // Add hour value on top of bar
+            const barValue = document.createElement('div');
+            barValue.className = 'chart-bar-value';
+            barValue.textContent = hours > 0 ? `${hours.toFixed(1)}t` : '';
+            bar.appendChild(barValue);
+
+            // Add hover events for enhanced tooltip - only for bars with data
+            if (hours > 0) {
+                bar.addEventListener('mouseenter', (e) => {
+                    const rect = bar.getBoundingClientRect();
+                    const containerRect = chartBars.getBoundingClientRect();
+
+                    const tooltipContent = document.getElementById('tooltipContent');
+                    if (tooltipContent) {
+                        tooltipContent.innerHTML = `
+                            <span class="chart-tooltip-line">Uke ${weekNumber}</span>
+                            <span class="chart-tooltip-line">${hours.toFixed(1)} timer</span>
+                            <span class="chart-tooltip-line">${monthlyPercent.toFixed(1)}% av måneden</span>
+                            <span class="chart-tooltip-line">${this.formatCurrency(earnings)}</span>
+                        `;
+                    }
+
+                    // Position tooltip with bounds checking
+                    const tooltipLeft = Math.max(10, Math.min(
+                        rect.left - containerRect.left + rect.width / 2,
+                        containerRect.width - 140 // tooltip min-width + padding
+                    ));
+
+                    chartTooltip.style.left = `${tooltipLeft}px`;
+                    chartTooltip.style.top = `${rect.top - containerRect.top - 8}px`;
+                    chartTooltip.classList.add('show');
+                });
+
+                bar.addEventListener('mouseleave', () => {
+                    chartTooltip.classList.remove('show');
+                });
+            }
+
+            chartBars.appendChild(bar);
+
+            // Create label
+            const label = document.createElement('div');
+            label.className = 'chart-label';
+            label.textContent = weekNumber.toString();
+            chartLabels.appendChild(label);
         });
+
+        // If no data, show a subtle message
+        if (maxHours === 0) {
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'chart-empty-message';
+            emptyMessage.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: var(--text-secondary);
+                font-size: 12px;
+                font-weight: 500;
+                opacity: 0.6;
+                text-align: center;
+                pointer-events: none;
+            `;
+            emptyMessage.textContent = 'Ingen vakter registrert denne måneden';
+            chartBars.appendChild(emptyMessage);
+        }
+
+
     },
 
-    _performStatCardCalculation(stats, container) {
-        // Force a layout recalculation to ensure fresh measurements
-        container.offsetHeight; // Trigger reflow
-
-        const viewport = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        const shiftSection = document.querySelector('.shift-section');
-
-        // Account for the next shift card height when it's visible
-        const nextShiftCard = document.getElementById('nextShiftCard');
-        let nextShiftCardHeight = 0;
-        if (nextShiftCard && nextShiftCard.style.display !== 'none') {
-            // Force layout recalculation for next shift card
-            nextShiftCard.offsetHeight;
-            const nextShiftRect = nextShiftCard.getBoundingClientRect();
-            nextShiftCardHeight = nextShiftRect.height;
-        }
-
-        // Calculate available space more simply and accurately
-        const containerRect = container.getBoundingClientRect();
-        const containerTop = containerRect.top;
-
-        // Calculate bottom boundary - either viewport bottom or start of shift section
-        let bottomBoundary = viewport;
-        if (shiftSection) {
-            // Force layout recalculation for shift section
-            shiftSection.offsetHeight;
-            const shiftSectionTop = shiftSection.getBoundingClientRect().top;
-            bottomBoundary = Math.min(bottomBoundary, shiftSectionTop);
-        }
-
-        // Calculate available height: from container top to bottom boundary, minus next shift card height
-        // Be maximally aggressive - use ALL available space
-        const containerStyles = window.getComputedStyle(container);
-        const availableHeight = bottomBoundary - containerTop - nextShiftCardHeight;
-        
-        // Create a temporary card to measure dimensions
-        const tempCard = document.createElement('div');
-        tempCard.className = 'stat-card';
-        tempCard.innerHTML = `<div class="stat-value">0</div><div class="stat-label">test</div>`;
-        tempCard.style.visibility = 'hidden';
-        tempCard.style.position = 'absolute';
-        tempCard.style.top = '-9999px';
-        container.appendChild(tempCard); // Append to container for more accurate measurement
-        
-        // Force layout calculation
-        const cardHeight = tempCard.getBoundingClientRect().height;
-        container.removeChild(tempCard);
-        
-        // Get grid gap from computed styles
-        const gridGap = parseInt(containerStyles.gap) || 15;
-        
-        // Calculate how many cards can fit horizontally
-        const containerWidth = containerRect.width;
-        const cardMinWidth = 160; // From CSS minmax(160px, 1fr)
-        const cardsPerRow = Math.floor((containerWidth + gridGap) / (cardMinWidth + gridGap));
-        
-        // Calculate total height needed for all cards
-        // Handle edge case where cardsPerRow is 0 (container too small)
-        const totalRows = cardsPerRow > 0 ? Math.ceil(stats.length / cardsPerRow) : 0;
-        const totalHeight = totalRows * cardHeight + Math.max(0, totalRows - 1) * gridGap;
-        
-        // Determine how many cards we can actually display - be more aggressive
-        let maxCards = stats.length;
-        if (cardsPerRow === 0) {
-            // If container is too narrow to fit any cards horizontally, show no cards
-            maxCards = 0;
-        } else if (totalHeight > availableHeight) {
-            // Be more aggressive - calculate exactly how many rows can fit
-            const maxRows = Math.floor(availableHeight / (cardHeight + gridGap)) + 1; // +1 to be more aggressive
-            maxCards = Math.max(0, maxRows * cardsPerRow);
-            
-            // But don't exceed the total number of stats available
-            maxCards = Math.min(maxCards, stats.length);
-        }
-
-        // Add cards up to the limit
-        for (let i = 0; i < Math.min(stats.length, maxCards); i++) {
-            const s = stats[i];
-            const card = document.createElement('div');
-            card.className = 'stat-card';
-            card.dataset.statId = s.id;
-            card.innerHTML = `<div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div>`;
-            card.addEventListener('click', () => this.showStatDetails(s.id));
-            container.appendChild(card);
-        }
-    },
     updateShiftList() {
         
         this.shifts.forEach((shift, index) => {
@@ -2835,23 +2826,13 @@ export const app = {
             this.monthNavigationTimeout = null;
         }
 
-        if (this.statCardRenderFrame) {
-            cancelAnimationFrame(this.statCardRenderFrame);
-            this.statCardRenderFrame = null;
-        }
 
-        // Reset render state
-        this.isRenderingStatCards = false;
-        this.lastStatCardRenderKey = '';
     },
 
     // Performance monitoring for debugging (can be called from console)
     getPerformanceStats() {
         return {
             monthNavigationActive: !!this.monthNavigationTimeout,
-            statCardRenderPending: !!this.statCardRenderFrame,
-            isRenderingStatCards: this.isRenderingStatCards,
-            lastRenderKey: this.lastStatCardRenderKey,
             currentMonth: this.currentMonth,
             currentYear: this.currentYear
         };
@@ -2975,15 +2956,10 @@ export const app = {
                     shiftData.className = 'calendar-shift-data';
                     
                     if (this.calendarDisplayMode === 'money') {
-                        const breakdown = document.createElement('div');
-                        breakdown.className = 'calendar-breakdown';
-                        breakdown.innerHTML = `<div class="calendar-base-amount">${this.formatCurrencyShort(base)}</div><div class="calendar-bonus-line">+<span class="calendar-bonus-amount">${this.formatCurrencyShort(bonus)}</span></div>`;
-                        
                         const totalDisplay = document.createElement('div');
                         totalDisplay.className = 'calendar-total';
                         totalDisplay.textContent = this.formatCurrencyCalendar(base + bonus);
-                        
-                        shiftData.appendChild(breakdown);
+
                         shiftData.appendChild(totalDisplay);
                     } else {
                         // Display time range
@@ -3134,15 +3110,10 @@ export const app = {
                 shiftData.className = 'calendar-shift-data';
 
                 if (this.calendarDisplayMode === 'money') {
-                    const breakdown = document.createElement('div');
-                    breakdown.className = 'calendar-breakdown';
-                    breakdown.innerHTML = `<div class="calendar-base-amount">${this.formatCurrencyShort(base)}</div><div class="calendar-bonus-line">+<span class="calendar-bonus-amount">${this.formatCurrencyShort(bonus)}</span></div>`;
-
                     const totalDisplay = document.createElement('div');
                     totalDisplay.className = 'calendar-total';
                     totalDisplay.textContent = this.formatCurrencyCalendar(base + bonus);
 
-                    shiftData.appendChild(breakdown);
                     shiftData.appendChild(totalDisplay);
                 } else {
                     const hoursDisplay = document.createElement('div');
@@ -3260,96 +3231,7 @@ export const app = {
             this.updateCalendarCells();
         }
     },
-        // Show breakdown in calendar view (replaces modal)
-    showBreakdownInCalendar(type) {
-        // Close any open modals first
-        this.closeSettings();
-        this.closeShiftDetails();
-        this.closeStatDetails();
-        
-        // Switch to calendar view if not already selected
-        if (this.shiftView !== 'calendar') {
-            this.switchShiftView('calendar');
-        }
-        
-        // Scroll to shift section
-        const shiftSection = document.querySelector('.shift-section');
-        if (shiftSection) {
-            shiftSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
-            });
-        }
-        
-        // Add shimmer effect to calendar numbers
-        this.triggerCalendarShimmer(type);
-        
-        // Optional: Add a brief visual indicator to show which type was selected
-        // You could add a temporary highlight to the relevant data in the calendar
-        this.highlightBreakdownType(type);
-    },
-    
-    // Trigger shimmer animations on calendar elements
-    triggerCalendarShimmer(type) {
-        let selector = '';
-        
-        if (type === 'base') {
-            selector = '.calendar-base-amount';
-        } else if (type === 'bonus') {
-            selector = '.calendar-bonus-amount';
-        } else if (type === 'total') {
-            // For total, only shimmer the total sum numbers
-            selector = '.calendar-total';
-        }
-        
-        if (selector) {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach((element) => {
-                // Remove any existing shimmer class first
-                element.classList.remove('shimmer');
-                // Force reflow to ensure class removal is processed
-                element.offsetHeight;
-                // Add shimmer class - all at once, no staggering
-                element.classList.add('shimmer');
-                
-                // Remove shimmer class after animation completes (2s)
-                setTimeout(() => {
-                    element.classList.remove('shimmer');
-                    // Reset any text styling that might have been applied with a slight delay
-                    setTimeout(() => {
-                        element.style.webkitTextFillColor = '';
-                        element.style.backgroundClip = '';
-                        element.style.webkitBackgroundClip = '';
-                    }, 50);
-                }, 2000);
-            });
-        }
-    },
 
-    // Helper function to briefly highlight the selected breakdown type
-    highlightBreakdownType(type) {
-        if (type === 'total') {
-            // For total type, highlight both breakdown cards
-            const breakdownCards = document.querySelectorAll('.breakdown-card');
-            breakdownCards.forEach(card => {
-                card.style.transform = 'scale(1.05)';
-                card.style.transition = 'transform 0.2s ease';
-                setTimeout(() => {
-                    card.style.transform = 'scale(1)';
-                }, 200);
-            });
-        } else {
-            // Add a brief visual feedback by highlighting the relevant breakdown card
-            const breakdownCard = document.querySelector(`[data-type="${type}"]`);
-            if (breakdownCard) {
-                breakdownCard.style.transform = 'scale(1.05)';
-                breakdownCard.style.transition = 'transform 0.2s ease';
-                setTimeout(() => {
-                    breakdownCard.style.transform = 'scale(1)';
-                }, 200);
-            }
-        }
-    },
 
 
     // Show detailed shift information in expanded view
@@ -3686,406 +3568,7 @@ export const app = {
         }
     },
 
-    // Show details for a statistic card
-    showStatDetails(statId) {
-        this.closeStatDetails();
-        this.closeSettings();
 
-        const header = document.querySelector('.header');
-        if (header) header.classList.add('hidden');
-
-        const backdrop = document.createElement('div');
-        backdrop.className = 'backdrop-blur';
-        backdrop.onclick = () => this.closeStatDetails();
-        document.body.appendChild(backdrop);
-        backdrop.offsetHeight;
-        backdrop.classList.add('active');
-
-        this.statDetailsKeydownHandler = (e) => {
-            if (e.key === 'Escape') {
-                this.closeStatDetails();
-            }
-        };
-        document.addEventListener('keydown', this.statDetailsKeydownHandler);
-
-        // Create modal container
-        const modal = document.createElement('div');
-        modal.className = 'breakdown-modal stat-detail-modal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            width: min(95vw, 600px);
-            max-height: 85vh;
-            background: var(--bg-primary);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px var(--shadow-blue);
-            z-index: 1200;
-            opacity: 0;
-            transition: all 0.4s var(--ease-default);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        `;
-
-        // Create title container
-        const titleContainer = document.createElement('div');
-        titleContainer.className = 'breakdown-title-container';
-        titleContainer.style.cssText = `
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding: 24px 24px 0 24px;
-            flex-shrink: 0;
-        `;
-
-        // Create icon based on stat type
-        const icon = document.createElement('div');
-        icon.className = 'breakdown-title-icon';
-        icon.innerHTML = this.getStatIcon(statId);
-        icon.style.cssText = `
-            color: var(--accent3);
-            opacity: 0.8;
-        `;
-
-        // Create title
-        const title = document.createElement('h3');
-        title.className = 'breakdown-title';
-        title.textContent = this.getStatTitle(statId);
-        title.style.cssText = `
-            color: var(--accent3);
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-        `;
-
-        titleContainer.appendChild(icon);
-        titleContainer.appendChild(title);
-        modal.appendChild(titleContainer);
-
-        // Create close button
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'close-btn';
-        closeBtn.innerHTML = '×';
-        closeBtn.style.cssText = `
-            position: absolute;
-            top: 15px;
-            right: 16px;
-            background: rgba(255, 102, 153, 0.1);
-            border: 1px solid rgba(255, 102, 153, 0.3);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--danger);
-            transition: all 0.2s var(--ease-default);
-            z-index: 21;
-            opacity: 0;
-            transform: scale(0.8);
-            animation: scaleIn 0.4s var(--ease-default) 0.3s forwards;
-            font-size: 18px;
-            font-weight: bold;
-        `;
-        closeBtn.onclick = (e) => {
-            e.stopPropagation();
-            this.closeStatDetails();
-        };
-        modal.appendChild(closeBtn);
-
-        // Create calendar container
-        const calendarContainer = document.createElement('div');
-        calendarContainer.className = 'breakdown-calendar';
-        calendarContainer.style.cssText = `
-            opacity: 0;
-            animation: slideInFromBottom 0.6s var(--ease-default) 0.3s forwards;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 0 24px 24px 24px;
-        `;
-        modal.appendChild(calendarContainer);
-
-        // Create the stat calendar
-        this.createStatCalendar(calendarContainer, statId);
-
-        document.body.appendChild(modal);
-        requestAnimationFrame(() => {
-            modal.style.opacity = '1';
-            modal.style.transform = 'translate(-50%, -50%) scale(1)';
-        });
-    },
-
-    // Get icon for stat type
-    getStatIcon(statId) {
-        const icons = {
-            'avgHourly': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
-            'bonusTotal': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
-            'longestShift': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
-            'avgPerShift': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
-            'bestDay': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
-            'monthCompare': '<svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>'
-        };
-        return icons[statId] || icons['avgHourly'];
-    },
-
-    // Get title for stat type
-    getStatTitle(statId) {
-        const titles = {
-            'avgHourly': 'Snittlønn/time',
-            'bonusTotal': 'Tillegg/UB',
-            'longestShift': 'Lengste vakt',
-            'avgPerShift': 'Snitt per vakt',
-            'bestDay': 'Beste dag',
-            'monthCompare': 'Endring fra forrige mnd'
-        };
-        return titles[statId] || 'Statistikk';
-    },
-
-    // Create stat calendar view
-    createStatCalendar(container, statId) {
-        const year = this.currentYear;
-        const monthIdx = this.currentMonth - 1;
-        const firstDay = new Date(year, monthIdx, 1);
-        const lastDay = new Date(year, monthIdx + 1, 0);
-        const startDate = new Date(firstDay);
-        const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-        startDate.setDate(startDate.getDate() - offset);
-
-        container.innerHTML = '';
-
-        // Add calendar header with day names
-        const header = document.createElement('div');
-        header.className = 'calendar-header';
-        header.style.cssText = `
-            opacity: 0;
-            animation: slideInFromTop 0.4s var(--ease-default) 0.2s forwards;
-        `;
-        
-        // Add week number header
-        const weekHeader = document.createElement('div');
-        weekHeader.textContent = '';
-        weekHeader.className = 'calendar-week-number header';
-        header.appendChild(weekHeader);
-        
-        // Add day headers
-        ['M', 'T', 'O', 'T', 'F', 'L', 'S'].forEach(day => {
-            const dayHeader = document.createElement('div');
-            dayHeader.textContent = day;
-            dayHeader.className = 'calendar-day-header';
-            header.appendChild(dayHeader);
-        });
-        container.appendChild(header);
-
-        // Create calendar grid
-        const grid = document.createElement('div');
-        grid.className = 'calendar-grid';
-
-        // Get shifts for current month and create lookup by date
-        const monthShifts = this.shifts.filter(s => 
-            s.date.getMonth() === this.currentMonth - 1 && 
-            s.date.getFullYear() === this.currentYear
-        );
-        
-        const shiftsByDate = {};
-        monthShifts.forEach(shift => {
-            const dateKey = shift.date.getDate();
-            if (!shiftsByDate[dateKey]) {
-                shiftsByDate[dateKey] = [];
-            }
-            shiftsByDate[dateKey].push(shift);
-        });
-
-        // Calculate how many weeks we need to show
-        const endDate = new Date(lastDay);
-        const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        const totalWeeks = Math.ceil(totalDays / 7);
-
-        for (let week = 0; week < totalWeeks; week++) {
-            // Add week number at the start of each row
-            const weekDate = new Date(startDate);
-            weekDate.setDate(startDate.getDate() + (week * 7));
-            const weekNum = this.getISOWeekNumber(weekDate);
-            const weekCell = document.createElement('div');
-            weekCell.className = 'calendar-week-number';
-            weekCell.textContent = weekNum;
-            
-            // Calculate animation delay for week number
-            const weekAnimationDelay = 0.3 + (week * 7) * 0.035;
-            weekCell.style.animationDelay = `${weekAnimationDelay}s`;
-            
-            grid.appendChild(weekCell);
-
-            // Add 7 days for this week
-            for (let day = 0; day < 7; day++) {
-                const cellDate = new Date(startDate);
-                cellDate.setDate(startDate.getDate() + (week * 7) + day);
-                
-                const cell = document.createElement('div');
-                cell.className = 'calendar-cell';
-                
-                // Calculate animation delay based on row and column position
-                const col = day;
-                const animationDelay = 0.3 + (week * 8 + col + 1) * 0.035;
-                cell.style.animationDelay = `${animationDelay}s`;
-                
-                // Create content wrapper and day number
-                const content = document.createElement('div');
-                content.className = 'calendar-cell-content';
-                
-                const dayNumber = document.createElement('div');
-                dayNumber.className = 'calendar-day-number';
-                dayNumber.textContent = cellDate.getDate();
-                content.appendChild(dayNumber);
-                
-                // Style for current month vs other months
-                if (cellDate.getMonth() !== monthIdx) {
-                    cell.classList.add('other-month');
-                    cell.style.setProperty('--final-opacity', '0.3');
-                }
-
-                // Add current date class if this is today
-                const today = new Date();
-                if (cellDate.getDate() === today.getDate() &&
-                    cellDate.getMonth() === today.getMonth() &&
-                    cellDate.getFullYear() === today.getFullYear()) {
-                    cell.classList.add('current-date');
-                }
-
-                const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
-                let displayValue = '';
-                let hasData = false;
-                
-                // Calculate display value based on stat type
-                if (cellDate.getMonth() === monthIdx && shiftsForDay.length > 0) {
-                    hasData = true;
-                    displayValue = this.calculateStatValue(statId, shiftsForDay);
-                }
-
-                if (hasData && displayValue !== '') {
-                    // Create wrapper for stat data
-                    const statData = document.createElement('div');
-                    statData.className = 'calendar-shift-data';
-                    
-                    const valueDisplay = document.createElement('div');
-                    valueDisplay.className = 'calendar-amount';
-                    valueDisplay.textContent = displayValue;
-                    
-                    statData.appendChild(valueDisplay);
-                    content.appendChild(statData);
-                    
-                    cell.classList.add('has-shifts');
-                    
-                    // Make clickable if there are shifts
-                    cell.style.cursor = 'pointer';
-                    cell.onclick = (e) => {
-                        e.stopPropagation();
-                        if (shiftsForDay.length > 0) {
-                            this.showShiftDetails(shiftsForDay[0].id);
-                        }
-                    };
-                }
-
-                cell.appendChild(content);
-                grid.appendChild(cell);
-            }
-        }
-
-        container.appendChild(grid);
-    },
-
-    // Calculate display value for stat type
-    calculateStatValue(statId, shiftsForDay) {
-        switch (statId) {
-            case 'avgHourly': {
-                let total = 0;
-                let hours = 0;
-                shiftsForDay.forEach(shift => {
-                    const calc = this.calculateShift(shift);
-                    total += calc.total;
-                    hours += calc.paidHours;
-                });
-                const avg = hours > 0 ? total / hours : 0;
-                return this.formatCurrencyCalendar(avg);
-            }
-
-            case 'bonusTotal': {
-                let bonus = 0;
-                shiftsForDay.forEach(shift => {
-                    const calc = this.calculateShift(shift);
-                    bonus += calc.bonus;
-                });
-                return bonus > 0 ? this.formatCurrencyCalendar(bonus) : '';
-            }
-            case 'longestShift': {
-                let longest = 0;
-                shiftsForDay.forEach(shift => {
-                    const calc = this.calculateShift(shift);
-                    if (calc.totalHours > longest) longest = calc.totalHours;
-                });
-                return longest > 0 ? `${longest.toFixed(1)}t` : '';
-            }
-            case 'avgPerShift': {
-                let total = 0;
-                shiftsForDay.forEach(shift => {
-                    const calc = this.calculateShift(shift);
-                    total += calc.total;
-                });
-                const avg = shiftsForDay.length > 0 ? total / shiftsForDay.length : 0;
-                return avg > 0 ? this.formatCurrencyCalendar(avg) : '';
-            }
-            case 'bestDay': {
-                let total = 0;
-                shiftsForDay.forEach(shift => {
-                    const calc = this.calculateShift(shift);
-                    total += calc.total;
-                });
-                return total > 0 ? this.formatCurrencyCalendar(total) : '';
-            }
-            case 'monthCompare': {
-                // For month compare, show total for the day
-                let total = 0;
-                shiftsForDay.forEach(shift => {
-                    const calc = this.calculateShift(shift);
-                    total += calc.total;
-                });
-                return total > 0 ? this.formatCurrencyCalendar(total) : '';
-            }
-            default:
-                return '';
-        }
-    },
-
-    closeStatDetails() {
-        const modal = document.querySelector('.stat-detail-modal');
-        const backdrop = document.querySelector('.backdrop-blur');
-        const header = document.querySelector('.header');
-
-        if (header) header.classList.remove('hidden');
-
-        if (this.statDetailsKeydownHandler) {
-            document.removeEventListener('keydown', this.statDetailsKeydownHandler);
-            this.statDetailsKeydownHandler = null;
-        }
-
-        if (modal) {
-            modal.style.opacity = '0';
-            modal.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            setTimeout(() => { if (modal.parentNode) modal.remove(); }, 300);
-        }
-
-        if (backdrop) {
-            setTimeout(() => {
-                backdrop.classList.remove('active');
-                setTimeout(() => { if (backdrop.parentNode) backdrop.remove(); }, 350);
-            }, 100);
-        }
-    },
     // Delete entire series by ID
     async deleteSeries(seriesId) {
         try {

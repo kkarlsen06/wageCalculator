@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=8">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
   <meta name="theme-color" content="#000000">
@@ -25,12 +25,12 @@
 <body>
     <!-- Skip links for accessibility -->
     <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
-    
+
     <!-- Hoved-appen skjules til bruker er innlogget -->
     <div id="app" style="display:none">
       <!-- Snap container for full-screen sections -->
       <div class="snap-container">
-          
+
           <!-- Dashboard Section -->
           <section class="snap-section dashboard-section" role="main" aria-label="Dashboard">
             <main id="main-content">
@@ -69,7 +69,7 @@
                   </div>
 
                   <div class="content dashboard-content">
-                      <div class="total-card" onclick="app.showBreakdownInCalendar('total')">
+                      <div class="total-card">
                           <div class="total-label">Brutto</div>
                           <div class="total-amount" id="totalAmount">0 kr</div>
                           <div class="total-hours">
@@ -81,22 +81,6 @@
                           </div>
                       </div>
 
-                      <div class="progress-card" title="Månedlig mål fremdrift">
-                          <div class="progress-fill loading" style="width: 0%"></div>
-                          <span class="progress-label">0 % av 0 kr</span>
-                      </div>
-
-                      <div class="breakdown-cards">
-                          <div class="breakdown-card" data-type="base" onclick="app.showBreakdownInCalendar('base')">
-                              <div class="breakdown-value" id="baseAmount">0 kr</div>
-                              <div class="breakdown-label">Grunnlønn</div>
-                          </div>
-                          <div class="breakdown-card" data-type="bonus" onclick="app.showBreakdownInCalendar('bonus')">
-                              <div class="breakdown-value" id="bonusAmount">0 kr</div>
-                              <div class="breakdown-label">Tillegg</div>
-                          </div>
-                      </div>
-
                       <div class="next-shift-card" id="nextShiftCard">
                           <div class="next-shift-content" id="nextShiftContent">
                               <!-- Will be populated with shift-item structure -->
@@ -105,8 +89,28 @@
                               <div class="empty-message">Ingen kommende vakter</div>
                           </div>
                       </div>
+                      <div class="weekly-hours-chart-card" id="weeklyHoursChart">
+                          <div class="chart-container">
+                              <div class="chart-bars" id="chartBars">
+                                  <!-- Bars will be populated dynamically -->
+                              </div>
+                              <div class="chart-labels" id="chartLabels">
+                                  <!-- Week labels will be populated dynamically -->
+                              </div>
+                              <!-- Integrated progress bar underneath the chart -->
+                              <div class="chart-progress-bar" title="Månedlig mål fremdrift">
+                                  <div class="chart-progress-fill loading" style="width: 0%"></div>
+                                  <span class="chart-progress-label">0 % av 0 kr</span>
+                              </div>
+                          </div>
+                          <div class="chart-tooltip" id="chartTooltip" style="display: none;">
+                              <span id="tooltipContent"></span>
+                          </div>
+                      </div>
 
-                      <div class="stat-cards" id="statCards"></div>
+
+
+
 
                   </div>
               </div>
@@ -132,7 +136,6 @@
                           </button>
                       </div>
                   </div>
-
                   <div class="shift-list" id="shiftList">
                       <div class="empty-state">
                           <div class="empty-icon">
@@ -148,7 +151,7 @@
                       </div>
                   </div>
                   <div id="shiftCalendar" class="shift-calendar" style="display:none;"></div>
-                  
+
                   <!-- Calendar display toggle -->
                   <div class="calendar-display-toggle" style="display:none;">
                       <div class="calendar-toggle-nav">
@@ -222,7 +225,7 @@
                       </div>
                   </div>
 
-                  <div id="customWageSection" style="display: none;">                     
+                  <div id="customWageSection" style="display: none;">
                       <div class="form-group">
                           <label>Timelønn (kr)</label>
                           <input type="number" class="form-control" id="customWageInput" placeholder="200" step="0.01" onchange="app.updateCustomWage(this.value)">
@@ -230,7 +233,7 @@
 
                       <div class="info-box">
                           <div class="info-content">
-                              <strong>Viktig:</strong> Fyll ut både timer og minutter for alle tidsperioder (f.eks. 18:00, ikke bare 18). 
+                              <strong>Viktig:</strong> Fyll ut både timer og minutter for alle tidsperioder (f.eks. 18:00, ikke bare 18).
                               Tomme felt lagres ikke automatisk.
                           </div>
                       </div>
@@ -259,7 +262,7 @@
                           <button class="btn btn-secondary" onclick="app.addBonusSlot('sunday')">+ Legg til tidsperiode</button>
                       </div>
                   </div>
-                  
+
                   <div class="form-group form-group-with-hint">
                       <label>Pausetrekk</label>
                       <div class="switch-group">
@@ -273,7 +276,7 @@
                         </label>
                       </div>
                   </div>
-                  
+
                   <div class="form-group form-group-with-hint">
                       <label for="monthlyGoalInput">Månedlig inntektsmål</label>
                       <div class="switch-group">
@@ -298,7 +301,7 @@
                         </label>
                       </div>
                   </div>
-                  
+
                   <div class="form-group form-group-with-hint">
                       <label>Minuttformat</label>
                       <div class="switch-group">
@@ -312,7 +315,7 @@
                         </label>
                       </div>
                   </div>
-                  
+
                   <div class="form-group form-group-with-hint">
                       <label>Valutaformat</label>
                       <div class="switch-group">
@@ -326,7 +329,7 @@
                         </label>
                       </div>
                   </div>
-                  
+
                   <div class="form-group form-group-with-hint">
                       <label>Kompakt visning</label>
                       <div class="switch-group">
@@ -362,7 +365,7 @@
                   <div id="exportOptionsSection" class="form-group form-group-with-hint">
                       <label class="export-section-header">Dataeksport</label>
                       <small class="form-hint">Last ned dine vaktdata for regnskapsføring eller backup</small>
-                      
+
                       <div class="export-period-options">
                           <label class="radio-option">
                               <input type="radio" name="exportPeriod" value="all">
@@ -381,7 +384,7 @@
                               <span>Egendefinert</span>
                           </label>
                       </div>
-                      
+
                       <div id="customPeriodSection" style="display: none;">
                           <label class="custom-period-header">Velg tidsperiode</label>
                           <small class="form-hint">Velg start- og sluttdato for eksporten</small>
@@ -390,7 +393,7 @@
                               <input type="date" id="exportEndDate" class="form-control" placeholder="Til dato">
                           </div>
                       </div>
-                      
+
                       <div class="export-buttons-container">
                           <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('csv')">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -412,7 +415,7 @@
                           </button>
                       </div>
                   </div>
-                  
+
                   <div class="form-group form-group-with-hint">
                       <label>Dataimport</label>
                       <div class="form-row">
@@ -690,7 +693,7 @@
 
                   </form>
               </div>
-          
+
           <!-- Fixed bottom buttons for add shift modal -->
           <div class="modal-fixed-footer">
               <div class="modal-button-group">
