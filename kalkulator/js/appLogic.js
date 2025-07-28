@@ -2093,6 +2093,12 @@ export const app = {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
         document.getElementById('currentMonth').textContent = `${monthName} ${this.currentYear}`;
 
+        // Update the dashboard month navigation display
+        const currentMonthDashboard = document.getElementById('currentMonthDashboard');
+        if (currentMonthDashboard) {
+            currentMonthDashboard.textContent = `${monthName} ${this.currentYear}`;
+        }
+
         // Update the month navigation display in the floating action bar
         const monthNavDisplayNav = document.getElementById('monthNavDisplayNav');
         if (monthNavDisplayNav) {
@@ -2482,14 +2488,16 @@ export const app = {
         const now = new Date();
         const currentMonth = now.getMonth() + 1;
         const currentYear = now.getFullYear();
-        // Hide the next shift card if we're not viewing the current month and year
+
+        // Always show the card, but handle different months differently
+        nextShiftCard.style.display = 'block';
+
+        // If we're not viewing the current month and year, show the best shift from selected month
         if (this.currentMonth !== currentMonth || this.currentYear !== currentYear) {
-            nextShiftCard.style.display = 'none';
+            this.displayBestShiftCard();
             this.stopNextShiftTimer(); // Stop timer when not viewing current month
             return;
         }
-        
-        nextShiftCard.style.display = 'block';
         
         // Check if there's a current shift happening right now
         const currentShift = this.shifts.find(shift => {
@@ -2561,10 +2569,109 @@ export const app = {
         const nextShiftEmpty = document.getElementById('nextShiftEmpty');
         
         if (upcomingShifts.length === 0) {
-            // No upcoming shifts
-            nextShiftContent.style.display = 'none';
-            nextShiftEmpty.style.display = 'flex';
-            this.stopNextShiftTimer(); // Stop timer when no upcoming shifts
+            // No upcoming shifts - show most recent shift instead
+            const pastShifts = this.shifts.filter(shift => {
+                const shiftDate = new Date(shift.date);
+
+                // If shift is on a past date, include it
+                if (shiftDate < now) {
+                    return true;
+                }
+
+                // If shift is today, check if it has already ended
+                if (shiftDate.toDateString() === now.toDateString()) {
+                    const [endHour, endMinute] = shift.endTime.split(':').map(Number);
+                    const shiftEndTime = new Date(shiftDate);
+                    shiftEndTime.setHours(endHour, endMinute, 0, 0);
+
+                    // Handle shifts that cross midnight
+                    if (endHour < parseInt(shift.startTime.split(':')[0])) {
+                        shiftEndTime.setDate(shiftEndTime.getDate() + 1);
+                    }
+
+                    return now > shiftEndTime;
+                }
+
+                return false;
+            });
+
+            // Sort past shifts by date and time (most recent first)
+            pastShifts.sort((a, b) => {
+                const aDate = new Date(a.date);
+                const bDate = new Date(b.date);
+
+                if (aDate.getTime() !== bDate.getTime()) {
+                    return bDate - aDate; // Most recent first
+                }
+
+                // Same date, sort by end time (latest end time first)
+                const [aEndHour, aEndMinute] = a.endTime.split(':').map(Number);
+                const [bEndHour, bEndMinute] = b.endTime.split(':').map(Number);
+
+                return (bEndHour * 60 + bEndMinute) - (aEndHour * 60 + aEndMinute);
+            });
+
+            if (pastShifts.length === 0) {
+                // No shifts at all
+                nextShiftContent.style.display = 'none';
+                nextShiftEmpty.style.display = 'flex';
+                // Reset empty message for current month
+                const emptyMessage = nextShiftEmpty.querySelector('.empty-message');
+                if (emptyMessage) {
+                    emptyMessage.textContent = 'Ingen kommende vakter';
+                }
+                this.stopNextShiftTimer(); // Stop timer when no shifts
+            } else {
+                // Show most recent shift
+                nextShiftContent.style.display = 'flex';
+                nextShiftEmpty.style.display = 'none';
+
+                const lastShift = pastShifts[0];
+                const calculation = this.calculateShift(lastShift);
+
+                // Format date
+                const shiftDate = new Date(lastShift.date);
+                const weekday = this.WEEKDAYS[shiftDate.getDay()];
+                const day = shiftDate.getDate();
+                const month = this.MONTHS[shiftDate.getMonth()];
+
+                // Create the shift item using the exact same structure as in the shift list
+                const typeClass = lastShift.type === 0 ? 'weekday' : (lastShift.type === 1 ? 'saturday' : 'sunday');
+                const seriesBadge = lastShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+
+                // No highlighting for last shift (remove active class)
+                nextShiftContent.innerHTML = `
+                    <div class="shift-item ${typeClass}" data-shift-id="${lastShift.id}" style="cursor: pointer; position: relative;">
+                        <div class="next-shift-badge">Siste</div>
+                        <div class="shift-info">
+                            <div class="shift-date">
+                                <span class="shift-date-number">${day}. ${month}</span>
+                                <span class="shift-date-separator"></span>
+                                <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                            </div>
+                            <div class="shift-details">
+                                <div class="shift-time-with-hours">
+                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    <span>${lastShift.startTime} - ${lastShift.endTime}</span>
+                                    <span class="shift-time-arrow">→</span>
+                                    <span>${this.formatHours(calculation.totalHours)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="shift-amount-wrapper">
+                            <div class="shift-total">${this.formatCurrency(calculation.total)}</div>
+                            <div class="shift-breakdown">
+                                ${this.formatCurrencyShort(calculation.baseWage)} + ${this.formatCurrencyShort(calculation.bonus)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                this.stopNextShiftTimer(); // Stop timer when showing last shift
+            }
         } else {
             // Show next shift details
             nextShiftContent.style.display = 'flex';
@@ -2814,6 +2921,110 @@ export const app = {
             clearInterval(this.nextShiftTimer);
             this.nextShiftTimer = null;
         }
+    },
+
+    displayBestShiftCard() {
+        const nextShiftContent = document.getElementById('nextShiftContent');
+        const nextShiftEmpty = document.getElementById('nextShiftEmpty');
+
+        if (!nextShiftContent || !nextShiftEmpty) return;
+
+        // Get all shifts for the selected month
+        const monthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === this.currentMonth - 1 &&
+            shift.date.getFullYear() === this.currentYear
+        );
+
+        if (monthShifts.length === 0) {
+            // No shifts in this month
+            nextShiftContent.style.display = 'none';
+            nextShiftEmpty.style.display = 'flex';
+            // Update empty message for non-current months
+            const emptyMessage = nextShiftEmpty.querySelector('.empty-message');
+            if (emptyMessage) {
+                emptyMessage.textContent = 'Ingen vakter registrert';
+            }
+            return;
+        }
+
+        // Calculate earnings for each shift and find the best one
+        const shiftsWithEarnings = monthShifts.map(shift => {
+            const calculation = this.calculateShift(shift);
+            return {
+                shift: shift,
+                earnings: calculation.total,
+                calculation: calculation
+            };
+        });
+
+        // Sort by earnings (highest first), then by date (earliest first), then by start time (earliest first)
+        shiftsWithEarnings.sort((a, b) => {
+            // First, compare by earnings (highest first)
+            if (b.earnings !== a.earnings) {
+                return b.earnings - a.earnings;
+            }
+
+            // If earnings are equal, compare by date (earliest first)
+            const aDate = new Date(a.shift.date);
+            const bDate = new Date(b.shift.date);
+            if (aDate.getTime() !== bDate.getTime()) {
+                return aDate - bDate;
+            }
+
+            // If dates are equal, compare by start time (earliest first)
+            const [aHour, aMinute] = a.shift.startTime.split(':').map(Number);
+            const [bHour, bMinute] = b.shift.startTime.split(':').map(Number);
+            return (aHour * 60 + aMinute) - (bHour * 60 + bMinute);
+        });
+
+        const bestShiftData = shiftsWithEarnings[0];
+        const bestShift = bestShiftData.shift;
+        const calculation = bestShiftData.calculation;
+
+        // Show the best shift
+        nextShiftContent.style.display = 'flex';
+        nextShiftEmpty.style.display = 'none';
+
+        // Format date
+        const shiftDate = new Date(bestShift.date);
+        const weekday = this.WEEKDAYS[shiftDate.getDay()];
+        const day = shiftDate.getDate();
+        const month = this.MONTHS[shiftDate.getMonth()];
+
+        // Create the shift item using the exact same structure as other shift cards
+        const typeClass = bestShift.type === 0 ? 'weekday' : (bestShift.type === 1 ? 'saturday' : 'sunday');
+        const seriesBadge = bestShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+
+        // No highlighting for best shift (remove active class)
+        nextShiftContent.innerHTML = `
+            <div class="shift-item ${typeClass}" data-shift-id="${bestShift.id}" style="cursor: pointer; position: relative;">
+                <div class="next-shift-badge">Beste</div>
+                <div class="shift-info">
+                    <div class="shift-date">
+                        <span class="shift-date-number">${day}. ${month}</span>
+                        <span class="shift-date-separator"></span>
+                        <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                    </div>
+                    <div class="shift-details">
+                        <div class="shift-time-with-hours">
+                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>${bestShift.startTime} - ${bestShift.endTime}</span>
+                            <span class="shift-time-arrow">→</span>
+                            <span>${this.formatHours(calculation.totalHours)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="shift-amount-wrapper">
+                    <div class="shift-total">${this.formatCurrency(calculation.total)}</div>
+                    <div class="shift-breakdown">
+                        ${this.formatCurrencyShort(calculation.baseWage)} + ${this.formatCurrencyShort(calculation.bonus)}
+                    </div>
+                </div>
+            </div>
+        `;
     },
 
     // Clean up timers when page is about to unload

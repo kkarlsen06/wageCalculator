@@ -1091,6 +1091,215 @@ body {
   z-index: 300;
 }
 
+/* Responsive month navigation positioning
+ *
+ * OPTIMIZED: iPhone Pro Max Portrait Support Added
+ * Analysis: iPhone Pro Max portrait (439px) has sufficient space for dashboard navigation.
+ * Space calculation: 439px available vs ~286px required = 153px margin (plenty!)
+ *
+ * Updated Implementation Strategy:
+ * - Small mobile portrait (<430px): Month navigation in shift section
+ * - Large mobile portrait (430px+): Month navigation in dashboard (iPhone Pro Max optimized!)
+ * - Large mobile landscape: Month navigation in dashboard (iOS Safari viewport fix)
+ * - Desktop (1024px+): Month navigation in dashboard
+ *
+ * Breakpoint Logic:
+ * - 430px threshold: Captures iPhone Pro Max portrait (439px) and larger devices
+ * - Landscape mode: Uses height-based detection for iOS Safari viewport issue
+ * - JavaScript fallback: Enhanced detection for edge cases
+ */
+
+/* Hide dashboard month navigation on small screens by default */
+.dashboard-month-nav {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Desktop and large screens - standard width-based breakpoint */
+@media (min-width: 1024px) {
+  .dashboard-month-nav {
+    display: flex;
+    opacity: 1;
+    justify-content: center;
+    margin-top: 24px;
+    margin-bottom: 0;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .shift-section .month-navigation-container {
+    display: none;
+  }
+}
+
+/* Large mobile devices in landscape - iOS Safari viewport fix */
+/* iPhone Pro Max landscape: viewport reports 439x956, but height (956) indicates landscape capability */
+@media (orientation: landscape) and (min-height: 400px) and (max-width: 1023px) {
+  .dashboard-month-nav {
+    display: flex;
+    opacity: 1;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 0;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .shift-section .month-navigation-container {
+    display: none;
+  }
+}
+
+/* Large mobile portrait and tablet portrait - sufficient width for dashboard layout */
+/* iPhone Pro Max portrait (439px) and larger devices */
+@media (min-width: 430px) and (max-width: 1023px) and (orientation: portrait) {
+  .dashboard-month-nav {
+    display: flex;
+    opacity: 1;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 0;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .shift-section .month-navigation-container {
+    display: none;
+  }
+}
+
+/* Small mobile devices - always use shift section navigation */
+/* Portrait phones smaller than iPhone Pro Max and small landscape phones */
+@media (max-width: 429px) {
+  .dashboard-month-nav {
+    display: none;
+  }
+
+  .shift-section .month-navigation-container {
+    display: flex;
+  }
+}
+
+/* Override for small landscape devices - still use shift section */
+/* Small phones in landscape mode don't have enough effective space */
+@media (orientation: landscape) and (max-height: 399px) {
+  .dashboard-month-nav {
+    display: none !important;
+  }
+
+  .shift-section .month-navigation-container {
+    display: flex !important;
+  }
+}
+
+/* Ensure portrait mode on small phones uses shift section */
+/* Small phones in portrait mode (smaller than iPhone Pro Max) */
+@media (orientation: portrait) and (max-width: 429px) {
+  .dashboard-month-nav {
+    display: none;
+  }
+
+  .shift-section .month-navigation-container {
+    display: flex;
+  }
+}
+
+/* Dashboard month navigation specific styling */
+.dashboard-month-nav .month-navigation {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+}
+
+.dashboard-month-nav .month-navigation:hover {
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateY(-1px);
+}
+
+/* Ensure month display text is properly styled in dashboard */
+.dashboard-month-nav .month-display {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 120px;
+  text-align: center;
+}
+
+/* Mobile and tablet dashboard month navigation styling */
+@media (orientation: landscape) and (min-height: 400px) and (max-width: 1023px),
+      (min-width: 430px) and (max-width: 1023px) and (orientation: portrait) {
+  .dashboard-month-nav .month-navigation {
+    background: rgba(255, 255, 255, 0.015);
+    border-radius: 14px;
+    padding: 10px 16px;
+  }
+
+  .dashboard-month-nav .month-display {
+    min-width: 100px;
+    font-size: var(--text-base);
+  }
+
+  .dashboard-month-nav .month-nav-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dashboard-month-nav .month-nav-btn .icon-sm {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Landscape-specific optimizations for mobile devices */
+@media (orientation: landscape) and (min-height: 400px) and (max-width: 1023px) {
+  .dashboard-month-nav {
+    margin-top: 16px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .dashboard-month-nav .month-navigation {
+    padding: 8px 14px;
+    border-radius: 12px;
+  }
+}
+
+/* Desktop-range devices with moderate screen sizes */
+@media (min-width: 1024px) and (max-width: 1200px) {
+  .dashboard-month-nav {
+    margin-top: 20px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+}
+
+/* JavaScript fallback for iOS Safari viewport issues */
+/* Force dashboard navigation when JavaScript determines it's appropriate */
+body.force-dashboard-nav .dashboard-month-nav {
+  display: flex !important;
+  opacity: 1 !important;
+}
+
+body.force-dashboard-nav .shift-section .month-navigation-container {
+  display: none !important;
+}
+
 .month-nav-btn {
   /* Apply consistent button styling with circular shape - enlarged for better touch accessibility */
   background: var(--bg-tertiary);

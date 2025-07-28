@@ -22,17 +22,62 @@ function setThemeColor() {
   }
 }
 
+// Enhanced responsive month navigation handler for iOS Safari viewport issues
+function handleResponsiveMonthNavigation() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const orientation = width > height ? 'landscape' : 'portrait';
+  const isLargeDevice = Math.max(width, height) >= 800; // Detect large devices
+
+  // Get month navigation elements
+  const dashboardNav = document.querySelector('.dashboard-month-nav');
+  const shiftNav = document.querySelector('.shift-section .month-navigation-container');
+
+  if (!dashboardNav || !shiftNav) return;
+
+  // Enhanced logic for iOS Safari viewport issues
+  let useDashboardNav = false;
+
+  // Desktop
+  if (width >= 1024) {
+    useDashboardNav = true;
+  }
+  // Large mobile in landscape (iOS Safari fix)
+  else if (orientation === 'landscape' && height >= 400 && isLargeDevice) {
+    useDashboardNav = true;
+  }
+  // Large mobile portrait (iPhone Pro Max and larger)
+  else if (width >= 430 && orientation === 'portrait') {
+    useDashboardNav = true;
+  }
+
+  // Apply the decision with CSS class override
+  if (useDashboardNav) {
+    document.body.classList.add('force-dashboard-nav');
+  } else {
+    document.body.classList.remove('force-dashboard-nav');
+  }
+}
+
 setAppHeight();
 setThemeColor();
-window.addEventListener('resize', setAppHeight);
+handleResponsiveMonthNavigation(); // Initial call
+window.addEventListener('resize', () => {
+  setAppHeight();
+  handleResponsiveMonthNavigation();
+});
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', setAppHeight);
+  window.visualViewport.addEventListener('resize', () => {
+    setAppHeight();
+    handleResponsiveMonthNavigation();
+  });
 }
 
 // Also listen for orientation changes that might affect mobile browser UI
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
     setAppHeight();
+    handleResponsiveMonthNavigation(); // Handle month navigation positioning after orientation change
   }, 100); // Delay to ensure orientation change is complete
 });
 
