@@ -770,11 +770,12 @@ body {
 }
 
 .header {
-  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* iOS-style translucent navigation bar with frosted glass effect */
+  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border */
   border-radius: 0 0 24px 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
