@@ -3078,7 +3078,7 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-semibold); /* 600 - Subtle emphasis for section labels */
-  margin-bottom: 10px;
+  margin-bottom: 16px; /* Increased from 10px to 16px for better visual separation */
   letter-spacing: 0.025em; /* Slight positive tracking for labels */
   text-transform: uppercase; /* Modern label styling */
 }

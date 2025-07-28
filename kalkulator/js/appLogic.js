@@ -2279,7 +2279,7 @@ export const app = {
             totalAmount;
 
         document.getElementById('totalAmount').textContent = this.formatCurrency(displayAmount);
-        document.getElementById('totalHours').textContent = this.formatHours(totalHours);
+        document.getElementById('totalHours').textContent = `${totalHours.toFixed(1).replace('.', ',')}t`;
         document.getElementById('shiftCount').textContent = monthShifts.length;
         
         // Update header shift count
