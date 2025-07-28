@@ -261,6 +261,8 @@ export const app = {
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
     initialAnimationComplete: false, // Track if initial progress bar animation is complete
+    taxDeductionEnabled: false, // Setting for enabling tax deduction
+    taxPercentage: 0.0, // Tax percentage to deduct (0.0 to 100.0)
     nextShiftTimer: null, // Timer for updating next shift countdown
     lastRenderedMonth: null,
     lastRenderedYear: null,
@@ -1192,7 +1194,17 @@ export const app = {
                 this.currencyFormat = settings.currency_format || false;
                 this.compactView = settings.compact_view || false;
                 this.defaultShiftsView = settings.default_shifts_view || 'list';
-                
+                this.taxDeductionEnabled = settings.tax_deduction_enabled === true;
+                this.taxPercentage = parseFloat(settings.tax_percentage) || 0.0;
+
+                // Debug logging for tax deduction settings
+                console.log('Loaded tax deduction settings:', {
+                    tax_deduction_enabled: settings.tax_deduction_enabled,
+                    tax_percentage: settings.tax_percentage,
+                    parsed_enabled: this.taxDeductionEnabled,
+                    parsed_percentage: this.taxPercentage
+                });
+
             } else {
                 // No settings found, set defaults
                 this.setDefaultSettings();
@@ -1216,6 +1228,8 @@ export const app = {
             saturday: [],
             sunday: []
         };
+        this.taxDeductionEnabled = false;
+        this.taxPercentage = 0.0;
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.currentYear = new Date().getFullYear(); // Default to current year
         this.pauseDeduction = false;
@@ -1265,6 +1279,29 @@ export const app = {
         if (pauseDeductionToggle) {
             pauseDeductionToggle.checked = this.pauseDeduction;
         }
+
+        const taxDeductionToggle = document.getElementById('taxDeductionToggle');
+        if (taxDeductionToggle) {
+            taxDeductionToggle.checked = this.taxDeductionEnabled;
+        }
+
+        const taxPercentageInput = document.getElementById('taxPercentageInput');
+        if (taxPercentageInput) {
+            taxPercentageInput.value = this.taxPercentage;
+        }
+
+        // Show/hide tax percentage section based on toggle state
+        this.toggleTaxPercentageSection();
+
+        // Debug logging for UI update
+        console.log('Updated tax deduction UI:', {
+            toggle_element: !!taxDeductionToggle,
+            toggle_checked: taxDeductionToggle?.checked,
+            input_element: !!taxPercentageInput,
+            input_value: taxPercentageInput?.value,
+            app_state_enabled: this.taxDeductionEnabled,
+            app_state_percentage: this.taxPercentage
+        });
 
         const fullMinuteRangeToggle = document.getElementById('fullMinuteRangeToggle');
         if (fullMinuteRangeToggle) {
@@ -1371,6 +1408,16 @@ export const app = {
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
+                if ('tax_deduction_enabled' in existingSettings) settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
+                if ('tax_percentage' in existingSettings) settingsData.tax_percentage = this.taxPercentage;
+
+                // Debug logging for tax deduction save
+                console.log('Saving tax deduction settings:', {
+                    has_tax_enabled_column: 'tax_deduction_enabled' in existingSettings,
+                    has_tax_percentage_column: 'tax_percentage' in existingSettings,
+                    saving_enabled: this.taxDeductionEnabled,
+                    saving_percentage: this.taxPercentage
+                });
             } else {
                 // No existing settings - try to save with common field names
                 settingsData.use_preset = this.usePreset;
@@ -1387,6 +1434,8 @@ export const app = {
                 settingsData.compact_view = this.compactView;
                 settingsData.default_shifts_view = this.defaultShiftsView;
                 settingsData.custom_bonuses = this.customBonuses || {};
+                settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
+                settingsData.tax_percentage = this.taxPercentage;
             }
 
             const { error } = await window.supa
@@ -1432,6 +1481,8 @@ export const app = {
                 this.currencyFormat = data.currencyFormat || false;
                 this.compactView = data.compactView || false;
                 this.defaultShiftsView = data.defaultShiftsView || 'list';
+                this.taxDeductionEnabled = data.taxDeductionEnabled || false;
+                this.taxPercentage = data.taxPercentage || 0.0;
                 
                 this.updateSettingsUI();
             } else {
@@ -1624,6 +1675,82 @@ export const app = {
         this.saveSettingsToSupabase();
         this.updateDisplay();
     },
+
+    toggleTaxDeduction() {
+        const toggle = document.getElementById('taxDeductionToggle');
+        this.taxDeductionEnabled = toggle.checked;
+        console.log('Tax deduction toggled:', {
+            toggle_checked: toggle.checked,
+            new_state: this.taxDeductionEnabled
+        });
+        this.toggleTaxPercentageSection();
+        this.saveSettingsToSupabase();
+        this.updateDisplay();
+    },
+
+    toggleTaxPercentageSection() {
+        const taxPercentageSection = document.getElementById('taxPercentageSection');
+        if (taxPercentageSection) {
+            if (this.taxDeductionEnabled) {
+                taxPercentageSection.style.display = 'block';
+            } else {
+                taxPercentageSection.style.display = 'none';
+            }
+        } else {
+            console.log('Tax percentage section element not found - modal may not be loaded yet');
+        }
+    },
+
+    updateTaxPercentage(value) {
+        const percentage = parseFloat(value) || 0.0;
+        // Validate percentage is within bounds
+        if (percentage < 0) {
+            this.taxPercentage = 0.0;
+        } else if (percentage > 100) {
+            this.taxPercentage = 100.0;
+        } else {
+            this.taxPercentage = percentage;
+        }
+
+        // Update the input field to reflect the validated value
+        const taxPercentageInput = document.getElementById('taxPercentageInput');
+        if (taxPercentageInput) {
+            taxPercentageInput.value = this.taxPercentage;
+        }
+
+        this.saveSettingsToSupabase();
+        this.updateDisplay();
+    },
+
+    updateTaxDeductionUI() {
+        console.log('Updating tax deduction UI specifically');
+
+        const taxDeductionToggle = document.getElementById('taxDeductionToggle');
+        const taxPercentageInput = document.getElementById('taxPercentageInput');
+        const taxPercentageSection = document.getElementById('taxPercentageSection');
+
+        console.log('Tax deduction UI elements found:', {
+            toggle: !!taxDeductionToggle,
+            input: !!taxPercentageInput,
+            section: !!taxPercentageSection
+        });
+
+        if (taxDeductionToggle) {
+            taxDeductionToggle.checked = this.taxDeductionEnabled;
+            console.log('Set toggle to:', this.taxDeductionEnabled);
+        }
+
+        if (taxPercentageInput) {
+            taxPercentageInput.value = this.taxPercentage;
+            console.log('Set input to:', this.taxPercentage);
+        }
+
+        if (taxPercentageSection) {
+            const shouldShow = this.taxDeductionEnabled;
+            taxPercentageSection.style.display = shouldShow ? 'block' : 'none';
+            console.log('Set section visibility to:', shouldShow ? 'visible' : 'hidden');
+        }
+    },
     populateCustomBonusSlots() {
         const types = ['weekday', 'saturday', 'sunday'];
         
@@ -1795,6 +1922,11 @@ export const app = {
 
             // Set active tab to wage (most important settings first)
             this.switchSettingsTabSync('wage');
+
+            // Ensure tax deduction UI is properly updated after modal is shown
+            setTimeout(() => {
+                this.updateTaxDeductionUI();
+            }, 50);
 
             // Show the modal
             modal.style.display = 'flex';
@@ -2057,7 +2189,9 @@ export const app = {
                 hasSeenRecurringIntro: this.hasSeenRecurringIntro,
                 currencyFormat: this.currencyFormat,
                 compactView: this.compactView,
-                defaultShiftsView: this.defaultShiftsView
+                defaultShiftsView: this.defaultShiftsView,
+                taxDeductionEnabled: this.taxDeductionEnabled,
+                taxPercentage: this.taxPercentage
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
         } catch (e) {
@@ -2138,7 +2272,13 @@ export const app = {
             totalBonus += calc.bonus;
         });
         const totalAmount = totalBase + totalBonus;
-        document.getElementById('totalAmount').textContent = this.formatCurrency(totalAmount);
+
+        // Apply tax deduction if enabled
+        const displayAmount = this.taxDeductionEnabled ?
+            totalAmount * (1 - this.taxPercentage / 100) :
+            totalAmount;
+
+        document.getElementById('totalAmount').textContent = this.formatCurrency(displayAmount);
         document.getElementById('totalHours').textContent = this.formatHours(totalHours);
         document.getElementById('shiftCount').textContent = monthShifts.length;
         
@@ -2154,6 +2294,9 @@ export const app = {
         // Calculate delta versus previous month for the total card label
         const deltaLabelEl = document.querySelector('.total-label');
         if (deltaLabelEl) {
+            // Update label to show if tax deduction is enabled
+            const baseLabel = this.taxDeductionEnabled ? 'Netto' : 'Brutto';
+
             const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
             const prevYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
             const prevShifts = this.shifts.filter(s =>
@@ -2162,17 +2305,27 @@ export const app = {
             );
             let prevTotal = 0;
             prevShifts.forEach(s => { prevTotal += this.calculateShift(s).total; });
+
+            // Apply tax deduction to previous total if enabled
+            const prevDisplayTotal = this.taxDeductionEnabled ?
+                prevTotal * (1 - this.taxPercentage / 100) :
+                prevTotal;
+
             let deltaPercent = 0;
-            if (prevTotal > 0) {
-                deltaPercent = ((totalAmount - prevTotal) / prevTotal) * 100;
+            if (prevDisplayTotal > 0) {
+                deltaPercent = ((displayAmount - prevDisplayTotal) / prevDisplayTotal) * 100;
             }
-            const arrow = deltaPercent >= 0 ? '▲' : '▼';
-            const prevMonthName = this.MONTHS[prevMonth - 1];
-            deltaLabelEl.textContent = `${arrow} ${Math.abs(deltaPercent).toFixed(1)} % vs. ${prevMonthName}`;
+            if (Math.abs(deltaPercent) > 0.1) {
+                const arrow = deltaPercent >= 0 ? '▲' : '▼';
+                const prevMonthName = this.MONTHS[prevMonth - 1];
+                deltaLabelEl.textContent = `${baseLabel} ${arrow} ${Math.abs(deltaPercent).toFixed(1)}% vs. ${prevMonthName}`;
+            } else {
+                deltaLabelEl.textContent = baseLabel;
+            }
         }
         // Oppdater fremdriftslinje for månedlig inntektsmål
         const monthlyGoal = getMonthlyGoal();
-        updateProgressBar(totalAmount, monthlyGoal, shouldAnimate);
+        updateProgressBar(displayAmount, monthlyGoal, shouldAnimate);
 
 
     },
