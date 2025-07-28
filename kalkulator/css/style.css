@@ -2157,11 +2157,17 @@ input[type="time"].form-control[value=""]:focus {
 
 .calendar-toggle-nav {
   display: flex;
-  background: transparent;
+  background: rgba(26, 26, 29, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
   border-radius: 24px;
   padding: 4px;
   gap: 4px;
   flex-shrink: 0;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .calendar-toggle-btn {
