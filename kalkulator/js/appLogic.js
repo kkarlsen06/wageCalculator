@@ -100,12 +100,13 @@ function updateProgressBar(current, goal, shouldAnimate = false) {
         fill.dataset.animating = 'false';
     }
 
+    // Always remove loading class to ensure progress bar is visible
+    fill.classList.remove('loading');
+
     // Enhanced animation with smoother text transitions
     if (shouldAnimate) {
         // Use single requestAnimationFrame for smooth animation
         requestAnimationFrame(() => {
-            fill.classList.remove('loading');
-
             // Smooth transition for both fill and text
             fill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
             label.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
