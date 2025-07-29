@@ -2288,14 +2288,18 @@ export const app = {
             if (this.taxDeductionEnabled) {
                 // Show gross amount with "before tax" text
                 totalSecondaryInfoEl.innerHTML = `
-                    <span class="bonus-amount">${this.formatCurrency(totalAmount)}</span>
-                    <span class="before-tax-text">før skatt</span>
+                    <div class="secondary-info-content">
+                        <span class="bonus-amount">${this.formatCurrency(totalAmount)}</span>
+                        <span class="before-tax-text">før skatt</span>
+                    </div>
                 `;
             } else {
                 // Show bonuses for this month
                 totalSecondaryInfoEl.innerHTML = `
-                    <span class="bonus-amount">${this.formatCurrency(totalBonus)}</span>
-                    <span class="before-tax-text">tillegg</span>
+                    <div class="secondary-info-content">
+                        <span class="bonus-amount">${this.formatCurrency(totalBonus)}</span>
+                        <span class="before-tax-text">i tillegg</span>
+                    </div>
                 `;
             }
         }
@@ -2516,7 +2520,21 @@ export const app = {
             // Add hour value on top of bar
             const barValue = document.createElement('div');
             barValue.className = 'chart-bar-value';
-            barValue.textContent = hours > 0 ? `${hours.toFixed(1)}t` : '';
+
+            // Format hours based on screen size - whole numbers for small screens (iPhone 16 standard and similar)
+            let formattedHours;
+            if (hours > 0) {
+                // Show whole numbers on small screens (max-width: 429px) - excludes iPhone Pro Max (439px) but includes iPhone 16 standard (393px)
+                if (window.innerWidth <= 429) {
+                    formattedHours = `${Math.round(hours)}t`;
+                } else {
+                    formattedHours = `${hours.toFixed(1)}t`;
+                }
+            } else {
+                formattedHours = '';
+            }
+
+            barValue.textContent = formattedHours;
             bar.appendChild(barValue);
 
             // Add interactive events for enhanced tooltip - only for bars with data

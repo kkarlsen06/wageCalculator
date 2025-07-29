@@ -1154,32 +1154,41 @@ body {
     margin-bottom: 0;
   }
 
-  /* Reduce total amount font size more aggressively */
+  /* Keep total amount readable on small screens */
   .total-amount {
-    font-size: 2.25rem !important; /* 36px - smaller than current 48px mobile size */
+    font-size: 3rem !important; /* 48px - maintain readability */
     font-weight: var(--font-weight-extrabold);
     letter-spacing: -0.02em;
-    line-height: 1; /* Tighter line height */
-    margin-bottom: 8px; /* Reduced margin */
+    line-height: 1.1; /* Slightly tighter line height */
+    margin-bottom: 10px; /* Reasonable margin */
   }
 
-  /* Reduce total label size and spacing */
+  /* Keep total label readable */
   .total-label {
-    font-size: 10px !important; /* Smaller than current mobile size */
+    font-size: 12px !important; /* Readable label size */
     font-weight: var(--font-weight-semibold);
     letter-spacing: 0.025em;
     text-transform: uppercase;
-    margin-bottom: 8px; /* Reduced from 16px */
+    margin-bottom: 10px; /* Reasonable margin */
     line-height: 1.2;
   }
 
-  /* Reduce secondary info size */
+  /* Keep secondary info readable */
   .total-secondary-info {
-    font-size: 13px !important; /* Smaller secondary text */
+    font-size: 15px !important; /* Readable secondary text */
     font-weight: var(--font-weight-medium);
     letter-spacing: -0.005em;
     line-height: 1.3;
-    margin-top: 4px; /* Reduced margin */
+    margin-top: 6px; /* Reasonable margin */
+  }
+
+  /* Ensure both amount and text have same size on mobile */
+  .total-secondary-info .before-tax-text {
+    font-size: 15px !important; /* Match parent size for mobile */
+  }
+
+  .total-secondary-info .bonus-amount {
+    font-size: 15px !important; /* Match parent size for mobile */
   }
 
   /* Reduce dashboard content gaps and padding */
@@ -1196,28 +1205,28 @@ body {
     min-height: 65px; /* Reduced minimum height */
   }
 
-  /* Reduce next shift card text sizes */
+  /* Keep next shift card text readable */
   .next-shift-card .shift-date {
-    font-size: 13px; /* Smaller date text */
-    margin-bottom: 3px; /* Reduced margin */
+    font-size: 15px; /* Readable date text */
+    margin-bottom: 4px; /* Reasonable margin */
     line-height: 1.2;
   }
 
   .next-shift-card .shift-time {
-    font-size: 12px; /* Smaller time text */
+    font-size: 14px; /* Readable time text */
     line-height: 1.3;
   }
 
   .next-shift-card .shift-total {
-    font-size: 16px; /* Smaller total amount */
+    font-size: 18px; /* Readable total amount */
     font-weight: var(--font-weight-bold);
     line-height: 1.2;
   }
 
   .next-shift-card .shift-breakdown {
-    font-size: 10px; /* Smaller breakdown text */
+    font-size: 12px; /* Readable breakdown text */
     line-height: 1.2;
-    margin-top: 2px;
+    margin-top: 3px;
   }
 
   /* AGGRESSIVE WEEKLY HOURS CHART HEIGHT REDUCTION */
@@ -1282,25 +1291,34 @@ body {
     border-radius: 18px; /* Smaller radius */
   }
 
-  /* Ultra-compact total amount */
+  /* Maintain readable total amount on very small screens */
   .total-amount {
-    font-size: 2rem !important; /* 32px - very compact */
-    line-height: 0.9; /* Tighter line height */
-    margin-bottom: 6px; /* Minimal margin */
+    font-size: 2.75rem !important; /* 44px - still readable */
+    line-height: 1; /* Reasonable line height */
+    margin-bottom: 8px; /* Reasonable margin */
   }
 
-  /* Ultra-compact total label */
+  /* Maintain readable total label */
   .total-label {
-    font-size: 9px !important; /* Very small label */
-    margin-bottom: 6px; /* Minimal margin */
-    line-height: 1.1;
+    font-size: 11px !important; /* Readable label */
+    margin-bottom: 8px; /* Reasonable margin */
+    line-height: 1.2;
   }
 
-  /* Ultra-compact secondary info */
+  /* Maintain readable secondary info */
   .total-secondary-info {
-    font-size: 12px !important; /* Very small secondary text */
-    line-height: 1.2;
-    margin-top: 3px;
+    font-size: 14px !important; /* Readable secondary text */
+    line-height: 1.3;
+    margin-top: 5px;
+  }
+
+  /* Ensure both amount and text have same size on mobile */
+  .total-secondary-info .before-tax-text {
+    font-size: 14px !important; /* Match parent size for mobile */
+  }
+
+  .total-secondary-info .bonus-amount {
+    font-size: 14px !important; /* Match parent size for mobile */
   }
 
   /* Ultra-compact dashboard spacing */
@@ -1317,23 +1335,23 @@ body {
     min-height: 60px; /* Very compact height */
   }
 
-  /* Ultra-compact next shift text */
+  /* Maintain readable next shift text on very small screens */
   .next-shift-card .shift-date {
-    font-size: 12px;
-    margin-bottom: 2px;
+    font-size: 14px;
+    margin-bottom: 3px;
   }
 
   .next-shift-card .shift-time {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .next-shift-card .shift-total {
-    font-size: 15px;
+    font-size: 17px;
   }
 
   .next-shift-card .shift-breakdown {
-    font-size: 9px;
-    margin-top: 1px;
+    font-size: 11px;
+    margin-top: 2px;
   }
 
   /* ULTRA-COMPACT WEEKLY HOURS CHART */
@@ -1396,21 +1414,30 @@ body {
   }
 
   .total-amount {
-    font-size: 1.75rem !important; /* 28px - very compact for landscape */
-    line-height: 0.9;
-    margin-bottom: 4px;
+    font-size: 2.5rem !important; /* 40px - readable even in landscape */
+    line-height: 1;
+    margin-bottom: 6px;
   }
 
   .total-label {
-    font-size: 8px !important; /* Very small for landscape */
-    margin-bottom: 4px;
-    line-height: 1;
+    font-size: 10px !important; /* Readable for landscape */
+    margin-bottom: 6px;
+    line-height: 1.1;
   }
 
   .total-secondary-info {
-    font-size: 11px !important;
-    line-height: 1.1;
-    margin-top: 2px;
+    font-size: 13px !important;
+    line-height: 1.2;
+    margin-top: 4px;
+  }
+
+  /* Ensure both amount and text have same size on mobile landscape */
+  .total-secondary-info .before-tax-text {
+    font-size: 13px !important; /* Match parent size for mobile landscape */
+  }
+
+  .total-secondary-info .bonus-amount {
+    font-size: 13px !important; /* Match parent size for mobile landscape */
   }
 
   .dashboard-content {
@@ -1427,21 +1454,21 @@ body {
   }
 
   .next-shift-card .shift-date {
-    font-size: 11px;
-    margin-bottom: 1px;
+    font-size: 13px;
+    margin-bottom: 2px;
   }
 
   .next-shift-card .shift-time {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .next-shift-card .shift-total {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .next-shift-card .shift-breakdown {
-    font-size: 8px;
-    margin-top: 0;
+    font-size: 10px;
+    margin-top: 1px;
   }
 
   /* Landscape weekly hours chart */
@@ -3408,14 +3435,18 @@ input:checked + .slider:before {
   margin-top: 10px;
   letter-spacing: -0.005em; /* Subtle negative tracking */
   display: flex;
-  align-items: baseline;
-  justify-content: center; /* Center the entire content */
-  gap: 8px; /* Space between amount and descriptive text */
+  justify-content: center; /* Center the content under main amount */
   text-align: center;
 }
 
+.secondary-info-content {
+  display: flex;
+  align-items: baseline; /* Align text elements by their baselines (bottom of text) */
+  gap: 8px; /* Space between amount and descriptive text */
+}
+
 .total-secondary-info .before-tax-text {
-  font-size: 14px;
+  font-size: var(--text-lg); /* Match the parent font size for proper baseline alignment */
   color: var(--text-secondary);
   font-weight: 400;
   white-space: nowrap;
