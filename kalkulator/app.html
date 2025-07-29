@@ -72,12 +72,8 @@
                       <div class="total-card">
                           <div class="total-label">Brutto</div>
                           <div class="total-amount" id="totalAmount">0 kr</div>
-                          <div class="total-hours">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                  <circle cx="12" cy="12" r="10"></circle>
-                                  <polyline points="12 6 12 12 16 14"></polyline>
-                              </svg>
-                              <span><span id="totalHours">0</span> (<span id="shiftCount">0</span> vakter)</span>
+                          <div class="total-secondary-info" id="totalSecondaryInfo">
+                              <!-- Will be populated based on tax deduction setting -->
                           </div>
                       </div>
 
@@ -90,21 +86,48 @@
                           </div>
                       </div>
                       <div class="weekly-hours-chart-card" id="weeklyHoursChart">
-                          <div class="chart-container">
-                              <div class="chart-bars" id="chartBars">
-                                  <!-- Bars will be populated dynamically -->
+                          <div class="chart-cards-container">
+                              <!-- Bar Chart Card -->
+                              <div class="chart-visualization-card">
+                                  <div class="chart-container">
+                                      <div class="chart-content">
+                                          <div class="chart-bars" id="chartBars">
+                                              <!-- Bars will be populated dynamically -->
+                                          </div>
+                                      </div>
+                                      <div class="chart-labels" id="chartLabels">
+                                          <!-- Week labels will be populated dynamically -->
+                                      </div>
+                                  </div>
+                                  <div class="chart-tooltip" id="chartTooltip">
+                                      <span id="tooltipContent"></span>
+                                  </div>
                               </div>
-                              <div class="chart-labels" id="chartLabels">
-                                  <!-- Week labels will be populated dynamically -->
-                              </div>
-                              <!-- Integrated progress bar underneath the chart -->
-                              <div class="chart-progress-bar" title="Månedlig mål fremdrift">
-                                  <div class="chart-progress-fill loading" style="width: 0%"></div>
-                                  <span class="chart-progress-label">0 % av 0 kr</span>
+
+                              <!-- Hours Section - Two Stacked Cards -->
+                              <div class="chart-hours-section">
+                                  <!-- Total Hours Card -->
+                                  <div class="chart-hours-value-card">
+                                      <div class="hours-value-content">
+                                          <div class="hours-value-number" id="totalHours">0</div>
+                                          <div class="hours-value-label">timer</div>
+                                      </div>
+                                  </div>
+
+                                  <!-- Shift Count Card -->
+                                  <div class="chart-shifts-count-card">
+                                      <div class="shifts-count-content">
+                                          <div class="shifts-count-number" id="shiftCount">0</div>
+                                          <div class="shifts-count-label">vakter</div>
+                                      </div>
+                                  </div>
                               </div>
                           </div>
-                          <div class="chart-tooltip" id="chartTooltip">
-                              <span id="tooltipContent"></span>
+
+                          <!-- Progress bar positioned below both cards -->
+                          <div class="chart-progress-bar" title="Månedlig mål fremdrift">
+                              <div class="chart-progress-fill loading" style="width: 0%"></div>
+                              <span class="chart-progress-label">0 % av 0 kr</span>
                           </div>
                       </div>
 

@@ -2279,15 +2279,33 @@ export const app = {
             totalAmount;
 
         document.getElementById('totalAmount').textContent = this.formatCurrency(displayAmount);
-        document.getElementById('totalHours').textContent = `${totalHours.toFixed(1).replace('.', ',')}t`;
+        document.getElementById('totalHours').textContent = totalHours.toFixed(1);
         document.getElementById('shiftCount').textContent = monthShifts.length;
-        
+
+        // Update total card secondary info based on tax deduction setting
+        const totalSecondaryInfoEl = document.getElementById('totalSecondaryInfo');
+        if (totalSecondaryInfoEl) {
+            if (this.taxDeductionEnabled) {
+                // Show gross amount with "before tax" text
+                totalSecondaryInfoEl.innerHTML = `
+                    <span class="bonus-amount">${this.formatCurrency(totalAmount)}</span>
+                    <span class="before-tax-text">før skatt</span>
+                `;
+            } else {
+                // Show bonuses for this month
+                totalSecondaryInfoEl.innerHTML = `
+                    <span class="bonus-amount">${this.formatCurrency(totalBonus)}</span>
+                    <span class="before-tax-text">tillegg</span>
+                `;
+            }
+        }
+
         // Update header shift count
         const headerShiftCountEl = document.getElementById('headerShiftCount');
         if (headerShiftCountEl) {
             headerShiftCountEl.textContent = monthShifts.length;
         }
-        
+
         // Update last updated time
         this.updateLastUpdatedTime();
 
@@ -2410,6 +2428,10 @@ export const app = {
         chartBars.innerHTML = '';
         chartLabels.innerHTML = '';
 
+        // Set total weeks count for CSS calculations on both containers
+        chartBars.style.setProperty('--total-weeks', sortedWeeks.length);
+        chartLabels.style.setProperty('--total-weeks', sortedWeeks.length);
+
         // Force reflow to ensure animations trigger properly
         chartBars.offsetHeight;
 
@@ -2458,12 +2480,38 @@ export const app = {
                 bar.setAttribute('aria-label', `Uke ${weekNumber}: ${hours.toFixed(1)} timer, ${this.formatCurrency(earnings)}`);
             }
 
+            // Calculate actual pixel height based on responsive container height
+            let containerHeight = 160 - 24; // Default: 160px container minus 16px top + 8px bottom padding
+
+            // Adjust for responsive breakpoints
+            if (window.innerWidth <= 360) {
+                containerHeight = 100 - 14; // 100px - 10px top + 4px bottom
+            } else if (window.innerWidth <= 480) {
+                containerHeight = 120 - 18; // 120px - 12px top + 6px bottom
+            } else if (window.innerWidth <= 767) {
+                containerHeight = 140 - 24; // 140px - 16px top + 8px bottom
+            } else if (window.innerWidth >= 768) {
+                containerHeight = 180 - 30; // 180px - 20px top + 10px bottom
+            }
+
+            const actualHeight = Math.max(2, (heightPercent / 100) * containerHeight);
+
             // Set CSS custom property for animation
-            bar.style.setProperty('--bar-height', `${heightPercent}%`);
+            bar.style.setProperty('--bar-height', `${actualHeight}px`);
             bar.setAttribute('data-week', weekNumber);
             bar.setAttribute('data-hours', hours.toFixed(1));
             bar.setAttribute('data-earnings', earnings.toFixed(0));
             bar.setAttribute('data-percentage', monthlyPercent.toFixed(1));
+
+            // Ensure the bar is added to DOM before setting animation
+            chartBars.appendChild(bar);
+
+            // Force animation restart by briefly removing and re-adding animation
+            requestAnimationFrame(() => {
+                bar.style.animation = 'none';
+                bar.offsetHeight; // Trigger reflow
+                bar.style.animation = 'barGrowth 0.25s ease-out forwards';
+            });
 
             // Add hour value on top of bar
             const barValue = document.createElement('div');
@@ -2498,10 +2546,10 @@ export const app = {
                         `;
                     }
 
-                    // Position tooltip over the hour value text inside the bar
+                    // Position tooltip directly above the hour value text inside the bar
                     const tooltipWidth = 140; // Approximate tooltip width
                     const tooltipHeight = 80; // Approximate tooltip height
-                    const padding = 8;
+                    const padding = 6; // Reduced padding for closer positioning
 
                     // Get the position of the hour value element if it exists
                     let barValueRect = null;
@@ -2512,7 +2560,7 @@ export const app = {
                     // Calculate horizontal position - center on hour value text or bar center
                     let tooltipLeft;
                     if (barValueRect) {
-                        // Center on the hour value text
+                        // Center on the hour value text precisely
                         tooltipLeft = barValueRect.left - containerRect.left + barValueRect.width / 2 - tooltipWidth / 2;
                     } else {
                         // Fallback to bar center
@@ -2522,10 +2570,11 @@ export const app = {
                     // Ensure tooltip stays within container bounds
                     tooltipLeft = Math.max(padding, Math.min(tooltipLeft, containerRect.width - tooltipWidth - padding));
 
-                    // Calculate vertical position - position over the hour value text
+                    // Calculate vertical position - position directly above the hour value text
                     let tooltipTop;
                     if (barValueRect) {
-                        // Position directly above the hour value text (which is at the bottom of the bar)
+                        // Position directly above the hour value text with minimal gap
+                        // The hour value is positioned at the bottom of the bar, so we position above it
                         tooltipTop = barValueRect.top - containerRect.top - tooltipHeight - padding;
                     } else {
                         // Fallback to above the bar
@@ -2535,8 +2584,10 @@ export const app = {
                     // If tooltip would go above container, position it below the hour value
                     if (tooltipTop < padding) {
                         if (barValueRect) {
+                            // Position below the hour value text
                             tooltipTop = barValueRect.bottom - containerRect.top + padding;
                         } else {
+                            // Fallback to below the bar
                             tooltipTop = rect.bottom - containerRect.top + padding;
                         }
                     }
@@ -2568,8 +2619,6 @@ export const app = {
                     showTooltip(e);
                 });
             }
-
-            chartBars.appendChild(bar);
 
             // Create label
             const label = document.createElement('div');
