@@ -261,6 +261,9 @@ export const app = {
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
     initialAnimationComplete: false, // Track if initial progress bar animation is complete
+    // Drill-down state
+    drillDownMode: false, // Track if we're in drill-down view
+    selectedWeek: null, // Track which week is selected for drill-down
     taxDeductionEnabled: false, // Setting for enabling tax deduction
     taxPercentage: 0.0, // Tax percentage to deduct (0.0 to 100.0)
     nextShiftTimer: null, // Timer for updating next shift countdown
@@ -921,6 +924,174 @@ export const app = {
         d.setUTCDate(d.getUTCDate() + 4 - dayNum);
         const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
         return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    },
+
+    // Drill-down state management functions
+    enterDrillDownMode(weekNumber) {
+        console.log('Entering drill-down mode for week:', weekNumber);
+
+        // Comprehensive tooltip cleanup before entering drill-down mode
+        this.clearAllTooltips();
+
+        this.drillDownMode = true;
+        this.selectedWeek = weekNumber;
+        this.updateWeeklyHoursChart();
+        this.updateDisplay(false); // Update stat cards without animation
+    },
+
+    exitDrillDownMode() {
+        console.log('Exiting drill-down mode');
+
+        // Comprehensive tooltip cleanup before exiting drill-down mode
+        this.clearAllTooltips();
+
+        this.drillDownMode = false;
+        this.selectedWeek = null;
+        this.removeBackButton();
+        this.updateWeeklyHoursChart();
+        this.updateDisplay(false); // Update stat cards without animation
+    },
+
+    isInDrillDownMode() {
+        return this.drillDownMode && this.selectedWeek !== null;
+    },
+
+    // Comprehensive tooltip cleanup function
+    clearAllTooltips() {
+        // Call the stored hideChartTooltip function if it exists
+        if (this.hideChartTooltip) {
+            this.hideChartTooltip();
+        }
+
+        // Also directly ensure tooltip is hidden by manipulating DOM
+        const chartTooltip = document.getElementById('chartTooltip');
+        if (chartTooltip) {
+            chartTooltip.classList.remove('show');
+        }
+
+        // Remove tooltip-active class from any bars
+        const activeBars = document.querySelectorAll('.chart-bar.tooltip-active');
+        activeBars.forEach(bar => {
+            bar.classList.remove('tooltip-active');
+        });
+    },
+
+    // Add back button for drill-down navigation
+    addBackButton() {
+        // Remove existing back button if any
+        this.removeBackButton();
+
+        const progressBar = document.querySelector('.chart-progress-bar');
+        if (!progressBar) return;
+
+        // Create wrapper container for progress bar and back button
+        const progressWrapper = document.createElement('div');
+        progressWrapper.className = 'progress-bar-wrapper';
+        progressWrapper.id = 'progressBarWrapper';
+
+        // Move progress bar into wrapper
+        const progressParent = progressBar.parentNode;
+        progressParent.insertBefore(progressWrapper, progressBar);
+        progressWrapper.appendChild(progressBar);
+
+        // Create back button
+        const backButton = document.createElement('button');
+        backButton.id = 'drillDownBackButton';
+        backButton.className = 'drill-down-back-button';
+        backButton.innerHTML = `
+            <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Uke ${this.selectedWeek}</span>
+        `;
+        backButton.setAttribute('aria-label', `Tilbake til ukeoversikt fra uke ${this.selectedWeek}`);
+
+        backButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.exitDrillDownMode();
+        });
+
+        // Add back button to wrapper
+        progressWrapper.appendChild(backButton);
+    },
+
+    // Remove back button and restore original progress bar structure
+    removeBackButton() {
+        const progressWrapper = document.getElementById('progressBarWrapper');
+        const backButton = document.getElementById('drillDownBackButton');
+
+        if (progressWrapper) {
+            const progressBar = progressWrapper.querySelector('.chart-progress-bar');
+            const wrapperParent = progressWrapper.parentNode;
+
+            // Move progress bar back to original position
+            if (progressBar && wrapperParent) {
+                wrapperParent.insertBefore(progressBar, progressWrapper);
+            }
+
+            // Remove wrapper
+            progressWrapper.remove();
+        } else if (backButton) {
+            // Fallback: just remove button if wrapper doesn't exist
+            backButton.remove();
+        }
+    },
+
+    // Get all shifts for a specific week
+    getShiftsForWeek(weekNumber) {
+        const monthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === this.currentMonth - 1 &&
+            shift.date.getFullYear() === this.currentYear
+        );
+
+        return monthShifts.filter(shift => {
+            return this.getISOWeekNumber(shift.date) === weekNumber;
+        });
+    },
+
+    // Get daily data for a specific week
+    getDailyDataForWeek(weekNumber) {
+        const weekShifts = this.getShiftsForWeek(weekNumber);
+        const dailyData = {};
+        let totalWeekHours = 0;
+        let totalWeekEarnings = 0;
+
+        // Group shifts by day of week (0 = Sunday, 1 = Monday, etc.)
+        weekShifts.forEach(shift => {
+            const dayOfWeek = shift.date.getDay();
+            if (!dailyData[dayOfWeek]) {
+                dailyData[dayOfWeek] = {
+                    hours: 0,
+                    earnings: 0,
+                    shifts: [],
+                    date: new Date(shift.date) // Store the actual date for this day
+                };
+            }
+            const calc = this.calculateShift(shift);
+            dailyData[dayOfWeek].hours += calc.hours;
+            dailyData[dayOfWeek].earnings += calc.total;
+            dailyData[dayOfWeek].shifts.push(shift);
+            totalWeekHours += calc.hours;
+            totalWeekEarnings += calc.total;
+        });
+
+        return {
+            dailyData,
+            totalWeekHours,
+            totalWeekEarnings,
+            weekNumber
+        };
+    },
+
+    // Get the days of the week that have shifts for a given week
+    getDaysWithShifts(weekNumber) {
+        const { dailyData } = this.getDailyDataForWeek(weekNumber);
+        return Object.keys(dailyData).map(day => parseInt(day)).sort((a, b) => {
+            // Sort so Monday (1) comes first, then Tuesday (2), etc., with Sunday (0) at the end
+            if (a === 0) return 1; // Sunday goes to end
+            if (b === 0) return -1; // Sunday goes to end
+            return a - b;
+        });
     },
     
     populateDateGrid(targetMonth = null, targetYear = null) {
@@ -2258,6 +2429,12 @@ export const app = {
         this.updateCurrentMonthLabel();
     },
     updateStats(shouldAnimate = false) {
+        // Check if we're in drill-down mode
+        if (this.isInDrillDownMode()) {
+            this.updateDrillDownStats(shouldAnimate);
+            return;
+        }
+
         let totalHours = 0;
         let totalBase = 0;
         let totalBonus = 0;
@@ -2352,12 +2529,84 @@ export const app = {
 
     },
 
+    // Update stats for drill-down view
+    updateDrillDownStats(shouldAnimate = false) {
+        const { totalWeekHours, totalWeekEarnings } = this.getDailyDataForWeek(this.selectedWeek);
+
+        // Get total monthly hours for progress bar calculation
+        const monthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === this.currentMonth - 1 &&
+            shift.date.getFullYear() === this.currentYear
+        );
+        let totalMonthlyHours = 0;
+        monthShifts.forEach(shift => {
+            const calc = this.calculateShift(shift);
+            totalMonthlyHours += calc.hours;
+        });
+
+        // Update hours card to show week total with two decimal places
+        document.getElementById('totalHours').textContent = totalWeekHours.toFixed(2);
+
+        // Transform shifts card to show total wage for the week
+        const shiftCountElement = document.getElementById('shiftCount');
+        const shiftCountLabel = document.querySelector('.shifts-count-label');
+        if (shiftCountElement && shiftCountLabel) {
+            shiftCountElement.textContent = this.formatCurrency(totalWeekEarnings).replace(' kr', '');
+            shiftCountLabel.textContent = 'kroner';
+        }
+
+        // Update progress bar to show week percentage of monthly hours
+        const weekPercentage = totalMonthlyHours > 0 ? (totalWeekHours / totalMonthlyHours) * 100 : 0;
+        const progressLabel = document.querySelector('.chart-progress-label');
+        if (progressLabel) {
+            const formattedPercent = weekPercentage < 10 ? weekPercentage.toFixed(1) : Math.round(weekPercentage);
+            progressLabel.textContent = `${formattedPercent}% av ${totalMonthlyHours.toFixed(1)} timer`;
+        }
+
+        // Update progress bar fill
+        const progressFill = document.querySelector('.chart-progress-fill');
+        if (progressFill) {
+            const clampedPercent = Math.min(weekPercentage, 100);
+
+            if (shouldAnimate) {
+                requestAnimationFrame(() => {
+                    progressFill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+                    progressFill.style.width = clampedPercent + '%';
+                });
+            } else {
+                progressFill.style.transition = 'none';
+                progressFill.style.width = clampedPercent + '%';
+                progressFill.offsetHeight; // Force reflow
+                progressFill.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            }
+
+            // Update progress classes
+            if (weekPercentage >= 100) {
+                progressFill.classList.add('full');
+            } else {
+                progressFill.classList.remove('full');
+            }
+
+            if (weekPercentage > 0) {
+                progressFill.classList.add('active');
+            } else {
+                progressFill.classList.remove('active');
+            }
+        }
+    },
+
     updateWeeklyHoursChart() {
         const chartBars = document.getElementById('chartBars');
         const chartLabels = document.getElementById('chartLabels');
         const chartTooltip = document.getElementById('chartTooltip');
 
         if (!chartBars || !chartLabels) return;
+
+        // Check if we're in drill-down mode
+        if (this.isInDrillDownMode()) {
+            this.renderDailyChart(chartBars, chartLabels, chartTooltip);
+            return;
+        }
 
         // Get shifts for current month
         const monthShifts = this.shifts.filter(shift =>
@@ -2428,7 +2677,12 @@ export const app = {
             return currentHours > highestHours ? week : highest;
         }, sortedWeeks[0]);
 
-        // Clear existing content
+        // Clear existing content and remove back button if present
+        this.removeBackButton();
+
+        // Comprehensive tooltip cleanup when re-rendering chart
+        this.clearAllTooltips();
+
         chartBars.innerHTML = '';
         chartLabels.innerHTML = '';
 
@@ -2619,28 +2873,30 @@ export const app = {
                     activeTooltipBar = bar;
                 };
 
-                // Click/tap event for mobile and desktop (no hover functionality)
+                // Store reference to app context for event handlers
+                const self = this;
+
+                // Click/tap event for mobile and desktop - immediate drill-down activation
                 bar.addEventListener('click', (e) => {
                     e.stopPropagation();
 
-                    // If this bar already has active tooltip, hide it
-                    if (bar.classList.contains('tooltip-active')) {
-                        hideTooltip();
-                        return;
-                    }
-
                     // Hide any existing tooltip first
-                    if (activeTooltipBar && activeTooltipBar !== bar) {
-                        activeTooltipBar.classList.remove('tooltip-active');
-                    }
+                    hideTooltip();
 
-                    showTooltip(e);
+                    // Immediately enter drill-down mode
+                    self.enterDrillDownMode(weekNumber);
                 });
             }
 
             // Create label
             const label = document.createElement('div');
             label.className = 'chart-label';
+
+            // Add current week class for highlighting
+            if (isCurrentMonth && weekNumber === currentWeekNumber) {
+                label.classList.add('current-week');
+            }
+
             label.textContent = weekNumber.toString();
             chartLabels.appendChild(label);
         });
@@ -2690,6 +2946,227 @@ export const app = {
             document.addEventListener('click', this.chartTooltipGlobalListener);
         }
 
+    },
+
+    // Render daily chart for drill-down view
+    renderDailyChart(chartBars, chartLabels, chartTooltip) {
+        const { dailyData, totalWeekHours, totalWeekEarnings } = this.getDailyDataForWeek(this.selectedWeek);
+
+        // Add back button
+        this.addBackButton();
+
+        // Get days that have shifts, sorted Monday to Sunday
+        const daysWithShifts = this.getDaysWithShifts(this.selectedWeek);
+
+        if (daysWithShifts.length === 0) {
+            // No shifts for this week
+            chartBars.innerHTML = '<div class="chart-empty-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text-secondary); font-size: 12px; font-weight: 500; opacity: 0.6; text-align: center; pointer-events: none;">Ingen vakter denne uken</div>';
+            chartLabels.innerHTML = '';
+            return;
+        }
+
+        // Clear existing content
+        chartBars.innerHTML = '';
+        chartLabels.innerHTML = '';
+
+        // Comprehensive tooltip cleanup when rendering daily chart
+        this.clearAllTooltips();
+
+        // Set total days count for CSS calculations
+        chartBars.style.setProperty('--total-weeks', daysWithShifts.length);
+        chartLabels.style.setProperty('--total-weeks', daysWithShifts.length);
+
+        // Force reflow to ensure animations trigger properly
+        chartBars.offsetHeight;
+
+        // Get max hours for scaling
+        const maxHours = Math.max(...daysWithShifts.map(day => dailyData[day]?.hours || 0), 1);
+
+        // Get current date for highlighting
+        const today = new Date();
+        const isCurrentMonth = this.currentMonth === (today.getMonth() + 1) && this.currentYear === today.getFullYear();
+
+        // Day abbreviations (Sunday to Saturday)
+        const dayAbbreviations = ['S', 'M', 'T', 'O', 'T', 'F', 'L'];
+
+        // Store reference to currently active tooltip bar
+        let activeTooltipBar = null;
+
+        // Global tooltip functions
+        const hideTooltip = () => {
+            chartTooltip.classList.remove('show');
+            if (activeTooltipBar) {
+                activeTooltipBar.classList.remove('tooltip-active');
+                activeTooltipBar = null;
+            }
+        };
+
+        // Store hideTooltip function for global access
+        this.hideChartTooltip = hideTooltip;
+
+        // Create bars and labels for each day with shifts
+        daysWithShifts.forEach((dayOfWeek, index) => {
+            const dayData = dailyData[dayOfWeek];
+            const hours = dayData.hours;
+            const earnings = dayData.earnings;
+            const heightPercent = maxHours > 0 ? (hours / maxHours) * 100 : 0;
+
+            // Create bar
+            const bar = document.createElement('div');
+            bar.className = 'chart-bar';
+
+            // Add has-data class since we only show days with shifts
+            bar.classList.add('has-data');
+
+            // Check if this day is today for highlighting
+            const isToday = isCurrentMonth &&
+                           dayData.date.getDate() === today.getDate() &&
+                           dayData.date.getMonth() === today.getMonth() &&
+                           dayData.date.getFullYear() === today.getFullYear();
+
+            if (isToday) {
+                bar.classList.add('current-week'); // Reuse current-week class for current day
+                bar.setAttribute('aria-label', `${this.WEEKDAYS[dayOfWeek]} (I dag): ${hours.toFixed(2)} timer, ${this.formatCurrency(earnings)}`);
+            } else {
+                bar.setAttribute('aria-label', `${this.WEEKDAYS[dayOfWeek]}: ${hours.toFixed(2)} timer, ${this.formatCurrency(earnings)}`);
+            }
+
+            // Calculate actual pixel height based on responsive container height
+            let containerHeight = 160 - 24; // Default: 160px container minus padding
+
+            // Adjust for responsive breakpoints
+            if (window.innerWidth <= 360) {
+                containerHeight = 100 - 14;
+            } else if (window.innerWidth <= 480) {
+                containerHeight = 120 - 18;
+            } else if (window.innerWidth <= 767) {
+                containerHeight = 140 - 24;
+            } else if (window.innerWidth >= 768) {
+                containerHeight = 180 - 30;
+            }
+
+            const actualHeight = Math.max(2, (heightPercent / 100) * containerHeight);
+
+            // Set CSS custom property for animation
+            bar.style.setProperty('--bar-height', `${actualHeight}px`);
+            bar.setAttribute('data-day', dayOfWeek);
+            bar.setAttribute('data-hours', hours.toFixed(1));
+            bar.setAttribute('data-earnings', earnings.toFixed(0));
+
+            // Ensure the bar is added to DOM before setting animation
+            chartBars.appendChild(bar);
+
+            // Force animation restart
+            requestAnimationFrame(() => {
+                bar.style.animation = 'none';
+                bar.offsetHeight; // Trigger reflow
+                bar.style.animation = 'barGrowth 0.25s ease-out forwards';
+            });
+
+            // Add hour value on top of bar
+            const barValue = document.createElement('div');
+            barValue.className = 'chart-bar-value';
+
+            // Format hours with two decimal places for daily drill-down view
+            let formattedHours;
+            if (window.innerWidth <= 429) {
+                formattedHours = `${hours.toFixed(2)}t`;
+            } else {
+                formattedHours = `${hours.toFixed(2)}t`;
+            }
+
+            barValue.textContent = formattedHours;
+            bar.appendChild(barValue);
+
+            // Add tooltip functionality
+            const showTooltip = (e) => {
+                const barValueElement = bar.querySelector('.chart-bar-value');
+                const rect = bar.getBoundingClientRect();
+                const tooltipParent = chartTooltip.parentElement;
+                const containerRect = tooltipParent.getBoundingClientRect();
+
+                const tooltipContent = document.getElementById('tooltipContent');
+                if (tooltipContent) {
+                    const dayName = this.WEEKDAYS[dayOfWeek];
+                    const dateStr = dayData.date.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+
+                    tooltipContent.innerHTML = `
+                        <span class="chart-tooltip-line">${dayName} ${dateStr}</span>
+                        <span class="chart-tooltip-line">${hours.toFixed(2).replace('.', ',')} timer</span>
+                        <span class="chart-tooltip-line">${this.formatCurrency(earnings)}</span>
+                    `;
+                }
+
+                // Position tooltip
+                const tooltipWidth = 140;
+                const tooltipHeight = 80;
+                const padding = 6;
+
+                let barValueRect = null;
+                if (barValueElement) {
+                    barValueRect = barValueElement.getBoundingClientRect();
+                }
+
+                let tooltipLeft;
+                if (barValueRect) {
+                    tooltipLeft = barValueRect.left - containerRect.left + barValueRect.width / 2 - tooltipWidth / 2;
+                } else {
+                    tooltipLeft = rect.left - containerRect.left + rect.width / 2 - tooltipWidth / 2;
+                }
+
+                tooltipLeft = Math.max(padding, Math.min(tooltipLeft, containerRect.width - tooltipWidth - padding));
+
+                let tooltipTop;
+                if (barValueRect) {
+                    tooltipTop = barValueRect.top - containerRect.top - tooltipHeight - padding;
+                } else {
+                    tooltipTop = rect.top - containerRect.top - tooltipHeight - padding;
+                }
+
+                if (tooltipTop < padding) {
+                    if (barValueRect) {
+                        tooltipTop = barValueRect.bottom - containerRect.top + padding;
+                    } else {
+                        tooltipTop = rect.bottom - containerRect.top + padding;
+                    }
+                }
+
+                chartTooltip.style.left = `${tooltipLeft}px`;
+                chartTooltip.style.top = `${tooltipTop}px`;
+                chartTooltip.classList.add('show');
+
+                bar.classList.add('tooltip-active');
+                activeTooltipBar = bar;
+            };
+
+            // Click event for tooltip
+            bar.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                if (bar.classList.contains('tooltip-active')) {
+                    hideTooltip();
+                    return;
+                }
+
+                if (activeTooltipBar && activeTooltipBar !== bar) {
+                    activeTooltipBar.classList.remove('tooltip-active');
+                }
+
+                showTooltip(e);
+            });
+
+            // Create label with day abbreviation
+            const label = document.createElement('div');
+            label.className = 'chart-label';
+
+            // Add current day class for highlighting
+            if (isToday) {
+                label.classList.add('current-week'); // Reuse current-week class for current day
+            }
+
+            label.textContent = dayAbbreviations[dayOfWeek];
+            chartLabels.appendChild(label);
+        });
     },
 
     updateShiftList() {

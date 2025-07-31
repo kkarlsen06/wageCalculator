@@ -7670,6 +7670,213 @@ input[type="file"].form-control:focus {
   letter-spacing: 0.02em;
 }
 
+/* Current week label highlighting - matches bar color */
+.chart-label.current-week {
+  color: var(--primary);
+}
+
+/* Progress bar wrapper for drill-down back button positioning */
+.progress-bar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Reduced gap for mobile */
+}
+
+.progress-bar-wrapper .chart-progress-bar {
+  flex: 1;
+  margin-top: 20px;
+  min-width: 0; /* Allow shrinking below content size */
+}
+
+/* Drill-down back button - positioned to the right of progress bar, width matches stat cards */
+.drill-down-back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  height: 52px;
+  flex-shrink: 0;
+  margin-top: 20px;
+  width: 130px; /* Match default chart-hours-section width */
+  justify-content: center;
+}
+
+.drill-down-back-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.drill-down-back-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.drill-down-back-button .back-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--primary);
+}
+
+.drill-down-back-button span {
+  color: var(--text-secondary);
+}
+
+/* Responsive adjustments for back button and wrapper - match chart-hours-section widths exactly */
+
+/* Very small mobile devices */
+@media (max-width: 320px) {
+  .progress-bar-wrapper {
+    gap: 6px; /* Minimal gap for very small screens */
+  }
+
+  .progress-bar-wrapper .chart-progress-bar {
+    margin-top: 8px;
+  }
+
+  .drill-down-back-button {
+    padding: 4px 6px;
+    font-size: 11px;
+    height: 42px;
+    margin-top: 8px;
+    border-radius: 10px;
+    width: 75px; /* Match chart-hours-section width */
+  }
+
+  .drill-down-back-button .back-icon {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 360px) {
+  .progress-bar-wrapper {
+    gap: 6px; /* Small gap for small screens */
+  }
+
+  .progress-bar-wrapper .chart-progress-bar {
+    margin-top: 8px;
+  }
+
+  .drill-down-back-button {
+    padding: 4px 6px;
+    font-size: 12px;
+    height: 42px;
+    margin-top: 8px;
+    border-radius: 10px;
+    width: 80px; /* Match chart-hours-section width */
+  }
+
+  .drill-down-back-button .back-icon {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Medium mobile devices */
+@media (max-width: 480px) {
+  .progress-bar-wrapper .chart-progress-bar {
+    margin-top: 10px;
+  }
+
+  .drill-down-back-button {
+    padding: 6px 8px;
+    font-size: 13px;
+    height: 46px;
+    margin-top: 10px;
+    border-radius: 12px;
+    width: 85px; /* Match chart-hours-section width */
+  }
+
+  .drill-down-back-button .back-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Additional responsive breakpoints to match chart-hours-section widths exactly */
+
+/* Larger mobile devices */
+@media (max-width: 600px) {
+  .drill-down-back-button {
+    width: 90px; /* Match chart-hours-section width */
+  }
+}
+
+/* Large mobile and small tablets */
+@media (min-width: 481px) and (max-width: 767px) {
+  .drill-down-back-button {
+    width: 115px; /* Match chart-hours-section width */
+  }
+}
+
+/* Tablet portrait - smaller devices */
+@media (max-width: 480px) {
+  .drill-down-back-button {
+    width: 100px; /* Match chart-hours-section width */
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+  .drill-down-back-button {
+    width: 65px; /* Match chart-hours-section width for landscape */
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  .drill-down-back-button .back-icon {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+/* Desktop and larger screens */
+@media (min-width: 768px) {
+  .progress-bar-wrapper {
+    gap: 12px; /* Comfortable gap for desktop */
+  }
+
+  .progress-bar-wrapper .chart-progress-bar {
+    margin-top: 24px;
+  }
+
+  .drill-down-back-button {
+    height: 58px;
+    margin-top: 24px;
+    padding: 10px 12px;
+    font-size: 15px;
+    border-radius: 16px;
+    width: 140px; /* Match chart-hours-section width */
+  }
+
+  .drill-down-back-button .back-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Large desktop screens - keep same width as 768px+ since chart-hours-section stays 140px */
+@media (min-width: 1024px) {
+  .drill-down-back-button {
+    width: 140px; /* Match chart-hours-section width (stays 140px on desktop) */
+  }
+}
+
 .chart-tooltip {
   position: absolute;
   background: linear-gradient(135deg,
