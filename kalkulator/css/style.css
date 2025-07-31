@@ -7693,7 +7693,6 @@ input[type="file"].form-control:focus {
 .drill-down-back-button {
   display: flex;
   align-items: center;
-  gap: 8px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
@@ -7710,7 +7709,7 @@ input[type="file"].form-control:focus {
   flex-shrink: 0;
   margin-top: 20px;
   width: 130px; /* Match default chart-hours-section width */
-  justify-content: center;
+  position: relative;
 }
 
 .drill-down-back-button:hover {
@@ -7729,10 +7728,20 @@ input[type="file"].form-control:focus {
   width: 16px;
   height: 16px;
   color: var(--primary);
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .drill-down-back-button span {
   color: var(--text-secondary);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
 }
 
 /* Responsive adjustments for back button and wrapper - match chart-hours-section widths exactly */
@@ -7759,6 +7768,7 @@ input[type="file"].form-control:focus {
   .drill-down-back-button .back-icon {
     width: 10px;
     height: 10px;
+    left: 6px; /* Adjust for smaller padding */
   }
 }
 
@@ -7784,6 +7794,7 @@ input[type="file"].form-control:focus {
   .drill-down-back-button .back-icon {
     width: 12px;
     height: 12px;
+    left: 6px; /* Adjust for smaller padding */
   }
 }
 
@@ -7805,6 +7816,7 @@ input[type="file"].form-control:focus {
   .drill-down-back-button .back-icon {
     width: 14px;
     height: 14px;
+    left: 8px; /* Adjust for padding */
   }
 }
 
@@ -7842,6 +7854,7 @@ input[type="file"].form-control:focus {
   .drill-down-back-button .back-icon {
     width: 10px;
     height: 10px;
+    left: 6px; /* Adjust for smaller padding */
   }
 }
 
@@ -7867,6 +7880,7 @@ input[type="file"].form-control:focus {
   .drill-down-back-button .back-icon {
     width: 18px;
     height: 18px;
+    left: 12px; /* Match default padding */
   }
 }
 
