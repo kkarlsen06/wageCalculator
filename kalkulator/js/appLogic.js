@@ -3300,9 +3300,12 @@ export const app = {
         // Get max hours for scaling
         const maxHours = Math.max(...daysWithShifts.map(day => dailyData[day]?.hours || 0), 1);
 
-        // Get current date for highlighting
+        // Get current date for highlighting and calculate the actual dates for this week
         const today = new Date();
         const isCurrentMonth = this.currentMonth === (today.getMonth() + 1) && this.currentYear === today.getFullYear();
+
+        // Get the date range for the selected week to properly calculate day dates
+        const { startDate, endDate } = this.getWeekDateRange(this.selectedWeek, this.currentYear);
 
         // Day abbreviations (Sunday to Saturday)
         const dayAbbreviations = ['S', 'M', 'T', 'O', 'T', 'F', 'L'];
@@ -3342,11 +3345,21 @@ export const app = {
                 bar.classList.add('adjacent-month');
             }
 
-            // Check if this day is today for highlighting
-            const isToday = isCurrentMonth &&
-                           dayData.date.getDate() === today.getDate() &&
-                           dayData.date.getMonth() === today.getMonth() &&
-                           dayData.date.getFullYear() === today.getFullYear();
+            // Calculate the actual date for this day of the week within the selected week
+            // startDate is Monday (day 1), so we need to adjust for different days of the week
+            const actualDateForThisDay = new Date(startDate);
+            if (dayOfWeek === 0) {
+                // Sunday - add 6 days to Monday to get Sunday
+                actualDateForThisDay.setDate(startDate.getDate() + 6);
+            } else {
+                // Monday (1) to Saturday (6) - add (dayOfWeek - 1) days to Monday
+                actualDateForThisDay.setDate(startDate.getDate() + (dayOfWeek - 1));
+            }
+
+            // Check if this day is today for highlighting using the calculated date
+            const isToday = actualDateForThisDay.getDate() === today.getDate() &&
+                           actualDateForThisDay.getMonth() === today.getMonth() &&
+                           actualDateForThisDay.getFullYear() === today.getFullYear();
 
             if (isToday) {
                 bar.classList.add('current-week'); // Reuse current-week class for current day
@@ -3591,7 +3604,12 @@ export const app = {
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                         </div>
-                        <span class="week-separator-total">${this.formatCurrency(weeklyTotal)}</span>
+                        <div class="week-separator-right">
+                            <svg class="week-separator-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                            <span class="week-separator-total">${this.formatCurrency(weeklyTotal)}</span>
+                        </div>
                     </div>
                     <div class="week-separator-line"></div>
                 </div>
@@ -3604,9 +3622,16 @@ export const app = {
                 const weekday = this.WEEKDAYS[shift.date.getDay()];
                 const typeClass = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
                 const seriesBadge = shift.seriesId ? '<span class="series-badge">Serie</span>' : '';
-                
+
+                // Check if this shift is on the current date
+                const today = new Date();
+                const isCurrentDate = shift.date.getDate() === today.getDate() &&
+                                    shift.date.getMonth() === today.getMonth() &&
+                                    shift.date.getFullYear() === today.getFullYear();
+                const currentDateClass = isCurrentDate ? ' current-date' : '';
+
                 shiftsHtml.push(`
-                    <div class="shift-item ${typeClass}" data-shift-id="${shift.id}" style="cursor: pointer;">
+                    <div class="shift-item ${typeClass}${currentDateClass}" data-shift-id="${shift.id}" style="cursor: pointer;">
                         <div class="shift-info">
                             <div class="shift-date">
                                 <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
@@ -3967,23 +3992,37 @@ export const app = {
         const day = shiftDate.getDate();
         const month = this.MONTHS[shiftDate.getMonth()];
         
-        // Calculate time worked so far
+        // Calculate time remaining until shift ends
         const [startHour, startMinute] = currentShift.startTime.split(':').map(Number);
+        const [endHour, endMinute] = currentShift.endTime.split(':').map(Number);
+
         const shiftStartTime = new Date(shiftDate);
         shiftStartTime.setHours(startHour, startMinute, 0, 0);
-        
-        const timeWorked = now - shiftStartTime;
-        const hoursWorked = Math.floor(timeWorked / (1000 * 60 * 60));
-        const minutesWorked = Math.floor((timeWorked % (1000 * 60 * 60)) / (1000 * 60));
-        const secondsWorked = Math.floor((timeWorked % (1000 * 60)) / 1000);
-        
-        let timeWorkedText = '';
-        if (hoursWorked > 0) {
-            timeWorkedText = `<span class="countdown-wrapper">(<span class="countdown-hours">${hoursWorked}t</span> <span class="countdown-minutes">${minutesWorked}m</span> <span class="countdown-seconds">${secondsWorked}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-hours">${hoursWorked}t</span> <span class="countdown-minutes">${minutesWorked}m</span> <span class="countdown-seconds">${secondsWorked}s</span></span>`;
-        } else if (minutesWorked > 0) {
-            timeWorkedText = `<span class="countdown-wrapper">(<span class="countdown-minutes">${minutesWorked}m</span> <span class="countdown-seconds">${secondsWorked}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-minutes">${minutesWorked}m</span> <span class="countdown-seconds">${secondsWorked}s</span></span>`;
+
+        const shiftEndTime = new Date(shiftDate);
+        shiftEndTime.setHours(endHour, endMinute, 0, 0);
+
+        // Handle shifts that cross midnight
+        if (shiftEndTime < shiftStartTime) {
+            shiftEndTime.setDate(shiftEndTime.getDate() + 1);
+        }
+
+        const timeRemaining = shiftEndTime - now;
+        const hoursRemaining = Math.floor(timeRemaining / (1000 * 60 * 60));
+        const minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+        const secondsRemaining = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+        let timeRemainingText = '';
+        if (hoursRemaining > 0) {
+            // Create compact version without spaces for mobile
+            timeRemainingText = `<span class="countdown-wrapper">(<span class="countdown-hours">${hoursRemaining}t</span> <span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-hours">${hoursRemaining}t</span><span class="countdown-minutes">${minutesRemaining}m</span><span class="countdown-seconds">${secondsRemaining}s</span></span>`;
+        } else if (minutesRemaining > 0) {
+            timeRemainingText = `<span class="countdown-wrapper">(<span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-minutes">${minutesRemaining}m</span><span class="countdown-seconds">${secondsRemaining}s</span></span>`;
+        } else if (secondsRemaining > 0) {
+            timeRemainingText = `<span class="countdown-wrapper">(<span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-seconds">${secondsRemaining}s</span></span>`;
         } else {
-            timeWorkedText = `<span class="countdown-wrapper">(<span class="countdown-seconds">${secondsWorked}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-seconds">${secondsWorked}s</span></span>`;
+            // Shift has ended
+            timeRemainingText = `<span class="countdown-wrapper">(Ferdig)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens">Ferdig</span>`;
         }
         
         const typeClass = currentShift.type === 0 ? 'weekday' : (currentShift.type === 1 ? 'saturday' : 'sunday');
@@ -3997,7 +4036,7 @@ export const app = {
                         <span class="shift-date-number">${day}. ${month}</span>
                         <span class="shift-date-separator"></span>
                         <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
-                        <span class="shift-countdown-timer"> ${timeWorkedText}</span>
+                        <span class="shift-countdown-timer"> ${timeRemainingText}</span>
                     </div>
                     <div class="shift-details">
                         <div class="shift-time-with-hours">

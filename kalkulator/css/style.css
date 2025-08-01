@@ -733,10 +733,10 @@ button {
 }
 
 body {
-  /* Simple top-to-bottom gradient: black at top, gray at bottom */
+  /* Simple top-to-bottom gradient: very dark at top, almost as dark at bottom */
   background: linear-gradient(to bottom,
-    #0a0a0a 0%,     /* Black at top */
-    #1a1a1a 100%    /* Gray at bottom */
+    #0a0a0a 0%,     /* Very dark at top */
+    #0c0c0c 100%    /* Almost as dark at bottom */
   );
   background-attachment: fixed;
   color: var(--text-primary);
@@ -2963,6 +2963,12 @@ input:checked + .slider:before {
   gap: 8px;
 }
 
+.week-separator-content .week-separator-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .week-separator-arrow {
   width: 16px;
   height: 16px;
@@ -3009,10 +3015,11 @@ input:checked + .slider:before {
 }
 
 .shift-item {
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
+  /* iOS-style translucent background matching header, total card, and chart card */
+  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border matching header */
   border-radius: 24px;
   padding: 18px;
   display: flex;
@@ -3020,38 +3027,35 @@ input:checked + .slider:before {
   align-items: center;
   transition: all var(--speed-normal) var(--ease-default);
   min-height: 80px;
-  border-left: 4px solid var(--border);
-  box-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   opacity: 0.9;
 }
 
 .shift-item.weekday {
-  border-left: 4px solid var(--text-secondary);
+  /* Left border indicator removed */
 }
 
 .shift-item.saturday {
-  border-left: 4px solid var(--accent3);
+  /* Left border indicator removed */
 }
 
 .shift-item.sunday {
-  border-left: 4px solid var(--accent2);
+  /* Left border indicator removed */
 }
 
 .shift-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 8px; /* Restore original gap */
 }
 
 .shift-date {
   font-weight: var(--font-weight-semibold); /* 600 - Same as stat-value for consistency */
-  margin-bottom: 2px;
+  margin-bottom: 0; /* Remove margin to rely on gap for spacing */
   font-size: var(--text-lg); /* 18px - Same size as stat-value */
   color: var(--text-primary);
-  line-height: 1.2;
+  line-height: 1.2; /* Match line-height with shift-total */
   letter-spacing: -0.005em; /* Subtle negative tracking */
   display: flex;
   align-items: center;
@@ -3083,6 +3087,12 @@ input:checked + .slider:before {
   font-weight: 600;
 }
 
+/* Current date styling for shift items - matches calendar current date styling */
+.shift-item.current-date {
+  background: rgba(14, 165, 233, 0.06) !important;
+  border: 2px solid rgba(14, 165, 233, 0.15) !important;
+}
+
 .shift-details {
   display: flex;
   align-items: center;
@@ -3090,6 +3100,7 @@ input:checked + .slider:before {
   font-weight: var(--font-weight-normal); /* 400 - General text weight */
   color: var(--text-secondary);
   letter-spacing: -0.005em; /* Subtle negative tracking for better readability */
+  line-height: 1.3; /* Consistent line-height for alignment with shift-breakdown */
 }
 
 .shift-time-with-hours {
@@ -3145,7 +3156,7 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 8px; /* Increase gap to match shift-info for alignment */
   margin-left: 16px;
   flex-shrink: 0;
 }
@@ -3164,6 +3175,7 @@ input:checked + .slider:before {
   font-weight: 400;
   color: var(--text-tertiary);
   white-space: nowrap;
+  line-height: 1.3; /* Match line-height with shift-details for alignment */
 }
 
 .shift-actions {
@@ -3340,18 +3352,17 @@ input:checked + .slider:before {
 
 /* Overview Section Adjustments */
 .total-card {
-  background: var(--gradient-secondary);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  /* iOS-style translucent background matching header */
+  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 24px;
   padding: 30px;
   text-align: center;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  border: 1px solid var(--border);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border matching header */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -6513,6 +6524,157 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 .next-shift-card .shift-countdown-timer {
   white-space: nowrap; /* Prevent line breaks */
   display: inline-block; /* Keep it inline but prevent wrapping */
+  flex-shrink: 1; /* Allow countdown to shrink if needed */
+  min-width: 0; /* Allow shrinking below content size */
+}
+
+/* Mobile responsive layout fixes for shift cards */
+@media (max-width: 480px) {
+  /* Reduce overall card padding to give more space */
+  .next-shift-card .shift-item {
+    padding: 14px 16px; /* Keep reasonable padding */
+  }
+
+  /* Constrain shift-info to prevent overflow */
+  .next-shift-card .shift-info {
+    min-width: 0; /* Allow shrinking */
+    overflow: hidden; /* Prevent overflow */
+  }
+
+  /* Reduce space between shift-info and amount wrapper */
+  .next-shift-card .shift-amount-wrapper {
+    margin-left: 10px; /* Slightly reduced from 16px */
+    flex-shrink: 0; /* Keep amount section fixed */
+  }
+
+  /* Ensure shift date elements stay on one line - KEEP ORIGINAL FONT SIZE */
+  .next-shift-card .shift-date {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .next-shift-card .shift-date-number {
+    flex-shrink: 0; /* Keep date number fixed */
+  }
+
+  .next-shift-card .shift-date-weekday {
+    margin-right: 3px;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .next-shift-card .shift-date-separator {
+    margin: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .next-shift-card .shift-countdown-timer {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Ensure time range stays on one line - KEEP ORIGINAL FONT SIZE */
+  .next-shift-card .shift-time-with-hours {
+    flex-wrap: nowrap;
+    gap: 3px; /* Slightly reduced gap */
+    white-space: nowrap;
+  }
+
+  .next-shift-card .shift-time-arrow {
+    margin: 0 4px; /* Slightly reduced margins */
+    flex-shrink: 0;
+  }
+}
+
+/* Extra small mobile devices - only reduce font sizes here */
+@media (max-width: 360px) {
+  /* More aggressive space optimization */
+  .next-shift-card .shift-item {
+    padding: 12px 14px;
+  }
+
+  .next-shift-card .shift-amount-wrapper {
+    margin-left: 8px;
+  }
+
+  /* NOW we start reducing font sizes for small screens */
+  .next-shift-card .shift-date {
+    font-size: 13px; /* Slightly smaller */
+  }
+
+  .next-shift-card .shift-date-weekday {
+    margin-right: 2px;
+  }
+
+  .next-shift-card .shift-date-separator {
+    margin: 0 3px;
+  }
+
+  .next-shift-card .shift-countdown-timer {
+    font-size: 0.9em;
+  }
+
+  /* Slightly smaller time display */
+  .next-shift-card .shift-time-with-hours {
+    gap: 2px;
+    font-size: 13px; /* Slightly smaller */
+  }
+
+  .next-shift-card .shift-time-arrow {
+    margin: 0 3px;
+  }
+}
+
+/* Ultra small screens - only for very old/small phones */
+@media (max-width: 320px) {
+  /* Compact space optimization */
+  .next-shift-card .shift-item {
+    padding: 10px 12px;
+    min-height: 65px;
+  }
+
+  .next-shift-card .shift-amount-wrapper {
+    margin-left: 6px;
+  }
+
+  /* More significant font reduction only for very small screens */
+  .next-shift-card .shift-date {
+    font-size: 12px;
+  }
+
+  .next-shift-card .shift-date-weekday {
+    margin-right: 1px;
+  }
+
+  .next-shift-card .shift-date-separator {
+    margin: 0 2px;
+  }
+
+  .next-shift-card .shift-countdown-timer {
+    font-size: 0.85em;
+  }
+
+  /* Compact time display */
+  .next-shift-card .shift-time-with-hours {
+    gap: 1px;
+    font-size: 12px;
+  }
+
+  .next-shift-card .shift-time-arrow {
+    margin: 0 2px;
+  }
+
+  /* Keep amount section readable */
+  .next-shift-card .shift-total {
+    font-size: 15px;
+  }
+
+  .next-shift-card .shift-breakdown {
+    font-size: 10px;
+  }
 }
 
 
@@ -7308,16 +7470,14 @@ input[type="file"].form-control:focus {
 
 /* Weekly Hours Chart Card Styling */
 .weekly-hours-chart-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  /* iOS-style translucent background matching header and total card */
+  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 24px;
   padding: 16px;
-  border: 1px solid var(--border);
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    inset 0 2px 4px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border matching header */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   /* spacing now handled by parent gap */
   margin-top: 0;
   flex: 1;
