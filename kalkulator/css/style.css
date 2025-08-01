@@ -7508,7 +7508,7 @@ input[type="file"].form-control:focus {
   flex: 1;
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: center;
   padding: 16px 8px 8px 8px;
   height: 160px; /* Fixed height for percentage calculations */
   gap: 4px;
@@ -7521,6 +7521,7 @@ input[type="file"].form-control:focus {
   border-radius: 8px 8px 0 0;
   min-width: 28px;
   width: calc((100% - 32px) / var(--total-weeks, 4)); /* Dynamic width based on week count */
+  max-width: 120px; /* Prevent bars from becoming too wide when few bars are present */
   position: relative;
   cursor: pointer;
   transition: all 0.25s ease-out;
@@ -7630,6 +7631,156 @@ input[type="file"].form-control:focus {
     inset -1px 0 1px rgba(0, 0, 0, 0.15);
 }
 
+/* Styling for chart bars representing days with shifts from adjacent months */
+.chart-bar.adjacent-month {
+  background: linear-gradient(135deg, #2A2A2A 0%, #1A1A1A 100%);
+  opacity: 0.6;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    inset 1px 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2),
+    inset -1px 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.chart-bar.adjacent-month:hover {
+  background: linear-gradient(135deg, #3A3A3A 0%, #2A2A2A 100%);
+  opacity: 0.8;
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.chart-bar.adjacent-month .chart-bar-value {
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+/* Styling for wage cards with tooltips indicating excluded shifts */
+.chart-shifts-count-card.has-tooltip,
+.chart-hours-value-card.has-tooltip {
+  position: relative;
+  border-color: rgba(255, 193, 7, 0.3);
+  background: linear-gradient(135deg,
+    var(--bg-card) 0%,
+    rgba(255, 193, 7, 0.02) 100%);
+  cursor: pointer;
+}
+
+.chart-shifts-count-card.has-tooltip:hover,
+.chart-hours-value-card.has-tooltip:hover {
+  border-color: rgba(255, 193, 7, 0.5);
+  background: linear-gradient(135deg,
+    var(--bg-card) 0%,
+    rgba(255, 193, 7, 0.04) 100%);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(255, 193, 7, 0.1),
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+/* Add a larger, more prominent indicator icon for cards with tooltips */
+.chart-shifts-count-card.has-tooltip::after,
+.chart-hours-value-card.has-tooltip::after {
+  content: 'i';
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  font-size: 11px;
+  color: rgba(255, 193, 7, 0.9);
+  font-weight: bold;
+  font-style: italic;
+  font-family: 'Times New Roman', serif;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 193, 7, 0.15);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  line-height: 1;
+  text-align: center;
+}
+
+/* Custom tooltip for wage cards */
+.wage-card-tooltip {
+  position: absolute;
+  background: linear-gradient(135deg,
+    rgba(10, 42, 58, 0.95) 0%,
+    rgba(2, 48, 71, 0.95) 50%,
+    rgba(26, 26, 29, 0.95) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  pointer-events: none;
+  z-index: 1002; /* Higher than chart tooltip */
+  white-space: normal;
+  max-width: min(280px, calc(100vw - 32px));
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.25),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(255, 193, 7, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transform: translateY(-8px) scale(0.95);
+  opacity: 0;
+  transition: all 0.25s ease-out;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.wage-card-tooltip.show {
+  opacity: 1;
+  transform: translateY(-12px) scale(1);
+}
+
+/* Responsive adjustments for tooltip indicators */
+@media (max-width: 480px) {
+  .chart-shifts-count-card.has-tooltip::after,
+  .chart-hours-value-card.has-tooltip::after {
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+    top: 4px;
+    right: 6px;
+  }
+
+  .wage-card-tooltip {
+    font-size: 11px;
+    padding: 10px 12px;
+    max-width: calc(100vw - 32px);
+    white-space: normal;
+  }
+}
+
+@media (max-width: 360px) {
+  .chart-shifts-count-card.has-tooltip::after,
+  .chart-hours-value-card.has-tooltip::after {
+    width: 12px;
+    height: 12px;
+    font-size: 8px;
+    top: 3px;
+    right: 5px;
+  }
+
+  .wage-card-tooltip {
+    font-size: 10px;
+    padding: 8px 10px;
+    max-width: calc(100vw - 24px);
+    white-space: normal;
+  }
+}
+
 .chart-bar-value {
   position: absolute;
   bottom: 12px;
@@ -7648,8 +7799,9 @@ input[type="file"].form-control:focus {
 .chart-labels {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 6px 8px 0 8px;
+  gap: 4px;
 }
 
 .chart-label {
@@ -7661,6 +7813,7 @@ input[type="file"].form-control:focus {
   min-width: 28px;
   /* Match the exact width calculation used by chart bars */
   width: calc((100% - 32px) / var(--total-weeks, 4));
+  max-width: 120px; /* Match chart-bar max-width for perfect alignment */
   transform: none;
   transform-origin: center;
   /* Ensure perfect alignment with bars */
@@ -8023,6 +8176,7 @@ input[type="file"].form-control:focus {
 
   .chart-bar {
     min-width: 24px;
+    max-width: 80px; /* Smaller max-width for mobile */
     border-radius: 6px 6px 0 0;
   }
 
@@ -8037,12 +8191,14 @@ input[type="file"].form-control:focus {
 
   .chart-labels {
     padding: 4px 6px 0 6px;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 3px;
   }
 
   .chart-label {
     font-size: 12px;
     min-width: 24px;
+    max-width: 80px; /* Match chart-bar max-width for mobile */
     font-weight: 700;
     transform: none;
   }
@@ -8133,6 +8289,7 @@ input[type="file"].form-control:focus {
 
   .chart-bar {
     min-width: 20px;
+    max-width: 60px; /* Even smaller max-width for very small screens */
     border-radius: 4px 4px 0 0;
   }
 
@@ -8147,12 +8304,14 @@ input[type="file"].form-control:focus {
 
   .chart-labels {
     padding: 3px 4px 0 4px;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 2px;
   }
 
   .chart-label {
     font-size: 10px;
     min-width: 20px;
+    max-width: 60px; /* Match chart-bar max-width for very small screens */
     font-weight: 700;
     transform: none;
   }
@@ -8236,7 +8395,8 @@ input[type="file"].form-control:focus {
   }
 
   .chart-labels {
-    justify-content: space-between;
+    justify-content: center;
+    gap: 6px;
   }
 
   .chart-progress-bar {
@@ -8312,6 +8472,7 @@ input[type="file"].form-control:focus {
 
   .chart-bar {
     min-width: 36px;
+    max-width: 140px; /* Larger max-width for desktop */
     border-radius: 10px 10px 0 0;
   }
 
@@ -8326,12 +8487,14 @@ input[type="file"].form-control:focus {
 
   .chart-labels {
     padding: 8px 12px 0 12px;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 8px;
   }
 
   .chart-label {
     font-size: 16px;
     min-width: 36px;
+    max-width: 140px; /* Match chart-bar max-width for desktop */
     font-weight: 700;
     transform: none;
   }
@@ -8394,7 +8557,8 @@ input[type="file"].form-control:focus {
   }
 
   .chart-labels {
-    justify-content: space-between;
+    justify-content: center;
+    gap: 4px;
   }
 
   .chart-bar.has-data {
@@ -8475,7 +8639,8 @@ input[type="file"].form-control:focus {
   }
 
   .chart-labels {
-    justify-content: space-between;
+    justify-content: center;
+    gap: 4px;
   }
 
 

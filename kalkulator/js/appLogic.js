@@ -588,7 +588,7 @@ export const app = {
     openAddShiftModal(targetMonth = null, targetYear = null) {
         // Close any existing expanded views, dropdowns, and modals first
         this.closeShiftDetails();
-        this.closeSettings();
+        this.closeSettings(false); // Don't save settings when closing as cleanup
         this.closeProfile();
         this.closeProfileDropdown();
         
@@ -926,6 +926,31 @@ export const app = {
         return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     },
 
+    // Helper function to get the start and end dates for a specific ISO week
+    getWeekDateRange(weekNumber, year) {
+        // Create a date for January 4th of the given year (always in week 1)
+        const jan4 = new Date(Date.UTC(year, 0, 4));
+
+        // Find the Monday of week 1
+        const dayOfWeek = jan4.getUTCDay() || 7; // Convert Sunday (0) to 7
+        const mondayOfWeek1 = new Date(jan4);
+        mondayOfWeek1.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1);
+
+        // Calculate the Monday of the target week
+        const mondayOfTargetWeek = new Date(mondayOfWeek1);
+        mondayOfTargetWeek.setUTCDate(mondayOfWeek1.getUTCDate() + (weekNumber - 1) * 7);
+
+        // Calculate the Sunday of the target week
+        const sundayOfTargetWeek = new Date(mondayOfTargetWeek);
+        sundayOfTargetWeek.setUTCDate(mondayOfTargetWeek.getUTCDate() + 6);
+
+        // Convert to local dates for consistency with the rest of the app
+        const startDate = new Date(mondayOfTargetWeek.getUTCFullYear(), mondayOfTargetWeek.getUTCMonth(), mondayOfTargetWeek.getUTCDate());
+        const endDate = new Date(sundayOfTargetWeek.getUTCFullYear(), sundayOfTargetWeek.getUTCMonth(), sundayOfTargetWeek.getUTCDate());
+
+        return { startDate, endDate };
+    },
+
     // Drill-down state management functions
     enterDrillDownMode(weekNumber) {
         console.log('Entering drill-down mode for week:', weekNumber);
@@ -944,6 +969,28 @@ export const app = {
 
         // Comprehensive tooltip cleanup before exiting drill-down mode
         this.clearAllTooltips();
+
+        // Clean up wage card tooltips
+        const hoursCard = document.querySelector('.chart-hours-value-card');
+        const shiftCountCard = document.querySelector('.chart-shifts-count-card');
+
+        if (hoursCard) {
+            hoursCard.classList.remove('has-tooltip', 'tooltip-active');
+            hoursCard.removeAttribute('data-tooltip');
+            this.removeWageCardTooltip(hoursCard);
+        }
+
+        if (shiftCountCard) {
+            shiftCountCard.classList.remove('has-tooltip', 'tooltip-active');
+            shiftCountCard.removeAttribute('data-tooltip');
+            this.removeWageCardTooltip(shiftCountCard);
+        }
+
+        // Hide wage card tooltip
+        const wageTooltip = document.getElementById('wageCardTooltip');
+        if (wageTooltip) {
+            wageTooltip.classList.remove('show');
+        }
 
         this.drillDownMode = false;
         this.selectedWeek = null;
@@ -1037,15 +1084,25 @@ export const app = {
         }
     },
 
-    // Get all shifts for a specific week
+    // Get all shifts for a specific week (including shifts from adjacent months)
     getShiftsForWeek(weekNumber) {
-        const monthShifts = this.shifts.filter(shift =>
-            shift.date.getMonth() === this.currentMonth - 1 &&
-            shift.date.getFullYear() === this.currentYear
-        );
+        // Get the date range for this week
+        const { startDate, endDate } = this.getWeekDateRange(weekNumber, this.currentYear);
 
-        return monthShifts.filter(shift => {
-            return this.getISOWeekNumber(shift.date) === weekNumber;
+        // Get all shifts that fall within this week's date range
+        const weekShifts = this.shifts.filter(shift => {
+            const shiftDate = new Date(shift.date);
+            return shiftDate >= startDate && shiftDate <= endDate;
+        });
+
+        // Add metadata to distinguish current month vs adjacent month shifts
+        return weekShifts.map(shift => {
+            const isCurrentMonth = shift.date.getMonth() === this.currentMonth - 1 &&
+                                   shift.date.getFullYear() === this.currentYear;
+            return {
+                ...shift,
+                isCurrentMonth
+            };
         });
     },
 
@@ -1055,6 +1112,8 @@ export const app = {
         const dailyData = {};
         let totalWeekHours = 0;
         let totalWeekEarnings = 0;
+        let totalCurrentMonthHours = 0;
+        let totalCurrentMonthEarnings = 0;
 
         // Group shifts by day of week (0 = Sunday, 1 = Monday, etc.)
         weekShifts.forEach(shift => {
@@ -1064,13 +1123,26 @@ export const app = {
                     hours: 0,
                     earnings: 0,
                     shifts: [],
-                    date: new Date(shift.date) // Store the actual date for this day
+                    date: new Date(shift.date), // Store the actual date for this day
+                    hasCurrentMonthShifts: false,
+                    hasAdjacentMonthShifts: false
                 };
             }
+
             const calc = this.calculateShift(shift);
             dailyData[dayOfWeek].hours += calc.hours;
             dailyData[dayOfWeek].earnings += calc.total;
             dailyData[dayOfWeek].shifts.push(shift);
+
+            // Track which types of shifts this day has
+            if (shift.isCurrentMonth) {
+                dailyData[dayOfWeek].hasCurrentMonthShifts = true;
+                totalCurrentMonthHours += calc.hours;
+                totalCurrentMonthEarnings += calc.total;
+            } else {
+                dailyData[dayOfWeek].hasAdjacentMonthShifts = true;
+            }
+
             totalWeekHours += calc.hours;
             totalWeekEarnings += calc.total;
         });
@@ -1079,6 +1151,8 @@ export const app = {
             dailyData,
             totalWeekHours,
             totalWeekEarnings,
+            totalCurrentMonthHours,
+            totalCurrentMonthEarnings,
             weekNumber
         };
     },
@@ -2112,22 +2186,27 @@ export const app = {
 
         }
     },
-    async closeSettings() {
-        // If in custom mode, automatically save custom bonuses before closing
-        if (!this.usePreset) {
-            await this.saveCustomBonusesSilent();
+    async closeSettings(shouldSave = true) {
+        const modal = document.getElementById('settingsModal');
+        const wasModalOpen = modal && modal.style.display !== 'none';
+
+        // Only perform save operations if the modal was actually open and we should save
+        if (wasModalOpen && shouldSave) {
+            // If in custom mode, automatically save custom bonuses before closing
+            if (!this.usePreset) {
+                await this.saveCustomBonusesSilent();
+            }
+
+            // Save settings when closing modal
+            this.saveSettingsToSupabase();
         }
 
-        const modal = document.getElementById('settingsModal');
         if (modal) {
             modal.style.display = 'none';
         }
 
         // Close profile dropdown if open
         this.closeProfileDropdown();
-
-        // Save settings when closing modal
-        this.saveSettingsToSupabase();
     },
 
     // Profile dropdown functionality
@@ -2212,7 +2291,7 @@ export const app = {
         this.closeProfileDropdown();
 
         // Close any other open modals
-        this.closeSettings();
+        this.closeSettings(false); // Don't save settings when closing as cleanup
         this.closeShiftDetails();
 
         const modal = document.getElementById('profileModal');
@@ -2459,6 +2538,12 @@ export const app = {
         document.getElementById('totalHours').textContent = totalHours.toFixed(1);
         document.getElementById('shiftCount').textContent = monthShifts.length;
 
+        // Ensure shifts card label is reset to "vakter" when not in drill-down mode
+        const shiftCountLabel = document.querySelector('.shifts-count-label');
+        if (shiftCountLabel) {
+            shiftCountLabel.textContent = 'vakter';
+        }
+
         // Update total card secondary info based on tax deduction setting
         const totalSecondaryInfoEl = document.getElementById('totalSecondaryInfo');
         if (totalSecondaryInfoEl) {
@@ -2531,7 +2616,10 @@ export const app = {
 
     // Update stats for drill-down view
     updateDrillDownStats(shouldAnimate = false) {
-        const { totalWeekHours, totalWeekEarnings } = this.getDailyDataForWeek(this.selectedWeek);
+        const { totalCurrentMonthHours, totalCurrentMonthEarnings, totalWeekHours, totalWeekEarnings } = this.getDailyDataForWeek(this.selectedWeek);
+
+        // Check if this week has shifts from adjacent months
+        const hasAdjacentMonthShifts = totalWeekHours > totalCurrentMonthHours || totalWeekEarnings > totalCurrentMonthEarnings;
 
         // Get total monthly hours for progress bar calculation
         const monthShifts = this.shifts.filter(shift =>
@@ -2544,19 +2632,63 @@ export const app = {
             totalMonthlyHours += calc.hours;
         });
 
-        // Update hours card to show week total with two decimal places
-        document.getElementById('totalHours').textContent = totalWeekHours.toFixed(2);
+        // Update hours card to show current month hours for the week (excluding adjacent month shifts)
+        document.getElementById('totalHours').textContent = totalCurrentMonthHours.toFixed(2);
 
-        // Transform shifts card to show total wage for the week
-        const shiftCountElement = document.getElementById('shiftCount');
-        const shiftCountLabel = document.querySelector('.shifts-count-label');
-        if (shiftCountElement && shiftCountLabel) {
-            shiftCountElement.textContent = this.formatCurrency(totalWeekEarnings).replace(' kr', '');
-            shiftCountLabel.textContent = 'kroner';
+        // Add tooltip to hours card if there are adjacent month shifts
+        const hoursCard = document.querySelector('.chart-hours-value-card');
+        if (hoursCard) {
+            if (hasAdjacentMonthShifts) {
+                const excludedHours = totalWeekHours - totalCurrentMonthHours;
+                const tooltipText = `Kun timer for ${this.MONTHS[this.currentMonth - 1]} er med i utregningen. ` +
+                    `Ekskludert: ${excludedHours.toFixed(1)} timer fra andre måneder.`;
+
+                hoursCard.classList.add('has-tooltip');
+                hoursCard.setAttribute('data-tooltip', tooltipText);
+                this.setupWageCardTooltip(hoursCard);
+            } else {
+                hoursCard.classList.remove('has-tooltip');
+                hoursCard.removeAttribute('data-tooltip');
+                this.removeWageCardTooltip(hoursCard);
+            }
         }
 
-        // Update progress bar to show week percentage of monthly hours
-        const weekPercentage = totalMonthlyHours > 0 ? (totalWeekHours / totalMonthlyHours) * 100 : 0;
+        // Transform shifts card to show total wage for current month shifts only
+        const shiftCountElement = document.getElementById('shiftCount');
+        const shiftCountLabel = document.querySelector('.shifts-count-label');
+        const shiftCountCard = document.querySelector('.chart-shifts-count-card');
+
+        if (shiftCountElement && shiftCountLabel && shiftCountCard) {
+            // Apply tax deduction if enabled
+            const displayAmount = this.taxDeductionEnabled ?
+                totalCurrentMonthEarnings * (1 - this.taxPercentage / 100) :
+                totalCurrentMonthEarnings;
+            shiftCountElement.textContent = this.formatCurrency(displayAmount).replace(' kr', '');
+            shiftCountLabel.textContent = 'kroner';
+
+            // Add or remove tooltip based on whether there are adjacent month shifts
+            if (hasAdjacentMonthShifts) {
+                const excludedHours = totalWeekHours - totalCurrentMonthHours;
+                const excludedEarnings = totalWeekEarnings - totalCurrentMonthEarnings;
+                const excludedDisplayAmount = this.taxDeductionEnabled ?
+                    excludedEarnings * (1 - this.taxPercentage / 100) :
+                    excludedEarnings;
+
+                const tooltipText = `Kun vakter for ${this.MONTHS[this.currentMonth - 1]} er med i utregningen. ` +
+                    `Ekskludert: ${excludedHours.toFixed(1)} timer (${this.formatCurrency(excludedDisplayAmount)}) fra andre måneder.`;
+
+                shiftCountCard.classList.add('has-tooltip');
+                shiftCountCard.setAttribute('data-tooltip', tooltipText);
+                this.setupWageCardTooltip(shiftCountCard);
+            } else {
+                shiftCountCard.classList.remove('has-tooltip');
+                shiftCountCard.removeAttribute('data-tooltip');
+                this.removeWageCardTooltip(shiftCountCard);
+            }
+        }
+
+        // Update progress bar to show current month week percentage of monthly hours
+        const weekPercentage = totalMonthlyHours > 0 ? (totalCurrentMonthHours / totalMonthlyHours) * 100 : 0;
         const progressLabel = document.querySelector('.chart-progress-label');
         if (progressLabel) {
             const formattedPercent = weekPercentage < 10 ? weekPercentage.toFixed(1) : Math.round(weekPercentage);
@@ -2593,6 +2725,192 @@ export const app = {
                 progressFill.classList.remove('active');
             }
         }
+    },
+
+    // Wage card tooltip management functions
+    setupWageCardTooltip(card) {
+        if (!card || card.hasTooltipListener) return;
+
+        const tooltip = document.getElementById('wageCardTooltip');
+        if (!tooltip) return;
+
+        const showTooltip = (e) => {
+            const tooltipText = card.getAttribute('data-tooltip');
+            if (!tooltipText) return;
+
+            const tooltipContent = document.getElementById('wageTooltipContent');
+            if (tooltipContent) {
+                tooltipContent.textContent = tooltipText;
+            }
+
+            // Position tooltip relative to the stat cards container
+            const cardRect = card.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Get the stat cards container for proper boundary detection
+            const statsContainer = document.querySelector('.chart-stats-section') ||
+                                 document.querySelector('.chart-hours-section') ||
+                                 card.closest('.weekly-hours-chart-card');
+            const statsRect = statsContainer ? statsContainer.getBoundingClientRect() : cardRect;
+
+            // Use smaller tooltip width on desktop to ensure it fits within stat cards
+            const isDesktop = viewportWidth > 768;
+            const tooltipWidth = isDesktop ?
+                Math.min(240, statsRect.width - 32) : // Desktop: fit within stats container
+                Math.min(280, viewportWidth - 32);    // Mobile: use viewport
+
+            const tooltipHeight = 70; // Slightly increased for text wrapping
+            const padding = 12;
+
+            // Position tooltip in the space between the two cards
+            // Get both card positions for consistent between-cards positioning
+            const hoursCard = document.querySelector('.chart-hours-value-card');
+            const wageCard = document.querySelector('.chart-shifts-count-card');
+
+            let tooltipLeft = cardRect.left + (cardRect.width / 2) - (tooltipWidth / 2);
+            let tooltipTop;
+
+            if (hoursCard && wageCard) {
+                const hoursRect = hoursCard.getBoundingClientRect();
+                const wageRect = wageCard.getBoundingClientRect();
+
+                // Position tooltip in the middle of the space between the two cards
+                const spaceBetweenCards = wageRect.top - hoursRect.bottom;
+                const tooltipVerticalCenter = hoursRect.bottom + (spaceBetweenCards / 2) - (tooltipHeight / 2);
+
+                // Ensure there's enough space between cards for the tooltip
+                if (spaceBetweenCards >= tooltipHeight + (padding * 2)) {
+                    tooltipTop = tooltipVerticalCenter;
+                } else {
+                    // If not enough space between cards, position just below the hours card
+                    tooltipTop = hoursRect.bottom + padding;
+                }
+            } else {
+                // Fallback: position above the clicked card if we can't find both cards
+                tooltipTop = cardRect.top - tooltipHeight - padding;
+            }
+
+            // Ensure tooltip stays within stats container bounds horizontally
+            const containerLeft = statsRect.left + padding;
+            const containerRight = statsRect.right - padding;
+
+            // Keep tooltip within the stats container boundaries horizontally
+            if (tooltipLeft < containerLeft) {
+                tooltipLeft = containerLeft;
+            } else if (tooltipLeft + tooltipWidth > containerRight) {
+                tooltipLeft = containerRight - tooltipWidth;
+            }
+
+            // Ensure tooltip stays within viewport bounds
+            if (tooltipTop < padding) {
+                tooltipTop = padding;
+            }
+            if (tooltipTop + tooltipHeight > viewportHeight - padding) {
+                tooltipTop = viewportHeight - tooltipHeight - padding;
+            }
+
+            // Check for back button collision and adjust position
+            const backButton = document.querySelector('.back-button');
+            if (backButton) {
+                const backButtonRect = backButton.getBoundingClientRect();
+                const tooltipBottom = tooltipTop + tooltipHeight;
+
+                // If tooltip would overlap with back button, position it above the back button
+                if (tooltipBottom > backButtonRect.top - padding) {
+                    tooltipTop = backButtonRect.top - tooltipHeight - padding;
+
+                    // If this pushes tooltip too high, try positioning it above the cards instead
+                    if (tooltipTop < padding) {
+                        if (hoursCard) {
+                            const hoursRect = hoursCard.getBoundingClientRect();
+                            tooltipTop = hoursRect.top - tooltipHeight - padding;
+
+                            // Final fallback: position at top of viewport
+                            if (tooltipTop < padding) {
+                                tooltipTop = padding;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Convert to relative positioning within the tooltip parent
+            const tooltipParent = tooltip.parentElement;
+            const containerRect = tooltipParent.getBoundingClientRect();
+
+            const relativeLeft = tooltipLeft - containerRect.left;
+            const relativeTop = tooltipTop - containerRect.top;
+
+            tooltip.style.left = `${relativeLeft}px`;
+            tooltip.style.top = `${relativeTop}px`;
+            tooltip.classList.add('show');
+
+            card.classList.add('tooltip-active');
+        };
+
+        const hideTooltip = () => {
+            tooltip.classList.remove('show');
+            card.classList.remove('tooltip-active');
+        };
+
+        // Add click event listener
+        card.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            if (card.classList.contains('tooltip-active')) {
+                hideTooltip();
+            } else {
+                // Hide any other active wage card tooltips
+                document.querySelectorAll('.chart-hours-value-card.tooltip-active, .chart-shifts-count-card.tooltip-active')
+                    .forEach(activeCard => {
+                        if (activeCard !== card) {
+                            activeCard.classList.remove('tooltip-active');
+                        }
+                    });
+                showTooltip(e);
+            }
+        });
+
+        // Store reference to prevent duplicate listeners
+        card.hasTooltipListener = true;
+        card.wageTooltipHideFunction = hideTooltip;
+
+        // Add global click listener to hide tooltip when clicking outside (only once)
+        if (!this.wageTooltipGlobalListener) {
+            this.wageTooltipGlobalListener = (e) => {
+                const clickedCard = e.target.closest('.chart-hours-value-card, .chart-shifts-count-card');
+                const clickedTooltip = e.target.closest('.wage-card-tooltip');
+
+                // Don't hide if clicking on a wage card or the tooltip itself
+                if (clickedCard || clickedTooltip) {
+                    return;
+                }
+
+                // Hide all active wage card tooltips
+                document.querySelectorAll('.chart-hours-value-card.tooltip-active, .chart-shifts-count-card.tooltip-active')
+                    .forEach(activeCard => {
+                        if (activeCard.wageTooltipHideFunction) {
+                            activeCard.wageTooltipHideFunction();
+                        }
+                    });
+            };
+
+            document.addEventListener('click', this.wageTooltipGlobalListener);
+        }
+    },
+
+    removeWageCardTooltip(card) {
+        if (!card || !card.hasTooltipListener) return;
+
+        // Remove tooltip if active
+        if (card.wageTooltipHideFunction) {
+            card.wageTooltipHideFunction();
+        }
+
+        // Clean up
+        card.hasTooltipListener = false;
+        card.wageTooltipHideFunction = null;
     },
 
     updateWeeklyHoursChart() {
@@ -3018,6 +3336,12 @@ export const app = {
             // Add has-data class since we only show days with shifts
             bar.classList.add('has-data');
 
+            // Check if this day has shifts from adjacent months
+            if (dayData.hasAdjacentMonthShifts && !dayData.hasCurrentMonthShifts) {
+                // Day only has shifts from adjacent months
+                bar.classList.add('adjacent-month');
+            }
+
             // Check if this day is today for highlighting
             const isToday = isCurrentMonth &&
                            dayData.date.getDate() === today.getDate() &&
@@ -3139,20 +3463,51 @@ export const app = {
                 activeTooltipBar = bar;
             };
 
-            // Click event for tooltip
+            // Double-click tracking variables for this bar
+            let clickCount = 0;
+            let clickTimer = null;
+
+            // Click event for tooltip and double-click detection
             bar.addEventListener('click', (e) => {
                 e.stopPropagation();
 
-                if (bar.classList.contains('tooltip-active')) {
+                clickCount++;
+
+                if (clickCount === 1) {
+                    // Single click - set timer to handle tooltip
+                    clickTimer = setTimeout(() => {
+                        // Single click behavior - show/hide tooltip
+                        if (bar.classList.contains('tooltip-active')) {
+                            hideTooltip();
+                        } else {
+                            if (activeTooltipBar && activeTooltipBar !== bar) {
+                                activeTooltipBar.classList.remove('tooltip-active');
+                            }
+                            showTooltip(e);
+                        }
+                        clickCount = 0;
+                    }, 300); // 300ms delay to detect double-click
+                } else if (clickCount === 2) {
+                    // Double click detected - clear timer and open shift details
+                    clearTimeout(clickTimer);
+                    clickCount = 0;
+
+                    console.log('Double-click detected on daily chart bar for day:', dayOfWeek);
+
+                    // Hide any active tooltip first
                     hideTooltip();
-                    return;
-                }
 
-                if (activeTooltipBar && activeTooltipBar !== bar) {
-                    activeTooltipBar.classList.remove('tooltip-active');
+                    // Get the shifts for this day and open details for the first shift
+                    const dayShifts = dayData.shifts;
+                    if (dayShifts && dayShifts.length > 0) {
+                        console.log('Opening shift details for shift ID:', dayShifts[0].id);
+                        // If multiple shifts on the same day, show details for the first one
+                        // In the future, this could be enhanced to show a selection dialog
+                        this.showShiftDetails(dayShifts[0].id);
+                    } else {
+                        console.log('No shifts found for this day');
+                    }
                 }
-
-                showTooltip(e);
             });
 
             // Create label with day abbreviation
@@ -3861,6 +4216,12 @@ export const app = {
             this.chartTooltipGlobalListener = null;
         }
 
+        // Clean up wage card tooltip global listener
+        if (this.wageTooltipGlobalListener) {
+            document.removeEventListener('click', this.wageTooltipGlobalListener);
+            this.wageTooltipGlobalListener = null;
+        }
+
     },
 
     // Performance monitoring for debugging (can be called from console)
@@ -4051,10 +4412,38 @@ export const app = {
                     
                     cell.classList.add('has-shifts');
                     cell.style.cursor = 'pointer';
+
+                    // Double-click functionality for calendar cells with shifts
+                    let cellClickCount = 0;
+                    let cellClickTimer = null;
+
                     cell.onclick = (e) => {
                         e.stopPropagation();
-                        if (shiftsForDay.length > 0) {
-                            this.showShiftDetails(shiftsForDay[0].id);
+
+                        cellClickCount++;
+
+                        if (cellClickCount === 1) {
+                            // Single click - set timer
+                            cellClickTimer = setTimeout(() => {
+                                // Single click behavior - show shift details (existing behavior)
+                                if (shiftsForDay.length > 0) {
+                                    this.showShiftDetails(shiftsForDay[0].id);
+                                }
+                                cellClickCount = 0;
+                            }, 300); // 300ms delay to detect double-click
+                        } else if (cellClickCount === 2) {
+                            // Double click detected - clear timer and show shift details immediately
+                            clearTimeout(cellClickTimer);
+                            cellClickCount = 0;
+
+                            console.log('Double-click detected on calendar cell with shifts');
+
+                            if (shiftsForDay.length > 0) {
+                                console.log('Opening shift details for shift ID:', shiftsForDay[0].id);
+                                this.showShiftDetails(shiftsForDay[0].id);
+                            } else {
+                                console.log('No shifts found for this calendar cell');
+                            }
                         }
                     };
                 } else {
@@ -4201,11 +4590,38 @@ export const app = {
                 cell.classList.add('has-shifts');
                 cell.style.cursor = 'pointer';
 
+                // Double-click functionality for updated calendar cells with shifts
+                let updateCellClickCount = 0;
+                let updateCellClickTimer = null;
+
                 // Set up click handler for cells with shifts
                 cell.onclick = (e) => {
                     e.stopPropagation();
-                    if (shiftsToDisplay.length > 0) {
-                        this.showShiftDetails(shiftsToDisplay[0].id);
+
+                    updateCellClickCount++;
+
+                    if (updateCellClickCount === 1) {
+                        // Single click - set timer
+                        updateCellClickTimer = setTimeout(() => {
+                            // Single click behavior - show shift details
+                            if (shiftsToDisplay.length > 0) {
+                                this.showShiftDetails(shiftsToDisplay[0].id);
+                            }
+                            updateCellClickCount = 0;
+                        }, 300); // 300ms delay to detect double-click
+                    } else if (updateCellClickCount === 2) {
+                        // Double click detected - clear timer and show shift details immediately
+                        clearTimeout(updateCellClickTimer);
+                        updateCellClickCount = 0;
+
+                        console.log('Double-click detected on updated calendar cell with shifts');
+
+                        if (shiftsToDisplay.length > 0) {
+                            console.log('Opening shift details for shift ID:', shiftsToDisplay[0].id);
+                            this.showShiftDetails(shiftsToDisplay[0].id);
+                        } else {
+                            console.log('No shifts found for this updated calendar cell');
+                        }
                     }
                 };
             } else if (isCurrentMonth) {
@@ -4273,10 +4689,10 @@ export const app = {
         // Find the shift by ID
         const shift = this.shifts.find(s => s.id === shiftId);
         if (!shift) return;
-        
+
         // Close any existing expanded views
         this.closeStatDetails();
-        this.closeSettings();
+        this.closeSettings(false); // Don't save settings when closing as cleanup
         
         // Hide header
         const header = document.querySelector('.header');
@@ -6351,7 +6767,7 @@ export const app = {
     // Feature introduction for recurring shifts
     showRecurringIntroduction() {
         // Close any open modals first
-        this.closeSettings();
+        this.closeSettings(false); // Don't save settings when closing as cleanup
         this.closeAddShiftModal();
         this.closeEditShift();
         
