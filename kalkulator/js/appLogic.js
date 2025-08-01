@@ -3553,9 +3553,9 @@ export const app = {
             return;
         }
         
-        // Sort shifts by date (newest first)
-        const sortedShifts = monthShifts.sort((a, b) => b.date - a.date);
-        
+        // Sort shifts by date (earliest first)
+        const sortedShifts = monthShifts.sort((a, b) => a.date - b.date);
+
         // Group shifts by week
         const weekGroups = {};
         sortedShifts.forEach(shift => {
@@ -3565,23 +3565,33 @@ export const app = {
             }
             weekGroups[weekNumber].push(shift);
         });
-        
+
         // Create HTML with week separators
         const shiftsHtml = [];
-        const weekNumbers = Object.keys(weekGroups).sort((a, b) => b - a); // Sort weeks descending (newest first)
+        const weekNumbers = Object.keys(weekGroups).sort((a, b) => a - b); // Sort weeks ascending (earliest first)
         
         weekNumbers.forEach((weekNumber, weekIndex) => {
             const weekShifts = weekGroups[weekNumber];
-            
+
+            // Calculate weekly wage total
+            let weeklyTotal = 0;
+            weekShifts.forEach(shift => {
+                const calc = this.calculateShift(shift);
+                weeklyTotal += calc.total;
+            });
+
             // Add week separator BEFORE each week's shifts as a header
             shiftsHtml.push(`
                 <div class="week-separator">
                     <div class="week-separator-line"></div>
                     <div class="week-separator-content">
-                        <svg class="week-separator-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                        <span class="week-separator-week">Uke ${weekNumber}</span>
+                        <div class="week-separator-left">
+                            <span class="week-separator-week">Uke ${weekNumber}</span>
+                            <svg class="week-separator-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                        <span class="week-separator-total">${this.formatCurrency(weeklyTotal)}</span>
                     </div>
                     <div class="week-separator-line"></div>
                 </div>

@@ -2920,25 +2920,19 @@ input:checked + .slider:before {
   align-items: center;
   margin: 16px 0 8px 0;
   position: relative;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.02) 60%,
+    rgba(255, 255, 255, 0.01) 80%,
+    transparent 100%
+  );
+  border-radius: 12px;
+  padding: 8px 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.week-separator::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 1px;
-  background: linear-gradient(90deg,
-    var(--border) 0%,
-    var(--border) 40%,
-    transparent 45%,
-    transparent 55%,
-    var(--border) 60%,
-    var(--border) 100%
-  );
-  z-index: 1;
-}
+
 
 .week-separator-line {
   flex: 1;
@@ -2950,6 +2944,8 @@ input:checked + .slider:before {
 .week-separator-content {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
   gap: 8px;
   padding: 0 16px;
   background: transparent;
@@ -2959,6 +2955,12 @@ input:checked + .slider:before {
   white-space: nowrap;
   position: relative;
   z-index: 2;
+}
+
+.week-separator-content .week-separator-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .week-separator-arrow {
@@ -2974,6 +2976,13 @@ input:checked + .slider:before {
   color: var(--text-primary);
 }
 
+.week-separator-total {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
 @media (max-width: 480px) {
   .week-separator {
     margin: 12px 0 6px 0;
@@ -2987,6 +2996,10 @@ input:checked + .slider:before {
   .week-separator-arrow {
     width: 14px;
     height: 14px;
+  }
+
+  .week-separator-total {
+    font-size: 14px;
   }
 
   .week-number-on-separator {
@@ -3771,19 +3784,7 @@ input:checked + .slider:before {
   align-items: center;
 }
 
-.week-separator::before {
-  content: '';
-  position: absolute;
-  left: 80px;
-  right: 10px;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    var(--border) 0%,
-    var(--border) 100%
-  );
-  opacity: 0.4;
-}
+
 
 /* Week number positioned on left side of separator line */
 .week-number-on-separator {
