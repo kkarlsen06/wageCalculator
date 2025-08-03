@@ -85,58 +85,14 @@
                               <div class="empty-message">Ingen kommende vakter</div>
                           </div>
                       </div>
-                      <div class="weekly-hours-chart-card" id="weeklyHoursChart">
-                          <div class="chart-cards-container">
-                              <!-- Bar Chart Card -->
-                              <div class="chart-visualization-card">
-                                  <div class="chart-container">
-                                      <div class="chart-content">
-                                          <div class="chart-bars" id="chartBars">
-                                              <!-- Bars will be populated dynamically -->
-                                          </div>
-                                      </div>
-                                      <div class="chart-labels" id="chartLabels">
-                                          <!-- Week labels will be populated dynamically -->
-                                      </div>
-                                  </div>
-                                  <div class="chart-tooltip" id="chartTooltip">
-                                      <span id="tooltipContent"></span>
-                                  </div>
-                              </div>
 
-                              <!-- Hours Section - Two Stacked Cards -->
-                              <div class="chart-hours-section">
-                                  <!-- Total Hours Card -->
-                                  <div class="chart-hours-value-card">
-                                      <div class="hours-value-content">
-                                          <div class="hours-value-number" id="totalHours">0</div>
-                                          <div class="hours-value-label">timer</div>
-                                      </div>
-                                  </div>
-
-                                  <!-- Shift Count Card -->
-                                  <div class="chart-shifts-count-card">
-                                      <div class="shifts-count-content">
-                                          <div class="shifts-count-number" id="shiftCount">0</div>
-                                          <div class="shifts-count-label">vakter</div>
-                                      </div>
-                                  </div>
-
-                                  <!-- Custom tooltip for wage cards -->
-                                  <div class="wage-card-tooltip" id="wageCardTooltip">
-                                      <span id="wageTooltipContent"></span>
-                                  </div>
-                              </div>
-                          </div>
-
-                          <!-- Progress bar positioned below both cards -->
-                          <div class="chart-progress-bar" title="Månedlig mål fremdrift">
-                              <div class="chart-progress-fill loading" style="width: 0%"></div>
-                              <span class="chart-progress-label">0 % av 0 kr</span>
+                      <div class="next-payroll-card" id="nextPayrollCard" style="display: none;">
+                          <div class="next-payroll-content" id="nextPayrollContent">
+                              <!-- Will be populated with payroll information -->
                           </div>
                       </div>
 
-                      <!-- Month Navigation for larger screens - positioned below stat card -->
+                      <!-- Month Navigation for larger screens - positioned directly below Next Payroll card -->
                       <!-- This navigation is shown on screens >= 1024px and hidden on smaller screens -->
                       <div class="month-navigation-container dashboard-month-nav">
                           <div class="month-navigation">
@@ -166,6 +122,58 @@
           <!-- Shift List Section -->
           <section class="snap-section shift-section" role="complementary" aria-label="Vaktliste">
               <div class="app-container">
+                  <!-- Stats card moved from dashboard to top of shifts section -->
+                  <div class="weekly-hours-chart-card" id="weeklyHoursChart">
+                      <div class="chart-cards-container">
+                          <!-- Bar Chart Card -->
+                          <div class="chart-visualization-card">
+                              <div class="chart-container">
+                                  <div class="chart-content">
+                                      <div class="chart-bars" id="chartBars">
+                                          <!-- Bars will be populated dynamically -->
+                                      </div>
+                                  </div>
+                                  <div class="chart-labels" id="chartLabels">
+                                      <!-- Week labels will be populated dynamically -->
+                                  </div>
+                              </div>
+                              <div class="chart-tooltip" id="chartTooltip">
+                                  <span id="tooltipContent"></span>
+                              </div>
+                          </div>
+
+                          <!-- Hours Section - Two Stacked Cards -->
+                          <div class="chart-hours-section">
+                              <!-- Total Hours Card -->
+                              <div class="chart-hours-value-card">
+                                  <div class="hours-value-content">
+                                      <div class="hours-value-number" id="totalHours">0</div>
+                                      <div class="hours-value-label">timer</div>
+                                  </div>
+                              </div>
+
+                              <!-- Shift Count Card -->
+                              <div class="chart-shifts-count-card">
+                                  <div class="shifts-count-content">
+                                      <div class="shifts-count-number" id="shiftCount">0</div>
+                                      <div class="shifts-count-label">vakter</div>
+                                  </div>
+                              </div>
+
+                              <!-- Custom tooltip for wage cards -->
+                              <div class="wage-card-tooltip" id="wageCardTooltip">
+                                  <span id="wageTooltipContent"></span>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- Progress bar positioned below both cards -->
+                      <div class="chart-progress-bar" title="Månedlig mål fremdrift">
+                          <div class="chart-progress-fill loading" style="width: 0%"></div>
+                          <span class="chart-progress-label">0 % av 0 kr</span>
+                      </div>
+                  </div>
+
                   <!-- Month Navigation with arrow buttons -->
                   <!-- This navigation is shown on screens < 1024px and hidden on larger screens -->
                   <div class="month-navigation-container">
@@ -354,6 +362,14 @@
                           <span class="text-secondary" style="margin-left:8px;">%</span>
                       </div>
                       <small class="form-hint">Skriv inn skatteprosenten som skal trekkes fra bruttolønnen</small>
+                  </div>
+
+                  <div class="form-group">
+                      <label for="payrollDayInput">Lønningsdag</label>
+                      <div class="switch-group">
+                          <input type="number" id="payrollDayInput" class="form-control" min="1" max="31" step="1" style="max-width:140px;display:inline-block;" placeholder="15" onchange="app.updatePayrollDay(this.value)">
+                      </div>
+                      <small class="form-hint">Velg hvilken dag i måneden du får utbetalt lønn (1-31)</small>
                   </div>
               </div>
 

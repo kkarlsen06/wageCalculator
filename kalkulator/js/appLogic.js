@@ -374,13 +374,19 @@ export const app = {
         this.shiftView = this.defaultShiftsView;
         this.switchShiftView(this.shiftView);
 
-        window.addEventListener('resize', () => {
-            this.updateStats(false);
-        });
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', () => {
+        // Debounced resize handler to prevent excessive recalculations
+        let resizeTimeout;
+        const debouncedResize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
                 this.updateStats(false);
-            });
+                this.updateNextPayrollCard(); // Update payroll card visibility on resize
+            }, 150); // 150ms debounce
+        };
+
+        window.addEventListener('resize', debouncedResize);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', debouncedResize);
         }
 
         const header = document.querySelector('.header');
@@ -1441,13 +1447,16 @@ export const app = {
                 this.defaultShiftsView = settings.default_shifts_view || 'list';
                 this.taxDeductionEnabled = settings.tax_deduction_enabled === true;
                 this.taxPercentage = parseFloat(settings.tax_percentage) || 0.0;
+                this.payrollDay = parseInt(settings.payroll_day) || 15;
 
-                // Debug logging for tax deduction settings
-                console.log('Loaded tax deduction settings:', {
+                // Debug logging for tax deduction and payroll day settings
+                console.log('Loaded tax deduction and payroll settings:', {
                     tax_deduction_enabled: settings.tax_deduction_enabled,
                     tax_percentage: settings.tax_percentage,
+                    payroll_day: settings.payroll_day,
                     parsed_enabled: this.taxDeductionEnabled,
-                    parsed_percentage: this.taxPercentage
+                    parsed_percentage: this.taxPercentage,
+                    parsed_payroll_day: this.payrollDay
                 });
 
             } else {
@@ -1485,6 +1494,7 @@ export const app = {
         this.currencyFormat = false; // Default to "kr" instead of "NOK"
         this.compactView = false; // Default to normal view
         this.defaultShiftsView = 'list'; // Default to list view for shifts
+        this.payrollDay = 15; // Default to 15th of the month
     },
 
     // Helper function to test custom bonuses
@@ -1533,6 +1543,11 @@ export const app = {
         const taxPercentageInput = document.getElementById('taxPercentageInput');
         if (taxPercentageInput) {
             taxPercentageInput.value = this.taxPercentage;
+        }
+
+        const payrollDayInput = document.getElementById('payrollDayInput');
+        if (payrollDayInput) {
+            payrollDayInput.value = this.payrollDay;
         }
 
         // Show/hide tax percentage section based on toggle state
@@ -1655,13 +1670,16 @@ export const app = {
                 }
                 if ('tax_deduction_enabled' in existingSettings) settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 if ('tax_percentage' in existingSettings) settingsData.tax_percentage = this.taxPercentage;
+                if ('payroll_day' in existingSettings) settingsData.payroll_day = this.payrollDay;
 
-                // Debug logging for tax deduction save
-                console.log('Saving tax deduction settings:', {
+                // Debug logging for tax deduction and payroll day save
+                console.log('Saving tax deduction and payroll settings:', {
                     has_tax_enabled_column: 'tax_deduction_enabled' in existingSettings,
                     has_tax_percentage_column: 'tax_percentage' in existingSettings,
+                    has_payroll_day_column: 'payroll_day' in existingSettings,
                     saving_enabled: this.taxDeductionEnabled,
-                    saving_percentage: this.taxPercentage
+                    saving_percentage: this.taxPercentage,
+                    saving_payroll_day: this.payrollDay
                 });
             } else {
                 // No existing settings - try to save with common field names
@@ -1681,6 +1699,7 @@ export const app = {
                 settingsData.custom_bonuses = this.customBonuses || {};
                 settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 settingsData.tax_percentage = this.taxPercentage;
+                settingsData.payroll_day = this.payrollDay;
             }
 
             const { error } = await window.supa
@@ -1961,6 +1980,27 @@ export const app = {
         const taxPercentageInput = document.getElementById('taxPercentageInput');
         if (taxPercentageInput) {
             taxPercentageInput.value = this.taxPercentage;
+        }
+
+        this.saveSettingsToSupabase();
+        this.updateDisplay();
+    },
+
+    updatePayrollDay(value) {
+        const day = parseInt(value) || 15;
+        // Validate day is within bounds (1-31)
+        if (day < 1) {
+            this.payrollDay = 1;
+        } else if (day > 31) {
+            this.payrollDay = 31;
+        } else {
+            this.payrollDay = day;
+        }
+
+        // Update the input field to reflect the validated value
+        const payrollDayInput = document.getElementById('payrollDayInput');
+        if (payrollDayInput) {
+            payrollDayInput.value = this.payrollDay;
         }
 
         this.saveSettingsToSupabase();
@@ -2466,13 +2506,15 @@ export const app = {
     },
     updateDisplay(shouldAnimate = false) {
         this.updateHeader();
-        this.updateNextShiftCard(); // Move before updateStats to ensure correct viewport calculations
+
+        this.updateNextPayrollCard(); // Update the next payroll card
+        this.updateNextShiftCard(); // Update the next shift card
         this.updateStats(shouldAnimate);
         this.updateWeeklyHoursChart(); // Update the weekly hours chart
         this.updateShiftList();
         this.updateShiftCalendar();
         this.populateDateGrid();
-        this.startNextShiftTimer(); // Start the countdown timer
+
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
@@ -3689,6 +3731,295 @@ export const app = {
         }
     },
 
+
+
+
+
+
+
+
+
+    // Payroll calculation functions
+    calculatePreviousMonthSalary() {
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+
+        // Calculate previous month
+        let prevMonth = currentMonth - 1;
+        let prevYear = currentYear;
+        if (prevMonth === 0) {
+            prevMonth = 12;
+            prevYear = currentYear - 1;
+        }
+
+        // Get all shifts from previous month
+        const prevMonthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === prevMonth - 1 &&
+            shift.date.getFullYear() === prevYear
+        );
+
+        if (prevMonthShifts.length === 0) {
+            return 0;
+        }
+
+        // Calculate total earnings
+        let totalEarnings = 0;
+        prevMonthShifts.forEach(shift => {
+            const calc = this.calculateShift(shift);
+            totalEarnings += calc.total;
+        });
+
+        // Apply tax deduction if enabled
+        const netSalary = this.taxDeductionEnabled ?
+            totalEarnings * (1 - this.taxPercentage / 100) :
+            totalEarnings;
+
+        return netSalary;
+    },
+
+    getNextPayrollDate() {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        const currentDay = now.getDate();
+
+        // Create payroll date for current month
+        let payrollDate = new Date(currentYear, currentMonth, this.payrollDay);
+
+        // If payroll day has already passed this month, move to next month
+        if (currentDay >= this.payrollDay) {
+            payrollDate.setMonth(currentMonth + 1);
+        }
+
+        // Handle months with fewer days than payroll day (e.g., February 30th)
+        // Check if the date rolled over to next month
+        const targetMonth = payrollDate.getMonth();
+        const expectedMonth = currentDay >= this.payrollDay ? (currentMonth + 1) % 12 : currentMonth;
+
+        if (targetMonth !== expectedMonth) {
+            // Date rolled over, use the last day of the intended month
+            payrollDate = new Date(currentYear, expectedMonth + 1, 0); // Last day of intended month
+        }
+
+        return payrollDate;
+    },
+
+    calculatePayrollCountdown() {
+        const now = new Date();
+        const payrollDate = this.getNextPayrollDate();
+
+        // Calculate difference in days
+        const timeDiff = payrollDate.getTime() - now.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+        // Handle special cases
+        if (daysDiff === 0) {
+            return 'i dag';
+        } else if (daysDiff === 1) {
+            return 'i morgen';
+        } else {
+            return `om ${daysDiff} dager`;
+        }
+    },
+
+    applyPayrollCardPositioning(payrollCard) {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const orientation = width > height ? 'landscape' : 'portrait';
+
+        // Remove any existing positioning classes
+        payrollCard.classList.remove('payroll-card-hidden', 'payroll-card-below-viewport', 'payroll-card-visible');
+
+        // On very short viewports (landscape mobile), hide completely to save space
+        if (height <= 500 && orientation === 'landscape') {
+            payrollCard.classList.add('payroll-card-hidden');
+            return;
+        }
+
+        // Check if there's sufficient space in the current viewport
+        const hasSpaceInViewport = this.checkAvailableSpaceForPayrollCard();
+
+        if (hasSpaceInViewport) {
+            // Card can be visible in the current viewport
+            payrollCard.classList.add('payroll-card-visible');
+        } else {
+            // Card should be positioned below the viewport (scrollable)
+            payrollCard.classList.add('payroll-card-below-viewport');
+        }
+    },
+
+    checkAvailableSpaceForPayrollCard() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        // EXTREMELY conservative space detection accounting for browser UI
+        // Mobile browsers can have 60-100px navigation bars that reduce usable height
+
+        // CRITICAL: Devices with widths 400-900px should NEVER show payroll card in viewport
+        // This includes:
+        // - iPhone Pro Max (428px)
+        // - Large Android phones (400-450px)
+        // - iPad portrait (768px)
+        // - Medium tablets (800-900px)
+        if (width >= 400 && width <= 900) {
+            console.log(`Large mobile/tablet device detected (${width}px width) - forcing below viewport positioning`);
+            return false;
+        }
+
+        // For very small devices (< 400px), also position below viewport
+        if (width < 400) {
+            console.log(`Small mobile device detected (${width}px width) - forcing below viewport positioning`);
+            return false;
+        }
+
+        // Only extremely large desktop screens with abundant space should show in viewport
+        // Require massive screens to account for all possible UI elements
+        if (width >= 1500 && height >= 1000) {
+            // Even on very large screens, do a calculation to be absolutely sure
+            return this.calculateActualAvailableSpace(width, height);
+        }
+
+        // All other screens: position below viewport (scrollable)
+        // This includes medium desktop screens (901-1499px width)
+        console.log(`Medium desktop or other device (${width}x${height}) - positioning below viewport`);
+        return false;
+    },
+
+    calculateActualAvailableSpace(width, height) {
+        try {
+            const dashboardContent = document.querySelector('.dashboard-content');
+            if (!dashboardContent) return false;
+
+            const totalCard = document.querySelector('.total-card');
+            const nextShiftCard = document.querySelector('.next-shift-card');
+            const nextPayrollCard = document.querySelector('.next-payroll-card');
+
+            if (!totalCard || !nextShiftCard) return false;
+
+            // Get actual heights of existing elements in the main dashboard
+            const totalCardHeight = totalCard.offsetHeight;
+            const nextShiftCardHeight = nextShiftCard.offsetHeight;
+            const nextPayrollCardHeight = nextPayrollCard ? nextPayrollCard.offsetHeight : 120; // Fallback estimate
+
+            // VERY conservative calculations accounting for browser UI
+            const browserNavBar = 100; // Mobile browser navigation (60-100px)
+            const browserAddressBar = 60; // Browser address bar when visible
+            const headerHeight = 80; // App header height
+            const dashboardPadding = 60; // Dashboard padding
+            const cardGaps = 40 * 5; // Very conservative gaps between all cards
+            const payrollCardHeight = 140; // Conservative payroll card height estimate
+            const monthPickerHeight = 80; // Month picker with padding
+            const shiftsPreviewHeight = 120; // Shifts preview section
+            const bottomBuffer = 150; // Large buffer space at bottom
+            const safetyMargin = 200; // Very large additional safety margin
+            const scrollbarWidth = 20; // Account for scrollbars
+
+            const totalUsedHeight = browserNavBar + browserAddressBar + headerHeight +
+                                  totalCardHeight + nextShiftCardHeight + nextPayrollCardHeight +
+                                  monthPickerHeight + shiftsPreviewHeight +
+                                  dashboardPadding + cardGaps + bottomBuffer + safetyMargin;
+
+            // Only show in viewport if we have MASSIVE extra space
+            const hasSpace = totalUsedHeight <= height;
+
+            // Debug logging with browser UI considerations
+            console.log('Conservative space calculation with browser UI:', {
+                viewport: `${width}x${height}`,
+                totalUsedHeight,
+                hasSpace,
+                browserUI: {
+                    navBar: browserNavBar,
+                    addressBar: browserAddressBar
+                },
+                components: {
+                    header: headerHeight,
+                    totalCard: totalCardHeight,
+                    nextShift: nextShiftCardHeight,
+                    nextPayroll: nextPayrollCardHeight,
+                    monthPicker: monthPickerHeight,
+                    shiftsPreview: shiftsPreviewHeight,
+                    padding: dashboardPadding,
+                    gaps: cardGaps,
+                    buffer: bottomBuffer,
+                    safety: safetyMargin,
+                    scrollbar: scrollbarWidth
+                },
+                availableAfterUI: height - browserNavBar - browserAddressBar
+            });
+
+            return hasSpace;
+
+        } catch (error) {
+            console.warn('Error calculating available space:', error);
+            // Ultra-conservative fallback - only massive screens
+            return width >= 1600 && height >= 1000;
+        }
+    },
+
+    updateNextPayrollCard() {
+        const nextPayrollCard = document.getElementById('nextPayrollCard');
+        if (!nextPayrollCard) return;
+
+        // Calculate previous month's salary
+        const previousMonthSalary = this.calculatePreviousMonthSalary();
+
+        // If no salary to display, hide the card completely
+        if (previousMonthSalary <= 0) {
+            nextPayrollCard.style.display = 'none';
+            return;
+        }
+
+        // Always show the card (it will be positioned appropriately by CSS)
+        nextPayrollCard.style.display = 'block';
+
+        // Apply responsive positioning class based on available space
+        this.applyPayrollCardPositioning(nextPayrollCard);
+
+        // Get payroll information
+        const payrollDate = this.getNextPayrollDate();
+        const payrollDay = payrollDate.getDate();
+        const payrollCountdown = this.calculatePayrollCountdown();
+
+        // Format the previous month name
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        let prevMonth = currentMonth - 1;
+        if (prevMonth === 0) {
+            prevMonth = 12;
+        }
+        const prevMonthName = this.MONTHS[prevMonth - 1];
+
+        // Format the salary amount
+        const formattedAmount = this.formatCurrency(previousMonthSalary);
+
+        // Create the payroll card content
+        const nextPayrollContent = document.getElementById('nextPayrollContent');
+        if (nextPayrollContent) {
+            nextPayrollContent.innerHTML = `
+                <div class="payroll-item">
+                    <div class="payroll-info">
+                        <div class="payroll-title">Neste lønning</div>
+                        <div class="payroll-countdown">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            <span class="payroll-date-number">${payrollDay}.</span>
+                            <span class="payroll-date-separator"></span>
+                            <span class="payroll-date-time">${payrollCountdown}</span>
+                        </div>
+                    </div>
+                    <div class="payroll-amount-wrapper">
+                        <div class="payroll-amount">${formattedAmount}</div>
+                        <div class="payroll-period">${prevMonthName}</div>
+                    </div>
+                </div>
+            `;
+        }
+    },
+
+    // Next Shift Card Methods - Exactly matches Next Payroll Card structure
     updateNextShiftCard() {
         const nextShiftCard = document.getElementById('nextShiftCard');
         if (!nextShiftCard) return;
@@ -3702,450 +4033,150 @@ export const app = {
 
         // If we're not viewing the current month and year, show the best shift from selected month
         if (this.currentMonth !== currentMonth || this.currentYear !== currentYear) {
-            this.displayBestShiftCard();
-            this.stopNextShiftTimer(); // Stop timer when not viewing current month
+            this.displayFutureShiftsCard();
             return;
         }
-        
+
         // Check if there's a current shift happening right now
         const currentShift = this.shifts.find(shift => {
             const shiftDate = new Date(shift.date);
             if (shiftDate.toDateString() === now.toDateString()) {
                 const [startHour, startMinute] = shift.startTime.split(':').map(Number);
                 const [endHour, endMinute] = shift.endTime.split(':').map(Number);
-                
+
                 const shiftStartTime = new Date(shiftDate);
                 shiftStartTime.setHours(startHour, startMinute, 0, 0);
-                
+
                 const shiftEndTime = new Date(shiftDate);
                 shiftEndTime.setHours(endHour, endMinute, 0, 0);
-                
+
                 // Handle shifts that cross midnight
                 if (shiftEndTime < shiftStartTime) {
                     shiftEndTime.setDate(shiftEndTime.getDate() + 1);
                 }
-                
+
                 return now >= shiftStartTime && now <= shiftEndTime;
             }
             return false;
         });
-        
+
         // If there's a current shift, show current shift info
         if (currentShift) {
             this.displayCurrentShiftCard(currentShift, now);
             return;
         }
-        
+
         // Get all shifts from now onwards
         const upcomingShifts = this.shifts.filter(shift => {
             const shiftDate = new Date(shift.date);
-            
+
             // If shift is on a future date, include it
             if (shiftDate > now) {
                 return true;
             }
-            
+
             // If shift is today, check if it hasn't started yet
             if (shiftDate.toDateString() === now.toDateString()) {
                 const [startHour, startMinute] = shift.startTime.split(':').map(Number);
                 const shiftStartTime = new Date(shiftDate);
                 shiftStartTime.setHours(startHour, startMinute, 0, 0);
-                
+
                 return shiftStartTime > now;
             }
-            
+
             return false;
         });
-        
+
         // Sort by date and time
         upcomingShifts.sort((a, b) => {
             const aDate = new Date(a.date);
             const bDate = new Date(b.date);
-            
+
             if (aDate.getTime() !== bDate.getTime()) {
                 return aDate - bDate;
             }
-            
+
             // Same date, sort by start time
             const [aHour, aMinute] = a.startTime.split(':').map(Number);
             const [bHour, bMinute] = b.startTime.split(':').map(Number);
-            
+
             return (aHour * 60 + aMinute) - (bHour * 60 + bMinute);
         });
-        
-        const nextShiftContent = document.getElementById('nextShiftContent');
-        const nextShiftEmpty = document.getElementById('nextShiftEmpty');
-        
+
         if (upcomingShifts.length === 0) {
-            // No upcoming shifts - show most recent shift instead
-            const pastShifts = this.shifts.filter(shift => {
-                const shiftDate = new Date(shift.date);
-
-                // If shift is on a past date, include it
-                if (shiftDate < now) {
-                    return true;
-                }
-
-                // If shift is today, check if it has already ended
-                if (shiftDate.toDateString() === now.toDateString()) {
-                    const [endHour, endMinute] = shift.endTime.split(':').map(Number);
-                    const shiftEndTime = new Date(shiftDate);
-                    shiftEndTime.setHours(endHour, endMinute, 0, 0);
-
-                    // Handle shifts that cross midnight
-                    if (endHour < parseInt(shift.startTime.split(':')[0])) {
-                        shiftEndTime.setDate(shiftEndTime.getDate() + 1);
-                    }
-
-                    return now > shiftEndTime;
-                }
-
-                return false;
-            });
-
-            // Sort past shifts by date and time (most recent first)
-            pastShifts.sort((a, b) => {
-                const aDate = new Date(a.date);
-                const bDate = new Date(b.date);
-
-                if (aDate.getTime() !== bDate.getTime()) {
-                    return bDate - aDate; // Most recent first
-                }
-
-                // Same date, sort by end time (latest end time first)
-                const [aEndHour, aEndMinute] = a.endTime.split(':').map(Number);
-                const [bEndHour, bEndMinute] = b.endTime.split(':').map(Number);
-
-                return (bEndHour * 60 + bEndMinute) - (aEndHour * 60 + aEndMinute);
-            });
-
-            if (pastShifts.length === 0) {
-                // No shifts at all
-                nextShiftContent.style.display = 'none';
-                nextShiftEmpty.style.display = 'flex';
-                // Reset empty message for current month
-                const emptyMessage = nextShiftEmpty.querySelector('.empty-message');
-                if (emptyMessage) {
-                    emptyMessage.textContent = 'Ingen kommende vakter';
-                }
-                this.stopNextShiftTimer(); // Stop timer when no shifts
-            } else {
-                // Show most recent shift
-                nextShiftContent.style.display = 'flex';
-                nextShiftEmpty.style.display = 'none';
-
-                const lastShift = pastShifts[0];
-                const calculation = this.calculateShift(lastShift);
-
-                // Format date
-                const shiftDate = new Date(lastShift.date);
-                const weekday = this.WEEKDAYS[shiftDate.getDay()];
-                const day = shiftDate.getDate();
-                const month = this.MONTHS[shiftDate.getMonth()];
-
-                // Create the shift item using the exact same structure as in the shift list
-                const typeClass = lastShift.type === 0 ? 'weekday' : (lastShift.type === 1 ? 'saturday' : 'sunday');
-                const seriesBadge = lastShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
-
-                // No highlighting for last shift (remove active class)
-                nextShiftContent.innerHTML = `
-                    <div class="shift-item ${typeClass}" data-shift-id="${lastShift.id}" style="cursor: pointer; position: relative;">
-                        <div class="next-shift-badge">Siste</div>
-                        <div class="shift-info">
-                            <div class="shift-date">
-                                <span class="shift-date-number">${day}. ${month}</span>
-                                <span class="shift-date-separator"></span>
-                                <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
-                            </div>
-                            <div class="shift-details">
-                                <div class="shift-time-with-hours">
-                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polyline points="12 6 12 12 16 14"></polyline>
-                                    </svg>
-                                    <span>${lastShift.startTime} - ${lastShift.endTime}</span>
-                                    <span class="shift-time-arrow">→</span>
-                                    <span>${this.formatHours(calculation.totalHours)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="shift-amount-wrapper">
-                            <div class="shift-total">${this.formatCurrency(calculation.total)}</div>
-                            <div class="shift-breakdown">
-                                ${this.formatCurrencyShort(calculation.baseWage)} + ${this.formatCurrencyShort(calculation.bonus)}
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                this.stopNextShiftTimer(); // Stop timer when showing last shift
-            }
+            this.displayNoShiftsCard();
         } else {
-            // Show next shift details
-            nextShiftContent.style.display = 'flex';
-            nextShiftEmpty.style.display = 'none';
-            
-            const nextShift = upcomingShifts[0];
-            const calculation = this.calculateShift(nextShift);
-            
-            // Format date
-            const shiftDate = new Date(nextShift.date);
-            const weekday = this.WEEKDAYS[shiftDate.getDay()];
-            const day = shiftDate.getDate();
-            const month = this.MONTHS[shiftDate.getMonth()];
-            
-            // Check if it's today or tomorrow
-            // Use the same reference time ("now") to avoid race conditions around midnight
-            const today = new Date(now);
-            const tomorrow = new Date(now);
-            tomorrow.setDate(now.getDate() + 1);
-            
-            // Create the shift item using the exact same structure as in the shift list
-            const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
-            const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
-            
-            // Add time remaining for today's shifts or "i morgen" for tomorrow's shifts
-            let dateSuffix = '';
-            if (shiftDate.toDateString() === today.toDateString()) {
-                // Calculate time remaining until shift starts
-                const [startHour, startMinute] = nextShift.startTime.split(':').map(Number);
-                const shiftStartTime = new Date(shiftDate);
-                shiftStartTime.setHours(startHour, startMinute, 0, 0);
-                
-                const timeDifference = shiftStartTime - now;
-                const hoursRemaining = Math.floor(timeDifference / (1000 * 60 * 60));
-                const minutesRemaining = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
-                const secondsRemaining = Math.floor((timeDifference % (1000 * 60)) / 1000);
-                
-                if (hoursRemaining > 0) {
-                    dateSuffix = ` <span class="countdown-wrapper">(<span class="countdown-hours">${hoursRemaining}t</span> <span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-hours">${hoursRemaining}t</span> <span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span></span>`;
-                } else if (minutesRemaining > 0) {
-                    dateSuffix = ` <span class="countdown-wrapper">(<span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span></span>`;
-                } else if (secondsRemaining > 0) {
-                    dateSuffix = ` <span class="countdown-wrapper">(<span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-seconds">${secondsRemaining}s</span></span>`;
-                } else {
-                    dateSuffix = ' <span class="countdown-wrapper">(starter nå)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens">starter nå</span>';
-                    // Stop timer when shift starts
-                    this.stopNextShiftTimer();
-                }
-            } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
-                dateSuffix = ' (i morgen)';
-            }
-            
-            // Determine if the shift should be highlighted (active)
-            const isToday = shiftDate.toDateString() === today.toDateString();
-            const isTomorrow = shiftDate.toDateString() === tomorrow.toDateString();
-            const activeClass = (isToday || isTomorrow) ? ' active' : '';
-            
-            nextShiftContent.innerHTML = `
-                <div class="shift-item ${typeClass}${activeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer; position: relative;">
-                    <div class="next-shift-badge">Neste</div>
-                    <div class="shift-info">
-                        <div class="shift-date">
-                            <span class="shift-date-number">${day}. ${month}</span>
-                            <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
-                            <span class="shift-countdown-timer">${dateSuffix}</span>
-                        </div>
-                        <div class="shift-details">
-                            <div class="shift-time-with-hours">
-                                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                                <span>${nextShift.startTime} - ${nextShift.endTime}</span>
-                                <span class="shift-time-arrow">→</span>
-                                <span>${this.formatHours(calculation.totalHours)}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="shift-amount-wrapper">
-                        <div class="shift-total">${this.formatCurrency(calculation.total)}</div>
-                        <div class="shift-breakdown">
-                            ${this.formatCurrencyShort(calculation.baseWage)} + ${this.formatCurrencyShort(calculation.bonus)}
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Click handler is handled by global event delegation in app.js
-            // No need for direct event listener here
+            this.displayNextShiftCard(upcomingShifts[0], now);
         }
     },
 
-    displayCurrentShiftCard(currentShift, now) {
+    // Display Next Shift Card - matches payroll card structure exactly
+    displayNextShiftCard(nextShift, now) {
         const nextShiftContent = document.getElementById('nextShiftContent');
         const nextShiftEmpty = document.getElementById('nextShiftEmpty');
-        
+
+        if (!nextShiftContent || !nextShiftEmpty) return;
+
         nextShiftContent.style.display = 'flex';
         nextShiftEmpty.style.display = 'none';
-        
-        // Calculate earnings so far
-        const currentEarnings = this.calculateCurrentShiftEarnings(currentShift, now);
-        
-        // Calculate full shift duration (like other shift cards)
-        const fullShiftCalculation = this.calculateShift(currentShift);
-        
-        // Format date
-        const shiftDate = new Date(currentShift.date);
-        const weekday = this.WEEKDAYS[shiftDate.getDay()];
+
+        const calculation = this.calculateShift(nextShift);
+
+        // Format date - matches payroll card structure
+        const shiftDate = new Date(nextShift.date);
         const day = shiftDate.getDate();
-        const month = this.MONTHS[shiftDate.getMonth()];
-        
-        // Calculate time remaining until shift ends
-        const [startHour, startMinute] = currentShift.startTime.split(':').map(Number);
-        const [endHour, endMinute] = currentShift.endTime.split(':').map(Number);
 
-        const shiftStartTime = new Date(shiftDate);
-        shiftStartTime.setHours(startHour, startMinute, 0, 0);
+        // Check if it's today or tomorrow
+        const today = new Date(now);
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
 
-        const shiftEndTime = new Date(shiftDate);
-        shiftEndTime.setHours(endHour, endMinute, 0, 0);
+        // Create date and countdown format to match payroll card structure
+        let dayNumber = `${day}.`;
+        let timeIndicator = '';
 
-        // Handle shifts that cross midnight
-        if (shiftEndTime < shiftStartTime) {
-            shiftEndTime.setDate(shiftEndTime.getDate() + 1);
-        }
-
-        const timeRemaining = shiftEndTime - now;
-        const hoursRemaining = Math.floor(timeRemaining / (1000 * 60 * 60));
-        const minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-        const secondsRemaining = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-        let timeRemainingText = '';
-        if (hoursRemaining > 0) {
-            // Create compact version without spaces for mobile
-            timeRemainingText = `<span class="countdown-wrapper">(<span class="countdown-hours">${hoursRemaining}t</span> <span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-hours">${hoursRemaining}t</span><span class="countdown-minutes">${minutesRemaining}m</span><span class="countdown-seconds">${secondsRemaining}s</span></span>`;
-        } else if (minutesRemaining > 0) {
-            timeRemainingText = `<span class="countdown-wrapper">(<span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-minutes">${minutesRemaining}m</span><span class="countdown-seconds">${secondsRemaining}s</span></span>`;
-        } else if (secondsRemaining > 0) {
-            timeRemainingText = `<span class="countdown-wrapper">(<span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-seconds">${secondsRemaining}s</span></span>`;
+        if (shiftDate.toDateString() === today.toDateString()) {
+            timeIndicator = 'i dag';
+        } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
+            timeIndicator = 'i morgen';
         } else {
-            // Shift has ended
-            timeRemainingText = `<span class="countdown-wrapper">(Ferdig)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens">Ferdig</span>`;
+            // For other dates, show relative time
+            const daysDiff = Math.ceil((shiftDate - today) / (1000 * 60 * 60 * 24));
+            if (daysDiff > 1) {
+                timeIndicator = `om ${daysDiff} dager`;
+            } else {
+                timeIndicator = '';
+            }
         }
-        
-        const typeClass = currentShift.type === 0 ? 'weekday' : (currentShift.type === 1 ? 'saturday' : 'sunday');
-        const seriesBadge = currentShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
-        
+
+        // Format shift hours to match payroll card period format
+        const shiftHours = `${nextShift.startTime} - ${nextShift.endTime}`;
+
+        // Create the shift card content - exactly matches payroll card structure
         nextShiftContent.innerHTML = `
-            <div class="shift-item ${typeClass} active" data-shift-id="${currentShift.id}" style="cursor: pointer; position: relative;">
-                <div class="next-shift-badge">NÅ</div>
+            <div class="shift-item">
                 <div class="shift-info">
-                    <div class="shift-date">
-                        <span class="shift-date-number">${day}. ${month}</span>
+                    <div class="shift-title">Neste vakt</div>
+                    <div class="shift-countdown">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12,6 12,12 16,14"></polyline>
+                        </svg>
+                        <span class="shift-date-number">${dayNumber}</span>
                         <span class="shift-date-separator"></span>
-                        <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
-                        <span class="shift-countdown-timer"> ${timeRemainingText}</span>
-                    </div>
-                    <div class="shift-details">
-                        <div class="shift-time-with-hours">
-                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            <span>${currentShift.startTime} - ${currentShift.endTime}</span>
-                            <span class="shift-time-arrow">→</span>
-                            <span>${this.formatHours(fullShiftCalculation.totalHours)}</span>
-                        </div>
+                        <span class="shift-date-time">${timeIndicator}</span>
                     </div>
                 </div>
                 <div class="shift-amount-wrapper">
-                    <div class="shift-total">${this.formatCurrencyDetailed(currentEarnings.totalEarned)}</div>
-                    <div class="shift-breakdown">
-                        ${this.formatCurrencyDetailed(currentEarnings.baseEarned)} + ${this.formatCurrencyDetailed(currentEarnings.bonusEarned)}
-                    </div>
+                    <div class="shift-total">${this.formatCurrency(calculation.total)}</div>
+                    <div class="shift-period">${shiftHours}</div>
                 </div>
             </div>
         `;
-        
-                // Click handler is handled by global event delegation in app.js
-        // No need for direct event listener here
     },
 
-    calculateCurrentShiftEarnings(shift, now) {
-        const shiftDate = new Date(shift.date);
-        const [startHour, startMinute] = shift.startTime.split(':').map(Number);
-        const shiftStartTime = new Date(shiftDate);
-        shiftStartTime.setHours(startHour, startMinute, 0, 0);
-        
-        // Calculate time worked so far in hours
-        const timeWorked = now - shiftStartTime;
-        const hoursWorked = timeWorked / (1000 * 60 * 60);
-        
-        // Get wage rate and bonuses
-        const wageRate = this.getCurrentWageRate();
-        const bonuses = this.getCurrentBonuses();
-        const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-        const bonusSegments = bonuses[bonusType] || [];
-        
-        // Calculate base earnings so far
-        const baseEarned = hoursWorked * wageRate;
-        
-        // Calculate bonus earnings so far - include seconds for real-time updates
-        const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        const bonusEarned = this.calculateBonusWithSeconds(shift.startTime, currentTimeStr, bonusSegments);
-        
-        return {
-            totalHours: hoursWorked,
-            baseEarned: baseEarned,
-            bonusEarned: bonusEarned,
-            totalEarned: baseEarned + bonusEarned
-        };
-    },
-
-    startNextShiftTimer() {
-        // Clear any existing timer
-        this.stopNextShiftTimer();
-        
-        // Only start timer if we're viewing the current month and year
-        const now = new Date();
-        const currentMonth = now.getMonth() + 1;
-        const currentYear = now.getFullYear();
-        
-        if (this.currentMonth === currentMonth && this.currentYear === currentYear) {
-            // Check if there's a current shift or upcoming shifts today that need real-time updates
-            const today = new Date();
-            const todayShifts = this.shifts.filter(shift => {
-                const shiftDate = new Date(shift.date);
-                if (shiftDate.toDateString() === today.toDateString()) {
-                    const [startHour, startMinute] = shift.startTime.split(':').map(Number);
-                    const [endHour, endMinute] = shift.endTime.split(':').map(Number);
-                    
-                    const shiftStartTime = new Date(shiftDate);
-                    shiftStartTime.setHours(startHour, startMinute, 0, 0);
-                    
-                    const shiftEndTime = new Date(shiftDate);
-                    shiftEndTime.setHours(endHour, endMinute, 0, 0);
-                    
-                    // Handle shifts that cross midnight
-                    if (shiftEndTime < shiftStartTime) {
-                        shiftEndTime.setDate(shiftEndTime.getDate() + 1);
-                    }
-                    
-                    // Include current shifts (happening now) or upcoming shifts (not started yet)
-                    return (now >= shiftStartTime && now <= shiftEndTime) || shiftStartTime > now;
-                }
-                return false;
-            });
-            
-            // Start timer if there are current shifts or upcoming shifts today
-            if (todayShifts.length > 0) {
-                this.nextShiftTimer = setInterval(() => {
-                    this.updateNextShiftCard();
-                }, 1000); // Update every second
-            }
-        }
-    },
-
-    stopNextShiftTimer() {
-        if (this.nextShiftTimer) {
-            clearInterval(this.nextShiftTimer);
-            this.nextShiftTimer = null;
-        }
-    },
-
-    displayBestShiftCard() {
+    // Display Future Shifts Card - for non-current months
+    displayFutureShiftsCard() {
         const nextShiftContent = document.getElementById('nextShiftContent');
         const nextShiftEmpty = document.getElementById('nextShiftEmpty');
 
@@ -4179,24 +4210,14 @@ export const app = {
             };
         });
 
-        // Sort by earnings (highest first), then by date (earliest first), then by start time (earliest first)
+        // Sort by earnings (highest first), then by date (earliest first)
         shiftsWithEarnings.sort((a, b) => {
-            // First, compare by earnings (highest first)
             if (b.earnings !== a.earnings) {
                 return b.earnings - a.earnings;
             }
-
-            // If earnings are equal, compare by date (earliest first)
             const aDate = new Date(a.shift.date);
             const bDate = new Date(b.shift.date);
-            if (aDate.getTime() !== bDate.getTime()) {
-                return aDate - bDate;
-            }
-
-            // If dates are equal, compare by start time (earliest first)
-            const [aHour, aMinute] = a.shift.startTime.split(':').map(Number);
-            const [bHour, bMinute] = b.shift.startTime.split(':').map(Number);
-            return (aHour * 60 + aMinute) - (bHour * 60 + bMinute);
+            return aDate - bDate;
         });
 
         const bestShiftData = shiftsWithEarnings[0];
@@ -4209,49 +4230,123 @@ export const app = {
 
         // Format date
         const shiftDate = new Date(bestShift.date);
-        const weekday = this.WEEKDAYS[shiftDate.getDay()];
         const day = shiftDate.getDate();
         const month = this.MONTHS[shiftDate.getMonth()];
 
-        // Create the shift item using the exact same structure as other shift cards
-        const typeClass = bestShift.type === 0 ? 'weekday' : (bestShift.type === 1 ? 'saturday' : 'sunday');
-        const seriesBadge = bestShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+        // Format shift hours to match payroll card period format
+        const shiftHours = `${bestShift.startTime} - ${bestShift.endTime}`;
 
-        // No highlighting for best shift (remove active class)
+        // Create the shift card content - exactly matches payroll card structure
         nextShiftContent.innerHTML = `
-            <div class="shift-item ${typeClass}" data-shift-id="${bestShift.id}" style="cursor: pointer; position: relative;">
-                <div class="next-shift-badge">Beste</div>
+            <div class="shift-item">
                 <div class="shift-info">
-                    <div class="shift-date">
-                        <span class="shift-date-number">${day}. ${month}</span>
+                    <div class="shift-title">Beste vakt</div>
+                    <div class="shift-countdown">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12,6 12,12 16,14"></polyline>
+                        </svg>
+                        <span class="shift-date-number">${day}.</span>
                         <span class="shift-date-separator"></span>
-                        <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
-                    </div>
-                    <div class="shift-details">
-                        <div class="shift-time-with-hours">
-                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            <span>${bestShift.startTime} - ${bestShift.endTime}</span>
-                            <span class="shift-time-arrow">→</span>
-                            <span>${this.formatHours(calculation.totalHours)}</span>
-                        </div>
+                        <span class="shift-date-time">${month}</span>
                     </div>
                 </div>
                 <div class="shift-amount-wrapper">
                     <div class="shift-total">${this.formatCurrency(calculation.total)}</div>
-                    <div class="shift-breakdown">
-                        ${this.formatCurrencyShort(calculation.baseWage)} + ${this.formatCurrencyShort(calculation.bonus)}
-                    </div>
+                    <div class="shift-period">${shiftHours}</div>
                 </div>
             </div>
         `;
     },
 
+    // Display Current Shift Card - for shifts happening now
+    displayCurrentShiftCard(currentShift, now) {
+        const nextShiftContent = document.getElementById('nextShiftContent');
+        const nextShiftEmpty = document.getElementById('nextShiftEmpty');
+
+        if (!nextShiftContent || !nextShiftEmpty) return;
+
+        nextShiftContent.style.display = 'flex';
+        nextShiftEmpty.style.display = 'none';
+
+        // Calculate current earnings
+        const calculation = this.calculateShift(currentShift);
+
+        // Format date
+        const shiftDate = new Date(currentShift.date);
+        const day = shiftDate.getDate();
+
+        // Calculate time remaining until shift ends
+        const [endHour, endMinute] = currentShift.endTime.split(':').map(Number);
+        const shiftEndTime = new Date(shiftDate);
+        shiftEndTime.setHours(endHour, endMinute, 0, 0);
+
+        // Handle shifts that cross midnight
+        const [startHour] = currentShift.startTime.split(':').map(Number);
+        if (endHour < startHour) {
+            shiftEndTime.setDate(shiftEndTime.getDate() + 1);
+        }
+
+        const timeRemaining = shiftEndTime - now;
+        const hoursRemaining = Math.floor(timeRemaining / (1000 * 60 * 60));
+        const minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+
+        let timeIndicator = 'pågår nå';
+        if (hoursRemaining > 0) {
+            timeIndicator = `${hoursRemaining}t ${minutesRemaining}m igjen`;
+        } else if (minutesRemaining > 0) {
+            timeIndicator = `${minutesRemaining}m igjen`;
+        } else {
+            timeIndicator = 'ferdig snart';
+        }
+
+        // Format shift hours to match payroll card period format
+        const shiftHours = `${currentShift.startTime} - ${currentShift.endTime}`;
+
+        // Create the shift card content - exactly matches payroll card structure
+        nextShiftContent.innerHTML = `
+            <div class="shift-item">
+                <div class="shift-info">
+                    <div class="shift-title">Pågående vakt</div>
+                    <div class="shift-countdown">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12,6 12,12 16,14"></polyline>
+                        </svg>
+                        <span class="shift-date-number">${day}.</span>
+                        <span class="shift-date-separator"></span>
+                        <span class="shift-date-time">${timeIndicator}</span>
+                    </div>
+                </div>
+                <div class="shift-amount-wrapper">
+                    <div class="shift-total">${this.formatCurrency(calculation.total)}</div>
+                    <div class="shift-period">${shiftHours}</div>
+                </div>
+            </div>
+        `;
+    },
+
+    // Display No Shifts Card - empty state
+    displayNoShiftsCard() {
+        const nextShiftContent = document.getElementById('nextShiftContent');
+        const nextShiftEmpty = document.getElementById('nextShiftEmpty');
+
+        if (!nextShiftContent || !nextShiftEmpty) return;
+
+        // No upcoming shifts
+        nextShiftContent.style.display = 'none';
+        nextShiftEmpty.style.display = 'flex';
+
+        // Reset empty message for current month
+        const emptyMessage = nextShiftEmpty.querySelector('.empty-message');
+        if (emptyMessage) {
+            emptyMessage.textContent = 'Ingen kommende vakter';
+        }
+    },
+
     // Clean up timers when page is about to unload
     cleanup() {
-        this.stopNextShiftTimer();
+
 
         // Clean up month navigation performance optimization timers
         if (this.monthNavigationTimeout) {

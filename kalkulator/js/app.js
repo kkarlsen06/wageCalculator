@@ -38,8 +38,16 @@ function handleResponsiveMonthNavigation() {
   // Enhanced logic for iOS Safari viewport issues
   let useDashboardNav = false;
 
+  // Small mobile devices - always use dashboard navigation
+  if (width <= 429) {
+    useDashboardNav = true;
+  }
+  // Small landscape devices - use dashboard navigation
+  else if (orientation === 'landscape' && height <= 399) {
+    useDashboardNav = true;
+  }
   // Desktop
-  if (width >= 1024) {
+  else if (width >= 1024) {
     useDashboardNav = true;
   }
   // Large mobile in landscape (iOS Safari fix)
