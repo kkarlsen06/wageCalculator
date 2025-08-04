@@ -3031,18 +3031,6 @@ input:checked + .slider:before {
   opacity: 0.9;
 }
 
-.shift-item.weekday {
-  /* Left border indicator removed */
-}
-
-.shift-item.saturday {
-  /* Left border indicator removed */
-}
-
-.shift-item.sunday {
-  /* Left border indicator removed */
-}
-
 .shift-info {
   flex: 1;
   display: flex;
