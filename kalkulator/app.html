@@ -41,7 +41,9 @@
                               <a href="../index.html" class="header-logo-link">
                                   <img src="../assets/kkarlsen_ikon_clean.png" class="header-logo" alt="kkarlsen logo">
                               </a>
-
+                              <button class="dashboard-toggle-btn" id="dashboardToggleBtn" onclick="app.toggleDashboardView()" aria-label="Bytt til statistikkvisning">
+                                  <span class="toggle-text">Stat.</span>
+                              </button>
                           </div>
                           <div class="header-right">
                                 <div class="user-profile-container">
@@ -85,6 +87,47 @@
                               <div class="empty-message">Ingen kommende vakter</div>
                           </div>
                       </div>
+
+                      <div class="next-payroll-card" id="nextPayrollCard">
+                          <div class="next-payroll-content" id="nextPayrollContent">
+                              <!-- Will be populated with payroll-item structure -->
+                          </div>
+                          <div class="next-payroll-empty" id="nextPayrollEmpty" style="display: none;">
+                              <div class="empty-message">Ingen lønnsdata tilgjengelig</div>
+                          </div>
+                      </div>
+
+                      <!-- Month Navigation - positioned directly underneath Next Payroll card -->
+                      <!-- This navigation stays in dashboard section across all screen sizes -->
+                      <div class="month-navigation-container dashboard-month-nav">
+                          <div class="month-navigation">
+                              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                      <polyline points="15 18 9 12 15 6"></polyline>
+                                  </svg>
+                              </button>
+                              <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
+                              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                      <polyline points="9 6 15 12 9 18"></polyline>
+                                  </svg>
+                              </button>
+                          </div>
+                      </div>
+
+
+
+
+
+                  </div>
+              </div>
+             </main>
+          </section>
+
+          <!-- Statistics Section -->
+          <section class="snap-section statistics-section" role="complementary" aria-label="Statistikk">
+              <div class="app-container">
+                  <div class="statistics-content">
                       <div class="weekly-hours-chart-card" id="weeklyHoursChart">
                           <div class="chart-cards-container">
                               <!-- Bar Chart Card -->
@@ -135,32 +178,8 @@
                               <span class="chart-progress-label">0 % av 0 kr</span>
                           </div>
                       </div>
-
-                      <!-- Month Navigation for larger screens - positioned below stat card -->
-                      <!-- This navigation is shown on screens >= 1024px and hidden on smaller screens -->
-                      <div class="month-navigation-container dashboard-month-nav">
-                          <div class="month-navigation">
-                              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
-                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                      <polyline points="15 18 9 12 15 6"></polyline>
-                                  </svg>
-                              </button>
-                              <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
-                              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
-                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                      <polyline points="9 6 15 12 9 18"></polyline>
-                                  </svg>
-                              </button>
-                          </div>
-                      </div>
-
-
-
-
-
                   </div>
               </div>
-             </main>
           </section>
 
           <!-- Shift List Section -->
@@ -354,6 +373,14 @@
                           <span class="text-secondary" style="margin-left:8px;">%</span>
                       </div>
                       <small class="form-hint">Skriv inn skatteprosenten som skal trekkes fra bruttolønnen</small>
+                  </div>
+
+                  <div class="form-group form-group-with-hint">
+                      <label for="payrollDayInput">Lønningsdag</label>
+                      <div class="switch-group">
+                          <input type="number" id="payrollDayInput" class="form-control" min="1" max="31" step="1" style="max-width:140px;display:inline-block;" placeholder="15" onchange="app.updatePayrollDay(this.value)">
+                      </div>
+                      <small class="form-hint">Velg hvilken dag i måneden du får utbetalt lønn (1-31)</small>
                   </div>
               </div>
 

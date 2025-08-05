@@ -22,41 +22,17 @@ function setThemeColor() {
   }
 }
 
-// Enhanced responsive month navigation handler for iOS Safari viewport issues
+// Enhanced responsive month navigation handler - UPDATED: Always use dashboard navigation
 function handleResponsiveMonthNavigation() {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const orientation = width > height ? 'landscape' : 'portrait';
-  const isLargeDevice = Math.max(width, height) >= 800; // Detect large devices
-
   // Get month navigation elements
   const dashboardNav = document.querySelector('.dashboard-month-nav');
   const shiftNav = document.querySelector('.shift-section .month-navigation-container');
 
   if (!dashboardNav || !shiftNav) return;
 
-  // Enhanced logic for iOS Safari viewport issues
-  let useDashboardNav = false;
-
-  // Desktop
-  if (width >= 1024) {
-    useDashboardNav = true;
-  }
-  // Large mobile in landscape (iOS Safari fix)
-  else if (orientation === 'landscape' && height >= 400 && isLargeDevice) {
-    useDashboardNav = true;
-  }
-  // Large mobile portrait (iPhone Pro Max and larger)
-  else if (width >= 430 && orientation === 'portrait') {
-    useDashboardNav = true;
-  }
-
-  // Apply the decision with CSS class override
-  if (useDashboardNav) {
-    document.body.classList.add('force-dashboard-nav');
-  } else {
-    document.body.classList.remove('force-dashboard-nav');
-  }
+  // UPDATED: Always use dashboard navigation across all screen sizes
+  // This ensures a single month picker instance that stays in the dashboard section consistently
+  document.body.classList.add('force-dashboard-nav');
 }
 
 setAppHeight();

@@ -266,6 +266,8 @@ export const app = {
     selectedWeek: null, // Track which week is selected for drill-down
     taxDeductionEnabled: false, // Setting for enabling tax deduction
     taxPercentage: 0.0, // Tax percentage to deduct (0.0 to 100.0)
+    payrollDay: 15, // Day of the month when user receives payroll (1-31)
+    dashboardView: 'default', // Dashboard view mode: 'default' or 'stats'
     nextShiftTimer: null, // Timer for updating next shift countdown
     lastRenderedMonth: null,
     lastRenderedYear: null,
@@ -299,6 +301,27 @@ export const app = {
             console.error('loadFromSupabase failed:', err);
             this.loadFromLocalStorage();
         }
+
+        // Initialize dashboard view from localStorage
+        const savedDashboardView = localStorage.getItem('dashboardView');
+        if (savedDashboardView && (savedDashboardView === 'stats' || savedDashboardView === 'default')) {
+            this.dashboardView = savedDashboardView;
+        }
+
+        // Apply initial dashboard view and update toggle button
+        this.applyDashboardView();
+        const toggleBtn = document.getElementById('dashboardToggleBtn');
+        if (toggleBtn) {
+            toggleBtn.classList.toggle('active', this.dashboardView === 'stats');
+            const toggleText = toggleBtn.querySelector('.toggle-text');
+            if (toggleText) {
+                toggleText.textContent = this.dashboardView === 'stats' ? 'Std.' : 'Stat.';
+            }
+            toggleBtn.setAttribute('aria-label',
+                this.dashboardView === 'stats' ? 'Bytt til standardvisning' : 'Bytt til statistikkvisning'
+            );
+        }
+
         // Set initial shifts
         this.shifts = [...this.userShifts];
         // Bind pause toggle
@@ -1441,6 +1464,7 @@ export const app = {
                 this.defaultShiftsView = settings.default_shifts_view || 'list';
                 this.taxDeductionEnabled = settings.tax_deduction_enabled === true;
                 this.taxPercentage = parseFloat(settings.tax_percentage) || 0.0;
+                this.payrollDay = parseInt(settings.payroll_day) || 15;
 
                 // Debug logging for tax deduction settings
                 console.log('Loaded tax deduction settings:', {
@@ -1475,6 +1499,7 @@ export const app = {
         };
         this.taxDeductionEnabled = false;
         this.taxPercentage = 0.0;
+        this.payrollDay = 15; // Default payroll day (15th of each month)
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.currentYear = new Date().getFullYear(); // Default to current year
         this.pauseDeduction = false;
@@ -1533,6 +1558,11 @@ export const app = {
         const taxPercentageInput = document.getElementById('taxPercentageInput');
         if (taxPercentageInput) {
             taxPercentageInput.value = this.taxPercentage;
+        }
+
+        const payrollDayInput = document.getElementById('payrollDayInput');
+        if (payrollDayInput) {
+            payrollDayInput.value = this.payrollDay;
         }
 
         // Show/hide tax percentage section based on toggle state
@@ -1655,6 +1685,7 @@ export const app = {
                 }
                 if ('tax_deduction_enabled' in existingSettings) settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 if ('tax_percentage' in existingSettings) settingsData.tax_percentage = this.taxPercentage;
+                if ('payroll_day' in existingSettings) settingsData.payroll_day = this.payrollDay;
 
                 // Debug logging for tax deduction save
                 console.log('Saving tax deduction settings:', {
@@ -1681,6 +1712,7 @@ export const app = {
                 settingsData.custom_bonuses = this.customBonuses || {};
                 settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 settingsData.tax_percentage = this.taxPercentage;
+                settingsData.payroll_day = this.payrollDay;
             }
 
             const { error } = await window.supa
@@ -1728,7 +1760,8 @@ export const app = {
                 this.defaultShiftsView = data.defaultShiftsView || 'list';
                 this.taxDeductionEnabled = data.taxDeductionEnabled || false;
                 this.taxPercentage = data.taxPercentage || 0.0;
-                
+                this.payrollDay = parseInt(data.payrollDay) || 15;
+
                 this.updateSettingsUI();
             } else {
                 this.setDefaultSettings();
@@ -1996,6 +2029,64 @@ export const app = {
             console.log('Set section visibility to:', shouldShow ? 'visible' : 'hidden');
         }
     },
+
+    // Payroll day management methods
+    updatePayrollDay(value) {
+        const day = parseInt(value);
+
+        // Validate input (1-31 range)
+        if (isNaN(day) || day < 1 || day > 31) {
+            console.warn('Invalid payroll day:', value, 'Using default value 15');
+            this.payrollDay = 15;
+        } else {
+            this.payrollDay = day;
+        }
+
+        // Update the input field to reflect the validated value
+        const payrollDayInput = document.getElementById('payrollDayInput');
+        if (payrollDayInput) {
+            payrollDayInput.value = this.payrollDay;
+        }
+
+        this.saveSettingsToSupabase();
+        this.updateDisplay();
+    },
+
+    getNextPayrollDate() {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); // 0-based
+        const currentDay = now.getDate();
+
+        // Start with this month's payroll date
+        let nextPayrollDate = new Date(currentYear, currentMonth, this.payrollDay);
+
+        // If this month's payroll date has already passed, move to next month
+        if (nextPayrollDate <= now) {
+            nextPayrollDate = new Date(currentYear, currentMonth + 1, this.payrollDay);
+        }
+
+        // Handle months with fewer days (e.g., February with 28/29 days)
+        // If the payroll day doesn't exist in the target month, use the last day of that month
+        const targetMonth = nextPayrollDate.getMonth();
+        const lastDayOfMonth = new Date(nextPayrollDate.getFullYear(), targetMonth + 1, 0).getDate();
+
+        if (this.payrollDay > lastDayOfMonth) {
+            nextPayrollDate.setDate(lastDayOfMonth);
+        }
+
+        // Adjust for weekends - move to preceding Friday if payroll falls on weekend
+        const dayOfWeek = nextPayrollDate.getDay(); // 0 = Sunday, 6 = Saturday
+
+        if (dayOfWeek === 0) { // Sunday
+            nextPayrollDate.setDate(nextPayrollDate.getDate() - 2); // Move to Friday
+        } else if (dayOfWeek === 6) { // Saturday
+            nextPayrollDate.setDate(nextPayrollDate.getDate() - 1); // Move to Friday
+        }
+
+        return nextPayrollDate;
+    },
+
     populateCustomBonusSlots() {
         const types = ['weekday', 'saturday', 'sunday'];
         
@@ -2186,6 +2277,55 @@ export const app = {
 
         }
     },
+
+    async openPaydateSettings() {
+        // Close any existing expanded views, dropdowns, and modals
+        this.closeShiftDetails();
+        this.closeProfileDropdown();
+        this.closeProfile();
+
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            // Update UI to match current state
+            this.updateSettingsUI();
+
+            // Set active tab to wage where paydate setting is located
+            this.switchSettingsTabSync('wage');
+
+            // Ensure tax deduction UI is properly updated after modal is shown
+            setTimeout(() => {
+                this.updateTaxDeductionUI();
+            }, 50);
+
+            // Show the modal
+            modal.style.display = 'flex';
+
+            // Ensure custom bonus slots are populated if custom mode is active
+            if (!this.usePreset) {
+                setTimeout(() => {
+                    this.populateCustomBonusSlots();
+                }, 100);
+            }
+
+            // Scroll to and highlight the payroll day input field
+            setTimeout(() => {
+                const payrollDayInput = document.getElementById('payrollDayInput');
+                if (payrollDayInput) {
+                    // Scroll the input into view
+                    payrollDayInput.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+
+                    // Focus and select the input after scrolling
+                    setTimeout(() => {
+                        payrollDayInput.focus();
+                        payrollDayInput.select();
+                    }, 300);
+                }
+            }, 150);
+        }
+    },
     async closeSettings(shouldSave = true) {
         const modal = document.getElementById('settingsModal');
         const wasModalOpen = modal && modal.style.display !== 'none';
@@ -2207,6 +2347,116 @@ export const app = {
 
         // Close profile dropdown if open
         this.closeProfileDropdown();
+    },
+
+    // Dashboard view toggle functionality
+    toggleDashboardView() {
+        const toggleBtn = document.getElementById('dashboardToggleBtn');
+        if (!toggleBtn) return;
+
+        // Toggle between 'default' and 'stats' view
+        this.dashboardView = this.dashboardView === 'default' ? 'stats' : 'default';
+
+        // Update button active state
+        toggleBtn.classList.toggle('active', this.dashboardView === 'stats');
+
+        // Update button text and aria-label
+        const toggleText = toggleBtn.querySelector('.toggle-text');
+        if (toggleText) {
+            toggleText.textContent = this.dashboardView === 'stats' ? 'Std.' : 'Stat.';
+        }
+        toggleBtn.setAttribute('aria-label',
+            this.dashboardView === 'stats' ? 'Bytt til standardvisning' : 'Bytt til statistikkvisning'
+        );
+
+        // Apply view changes
+        this.applyDashboardView();
+
+        // Save preference to localStorage
+        localStorage.setItem('dashboardView', this.dashboardView);
+    },
+
+    applyDashboardView() {
+        const body = document.body;
+        const dashboardContent = document.querySelector('.dashboard-content');
+        const statisticsSection = document.querySelector('.statistics-section');
+        const weeklyHoursChart = document.getElementById('weeklyHoursChart');
+
+        if (this.dashboardView === 'stats') {
+            // Stats view: move stats card to replace dashboard content
+            body.classList.add('stats-view');
+
+            // Debug: Check if class was applied
+            console.log('Body classes after adding stats-view:', body.className);
+
+            // Manually hide dashboard cards as backup
+            const totalCard = document.querySelector('.total-card');
+            const nextShiftCard = document.querySelector('.next-shift-card');
+            const nextPayrollCard = document.querySelector('.next-payroll-card');
+
+            if (totalCard) {
+                totalCard.style.display = 'none';
+                console.log('Manually hid total card');
+            }
+            if (nextShiftCard) {
+                nextShiftCard.style.display = 'none';
+                console.log('Manually hid next shift card');
+            }
+            if (nextPayrollCard) {
+                nextPayrollCard.style.display = 'none';
+                console.log('Manually hid next payroll card');
+            }
+
+            // Move the stats card to dashboard content if not already there
+            if (weeklyHoursChart && dashboardContent && !dashboardContent.contains(weeklyHoursChart)) {
+                // Create a container for the stats card in dashboard
+                const statsContainer = document.createElement('div');
+                statsContainer.className = 'dashboard-stats-container';
+                statsContainer.style.order = '1'; // Position first in dashboard
+
+                // Move the chart to the dashboard
+                statsContainer.appendChild(weeklyHoursChart);
+                dashboardContent.appendChild(statsContainer);
+            }
+
+            console.log('Applied stats view - stats card replaces dashboard content');
+        } else {
+            // Default view: move stats card back to statistics section
+            body.classList.remove('stats-view');
+
+            // Show dashboard cards again
+            const totalCard = document.querySelector('.total-card');
+            const nextShiftCard = document.querySelector('.next-shift-card');
+            const nextPayrollCard = document.querySelector('.next-payroll-card');
+
+            if (totalCard) {
+                totalCard.style.display = '';
+                console.log('Showed total card');
+            }
+            if (nextShiftCard) {
+                nextShiftCard.style.display = '';
+                console.log('Showed next shift card');
+            }
+            if (nextPayrollCard) {
+                nextPayrollCard.style.display = '';
+                console.log('Showed next payroll card');
+            }
+
+            // Move the stats card back to statistics section if it's in dashboard
+            if (weeklyHoursChart && statisticsSection) {
+                const statisticsContent = statisticsSection.querySelector('.statistics-content');
+                const dashboardStatsContainer = document.querySelector('.dashboard-stats-container');
+
+                if (dashboardStatsContainer && statisticsContent) {
+                    // Move chart back to statistics section
+                    statisticsContent.appendChild(weeklyHoursChart);
+                    // Remove the temporary container
+                    dashboardStatsContainer.remove();
+                }
+            }
+
+            console.log('Applied default view - stats card moved back to statistics section');
+        }
     },
 
     // Profile dropdown functionality
@@ -2467,6 +2717,7 @@ export const app = {
     updateDisplay(shouldAnimate = false) {
         this.updateHeader();
         this.updateNextShiftCard(); // Move before updateStats to ensure correct viewport calculations
+        this.updateNextPayrollCard(); // Update the payroll card
         this.updateStats(shouldAnimate);
         this.updateWeeklyHoursChart(); // Update the weekly hours chart
         this.updateShiftList();
@@ -3843,9 +4094,36 @@ export const app = {
                 const day = shiftDate.getDate();
                 const month = this.MONTHS[shiftDate.getMonth()];
 
+                // Check if the shift is in the current week
+                const currentWeekNumber = this.getISOWeekNumber(now);
+                const shiftWeekNumber = this.getISOWeekNumber(shiftDate);
+                const isCurrentWeek = currentWeekNumber === shiftWeekNumber && shiftDate.getFullYear() === now.getFullYear();
+
+                // Determine date display format with Norwegian day indicators
+                let dateDisplay;
+                if (shiftDate.toDateString() === now.toDateString()) {
+                    // Show "I dag" for today's shifts
+                    dateDisplay = `I dag${seriesBadge}`;
+                } else {
+                    // Calculate tomorrow for comparison
+                    const tomorrow = new Date(now);
+                    tomorrow.setDate(now.getDate() + 1);
+
+                    if (shiftDate.toDateString() === tomorrow.toDateString()) {
+                        // Show "I morgen" for tomorrow's shifts
+                        dateDisplay = `I morgen${seriesBadge}`;
+                    } else if (isCurrentWeek) {
+                        // Show capitalized weekday name for shifts in current week
+                        const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+                        dateDisplay = `${capitalizedWeekday}${seriesBadge}`;
+                    } else {
+                        // Show full date without weekday for shifts outside current week
+                        dateDisplay = `${day}. ${month}${seriesBadge}`;
+                    }
+                }
+
                 // Create the shift item using the exact same structure as in the shift list
                 const typeClass = lastShift.type === 0 ? 'weekday' : (lastShift.type === 1 ? 'saturday' : 'sunday');
-                const seriesBadge = lastShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
                 // No highlighting for last shift (remove active class)
                 nextShiftContent.innerHTML = `
@@ -3853,9 +4131,7 @@ export const app = {
                         <div class="next-shift-badge">Siste</div>
                         <div class="shift-info">
                             <div class="shift-date">
-                                <span class="shift-date-number">${day}. ${month}</span>
-                                <span class="shift-date-separator"></span>
-                                <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                                <span class="shift-date-weekday">${dateDisplay}</span>
                             </div>
                             <div class="shift-details">
                                 <div class="shift-time-with-hours">
@@ -3903,6 +4179,28 @@ export const app = {
             // Create the shift item using the exact same structure as in the shift list
             const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
             const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
+
+            // Check if the shift is in the current week
+            const currentWeekNumber = this.getISOWeekNumber(now);
+            const shiftWeekNumber = this.getISOWeekNumber(shiftDate);
+            const isCurrentWeek = currentWeekNumber === shiftWeekNumber && shiftDate.getFullYear() === now.getFullYear();
+
+            // Determine date display format with Norwegian day indicators
+            let dateDisplay;
+            if (shiftDate.toDateString() === today.toDateString()) {
+                // Show "I dag" for today's shifts
+                dateDisplay = `I dag${seriesBadge}`;
+            } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
+                // Show "I morgen" for tomorrow's shifts
+                dateDisplay = `I morgen${seriesBadge}`;
+            } else if (isCurrentWeek) {
+                // Show capitalized weekday name for shifts in current week
+                const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+                dateDisplay = `${capitalizedWeekday}${seriesBadge}`;
+            } else {
+                // Show full date without weekday for shifts outside current week
+                dateDisplay = `${day}. ${month}${seriesBadge}`;
+            }
             
             // Add time remaining for today's shifts or "i morgen" for tomorrow's shifts
             let dateSuffix = '';
@@ -3942,10 +4240,8 @@ export const app = {
                     <div class="next-shift-badge">Neste</div>
                     <div class="shift-info">
                         <div class="shift-date">
-                            <span class="shift-date-number">${day}. ${month}</span>
-                            <span class="shift-date-separator"></span>
-                            <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
-                            <span class="shift-countdown-timer">${dateSuffix}</span>
+                            <span class="shift-date-weekday">${dateDisplay}</span>
+                            <span class="shift-countdown-timer">  ${dateSuffix}</span>
                         </div>
                         <div class="shift-details">
                             <div class="shift-time-with-hours">
@@ -3991,6 +4287,25 @@ export const app = {
         const weekday = this.WEEKDAYS[shiftDate.getDay()];
         const day = shiftDate.getDate();
         const month = this.MONTHS[shiftDate.getMonth()];
+
+        // Check if the shift is in the current week
+        const currentWeekNumber = this.getISOWeekNumber(now);
+        const shiftWeekNumber = this.getISOWeekNumber(shiftDate);
+        const isCurrentWeek = currentWeekNumber === shiftWeekNumber && shiftDate.getFullYear() === now.getFullYear();
+
+        // Determine date display format with Norwegian day indicators
+        let dateDisplay;
+        if (shiftDate.toDateString() === now.toDateString()) {
+            // Show "I dag" for today's shifts (current shift is always today)
+            dateDisplay = `I dag`;
+        } else if (isCurrentWeek) {
+            // Show capitalized weekday name for shifts in current week
+            const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+            dateDisplay = `${capitalizedWeekday}`;
+        } else {
+            // Show full date without weekday for shifts outside current week
+            dateDisplay = `${day}. ${month}`;
+        }
         
         // Calculate time remaining until shift ends
         const [startHour, startMinute] = currentShift.startTime.split(':').map(Number);
@@ -4033,10 +4348,8 @@ export const app = {
                 <div class="next-shift-badge">NÅ</div>
                 <div class="shift-info">
                     <div class="shift-date">
-                        <span class="shift-date-number">${day}. ${month}</span>
-                        <span class="shift-date-separator"></span>
-                        <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
-                        <span class="shift-countdown-timer"> ${timeRemainingText}</span>
+                        <span class="shift-date-weekday">${dateDisplay}${seriesBadge}</span>
+                        <span class="shift-countdown-timer">  ${timeRemainingText}</span>
                     </div>
                     <div class="shift-details">
                         <div class="shift-time-with-hours">
@@ -4213,6 +4526,35 @@ export const app = {
         const day = shiftDate.getDate();
         const month = this.MONTHS[shiftDate.getMonth()];
 
+        // Check if the shift is in the current week
+        const now = new Date();
+        const currentWeekNumber = this.getISOWeekNumber(now);
+        const shiftWeekNumber = this.getISOWeekNumber(shiftDate);
+        const isCurrentWeek = currentWeekNumber === shiftWeekNumber && shiftDate.getFullYear() === now.getFullYear();
+
+        // Determine date display format with Norwegian day indicators
+        let dateDisplay;
+        if (shiftDate.toDateString() === now.toDateString()) {
+            // Show "I dag" for today's shifts
+            dateDisplay = `I dag`;
+        } else {
+            // Calculate tomorrow for comparison
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
+
+            if (shiftDate.toDateString() === tomorrow.toDateString()) {
+                // Show "I morgen" for tomorrow's shifts
+                dateDisplay = `I morgen`;
+            } else if (isCurrentWeek) {
+                // Show capitalized weekday name for shifts in current week
+                const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+                dateDisplay = `${capitalizedWeekday}`;
+            } else {
+                // Show full date without weekday for shifts outside current week
+                dateDisplay = `${day}. ${month}`;
+            }
+        }
+
         // Create the shift item using the exact same structure as other shift cards
         const typeClass = bestShift.type === 0 ? 'weekday' : (bestShift.type === 1 ? 'saturday' : 'sunday');
         const seriesBadge = bestShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
@@ -4223,9 +4565,7 @@ export const app = {
                 <div class="next-shift-badge">Beste</div>
                 <div class="shift-info">
                     <div class="shift-date">
-                        <span class="shift-date-number">${day}. ${month}</span>
-                        <span class="shift-date-separator"></span>
-                        <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                        <span class="shift-date-weekday">${dateDisplay}${seriesBadge}</span>
                     </div>
                     <div class="shift-details">
                         <div class="shift-time-with-hours">
@@ -4247,6 +4587,121 @@ export const app = {
                 </div>
             </div>
         `;
+    },
+
+    updateNextPayrollCard() {
+        const nextPayrollCard = document.getElementById('nextPayrollCard');
+        if (!nextPayrollCard) return;
+
+        const nextPayrollContent = document.getElementById('nextPayrollContent');
+        const nextPayrollEmpty = document.getElementById('nextPayrollEmpty');
+
+        if (!nextPayrollContent || !nextPayrollEmpty) return;
+
+        // Always show the card
+        nextPayrollCard.style.display = 'block';
+
+        // Get next payroll date
+        const nextPayrollDate = this.getNextPayrollDate();
+        const now = new Date();
+
+        // Calculate previous month's earnings
+        const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const previousMonthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === previousMonth.getMonth() &&
+            shift.date.getFullYear() === previousMonth.getFullYear()
+        );
+
+        if (previousMonthShifts.length === 0) {
+            // No shifts in previous month
+            nextPayrollContent.style.display = 'none';
+            nextPayrollEmpty.style.display = 'flex';
+            return;
+        }
+
+        // Calculate total earnings for previous month with breakdown
+        let totalEarnings = 0;
+        let totalBaseWage = 0;
+        let totalBonus = 0;
+
+        previousMonthShifts.forEach(shift => {
+            const calc = this.calculateShift(shift);
+            totalEarnings += calc.total;
+            totalBaseWage += calc.baseWage;
+            totalBonus += calc.bonus;
+        });
+
+        // Apply tax deduction if enabled
+        const displayAmount = this.taxDeductionEnabled ?
+            totalEarnings * (1 - this.taxPercentage / 100) :
+            totalEarnings;
+
+        // Calculate days until payroll
+        const daysUntilPayroll = Math.ceil((nextPayrollDate - now) / (1000 * 60 * 60 * 24));
+        let countdownText = '';
+
+        if (daysUntilPayroll === 0) {
+            countdownText = 'I dag';
+        } else if (daysUntilPayroll === 1) {
+            countdownText = 'I morgen';
+        } else if (daysUntilPayroll <= 7) {
+            countdownText = `Om ${daysUntilPayroll} dager`;
+        } else {
+            // For payrolls more than 7 days away, show the actual date
+            const payrollDay = nextPayrollDate.getDate();
+            const payrollMonth = this.MONTHS[nextPayrollDate.getMonth()];
+            countdownText = `${payrollDay}. ${payrollMonth}`;
+        }
+
+        // Format the payroll date for shift details display
+        const payrollDay = nextPayrollDate.getDate();
+        const payrollMonth = this.MONTHS[nextPayrollDate.getMonth()];
+        const payrollDateText = `${payrollDay}. ${payrollMonth}`;
+
+        // Determine if payroll is soon (within 7 days)
+        const activeClass = daysUntilPayroll <= 7 ? ' active' : '';
+
+        // Show payroll details
+        nextPayrollContent.style.display = 'flex';
+        nextPayrollEmpty.style.display = 'none';
+
+        nextPayrollContent.innerHTML = `
+            <div class="payroll-item${activeClass}" style="cursor: pointer; position: relative;">
+                <div class="next-payroll-badge">Lønn</div>
+                <div class="shift-info">
+                    <div class="shift-date">
+                        <span class="shift-countdown-timer">${countdownText}</span>
+                    </div>
+                    <div class="shift-details">
+                        <div class="shift-time-with-hours">
+                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 6v6l4 2"></path>
+                            </svg>
+                            <span>${payrollDateText}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="shift-amount-wrapper">
+                    <div class="shift-total">${this.formatCurrency(displayAmount)}</div>
+                    <div class="shift-breakdown">
+                        ${this.taxDeductionEnabled ?
+                            `${this.formatCurrencyShort(totalEarnings)} - ${this.formatCurrencyShort(totalEarnings - displayAmount)}` :
+                            `${this.formatCurrencyShort(totalBaseWage)} + ${this.formatCurrencyShort(totalBonus)}`
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add click event listener to open settings and navigate to paydate setting
+        const payrollItem = nextPayrollContent.querySelector('.payroll-item');
+        if (payrollItem) {
+            payrollItem.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openPaydateSettings();
+            });
+        }
     },
 
     // Clean up timers when page is about to unload

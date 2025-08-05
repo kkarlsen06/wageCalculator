@@ -808,6 +808,142 @@ body {
   gap: 8px;
 }
 
+/* Dashboard Toggle Button */
+.dashboard-toggle-btn {
+  background: rgba(18, 18, 18, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: none;
+  border-radius: 16px;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  margin-left: 8px;
+}
+
+.dashboard-toggle-btn:hover {
+  background: rgba(18, 18, 18, 0.85);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* Active state with enhanced 3D bevel effect */
+.dashboard-toggle-btn.active {
+  background: rgba(18, 18, 18, 0.85);
+  color: var(--text-primary);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 2px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.23),
+    inset 2px 0 0 rgba(255, 255, 255, 0.08),
+    inset -2px 0 0 rgba(0, 0, 0, 0.13);
+}
+
+.toggle-text {
+  display: block;
+}
+
+/* Dashboard View Toggle Styles */
+.stats-view .dashboard-content {
+  /* In stats view, restructure dashboard to show only stats */
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+/* Hide statistics section by default - only show stats card when Stats button is pressed */
+.statistics-section {
+  display: none !important;
+}
+
+/* Keep statistics section hidden in stats view since chart is moved to dashboard */
+.stats-view .statistics-section {
+  display: none;
+}
+
+/* Hide all original dashboard cards in stats view with smooth transition */
+body.stats-view .dashboard-content .total-card,
+body.stats-view .dashboard-content .next-shift-card,
+body.stats-view .dashboard-content .next-payroll-card {
+  display: none !important;
+}
+
+/* Add smooth transitions for dashboard cards */
+.total-card,
+.next-shift-card,
+.next-payroll-card {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* Position month picker prominently in stats view */
+.stats-view .dashboard-month-nav {
+  order: 2; /* Position after stats container */
+  margin-top: 20px;
+  margin-bottom: 20px;
+  display: flex !important; /* Ensure visibility in stats view */
+}
+
+/* Move shifts section up in stats view */
+.stats-view .shift-section {
+  margin-top: -20px; /* Move up to reduce gap */
+  padding-top: 20px;
+}
+
+/* Hide shift section month navigation in stats view to avoid duplication */
+.stats-view .shift-section .month-navigation-container {
+  display: none !important;
+}
+
+/* Enhanced stats view styling for better visual distinction */
+.stats-view .dashboard-section {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 0 0 32px 32px;
+  padding-bottom: 32px;
+}
+
+/* Dashboard stats container styling for stats view */
+.dashboard-stats-container {
+  order: 1;
+  margin: 0;
+  width: 100%;
+  flex: 1;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: statsContainerFadeIn 0.4s ease-out forwards;
+}
+
+@keyframes statsContainerFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ensure stats card maintains proper styling when moved to dashboard */
+.stats-view .dashboard-stats-container .weekly-hours-chart-card {
+  margin: 0;
+  width: 100%;
+  height: auto;
+}
+
+/* Ensure dashboard content uses flexbox ordering in stats view */
+.stats-view .dashboard-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure proper spacing between dashboard and shifts in stats view */
+.stats-view .dashboard-section {
+  margin-bottom: 0; /* Remove bottom margin to reduce gap */
+}
+
+.stats-view .shift-section {
+  padding-top: 10px; /* Reduce top padding for tighter layout */
+}
+
 .header-logo {
   width: 28px;
   height: 28px;
@@ -1060,9 +1196,19 @@ body {
   padding-top: 6px;
 }
 
-/* Month navigation container when positioned in dashboard - UPDATED: Hidden */
+/* Hide shift section month navigation by default since we use dashboard navigation */
+.shift-section .month-navigation-container {
+  display: none !important;
+}
+
+/* Month navigation container when positioned in dashboard - UPDATED: Hidden by default, shown in stats view */
 .dashboard-content .month-navigation-container {
-  display: none !important; /* Hide dashboard navigation completely */
+  display: none !important; /* Hide dashboard navigation completely by default */
+}
+
+/* Show dashboard month navigation in stats view */
+.stats-view .dashboard-content .month-navigation-container {
+  display: flex !important; /* Show dashboard navigation in stats view */
 }
 
 /* Remove pseudo-elements approach and use direct spacing */
@@ -1083,31 +1229,34 @@ body {
   z-index: 300;
 }
 
-/* Month navigation positioning - UPDATED: Always show at top of shifts section
+/* Month navigation positioning - UPDATED: Always show in dashboard section underneath Next Payroll card
  *
- * UPDATED BEHAVIOR: Month picker consistently positioned at the very top of shifts section
- * - Dashboard navigation: HIDDEN on all screen sizes to avoid duplication
- * - Shift section navigation: VISIBLE on all screen sizes (desktop, tablet, mobile)
+ * UPDATED BEHAVIOR: Month picker consistently positioned underneath Next Payroll card in dashboard section
+ * - Dashboard navigation: VISIBLE on all screen sizes as the single month picker instance
+ * - Shift section navigation: HIDDEN on all screen sizes to avoid duplication
  * - Consistent positioning and functionality across all device types
- * - Maintains existing styling and responsive behavior within shifts section
+ * - Maintains existing styling and responsive behavior within dashboard section
  */
 
-/* Hide dashboard month navigation on all screen sizes */
+/* Show dashboard month navigation on all screen sizes */
 .dashboard-month-nav {
-  display: none !important;
-  opacity: 0;
+  display: flex !important;
+  justify-content: center;
+  margin-top: 16px;
+  margin-bottom: 0;
+  opacity: 1;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* Desktop and large screens - UPDATED: Always show shifts section navigation */
+/* Desktop and large screens - UPDATED: Always show dashboard navigation, hide shifts section navigation */
 @media (min-width: 1024px) {
   .dashboard-month-nav {
-    display: none; /* Hide dashboard navigation on all screen sizes */
+    display: flex !important; /* Show dashboard navigation on all screen sizes */
   }
 
-  /* Ensure shift section navigation is always visible */
+  /* Hide shift section navigation to avoid duplication */
   .shift-section .month-navigation-container {
-    display: flex;
+    display: none;
   }
 }
 
@@ -1135,15 +1284,36 @@ body {
   }
 }
 
-/* Small mobile devices - always use shift section navigation */
+/* Small mobile devices - always use dashboard navigation */
 /* Portrait phones smaller than iPhone Pro Max and small landscape phones */
 @media (max-width: 429px) {
   .dashboard-month-nav {
-    display: none;
+    display: flex !important;
+    margin-top: 10px; /* Reduced spacing for small screens */
+  }
+
+  .dashboard-month-nav .month-navigation {
+    border-radius: 12px;
+    padding: 8px 12px; /* Smaller padding for small screens */
+  }
+
+  .dashboard-month-nav .month-display {
+    min-width: 90px;
+    font-size: 14px; /* Smaller font for small screens */
+  }
+
+  .dashboard-month-nav .month-nav-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dashboard-month-nav .month-nav-btn .icon-sm {
+    width: 14px;
+    height: 14px;
   }
 
   .shift-section .month-navigation-container {
-    display: flex;
+    display: none;
   }
 
   /* AGGRESSIVE STAT CARD HEIGHT REDUCTION FOR SMALL PHONES */
@@ -1198,6 +1368,13 @@ body {
     gap: 12px; /* Reduced from 20px */
   }
 
+  /* Statistics section mobile optimization */
+  .statistics-content {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    gap: 12px;
+  }
+
   /* AGGRESSIVE NEXT SHIFT CARD HEIGHT REDUCTION */
   .next-shift-card .shift-item {
     padding: 12px 14px; /* Reduced from 18px */
@@ -1207,7 +1384,7 @@ body {
 
   /* Keep next shift card text readable */
   .next-shift-card .shift-date {
-    font-size: 15px; /* Readable date text */
+    /* Font size now controlled by .shift-date-weekday rule */
     margin-bottom: 4px; /* Reasonable margin */
     line-height: 1.2;
   }
@@ -1328,6 +1505,13 @@ body {
     gap: 10px; /* Minimal gap */
   }
 
+  /* Ultra-compact statistics spacing */
+  .statistics-content {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    gap: 10px;
+  }
+
   /* ULTRA-COMPACT NEXT SHIFT CARD */
   .next-shift-card .shift-item {
     padding: 10px 12px; /* Minimal padding */
@@ -1337,7 +1521,7 @@ body {
 
   /* Maintain readable next shift text on very small screens */
   .next-shift-card .shift-date {
-    font-size: 14px;
+    /* Font size now controlled by .shift-date-weekday rule */
     margin-bottom: 3px;
   }
 
@@ -1446,6 +1630,13 @@ body {
     gap: 8px; /* Very tight spacing */
   }
 
+  /* Landscape statistics spacing */
+  .statistics-content {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    gap: 8px;
+  }
+
   /* Landscape next shift card */
   .next-shift-card .shift-item {
     padding: 8px 10px;
@@ -1454,7 +1645,7 @@ body {
   }
 
   .next-shift-card .shift-date {
-    font-size: 13px;
+    /* Font size now controlled by .shift-date-weekday rule */
     margin-bottom: 2px;
   }
 
@@ -1531,27 +1722,52 @@ body {
   }
 }
 
-/* Ensure portrait mode on small phones uses shift section */
+/* Ensure portrait mode on small phones uses dashboard navigation */
 /* Small phones in portrait mode (smaller than iPhone Pro Max) */
 @media (orientation: portrait) and (max-width: 429px) {
   .dashboard-month-nav {
-    display: none;
+    display: flex !important;
   }
 
   .shift-section .month-navigation-container {
-    display: flex;
+    display: none;
   }
 }
 
-/* Dashboard month navigation specific styling */
+/* Dashboard month navigation specific styling - positioned underneath Next Payroll card */
+.dashboard-month-nav {
+  /* Ensure proper spacing underneath Next Payroll card */
+  margin-top: 16px;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .dashboard-month-nav .month-navigation {
   border-radius: 16px;
   padding: 12px 20px;
   transition: all 0.3s ease;
+  background: rgba(18, 18, 18, 0.75); /* Match Next Payroll card styling */
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: none;
+  /* Subtle 3D Bevel Effect matching other cards */
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05),
+    inset -1px 0 0 rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-month-nav .month-navigation:hover {
   transform: translateY(-1px);
+  box-shadow:
+    0 6px 25px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 1px 0 0 rgba(255, 255, 255, 0.07),
+    inset -1px 0 0 rgba(0, 0, 0, 0.12);
 }
 
 /* Ensure month display text is properly styled in dashboard */
@@ -1563,8 +1779,11 @@ body {
 }
 
 /* Mobile and tablet dashboard month navigation styling */
-@media (orientation: landscape) and (min-height: 400px) and (max-width: 1023px),
-      (min-width: 430px) and (max-width: 1023px) and (orientation: portrait) {
+@media (max-width: 1023px) {
+  .dashboard-month-nav {
+    margin-top: 12px; /* Slightly reduced spacing on mobile */
+  }
+
   .dashboard-month-nav .month-navigation {
     border-radius: 14px;
     padding: 10px 16px;
@@ -1618,14 +1837,14 @@ body {
   }
 }
 
-/* JavaScript fallback - UPDATED: Always use shifts section navigation */
+/* JavaScript fallback - UPDATED: Always use dashboard navigation */
 /* Maintain consistent behavior regardless of JavaScript state */
 body.force-dashboard-nav .dashboard-month-nav {
-  display: none !important; /* Keep dashboard navigation hidden */
+  display: flex !important; /* Always show dashboard navigation */
 }
 
 body.force-dashboard-nav .shift-section .month-navigation-container {
-  display: flex !important; /* Always show shifts section navigation */
+  display: none !important; /* Hide shifts section navigation */
 }
 
 .month-nav-btn {
@@ -3019,7 +3238,7 @@ input:checked + .slider:before {
   background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border matching header */
+  border: none; /* Remove border for consistent bevel effect */
   border-radius: 24px;
   padding: 18px;
   display: flex;
@@ -3027,7 +3246,13 @@ input:checked + .slider:before {
   align-items: center;
   transition: all var(--speed-normal) var(--ease-default);
   min-height: 80px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  /* Subtle 3D Bevel Effect - consistent with all cards */
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.1), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.05), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.1); /* Subtle right inner shadow */
   opacity: 0.9;
 }
 
@@ -3062,6 +3287,22 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   font-size: var(--text-base);
   font-weight: bold;
+}
+
+/* Hide bullet point for next shift cards since they use conditional date display */
+.next-shift-card .shift-date-separator::before {
+  content: '';
+}
+
+/* Increase font size of date display text to match payroll countdown text */
+.next-shift-card .shift-date-weekday {
+  font-size: var(--text-lg); /* 18px - Same as payroll countdown text */
+  font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
+}
+
+/* Add consistent spacing between date and countdown text */
+.next-shift-card .shift-countdown-timer {
+  margin-left: 8px; /* Consistent spacing between date and countdown */
 }
 
 /* Color weekday text to match left border colors for Saturday and Sunday shifts */
@@ -3349,8 +3590,14 @@ input:checked + .slider:before {
   text-align: center;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  border: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border matching header */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: none; /* Remove border/outline */
+  /* Subtle 3D Bevel Effect - refined raised appearance */
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.1), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.05), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.1); /* Subtle right inner shadow */
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -3359,11 +3606,14 @@ input:checked + .slider:before {
 
 .total-card:hover {
   background-color: rgba(255, 255, 255, 0.02);
-  border-color: rgba(99, 102, 241, 0.3);
   transform: translateY(-2px);
+  /* Subtle 3D Bevel Effect on hover - refined appearance */
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 12px 40px rgba(0, 0, 0, 0.18), /* Enhanced depth shadow */
+    inset 0 2px 0 rgba(255, 255, 255, 0.13), /* Refined top inner highlight */
+    inset 0 -2px 0 rgba(0, 0, 0, 0.23), /* Refined bottom inner shadow */
+    inset 2px 0 0 rgba(255, 255, 255, 0.08), /* Refined left inner highlight */
+    inset -2px 0 0 rgba(0, 0, 0, 0.13); /* Refined right inner shadow */
 }
 
 .total-card::before {
@@ -3844,12 +4094,48 @@ input:checked + .slider:before {
   justify-content: flex-start;
 }
 
+/* Next Payroll Card Styling - reuse Next Shift Card styles */
+.next-payroll-card {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  position: relative;
+  overflow: visible;
+  transition: none;
+  border: none;
+  min-height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
 .next-shift-card:hover {
   transform: none;
   box-shadow: none;
 }
 
+.next-payroll-card:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Hover effect for clickable payroll item */
+.next-payroll-card .payroll-item:hover {
+  background: rgba(18, 18, 18, 0.85); /* Slightly more opaque on hover */
+  transform: translateY(-1px); /* Subtle lift effect */
+  transition: all 0.2s ease;
+}
+
 .next-shift-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+
+.next-payroll-content {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -3866,22 +4152,78 @@ input:checked + .slider:before {
   padding: 18px;
   margin: 0;
   border: none;
+  /* Subtle 3D Bevel Effect - consistent with other cards */
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    0 4px 16px rgba(0, 0, 0, 0.08), /* Existing depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.1), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.05), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.1); /* Subtle right inner shadow */
   transition: all var(--speed-normal) var(--ease-default);
   min-height: 80px;
   position: relative;
   overflow: hidden; /* Add overflow hidden to contain the badge */
 }
 
+/* Style the payroll-item when it's inside the next-payroll-card */
+.next-payroll-card .payroll-item {
+  background: rgba(18, 18, 18, 0.75); /* Same as header - semi-transparent background */
+  backdrop-filter: blur(20px) saturate(180%); /* Same as header - enhanced blur with saturation */
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: none; /* Remove border/outline */
+  border-radius: 24px; /* Fully rounded edges */
+  padding: 18px;
+  margin: 0;
+  /* Subtle 3D Bevel Effect - refined raised appearance matching total card */
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.1), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.05), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.1); /* Subtle right inner shadow */
+  transition: all var(--speed-normal) var(--ease-default);
+  min-height: 80px;
+  position: relative;
+  overflow: hidden; /* Add overflow hidden to contain the badge */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 /* Active next shift - when it's today or tomorrow */
 .next-shift-card .shift-item.active {
   background: var(--gradient-secondary);
-  border-color: rgba(99, 102, 241, 0.4);
+  /* Subtle 3D Bevel Effect for active state */
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08), /* Existing depth shadow */
+    inset 0 2px 0 rgba(255, 255, 255, 0.13), /* Refined top inner highlight */
+    inset 0 -2px 0 rgba(0, 0, 0, 0.23), /* Refined bottom inner shadow */
+    inset 2px 0 0 rgba(255, 255, 255, 0.08), /* Refined left inner highlight */
+    inset -2px 0 0 rgba(0, 0, 0, 0.13); /* Refined right inner shadow */
+}
+
+/* Active next payroll - when it's soon */
+.next-payroll-card .payroll-item.active {
+  background: rgba(18, 18, 18, 0.85); /* Slightly more opaque when active */
+  /* Subtle 3D Bevel Effect for active state */
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
+    inset 0 2px 0 rgba(255, 255, 255, 0.13), /* Refined top inner highlight */
+    inset 0 -2px 0 rgba(0, 0, 0, 0.23), /* Refined bottom inner shadow */
+    inset 2px 0 0 rgba(255, 255, 255, 0.08), /* Refined left inner highlight */
+    inset -2px 0 0 rgba(0, 0, 0, 0.13); /* Refined right inner shadow */
 }
 
 .next-shift-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  text-align: center;
+  flex: 1;
+}
+
+.next-payroll-empty {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3919,6 +4261,22 @@ input:checked + .slider:before {
     min-height: 80px;
   }
 
+  .next-payroll-card {
+    padding: 0;
+    border-radius: 0;
+    min-height: auto;
+  }
+
+  .next-payroll-content {
+    gap: 5px;
+  }
+
+  .next-payroll-card .payroll-item {
+    padding: 16px;
+    border-radius: 24px; /* Fully rounded edges */
+    min-height: 80px;
+  }
+
   .empty-message {
     font-size: 12px;
   }
@@ -3940,6 +4298,22 @@ input:checked + .slider:before {
   }
 
   .next-shift-card .shift-item {
+    padding: 14px;
+    border-radius: 24px; /* Fully rounded edges */
+    min-height: 80px;
+  }
+
+  .next-payroll-card {
+    padding: 0;
+    border-radius: 0;
+    min-height: auto;
+  }
+
+  .next-payroll-content {
+    gap: 4px;
+  }
+
+  .next-payroll-card .payroll-item {
     padding: 14px;
     border-radius: 24px; /* Fully rounded edges */
     min-height: 80px;
@@ -5944,6 +6318,41 @@ input:checked + .slider:before {
   .dashboard-content {
     gap: 16px; /* Reduced gap on desktop for tighter layout */
   }
+
+  .statistics-content {
+    gap: 16px; /* Consistent with dashboard content */
+  }
+}
+
+/* Statistics section styling */
+.statistics-section {
+  background: transparent;
+  min-height: auto; /* Allow content to determine height */
+  height: auto;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.statistics-section .app-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+}
+
+.statistics-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  gap: 20px;
+  position: relative;
+  min-height: 0;
+  height: 100%;
 }
 
 /* Shift section styling */
@@ -6575,6 +6984,45 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     margin: 0 4px; /* Slightly reduced margins */
     flex-shrink: 0;
   }
+
+  /* Mobile responsive layout fixes for payroll cards */
+  .next-payroll-card .payroll-item {
+    padding: 14px 16px; /* Keep reasonable padding */
+  }
+
+  .next-payroll-card .shift-info {
+    min-width: 0; /* Allow shrinking */
+    overflow: hidden; /* Prevent overflow */
+  }
+
+  .next-payroll-card .shift-amount-wrapper {
+    margin-left: 10px; /* Slightly reduced from 16px */
+    flex-shrink: 0; /* Keep amount section fixed */
+  }
+
+  .next-payroll-card .shift-date {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .next-payroll-card .shift-date-number {
+    flex-shrink: 0; /* Keep date number fixed */
+  }
+
+  .next-payroll-card .shift-date-weekday {
+    margin-right: 3px;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .next-payroll-card .shift-time-with-hours {
+    flex-wrap: nowrap;
+    gap: 3px; /* Slightly reduced gap */
+    white-space: nowrap;
+  }
 }
 
 /* Extra small mobile devices - only reduce font sizes here */
@@ -6588,13 +7036,12 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     margin-left: 8px;
   }
 
-  /* NOW we start reducing font sizes for small screens */
-  .next-shift-card .shift-date {
-    font-size: 13px; /* Slightly smaller */
-  }
+  /* Font sizes no longer need reduction due to shorter date text */
+  /* .next-shift-card .shift-date font-size removed - using default size */
 
   .next-shift-card .shift-date-weekday {
     margin-right: 2px;
+    font-size: var(--text-lg) !important; /* Maintain 18px font size on mobile */
   }
 
   .next-shift-card .shift-date-separator {
@@ -6614,6 +7061,29 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   .next-shift-card .shift-time-arrow {
     margin: 0 3px;
   }
+
+  /* More aggressive space optimization for payroll cards */
+  .next-payroll-card .payroll-item {
+    padding: 12px 14px;
+  }
+
+  .next-payroll-card .shift-amount-wrapper {
+    margin-left: 8px;
+  }
+
+  /* Reduce font sizes for small screens */
+  .next-payroll-card .shift-date {
+    font-size: 13px; /* Slightly smaller */
+  }
+
+  .next-payroll-card .shift-date-weekday {
+    margin-right: 2px;
+  }
+
+  .next-payroll-card .shift-time-with-hours {
+    gap: 2px;
+    font-size: 13px; /* Slightly smaller */
+  }
 }
 
 /* Ultra small screens - only for very old/small phones */
@@ -6628,13 +7098,12 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     margin-left: 6px;
   }
 
-  /* More significant font reduction only for very small screens */
-  .next-shift-card .shift-date {
-    font-size: 12px;
-  }
+  /* Font sizes no longer need reduction due to shorter date text */
+  /* .next-shift-card .shift-date font-size removed - using default size */
 
   .next-shift-card .shift-date-weekday {
     margin-right: 1px;
+    font-size: var(--text-lg) !important; /* Maintain 18px font size on ultra small screens */
   }
 
   .next-shift-card .shift-date-separator {
@@ -6661,6 +7130,37 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   }
 
   .next-shift-card .shift-breakdown {
+    font-size: 10px;
+  }
+
+  /* Ultra compact payroll card optimization */
+  .next-payroll-card .payroll-item {
+    padding: 10px 12px;
+    min-height: 65px;
+  }
+
+  .next-payroll-card .shift-amount-wrapper {
+    margin-left: 6px;
+  }
+
+  .next-payroll-card .shift-date {
+    font-size: 12px;
+  }
+
+  .next-payroll-card .shift-date-weekday {
+    margin-right: 1px;
+  }
+
+  .next-payroll-card .shift-time-with-hours {
+    gap: 1px;
+    font-size: 12px;
+  }
+
+  .next-payroll-card .shift-total {
+    font-size: 15px;
+  }
+
+  .next-payroll-card .shift-breakdown {
     font-size: 10px;
   }
 }
@@ -6751,6 +7251,13 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     padding-bottom: 16px;
     min-height: 60px;
   }
+
+  /* Statistics section for large mobile */
+  .statistics-content {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    gap: 16px;
+  }
 }
 
 /* Very large mobile devices (iPad portrait) - optimize for viewport usage */
@@ -6763,6 +7270,11 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     padding-top: 24px;
     padding-bottom: 24px;
     min-height: 80px;
+  }
+
+  /* Statistics section for iPad portrait */
+  .statistics-content {
+    gap: 18px;
   }
 }
 
@@ -6778,6 +7290,13 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     padding-top: 12px;
     padding-bottom: 12px;
     min-height: 50px;
+  }
+
+  /* Statistics section for landscape short viewports */
+  .statistics-content {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    gap: 12px;
   }
 }
 
@@ -7292,15 +7811,54 @@ input[type="file"].form-control:focus {
   transform: rotate(180deg);
 }
 
+/* Next payroll badge styling */
+.next-payroll-badge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(135deg,
+    rgba(0, 245, 255, 0.12) 0%,
+    rgba(0, 212, 255, 0.12) 50%,
+    rgba(58, 190, 246, 0.12) 100%); /* Slightly more opaque than default to match shift badge appearance */
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  z-index: 2; /* Higher z-index to ensure it's above backdrop-filter */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Create flat left edges, rounded right edge (reversed due to 180deg rotation) */
+  border-radius: 0 24px 24px 0;
+
+  /* Text rotation - bottom facing inward */
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
 /* Responsive border radius for neste badge to match card */
 @media (max-width: 480px) {
   .next-shift-badge {
+    border-radius: 0 20px 20px 0;
+  }
+
+  .next-payroll-badge {
     border-radius: 0 20px 20px 0;
   }
 }
 
 @media (max-width: 360px) {
   .next-shift-badge {
+    border-radius: 0 16px 16px 0;
+  }
+
+  .next-payroll-badge {
     border-radius: 0 16px 16px 0;
   }
 }
@@ -7454,6 +8012,26 @@ input[type="file"].form-control:focus {
 /* Adjust shift-info padding to make room for the badge */
 .next-shift-card .shift-item .shift-info {
   padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
+}
+
+/* Adjust payroll-info padding to make room for the badge */
+.next-payroll-card .payroll-item .shift-info {
+  padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Ensure payroll card amount wrapper has proper styling */
+.next-payroll-card .shift-amount-wrapper {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: 16px;
+  flex-shrink: 0;
 }
 
 /* Weekly Hours Chart Card Styling */
