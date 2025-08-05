@@ -4645,13 +4645,9 @@ export const app = {
             countdownText = 'I dag';
         } else if (daysUntilPayroll === 1) {
             countdownText = 'I morgen';
-        } else if (daysUntilPayroll <= 7) {
-            countdownText = `Om ${daysUntilPayroll} dager`;
         } else {
-            // For payrolls more than 7 days away, show the actual date
-            const payrollDay = nextPayrollDate.getDate();
-            const payrollMonth = this.MONTHS[nextPayrollDate.getMonth()];
-            countdownText = `${payrollDay}. ${payrollMonth}`;
+            // Always show countdown in days, never show the actual date
+            countdownText = `Om ${daysUntilPayroll} dager`;
         }
 
         // Format the payroll date for shift details display
