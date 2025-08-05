@@ -1,0 +1,33 @@
+body {
+  font-family: sans-serif;
+  max-width: 500px;
+  margin: 40px auto;
+}
+
+#chatbox {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+#log {
+  height: 300px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+  background: #fafafa;
+  padding: 5px;
+}
+
+#log p {
+  margin: 4px 0;
+}
+
+#input {
+  width: 100%;
+  height: 60px;
+}
+
+button {
+  margin-top: 6px;
+  padding: 6px 12px;
+}
