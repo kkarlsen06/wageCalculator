@@ -4093,6 +4093,7 @@ export const app = {
                 const weekday = this.WEEKDAYS[shiftDate.getDay()];
                 const day = shiftDate.getDate();
                 const month = this.MONTHS[shiftDate.getMonth()];
+                const seriesBadge = lastShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
                 // Check if the shift is in the current week
                 const currentWeekNumber = this.getISOWeekNumber(now);

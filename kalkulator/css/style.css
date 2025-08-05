@@ -4145,16 +4145,16 @@ input:checked + .slider:before {
 
 /* Style the shift-item when it's inside the next-shift-card */
 .next-shift-card .shift-item {
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(18, 18, 18, 0.75); /* Same as next payroll card - semi-transparent background */
+  backdrop-filter: blur(20px) saturate(180%); /* Same as next payroll card - enhanced blur with saturation */
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 24px; /* Fully rounded edges */
   padding: 18px;
   margin: 0;
   border: none;
-  /* Subtle 3D Bevel Effect - consistent with other cards */
+  /* Subtle 3D Bevel Effect - consistent with payroll card */
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.08), /* Existing depth shadow */
+    0 4px 20px rgba(0, 0, 0, 0.15), /* Same depth shadow as payroll card */
     inset 0 1px 0 rgba(255, 255, 255, 0.1), /* Subtle top inner highlight */
     inset 0 -1px 0 rgba(0, 0, 0, 0.2), /* Subtle bottom inner shadow */
     inset 1px 0 0 rgba(255, 255, 255, 0.05), /* Subtle left inner highlight */
@@ -7790,14 +7790,17 @@ input[type="file"].form-control:focus {
   top: 0;
   bottom: 0;
   width: 32px;
-  background: var(--gradient-progress-bg);
+  background: linear-gradient(135deg,
+    rgba(0, 245, 255, 0.12) 0%,
+    rgba(0, 212, 255, 0.12) 50%,
+    rgba(58, 190, 246, 0.12) 100%); /* Same as payroll badge for consistency */
   color: var(--text-secondary);
   font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
-  z-index: 1;
+  z-index: 2; /* Higher z-index to ensure it's above backdrop-filter */
   display: flex;
   align-items: center;
   justify-content: center;
