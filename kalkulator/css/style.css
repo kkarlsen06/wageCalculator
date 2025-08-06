@@ -930,13 +930,25 @@ body.chatbox-view .month-display,
   left: -9999px !important;
 }
 
-/* Hide shifts section in chatbox view - this was causing the dead space! */
-body.chatbox-view .shift-section {
-  display: none !important;
-}
+/* Keep shifts section visible in chatbox view (similar to stats view) */
+/* Remove the display: none rule to allow shifts section to remain visible */
 
 /* Hide floating action bar in chatbox view */
 body.chatbox-view .floating-action-bar {
+  display: none !important;
+}
+
+/* Ensure proper spacing between dashboard and shifts in chatbox view */
+.chatbox-view .dashboard-section {
+  margin-bottom: 0; /* Remove bottom margin to reduce gap */
+}
+
+.chatbox-view .shift-section {
+  padding-top: 10px; /* Reduce top padding for tighter layout */
+}
+
+/* Hide shift section month navigation in chatbox view to avoid duplication */
+.chatbox-view .shift-section .month-navigation-container {
   display: none !important;
 }
 
@@ -6646,13 +6658,11 @@ input:checked + .slider:before {
   height: auto;
 }
 
-/* In chatbox-view, dashboard section should contain content properly */
+/* In chatbox-view, dashboard section should contain content properly but allow shifts section below */
 body.chatbox-view .snap-section.dashboard-section {
-  min-height: 100vh; /* Maintain viewport height */
-  min-height: 100dvh;
-  height: 100vh; /* Full height */
-  height: 100dvh;
-  overflow: hidden; /* Prevent any overflow that creates bottom space */
+  min-height: auto; /* Allow natural height to accommodate shifts section below */
+  height: auto; /* Allow content to determine height */
+  overflow: visible; /* Allow shifts section to be visible below */
 }
 
 /* When chatbox is expanded, ensure proper layout flow */
@@ -6691,12 +6701,12 @@ body.chatbox-view .snap-section.dashboard-section {
   min-height: 0; /* Allow flex children to shrink */
 }
 
-/* In chatbox-view, app-container should fill space but not overflow */
+/* In chatbox-view, app-container should allow natural height for shifts section below */
 body.chatbox-view .dashboard-section .app-container {
-  height: 100%; /* Fill dashboard section */
+  height: auto; /* Allow natural height */
   min-height: 0; /* Allow shrinking */
   flex: 1; /* Fill available space */
-  overflow: hidden; /* Prevent overflow that creates bottom space */
+  overflow: visible; /* Allow content to flow naturally */
 }
 
 .dashboard-content {
@@ -6711,6 +6721,11 @@ body.chatbox-view .dashboard-section .app-container {
   /* Ensure the content can fill the full height */
   min-height: 0;
   height: 100%;
+}
+
+/* In chatbox-view, allow dashboard-content to have natural height */
+body.chatbox-view .dashboard-content {
+  height: auto; /* Allow natural height to accommodate shifts section below */
 }
 
 /* Override gap specifically for desktop to reduce spacing before month picker */

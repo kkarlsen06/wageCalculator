@@ -1211,12 +1211,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Add chatbox view class to body
     body.classList.add('chatbox-view');
 
-    // Hide dashboard cards and shifts section manually as backup
+    // Hide dashboard cards manually as backup (but keep shifts section visible)
     const totalCard = document.querySelector('.total-card');
     const nextShiftCard = document.querySelector('.next-shift-card');
     const nextPayrollCard = document.querySelector('.next-payroll-card');
     const monthNav = document.querySelector('.dashboard-month-nav');
-    const shiftSection = document.querySelector('.shift-section');
     const floatingActionBar = document.querySelector('.floating-action-bar');
 
     if (totalCard) totalCard.style.display = 'none';
@@ -1231,7 +1230,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       monthNav.style.padding = '0';
       monthNav.style.opacity = '0';
     }
-    if (shiftSection) shiftSection.style.display = 'none'; // Hide shifts section - this was causing dead space!
+    // Keep shifts section visible (similar to stats view) - remove the line that was hiding it
+    // if (shiftSection) shiftSection.style.display = 'none'; // REMOVED: Let shifts section remain visible
     if (floatingActionBar) floatingActionBar.style.display = 'none'; // Hide floating action bar
 
     // Move the chatbox to dashboard content if not already there
@@ -1255,12 +1255,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Remove chatbox view class from body
     body.classList.remove('chatbox-view');
 
-    // Show dashboard cards and shifts section again
+    // Show dashboard cards again (shifts section was never hidden)
     const totalCard = document.querySelector('.total-card');
     const nextShiftCard = document.querySelector('.next-shift-card');
     const nextPayrollCard = document.querySelector('.next-payroll-card');
     const monthNav = document.querySelector('.dashboard-month-nav');
-    const shiftSection = document.querySelector('.shift-section');
     const floatingActionBar = document.querySelector('.floating-action-bar');
 
     if (totalCard) totalCard.style.display = '';
@@ -1278,7 +1277,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       monthNav.style.position = '';
       monthNav.style.left = '';
     }
-    if (shiftSection) shiftSection.style.display = ''; // Restore shifts section
+    // Shifts section was never hidden, so no need to restore it
+    // if (shiftSection) shiftSection.style.display = ''; // REMOVED: shifts section was never hidden
     if (floatingActionBar) floatingActionBar.style.display = ''; // Restore floating action bar
 
     // Move the chatbox back to its original position
