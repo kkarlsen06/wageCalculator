@@ -6275,6 +6275,12 @@ input:checked + .slider:before {
   position: relative;
 }
 
+/* Dashboard section can expand when chatbox is open */
+.snap-section.dashboard-section {
+  min-height: var(--app-height, 100vh);
+  height: auto;
+}
+
 /* Shift section can expand beyond viewport */
 .snap-section.shift-section {
   min-height: var(--app-height, 100vh);
@@ -9589,7 +9595,6 @@ input[type="file"].form-control:focus {
   width: 100%;
   /* Ensure this container takes up space in the layout flow */
   position: relative;
-  z-index: 1;
 }
 
 /* Pill-style container that can expand */
@@ -9701,6 +9706,9 @@ input[type="file"].form-control:focus {
   border-top: 1px solid var(--border);
   animation: chatboxExpand 0.3s ease-out;
   overflow: hidden;
+  /* Ensure it takes up space in the document flow */
+  position: relative;
+  width: 100%;
 }
 
 @keyframes chatboxExpand {
