@@ -16,11 +16,16 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" href="/assets/favicon.ico">
     
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="kalkulator/js/config.js"></script>
+
     <!-- Scripts -->
     <script src="js/loading-helpers.js"></script>
     <script src="js/error-handling.js"></script>
     <script src="js/redirect.js"></script>
     <script src="js/animations.js" defer></script>
+    <script src="js/chat.js" defer></script>
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
@@ -83,6 +88,13 @@
                         <span class="hero-description-full"> Perfekt for deg med Virke-tariff eller egendefinerte lønnsrater.</span>
                     </p>
                 </div>
+
+                <!-- CHATBOX SECTION -->
+                <section id="chatbox">
+                    <div id="log"></div>
+                    <textarea id="input" placeholder="Ask me to add a shift…"></textarea>
+                    <button id="send">Send</button>
+                </section>
                 
                 <!-- BOTTOM THIRD - CTA and Stats -->
                 <div class="hero-bottom-section">
