@@ -9654,7 +9654,7 @@ input[type="file"].form-control:focus {
 
 .chatbox-pill-placeholder {
   color: var(--text-secondary); /* Gray color as requested */
-  font-size: 14px;
+  font-size: 16px; /* Minimum 16px to prevent iOS zoom */
   font-weight: 400; /* Lighter weight for placeholder */
   cursor: text;
   user-select: none;
@@ -9666,7 +9666,7 @@ input[type="file"].form-control:focus {
   border: none;
   outline: none;
   color: white; /* White text as requested */
-  font-size: 14px;
+  font-size: 16px; /* Minimum 16px to prevent iOS zoom */
   font-weight: 500;
   width: 100%;
   font-family: inherit;
@@ -9863,11 +9863,11 @@ input[type="file"].form-control:focus {
   }
 
   .chatbox-pill-placeholder {
-    font-size: 13px;
+    font-size: 16px; /* Minimum 16px to prevent iOS zoom */
   }
 
   .chatbox-pill-input {
-    font-size: 13px;
+    font-size: 16px; /* Minimum 16px to prevent iOS zoom */
   }
 
   .chatbox-header {
