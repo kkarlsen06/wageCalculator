@@ -573,6 +573,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
       const secondCompletion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: messagesWithToolResult,
+        tools,
         tool_choice: 'none'
       });
       assistantMessage = secondCompletion.choices[0].message.content;
