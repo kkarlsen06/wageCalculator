@@ -5612,9 +5612,9 @@ input:checked + .slider:before {
 @media (max-width: 768px) {
   #cropModal .modal-content {
     width: 100vw;
-    height: 100vh;
+    height: var(--app-height, 100vh);
     /* Ensure modal doesn't exceed viewport on mobile */
-    max-height: 100vh;
+    max-height: var(--app-height, 100vh);
     border-radius: 0;
     border: none;
     /* Position modal to account for mobile browser UI */
@@ -5626,7 +5626,8 @@ input:checked + .slider:before {
   .crop-modal-body {
     padding: 16px;
     gap: 16px;
-    padding-bottom: 80px; /* Space for fixed footer */
+    /* Ensure adequate space for fixed footer with safe area */
+    padding-bottom: max(80px, calc(80px + env(safe-area-inset-bottom)));
   }
 
   .crop-container {
@@ -5670,6 +5671,8 @@ input:checked + .slider:before {
     background: var(--bg-secondary);
     border-top: 1px solid var(--border);
     padding: 12px 16px;
+    /* Add safe area padding for mobile devices */
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
     z-index: 1400;
     border-radius: 0 0 24px 24px;
   }
@@ -5701,6 +5704,39 @@ input:checked + .slider:before {
   }
 }
 
+/* Handle very short mobile viewports (landscape or browser UI expanded) */
+@media (max-width: 768px) and (max-height: 500px) {
+  #cropModal .modal-content {
+    /* Ensure modal uses full available height */
+    height: var(--app-height, 100vh);
+    max-height: var(--app-height, 100vh);
+  }
+
+  .crop-modal-body {
+    padding: 8px;
+    gap: 8px;
+    /* Reduce bottom padding on very short screens */
+    padding-bottom: max(60px, calc(60px + env(safe-area-inset-bottom)));
+  }
+
+  .crop-container {
+    min-height: 150px;
+    max-height: 180px;
+  }
+
+  /* Ensure footer buttons remain accessible */
+  #cropModal .modal-fixed-footer {
+    padding: 8px 12px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .modal-footer-buttons .btn {
+    padding: 10px 12px;
+    font-size: 12px;
+    min-height: 40px; /* Slightly smaller but still accessible */
+  }
+}
+
 /* Modal Footer Buttons Styling */
 .modal-footer-buttons {
   display: flex;
@@ -5721,16 +5757,21 @@ input:checked + .slider:before {
 /* Mobile specific modal footer button styling */
 @media (max-width: 768px) {
   .modal-footer-buttons {
-    gap: 10px;
+    gap: 12px;
     padding: 0;
   }
 
   .modal-footer-buttons .btn {
     flex: 1;
-    min-width: 100px;
+    min-width: 120px;
     max-width: none;
-    padding: 12px 16px;
+    padding: 14px 16px;
     font-size: 14px;
+    /* Ensure minimum touch target size */
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Ensure buttons stay horizontal on mobile */
@@ -5742,13 +5783,15 @@ input:checked + .slider:before {
 
 @media (max-width: 480px) {
   .modal-footer-buttons {
-    gap: 8px;
+    gap: 10px;
   }
 
   .modal-footer-buttons .btn {
-    padding: 10px 12px;
+    padding: 12px 14px;
     font-size: 13px;
-    min-width: 80px;
+    min-width: 100px;
+    /* Maintain minimum touch target size even on small screens */
+    min-height: 44px;
   }
 
   /* Reduce button text on very small screens */
