@@ -429,40 +429,36 @@ app.post('/chat', authenticateUser, async (req, res) => {
   const today = new Date().toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
   const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
 
-  const systemContextHint = {
-    role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}.
+  // Create a more specific system prompt based on the user message
+  let systemContent = `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}.
 
 ABSOLUTT KRITISK - MULTIPLE TOOL CALLS REGEL:
-Når brukeren ber om flere operasjoner i SAMME melding, MÅ du utføre ALLE operasjonene i SAMME respons med flere tool_calls. Dette er OBLIGATORISK, ikke valgfritt!
+Når brukeren ber om flere operasjoner i SAMME melding, MÅ du utføre ALLE operasjonene i SAMME respons med flere tool_calls. Dette er OBLIGATORISK, ikke valgfritt!`;
 
-EKSEMPEL: "vis meg vaktene denne uken og endre fredagens vakt til 15:00"
-- Du MÅ kalle getShifts(criteria_type="week")
-- Du MÅ deretter kalle editShift(shift_date="2025-08-08", start_time="16:00", new_start_time="15:00")
-- BEGGE i samme respons! IKKE spør om bekreftelse eller si at du ikke finner vakten!
+  // Add specific instructions for common patterns
+  if (userMessage.includes('vis') && userMessage.includes('endre')) {
+    systemContent += `
 
-ANDRE EKSEMPLER som KREVER multiple tool calls:
-- "legg til mandag og tirsdag" → addShift + addShift
-- "slett vakter og legg til nye" → deleteSeries + addSeries
-- "kopier til onsdag og fredag" → copyShift + copyShift
-- "vis vakter og slett fredag" → getShifts + deleteShift
+SPESIFIKK INSTRUKSJON for din forespørsel:
+Du skal gjøre NØYAKTIG disse to tool calls i denne rekkefølgen:
+1. getShifts({"criteria_type": "week"}) - for å hente vaktene
+2. editShift({"date_reference": "Friday", "new_start_time": "15:00"}) - for å endre fredagsvakten
 
-ALDRI si "la meg gjøre det", "vent litt", "bekrefter du", "jeg fant ikke vakten" eller lignende. Utfør ALT med en gang!
+IKKE gjør getShifts to ganger! IKKE spør om bekreftelse! Gjør begge operasjonene nå!`;
+  }
 
-VIKTIG: Når du får data fra getShifts, BRUK den informasjonen til å gjøre editShift med riktig shift_date og start_time. Ikke si at du ikke finner vakten - du har jo nettopp hentet den!
+  const systemContextHint = {
+    role: 'system',
+    content: `Du er en vaktplanleggingsassistent. I dag er ${today}, i morgen er ${tomorrow}. Brukerens navn er ${userName}.
 
-For tool-bruk: getShifts for "denne uka" → criteria_type=week (uten week_number/year), "neste uke" → criteria_type=next. editShift kan bruke shift_date og start_time fra getShifts-resultatet. Vis datoer som dd.mm.yyyy til brukeren. VIKTIG: Når tool-svaret inneholder status:"ok" og ID-lister (inserted/updated/deleted), ikke be om ny bekreftelse - bruk ID-ene for videre operasjoner. For addSeries: bruk interval_weeks=2 for "annenhver uke", offset_start for å justere startpunkt. For deleteSeries: bruk shift_ids array for presise slettinger når du har ID-ene. COPYSHIFT: Bruk copyShift for å kopiere skift til andre datoer. Eksempler: "kopier mandagsskiftet mitt til neste uke" → copyShift(source_date_reference="Monday", weeks_ahead=1), "kopier tirsdagsskiftet til torsdag og fredag" → copyShift(source_date_reference="Tuesday", target_date_references=["Thursday", "Friday"]), "kopier morgenskiftet mitt i dag til de neste 3 ukene" → copyShift(source_date_reference="today", source_time_reference="morning", weeks_ahead=3).
+${systemContent}
 
-KRITISK - MULTIPLE TOOL CALLS: Du SKAL og MÅ gjøre flere tool-kall i samme respons når brukeren ber om flere operasjoner. Dette er ikke valgfritt! Eksempler som KREVER flere tool calls:
-- "Vis meg alle vaktene denne uken og endre fredagens vakt til å starte 15:00" → getShifts først, deretter editShift
-- "Legg til vakt på mandag og tirsdag" → addShift to ganger
-- "Slett alle vakter neste uke og legg til en ny serie" → deleteSeries først, deretter addSeries
-- "Kopier mandagens vakt til onsdag og fredag" → copyShift to ganger med forskjellige target_date_references
-- "Vis meg vaktene mine og slett den på fredag" → getShifts først, deretter deleteShift
+TOOL USAGE:
+- getShifts: criteria_type="week" for denne uka, "next" for neste uke
+- editShift: bruk date_reference="Friday" for fredagsvakter, eller shift_date + start_time
+- Vis datoer som dd.mm.yyyy til brukeren
 
-BEKREFTELSER: IKKE spør om bekreftelse for addShift, editShift, copyShift eller getShifts operasjoner. Kun deleteSeries og deleteShift krever bekreftelse når de brukes alene. Når brukeren ber om flere operasjoner i samme melding (som "vis og endre"), utfør ALLE operasjonene uten å spørre om bekreftelse.
-
-ALDRI si "vent litt", "la meg gjøre det i neste melding", "bekrefter du dette" eller be brukeren vente. Utfør ALLE nødvendige operasjoner i ÉN respons med flere tool calls.`
+ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE tools for FORSKJELLIGE operasjoner!`
   };
   const fullMessages = [systemContextHint, ...messages];
 
