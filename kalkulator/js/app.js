@@ -857,7 +857,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
 
-      // Use regular request for now (streaming has issues)
+      // Use streaming for better user experience
       const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: {
@@ -866,7 +866,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         body: JSON.stringify({
           messages: chatMessages,
-          stream: false
+          stream: true
         })
       });
 
@@ -874,7 +874,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      // Handle streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finalData = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              break;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+              handleStreamEvent(parsed, spinner);
+
+              if (parsed.type === 'complete') {
+                finalData = parsed;
+              }
+            } catch (e) {
+              console.warn('Failed to parse streaming data:', data);
+            }
+          }
+        }
+      }
+
+      const data = finalData;
+
+      // Handle response - check if we have valid data
+      if (!data) {
+        throw new Error('No data received from streaming response');
+      }
 
       // Log raw JSON response for debugging
       console.debug('[/chat response]', data);
@@ -930,7 +970,75 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (error) {
       console.error('Chat error:', error);
-      spinner.textContent = '⚠️ Kunne ikke koble til serveren.';
+
+      // Fallback to non-streaming request if streaming fails
+      try {
+        console.log('Streaming failed, falling back to regular request...');
+        const fallbackResponse = await fetch(`${API_BASE}/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            messages: chatMessages,
+            stream: false
+          })
+        });
+
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+
+          const txt = fallbackData.assistant
+            ?? (fallbackData.error && `⚠️ ${fallbackData.error}`)
+            ?? '⚠️ Ukjent svar fra serveren.';
+
+          if (fallbackData.assistant) {
+            const html = DOMPurify.sanitize(marked.parse(txt));
+            spinner.innerHTML = html;
+          } else {
+            spinner.textContent = txt;
+          }
+
+          if (fallbackData.assistant) {
+            chatMessages.push({ role: 'assistant', content: fallbackData.assistant });
+          }
+
+          // Update shifts
+          const shifts = fallbackData.shifts || [];
+          const uniq = [];
+          const seen = new Set();
+          for (const s of shifts) {
+            const k = `${s.shift_date}|${s.start_time}|${s.end_time}`;
+            if (!seen.has(k)) {
+              seen.add(k);
+              uniq.push(s);
+            }
+          }
+
+          if (window.app && window.app.refreshUI) {
+            const newShifts = uniq.map(shift => ({
+              id: shift.id || Date.now() + Math.random(),
+              date: new Date(shift.date || shift.shift_date),
+              startTime: shift.startTime || shift.start_time,
+              endTime: shift.endTime || shift.end_time,
+              type: shift.type !== undefined ? shift.type : shift.shift_type,
+              seriesId: shift.seriesId || shift.series_id || null
+            }));
+
+            if (window.app.shifts && window.app.userShifts) {
+              window.app.shifts = [...newShifts];
+              window.app.userShifts = [...newShifts];
+            }
+            window.app.refreshUI(newShifts);
+          }
+        } else {
+          throw new Error('Fallback request also failed');
+        }
+      } catch (fallbackError) {
+        console.error('Fallback error:', fallbackError);
+        spinner.textContent = '⚠️ Kunne ikke koble til serveren.';
+      }
     } finally {
       if (chatElements.send) {
         chatElements.send.disabled = false;

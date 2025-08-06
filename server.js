@@ -416,6 +416,9 @@ app.get('/settings', authenticateUser, async (req, res) => {
 app.post('/chat', authenticateUser, async (req, res) => {
   const { messages, stream = false } = req.body;
 
+  // Get user message first for system prompt customization
+  const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
+
   // Get user information for personalization
   const { data: { user }, error: userError } = await supabase.auth.getUser(req.headers.authorization?.slice(7));
   let userName = 'bruker';
@@ -474,7 +477,6 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   }
 
   // First call: Let GPT choose tools - force tool usage for multi-step operations
-  const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
   const isMultiStep = /\bog\b.*\bog\b|vis.*og.*endre|vis.*og.*slett|vis.*og.*gjør|legg til.*og.*legg til|hent.*og.*endre/.test(userMessage);
 
   console.log('User message:', userMessage);
