@@ -54,6 +54,7 @@ const addShiftSchema = {
     required: ['shift_date', 'start_time', 'end_time']
   }
 };
+
 const addSeriesSchema = {
   name: 'addSeries',
   description: 'Add multiple identical shifts over a date range',

@@ -40,36 +40,40 @@ async function authenticateUser(req, res, next) {
   next();
 }
 
-// ---------- GPT function schema ----------
-const functions = [
-  {
-    name: 'addShift',
-    description: 'Add one work shift',
-    parameters: {
-      type: 'object',
-      properties: {
-        shift_date: { type: 'string', description: 'YYYY-MM-DD' },
-        start_time: { type: 'string', description: 'HH:mm' },
-        end_time:   { type: 'string', description: 'HH:mm' }
-      },
-      required: ['shift_date', 'start_time', 'end_time']
-    }
-  },
-  {
-    name: 'addSeries',
-    description: 'Add multiple identical shifts over a date range',
-    parameters: {
-      type: 'object',
-      properties: {
-        from:  { type: 'string', description: 'First day YYYY-MM-DD' },
-        to:    { type: 'string', description: 'Last day YYYY-MM-DD (inclusive)' },
-        days:  { type: 'array',  items: { type: 'integer' }, description: 'Weekdays 0-6' },
-        start: { type: 'string', description: 'Shift start HH:mm' },
-        end:   { type: 'string', description: 'Shift end   HH:mm' }
-      },
-      required: ['from', 'to', 'days', 'start', 'end']
-    }
+// ---------- GPT tool schema ----------
+const addShiftSchema = {
+  name: 'addShift',
+  description: 'Add one work shift',
+  parameters: {
+    type: 'object',
+    properties: {
+      shift_date: { type: 'string', description: 'YYYY-MM-DD' },
+      start_time: { type: 'string', description: 'HH:mm' },
+      end_time:   { type: 'string', description: 'HH:mm' }
+    },
+    required: ['shift_date', 'start_time', 'end_time']
   }
+};
+
+const addSeriesSchema = {
+  name: 'addSeries',
+  description: 'Add multiple identical shifts over a date range',
+  parameters: {
+    type: 'object',
+    properties: {
+      from:  { type: 'string', description: 'First day YYYY-MM-DD' },
+      to:    { type: 'string', description: 'Last day YYYY-MM-DD (inclusive)' },
+      days:  { type: 'array',  items: { type: 'integer' }, description: 'Weekdays 0-6' },
+      start: { type: 'string', description: 'Shift start HH:mm' },
+      end:   { type: 'string', description: 'Shift end   HH:mm' }
+    },
+    required: ['from', 'to', 'days', 'start', 'end']
+  }
+};
+
+const tools = [
+  { type: 'function', function: addShiftSchema },
+  { type: 'function', function: addSeriesSchema }
 ];
 
 // ---------- helpers ----------
@@ -120,18 +124,19 @@ app.post('/chat', authenticateUser, async (req, res) => {
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: fullMessages,
-    functions,
-    function_call: 'auto'
+    tools,
+    tool_choice: 'auto'
   });
 
   const choice = completion.choices[0].message;
   let systemMessage = null;
 
-  if (choice.function_call) {
-    const { name, arguments: argStr } = choice.function_call;
-    const args = JSON.parse(argStr);
+  const call = choice.tool_calls?.[0];
+  if (call) {
+    const fnName = call.function.name;
+    const args = JSON.parse(call.function.arguments);
 
-    if (name === 'addShift') {
+    if (fnName === 'addShift') {
       // Check for duplicate shift before inserting
       const { data: dupCheck } = await supabase
         .from('user_shifts')
@@ -166,7 +171,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
       if (error) return res.status(500).json({ error: 'Failed to save shift' });
     }
 
-    if (name === 'addSeries') {
+    if (fnName === 'addSeries') {
       const dates = generateSeriesDates(args.from, args.to, args.days);
       if (!dates.length) return res.status(400).json({ error: 'No matching dates' });
 
@@ -217,7 +222,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
   }
 
   // Guarantee fallback - ensure we always have content to return
-  if (!choice.content && !choice.function_call) {
+  if (!choice.content && !choice.tool_calls) {
     choice.content = "Jeg forstod ikke kommandoen.";
   }
 

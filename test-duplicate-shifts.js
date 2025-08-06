@@ -97,11 +97,11 @@ async function testDuplicateShiftLogic() {
   console.log('\n' + '='.repeat(50) + '\n');
 
   // Test 3: Fallback message
-  console.log('Test 3: Fallback message when no content or function_call');
+  console.log('Test 3: Fallback message when no content or tool_calls');
 
   const choice = {}; // Simulates empty GPT response
 
-  if (!choice.content && !choice.function_call) {
+  if (!choice.content && !choice.tool_calls) {
     choice.content = "Jeg forstod ikke kommandoen.";
   }
 
