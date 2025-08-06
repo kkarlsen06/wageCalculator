@@ -827,7 +827,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
 
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4.1-nano',
     messages: fullMessages,
     tools,
     tool_choice: isMultiStep ? 'required' : 'auto'
@@ -917,7 +917,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       if (stream) {
         // Use streaming for the final response
         const streamCompletion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: 'gpt-4.1',
           messages: messagesWithToolResult,
           tools,
           tool_choice: 'none',
@@ -961,7 +961,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       } else {
         // Non-streaming version
         const secondCompletion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: 'gpt-4.1-nano',
           messages: messagesWithToolResult,
           tools,
           tool_choice: 'none'
