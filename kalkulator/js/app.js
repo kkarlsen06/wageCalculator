@@ -1,3 +1,20 @@
+import { getAccessToken } from './auth.js';
+
+// Global fetch wrapper for chat functionality
+export async function chatFetch(body) {
+  const token = await getAccessToken();
+  if (!token) throw new Error('not-authenticated');
+
+  const res = await fetch('/.netlify/functions/chat', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json',
+               'Authorization':`Bearer ${token}` },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 function setAppHeight() {
   // Use visual viewport for better mobile browser UI handling
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -822,30 +839,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const spinner = appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
 
     try {
-      // Get JWT token from Supabase session
-      const { data: { session } } = await window.supa.auth.getSession();
-      const token = session?.access_token;
-
-      if (!token) {
-        spinner.remove();
-        appendMessage('system', 'Du må være innlogget for å bruke chat-funksjonen.');
-        return;
-      }
-
-      const response = await fetch('/.netlify/functions/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ messages: chatMessages })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      // Use the global chatFetch wrapper for port-agnostic authentication
+      const data = await chatFetch({ messages: chatMessages });
 
       // Log raw JSON response for debugging
       console.debug('[/chat response]', data);

@@ -12,6 +12,11 @@ const supabase = createClient(
 
 // ---------- auth helper ----------
 async function authenticateUser(headers) {
+  // Dev-mode fallback for local development
+  if (process.env.DEV_BYPASS && process.env.NODE_ENV !== 'production') {
+    return process.env.DEV_USER_ID;  // sett til din UUID i .env
+  }
+
   const auth = headers.authorization || '';
   if (!auth.startsWith('Bearer ')) {
     throw new Error('Missing or invalid Authorization header');

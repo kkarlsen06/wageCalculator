@@ -108,17 +108,23 @@ wageCalculator/
    OPENAI_API_KEY=your_openai_api_key
    SUPABASE_URL=your_supabase_url
    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   DEV_BYPASS=true
+   DEV_USER_ID=your_user_uuid_here
    ```
 
 ### Lokal utvikling
 
-**Med Netlify Functions (anbefalt for produksjon-lignende miljø):**
+**Anbefalt: Med Netlify Dev (speiler prod-miljø):**
 ```bash
+# 1. start dev-server som speiler prod-miljø
 netlify dev
-```
-Dette starter en lokal server på `http://localhost:8888` med full støtte for serverless functions.
 
-**Med Express server (legacy):**
+# 2. første gang: åpne http://localhost:8888 og logg inn
+#    (token lagres i Supabase-cookie for port 8888)
+```
+Dette starter en lokal server på `http://localhost:8888` med full støtte for serverless functions og port-agnostisk autentisering.
+
+**Legacy: Med Express server:**
 ```bash
 npm start
 ```

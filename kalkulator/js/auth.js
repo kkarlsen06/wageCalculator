@@ -2,6 +2,17 @@
 let supa;
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
+// Auth helper function to get access token with automatic refresh
+export async function getAccessToken() {
+  const { data: { session } } = await supa.auth.getSession();
+  if (session?.access_token) return session.access_token;
+
+  // Token kan være utløpt – prøv refresh
+  const { data: { session: refreshed } } =
+    await supa.auth.refreshSession();
+  return refreshed?.access_token || null;
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
 
   // Initialize Supabase client using configuration
@@ -446,11 +457,10 @@ function toggleForgot(show) {
 
 async function sendResetLink(email) {
   try {
-    // Use the current domain to ensure consistency
-    const currentDomain = window.location.origin;
-    const redirectUrl = `${currentDomain}/kalkulator/login.html`;
-    
-    
+    // Use dynamic redirectTo for port-agnostic functionality
+    const redirectUrl = `${window.location.origin}/kalkulator/login.html`;
+
+
     const { error } = await supa.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl
     });
@@ -467,11 +477,10 @@ async function sendResetLink(email) {
 
 async function sendMagicLink(email) {
   try {
-    // Use the current domain to ensure consistency
-    const currentDomain = window.location.origin;
-    const redirectUrl = `${currentDomain}/kalkulator/login.html`; // Redirect to kalkulator login after magic link login
-    
-    
+    // Use dynamic redirectTo for port-agnostic functionality
+    const redirectUrl = `${window.location.origin}/kalkulator/login.html`; // Redirect to kalkulator login after magic link login
+
+
     const { error } = await supa.auth.signInWithOtp({
       email: email,
       options: {
