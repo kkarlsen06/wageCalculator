@@ -257,6 +257,14 @@ function timeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
+function minutesToTime(minutes) {
+  // Convert minutes back to time string, handling values >= 24 hours
+  const adjustedMinutes = minutes % (24 * 60);
+  const hours = Math.floor(adjustedMinutes / 60);
+  const mins = adjustedMinutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+}
+
 function calculateOverlap(start1, end1, start2, end2) {
   const overlapStart = Math.max(start1, start2);
   const overlapEnd = Math.min(end1, end2);
@@ -283,6 +291,133 @@ function calculateBonus(startTime, endTime, bonusSegments) {
     totalBonus += (overlap / 60) * segment.rate;
   }
   return totalBonus;
+}
+
+// Legal break deduction calculation system
+function calculateLegalBreakDeduction(shift, userSettings, wageRate, bonuses) {
+  const startMinutes = timeToMinutes(shift.start_time);
+  let endMinutes = timeToMinutes(shift.end_time);
+
+  // Handle shifts that cross midnight
+  if (endMinutes < startMinutes) {
+    endMinutes += 24 * 60;
+  } else if (endMinutes === startMinutes) {
+    endMinutes += 24 * 60;
+  }
+
+  const totalDurationHours = (endMinutes - startMinutes) / 60;
+
+  // Get break deduction settings with defaults
+  const breakSettings = {
+    enabled: userSettings?.pause_deduction_enabled !== false,
+    method: userSettings?.pause_deduction_method || 'proportional',
+    thresholdHours: userSettings?.pause_threshold_hours || 5.5,
+    deductionMinutes: userSettings?.pause_deduction_minutes || 30,
+    auditEnabled: userSettings?.audit_break_calculations !== false
+  };
+
+  // Check if break deduction should be applied
+  if (!breakSettings.enabled || totalDurationHours <= breakSettings.thresholdHours) {
+    return {
+      shouldDeduct: false,
+      deductionHours: 0,
+      adjustedEndMinutes: endMinutes,
+      auditTrail: breakSettings.auditEnabled ? {
+        originalDuration: totalDurationHours,
+        thresholdHours: breakSettings.thresholdHours,
+        method: breakSettings.method,
+        reason: !breakSettings.enabled ? 'Break deduction disabled' : 'Shift duration below threshold',
+        wagePeriods: [],
+        deductedHours: 0,
+        complianceNotes: []
+      } : null
+    };
+  }
+
+  const deductionHours = breakSettings.deductionMinutes / 60;
+  let adjustedEndMinutes = endMinutes - breakSettings.deductionMinutes;
+
+  // Calculate wage periods for audit trail and proportional deduction
+  const wagePeriods = calculateWagePeriods(shift, wageRate, bonuses, startMinutes, endMinutes);
+
+  let auditTrail = null;
+  if (breakSettings.auditEnabled) {
+    auditTrail = {
+      originalDuration: totalDurationHours,
+      thresholdHours: breakSettings.thresholdHours,
+      method: breakSettings.method,
+      deductionMinutes: breakSettings.deductionMinutes,
+      wagePeriods: wagePeriods,
+      deductedHours: deductionHours,
+      complianceNotes: []
+    };
+
+    // Add compliance warnings for problematic methods
+    if (breakSettings.method === 'end_of_shift') {
+      auditTrail.complianceNotes.push('WARNING: End-of-shift deduction may not comply with labor laws in all jurisdictions');
+    }
+  }
+
+  return {
+    shouldDeduct: true,
+    deductionHours: deductionHours,
+    adjustedEndMinutes: adjustedEndMinutes,
+    method: breakSettings.method,
+    auditTrail: auditTrail
+  };
+}
+
+// Calculate wage periods for break deduction analysis
+function calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMinutes) {
+  const periods = [];
+  const dayOfWeek = new Date(shift.shift_date).getDay();
+
+  // Determine which bonus segments apply
+  let applicableBonuses = [];
+  if (dayOfWeek === 0) { // Sunday
+    applicableBonuses = bonuses.sunday || [];
+  } else if (dayOfWeek === 6) { // Saturday
+    applicableBonuses = bonuses.saturday || [];
+  } else { // Weekday
+    applicableBonuses = bonuses.weekday || [];
+  }
+
+  // Create base period covering entire shift
+  periods.push({
+    startMinutes: startMinutes,
+    endMinutes: endMinutes,
+    durationHours: (endMinutes - startMinutes) / 60,
+    wageRate: baseWageRate,
+    bonusRate: 0,
+    totalRate: baseWageRate,
+    type: 'base'
+  });
+
+  // Add bonus periods
+  for (const bonus of applicableBonuses) {
+    const bonusStart = timeToMinutes(bonus.from);
+    let bonusEnd = timeToMinutes(bonus.to);
+    if (bonusEnd <= bonusStart) {
+      bonusEnd += 24 * 60;
+    }
+
+    const overlapStart = Math.max(startMinutes, bonusStart);
+    const overlapEnd = Math.min(endMinutes, bonusEnd);
+
+    if (overlapEnd > overlapStart) {
+      periods.push({
+        startMinutes: overlapStart,
+        endMinutes: overlapEnd,
+        durationHours: (overlapEnd - overlapStart) / 60,
+        wageRate: baseWageRate,
+        bonusRate: bonus.rate,
+        totalRate: baseWageRate + bonus.rate,
+        type: 'bonus'
+      });
+    }
+  }
+
+  return periods;
 }
 
 async function getUserSettings(user_id) {
@@ -430,18 +565,9 @@ function calculateShiftEarnings(shift, userSettings) {
       pauseDeducted: false,
       baseWage: 0,
       bonus: 0,
-      total: 0
+      total: 0,
+      breakDeduction: null
     };
-  }
-
-  let paidHours = durationHours;
-  let adjustedEndMinutes = endMinutes;
-
-  // Apply pause deduction if enabled
-  const pauseDeduction = userSettings?.pause_deduction !== false;
-  if (pauseDeduction && durationHours > PAUSE_THRESHOLD) {
-    paidHours -= PAUSE_DEDUCTION;
-    adjustedEndMinutes -= PAUSE_DEDUCTION * 60;
   }
 
   // Get wage rate
@@ -450,14 +576,25 @@ function calculateShiftEarnings(shift, userSettings) {
     ? PRESET_WAGE_RATES[userSettings?.wage_level || userSettings?.current_wage_level || 1]
     : (userSettings?.custom_wage || 200);
 
-  const baseWage = paidHours * wageRate;
-
   // Get bonuses
   const bonuses = usePreset ? PRESET_BONUSES : (userSettings?.custom_bonuses || {
     weekday: [],
     saturday: [],
     sunday: []
   });
+
+  // Apply legal break deduction system
+  const breakResult = calculateLegalBreakDeduction(shift, userSettings, wageRate, bonuses);
+
+  let paidHours = durationHours;
+  let adjustedEndMinutes = endMinutes;
+
+  if (breakResult.shouldDeduct) {
+    paidHours -= breakResult.deductionHours;
+    adjustedEndMinutes = breakResult.adjustedEndMinutes;
+  }
+
+  const baseWage = paidHours * wageRate;
 
   const bonusType = shift.shift_type === 0 ? 'weekday' : (shift.shift_type === 1 ? 'saturday' : 'sunday');
   const bonusSegments = bonuses[bonusType] || [];
@@ -472,10 +609,11 @@ function calculateShiftEarnings(shift, userSettings) {
     hours: parseFloat(paidHours.toFixed(2)),
     totalHours: parseFloat(durationHours.toFixed(2)),
     paidHours: parseFloat(paidHours.toFixed(2)),
-    pauseDeducted: pauseDeduction && durationHours > PAUSE_THRESHOLD,
+    pauseDeducted: breakResult.shouldDeduct,
     baseWage: parseFloat(baseWage.toFixed(2)),
     bonus: parseFloat(bonus.toFixed(2)),
-    total: parseFloat((baseWage + bonus).toFixed(2))
+    total: parseFloat((baseWage + bonus).toFixed(2)),
+    breakDeduction: breakResult.auditTrail
   };
 }
 
