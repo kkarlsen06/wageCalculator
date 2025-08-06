@@ -740,6 +740,16 @@ export const app = {
             const endMinute = document.getElementById('recurringEndMinute').value || '00';
             
             if (!startDateStr || !freq || !duration || !startHour || !endHour) {
+                // Show validation alert message
+                if (window.ErrorHelper) {
+                    window.ErrorHelper.showError('Vennligst fyll ut alle påkrevde felt for å opprette en vaktserie.', {
+                        type: 'warning',
+                        duration: 4000
+                    });
+                } else {
+                    alert('Vennligst fyll ut alle påkrevde felt for å opprette en vaktserie.');
+                }
+
                 // Show validation error with button animation
                 const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
                 if (modalAddButton) {
@@ -843,6 +853,16 @@ export const app = {
         }
         try {
             if (!this.selectedDates || this.selectedDates.length === 0) {
+                // Show validation alert message
+                if (window.ErrorHelper) {
+                    window.ErrorHelper.showError('Vennligst velg en dato før du lagrer vakten.', {
+                        type: 'warning',
+                        duration: 4000
+                    });
+                } else {
+                    alert('Vennligst velg en dato før du lagrer vakten.');
+                }
+
                 // Show validation error with button animation
                 const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
                 if (modalAddButton) {
@@ -863,6 +883,16 @@ export const app = {
             const endMinute = document.getElementById('endMinute').value || '00';
             
             if (!startHour || !endHour) {
+                // Show validation alert message
+                if (window.ErrorHelper) {
+                    window.ErrorHelper.showError('Vennligst fyll ut arbeidstid (start- og sluttidspunkt).', {
+                        type: 'warning',
+                        duration: 4000
+                    });
+                } else {
+                    alert('Vennligst fyll ut arbeidstid (start- og sluttidspunkt).');
+                }
+
                 // Show validation error with button animation
                 const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
                 if (modalAddButton) {
