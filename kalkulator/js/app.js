@@ -73,6 +73,60 @@ window.addEventListener('scroll', () => {
   }, 50); // Debounced scroll handler
 });
 
+// Enhanced mobile keyboard handling
+function handleMobileKeyboard() {
+  if (!window.visualViewport) return;
+
+  let initialViewportHeight = window.visualViewport.height;
+  let keyboardVisible = false;
+
+  function onViewportChange() {
+    const currentHeight = window.visualViewport.height;
+    const heightDifference = initialViewportHeight - currentHeight;
+
+    // Keyboard is considered visible if viewport height decreased by more than 150px
+    const wasKeyboardVisible = keyboardVisible;
+    keyboardVisible = heightDifference > 150;
+
+    // Only act on keyboard state changes
+    if (keyboardVisible !== wasKeyboardVisible) {
+      const chatboxPill = document.getElementById('chatboxPill');
+
+      if (keyboardVisible) {
+        // Keyboard appeared
+        document.body.classList.add('keyboard-visible');
+        if (chatboxPill && chatboxPill.classList.contains('expanded')) {
+          // Adjust chatbox position when keyboard is visible
+          chatboxPill.style.bottom = '10px';
+        }
+      } else {
+        // Keyboard hidden
+        document.body.classList.remove('keyboard-visible');
+        if (chatboxPill && chatboxPill.classList.contains('expanded')) {
+          // Reset chatbox position
+          chatboxPill.style.bottom = '20px';
+        }
+      }
+    }
+  }
+
+  window.visualViewport.addEventListener('resize', onViewportChange);
+
+  // Update initial height on orientation change
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      initialViewportHeight = window.visualViewport.height;
+      keyboardVisible = false;
+      document.body.classList.remove('keyboard-visible');
+    }, 500);
+  });
+}
+
+// Initialize mobile keyboard handling
+if (window.innerWidth <= 768) {
+  handleMobileKeyboard();
+}
+
 // Initialize Supabase client
 document.addEventListener('DOMContentLoaded', async () => {
   const supa = window.supabase.createClient(
