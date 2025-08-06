@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         headers: { Authorization: `Bearer ${session.access_token}` }
       });
       if (ok.status === 200) {          // token accepted by backend
-        window.location.replace('/index.html');
+        window.location.replace('index.html');
         return;
       }
     } catch (_) { /* ignore network errors */ }
@@ -359,7 +359,7 @@ async function checkAndShowProfileCompletion() {
       
       // Small delay to ensure auth state is properly set
       setTimeout(() => {
-        window.location.replace("/");
+        window.location.replace("index.html");
       }, 150);
       
     } catch (err) {
@@ -369,7 +369,7 @@ async function checkAndShowProfileCompletion() {
       if (!isRedirecting) {
         isRedirecting = true;
         setTimeout(() => {
-          window.location.replace("/");
+          window.location.replace("index.html");
         }, 100);
       }
     }
@@ -382,7 +382,7 @@ async function checkAndShowProfileCompletion() {
     // Force redirect on timeout
     if (!isRedirecting) {
       isRedirecting = true;
-      window.location.replace("/");
+      window.location.replace("index.html");
     }
   }
 }
@@ -415,7 +415,7 @@ async function completeProfile() {
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = "index.html";
   } catch (err) {
     console.error("Error completing profile:", err);
     window.authElements.completeProfileMsg.textContent = "Kunne ikke oppdatere profil";
@@ -424,7 +424,7 @@ async function completeProfile() {
 
 async function skipProfileCompletion() {
   // Just redirect to app without requiring profile completion
-  window.location.href = "/";
+  window.location.href = "index.html";
 }
 
 // Legacy function - no longer used since we have signUpWithDetails
@@ -448,7 +448,7 @@ async function sendResetLink(email) {
   try {
     // Use the current domain to ensure consistency
     const currentDomain = window.location.origin;
-    const redirectUrl = `${currentDomain}/`;
+    const redirectUrl = `${currentDomain}/kalkulator/login.html`;
     
     
     const { error } = await supa.auth.resetPasswordForEmail(email, {
@@ -469,7 +469,7 @@ async function sendMagicLink(email) {
   try {
     // Use the current domain to ensure consistency
     const currentDomain = window.location.origin;
-    const redirectUrl = `${currentDomain}/`; // Redirect to root after magic link login
+    const redirectUrl = `${currentDomain}/kalkulator/login.html`; // Redirect to kalkulator login after magic link login
     
     
     const { error } = await supa.auth.signInWithOtp({
@@ -724,7 +724,7 @@ async function updatePassword(newPassword, confirmPassword) {
             setTimeout(async () => {
                 await supa.auth.signOut();
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = 'login.html';
                 }, 500);
             }, 1500);
         }

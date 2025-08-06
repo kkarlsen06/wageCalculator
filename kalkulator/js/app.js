@@ -83,6 +83,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   let retryCount = 0;
   const maxRetries = 3; // Reduced from 5 to 3
 
+  // Immediate redirect check - if we can quickly determine no session exists
+  try {
+    const { data: { session: quickSession } } = await supa.auth.getSession();
+    if (!quickSession) {
+      console.log('Quick session check: No session found, redirecting to login immediately');
+      window.location.href = 'login.html';
+      return;
+    }
+  } catch (quickCheckError) {
+    console.log('Quick session check failed, proceeding with retry logic:', quickCheckError);
+    // Continue with the retry logic below
+  }
+
   // Load and display profile information immediately after greeting
   async function loadAndDisplayProfileInfo() {
     try {
@@ -309,9 +322,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log(`App.html: No session found, waiting 200ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, 200));
       } else {
-        console.log(`App.html: No session after ${maxRetries} attempts, showing login form`);
-        console.log('[login] no session – showing form');
-        document.body.style.visibility = 'visible';
+        console.log(`App.html: No session after ${maxRetries} attempts, redirecting to login`);
+        console.log('[login] no session – redirecting to login page');
+        window.location.href = 'login.html';
         return;
       }
     } else {
@@ -326,7 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.chatbox.clear();
     }
     await supa.auth.signOut();
-    window.location.href = './';
+    window.location.href = 'login.html';
   };
 
   // After ensuring session, show welcome, init app, and display
@@ -725,10 +738,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const messageDiv = document.createElement('div');
     messageDiv.className = `chatbox-message ${role}`;
-    messageDiv.textContent = text;
+
+    // Check if text contains HTML (for dots animation)
+    if (text.includes('<span class="dots">')) {
+      messageDiv.innerHTML = text;
+    } else {
+      messageDiv.textContent = text;
+    }
 
     chatElements.log.appendChild(messageDiv);
     chatElements.log.scrollTop = chatElements.log.scrollHeight;
+
+    // Return the message element so it can be removed if needed
+    return messageDiv;
   }
 
   async function sendPillMessage() {
@@ -764,12 +786,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     appendMessage('user', messageText);
     chatMessages.push({ role: 'user', content: messageText });
 
+    // Show thinking indicator with dots animation
+    const spinner = appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
+
     try {
       // Get JWT token from Supabase session
       const { data: { session } } = await window.supa.auth.getSession();
       const token = session?.access_token;
 
       if (!token) {
+        spinner.remove();
         appendMessage('system', 'Du må være innlogget for å bruke chat-funksjonen.');
         return;
       }
@@ -787,23 +813,61 @@ document.addEventListener('DOMContentLoaded', async () => {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const result = await response.json();
+      const data = await response.json();
 
-      if (result.assistant) {
-        appendMessage('assistant', result.assistant);
-        chatMessages.push({ role: 'assistant', content: result.assistant });
-      } else if (result.system) {
-        appendMessage('assistant', result.system);
-        // If shifts were added, refresh the app data
-        if (result.shifts && window.app && window.app.loadShifts) {
-          await window.app.loadShifts();
+      // Remove spinner after response
+      spinner.remove();
+
+      // Handle different response types - prioritize assistant, then system, then error
+      const txt = data.assistant ?? data.system ?? (data.error && '⚠️ ' + data.error);
+      if (txt) {
+        appendMessage('assistant', txt);
+        if (data.assistant) {
+          chatMessages.push({ role: 'assistant', content: data.assistant });
         }
-      } else {
-        appendMessage('system', 'Ingen svar mottatt fra serveren.');
       }
+
+      // Update shifts table if shifts data is provided
+      if (Array.isArray(data.shifts)) {
+        // Filter out duplicates based on date+time combination before rendering
+        const uniq = [];
+        const seen = new Set();
+        for (const s of data.shifts) {
+          const key = `${s.shift_date}|${s.start_time}|${s.end_time}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            uniq.push(s);
+          }
+        }
+
+        // Update the shifts in the app and refresh display
+        if (window.app && window.app.updateDisplay) {
+          // Add new shifts to the app's shifts array
+          if (window.app.shifts && window.app.userShifts) {
+            // Convert shifts data to app format if needed
+            const newShifts = uniq.map(shift => ({
+              id: shift.id || Date.now() + Math.random(), // Generate temp ID if not provided
+              date: new Date(shift.date || shift.shift_date),
+              startTime: shift.startTime || shift.start_time,
+              endTime: shift.endTime || shift.end_time,
+              type: shift.type !== undefined ? shift.type : shift.shift_type,
+              seriesId: shift.seriesId || shift.series_id || null
+            }));
+
+            // Add to both arrays
+            window.app.shifts.push(...newShifts);
+            window.app.userShifts.push(...newShifts);
+          }
+
+          // Refresh the display
+          window.app.updateDisplay();
+        }
+      }
+
     } catch (error) {
       console.error('Chat error:', error);
-      appendMessage('system', 'Feil ved sending av melding. Prøv igjen senere.');
+      spinner.remove();
+      appendMessage('assistant', '⚠️ Kunne ikke koble til serveren.');
     } finally {
       if (chatElements.send) {
         chatElements.send.disabled = false;
