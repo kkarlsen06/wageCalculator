@@ -620,6 +620,16 @@ export const app = {
         this.closeSettings(false); // Don't save settings when closing as cleanup
         this.closeProfile();
         this.closeProfileDropdown();
+
+        // Hide floating action bar when modal opens to prevent z-index conflicts
+        const floatingBar = document.querySelector('.floating-action-bar');
+        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+        if (floatingBar) {
+            floatingBar.style.display = 'none';
+        }
+        if (floatingBarBackdrop) {
+            floatingBarBackdrop.style.display = 'none';
+        }
         
         // Populate form elements if they're empty
         const startHourElement = document.getElementById('startHour');
@@ -702,6 +712,16 @@ export const app = {
         const modal = document.getElementById('addShiftModal');
         modal.style.display = 'none';
         modal.classList.remove('active');
+
+        // Restore floating action bar visibility when modal closes
+        const floatingBar = document.querySelector('.floating-action-bar');
+        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+        if (floatingBar) {
+            floatingBar.style.display = '';
+        }
+        if (floatingBarBackdrop) {
+            floatingBarBackdrop.style.display = '';
+        }
     },
     async addShift() {
         // Handle recurring shifts
@@ -2310,6 +2330,16 @@ export const app = {
         this.closeProfileDropdown();
         this.closeProfile();
 
+        // Hide floating action bar when modal opens to prevent z-index conflicts
+        const floatingBar = document.querySelector('.floating-action-bar');
+        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+        if (floatingBar) {
+            floatingBar.style.display = 'none';
+        }
+        if (floatingBarBackdrop) {
+            floatingBarBackdrop.style.display = 'none';
+        }
+
         const modal = document.getElementById('settingsModal');
         if (modal) {
             // Update UI to match current state
@@ -2342,6 +2372,16 @@ export const app = {
         this.closeShiftDetails();
         this.closeProfileDropdown();
         this.closeProfile();
+
+        // Hide floating action bar when modal opens to prevent z-index conflicts
+        const floatingBar = document.querySelector('.floating-action-bar');
+        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+        if (floatingBar) {
+            floatingBar.style.display = 'none';
+        }
+        if (floatingBarBackdrop) {
+            floatingBarBackdrop.style.display = 'none';
+        }
 
         const modal = document.getElementById('settingsModal');
         if (modal) {
@@ -2402,6 +2442,16 @@ export const app = {
 
         if (modal) {
             modal.style.display = 'none';
+        }
+
+        // Restore floating action bar visibility when modal closes
+        const floatingBar = document.querySelector('.floating-action-bar');
+        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+        if (floatingBar) {
+            floatingBar.style.display = '';
+        }
+        if (floatingBarBackdrop) {
+            floatingBarBackdrop.style.display = '';
         }
 
         // Close profile dropdown if open
@@ -2603,6 +2653,16 @@ export const app = {
         this.closeSettings(false); // Don't save settings when closing as cleanup
         this.closeShiftDetails();
 
+        // Hide floating action bar when modal opens to prevent z-index conflicts
+        const floatingBar = document.querySelector('.floating-action-bar');
+        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+        if (floatingBar) {
+            floatingBar.style.display = 'none';
+        }
+        if (floatingBarBackdrop) {
+            floatingBarBackdrop.style.display = 'none';
+        }
+
         const modal = document.getElementById('profileModal');
         if (modal) {
             // Load profile data
@@ -2646,6 +2706,16 @@ export const app = {
             if (modal.clickOutsideHandler) {
                 modal.removeEventListener('click', modal.clickOutsideHandler);
                 modal.clickOutsideHandler = null;
+            }
+
+            // Restore floating action bar visibility when modal closes
+            const floatingBar = document.querySelector('.floating-action-bar');
+            const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+            if (floatingBar) {
+                floatingBar.style.display = '';
+            }
+            if (floatingBarBackdrop) {
+                floatingBarBackdrop.style.display = '';
             }
         }
     },
@@ -5504,7 +5574,17 @@ export const app = {
         // Close any existing expanded views
         this.closeStatDetails();
         this.closeSettings(false); // Don't save settings when closing as cleanup
-        
+
+        // Hide floating action bar when modal opens to prevent z-index conflicts
+        const floatingBar = document.querySelector('.floating-action-bar');
+        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+        if (floatingBar) {
+            floatingBar.style.display = 'none';
+        }
+        if (floatingBarBackdrop) {
+            floatingBarBackdrop.style.display = 'none';
+        }
+
         // Hide header
         const header = document.querySelector('.header');
         if (header) header.classList.add('hidden');
@@ -5807,6 +5887,16 @@ export const app = {
         if (this.shiftDetailsKeydownHandler) {
             document.removeEventListener('keydown', this.shiftDetailsKeydownHandler);
             this.shiftDetailsKeydownHandler = null;
+        }
+
+        // Restore floating action bar visibility when modal closes
+        const floatingBar = document.querySelector('.floating-action-bar');
+        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+        if (floatingBar) {
+            floatingBar.style.display = '';
+        }
+        if (floatingBarBackdrop) {
+            floatingBarBackdrop.style.display = '';
         }
 
         // Immediately disable pointer events on backdrop to prevent double-tap
@@ -7455,6 +7545,16 @@ export const app = {
                 header.classList.add('hidden');
             }
 
+            // Hide floating action bar when modal opens to prevent z-index conflicts
+            const floatingBar = document.querySelector('.floating-action-bar');
+            const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+            if (floatingBar) {
+                floatingBar.style.display = 'none';
+            }
+            if (floatingBarBackdrop) {
+                floatingBarBackdrop.style.display = 'none';
+            }
+
             // Add backdrop click handler
             const backdrop = editModal.querySelector('.modal-backdrop');
             if (backdrop) {
@@ -7492,6 +7592,16 @@ export const app = {
                     }
                 });
                 delete editModal.dataset.keydownHandler;
+            }
+
+            // Restore floating action bar visibility when modal closes
+            const floatingBar = document.querySelector('.floating-action-bar');
+            const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
+            if (floatingBar) {
+                floatingBar.style.display = '';
+            }
+            if (floatingBarBackdrop) {
+                floatingBarBackdrop.style.display = '';
             }
 
             // Clear editing state
