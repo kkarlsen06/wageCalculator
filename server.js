@@ -335,10 +335,44 @@ function calculateLegalBreakDeduction(shift, userSettings, wageRate, bonuses) {
   }
 
   const deductionHours = breakSettings.deductionMinutes / 60;
-  let adjustedEndMinutes = endMinutes - breakSettings.deductionMinutes;
 
-  // Calculate wage periods for audit trail and proportional deduction
+  // Calculate wage periods for audit trail and method-specific deduction
   const wagePeriods = calculateWagePeriods(shift, wageRate, bonuses, startMinutes, endMinutes);
+
+  // Apply break deduction based on selected method
+  let adjustedEndMinutes = endMinutes;
+  let methodSpecificDeduction = null;
+
+  switch (breakSettings.method) {
+    case 'none':
+      // No deduction - paid pause
+      methodSpecificDeduction = {
+        deductionHours: 0,
+        adjustedEndMinutes: endMinutes,
+        deductionDetails: 'No break deduction applied - paid pause'
+      };
+      break;
+
+    case 'proportional':
+      // Deduct proportionally across all wage periods
+      methodSpecificDeduction = applyProportionalDeduction(wagePeriods, deductionHours, startMinutes, endMinutes);
+      break;
+
+    case 'base_only':
+      // Deduct only from base rate periods
+      methodSpecificDeduction = applyBaseOnlyDeduction(wagePeriods, deductionHours, startMinutes, endMinutes);
+      break;
+
+    case 'end_of_shift':
+    default:
+      // Legacy method - deduct from end of shift
+      methodSpecificDeduction = {
+        deductionHours: deductionHours,
+        adjustedEndMinutes: endMinutes - breakSettings.deductionMinutes,
+        deductionDetails: 'Break deducted from end of shift (legacy method)'
+      };
+      break;
+  }
 
   let auditTrail = null;
   if (breakSettings.auditEnabled) {
@@ -348,7 +382,8 @@ function calculateLegalBreakDeduction(shift, userSettings, wageRate, bonuses) {
       method: breakSettings.method,
       deductionMinutes: breakSettings.deductionMinutes,
       wagePeriods: wagePeriods,
-      deductedHours: deductionHours,
+      deductedHours: methodSpecificDeduction.deductionHours,
+      deductionDetails: methodSpecificDeduction.deductionDetails,
       complianceNotes: []
     };
 
@@ -359,9 +394,9 @@ function calculateLegalBreakDeduction(shift, userSettings, wageRate, bonuses) {
   }
 
   return {
-    shouldDeduct: true,
-    deductionHours: deductionHours,
-    adjustedEndMinutes: adjustedEndMinutes,
+    shouldDeduct: breakSettings.method !== 'none',
+    deductionHours: methodSpecificDeduction.deductionHours,
+    adjustedEndMinutes: methodSpecificDeduction.adjustedEndMinutes,
     method: breakSettings.method,
     auditTrail: auditTrail
   };
@@ -418,6 +453,136 @@ function calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMin
   }
 
   return periods;
+}
+
+// Apply proportional break deduction across all wage periods
+function applyProportionalDeduction(wagePeriods, deductionHours, startMinutes, endMinutes) {
+  const totalShiftHours = (endMinutes - startMinutes) / 60;
+  let remainingDeduction = deductionHours;
+  let totalDeducted = 0;
+
+  // Calculate proportional deduction for each period
+  const deductionDetails = [];
+
+  for (const period of wagePeriods) {
+    if (remainingDeduction <= 0) break;
+
+    const periodProportion = period.durationHours / totalShiftHours;
+    const periodDeduction = Math.min(deductionHours * periodProportion, remainingDeduction);
+
+    if (periodDeduction > 0) {
+      totalDeducted += periodDeduction;
+      remainingDeduction -= periodDeduction;
+      deductionDetails.push(`${periodDeduction.toFixed(2)}h from ${period.type} rate (${period.totalRate} kr/h)`);
+    }
+  }
+
+  return {
+    deductionHours: totalDeducted,
+    adjustedEndMinutes: endMinutes - (totalDeducted * 60),
+    deductionDetails: `Proportional deduction: ${deductionDetails.join(', ')}`
+  };
+}
+
+// Apply break deduction only to base rate periods
+function applyBaseOnlyDeduction(wagePeriods, deductionHours, startMinutes, endMinutes) {
+  let remainingDeduction = deductionHours;
+  let totalDeducted = 0;
+
+  // Find base rate periods (lowest bonus rate)
+  const basePeriods = wagePeriods.filter(p => p.bonusRate === 0);
+  const deductionDetails = [];
+
+  if (basePeriods.length === 0) {
+    // No base periods, deduct from periods with smallest bonuses
+    const sortedPeriods = [...wagePeriods].sort((a, b) => a.bonusRate - b.bonusRate);
+    const smallestBonus = sortedPeriods[0].bonusRate;
+    const targetPeriods = sortedPeriods.filter(p => p.bonusRate === smallestBonus);
+
+    for (const period of targetPeriods) {
+      if (remainingDeduction <= 0) break;
+
+      const periodDeduction = Math.min(period.durationHours, remainingDeduction);
+      totalDeducted += periodDeduction;
+      remainingDeduction -= periodDeduction;
+      deductionDetails.push(`${periodDeduction.toFixed(2)}h from lowest bonus rate (${period.totalRate} kr/h)`);
+    }
+  } else {
+    // Deduct from base rate periods
+    for (const period of basePeriods) {
+      if (remainingDeduction <= 0) break;
+
+      const periodDeduction = Math.min(period.durationHours, remainingDeduction);
+      totalDeducted += periodDeduction;
+      remainingDeduction -= periodDeduction;
+      deductionDetails.push(`${periodDeduction.toFixed(2)}h from base rate (${period.wageRate} kr/h)`);
+    }
+  }
+
+  return {
+    deductionHours: totalDeducted,
+    adjustedEndMinutes: endMinutes - (totalDeducted * 60),
+    deductionDetails: `Base-only deduction: ${deductionDetails.join(', ')}`
+  };
+}
+
+// Calculate adjusted wages based on break deduction method
+function calculateAdjustedWages(breakResult, baseWageRate) {
+  let totalBaseWage = 0;
+  let totalBonus = 0;
+  let totalHours = 0;
+
+  if (!breakResult.auditTrail || !breakResult.auditTrail.wagePeriods) {
+    return { baseWage: 0, bonus: 0, totalHours: 0 };
+  }
+
+  const wagePeriods = breakResult.auditTrail.wagePeriods;
+  const method = breakResult.method;
+  const deductionHours = breakResult.deductionHours;
+
+  if (method === 'proportional') {
+    // Apply proportional deduction to each period
+    const totalShiftHours = wagePeriods.reduce((sum, period) => sum + period.durationHours, 0);
+
+    for (const period of wagePeriods) {
+      const periodProportion = period.durationHours / totalShiftHours;
+      const periodDeduction = deductionHours * periodProportion;
+      const adjustedPeriodHours = Math.max(0, period.durationHours - periodDeduction);
+
+      totalHours += adjustedPeriodHours;
+      totalBaseWage += adjustedPeriodHours * period.wageRate;
+      totalBonus += adjustedPeriodHours * period.bonusRate;
+    }
+  } else if (method === 'base_only') {
+    // Apply deduction only to base rate periods
+    let remainingDeduction = deductionHours;
+
+    // First pass: deduct from base periods
+    const basePeriods = wagePeriods.filter(p => p.bonusRate === 0);
+    const bonusPeriods = wagePeriods.filter(p => p.bonusRate > 0);
+
+    for (const period of basePeriods) {
+      const periodDeduction = Math.min(period.durationHours, remainingDeduction);
+      const adjustedPeriodHours = period.durationHours - periodDeduction;
+      remainingDeduction -= periodDeduction;
+
+      totalHours += adjustedPeriodHours;
+      totalBaseWage += adjustedPeriodHours * period.wageRate;
+    }
+
+    // Add all bonus periods (no deduction from bonus periods in base_only method)
+    for (const period of bonusPeriods) {
+      totalHours += period.durationHours;
+      totalBaseWage += period.durationHours * period.wageRate;
+      totalBonus += period.durationHours * period.bonusRate;
+    }
+  }
+
+  return {
+    baseWage: parseFloat(totalBaseWage.toFixed(2)),
+    bonus: parseFloat(totalBonus.toFixed(2)),
+    totalHours: parseFloat(totalHours.toFixed(2))
+  };
 }
 
 async function getUserSettings(user_id) {
@@ -589,21 +754,33 @@ function calculateShiftEarnings(shift, userSettings) {
   let paidHours = durationHours;
   let adjustedEndMinutes = endMinutes;
 
-  if (breakResult.shouldDeduct) {
-    paidHours -= breakResult.deductionHours;
-    adjustedEndMinutes = breakResult.adjustedEndMinutes;
+  let baseWage = 0;
+  let bonus = 0;
+
+  if (breakResult.shouldDeduct && (breakResult.method === 'proportional' || breakResult.method === 'base_only')) {
+    // For proportional and base_only methods, calculate wages based on adjusted wage periods
+    const adjustedWages = calculateAdjustedWages(breakResult, wageRate);
+    baseWage = adjustedWages.baseWage;
+    bonus = adjustedWages.bonus;
+    paidHours = adjustedWages.totalHours;
+  } else {
+    // For end_of_shift and none methods, use traditional calculation
+    if (breakResult.shouldDeduct) {
+      paidHours -= breakResult.deductionHours;
+      adjustedEndMinutes = breakResult.adjustedEndMinutes;
+    }
+
+    baseWage = paidHours * wageRate;
+
+    const bonusType = shift.shift_type === 0 ? 'weekday' : (shift.shift_type === 1 ? 'saturday' : 'sunday');
+    const bonusSegments = bonuses[bonusType] || [];
+
+    // Calculate end time after adjustments
+    const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
+    const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
+
+    bonus = calculateBonus(shift.start_time, endTimeStr, bonusSegments);
   }
-
-  const baseWage = paidHours * wageRate;
-
-  const bonusType = shift.shift_type === 0 ? 'weekday' : (shift.shift_type === 1 ? 'saturday' : 'sunday');
-  const bonusSegments = bonuses[bonusType] || [];
-
-  // Calculate end time after adjustments
-  const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
-  const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
-
-  const bonus = calculateBonus(shift.start_time, endTimeStr, bonusSegments);
 
   return {
     hours: parseFloat(paidHours.toFixed(2)),

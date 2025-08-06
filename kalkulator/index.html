@@ -368,15 +368,73 @@
                       </div>
                   </div>
 
+                  <!-- Break Deduction Settings Section -->
                   <div class="form-group form-group-with-hint">
-                      <label>Pausetrekk</label>
+                      <label>Pausetrekk-innstillinger</label>
+
+                      <!-- Enable/Disable Break Deduction -->
                       <div class="switch-group">
                         <div>
-                          <span class="text-secondary">Trekk fra betalt pause for vakter over 5,5 timer</span>
-                          <small class="form-hint">Følger standard arbeidsrett - påvirker lønnsberegningen</small>
+                          <span class="text-secondary">Aktiver pausetrekk</span>
+                          <small class="form-hint">Trekk fra betalt pause for lange vakter</small>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="pauseDeductionToggle" checked>
+                            <input type="checkbox" id="pauseDeductionEnabledToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                      </div>
+
+                      <!-- Break Deduction Method -->
+                      <div class="form-group" id="breakDeductionMethodSection">
+                        <label for="pauseDeductionMethodSelect">Pausetrekk-metode</label>
+                        <select id="pauseDeductionMethodSelect" class="form-control">
+                          <option value="proportional">Proporsjonal (anbefalt)</option>
+                          <option value="base_only">Kun grunnlønn</option>
+                          <option value="end_of_shift">Slutt av vakt (legacy)</option>
+                          <option value="none">Ingen trekk (betalt pause)</option>
+                        </select>
+                        <small class="form-hint">Velg hvordan pausetrekk skal beregnes</small>
+                      </div>
+
+                      <!-- Method Explanation -->
+                      <div class="form-group" id="methodExplanation">
+                        <div class="method-info">
+                          <div id="proportionalInfo" class="method-description">
+                            <strong>Proporsjonal trekk:</strong> Trekker pausetid proporsjonalt fra alle lønnsperioder. Juridisk korrekt metode.
+                          </div>
+                          <div id="baseOnlyInfo" class="method-description" style="display: none;">
+                            <strong>Kun grunnlønn:</strong> Trekker pausetid kun fra grunnlønn-timer, bevarer tillegg.
+                          </div>
+                          <div id="endOfShiftInfo" class="method-description" style="display: none;">
+                            <strong>⚠️ Slutt av vakt:</strong> Trekker fra slutten av vakten. Kan være juridisk problematisk.
+                          </div>
+                          <div id="noneInfo" class="method-description" style="display: none;">
+                            <strong>Ingen trekk:</strong> Alle timer betales, inkludert pausetid.
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Advanced Settings -->
+                      <div class="form-group" id="pauseThresholdSection">
+                        <label for="pauseThresholdInput">Pausetrekk-terskel (timer)</label>
+                        <input type="number" id="pauseThresholdInput" class="form-control" min="0" max="24" step="0.5" value="5.5">
+                        <small class="form-hint">Minimum vaktlengde for å utløse pausetrekk</small>
+                      </div>
+
+                      <div class="form-group" id="pauseDeductionMinutesSection">
+                        <label for="pauseDeductionMinutesInput">Pausetrekk (minutter)</label>
+                        <input type="number" id="pauseDeductionMinutesInput" class="form-control" min="0" max="120" step="15" value="30">
+                        <small class="form-hint">Antall minutter som trekkes fra</small>
+                      </div>
+
+                      <!-- Audit Trail Toggle -->
+                      <div class="switch-group">
+                        <div>
+                          <span class="text-secondary">Detaljert pausetrekk-logg</span>
+                          <small class="form-hint">Lagre detaljert informasjon om pausetrekk-beregninger</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="auditBreakCalculationsToggle" checked>
                             <span class="slider"></span>
                         </label>
                       </div>

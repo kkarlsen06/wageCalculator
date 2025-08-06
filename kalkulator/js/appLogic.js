@@ -324,12 +324,8 @@ export const app = {
 
         // Set initial shifts
         this.shifts = [...this.userShifts];
-        // Bind pause toggle
-        document.getElementById('pauseDeductionToggle').addEventListener('change', e => {
-            this.pauseDeduction = e.target.checked;
-            this.updateDisplay();
-            this.saveSettingsToSupabase();
-        });
+        // Bind new break deduction settings
+        this.setupBreakDeductionEventListeners();
         document.getElementById('fullMinuteRangeToggle').addEventListener('change', e => {
             if (e.target.checked && this.directTimeInput) {
                 // Disable direct time input when full minute range is enabled
@@ -1510,7 +1506,14 @@ export const app = {
                 // Load selected year, default to current year if not set
                 this.currentYear = settings.current_year || new Date().getFullYear();
                     
-                this.pauseDeduction = settings.pause_deduction || false;
+                this.pauseDeduction = settings.pause_deduction || false; // Legacy setting
+                // Load new break deduction settings
+                this.pauseDeductionEnabled = settings.pause_deduction_enabled !== false;
+                this.pauseDeductionMethod = settings.pause_deduction_method || 'proportional';
+                this.pauseThresholdHours = parseFloat(settings.pause_threshold_hours) || 5.5;
+                this.pauseDeductionMinutes = parseInt(settings.pause_deduction_minutes) || 30;
+                this.auditBreakCalculations = settings.audit_break_calculations !== false;
+
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
             this.monthlyGoal = settings.monthly_goal || 20000;
@@ -1558,7 +1561,14 @@ export const app = {
         this.payrollDay = 15; // Default payroll day (15th of each month)
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.currentYear = new Date().getFullYear(); // Default to current year
-        this.pauseDeduction = false;
+        this.pauseDeduction = false; // Legacy setting - kept for backward compatibility
+        // New legal break deduction settings
+        this.pauseDeductionEnabled = true; // Enable break deduction by default
+        this.pauseDeductionMethod = 'proportional'; // Legal-compliant default method
+        this.pauseThresholdHours = 5.5; // Standard threshold
+        this.pauseDeductionMinutes = 30; // Standard 30-minute break
+        this.auditBreakCalculations = true; // Enable audit trail by default
+
         this.fullMinuteRange = false; // Default to 15-minute intervals
         this.directTimeInput = false; // Default to dropdown time selection
         this.monthlyGoal = 20000; // Default monthly goal
@@ -1601,10 +1611,35 @@ export const app = {
             customWageInput.value = this.customWage;
         }
 
-        const pauseDeductionToggle = document.getElementById('pauseDeductionToggle');
-        if (pauseDeductionToggle) {
-            pauseDeductionToggle.checked = this.pauseDeduction;
+        // Update new break deduction settings UI
+        const pauseDeductionEnabledToggle = document.getElementById('pauseDeductionEnabledToggle');
+        if (pauseDeductionEnabledToggle) {
+            pauseDeductionEnabledToggle.checked = this.pauseDeductionEnabled;
         }
+
+        const pauseDeductionMethodSelect = document.getElementById('pauseDeductionMethodSelect');
+        if (pauseDeductionMethodSelect) {
+            pauseDeductionMethodSelect.value = this.pauseDeductionMethod;
+        }
+
+        const pauseThresholdInput = document.getElementById('pauseThresholdInput');
+        if (pauseThresholdInput) {
+            pauseThresholdInput.value = this.pauseThresholdHours;
+        }
+
+        const pauseDeductionMinutesInput = document.getElementById('pauseDeductionMinutesInput');
+        if (pauseDeductionMinutesInput) {
+            pauseDeductionMinutesInput.value = this.pauseDeductionMinutes;
+        }
+
+        const auditBreakCalculationsToggle = document.getElementById('auditBreakCalculationsToggle');
+        if (auditBreakCalculationsToggle) {
+            auditBreakCalculationsToggle.checked = this.auditBreakCalculations;
+        }
+
+        // Update break deduction sections visibility and method explanation
+        this.toggleBreakDeductionSections();
+        this.updateMethodExplanation();
 
         const taxDeductionToggle = document.getElementById('taxDeductionToggle');
         if (taxDeductionToggle) {
@@ -1757,7 +1792,23 @@ export const app = {
                 settingsData.custom_wage = this.customWage;
                 // Remove currentMonth from settings - it should always default to current month on page load
                 settingsData.current_year = this.currentYear;
-                settingsData.pause_deduction = this.pauseDeduction;
+                settingsData.pause_deduction = this.pauseDeduction; // Legacy setting
+                // New break deduction settings
+                settingsData.pause_deduction_enabled = this.pauseDeductionEnabled;
+                settingsData.pause_deduction_method = this.pauseDeductionMethod;
+                settingsData.pause_threshold_hours = this.pauseThresholdHours;
+                settingsData.pause_deduction_minutes = this.pauseDeductionMinutes;
+                settingsData.audit_break_calculations = this.auditBreakCalculations;
+
+                // Debug logging for break deduction settings
+                console.log('Saving break deduction settings:', {
+                    enabled: this.pauseDeductionEnabled,
+                    method: this.pauseDeductionMethod,
+                    threshold: this.pauseThresholdHours,
+                    minutes: this.pauseDeductionMinutes,
+                    audit: this.auditBreakCalculations
+                });
+
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
                 settingsData.monthly_goal = this.monthlyGoal;
@@ -1806,7 +1857,14 @@ export const app = {
                 this.currentWageLevel = data.currentWageLevel || 1;
                 this.customBonuses = data.customBonuses || {};
                 this.currentMonth = new Date().getMonth() + 1; // Always default to current month
-                this.pauseDeduction = data.pauseDeduction !== false;
+                this.pauseDeduction = data.pauseDeduction !== false; // Legacy setting
+                // Load new break deduction settings from localStorage
+                this.pauseDeductionEnabled = data.pauseDeductionEnabled !== false;
+                this.pauseDeductionMethod = data.pauseDeductionMethod || 'proportional';
+                this.pauseThresholdHours = parseFloat(data.pauseThresholdHours) || 5.5;
+                this.pauseDeductionMinutes = parseInt(data.pauseDeductionMinutes) || 30;
+                this.auditBreakCalculations = data.auditBreakCalculations !== false;
+
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
                 this.monthlyGoal = data.monthlyGoal || 20000;
@@ -2856,7 +2914,14 @@ export const app = {
                 currentWageLevel: this.currentWageLevel,
                 customBonuses: this.customBonuses,
                 // Remove currentMonth from localStorage - it should always default to current month on page load
-                pauseDeduction: this.pauseDeduction,
+                pauseDeduction: this.pauseDeduction, // Legacy setting
+                // New break deduction settings
+                pauseDeductionEnabled: this.pauseDeductionEnabled,
+                pauseDeductionMethod: this.pauseDeductionMethod,
+                pauseThresholdHours: this.pauseThresholdHours,
+                pauseDeductionMinutes: this.pauseDeductionMinutes,
+                auditBreakCalculations: this.auditBreakCalculations,
+
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
                 hasSeenRecurringIntro: this.hasSeenRecurringIntro,
@@ -6907,7 +6972,7 @@ export const app = {
     calculateShift(shift) {
         const startMinutes = this.timeToMinutes(shift.startTime);
         let endMinutes = this.timeToMinutes(shift.endTime);
-        
+
         // Improved logic for handling shifts that cross midnight
         if (endMinutes < startMinutes) {
             // Shift spans midnight, add 24 hours to end time
@@ -6922,9 +6987,9 @@ export const app = {
             // Assume it's a 24-hour shift if times are identical
             endMinutes += 24 * 60;
         }
-        
+
         const durationHours = (endMinutes - startMinutes) / 60;
-        
+
         // Validate shift duration
         if (durationHours <= 0) {
             console.error('Invalid shift duration', {
@@ -6939,46 +7004,501 @@ export const app = {
                 pauseDeducted: false,
                 baseWage: 0,
                 bonus: 0,
-                total: 0
+                total: 0,
+                breakDeduction: null
             };
         }
-        
+
+        const wageRate = this.getCurrentWageRate();
+        const bonuses = this.getCurrentBonuses();
+
+        // Apply legal break deduction system
+        const breakResult = this.calculateLegalBreakDeduction(shift, wageRate, bonuses, startMinutes, endMinutes);
+
+        // Debug logging for break deduction
+        if (durationHours > 5.5) {
+            console.log('Break deduction debug:', {
+                shiftDuration: durationHours,
+                method: this.pauseDeductionMethod,
+                enabled: this.pauseDeductionEnabled,
+                shouldDeduct: breakResult.shouldDeduct,
+                deductionHours: breakResult.deductionHours,
+                auditTrail: breakResult.auditTrail
+            });
+        }
+
         let paidHours = durationHours;
         let adjustedEndMinutes = endMinutes;
-        
-        // Apply pause deduction if enabled
-        if (this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD) {
-            paidHours -= this.PAUSE_DEDUCTION;
-            adjustedEndMinutes -= this.PAUSE_DEDUCTION * 60;
-        }
-        
-        const wageRate = this.getCurrentWageRate();
-        const baseWage = paidHours * wageRate;
-        const bonuses = this.getCurrentBonuses();
-        const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-        const bonusSegments = bonuses[bonusType] || [];
-        
-        // Recreate the end time after any pause deduction or midnight handling
-        // so we can reuse the same format when calculating bonuses
-        const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
-        const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
 
-        const bonus = this.calculateBonus(
-            shift.startTime,
-            endTimeStr,
-            bonusSegments
-        );
-        
+        let baseWage = 0;
+        let bonus = 0;
+
+        if (breakResult.shouldDeduct && (breakResult.method === 'proportional' || breakResult.method === 'base_only')) {
+            // For proportional and base_only methods, calculate wages based on adjusted wage periods
+            const adjustedWages = this.calculateAdjustedWages(breakResult, wageRate);
+            baseWage = adjustedWages.baseWage;
+            bonus = adjustedWages.bonus;
+            paidHours = adjustedWages.totalHours;
+        } else {
+            // For end_of_shift and none methods, use traditional calculation
+            if (breakResult.shouldDeduct) {
+                paidHours -= breakResult.deductionHours;
+                adjustedEndMinutes = breakResult.adjustedEndMinutes;
+            }
+
+            baseWage = paidHours * wageRate;
+            const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
+            const bonusSegments = bonuses[bonusType] || [];
+
+            // Recreate the end time after any pause deduction or midnight handling
+            // so we can reuse the same format when calculating bonuses
+            const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
+            const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
+
+            bonus = this.calculateBonus(
+                shift.startTime,
+                endTimeStr,
+                bonusSegments
+            );
+        }
+
         return {
             hours: parseFloat(paidHours.toFixed(2)),
             totalHours: parseFloat(durationHours.toFixed(2)),
             paidHours: parseFloat(paidHours.toFixed(2)),
-            pauseDeducted: this.pauseDeduction && durationHours > this.PAUSE_THRESHOLD,
+            pauseDeducted: breakResult.shouldDeduct,
             baseWage: baseWage,
             bonus: bonus,
-            total: baseWage + bonus
+            total: baseWage + bonus,
+            breakDeduction: breakResult.auditTrail
         };
     },
+
+    // Legal break deduction calculation system (client-side)
+    calculateLegalBreakDeduction(shift, wageRate, bonuses, startMinutes, endMinutes) {
+        const totalDurationHours = (endMinutes - startMinutes) / 60;
+
+        // Get break deduction settings with defaults
+        const breakSettings = {
+            enabled: this.pauseDeductionEnabled !== false,
+            method: this.pauseDeductionMethod || 'proportional',
+            thresholdHours: this.pauseThresholdHours || 5.5,
+            deductionMinutes: this.pauseDeductionMinutes || 30,
+            auditEnabled: this.auditBreakCalculations !== false
+        };
+
+        // Check if break deduction should be applied
+        if (!breakSettings.enabled || totalDurationHours <= breakSettings.thresholdHours) {
+            return {
+                shouldDeduct: false,
+                deductionHours: 0,
+                adjustedEndMinutes: endMinutes,
+                auditTrail: breakSettings.auditEnabled ? {
+                    originalDuration: totalDurationHours,
+                    thresholdHours: breakSettings.thresholdHours,
+                    method: breakSettings.method,
+                    reason: !breakSettings.enabled ? 'Break deduction disabled' : 'Shift duration below threshold',
+                    wagePeriods: [],
+                    deductedHours: 0,
+                    complianceNotes: []
+                } : null
+            };
+        }
+
+        const deductionHours = breakSettings.deductionMinutes / 60;
+
+        // Calculate wage periods for audit trail and method-specific deduction
+        const wagePeriods = this.calculateWagePeriods(shift, wageRate, bonuses, startMinutes, endMinutes);
+
+        // Apply break deduction based on selected method
+        let methodSpecificDeduction = null;
+
+        switch (breakSettings.method) {
+            case 'none':
+                // No deduction - paid pause
+                methodSpecificDeduction = {
+                    deductionHours: 0,
+                    adjustedEndMinutes: endMinutes,
+                    deductionDetails: 'No break deduction applied - paid pause'
+                };
+                break;
+
+            case 'proportional':
+                // Deduct proportionally across all wage periods
+                methodSpecificDeduction = this.applyProportionalDeduction(wagePeriods, deductionHours, startMinutes, endMinutes);
+                break;
+
+            case 'base_only':
+                // Deduct only from base rate periods
+                methodSpecificDeduction = this.applyBaseOnlyDeduction(wagePeriods, deductionHours, startMinutes, endMinutes);
+                break;
+
+            case 'end_of_shift':
+            default:
+                // Legacy method - deduct from end of shift
+                methodSpecificDeduction = {
+                    deductionHours: deductionHours,
+                    adjustedEndMinutes: endMinutes - breakSettings.deductionMinutes,
+                    deductionDetails: 'Break deducted from end of shift (legacy method)'
+                };
+                break;
+        }
+
+        let auditTrail = null;
+        if (breakSettings.auditEnabled) {
+            auditTrail = {
+                originalDuration: totalDurationHours,
+                thresholdHours: breakSettings.thresholdHours,
+                method: breakSettings.method,
+                deductionMinutes: breakSettings.deductionMinutes,
+                wagePeriods: wagePeriods,
+                deductedHours: methodSpecificDeduction.deductionHours,
+                deductionDetails: methodSpecificDeduction.deductionDetails,
+                complianceNotes: []
+            };
+
+            // Add compliance warnings for problematic methods
+            if (breakSettings.method === 'end_of_shift') {
+                auditTrail.complianceNotes.push('WARNING: End-of-shift deduction may not comply with labor laws in all jurisdictions');
+            }
+        }
+
+        return {
+            shouldDeduct: breakSettings.method !== 'none',
+            deductionHours: methodSpecificDeduction.deductionHours,
+            adjustedEndMinutes: methodSpecificDeduction.adjustedEndMinutes,
+            method: breakSettings.method,
+            auditTrail: auditTrail
+        };
+    },
+
+    // Calculate wage periods for break deduction analysis (client-side)
+    calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMinutes) {
+        const periods = [];
+        const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
+        const applicableBonuses = bonuses[bonusType] || [];
+
+        // Create base period covering entire shift
+        periods.push({
+            startMinutes: startMinutes,
+            endMinutes: endMinutes,
+            durationHours: (endMinutes - startMinutes) / 60,
+            wageRate: baseWageRate,
+            bonusRate: 0,
+            totalRate: baseWageRate,
+            type: 'base'
+        });
+
+        // Add bonus periods
+        for (const bonus of applicableBonuses) {
+            const bonusStart = this.timeToMinutes(bonus.from);
+            let bonusEnd = this.timeToMinutes(bonus.to);
+            if (bonusEnd <= bonusStart) {
+                bonusEnd += 24 * 60;
+            }
+
+            const overlapStart = Math.max(startMinutes, bonusStart);
+            const overlapEnd = Math.min(endMinutes, bonusEnd);
+
+            if (overlapEnd > overlapStart) {
+                periods.push({
+                    startMinutes: overlapStart,
+                    endMinutes: overlapEnd,
+                    durationHours: (overlapEnd - overlapStart) / 60,
+                    wageRate: baseWageRate,
+                    bonusRate: bonus.rate,
+                    totalRate: baseWageRate + bonus.rate,
+                    type: 'bonus'
+                });
+            }
+        }
+
+        return periods;
+    },
+
+    // Test function for break deduction methods
+    testBreakDeductionMethods() {
+        console.log('Testing break deduction methods...');
+
+        // Create a test shift: 6 hours with bonus periods
+        const testShift = {
+            startTime: '16:00',
+            endTime: '22:00',
+            type: 1 // Saturday
+        };
+
+        const testWageRate = 200;
+        const testBonuses = {
+            saturday: [
+                { from: '18:00', to: '22:00', rate: 50 } // Evening bonus
+            ]
+        };
+
+        const methods = ['proportional', 'base_only', 'end_of_shift', 'none'];
+        const results = {};
+
+        for (const method of methods) {
+            // Temporarily set the method
+            const originalMethod = this.pauseDeductionMethod;
+            this.pauseDeductionMethod = method;
+            this.pauseDeductionEnabled = method !== 'none';
+
+            // Calculate shift earnings
+            const result = this.calculateShift(testShift);
+            results[method] = {
+                total: result.total,
+                baseWage: result.baseWage,
+                bonus: result.bonus,
+                paidHours: result.paidHours,
+                pauseDeducted: result.pauseDeducted
+            };
+
+            // Restore original method
+            this.pauseDeductionMethod = originalMethod;
+        }
+
+        console.table(results);
+        return results;
+    },
+
+    // Apply proportional break deduction across all wage periods (client-side)
+    applyProportionalDeduction(wagePeriods, deductionHours, startMinutes, endMinutes) {
+        const totalShiftHours = (endMinutes - startMinutes) / 60;
+        let remainingDeduction = deductionHours;
+        let totalDeducted = 0;
+
+        // Calculate proportional deduction for each period
+        const deductionDetails = [];
+
+        for (const period of wagePeriods) {
+            if (remainingDeduction <= 0) break;
+
+            const periodProportion = period.durationHours / totalShiftHours;
+            const periodDeduction = Math.min(deductionHours * periodProportion, remainingDeduction);
+
+            if (periodDeduction > 0) {
+                totalDeducted += periodDeduction;
+                remainingDeduction -= periodDeduction;
+                deductionDetails.push(`${periodDeduction.toFixed(2)}h from ${period.type} rate (${period.totalRate} kr/h)`);
+            }
+        }
+
+        return {
+            deductionHours: totalDeducted,
+            adjustedEndMinutes: endMinutes - (totalDeducted * 60),
+            deductionDetails: `Proportional deduction: ${deductionDetails.join(', ')}`
+        };
+    },
+
+    // Apply break deduction only to base rate periods (client-side)
+    applyBaseOnlyDeduction(wagePeriods, deductionHours, startMinutes, endMinutes) {
+        let remainingDeduction = deductionHours;
+        let totalDeducted = 0;
+
+        // Find base rate periods (lowest bonus rate)
+        const basePeriods = wagePeriods.filter(p => p.bonusRate === 0);
+        const deductionDetails = [];
+
+        if (basePeriods.length === 0) {
+            // No base periods, deduct from periods with smallest bonuses
+            const sortedPeriods = [...wagePeriods].sort((a, b) => a.bonusRate - b.bonusRate);
+            const smallestBonus = sortedPeriods[0].bonusRate;
+            const targetPeriods = sortedPeriods.filter(p => p.bonusRate === smallestBonus);
+
+            for (const period of targetPeriods) {
+                if (remainingDeduction <= 0) break;
+
+                const periodDeduction = Math.min(period.durationHours, remainingDeduction);
+                totalDeducted += periodDeduction;
+                remainingDeduction -= periodDeduction;
+                deductionDetails.push(`${periodDeduction.toFixed(2)}h from lowest bonus rate (${period.totalRate} kr/h)`);
+            }
+        } else {
+            // Deduct from base rate periods
+            for (const period of basePeriods) {
+                if (remainingDeduction <= 0) break;
+
+                const periodDeduction = Math.min(period.durationHours, remainingDeduction);
+                totalDeducted += periodDeduction;
+                remainingDeduction -= periodDeduction;
+                deductionDetails.push(`${periodDeduction.toFixed(2)}h from base rate (${period.wageRate} kr/h)`);
+            }
+        }
+
+        return {
+            deductionHours: totalDeducted,
+            adjustedEndMinutes: endMinutes - (totalDeducted * 60),
+            deductionDetails: `Base-only deduction: ${deductionDetails.join(', ')}`
+        };
+    },
+
+    // Calculate adjusted wages based on break deduction method (client-side)
+    calculateAdjustedWages(breakResult, baseWageRate) {
+        let totalBaseWage = 0;
+        let totalBonus = 0;
+        let totalHours = 0;
+
+        if (!breakResult.auditTrail || !breakResult.auditTrail.wagePeriods) {
+            return { baseWage: 0, bonus: 0, totalHours: 0 };
+        }
+
+        const wagePeriods = breakResult.auditTrail.wagePeriods;
+        const method = breakResult.method;
+        const deductionHours = breakResult.deductionHours;
+
+        if (method === 'proportional') {
+            // Apply proportional deduction to each period
+            const totalShiftHours = wagePeriods.reduce((sum, period) => sum + period.durationHours, 0);
+
+            for (const period of wagePeriods) {
+                const periodProportion = period.durationHours / totalShiftHours;
+                const periodDeduction = deductionHours * periodProportion;
+                const adjustedPeriodHours = Math.max(0, period.durationHours - periodDeduction);
+
+                totalHours += adjustedPeriodHours;
+                totalBaseWage += adjustedPeriodHours * period.wageRate;
+                totalBonus += adjustedPeriodHours * period.bonusRate;
+            }
+        } else if (method === 'base_only') {
+            // Apply deduction only to base rate periods
+            let remainingDeduction = deductionHours;
+
+            // First pass: deduct from base periods
+            const basePeriods = wagePeriods.filter(p => p.bonusRate === 0);
+            const bonusPeriods = wagePeriods.filter(p => p.bonusRate > 0);
+
+            for (const period of basePeriods) {
+                const periodDeduction = Math.min(period.durationHours, remainingDeduction);
+                const adjustedPeriodHours = period.durationHours - periodDeduction;
+                remainingDeduction -= periodDeduction;
+
+                totalHours += adjustedPeriodHours;
+                totalBaseWage += adjustedPeriodHours * period.wageRate;
+            }
+
+            // Add all bonus periods (no deduction from bonus periods in base_only method)
+            for (const period of bonusPeriods) {
+                totalHours += period.durationHours;
+                totalBaseWage += period.durationHours * period.wageRate;
+                totalBonus += period.durationHours * period.bonusRate;
+            }
+        }
+
+        return {
+            baseWage: parseFloat(totalBaseWage.toFixed(2)),
+            bonus: parseFloat(totalBonus.toFixed(2)),
+            totalHours: parseFloat(totalHours.toFixed(2))
+        };
+    },
+
+    // Setup event listeners for break deduction settings
+    setupBreakDeductionEventListeners() {
+        // Enable/disable break deduction
+        const enableToggle = document.getElementById('pauseDeductionEnabledToggle');
+        if (enableToggle) {
+            enableToggle.addEventListener('change', (e) => {
+                console.log('Break deduction enabled changed:', e.target.checked);
+                this.pauseDeductionEnabled = e.target.checked;
+                this.toggleBreakDeductionSections();
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        } else {
+            console.warn('pauseDeductionEnabledToggle element not found');
+        }
+
+        // Break deduction method selection
+        const methodSelect = document.getElementById('pauseDeductionMethodSelect');
+        if (methodSelect) {
+            methodSelect.addEventListener('change', (e) => {
+                console.log('Break deduction method changed:', e.target.value);
+                this.pauseDeductionMethod = e.target.value;
+                this.updateMethodExplanation();
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        } else {
+            console.warn('pauseDeductionMethodSelect element not found');
+        }
+
+        // Pause threshold input
+        const thresholdInput = document.getElementById('pauseThresholdInput');
+        if (thresholdInput) {
+            thresholdInput.addEventListener('change', (e) => {
+                this.pauseThresholdHours = parseFloat(e.target.value) || 5.5;
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
+
+        // Pause deduction minutes input
+        const minutesInput = document.getElementById('pauseDeductionMinutesInput');
+        if (minutesInput) {
+            minutesInput.addEventListener('change', (e) => {
+                this.pauseDeductionMinutes = parseInt(e.target.value) || 30;
+                this.updateDisplay();
+                this.saveSettingsToSupabase();
+            });
+        }
+
+        // Audit trail toggle
+        const auditToggle = document.getElementById('auditBreakCalculationsToggle');
+        if (auditToggle) {
+            auditToggle.addEventListener('change', (e) => {
+                this.auditBreakCalculations = e.target.checked;
+                this.saveSettingsToSupabase();
+            });
+        }
+    },
+
+    // Toggle visibility of break deduction sections based on enabled state
+    toggleBreakDeductionSections() {
+        // Find the container by looking for the parent form-group
+        const enableToggle = document.getElementById('pauseDeductionEnabledToggle');
+        if (enableToggle) {
+            const settingsContainer = enableToggle.closest('.form-group');
+            if (settingsContainer) {
+                if (this.pauseDeductionEnabled) {
+                    settingsContainer.classList.remove('break-settings-disabled');
+                } else {
+                    settingsContainer.classList.add('break-settings-disabled');
+                }
+            }
+        }
+    },
+
+    // Update method explanation based on selected method
+    updateMethodExplanation() {
+        const descriptions = ['proportionalInfo', 'baseOnlyInfo', 'endOfShiftInfo', 'noneInfo'];
+        descriptions.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.style.display = 'none';
+            }
+        });
+
+        let activeId = 'proportionalInfo'; // default
+        switch (this.pauseDeductionMethod) {
+            case 'proportional':
+                activeId = 'proportionalInfo';
+                break;
+            case 'base_only':
+                activeId = 'baseOnlyInfo';
+                break;
+            case 'end_of_shift':
+                activeId = 'endOfShiftInfo';
+                break;
+            case 'none':
+                activeId = 'noneInfo';
+                break;
+        }
+
+        const activeElement = document.getElementById(activeId);
+        if (activeElement) {
+            activeElement.style.display = 'block';
+        }
+    },
+
     timeToMinutes(timeStr) {
         const [hours, minutes] = timeStr.split(':').map(Number);
         return hours * 60 + minutes;

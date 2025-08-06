@@ -2101,6 +2101,47 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
   margin-bottom: 24px; /* Major spacing between form sections */
 }
 
+/* Break deduction settings styling */
+.method-info {
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+}
+
+.method-description {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.method-description strong {
+  color: var(--text-primary);
+}
+
+#endOfShiftInfo strong {
+  color: var(--error); /* Warning color for problematic method */
+}
+
+#breakDeductionMethodSection,
+#methodExplanation,
+#pauseThresholdSection,
+#pauseDeductionMinutesSection {
+  margin-left: 20px;
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.break-settings-disabled #breakDeductionMethodSection,
+.break-settings-disabled #methodExplanation,
+.break-settings-disabled #pauseThresholdSection,
+.break-settings-disabled #pauseDeductionMinutesSection {
+  opacity: 0.5;
+  pointer-events: none;
+  transform: translateX(-10px);
+}
+
 /* Form group labels - clear hierarchy */
 .form-group label {
   display: block;
