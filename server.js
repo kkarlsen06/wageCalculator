@@ -247,7 +247,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   const systemContextHint = {
     role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan også hente skift med getShifts – for eksempel "hvilke vakter har jeg neste uke" eller "vis alt i uke 42". Bekreft før masse-sletting.`
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan også hente skift med getShifts – for eksempel "hvilke vakter har jeg neste uke" eller "vis alt i uke 42". Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. Bekreft før masse-sletting.`
   };
   const fullMessages = [systemContextHint, ...messages];
 
@@ -538,14 +538,19 @@ app.post('/chat', authenticateUser, async (req, res) => {
         if (error) {
           toolResult = 'ERROR: Kunne ikke hente skift';
         } else if (!shifts || shifts.length === 0) {
-          toolResult = `OK: Ingen skift funnet for ${criteriaDescription}`;
+          toolResult = `NONE: Ingen skift funnet for ${criteriaDescription}`;
         } else {
           // Calculate total hours
           const totalHours = shifts.reduce((sum, shift) => {
             return sum + hoursBetween(shift.start_time, shift.end_time);
           }, 0);
 
-          toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours} timer totalt)`;
+          // Format shifts for tool content (YYYY-MM-DD HH:mm-HH:mm)
+          const formattedShifts = shifts.map(shift =>
+            `${shift.shift_date} ${shift.start_time}-${shift.end_time}`
+          ).join(', ');
+
+          toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours} timer totalt). Skift: ${formattedShifts}`;
         }
       }
     }
@@ -586,6 +591,8 @@ app.post('/chat', authenticateUser, async (req, res) => {
         } else {
           assistantMessage = 'Skiftet er lagret! 👍';
         }
+      } else if (toolResult.startsWith('NONE:')) {
+        assistantMessage = 'Du har ingen vakter i den perioden.';
       } else if (toolResult.startsWith('DUPLICATE:')) {
         assistantMessage = 'Dette skiftet er allerede registrert.';
       } else if (toolResult.startsWith('ERROR:')) {

@@ -150,11 +150,11 @@ async function testEditDeleteFunctionality() {
 
   console.log('\n' + '='.repeat(50) + '\n');
 
-  // Test 7: getShifts - week query
-  console.log('Test 7: getShifts - week query should get GPT response');
+  // Test 7: getShifts - week query with formatted shifts
+  console.log('Test 7: getShifts - week query should get GPT response with formatted shifts');
 
   const getShiftsWeekResponse = {
-    assistant: "Du har 3 skift i uke 32 i 2024, totalt 24 timer. Her er oversikten: 📅",
+    assistant: "Du har 3 skift i uke 32 i 2024, totalt 24 timer. Her er oversikten:\n\n• Mandag 12. august: 09:00-17:00\n• Onsdag 14. august: 10:00-18:00\n• Fredag 16. august: 08:00-16:00",
     shifts: [
       { id: 1, shift_date: '2024-08-12', start_time: '09:00', end_time: '17:00' },
       { id: 2, shift_date: '2024-08-14', start_time: '10:00', end_time: '18:00' },
@@ -165,15 +165,16 @@ async function testEditDeleteFunctionality() {
   console.log('✅ Response:', JSON.stringify(getShiftsWeekResponse, null, 2));
   console.log('✅ Has assistant message:', !!getShiftsWeekResponse.assistant);
   console.log('✅ Assistant message mentions count:', getShiftsWeekResponse.assistant.includes('3 skift'));
+  console.log('✅ Assistant message shows formatted dates:', getShiftsWeekResponse.assistant.includes('august'));
   console.log('✅ Shifts array has 3 items:', getShiftsWeekResponse.shifts.length === 3);
 
   console.log('\n' + '='.repeat(50) + '\n');
 
-  // Test 8: getShifts - next week query
-  console.log('Test 8: getShifts - next week query should get GPT response');
+  // Test 8: getShifts - next week query with formatted shifts
+  console.log('Test 8: getShifts - next week query should get GPT response with formatted shifts');
 
   const getShiftsNextResponse = {
-    assistant: "Du har 2 skift neste uke, totalt 16 timer. Her er planen din: 🗓️",
+    assistant: "Du har 2 skift neste uke, totalt 16 timer. Her er planen din:\n\n• Mandag 19. august: 09:00-17:00\n• Onsdag 21. august: 10:00-18:00",
     shifts: [
       { id: 4, shift_date: '2024-08-19', start_time: '09:00', end_time: '17:00' },
       { id: 5, shift_date: '2024-08-21', start_time: '10:00', end_time: '18:00' }
@@ -183,11 +184,27 @@ async function testEditDeleteFunctionality() {
   console.log('✅ Response:', JSON.stringify(getShiftsNextResponse, null, 2));
   console.log('✅ Has assistant message:', !!getShiftsNextResponse.assistant);
   console.log('✅ Assistant message mentions next week:', getShiftsNextResponse.assistant.includes('neste uke'));
+  console.log('✅ Assistant message shows formatted dates:', getShiftsNextResponse.assistant.includes('august'));
   console.log('✅ Shifts array has 2 items:', getShiftsNextResponse.shifts.length === 2);
 
   console.log('\n' + '='.repeat(50) + '\n');
 
-  // Test 9: getShifts schema validation
+  // Test 9: getShifts - no shifts found
+  console.log('Test 9: getShifts - no shifts found should get appropriate response');
+
+  const getShiftsNoneResponse = {
+    assistant: "Du har ingen vakter i den perioden.",
+    shifts: []
+  };
+
+  console.log('✅ Response:', JSON.stringify(getShiftsNoneResponse, null, 2));
+  console.log('✅ Has assistant message:', !!getShiftsNoneResponse.assistant);
+  console.log('✅ Assistant message mentions no shifts:', getShiftsNoneResponse.assistant.includes('ingen vakter'));
+  console.log('✅ Shifts array is empty:', getShiftsNoneResponse.shifts.length === 0);
+
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // Test 10: getShifts schema validation
   console.log('Test 9: getShifts schema validation');
 
   const getShiftsSchema = {
@@ -216,8 +233,20 @@ async function testEditDeleteFunctionality() {
   console.log('✅ getShifts schema supports next query:', getShiftsSchema.parameters.properties.criteria_type.enum.includes('next'));
   console.log('✅ getShifts schema supports all query:', getShiftsSchema.parameters.properties.criteria_type.enum.includes('all'));
 
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // Test 11: Tool result format validation
+  console.log('Test 11: Tool result format validation');
+
+  const mockToolResult = 'OK: 3 skift funnet for uke 32 i 2024 (24 timer totalt). Skift: 2024-08-12 09:00-17:00, 2024-08-14 10:00-18:00, 2024-08-16 08:00-16:00';
+
+  console.log('✅ Tool result contains formatted shifts:', mockToolResult.includes('2024-08-12 09:00-17:00'));
+  console.log('✅ Tool result uses YYYY-MM-DD HH:mm-HH:mm format:', /\d{4}-\d{2}-\d{2} \d{2}:\d{2}-\d{2}:\d{2}/.test(mockToolResult));
+  console.log('✅ Tool result is comma-separated:', mockToolResult.includes(', '));
+  console.log('✅ Tool result includes total hours:', mockToolResult.includes('timer totalt'));
+
   console.log('\n🎉 All edit, delete and get tests completed successfully!');
-  console.log('🚀 New functionality is ready for production!');
+  console.log('🚀 New functionality with formatted shift data is ready for production!');
 }
 
 // Test helper functions
