@@ -594,9 +594,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function setupChatEventListeners() {
-    // Pill content click to enter input mode (but not when clicking close button)
+    // Pill content click to enter input mode (but not when expanded or clicking close button)
     chatElements.pill.addEventListener('click', function(e) {
-      if (!e.target.closest('.chatbox-close')) {
+      if (!e.target.closest('.chatbox-close') && !isExpanded) {
         enterInputMode();
       }
     });
@@ -644,7 +644,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function enterInputMode() {
-    if (isInInputMode) return;
+    if (isInInputMode || isExpanded) return; // Don't allow input mode when expanded
 
     isInInputMode = true;
     chatElements.placeholder.style.display = 'none';

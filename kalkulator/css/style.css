@@ -9614,7 +9614,7 @@ input[type="file"].form-control:focus {
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* When expanded, remove hover effects */
+/* When expanded, remove hover effects and disable interaction */
 .chatbox-pill.expanded {
   transform: none;
   cursor: default;
@@ -9622,6 +9622,21 @@ input[type="file"].form-control:focus {
 
 .chatbox-pill.expanded:hover {
   transform: none;
+  background: var(--bg-secondary); /* Keep original background */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Keep original shadow */
+}
+
+.chatbox-pill.expanded .chatbox-pill-content {
+  cursor: default;
+  pointer-events: none; /* Disable all interactions */
+}
+
+.chatbox-pill.expanded .chatbox-pill-input-container {
+  pointer-events: none; /* Disable input interactions */
+}
+
+.chatbox-pill.expanded .chatbox-pill-placeholder {
+  cursor: default;
 }
 
 .chatbox-pill-content {
