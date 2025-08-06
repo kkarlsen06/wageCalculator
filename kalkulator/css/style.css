@@ -10322,8 +10322,8 @@ input[type="file"].form-control:focus {
 /* Mobile responsive adjustments for chatbox */
 @media (max-width: 768px) {
   .chatbox-pill-content {
-    padding: 8px 16px; /* Slimmer padding for mobile */
-    gap: 10px;
+    padding: 12px 20px; /* Increased padding for better mobile appearance */
+    gap: 12px;
   }
 
   .chatbox-icon {
@@ -10370,11 +10370,11 @@ input[type="file"].form-control:focus {
   }
 }
 
-/* Extra small mobile devices - make chatbox pill even slimmer */
+/* Extra small mobile devices - still maintain good padding */
 @media (max-width: 480px) {
   .chatbox-pill-content {
-    padding: 6px 14px; /* Even slimmer for small mobile */
-    gap: 8px;
+    padding: 10px 18px; /* Maintain reasonable padding even on small screens */
+    gap: 10px;
   }
 
   .chatbox-icon {
@@ -10394,6 +10394,7 @@ input[type="file"].form-control:focus {
   /* Ensure chatbox stays accessible when keyboard is open */
   .chatbox-pill.expanded {
     position: fixed;
+    top: 120px; /* Position below the top bar (header height + padding) */
     bottom: 20px;
     left: 20px;
     right: 20px;
