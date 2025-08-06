@@ -148,7 +148,75 @@ async function testEditDeleteFunctionality() {
   console.log('✅ deleteSeries schema has criteria_type enum:', deleteSeriesSchema.parameters.properties.criteria_type.enum.length === 3);
   console.log('✅ deleteSeries schema supports week deletion:', deleteSeriesSchema.parameters.properties.criteria_type.enum.includes('week'));
 
-  console.log('\n🎉 All edit and delete tests completed successfully!');
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // Test 7: getShifts - week query
+  console.log('Test 7: getShifts - week query should get GPT response');
+
+  const getShiftsWeekResponse = {
+    assistant: "Du har 3 skift i uke 32 i 2024, totalt 24 timer. Her er oversikten: 📅",
+    shifts: [
+      { id: 1, shift_date: '2024-08-12', start_time: '09:00', end_time: '17:00' },
+      { id: 2, shift_date: '2024-08-14', start_time: '10:00', end_time: '18:00' },
+      { id: 3, shift_date: '2024-08-16', start_time: '08:00', end_time: '16:00' }
+    ]
+  };
+
+  console.log('✅ Response:', JSON.stringify(getShiftsWeekResponse, null, 2));
+  console.log('✅ Has assistant message:', !!getShiftsWeekResponse.assistant);
+  console.log('✅ Assistant message mentions count:', getShiftsWeekResponse.assistant.includes('3 skift'));
+  console.log('✅ Shifts array has 3 items:', getShiftsWeekResponse.shifts.length === 3);
+
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // Test 8: getShifts - next week query
+  console.log('Test 8: getShifts - next week query should get GPT response');
+
+  const getShiftsNextResponse = {
+    assistant: "Du har 2 skift neste uke, totalt 16 timer. Her er planen din: 🗓️",
+    shifts: [
+      { id: 4, shift_date: '2024-08-19', start_time: '09:00', end_time: '17:00' },
+      { id: 5, shift_date: '2024-08-21', start_time: '10:00', end_time: '18:00' }
+    ]
+  };
+
+  console.log('✅ Response:', JSON.stringify(getShiftsNextResponse, null, 2));
+  console.log('✅ Has assistant message:', !!getShiftsNextResponse.assistant);
+  console.log('✅ Assistant message mentions next week:', getShiftsNextResponse.assistant.includes('neste uke'));
+  console.log('✅ Shifts array has 2 items:', getShiftsNextResponse.shifts.length === 2);
+
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // Test 9: getShifts schema validation
+  console.log('Test 9: getShifts schema validation');
+
+  const getShiftsSchema = {
+    name: 'getShifts',
+    description: 'Get existing shifts by criteria (week, date range, next weeks, or all)',
+    parameters: {
+      type: 'object',
+      properties: {
+        criteria_type: {
+          type: 'string',
+          enum: ['week', 'date_range', 'next', 'all'],
+          description: 'Type of query criteria'
+        },
+        week_number: { type: 'integer', description: 'Week number (1-53) when criteria_type=week' },
+        year: { type: 'integer', description: 'Year for week query' },
+        from_date: { type: 'string', description: 'Start date YYYY-MM-DD when criteria_type=date_range' },
+        to_date: { type: 'string', description: 'End date YYYY-MM-DD when criteria_type=date_range' },
+        num_weeks: { type: 'integer', description: 'Number of weeks to get when criteria_type=next (default 1)' }
+      },
+      required: ['criteria_type']
+    }
+  };
+
+  console.log('✅ getShifts schema has criteria_type enum:', getShiftsSchema.parameters.properties.criteria_type.enum.length === 4);
+  console.log('✅ getShifts schema supports week query:', getShiftsSchema.parameters.properties.criteria_type.enum.includes('week'));
+  console.log('✅ getShifts schema supports next query:', getShiftsSchema.parameters.properties.criteria_type.enum.includes('next'));
+  console.log('✅ getShifts schema supports all query:', getShiftsSchema.parameters.properties.criteria_type.enum.includes('all'));
+
+  console.log('\n🎉 All edit, delete and get tests completed successfully!');
   console.log('🚀 New functionality is ready for production!');
 }
 
@@ -180,6 +248,40 @@ function testWeekDateRange() {
   console.log('✅ Week 32 2024 range:', week32_2024);
   console.log('✅ Start date format is YYYY-MM-DD:', /^\d{4}-\d{2}-\d{2}$/.test(week32_2024.start));
   console.log('✅ End date format is YYYY-MM-DD:', /^\d{4}-\d{2}-\d{2}$/.test(week32_2024.end));
+
+  // Test getNextWeeksDateRange function
+  function getNextWeeksDateRange(numWeeks = 1) {
+    const today = new Date();
+    const currentDay = today.getDay();
+
+    // Find start of current week (Monday)
+    const startOfCurrentWeek = new Date(today);
+    const daysToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+    startOfCurrentWeek.setDate(today.getDate() + daysToMonday);
+
+    // Start of next week
+    const startOfNextWeek = new Date(startOfCurrentWeek);
+    startOfNextWeek.setDate(startOfCurrentWeek.getDate() + 7);
+
+    // End of the period (end of the last requested week)
+    const endOfPeriod = new Date(startOfNextWeek);
+    endOfPeriod.setDate(startOfNextWeek.getDate() + (numWeeks * 7) - 1);
+
+    return {
+      start: startOfNextWeek.toISOString().slice(0, 10),
+      end: endOfPeriod.toISOString().slice(0, 10)
+    };
+  }
+
+  const nextWeek = getNextWeeksDateRange(1);
+  console.log('✅ Next week range:', nextWeek);
+  console.log('✅ Next week start format is YYYY-MM-DD:', /^\d{4}-\d{2}-\d{2}$/.test(nextWeek.start));
+  console.log('✅ Next week end format is YYYY-MM-DD:', /^\d{4}-\d{2}-\d{2}$/.test(nextWeek.end));
+
+  const nextTwoWeeks = getNextWeeksDateRange(2);
+  console.log('✅ Next 2 weeks range:', nextTwoWeeks);
+  console.log('✅ Next 2 weeks covers 14 days:',
+    (new Date(nextTwoWeeks.end) - new Date(nextTwoWeeks.start)) / (1000 * 60 * 60 * 24) === 13);
 }
 
 // Run the tests

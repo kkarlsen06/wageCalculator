@@ -119,12 +119,34 @@ const deleteSeriesSchema = {
   }
 };
 
+const getShiftsSchema = {
+  name: 'getShifts',
+  description: 'Get existing shifts by criteria (week, date range, next weeks, or all)',
+  parameters: {
+    type: 'object',
+    properties: {
+      criteria_type: {
+        type: 'string',
+        enum: ['week', 'date_range', 'next', 'all'],
+        description: 'Type of query criteria'
+      },
+      week_number: { type: 'integer', description: 'Week number (1-53) when criteria_type=week' },
+      year: { type: 'integer', description: 'Year for week query' },
+      from_date: { type: 'string', description: 'Start date YYYY-MM-DD when criteria_type=date_range' },
+      to_date: { type: 'string', description: 'End date YYYY-MM-DD when criteria_type=date_range' },
+      num_weeks: { type: 'integer', description: 'Number of weeks to get when criteria_type=next (default 1)' }
+    },
+    required: ['criteria_type']
+  }
+};
+
 const tools = [
   { type: 'function', function: addShiftSchema },
   { type: 'function', function: addSeriesSchema },
   { type: 'function', function: editShiftSchema },
   { type: 'function', function: deleteShiftSchema },
-  { type: 'function', function: deleteSeriesSchema }
+  { type: 'function', function: deleteSeriesSchema },
+  { type: 'function', function: getShiftsSchema }
 ];
 
 // ---------- helpers ----------
@@ -169,6 +191,29 @@ function getWeekDateRange(weekNumber, year) {
   };
 }
 
+function getNextWeeksDateRange(numWeeks = 1) {
+  const today = new Date();
+  const currentDay = today.getDay();
+
+  // Find start of current week (Monday)
+  const startOfCurrentWeek = new Date(today);
+  const daysToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+  startOfCurrentWeek.setDate(today.getDate() + daysToMonday);
+
+  // Start of next week
+  const startOfNextWeek = new Date(startOfCurrentWeek);
+  startOfNextWeek.setDate(startOfCurrentWeek.getDate() + 7);
+
+  // End of the period (end of the last requested week)
+  const endOfPeriod = new Date(startOfNextWeek);
+  endOfPeriod.setDate(startOfNextWeek.getDate() + (numWeeks * 7) - 1);
+
+  return {
+    start: startOfNextWeek.toISOString().slice(0, 10),
+    end: endOfPeriod.toISOString().slice(0, 10)
+  };
+}
+
 // ---------- /settings ----------
 app.get('/settings', authenticateUser, async (req, res) => {
   const { data, error } = await supabase
@@ -202,7 +247,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   const systemContextHint = {
     role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere og slette skift. Bruk editShift, deleteShift eller deleteSeries ved behov, og bekreft før masse-sletting.`
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan også hente skift med getShifts – for eksempel "hvilke vakter har jeg neste uke" eller "vis alt i uke 42". Bekreft før masse-sletting.`
   };
   const fullMessages = [systemContextHint, ...messages];
 
@@ -450,6 +495,61 @@ app.post('/chat', authenticateUser, async (req, res) => {
       }
     }
 
+    if (fnName === 'getShifts') {
+      let selectQuery = supabase
+        .from('user_shifts')
+        .select('*')
+        .eq('user_id', req.user_id)
+        .order('shift_date');
+
+      let criteriaDescription = '';
+
+      if (args.criteria_type === 'week') {
+        if (!args.week_number || !args.year) {
+          toolResult = 'ERROR: Uke-nummer og år må spesifiseres for uke-spørring';
+        } else {
+          const { start, end } = getWeekDateRange(args.week_number, args.year);
+          selectQuery = selectQuery.gte('shift_date', start).lte('shift_date', end);
+          criteriaDescription = `uke ${args.week_number} i ${args.year}`;
+        }
+      } else if (args.criteria_type === 'date_range') {
+        if (!args.from_date || !args.to_date) {
+          toolResult = 'ERROR: Fra-dato og til-dato må spesifiseres for periode-spørring';
+        } else {
+          selectQuery = selectQuery.gte('shift_date', args.from_date).lte('shift_date', args.to_date);
+          criteriaDescription = `periode ${args.from_date} til ${args.to_date}`;
+        }
+      } else if (args.criteria_type === 'next') {
+        const numWeeks = args.num_weeks || 1;
+        const { start, end } = getNextWeeksDateRange(numWeeks);
+        selectQuery = selectQuery.gte('shift_date', start).lte('shift_date', end);
+        criteriaDescription = numWeeks === 1 ? 'neste uke' : `neste ${numWeeks} uker`;
+      } else if (args.criteria_type === 'all') {
+        criteriaDescription = 'alle skift';
+        // No additional filters needed for 'all'
+      } else {
+        toolResult = 'ERROR: Ugyldig spørring-kriterium';
+      }
+
+      // Only proceed if no error so far
+      if (!toolResult.startsWith('ERROR:')) {
+        const { data: shifts, error } = await selectQuery;
+
+        if (error) {
+          toolResult = 'ERROR: Kunne ikke hente skift';
+        } else if (!shifts || shifts.length === 0) {
+          toolResult = `OK: Ingen skift funnet for ${criteriaDescription}`;
+        } else {
+          // Calculate total hours
+          const totalHours = shifts.reduce((sum, shift) => {
+            return sum + hoursBetween(shift.start_time, shift.end_time);
+          }, 0);
+
+          toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours} timer totalt)`;
+        }
+      }
+    }
+
     // Add tool result to conversation and get GPT's response
     const messagesWithToolResult = [
       ...fullMessages,
@@ -481,6 +581,8 @@ app.post('/chat', authenticateUser, async (req, res) => {
           assistantMessage = 'Skiftet er slettet! 👍';
         } else if (fnName === 'deleteSeries') {
           assistantMessage = 'Skiftene er slettet! 👍';
+        } else if (fnName === 'getShifts') {
+          assistantMessage = 'Her er skiftene dine! 📅';
         } else {
           assistantMessage = 'Skiftet er lagret! 👍';
         }
