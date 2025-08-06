@@ -402,7 +402,7 @@ function calculateLegalBreakDeduction(shift, userSettings, wageRate, bonuses) {
   };
 }
 
-// Calculate wage periods for break deduction analysis
+// Calculate wage periods for break deduction analysis (non-overlapping periods)
 function calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMinutes) {
   const periods = [];
   const dayOfWeek = new Date(shift.shift_date).getDay();
@@ -417,18 +417,17 @@ function calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMin
     applicableBonuses = bonuses.weekday || [];
   }
 
-  // Create base period covering entire shift
-  periods.push({
-    startMinutes: startMinutes,
-    endMinutes: endMinutes,
-    durationHours: (endMinutes - startMinutes) / 60,
-    wageRate: baseWageRate,
-    bonusRate: 0,
-    totalRate: baseWageRate,
-    type: 'base'
+  // Create time segments with their applicable bonuses
+  const timeSegments = [];
+
+  // Start with the entire shift as base rate
+  timeSegments.push({
+    start: startMinutes,
+    end: endMinutes,
+    bonuses: []
   });
 
-  // Add bonus periods
+  // Apply each bonus to overlapping segments
   for (const bonus of applicableBonuses) {
     const bonusStart = timeToMinutes(bonus.from);
     let bonusEnd = timeToMinutes(bonus.to);
@@ -440,16 +439,67 @@ function calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMin
     const overlapEnd = Math.min(endMinutes, bonusEnd);
 
     if (overlapEnd > overlapStart) {
-      periods.push({
-        startMinutes: overlapStart,
-        endMinutes: overlapEnd,
-        durationHours: (overlapEnd - overlapStart) / 60,
-        wageRate: baseWageRate,
-        bonusRate: bonus.rate,
-        totalRate: baseWageRate + bonus.rate,
-        type: 'bonus'
-      });
+      // Split existing segments to accommodate this bonus
+      const newSegments = [];
+
+      for (const segment of timeSegments) {
+        if (segment.end <= overlapStart || segment.start >= overlapEnd) {
+          // No overlap - keep segment as is
+          newSegments.push(segment);
+        } else {
+          // There's overlap - split the segment
+
+          // Part before bonus (if any)
+          if (segment.start < overlapStart) {
+            newSegments.push({
+              start: segment.start,
+              end: overlapStart,
+              bonuses: [...segment.bonuses]
+            });
+          }
+
+          // Overlapping part with bonus added
+          const overlapSegmentStart = Math.max(segment.start, overlapStart);
+          const overlapSegmentEnd = Math.min(segment.end, overlapEnd);
+          if (overlapSegmentEnd > overlapSegmentStart) {
+            newSegments.push({
+              start: overlapSegmentStart,
+              end: overlapSegmentEnd,
+              bonuses: [...segment.bonuses, bonus]
+            });
+          }
+
+          // Part after bonus (if any)
+          if (segment.end > overlapEnd) {
+            newSegments.push({
+              start: overlapEnd,
+              end: segment.end,
+              bonuses: [...segment.bonuses]
+            });
+          }
+        }
+      }
+
+      timeSegments.length = 0;
+      timeSegments.push(...newSegments);
     }
+  }
+
+  // Convert time segments to wage periods
+  for (const segment of timeSegments) {
+    const durationHours = (segment.end - segment.start) / 60;
+    const totalBonusRate = segment.bonuses.reduce((sum, bonus) => sum + bonus.rate, 0);
+
+    periods.push({
+      startMinutes: segment.start,
+      endMinutes: segment.end,
+      durationHours: durationHours,
+      wageRate: baseWageRate,
+      bonusRate: totalBonusRate,
+      totalRate: baseWageRate + totalBonusRate,
+      type: totalBonusRate > 0 ? 'bonus' : 'base',
+      bonuses: segment.bonuses
+    });
   }
 
   return periods;
@@ -763,6 +813,20 @@ function calculateShiftEarnings(shift, userSettings) {
     baseWage = adjustedWages.baseWage;
     bonus = adjustedWages.bonus;
     paidHours = adjustedWages.totalHours;
+
+    // Debug logging for wage period calculations
+    if (durationHours > 5.5) {
+      console.log('Break deduction calculation (server):', {
+        shiftId: shift.id,
+        method: breakResult.method,
+        originalHours: durationHours,
+        paidHours: paidHours,
+        baseWage: baseWage,
+        bonus: bonus,
+        total: baseWage + bonus,
+        wagePeriods: breakResult.auditTrail?.wagePeriods
+      });
+    }
   } else {
     // For end_of_shift and none methods, use traditional calculation
     if (breakResult.shouldDeduct) {
@@ -780,6 +844,19 @@ function calculateShiftEarnings(shift, userSettings) {
     const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
 
     bonus = calculateBonus(shift.start_time, endTimeStr, bonusSegments);
+
+    // Debug logging for traditional calculations
+    if (durationHours > 5.5) {
+      console.log('Traditional calculation (server):', {
+        shiftId: shift.id,
+        method: breakResult.method,
+        originalHours: durationHours,
+        paidHours: paidHours,
+        baseWage: baseWage,
+        bonus: bonus,
+        total: baseWage + bonus
+      });
+    }
   }
 
   return {

@@ -1514,6 +1514,20 @@ export const app = {
                 this.pauseDeductionMinutes = parseInt(settings.pause_deduction_minutes) || 30;
                 this.auditBreakCalculations = settings.audit_break_calculations !== false;
 
+                // Debug logging for break deduction settings
+                console.log('Loaded break deduction settings from Supabase:', {
+                    pause_deduction_enabled: settings.pause_deduction_enabled,
+                    pause_deduction_method: settings.pause_deduction_method,
+                    pause_threshold_hours: settings.pause_threshold_hours,
+                    pause_deduction_minutes: settings.pause_deduction_minutes,
+                    audit_break_calculations: settings.audit_break_calculations,
+                    parsed_enabled: this.pauseDeductionEnabled,
+                    parsed_method: this.pauseDeductionMethod,
+                    parsed_threshold: this.pauseThresholdHours,
+                    parsed_minutes: this.pauseDeductionMinutes,
+                    parsed_audit: this.auditBreakCalculations
+                });
+
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
             this.monthlyGoal = settings.monthly_goal || 20000;
@@ -1777,6 +1791,22 @@ export const app = {
                 if ('tax_deduction_enabled' in existingSettings) settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 if ('tax_percentage' in existingSettings) settingsData.tax_percentage = this.taxPercentage;
                 if ('payroll_day' in existingSettings) settingsData.payroll_day = this.payrollDay;
+
+                // New break deduction settings - try to save them even if columns don't exist yet
+                settingsData.pause_deduction_enabled = this.pauseDeductionEnabled;
+                settingsData.pause_deduction_method = this.pauseDeductionMethod;
+                settingsData.pause_threshold_hours = this.pauseThresholdHours;
+                settingsData.pause_deduction_minutes = this.pauseDeductionMinutes;
+                settingsData.audit_break_calculations = this.auditBreakCalculations;
+
+                // Debug logging for break deduction settings
+                console.log('Saving break deduction settings (existing user):', {
+                    enabled: this.pauseDeductionEnabled,
+                    method: this.pauseDeductionMethod,
+                    threshold: this.pauseThresholdHours,
+                    minutes: this.pauseDeductionMinutes,
+                    audit: this.auditBreakCalculations
+                });
 
                 // Debug logging for tax deduction save
                 console.log('Saving tax deduction settings:', {
@@ -7039,6 +7069,19 @@ export const app = {
             baseWage = adjustedWages.baseWage;
             bonus = adjustedWages.bonus;
             paidHours = adjustedWages.totalHours;
+
+            // Debug logging for wage period calculations
+            if (durationHours > 5.5) {
+                console.log('Break deduction calculation (client):', {
+                    method: breakResult.method,
+                    originalHours: durationHours,
+                    paidHours: paidHours,
+                    baseWage: baseWage,
+                    bonus: bonus,
+                    total: baseWage + bonus,
+                    wagePeriods: breakResult.auditTrail?.wagePeriods
+                });
+            }
         } else {
             // For end_of_shift and none methods, use traditional calculation
             if (breakResult.shouldDeduct) {
@@ -7060,6 +7103,18 @@ export const app = {
                 endTimeStr,
                 bonusSegments
             );
+
+            // Debug logging for traditional calculations
+            if (durationHours > 5.5) {
+                console.log('Traditional calculation (client):', {
+                    method: breakResult.method,
+                    originalHours: durationHours,
+                    paidHours: paidHours,
+                    baseWage: baseWage,
+                    bonus: bonus,
+                    total: baseWage + bonus
+                });
+            }
         }
 
         return {
@@ -7172,24 +7227,23 @@ export const app = {
         };
     },
 
-    // Calculate wage periods for break deduction analysis (client-side)
+    // Calculate wage periods for break deduction analysis (client-side, non-overlapping periods)
     calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMinutes) {
         const periods = [];
         const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
         const applicableBonuses = bonuses[bonusType] || [];
 
-        // Create base period covering entire shift
-        periods.push({
-            startMinutes: startMinutes,
-            endMinutes: endMinutes,
-            durationHours: (endMinutes - startMinutes) / 60,
-            wageRate: baseWageRate,
-            bonusRate: 0,
-            totalRate: baseWageRate,
-            type: 'base'
+        // Create time segments with their applicable bonuses
+        const timeSegments = [];
+
+        // Start with the entire shift as base rate
+        timeSegments.push({
+            start: startMinutes,
+            end: endMinutes,
+            bonuses: []
         });
 
-        // Add bonus periods
+        // Apply each bonus to overlapping segments
         for (const bonus of applicableBonuses) {
             const bonusStart = this.timeToMinutes(bonus.from);
             let bonusEnd = this.timeToMinutes(bonus.to);
@@ -7201,16 +7255,67 @@ export const app = {
             const overlapEnd = Math.min(endMinutes, bonusEnd);
 
             if (overlapEnd > overlapStart) {
-                periods.push({
-                    startMinutes: overlapStart,
-                    endMinutes: overlapEnd,
-                    durationHours: (overlapEnd - overlapStart) / 60,
-                    wageRate: baseWageRate,
-                    bonusRate: bonus.rate,
-                    totalRate: baseWageRate + bonus.rate,
-                    type: 'bonus'
-                });
+                // Split existing segments to accommodate this bonus
+                const newSegments = [];
+
+                for (const segment of timeSegments) {
+                    if (segment.end <= overlapStart || segment.start >= overlapEnd) {
+                        // No overlap - keep segment as is
+                        newSegments.push(segment);
+                    } else {
+                        // There's overlap - split the segment
+
+                        // Part before bonus (if any)
+                        if (segment.start < overlapStart) {
+                            newSegments.push({
+                                start: segment.start,
+                                end: overlapStart,
+                                bonuses: [...segment.bonuses]
+                            });
+                        }
+
+                        // Overlapping part with bonus added
+                        const overlapSegmentStart = Math.max(segment.start, overlapStart);
+                        const overlapSegmentEnd = Math.min(segment.end, overlapEnd);
+                        if (overlapSegmentEnd > overlapSegmentStart) {
+                            newSegments.push({
+                                start: overlapSegmentStart,
+                                end: overlapSegmentEnd,
+                                bonuses: [...segment.bonuses, bonus]
+                            });
+                        }
+
+                        // Part after bonus (if any)
+                        if (segment.end > overlapEnd) {
+                            newSegments.push({
+                                start: overlapEnd,
+                                end: segment.end,
+                                bonuses: [...segment.bonuses]
+                            });
+                        }
+                    }
+                }
+
+                timeSegments.length = 0;
+                timeSegments.push(...newSegments);
             }
+        }
+
+        // Convert time segments to wage periods
+        for (const segment of timeSegments) {
+            const durationHours = (segment.end - segment.start) / 60;
+            const totalBonusRate = segment.bonuses.reduce((sum, bonus) => sum + bonus.rate, 0);
+
+            periods.push({
+                startMinutes: segment.start,
+                endMinutes: segment.end,
+                durationHours: durationHours,
+                wageRate: baseWageRate,
+                bonusRate: totalBonusRate,
+                totalRate: baseWageRate + totalBonusRate,
+                type: totalBonusRate > 0 ? 'bonus' : 'base',
+                bonuses: segment.bonuses
+            });
         }
 
         return periods;
@@ -7227,19 +7332,14 @@ export const app = {
             type: 1 // Saturday
         };
 
-        const testWageRate = 200;
-        const testBonuses = {
-            saturday: [
-                { from: '18:00', to: '22:00', rate: 50 } // Evening bonus
-            ]
-        };
-
         const methods = ['proportional', 'base_only', 'end_of_shift', 'none'];
         const results = {};
 
         for (const method of methods) {
             // Temporarily set the method
             const originalMethod = this.pauseDeductionMethod;
+            const originalEnabled = this.pauseDeductionEnabled;
+
             this.pauseDeductionMethod = method;
             this.pauseDeductionEnabled = method !== 'none';
 
@@ -7253,12 +7353,85 @@ export const app = {
                 pauseDeducted: result.pauseDeducted
             };
 
-            // Restore original method
+            // Show wage period breakdown for debugging
+            if (result.breakDeduction && result.breakDeduction.wagePeriods) {
+                console.log(`${method} wage periods:`, result.breakDeduction.wagePeriods);
+            }
+
+            // Restore original settings
             this.pauseDeductionMethod = originalMethod;
+            this.pauseDeductionEnabled = originalEnabled;
         }
 
         console.table(results);
+
+        // Verify no doubling occurred
+        const expectedMaxTotal = 6 * 200 + 4 * 50; // 6h base + 4h bonus = 1400 kr max
+        const actualTotals = Object.values(results).map(r => r.total);
+        const maxTotal = Math.max(...actualTotals);
+
+        if (maxTotal > expectedMaxTotal) {
+            console.error('❌ DOUBLING DETECTED! Max total:', maxTotal, 'Expected max:', expectedMaxTotal);
+        } else {
+            console.log('✅ No doubling detected. Max total:', maxTotal, 'Expected max:', expectedMaxTotal);
+        }
+
         return results;
+    },
+
+    // Test function to check if break deduction columns exist in database
+    async testBreakDeductionColumns() {
+        const { data: { user } } = await window.supa.auth.getUser();
+        if (!user) {
+            console.log('❌ Not logged in');
+            return;
+        }
+
+        try {
+            const { data: settings, error } = await window.supa
+                .from('user_settings')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+
+            if (error) {
+                console.error('❌ Error fetching settings:', error);
+                return;
+            }
+
+            const breakColumns = [
+                'pause_deduction_enabled',
+                'pause_deduction_method',
+                'pause_threshold_hours',
+                'pause_deduction_minutes',
+                'audit_break_calculations'
+            ];
+
+            console.log('🔍 Break deduction column check:');
+            breakColumns.forEach(col => {
+                const exists = col in settings;
+                const value = settings[col];
+                console.log(`  ${exists ? '✅' : '❌'} ${col}: ${exists ? value : 'MISSING'}`);
+            });
+
+            const missingColumns = breakColumns.filter(col => !(col in settings));
+            if (missingColumns.length > 0) {
+                console.log('⚠️  Missing columns detected. Please run the database migration SQL:');
+                console.log(`
+ALTER TABLE user_settings
+ADD COLUMN IF NOT EXISTS pause_deduction_enabled BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS pause_deduction_method TEXT DEFAULT 'proportional' CHECK (pause_deduction_method IN ('proportional', 'base_only', 'end_of_shift', 'none')),
+ADD COLUMN IF NOT EXISTS pause_threshold_hours DECIMAL(3,1) DEFAULT 5.5 CHECK (pause_threshold_hours > 0),
+ADD COLUMN IF NOT EXISTS pause_deduction_minutes INTEGER DEFAULT 30 CHECK (pause_deduction_minutes > 0),
+ADD COLUMN IF NOT EXISTS audit_break_calculations BOOLEAN DEFAULT true;
+                `);
+            } else {
+                console.log('✅ All break deduction columns exist in database');
+            }
+
+        } catch (e) {
+            console.error('❌ Error checking columns:', e);
+        }
     },
 
     // Apply proportional break deduction across all wage periods (client-side)
