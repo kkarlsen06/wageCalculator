@@ -1,6 +1,10 @@
 function setAppHeight() {
+  // Use visual viewport for better mobile browser UI handling
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   document.documentElement.style.setProperty('--app-height', h + 'px');
+
+  // Also set dynamic viewport height for modern browsers
+  document.documentElement.style.setProperty('--dvh', h + 'px');
 }
 
 function setThemeColor() {
@@ -79,6 +83,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   let retryCount = 0;
   const maxRetries = 3; // Reduced from 5 to 3
 
+  // Immediate redirect check - if we can quickly determine no session exists
+  try {
+    const { data: { session: quickSession } } = await supa.auth.getSession();
+    if (!quickSession) {
+      console.log('Quick session check: No session found, redirecting to login immediately');
+      window.location.href = 'login.html';
+      return;
+    }
+  } catch (quickCheckError) {
+    console.log('Quick session check failed, proceeding with retry logic:', quickCheckError);
+    // Continue with the retry logic below
+  }
+
   // Load and display profile information immediately after greeting
   async function loadAndDisplayProfileInfo() {
     try {
@@ -93,6 +110,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         user.email?.split('@')[0] ||
                         'Bruker';
         nicknameElement.textContent = nickname;
+      }
+
+      // Update chatbox placeholder with user name
+      if (window.chatbox && window.chatbox.updatePlaceholder) {
+        window.chatbox.updatePlaceholder();
       }
 
       // Load profile picture
@@ -306,7 +328,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         await new Promise(resolve => setTimeout(resolve, 200));
       } else {
         console.log(`App.html: No session after ${maxRetries} attempts, redirecting to login`);
-        window.location.href = './';
+        console.log('[login] no session – redirecting to login page');
+        window.location.href = 'login.html';
         return;
       }
     } else {
@@ -315,7 +338,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Expose logout function
-  window.logout = async () => { await supa.auth.signOut(); window.location.href = './'; };
+  window.logout = async () => {
+    // Clear chat log before signing out
+    if (window.chatbox && window.chatbox.clear) {
+      window.chatbox.clear();
+    }
+    await supa.auth.signOut();
+    window.location.href = 'login.html';
+  };
 
   // After ensuring session, show welcome, init app, and display
   const { app } = await import('./appLogic.js?v=5');
@@ -551,3 +581,384 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
 });
+
+// ===== CHATBOX FUNCTIONALITY =====
+(function() {
+  'use strict';
+
+  let chatMessages = [
+    { role: 'system', content: 'Du er en chatbot som hjelper brukeren å registrere skift via addShift eller addSeries. Svar alltid på norsk.' }
+  ];
+
+  let chatElements = {};
+  let isExpanded = false;
+  let isInInputMode = false;
+  let hasFirstMessage = false;
+
+  // Initialize chatbox when DOM is ready
+  function initChatbox() {
+    chatElements = {
+      pill: document.getElementById('chatboxPill'),
+      expandedContent: document.getElementById('chatboxExpandedContent'),
+      close: document.getElementById('chatboxClose'),
+      log: document.getElementById('chatboxLog'),
+      input: document.getElementById('chatboxInput'),
+      send: document.getElementById('chatboxSend'),
+      placeholder: document.getElementById('chatboxPillPlaceholder'),
+      pillInput: document.getElementById('chatboxPillInput')
+    };
+
+    if (!chatElements.pill || !chatElements.expandedContent) {
+      console.warn('Chatbox elements not found');
+      return;
+    }
+
+    setupChatEventListeners();
+    updateChatboxPlaceholder(); // Set initial placeholder with user name
+  }
+
+  // Update chatbox placeholder with user's name
+  async function updateChatboxPlaceholder() {
+    try {
+      const { data: { user } } = await supa.auth.getUser();
+      if (!user || !chatElements.placeholder) return;
+
+      // Use first name if available, otherwise use first part of email, fallback to 'Bruker'
+      const userName = user.user_metadata?.first_name ||
+                      user.email?.split('@')[0] ||
+                      'Bruker';
+
+      chatElements.placeholder.textContent = `Trenger du hjelp, ${userName}?`;
+    } catch (err) {
+      console.error('Error updating chatbox placeholder:', err);
+      // Fallback to default
+      if (chatElements.placeholder) {
+        chatElements.placeholder.textContent = 'Trenger du hjelp, Bruker?';
+      }
+    }
+  }
+
+  function setupChatEventListeners() {
+    // Pill content click to enter input mode (but not when expanded or clicking close button)
+    chatElements.pill.addEventListener('click', function(e) {
+      if (!e.target.closest('.chatbox-close') && !isExpanded) {
+        enterInputMode();
+      }
+    });
+
+    // Close button
+    if (chatElements.close) {
+      chatElements.close.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        collapseChatbox();
+      });
+    }
+
+    // Send button in expanded view
+    if (chatElements.send) {
+      chatElements.send.addEventListener('click', sendExpandedMessage);
+    }
+
+    // Enter key in pill input
+    chatElements.pillInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendPillMessage();
+      } else if (e.key === 'Escape') {
+        exitInputMode();
+      }
+    });
+
+    // Enter key in expanded input (with Shift+Enter for new line)
+    if (chatElements.input) {
+      chatElements.input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendExpandedMessage();
+        }
+      });
+
+      // Auto-resize textarea in expanded view
+      chatElements.input.addEventListener('input', autoResizeTextarea);
+    }
+
+    // Click outside to exit input mode
+    document.addEventListener('click', function(e) {
+      if (isInInputMode && !chatElements.pill.contains(e.target)) {
+        exitInputMode();
+      }
+    });
+  }
+
+  function enterInputMode() {
+    if (isInInputMode || isExpanded) return; // Don't allow input mode when expanded
+
+    isInInputMode = true;
+    chatElements.placeholder.style.display = 'none';
+    chatElements.pillInput.style.display = 'block';
+    chatElements.pillInput.focus();
+  }
+
+  function exitInputMode() {
+    if (!isInInputMode) return;
+
+    isInInputMode = false;
+    chatElements.pillInput.style.display = 'none';
+    chatElements.pillInput.value = '';
+    chatElements.placeholder.style.display = 'block';
+  }
+
+  function expandChatbox() {
+    isExpanded = true;
+    chatElements.pill.classList.add('expanded');
+    chatElements.expandedContent.style.display = 'block';
+    chatElements.close.style.display = 'flex';
+
+    // Add class to body for CSS targeting (fallback for browsers without :has() support)
+    document.body.classList.add('chatbox-expanded-active');
+
+    // Focus input after animation
+    setTimeout(() => {
+      if (chatElements.input) {
+        chatElements.input.focus();
+      }
+    }, 300);
+  }
+
+  function collapseChatbox() {
+    isExpanded = false;
+    isInInputMode = false;
+    hasFirstMessage = false;
+
+    chatElements.pill.classList.remove('expanded');
+    chatElements.expandedContent.style.display = 'none';
+    chatElements.close.style.display = 'none';
+    chatElements.pillInput.style.display = 'none';
+    chatElements.pillInput.value = '';
+    chatElements.placeholder.style.display = 'block';
+
+    // Remove class from body
+    document.body.classList.remove('chatbox-expanded-active');
+
+    // Clear chat log
+    if (chatElements.log) {
+      chatElements.log.innerHTML = '';
+    }
+    chatMessages = [
+      { role: 'system', content: 'Du er en chatbot som hjelper brukeren å registrere skift via addShift eller addSeries. Svar alltid på norsk.' }
+    ];
+  }
+
+  function autoResizeTextarea() {
+    const textarea = chatElements.input;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+  }
+
+  function appendMessage(role, text) {
+    // Ensure expanded view is shown after first message
+    if (!hasFirstMessage && !isExpanded) {
+      hasFirstMessage = true;
+      expandChatbox();
+    }
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chatbox-message ${role}`;
+
+    // Check if text contains HTML (for dots animation)
+    if (text.includes('<span class="dots">')) {
+      messageDiv.innerHTML = text;
+    } else if (role === 'assistant') {
+      // Render Markdown for assistant messages
+      const html = DOMPurify.sanitize(marked.parse(text));
+      messageDiv.innerHTML = html;
+    } else {
+      // Plain text for user messages
+      messageDiv.textContent = text;
+    }
+
+    chatElements.log.appendChild(messageDiv);
+    chatElements.log.scrollTop = chatElements.log.scrollHeight;
+
+    // Return the message element so it can be removed if needed
+    return messageDiv;
+  }
+
+  async function sendPillMessage() {
+    const text = chatElements.pillInput.value.trim();
+    if (!text) return;
+
+    // Exit input mode
+    exitInputMode();
+
+    // Send the message
+    await sendMessage(text);
+  }
+
+  async function sendExpandedMessage() {
+    const text = chatElements.input.value.trim();
+    if (!text) return;
+
+    // Clear input
+    chatElements.input.value = '';
+    autoResizeTextarea();
+
+    // Send the message
+    await sendMessage(text);
+  }
+
+  async function sendMessage(messageText) {
+    // Disable send button during request
+    if (chatElements.send) {
+      chatElements.send.disabled = true;
+    }
+
+    // Add user message
+    appendMessage('user', messageText);
+    chatMessages.push({ role: 'user', content: messageText });
+
+    // Show thinking indicator with dots animation
+    const spinner = appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
+
+    try {
+      // Get JWT token from Supabase session
+      const { data: { session } } = await window.supa.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        spinner.remove();
+        appendMessage('system', 'Du må være innlogget for å bruke chat-funksjonen.');
+        return;
+      }
+
+      const response = await fetch('/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ messages: chatMessages })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Log raw JSON response for debugging
+      console.debug('[/chat response]', data);
+
+      // Handle response - now only GPT-generated assistant messages
+      const txt = data.assistant
+        ?? (data.error && `⚠️ ${data.error}`)
+        ?? '⚠️ Ukjent svar fra serveren.';
+
+      // Replace spinner content with response text in the same bubble
+      // Use Markdown rendering for assistant messages
+      if (data.assistant) {
+        const html = DOMPurify.sanitize(marked.parse(txt));
+        spinner.innerHTML = html;
+      } else {
+        spinner.textContent = txt;
+      }
+      if (data.assistant) {
+        chatMessages.push({ role: 'assistant', content: data.assistant });
+      }
+
+      // Always update shifts table - dedupe and render
+      const shifts = data.shifts || [];
+      const uniq = [];
+      const seen = new Set();
+      for (const s of shifts) {
+        const k = `${s.shift_date}|${s.start_time}|${s.end_time}`;
+        if (!seen.has(k)) {
+          seen.add(k);
+          uniq.push(s);
+        }
+      }
+
+      // Always call refreshUI to update all components
+      if (window.app && window.app.refreshUI) {
+        // Convert shifts data to app format if needed
+        const newShifts = uniq.map(shift => ({
+          id: shift.id || Date.now() + Math.random(),
+          date: new Date(shift.date || shift.shift_date),
+          startTime: shift.startTime || shift.start_time,
+          endTime: shift.endTime || shift.end_time,
+          type: shift.type !== undefined ? shift.type : shift.shift_type,
+          seriesId: shift.seriesId || shift.series_id || null
+        }));
+
+        // Update app shifts and refresh all UI components
+        if (window.app.shifts && window.app.userShifts) {
+          window.app.shifts = [...newShifts];
+          window.app.userShifts = [...newShifts];
+        }
+        window.app.refreshUI(newShifts);
+      }
+
+    } catch (error) {
+      console.error('Chat error:', error);
+      spinner.textContent = '⚠️ Kunne ikke koble til serveren.';
+    } finally {
+      if (chatElements.send) {
+        chatElements.send.disabled = false;
+      }
+    }
+  }
+
+  // Clear chat log function (for sign-out)
+  function clearChatLog() {
+    if (chatElements.log) {
+      chatElements.log.innerHTML = '';
+    }
+    chatMessages = [
+      { role: 'system', content: 'Du er en chatbot som hjelper brukeren å registrere skift via addShift eller addSeries. Svar alltid på norsk.' }
+    ];
+
+    // Reset all states
+    hasFirstMessage = false;
+    isExpanded = false;
+    isInInputMode = false;
+
+    // Remove class from body
+    document.body.classList.remove('chatbox-expanded-active');
+
+    // Reset UI to initial state
+    if (chatElements.pill) {
+      chatElements.pill.classList.remove('expanded');
+    }
+    if (chatElements.expandedContent) {
+      chatElements.expandedContent.style.display = 'none';
+    }
+    if (chatElements.close) {
+      chatElements.close.style.display = 'none';
+    }
+    if (chatElements.pillInput) {
+      chatElements.pillInput.style.display = 'none';
+      chatElements.pillInput.value = '';
+    }
+    if (chatElements.placeholder) {
+      chatElements.placeholder.style.display = 'block';
+    }
+  }
+
+  // Expose functions globally for app integration
+  window.chatbox = {
+    init: initChatbox,
+    clear: clearChatLog,
+    expand: expandChatbox,
+    collapse: collapseChatbox,
+    updatePlaceholder: updateChatboxPlaceholder
+  };
+
+  // Auto-initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChatbox);
+  } else {
+    initChatbox();
+  }
+
+})();

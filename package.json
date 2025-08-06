@@ -1,0 +1,33 @@
+{
+  "name": "wagecalculator",
+  "version": "1.0.0",
+  "description": "En moderne webapplikasjon for å beregne lønn basert på vakter, arbeidstid og tariffbaserte timelønn. Applikasjonen er spesielt utviklet for ansatte med varierende arbeidstid og støtter komplekse lønnssystemer med grunnlønn og ulike tillegg.",
+  "main": "server.js",
+  
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test":  "node test-duplicate-shifts.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kkarlsen06/wageCalculator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kkarlsen06/wageCalculator/issues"
+  },
+  "homepage": "https://github.com/kkarlsen06/wageCalculator#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.53.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "openai": "^5.12.0"
+  },
+  "type": "module"
+}

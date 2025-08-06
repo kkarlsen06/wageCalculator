@@ -1242,7 +1242,7 @@ body.stats-view .dashboard-content .next-payroll-card {
 .dashboard-month-nav {
   display: flex !important;
   justify-content: center;
-  margin-top: 16px;
+  margin-top: 0; /* Remove margin - spacing handled by dashboard gap system */
   margin-bottom: 0;
   opacity: 1;
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -1289,7 +1289,7 @@ body.stats-view .dashboard-content .next-payroll-card {
 @media (max-width: 429px) {
   .dashboard-month-nav {
     display: flex !important;
-    margin-top: 10px; /* Reduced spacing for small screens */
+    margin-top: 0; /* Remove margin - spacing handled by dashboard gap system */
   }
 
   .dashboard-month-nav .month-navigation {
@@ -1736,8 +1736,8 @@ body.stats-view .dashboard-content .next-payroll-card {
 
 /* Dashboard month navigation specific styling - positioned underneath Next Payroll card */
 .dashboard-month-nav {
-  /* Ensure proper spacing underneath Next Payroll card */
-  margin-top: 16px;
+  /* Spacing handled by dashboard gap system for consistency */
+  margin-top: 0;
   margin-bottom: 0;
   padding-top: 0;
   padding-bottom: 0;
@@ -1781,7 +1781,7 @@ body.stats-view .dashboard-content .next-payroll-card {
 /* Mobile and tablet dashboard month navigation styling */
 @media (max-width: 1023px) {
   .dashboard-month-nav {
-    margin-top: 12px; /* Slightly reduced spacing on mobile */
+    margin-top: 0; /* Remove margin - spacing handled by dashboard gap system */
   }
 
   .dashboard-month-nav .month-navigation {
@@ -1808,9 +1808,9 @@ body.stats-view .dashboard-content .next-payroll-card {
 /* Landscape-specific optimizations for mobile devices */
 @media (orientation: landscape) and (min-height: 400px) and (max-width: 1023px) {
   .dashboard-month-nav {
-    margin-top: 16px;
-    padding-top: 12px;
-    padding-bottom: 12px;
+    margin-top: 0; /* Remove margin - spacing handled by dashboard gap system */
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
   }
 
   .dashboard-month-nav .month-navigation {
@@ -1822,18 +1822,18 @@ body.stats-view .dashboard-content .next-payroll-card {
 /* Desktop-range devices with moderate screen sizes */
 @media (min-width: 1024px) and (max-width: 1200px) {
   .dashboard-month-nav {
-    margin-top: 0; /* No margin - immediate positioning */
-    padding-top: 6px; /* Ultra-minimal padding */
-    padding-bottom: 6px; /* Ultra-minimal padding */
+    margin-top: 0; /* No margin - spacing handled by dashboard gap system */
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
   }
 }
 
 /* Large desktop screens - optimize spacing for abundant screen real estate */
 @media (min-width: 1201px) {
   .dashboard-month-nav {
-    margin-top: 0; /* No margin - immediate positioning */
-    padding-top: 4px; /* Ultra-minimal padding for maximum efficiency */
-    padding-bottom: 4px; /* Ultra-minimal padding for maximum efficiency */
+    margin-top: 0; /* No margin - spacing handled by dashboard gap system */
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
   }
 }
 
@@ -3261,6 +3261,8 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   gap: 8px; /* Restore original gap */
+  min-width: 0; /* Allow shrinking to prevent forcing time wrapping */
+  overflow: hidden; /* Handle overflow gracefully */
 }
 
 .shift-date {
@@ -3300,9 +3302,9 @@ input:checked + .slider:before {
   font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
 }
 
-/* Add consistent spacing between date and countdown text */
+/* Add single space between date and countdown text */
 .next-shift-card .shift-countdown-timer {
-  margin-left: 8px; /* Consistent spacing between date and countdown */
+  margin-left: 0.25em; /* Single space equivalent between date and countdown */
 }
 
 /* Color weekday text to match left border colors for Saturday and Sunday shifts */
@@ -3330,12 +3332,17 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   letter-spacing: -0.005em; /* Subtle negative tracking for better readability */
   line-height: 1.3; /* Consistent line-height for alignment with shift-breakdown */
+  white-space: nowrap; /* Prevent wrapping of time elements */
+  overflow: hidden; /* Handle overflow gracefully */
+  min-width: 0; /* Allow container to shrink if needed */
 }
 
 .shift-time-with-hours {
   display: flex;
   align-items: center;
   gap: 5px;
+  white-space: nowrap; /* Prevent time display from wrapping */
+  flex-shrink: 0; /* Prevent shrinking that causes wrapping */
 }
 
 .shift-time-arrow {
@@ -3572,6 +3579,48 @@ input:checked + .slider:before {
   font-weight: 500;
   margin-left: 8px;
   vertical-align: middle;
+}
+
+/* Warning Indicator for Overlapping Shifts */
+.shift-warning-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 8px;
+  color: var(--warning);
+  flex-shrink: 0;
+  opacity: 0.9;
+  transition: all var(--speed-normal) var(--ease-default);
+  vertical-align: middle;
+  cursor: help;
+}
+
+.shift-warning-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.shift-warning-indicator svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* Responsive adjustments for warning indicator */
+@media (max-width: 480px) {
+  .shift-warning-indicator {
+    width: 14px;
+    height: 14px;
+    margin-left: 6px;
+  }
+
+  .shift-warning-indicator svg {
+    width: 12px;
+    height: 12px;
+  }
 }
 
 /* Content section with proper spacing from header */
@@ -5226,6 +5275,18 @@ input:checked + .slider:before {
   100% { transform: rotate(360deg); }
 }
 
+/* Dots animation for chat loading */
+.dots span {
+  animation: blink 1.2s infinite both;
+  font-weight: bold;
+  opacity: .3;
+  font-size: 18px;
+}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+
 /* Mobile responsiveness for profile picture upload */
 @media (max-width: 480px) {
   .profile-picture-upload-container {
@@ -6269,15 +6330,33 @@ input:checked + .slider:before {
 
 /* Individual sections */
 .snap-section {
-  height: var(--app-height, 100vh);
+  height: var(--app-height, 100dvh); /* Use dynamic viewport height for better mobile support */
   display: flex;
   flex-direction: column;
   position: relative;
 }
 
+/* Dashboard section can expand when chatbox is open */
+.snap-section.dashboard-section {
+  min-height: var(--app-height, 100dvh); /* Use dynamic viewport height */
+  height: auto;
+}
+
+/* When chatbox is expanded, ensure proper layout flow */
+.snap-section.dashboard-section:has(.chatbox-pill.expanded) {
+  height: auto;
+  min-height: var(--app-height, 100dvh);
+}
+
+/* Fallback for browsers without :has() support */
+.chatbox-expanded-active .snap-section.dashboard-section {
+  height: auto;
+  min-height: var(--app-height, 100dvh);
+}
+
 /* Shift section can expand beyond viewport */
 .snap-section.shift-section {
-  min-height: var(--app-height, 100vh);
+  min-height: var(--app-height, 100dvh); /* Use dynamic viewport height */
   height: auto;
   background: transparent;
   padding-bottom: 100px; /* Add space for floating bar */
@@ -6925,6 +7004,14 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   min-width: 0; /* Allow shrinking below content size */
 }
 
+/* Base styling for payroll countdown text - match shift countdown exactly */
+.next-payroll-card .shift-countdown-timer {
+  /* No explicit font-size - inherits from parent (same as shift countdown) */
+  font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
+  white-space: nowrap; /* Prevent line breaks */
+  display: inline-block; /* Keep it inline but prevent wrapping */
+}
+
 /* Mobile responsive layout fixes for shift cards */
 @media (max-width: 480px) {
   /* Reduce overall card padding to give more space */
@@ -6949,6 +7036,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     flex-wrap: nowrap;
     overflow: hidden;
     min-width: 0;
+    white-space: nowrap; /* Force single line */
   }
 
   .next-shift-card .shift-date-number {
@@ -6978,6 +7066,26 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     flex-wrap: nowrap;
     gap: 3px; /* Slightly reduced gap */
     white-space: nowrap;
+  }
+
+  /* Ensure shift details stay on one line */
+  .next-shift-card .shift-details {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  /* Ensure all time elements stay on one line */
+  .shift-time-with-hours {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  .shift-details {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .next-shift-card .shift-time-arrow {
@@ -7023,6 +7131,18 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     gap: 3px; /* Slightly reduced gap */
     white-space: nowrap;
   }
+
+  /* Apply time wrapping fixes to all shift items, not just next-shift-card */
+  .shift-item .shift-time-with-hours {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  .shift-item .shift-details {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
 }
 
 /* Extra small mobile devices - only reduce font sizes here */
@@ -7052,6 +7172,12 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     font-size: 0.9em;
   }
 
+  /* Match payroll countdown text size with shift countdown exactly */
+  .next-payroll-card .shift-countdown-timer {
+    font-size: 0.9em; /* Match shift countdown exactly */
+    font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
+  }
+
   /* Slightly smaller time display */
   .next-shift-card .shift-time-with-hours {
     gap: 2px;
@@ -7071,10 +7197,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     margin-left: 8px;
   }
 
-  /* Reduce font sizes for small screens */
-  .next-payroll-card .shift-date {
-    font-size: 13px; /* Slightly smaller */
-  }
+  /* Remove font size override for payroll shift-date to allow countdown timer styling to take precedence */
 
   .next-payroll-card .shift-date-weekday {
     margin-right: 2px;
@@ -7114,6 +7237,12 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     font-size: 0.85em;
   }
 
+  /* Match payroll countdown text size with shift countdown exactly on very small screens */
+  .next-payroll-card .shift-countdown-timer {
+    font-size: 0.85em; /* Match shift countdown exactly */
+    font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
+  }
+
   /* Compact time display */
   .next-shift-card .shift-time-with-hours {
     gap: 1px;
@@ -7143,9 +7272,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     margin-left: 6px;
   }
 
-  .next-payroll-card .shift-date {
-    font-size: 12px;
-  }
+  /* Remove font size override for payroll shift-date to allow countdown timer styling to take precedence */
 
   .next-payroll-card .shift-date-weekday {
     margin-right: 1px;
@@ -7181,11 +7308,11 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     padding-bottom: 15px;
   }
 
-  /* Adjust month navigation spacing for mobile */
+  /* Remove extra padding for dashboard month navigation - spacing handled by gap system */
   .dashboard-content .month-navigation-container {
-    padding-top: 20px; /* Further reduced top padding on mobile */
-    padding-bottom: 20px; /* Further reduced bottom padding on mobile */
-    min-height: 70px; /* Further reduced minimum height on mobile */
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+    min-height: auto; /* Remove fixed height - let content determine height */
   }
 
   /* Responsive month navigation button sizing for mobile */
@@ -7247,9 +7374,9 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   }
 
   .dashboard-content .month-navigation-container {
-    padding-top: 16px;
-    padding-bottom: 16px;
-    min-height: 60px;
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+    min-height: auto; /* Remove fixed height - let content determine height */
   }
 
   /* Statistics section for large mobile */
@@ -7267,9 +7394,9 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   }
 
   .dashboard-content .month-navigation-container {
-    padding-top: 24px;
-    padding-bottom: 24px;
-    min-height: 80px;
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+    min-height: auto; /* Remove fixed height - let content determine height */
   }
 
   /* Statistics section for iPad portrait */
@@ -7287,9 +7414,9 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   }
 
   .dashboard-content .month-navigation-container {
-    padding-top: 12px;
-    padding-bottom: 12px;
-    min-height: 50px;
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+    min-height: auto; /* Remove fixed height - let content determine height */
   }
 
   /* Statistics section for landscape short viewports */
@@ -7371,11 +7498,11 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   padding-bottom: 15px;
 }
 
-/* Adjust month navigation spacing for compact view */
+/* Remove extra padding for compact view dashboard month navigation */
 .compact-view .dashboard-content .month-navigation-container {
-  padding-top: 20px; /* Further reduced top padding in compact view */
-  padding-bottom: 20px; /* Further reduced bottom padding in compact view */
-  min-height: 70px; /* Further reduced minimum height in compact view */
+  padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+  padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+  min-height: auto; /* Remove fixed height - let content determine height */
 }
 
 /* Compact view month navigation sizing */
@@ -9580,4 +9707,427 @@ input[type="file"].form-control:focus {
   .chart-progress-label {
     font-size: var(--text-base);
   }
+}
+
+/* ===== CHATBOX STYLES ===== */
+
+.chatbox-container {
+  margin-top: 16px;
+  width: 100%;
+  /* Ensure this container takes up space in the layout flow */
+  position: relative;
+}
+
+/* Pill-style container that can expand */
+.chatbox-pill {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Remove fixed padding - will be handled by content */
+}
+
+.chatbox-pill:hover {
+  background: var(--bg-tertiary);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* When expanded, remove hover effects and disable interaction */
+.chatbox-pill.expanded {
+  transform: none;
+  cursor: default;
+}
+
+.chatbox-pill.expanded:hover {
+  transform: none;
+  background: var(--bg-secondary); /* Keep original background */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Keep original shadow */
+}
+
+.chatbox-pill.expanded .chatbox-pill-input-container {
+  pointer-events: none; /* Disable input interactions */
+}
+
+.chatbox-pill.expanded .chatbox-pill-placeholder {
+  cursor: default;
+  pointer-events: none; /* Disable placeholder interactions */
+}
+
+/* Ensure close button remains clickable when expanded */
+.chatbox-pill.expanded .chatbox-close {
+  pointer-events: auto; /* Re-enable close button */
+}
+
+.chatbox-pill-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+  padding: 12px 20px; /* Move padding here from pill container */
+  cursor: pointer;
+}
+
+.chatbox-pill.expanded .chatbox-pill-content {
+  cursor: default;
+}
+
+.chatbox-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  order: -1; /* Ensure icon stays at the far left */
+}
+
+.chatbox-pill-input-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chatbox-pill-placeholder {
+  color: var(--text-secondary); /* Gray color as requested */
+  font-size: 16px; /* Minimum 16px to prevent iOS zoom */
+  font-weight: 400; /* Lighter weight for placeholder */
+  cursor: text;
+  user-select: none;
+  width: 100%;
+}
+
+.chatbox-pill-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white; /* White text as requested */
+  font-size: 16px; /* Minimum 16px to prevent iOS zoom */
+  font-weight: 500;
+  width: 100%;
+  font-family: inherit;
+}
+
+.chatbox-pill-input::placeholder {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.chatbox-close {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chatbox-close:hover {
+  background: var(--bg-tertiary);
+}
+
+.chatbox-close svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+
+/* Expanded content within the pill */
+.chatbox-expanded-content {
+  background: transparent; /* Remove darker background */
+  border-top: 1px solid var(--border);
+  animation: chatboxExpand 0.3s ease-out;
+  overflow: hidden;
+  /* Ensure it takes up space in the document flow */
+  position: relative;
+  width: 100%;
+}
+
+@keyframes chatboxExpand {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 400px;
+  }
+}
+
+.chatbox-log {
+  max-height: 300px; /* Maximum height before scrolling */
+  overflow-y: auto;
+  padding: 16px 20px;
+  background: transparent; /* Remove darker background */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Add consistent spacing between messages */
+  min-height: 0; /* Allow shrinking */
+}
+
+.chatbox-log::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatbox-log::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatbox-log::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.chatbox-log::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.chatbox-message {
+  padding: 10px 16px;
+  border-radius: 24px; /* Match pill corner radius */
+  max-width: 75%; /* Reduced from 85% for better fit */
+  word-wrap: break-word;
+  display: inline-block; /* Make bubbles fit content width */
+  width: fit-content;
+  align-self: flex-start; /* Default alignment */
+  white-space: normal; /* Allow line breaks from Markdown */
+}
+
+.chatbox-message.user {
+  background: var(--bg-tertiary); /* More toned down than primary */
+  color: var(--text-primary);
+  align-self: flex-end; /* Align to right using flexbox */
+  text-align: right;
+  border: 1px solid var(--border);
+}
+
+.chatbox-message.assistant {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  align-self: flex-start; /* Align to left using flexbox */
+  border: 1px solid var(--border);
+}
+
+.chatbox-message.system {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  align-self: flex-start; /* Align to left using flexbox */
+  font-style: italic;
+  border: 1px solid var(--border);
+}
+
+/* Markdown styling within chat messages */
+.chatbox-message ul,
+.chatbox-message ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.chatbox-message li {
+  margin: 4px 0;
+  padding: 0;
+}
+
+.chatbox-message p {
+  margin: 8px 0;
+}
+
+.chatbox-message p:first-child {
+  margin-top: 0;
+}
+
+.chatbox-message p:last-child {
+  margin-bottom: 0;
+}
+
+.chatbox-message strong {
+  font-weight: 600;
+}
+
+.chatbox-message em {
+  font-style: italic;
+}
+
+.chatbox-message code {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.chatbox-message pre {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.chatbox-message pre code {
+  background: none;
+  padding: 0;
+}
+
+.chatbox-input-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+}
+
+.chatbox-input {
+  flex: 1;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  resize: none;
+  min-height: 20px;
+  max-height: 100px;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+}
+
+.chatbox-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.chatbox-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.chatbox-send-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chatbox-send-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.chatbox-send-btn:disabled {
+  background: var(--bg-tertiary);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.chatbox-send-btn svg {
+  width: 16px;
+  height: 16px;
+  color: white;
+}
+
+/* Mobile responsive adjustments for chatbox */
+@media (max-width: 768px) {
+  .chatbox-pill-content {
+    padding: 8px 16px; /* Slimmer padding for mobile */
+    gap: 10px;
+  }
+
+  .chatbox-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .chatbox-pill-placeholder {
+    font-size: 16px; /* Minimum 16px to prevent iOS zoom */
+  }
+
+  .chatbox-pill-input {
+    font-size: 16px; /* Minimum 16px to prevent iOS zoom */
+  }
+
+  .chatbox-header {
+    padding: 12px 16px;
+  }
+
+  .chatbox-title {
+    font-size: 15px;
+  }
+
+  .chatbox-log {
+    max-height: 250px; /* Maximum height before scrolling on mobile */
+    padding: 12px 16px;
+    min-height: 0; /* Allow shrinking */
+  }
+
+  .chatbox-input-container {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .chatbox-input {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .chatbox-send-btn {
+    padding: 10px;
+  }
+
+  .chatbox-message {
+    padding: 8px 12px;
+    font-size: 13px;
+    max-width: 80%; /* Slightly wider on mobile for readability */
+  }
+}
+
+/* Extra small mobile devices - make chatbox pill even slimmer */
+@media (max-width: 480px) {
+  .chatbox-pill-content {
+    padding: 6px 14px; /* Even slimmer for small mobile */
+    gap: 8px;
+  }
+
+  .chatbox-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Loading spinner animation for UI refresh */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-overlay {
+  position: relative;
+}
+
+.refresh-loading-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(4px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+  border-radius: inherit !important;
 }

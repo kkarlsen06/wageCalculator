@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.CONFIG.supabase.anonKey
   );
 
+  // Clear any stale tokens before checking session
+  await supa.auth.signOut();
+
   // Make supa available globally
   window.supa = supa;
 
@@ -64,13 +67,26 @@ document.addEventListener('DOMContentLoaded', async function() {
   try {
     const { data: { session } } = await supa.auth.getSession();
 
-    if (session && !isRecoveryFlow && !isInPasswordRecovery) {
-      shouldDisplayLoginPage = false;
-      window.location.replace('app.html');
-      return; // Stop further script execution on this page if redirected
+  if (session && !isRecoveryFlow && !isInPasswordRecovery) {
+    try {
+      const ok = await fetch('/settings', {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      if (ok.status === 200) {          // token accepted by backend
+        window.location.replace('index.html');
+        return;
+      }
+    } catch (_) { /* ignore network errors */ }
+
+    // token was bad – clear it and stay on login page
+    await supa.auth.signOut();
+    console.log('Stale token removed; showing login.');
     } else if (session && isRecoveryFlow) {
       isInPasswordRecovery = true;
     }
+
+    // Always make body visible when staying on login page
+    document.body.style.visibility = 'visible';
   } catch (e) {
     console.error('Error checking session for immediate redirect:', e);
     // In case of error, default to showing the login page (shouldDisplayLoginPage remains true)
@@ -343,7 +359,7 @@ async function checkAndShowProfileCompletion() {
       
       // Small delay to ensure auth state is properly set
       setTimeout(() => {
-        window.location.replace("app.html");
+        window.location.replace("index.html");
       }, 150);
       
     } catch (err) {
@@ -353,7 +369,7 @@ async function checkAndShowProfileCompletion() {
       if (!isRedirecting) {
         isRedirecting = true;
         setTimeout(() => {
-          window.location.replace("app.html");
+          window.location.replace("index.html");
         }, 100);
       }
     }
@@ -366,7 +382,7 @@ async function checkAndShowProfileCompletion() {
     // Force redirect on timeout
     if (!isRedirecting) {
       isRedirecting = true;
-      window.location.replace("app.html");
+      window.location.replace("index.html");
     }
   }
 }
@@ -399,7 +415,7 @@ async function completeProfile() {
       return;
     }
 
-    window.location.href = "app.html";
+    window.location.href = "index.html";
   } catch (err) {
     console.error("Error completing profile:", err);
     window.authElements.completeProfileMsg.textContent = "Kunne ikke oppdatere profil";
@@ -408,7 +424,7 @@ async function completeProfile() {
 
 async function skipProfileCompletion() {
   // Just redirect to app without requiring profile completion
-  window.location.href = "app.html";
+  window.location.href = "index.html";
 }
 
 // Legacy function - no longer used since we have signUpWithDetails
@@ -432,7 +448,7 @@ async function sendResetLink(email) {
   try {
     // Use the current domain to ensure consistency
     const currentDomain = window.location.origin;
-    const redirectUrl = `${currentDomain}/kalkulator/index.html`;
+    const redirectUrl = `${currentDomain}/kalkulator/login.html`;
     
     
     const { error } = await supa.auth.resetPasswordForEmail(email, {
@@ -453,7 +469,7 @@ async function sendMagicLink(email) {
   try {
     // Use the current domain to ensure consistency
     const currentDomain = window.location.origin;
-    const redirectUrl = `${currentDomain}/kalkulator/index.html`; // Or app.html if you want to redirect there after magic link login
+    const redirectUrl = `${currentDomain}/kalkulator/login.html`; // Redirect to kalkulator login after magic link login
     
     
     const { error } = await supa.auth.signInWithOtp({
@@ -708,7 +724,7 @@ async function updatePassword(newPassword, confirmPassword) {
             setTimeout(async () => {
                 await supa.auth.signOut();
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = 'login.html';
                 }, 500);
             }, 1500);
         }
