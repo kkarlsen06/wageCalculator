@@ -1242,7 +1242,7 @@ body.stats-view .dashboard-content .next-payroll-card {
 .dashboard-month-nav {
   display: flex !important;
   justify-content: center;
-  margin-top: 16px;
+  margin-top: 0; /* Remove margin - spacing handled by dashboard gap system */
   margin-bottom: 0;
   opacity: 1;
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -1289,7 +1289,7 @@ body.stats-view .dashboard-content .next-payroll-card {
 @media (max-width: 429px) {
   .dashboard-month-nav {
     display: flex !important;
-    margin-top: 10px; /* Reduced spacing for small screens */
+    margin-top: 0; /* Remove margin - spacing handled by dashboard gap system */
   }
 
   .dashboard-month-nav .month-navigation {
@@ -1736,8 +1736,8 @@ body.stats-view .dashboard-content .next-payroll-card {
 
 /* Dashboard month navigation specific styling - positioned underneath Next Payroll card */
 .dashboard-month-nav {
-  /* Ensure proper spacing underneath Next Payroll card */
-  margin-top: 16px;
+  /* Spacing handled by dashboard gap system for consistency */
+  margin-top: 0;
   margin-bottom: 0;
   padding-top: 0;
   padding-bottom: 0;
@@ -1781,7 +1781,7 @@ body.stats-view .dashboard-content .next-payroll-card {
 /* Mobile and tablet dashboard month navigation styling */
 @media (max-width: 1023px) {
   .dashboard-month-nav {
-    margin-top: 12px; /* Slightly reduced spacing on mobile */
+    margin-top: 0; /* Remove margin - spacing handled by dashboard gap system */
   }
 
   .dashboard-month-nav .month-navigation {
@@ -1808,9 +1808,9 @@ body.stats-view .dashboard-content .next-payroll-card {
 /* Landscape-specific optimizations for mobile devices */
 @media (orientation: landscape) and (min-height: 400px) and (max-width: 1023px) {
   .dashboard-month-nav {
-    margin-top: 16px;
-    padding-top: 12px;
-    padding-bottom: 12px;
+    margin-top: 0; /* Remove margin - spacing handled by dashboard gap system */
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
   }
 
   .dashboard-month-nav .month-navigation {
@@ -1822,18 +1822,18 @@ body.stats-view .dashboard-content .next-payroll-card {
 /* Desktop-range devices with moderate screen sizes */
 @media (min-width: 1024px) and (max-width: 1200px) {
   .dashboard-month-nav {
-    margin-top: 0; /* No margin - immediate positioning */
-    padding-top: 6px; /* Ultra-minimal padding */
-    padding-bottom: 6px; /* Ultra-minimal padding */
+    margin-top: 0; /* No margin - spacing handled by dashboard gap system */
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
   }
 }
 
 /* Large desktop screens - optimize spacing for abundant screen real estate */
 @media (min-width: 1201px) {
   .dashboard-month-nav {
-    margin-top: 0; /* No margin - immediate positioning */
-    padding-top: 4px; /* Ultra-minimal padding for maximum efficiency */
-    padding-bottom: 4px; /* Ultra-minimal padding for maximum efficiency */
+    margin-top: 0; /* No margin - spacing handled by dashboard gap system */
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
   }
 }
 
@@ -7254,11 +7254,11 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     padding-bottom: 15px;
   }
 
-  /* Adjust month navigation spacing for mobile */
+  /* Remove extra padding for dashboard month navigation - spacing handled by gap system */
   .dashboard-content .month-navigation-container {
-    padding-top: 20px; /* Further reduced top padding on mobile */
-    padding-bottom: 20px; /* Further reduced bottom padding on mobile */
-    min-height: 70px; /* Further reduced minimum height on mobile */
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+    min-height: auto; /* Remove fixed height - let content determine height */
   }
 
   /* Responsive month navigation button sizing for mobile */
@@ -7320,9 +7320,9 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   }
 
   .dashboard-content .month-navigation-container {
-    padding-top: 16px;
-    padding-bottom: 16px;
-    min-height: 60px;
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+    min-height: auto; /* Remove fixed height - let content determine height */
   }
 
   /* Statistics section for large mobile */
@@ -7340,9 +7340,9 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   }
 
   .dashboard-content .month-navigation-container {
-    padding-top: 24px;
-    padding-bottom: 24px;
-    min-height: 80px;
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+    min-height: auto; /* Remove fixed height - let content determine height */
   }
 
   /* Statistics section for iPad portrait */
@@ -7360,9 +7360,9 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   }
 
   .dashboard-content .month-navigation-container {
-    padding-top: 12px;
-    padding-bottom: 12px;
-    min-height: 50px;
+    padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+    padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+    min-height: auto; /* Remove fixed height - let content determine height */
   }
 
   /* Statistics section for landscape short viewports */
@@ -7444,11 +7444,11 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   padding-bottom: 15px;
 }
 
-/* Adjust month navigation spacing for compact view */
+/* Remove extra padding for compact view dashboard month navigation */
 .compact-view .dashboard-content .month-navigation-container {
-  padding-top: 20px; /* Further reduced top padding in compact view */
-  padding-bottom: 20px; /* Further reduced bottom padding in compact view */
-  min-height: 70px; /* Further reduced minimum height in compact view */
+  padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
+  padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
+  min-height: auto; /* Remove fixed height - let content determine height */
 }
 
 /* Compact view month navigation sizing */
