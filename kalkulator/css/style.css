@@ -9729,6 +9729,9 @@ input[type="file"].form-control:focus {
   background: var(--bg-primary);
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Add consistent spacing between messages */
 }
 
 .chatbox-log::-webkit-scrollbar {
@@ -9749,31 +9752,36 @@ input[type="file"].form-control:focus {
 }
 
 .chatbox-message {
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  max-width: 85%;
+  padding: 10px 16px;
+  border-radius: 24px; /* Match pill corner radius */
+  max-width: 75%; /* Reduced from 85% for better fit */
   word-wrap: break-word;
+  display: inline-block; /* Make bubbles fit content width */
+  width: fit-content;
+  align-self: flex-start; /* Default alignment */
 }
 
 .chatbox-message.user {
-  background: var(--primary);
-  color: white;
-  margin-left: auto;
+  background: var(--bg-tertiary); /* More toned down than primary */
+  color: var(--text-primary);
+  align-self: flex-end; /* Align to right using flexbox */
   text-align: right;
+  border: 1px solid var(--border);
 }
 
 .chatbox-message.assistant {
   background: var(--bg-secondary);
   color: var(--text-primary);
-  margin-right: auto;
+  align-self: flex-start; /* Align to left using flexbox */
+  border: 1px solid var(--border);
 }
 
 .chatbox-message.system {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
-  margin-right: auto;
+  align-self: flex-start; /* Align to left using flexbox */
   font-style: italic;
+  border: 1px solid var(--border);
 }
 
 .chatbox-input-container {
@@ -9890,8 +9898,8 @@ input[type="file"].form-control:focus {
   }
 
   .chatbox-message {
-    margin-bottom: 10px;
-    padding: 6px 10px;
+    padding: 8px 12px;
     font-size: 13px;
+    max-width: 80%; /* Slightly wider on mobile for readability */
   }
 }
