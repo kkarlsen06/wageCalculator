@@ -10,6 +10,18 @@ function setAppHeight() {
   document.documentElement.style.setProperty('--dvh', h + 'px');
 }
 
+// Detect iOS PWA mode and add appropriate class
+function detectiOSPWA() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+  if (isIOS && isStandalone) {
+    document.documentElement.classList.add('ios-pwa');
+    // Additional adjustments for iOS PWA
+    setAppHeight();
+  }
+}
+
 function setThemeColor() {
   // Ensure theme color is set to black for browser chrome
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
@@ -44,6 +56,7 @@ function handleResponsiveMonthNavigation() {
 
 setAppHeight();
 setThemeColor();
+detectiOSPWA();
 handleResponsiveMonthNavigation(); // Initial call
 window.addEventListener('resize', () => {
   setAppHeight();
@@ -211,9 +224,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!profileBtn) return;
 
     if (imageUrl) {
+      // Add cache-busting parameter to ensure fresh image load
+      const cacheBustUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
+
       // Replace SVG with image
       const img = document.createElement('img');
-      img.src = imageUrl;
+      img.src = cacheBustUrl;
       img.alt = 'Profilbilde';
       img.className = 'profile-picture-img';
       img.style.cssText = `
@@ -224,6 +240,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Fade in when loaded
       img.onload = () => {
         img.style.opacity = '1';
+        // Force a repaint to ensure the image is displayed
+        img.offsetHeight;
       };
 
       // Handle image load error

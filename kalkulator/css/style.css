@@ -749,6 +749,7 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /* iOS PWA safe area handling - applied more specifically to avoid layout issues */
 }
 
 .app-container {
@@ -783,6 +784,10 @@ body {
   min-height: 80px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
+  /* iOS PWA safe area handling for header */
+  padding-top: max(20px, calc(20px + env(safe-area-inset-top)));
+  padding-left: max(20px, calc(20px + env(safe-area-inset-left)));
+  padding-right: max(20px, calc(20px + env(safe-area-inset-right)));
   /* Ensure header and profile elements are immediately visible */
   opacity: 1 !important;
   visibility: visible !important;
@@ -6456,6 +6461,9 @@ input:checked + .slider:before {
   /* Hide scrollbar but keep functionality */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* Internet Explorer 10+ */
+  /* iOS PWA safe area handling for container */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -6469,6 +6477,21 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+/* iOS PWA specific adjustments */
+@supports (padding: max(0px)) {
+  .snap-section {
+    /* Adjust height to account for safe areas in iOS PWA mode */
+    height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+}
+
+/* Specific iOS PWA mode adjustments */
+.ios-pwa .snap-section {
+  /* Ensure proper spacing in iOS PWA mode */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Dashboard section can expand when chatbox is open */

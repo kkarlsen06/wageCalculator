@@ -5910,8 +5910,11 @@ export const app = {
         if (!currentElement) return;
 
         if (imageUrl) {
+            // Add cache-busting parameter to ensure fresh image load
+            const cacheBustUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
+
             // Show the uploaded image
-            currentElement.innerHTML = `<img src="${imageUrl}" alt="Profilbilde" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            currentElement.innerHTML = `<img src="${cacheBustUrl}" alt="Profilbilde" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="profile-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
@@ -5941,9 +5944,12 @@ export const app = {
         if (!profileBtn) return;
 
         if (imageUrl) {
+            // Add cache-busting parameter to ensure fresh image load
+            const cacheBustUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
+
             // Replace SVG with image
             const img = document.createElement('img');
-            img.src = imageUrl;
+            img.src = cacheBustUrl;
             img.alt = 'Profilbilde';
             img.className = 'profile-picture-img';
             img.style.cssText = `
@@ -5954,6 +5960,8 @@ export const app = {
             // Handle image load success
             img.onload = () => {
                 img.style.opacity = '1';
+                // Force a repaint to ensure the image is displayed
+                img.offsetHeight;
             };
 
             // Handle image load error
@@ -6048,6 +6056,11 @@ export const app = {
         this.updateProfilePicturePreview(imageUrl);
         this.updateTopBarProfilePicture(imageUrl);
 
+        // Also refresh the user nickname/profile data to ensure consistency
+        setTimeout(() => {
+            this.loadUserNickname();
+        }, 100);
+
         // Hide progress after a short delay
         setTimeout(() => {
             this.showProfilePictureProgress(false);
@@ -6071,6 +6084,27 @@ export const app = {
         const { data: { user } } = await window.supa.auth.getUser();
         if (!user) throw new Error('Ikke innlogget');
 
+        // Clean up old profile pictures first (optional - helps prevent storage bloat)
+        try {
+            const { data: settings } = await window.supa
+                .from('user_settings')
+                .select('profile_picture_url')
+                .eq('user_id', user.id)
+                .single();
+
+            if (settings?.profile_picture_url && settings.profile_picture_url.includes('profile-pictures')) {
+                const oldFilename = settings.profile_picture_url.split('/').pop();
+                if (oldFilename) {
+                    await window.supa.storage
+                        .from('profile-pictures')
+                        .remove([`${user.id}/${oldFilename}`]);
+                }
+            }
+        } catch (cleanupError) {
+            // Ignore cleanup errors - not critical
+            console.log('Could not clean up old profile picture:', cleanupError);
+        }
+
         // Generate unique filename
         const filename = window.imageUtils.generateProfilePictureFilename(user.id, 'jpg');
 
@@ -6078,7 +6112,7 @@ export const app = {
         const { data, error } = await window.supa.storage
             .from('profile-pictures')
             .upload(filename, blob, {
-                cacheControl: '3600',
+                cacheControl: '300', // Reduce cache time to 5 minutes for faster updates
                 upsert: false
             });
 
@@ -6486,6 +6520,11 @@ export const app = {
             // Update UI
             this.updateProfilePicturePreview(imageUrl);
             this.updateTopBarProfilePicture(imageUrl);
+
+            // Also refresh the user nickname/profile data to ensure consistency
+            setTimeout(() => {
+                this.loadUserNickname();
+            }, 100);
 
             // Hide progress after a short delay
             setTimeout(() => {
