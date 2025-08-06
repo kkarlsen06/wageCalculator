@@ -107,9 +107,19 @@ app.get('/settings', authenticateUser, async (req, res) => {
 app.post('/chat', authenticateUser, async (req, res) => {
   const { messages } = req.body;
 
+  // Inject relative dates for GPT context
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Oslo' });
+  const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('sv-SE', { timeZone: 'Europe/Oslo' });
+
+  const systemDateHint = {
+    role: 'system',
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}.`
+  };
+  const fullMessages = [systemDateHint, ...messages];
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
-    messages,
+    messages: fullMessages,
     functions,
     function_call: 'auto'
   });
