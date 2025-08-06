@@ -945,6 +945,8 @@
     <script src="js/config.js"></script>
     <!-- Image utilities for profile picture compression -->
     <script src="js/imageUtils.js"></script>
+    <!-- Auth module (must be loaded before app.js) -->
+    <script type="module" src="js/auth.js"></script>
     <!-- UUID library for generating series IDs -->
     <script>
         // Simple UUID v4 generator function
@@ -955,6 +957,6 @@
             });
         }
     </script>
-    <script src="js/app.js?v=5"></script>
+    <script type="module" src="js/app.js?v=5"></script>
 </body>
 </html>

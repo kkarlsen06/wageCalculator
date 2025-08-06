@@ -1,7 +1,8 @@
+import { getAccessToken } from './auth.js';
+
 // Global fetch wrapper for chat functionality
 async function chatFetch(body) {
-  // Use the getAccessToken function from auth.js
-  const token = await window.getAccessToken();
+  const token = await getAccessToken();
   if (!token) throw new Error('not-authenticated');
 
   const res = await fetch('/.netlify/functions/chat', {
@@ -16,6 +17,9 @@ async function chatFetch(body) {
 
 // Make chatFetch available globally
 window.chatFetch = chatFetch;
+
+// Optional: Make getAccessToken available in dev console
+window.getAccessToken = getAccessToken;
 
 function setAppHeight() {
   // Use visual viewport for better mobile browser UI handling
