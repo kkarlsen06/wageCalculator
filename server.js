@@ -2,6 +2,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { OpenAI } from 'openai';
@@ -14,6 +15,11 @@ const FRONTEND_DIR = __dirname;
 
 // ---------- app & core middleware ----------
 const app = express();
+
+// Request logging with Morgan
+const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
+app.use(morgan(logFormat));
+
 app.use(express.static(FRONTEND_DIR)); // serve index.html, css, js, etc.
 app.use(cors());
 app.use(express.json());
@@ -408,7 +414,7 @@ app.get('/settings', authenticateUser, async (req, res) => {
 
 // ---------- /chat ----------
 app.post('/chat', authenticateUser, async (req, res) => {
-  const { messages } = req.body;
+  const { messages, stream = false } = req.body;
 
   // Get user information for personalization
   const { data: { user }, error: userError } = await supabase.auth.getUser(req.headers.authorization?.slice(7));
@@ -425,7 +431,27 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   const systemContextHint = {
     role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries, getShifts eller copyShift ved behov. Du kan redigere et skift ved å oppgi dato og starttid hvis du ikke har ID-en. Bruk editShift direkte med shift_date og start_time for å finne skiftet, og new_start_time/new_end_time for nye tider. For getShifts: "denne uka"/"hvilke vakter har jeg denne uka" → bruk criteria_type=week (uten week_number/year), "neste uke" → bruk criteria_type=next, "uke 42" → bruk criteria_type=week med week_number=42. Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. VIKTIG: Vis alltid datoer i dd.mm.yyyy format (f.eks. 15.03.2024) når du snakker med brukeren, ikke yyyy-mm-dd format. Når brukeren ber om å slette flere vakter (for eksempel "slett vaktene mine neste uke"), bruk deleteSeries. Spør én gang om bekreftelse først før du utfører slettingen, men IKKE spør om bekreftelse for rene leseoperasjoner som getShifts. VIKTIG: Når tool-svaret inneholder status:"ok" og ID-lister (inserted/updated/deleted), ikke be om ny bekreftelse - bruk ID-ene for videre operasjoner. For addSeries: bruk interval_weeks=2 for "annenhver uke", offset_start for å justere startpunkt. For deleteSeries: bruk shift_ids array for presise slettinger når du har ID-ene. COPYSHIFT: Bruk copyShift for å kopiere skift til andre datoer. Eksempler: "kopier mandagsskiftet mitt til neste uke" → copyShift(source_date_reference="Monday", weeks_ahead=1), "kopier tirsdagsskiftet til torsdag og fredag" → copyShift(source_date_reference="Tuesday", target_date_references=["Thursday", "Friday"]), "kopier morgenskiftet mitt i dag til de neste 3 ukene" → copyShift(source_date_reference="today", source_time_reference="morning", weeks_ahead=3).
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}.
+
+ABSOLUTT KRITISK - MULTIPLE TOOL CALLS REGEL:
+Når brukeren ber om flere operasjoner i SAMME melding, MÅ du utføre ALLE operasjonene i SAMME respons med flere tool_calls. Dette er OBLIGATORISK, ikke valgfritt!
+
+EKSEMPEL: "vis meg vaktene denne uken og endre fredagens vakt til 15:00"
+- Du MÅ kalle getShifts(criteria_type="week")
+- Du MÅ deretter kalle editShift(shift_date="2025-08-08", start_time="16:00", new_start_time="15:00")
+- BEGGE i samme respons! IKKE spør om bekreftelse eller si at du ikke finner vakten!
+
+ANDRE EKSEMPLER som KREVER multiple tool calls:
+- "legg til mandag og tirsdag" → addShift + addShift
+- "slett vakter og legg til nye" → deleteSeries + addSeries
+- "kopier til onsdag og fredag" → copyShift + copyShift
+- "vis vakter og slett fredag" → getShifts + deleteShift
+
+ALDRI si "la meg gjøre det", "vent litt", "bekrefter du", "jeg fant ikke vakten" eller lignende. Utfør ALT med en gang!
+
+VIKTIG: Når du får data fra getShifts, BRUK den informasjonen til å gjøre editShift med riktig shift_date og start_time. Ikke si at du ikke finner vakten - du har jo nettopp hentet den!
+
+For tool-bruk: getShifts for "denne uka" → criteria_type=week (uten week_number/year), "neste uke" → criteria_type=next. editShift kan bruke shift_date og start_time fra getShifts-resultatet. Vis datoer som dd.mm.yyyy til brukeren. VIKTIG: Når tool-svaret inneholder status:"ok" og ID-lister (inserted/updated/deleted), ikke be om ny bekreftelse - bruk ID-ene for videre operasjoner. For addSeries: bruk interval_weeks=2 for "annenhver uke", offset_start for å justere startpunkt. For deleteSeries: bruk shift_ids array for presise slettinger når du har ID-ene. COPYSHIFT: Bruk copyShift for å kopiere skift til andre datoer. Eksempler: "kopier mandagsskiftet mitt til neste uke" → copyShift(source_date_reference="Monday", weeks_ahead=1), "kopier tirsdagsskiftet til torsdag og fredag" → copyShift(source_date_reference="Tuesday", target_date_references=["Thursday", "Friday"]), "kopier morgenskiftet mitt i dag til de neste 3 ukene" → copyShift(source_date_reference="today", source_time_reference="morning", weeks_ahead=3).
 
 KRITISK - MULTIPLE TOOL CALLS: Du SKAL og MÅ gjøre flere tool-kall i samme respons når brukeren ber om flere operasjoner. Dette er ikke valgfritt! Eksempler som KREVER flere tool calls:
 - "Vis meg alle vaktene denne uken og endre fredagens vakt til å starte 15:00" → getShifts først, deretter editShift
@@ -434,26 +460,94 @@ KRITISK - MULTIPLE TOOL CALLS: Du SKAL og MÅ gjøre flere tool-kall i samme res
 - "Kopier mandagens vakt til onsdag og fredag" → copyShift to ganger med forskjellige target_date_references
 - "Vis meg vaktene mine og slett den på fredag" → getShifts først, deretter deleteShift
 
-ALDRI si "vent litt", "la meg gjøre det i neste melding" eller be brukeren vente. Utfør ALLE nødvendige operasjoner i ÉN respons med flere tool calls.`
+BEKREFTELSER: IKKE spør om bekreftelse for addShift, editShift, copyShift eller getShifts operasjoner. Kun deleteSeries og deleteShift krever bekreftelse når de brukes alene. Når brukeren ber om flere operasjoner i samme melding (som "vis og endre"), utfør ALLE operasjonene uten å spørre om bekreftelse.
+
+ALDRI si "vent litt", "la meg gjøre det i neste melding", "bekrefter du dette" eller be brukeren vente. Utfør ALLE nødvendige operasjoner i ÉN respons med flere tool calls.`
   };
   const fullMessages = [systemContextHint, ...messages];
 
-  // First call: Let GPT choose tools
+  // Set up streaming if requested
+  if (stream) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    // Send initial status
+    res.write(`data: ${JSON.stringify({ type: 'status', message: 'Starter GPT-forespørsel...' })}\n\n`);
+  }
+
+  // First call: Let GPT choose tools - force tool usage for multi-step operations
+  const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
+  const isMultiStep = /\bog\b.*\bog\b|vis.*og.*endre|vis.*og.*slett|vis.*og.*gjør|legg til.*og.*legg til|hent.*og.*endre/.test(userMessage);
+
+  console.log('User message:', userMessage);
+  console.log('Detected as multi-step:', isMultiStep);
+
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-4o',
     messages: fullMessages,
     tools,
-    tool_choice: 'auto'
+    tool_choice: isMultiStep ? 'required' : 'auto'
   });
 
   const choice = completion.choices[0].message;
+
+  // Log what GPT decided to do
+  console.log('=== GPT RESPONSE ===');
+  console.log('Content:', choice.content);
+  console.log('Tool calls:', choice.tool_calls?.length || 0);
+  if (choice.tool_calls) {
+    choice.tool_calls.forEach((call, i) => {
+      console.log(`Tool ${i+1}: ${call.function.name}(${call.function.arguments})`);
+    });
+  }
+  console.log('==================');
+
+  if (stream) {
+    res.write(`data: ${JSON.stringify({
+      type: 'gpt_response',
+      content: choice.content,
+      tool_calls: choice.tool_calls?.map(call => ({
+        name: call.function.name,
+        arguments: call.function.arguments
+      })) || []
+    })}\n\n`);
+  }
 
   if (choice.tool_calls && choice.tool_calls.length > 0) {
     // Handle multiple tool calls
     const toolMessages = [];
 
+    if (stream) {
+      res.write(`data: ${JSON.stringify({
+        type: 'tool_calls_start',
+        count: choice.tool_calls.length,
+        message: `Utfører ${choice.tool_calls.length} operasjon${choice.tool_calls.length > 1 ? 'er' : ''}...`
+      })}\n\n`);
+    }
+
     for (const call of choice.tool_calls) {
+      if (stream) {
+        res.write(`data: ${JSON.stringify({
+          type: 'tool_call_start',
+          name: call.function.name,
+          arguments: JSON.parse(call.function.arguments),
+          message: `Utfører ${call.function.name}...`
+        })}\n\n`);
+      }
+
       const toolResult = await handleTool(call, req.user_id);
+
+      if (stream) {
+        res.write(`data: ${JSON.stringify({
+          type: 'tool_call_complete',
+          name: call.function.name,
+          result: toolResult.substring(0, 200) + (toolResult.length > 200 ? '...' : ''),
+          message: `${call.function.name} fullført`
+        })}\n\n`);
+      }
+
       toolMessages.push({
         role: 'tool',
         tool_call_id: call.id,
@@ -474,10 +568,17 @@ ALDRI si "vent litt", "la meg gjøre det i neste melding" eller be brukeren vent
     ];
 
     // Second call: Let GPT formulate a user-friendly response with error handling
+    if (stream) {
+      res.write(`data: ${JSON.stringify({
+        type: 'generating_response',
+        message: 'Genererer svar...'
+      })}\n\n`);
+    }
+
     let assistantMessage;
     try {
       const secondCompletion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: messagesWithToolResult,
         tools,
         tool_choice: 'none'
@@ -505,10 +606,20 @@ ALDRI si "vent litt", "la meg gjøre det i neste melding" eller be brukeren vent
       .eq('user_id', req.user_id)
       .order('shift_date');
 
-    res.json({
-      assistant: assistantMessage,
-      shifts: shifts || []
-    });
+    if (stream) {
+      res.write(`data: ${JSON.stringify({
+        type: 'complete',
+        assistant: assistantMessage,
+        shifts: shifts || []
+      })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } else {
+      res.json({
+        assistant: assistantMessage,
+        shifts: shifts || []
+      });
+    }
   } else {
     // No tool call - just return GPT's direct response
     const assistantMessage = choice.content || "Jeg forstod ikke kommandoen.";
@@ -519,10 +630,20 @@ ALDRI si "vent litt", "la meg gjøre det i neste melding" eller be brukeren vent
       .eq('user_id', req.user_id)
       .order('shift_date');
 
-    res.json({
-      assistant: assistantMessage,
-      shifts: shifts || []
-    });
+    if (stream) {
+      res.write(`data: ${JSON.stringify({
+        type: 'complete',
+        assistant: assistantMessage,
+        shifts: shifts || []
+      })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } else {
+      res.json({
+        assistant: assistantMessage,
+        shifts: shifts || []
+      });
+    }
   }
 });
 

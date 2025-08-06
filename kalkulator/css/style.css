@@ -5300,6 +5300,18 @@ input:checked + .slider:before {
   color: var(--accent-primary);
 }
 
+/* Streaming status indicator */
+.stream-status {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 14px;
+}
+
+.chatbox-message .stream-status {
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
 /* Mobile responsiveness for profile picture upload */
 @media (max-width: 480px) {
   .profile-picture-upload-container {

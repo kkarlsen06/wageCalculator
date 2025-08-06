@@ -838,24 +838,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? appendMessage('assistant', '<span class="multi-step-indicator">Utfører flere operasjoner... <span class="dots"><span>.</span><span>.</span><span>.</span></span></span>')
       : appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
 
+    // Get JWT token from Supabase session (declare outside try block)
+    let token;
     try {
-      // Get JWT token from Supabase session
       const { data: { session } } = await window.supa.auth.getSession();
-      const token = session?.access_token;
+      token = session?.access_token;
 
       if (!token) {
         spinner.remove();
         appendMessage('system', 'Du må være innlogget for å bruke chat-funksjonen.');
         return;
       }
+    } catch (authError) {
+      console.error('Auth error:', authError);
+      spinner.textContent = '⚠️ Autentiseringsfeil.';
+      return;
+    }
 
+    try {
+
+      // Use regular request for now (streaming has issues)
       const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ messages: chatMessages })
+        body: JSON.stringify({
+          messages: chatMessages,
+          stream: false
+        })
       });
 
       if (!response.ok) {
@@ -923,6 +935,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (chatElements.send) {
         chatElements.send.disabled = false;
       }
+    }
+  }
+
+  // Handle streaming events from server
+  function handleStreamEvent(event, spinnerElement) {
+    switch (event.type) {
+      case 'status':
+        updateSpinnerText(spinnerElement, event.message);
+        break;
+      case 'gpt_response':
+        if (event.tool_calls && event.tool_calls.length > 0) {
+          const toolCallsText = event.tool_calls.map(call => call.name).join(', ');
+          updateSpinnerText(spinnerElement, `GPT planlegger: ${toolCallsText}`);
+        }
+        break;
+      case 'tool_calls_start':
+        updateSpinnerText(spinnerElement, event.message);
+        break;
+      case 'tool_call_start':
+        updateSpinnerText(spinnerElement, event.message);
+        break;
+      case 'tool_call_complete':
+        updateSpinnerText(spinnerElement, event.message + ' ✓');
+        break;
+      case 'generating_response':
+        updateSpinnerText(spinnerElement, event.message);
+        break;
+    }
+  }
+
+  function updateSpinnerText(spinnerElement, text) {
+    if (spinnerElement && spinnerElement.parentNode) {
+      spinnerElement.innerHTML = `<span class="stream-status">${text}</span> <span class="dots"><span>.</span><span>.</span><span>.</span></span>`;
     }
   }
 
