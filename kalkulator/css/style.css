@@ -256,6 +256,12 @@ html {
   box-sizing: border-box;
   /* Ensure browser chrome uses dark theme */
   color-scheme: dark;
+  /* iOS 26 support - allow content to extend behind system UI */
+  -webkit-appearance: none;
+  appearance: none;
+  /* Ensure full viewport usage including behind system navbar */
+  height: 100vh;
+  height: 100dvh;
 }
 
 /* Allow scrolling when auth forms are visible */
@@ -741,6 +747,7 @@ body {
   background-attachment: fixed;
   color: var(--text-primary);
   height: var(--app-height, 100vh);
+  height: var(--app-height, 100dvh);
   overflow: hidden;
   position: relative;
   /* Ensure browser chrome uses dark theme */
@@ -749,7 +756,8 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  /* iOS PWA safe area handling - applied more specifically to avoid layout issues */
+  /* iOS 26 support - allow content to extend behind floating system navbar */
+  /* Content will fill entire screen including behind system UI */
 }
 
 .app-container {
@@ -6596,17 +6604,22 @@ input:checked + .slider:before {
   flex-shrink: 0;
 }
 
-/* Container for sections - hidden scrollbar but scrolling works */
+/* Container for sections - hidden scrollbar but scrolling works - iOS 26 compatible */
 .snap-container {
+  /* iOS 26 support - use full viewport height including behind system navbar */
   height: var(--app-height, 100vh);
+  height: var(--app-height, 100dvh);
   overflow-y: auto;
   position: relative;
   /* Hide scrollbar but keep functionality */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* Internet Explorer 10+ */
-  /* iOS PWA safe area handling for container */
+  /* iOS 26 support - content extends behind system UI, no safe area padding needed */
+  /* Content will naturally flow behind iOS system navbar */
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  /* Ensure content can scroll behind system navbar */
+  padding-bottom: 0;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -6614,27 +6627,32 @@ input:checked + .slider:before {
   display: none;
 }
 
-/* Individual sections */
+/* Individual sections - iOS 26 compatible */
 .snap-section {
-  height: var(--app-height, 100dvh); /* Use dynamic viewport height for better mobile support */
+  /* iOS 26 support - use full viewport height, content extends behind system navbar */
+  height: var(--app-height, 100dvh);
   display: flex;
   flex-direction: column;
   position: relative;
+  /* Allow content to extend behind iOS system navbar */
+  /* Our custom navbar will float above using z-index */
 }
 
-/* iOS PWA specific adjustments */
+/* iOS 26 specific adjustments - content extends behind system navbar */
 @supports (padding: max(0px)) {
   .snap-section {
-    /* Adjust height to account for safe areas in iOS PWA mode */
-    height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    /* iOS 26 support - use full viewport height, don't subtract safe areas */
+    /* Content will extend behind system navbar, our custom navbar floats above */
+    height: var(--app-height, 100dvh);
+    min-height: var(--app-height, 100dvh);
   }
 }
 
-/* Specific iOS PWA mode adjustments */
+/* iOS PWA mode adjustments - content extends behind system UI */
 .ios-pwa .snap-section {
-  /* Ensure proper spacing in iOS PWA mode */
-  padding-bottom: env(safe-area-inset-bottom);
+  /* iOS 26 support - no bottom padding, content extends behind system navbar */
+  /* Our floating action bar handles safe area positioning */
+  padding-bottom: 0;
 }
 
 /* Dashboard section can expand when chatbox is open */
@@ -6962,10 +6980,11 @@ body.chatbox-view .dashboard-section .app-container {
   }
 }
 
-/* Floating action bar for shift controls */
+/* Floating action bar for shift controls - iOS 26 compatible */
 .floating-action-bar {
   position: fixed;
-  bottom: 20px;
+  /* iOS 26 support - position above system navbar using safe-area-inset-bottom */
+  bottom: max(20px, calc(20px + env(safe-area-inset-bottom)));
   left: 50%;
   transform: translateX(-50%);
   background: rgba(26, 26, 29, 0.95);
@@ -6978,7 +6997,8 @@ body.chatbox-view .dashboard-section .app-container {
   align-items: center;
   justify-content: space-between; /* Distribute space evenly */
   gap: 12px;
-  z-index: 1000;
+  /* Ensure navbar is above everything including iOS system UI */
+  z-index: 9999;
   width: 70%; /* Fixed percentage of viewport */
   max-width: 600px; /* Cap maximum width for large screens */
   box-shadow:
@@ -6988,14 +7008,16 @@ body.chatbox-view .dashboard-section .app-container {
   box-sizing: border-box;
 }
 
-/* Backdrop blur box behind floating action bar */
+/* Backdrop blur box behind floating action bar - iOS 26 compatible */
 .floating-action-bar-backdrop {
   position: fixed;
+  /* iOS 26 support - extend backdrop to cover system navbar area */
   bottom: 0;
   left: 0;
   right: 0;
   width: 100vw;
-  height: 160px; /* Action bar height (~60px) + bottom spacing (20px) + extra height (80px) */
+  /* Height includes safe area to cover iOS system navbar */
+  height: calc(160px + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(to top,
     rgba(18, 18, 18, 0.3) 0%,
     rgba(18, 18, 18, 0.2) 40%,
@@ -7016,7 +7038,7 @@ body.chatbox-view .dashboard-section .app-container {
     rgba(0, 0, 0, 0.4) 60%,
     rgba(0, 0, 0, 0) 100%
   );
-  z-index: 999; /* Below action bar (1000) but above content, below modals (1200) */
+  z-index: 9998; /* Below action bar but above content */
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.3s ease-out;
@@ -7145,11 +7167,12 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   white-space: nowrap;
 }
 
-/* Responsive adjustments - much simpler! */
+/* Responsive adjustments - iOS 26 compatible */
 @media (max-width: 480px) {
   .floating-action-bar {
     width: 85%; /* Slightly wider on mobile */
-    bottom: 10px;
+    /* iOS 26 support - position above system navbar on mobile */
+    bottom: max(10px, calc(10px + env(safe-area-inset-bottom)));
     padding: 10px 12px;
     gap: 8px;
   }
@@ -7211,17 +7234,19 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     min-width: 70px;
   }
 
-  /* Adjust backdrop height for mobile */
+  /* Adjust backdrop height for mobile - iOS 26 compatible */
   .floating-action-bar-backdrop {
-    height: 130px; /* Smaller action bar height + 10px bottom + extra height for coverage */
+    /* iOS 26 support - include safe area in backdrop height */
+    height: calc(130px + env(safe-area-inset-bottom, 0px));
   }
 }
 
-/* Extra small screens */
+/* Extra small screens - iOS 26 compatible */
 @media (max-width: 360px) {
   .floating-action-bar {
     width: 90%; /* Even wider on very small screens */
-    bottom: 10px;
+    /* iOS 26 support - position above system navbar on extra small screens */
+    bottom: max(10px, calc(10px + env(safe-area-inset-bottom)));
     gap: 6px;
     padding: 8px 10px;
   }

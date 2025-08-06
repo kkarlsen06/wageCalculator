@@ -1266,7 +1266,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (totalCard) totalCard.style.display = '';
     if (nextShiftCard) nextShiftCard.style.display = '';
     if (nextPayrollCard) nextPayrollCard.style.display = '';
-    if (monthNav) monthNav.style.display = '';
+    // Completely restore month navigation - clear ALL inline styles
+    if (monthNav) {
+      monthNav.style.display = '';
+      monthNav.style.visibility = '';
+      monthNav.style.height = '';
+      monthNav.style.margin = '';
+      monthNav.style.padding = '';
+      monthNav.style.opacity = '';
+      monthNav.style.width = '';
+      monthNav.style.position = '';
+      monthNav.style.left = '';
+    }
     if (shiftSection) shiftSection.style.display = ''; // Restore shifts section
     if (floatingActionBar) floatingActionBar.style.display = ''; // Restore floating action bar
 
