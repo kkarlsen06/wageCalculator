@@ -649,7 +649,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let chatElements = {};
   let isExpanded = false;
-  let isInInputMode = false;
   let hasFirstMessage = false;
 
   // Initialize chatbox when DOM is ready
@@ -705,15 +704,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function setupChatEventListeners() {
-    // Pill content click to enter input mode (but not when expanded or clicking close button)
+    // Pill content click to expand chatbox directly (but not when expanded or clicking close button)
     chatElements.pill.addEventListener('click', function(e) {
       if (!e.target.closest('.chatbox-close') && !isExpanded) {
-        // If input already has text and is visible, just focus it
-        if (chatElements.pillInput.style.display === 'block' && chatElements.pillInput.value.trim().length > 0) {
-          chatElements.pillInput.focus();
-        } else {
-          enterInputMode();
-        }
+        expandChatbox();
       }
     });
 
@@ -731,28 +725,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       chatElements.send.addEventListener('click', sendExpandedMessage);
     }
 
-    // Enter key in pill input
-    chatElements.pillInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        sendPillMessage();
-      } else if (e.key === 'Escape') {
-        exitInputMode();
-      }
-    });
-
-    // Handle blur event for pill input
-    chatElements.pillInput.addEventListener('blur', function(e) {
-      // Small delay to allow for click events to process first
-      setTimeout(() => {
-        exitInputMode();
-      }, 100);
-    });
-
-    // Handle focus event for pill input to ensure proper state
-    chatElements.pillInput.addEventListener('focus', function(e) {
-      isInInputMode = true;
-    });
+    // Note: Pill input event handlers removed since we now expand directly
 
     // Enter key in expanded input (with Shift+Enter for new line)
     if (chatElements.input) {
@@ -767,46 +740,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       chatElements.input.addEventListener('input', autoResizeTextarea);
     }
 
-    // Click outside to exit input mode
-    document.addEventListener('click', function(e) {
-      if (isInInputMode && !chatElements.pill.contains(e.target)) {
-        exitInputMode();
-      }
-    });
+    // Note: Click outside handler removed since we no longer use input mode
   }
 
-  function enterInputMode() {
-    if (isExpanded) return; // Don't allow input mode when expanded
-
-    isInInputMode = true;
-    chatElements.placeholder.style.display = 'none';
-    chatElements.pillInput.style.display = 'block';
-
-    // Focus with a small delay to ensure proper rendering
-    setTimeout(() => {
-      chatElements.pillInput.focus();
-    }, 10);
-  }
-
-  function exitInputMode() {
-    if (!isInInputMode) return;
-
-    isInInputMode = false;
-
-    // Only hide input and show placeholder if there's no text
-    // This preserves text when user taps outside
-    const hasText = chatElements.pillInput.value.trim().length > 0;
-
-    if (hasText) {
-      // Keep input visible if there's text, just remove focus
-      chatElements.pillInput.blur();
-      chatElements.placeholder.style.display = 'none';
-    } else {
-      // Hide input and show placeholder only if empty
-      chatElements.pillInput.style.display = 'none';
-      chatElements.placeholder.style.display = 'block';
-    }
-  }
+  // Note: enterInputMode and exitInputMode functions removed since we now expand directly
 
   function expandChatbox() {
     isExpanded = true;
@@ -831,7 +768,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function collapseChatbox() {
     isExpanded = false;
-    isInInputMode = false;
     hasFirstMessage = false;
 
     // Restore normal dashboard view
@@ -957,17 +893,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return messageDiv;
   }
 
-  async function sendPillMessage() {
-    const text = chatElements.pillInput.value.trim();
-    if (!text) return;
-
-    // Clear the input and exit input mode
-    chatElements.pillInput.value = '';
-    exitInputMode();
-
-    // Send the message
-    await sendMessage(text);
-  }
+  // Note: sendPillMessage function removed since we now expand directly
 
   async function sendExpandedMessage() {
     const text = chatElements.input.value.trim();
