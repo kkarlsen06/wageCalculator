@@ -876,11 +876,21 @@ body.stats-view .dashboard-content .next-payroll-card {
   display: none !important;
 }
 
-/* Chatbox View Toggle Styles - Similar to stats view */
+/* Chatbox View Toggle Styles - Proper spacing without bottom gaps */
 .chatbox-view .dashboard-content {
-  /* In chatbox view, restructure dashboard to show only chatbox */
-  gap: 20px;
-  margin-bottom: 32px;
+  /* In chatbox view, proper spacing from header but no bottom gaps */
+  gap: 0; /* No gap between elements */
+  margin: 0; /* No margins */
+  padding: 20px 0 0 0; /* Top padding for header spacing, no bottom padding */
+  /* Simple flexbox layout that fills available space */
+  display: flex;
+  flex-direction: column;
+  /* Fill available viewport height but don't create bottom space */
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
 }
 
 /* Hide all original dashboard cards in chatbox view with smooth transition */
@@ -890,8 +900,35 @@ body.chatbox-view .dashboard-content .next-payroll-card {
   display: none !important;
 }
 
-/* Hide month navigation in chatbox view */
-body.chatbox-view .dashboard-month-nav {
+/* Hide ALL month navigation elements completely in chatbox view */
+body.chatbox-view .dashboard-month-nav,
+body.chatbox-view .month-navigation-container,
+body.chatbox-view .month-navigation,
+body.chatbox-view .month-nav-btn,
+body.chatbox-view .month-display,
+.chatbox-view .dashboard-month-nav,
+.chatbox-view .month-navigation-container,
+.chatbox-view .month-navigation,
+.chatbox-view .month-nav-btn,
+.chatbox-view .month-display {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Hide shifts section in chatbox view - this was causing the dead space! */
+body.chatbox-view .shift-section {
+  display: none !important;
+}
+
+/* Hide floating action bar in chatbox view */
+body.chatbox-view .floating-action-bar {
   display: none !important;
 }
 
@@ -939,12 +976,16 @@ body.chatbox-view .dashboard-month-nav {
   animation: statsContainerFadeIn 0.4s ease-out forwards;
 }
 
-/* Dashboard chatbox container styling for chatbox view */
+/* Dashboard chatbox container styling for chatbox view - Fill remaining space */
 .dashboard-chatbox-container {
-  order: 1;
-  margin: 0;
-  width: 100%;
+  /* Take all remaining space after header padding */
   flex: 1;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  /* Simple flexbox layout */
+  display: flex;
+  flex-direction: column;
   opacity: 0;
   transform: translateY(20px);
   animation: chatboxContainerFadeIn 0.4s ease-out forwards;
@@ -971,27 +1012,66 @@ body.chatbox-view .dashboard-month-nav {
   height: auto;
 }
 
-/* Ensure chatbox maintains proper styling when moved to dashboard */
+/* CSS Container Query support for responsive chatbox (where supported) */
+@supports (container-type: inline-size) {
+  .dashboard-chatbox-container {
+    container-type: inline-size;
+  }
+
+  @container (max-width: 768px) {
+    .chatbox-pill {
+      padding: 12px;
+    }
+  }
+}
+
+/* Simple chatbox pill styling - no forced heights */
 .chatbox-view .dashboard-chatbox-container .chatbox-pill {
+  /* Take all container space without forced heights */
+  flex: 1;
   margin: 0;
+  padding: 0;
   width: 100%;
-  height: auto;
-  min-height: 60vh;
+  height: 100%;
+  /* Simple flexbox layout */
   display: flex;
   flex-direction: column;
 }
 
+/* When keyboard is visible, maximize chatbox pill height */
+body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
+  /* Take full container height when keyboard appears */
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
+  /* Remove any margins or padding that create gaps */
+  margin: 0;
+  padding: 0;
+}
+
 .chatbox-view .dashboard-chatbox-container .chatbox-expanded-content {
+  /* Take all available space in chatbox container */
   flex: 1;
   display: flex !important;
   flex-direction: column;
-  min-height: 50vh;
+  /* Fill available space without creating bottom gaps */
+  min-height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 .chatbox-view .dashboard-chatbox-container .chatbox-log {
+  /* Take all available space in expanded content */
   flex: 1;
-  max-height: none;
-  min-height: 40vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Fill available space */
+  min-height: 0;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  margin: 0;
+  padding: 16px; /* Essential padding for readability */
 }
 
 /* Ensure dashboard content uses flexbox ordering in both views */
@@ -6563,6 +6643,15 @@ input:checked + .slider:before {
   height: auto;
 }
 
+/* In chatbox-view, dashboard section should contain content properly */
+body.chatbox-view .snap-section.dashboard-section {
+  min-height: 100vh; /* Maintain viewport height */
+  min-height: 100dvh;
+  height: 100vh; /* Full height */
+  height: 100dvh;
+  overflow: hidden; /* Prevent any overflow that creates bottom space */
+}
+
 /* When chatbox is expanded, ensure proper layout flow */
 .snap-section.dashboard-section:has(.chatbox-pill.expanded) {
   height: auto;
@@ -6597,6 +6686,14 @@ input:checked + .slider:before {
   overflow: hidden;
   height: 100%; /* Ensure it doesn't grow beyond container */
   min-height: 0; /* Allow flex children to shrink */
+}
+
+/* In chatbox-view, app-container should fill space but not overflow */
+body.chatbox-view .dashboard-section .app-container {
+  height: 100%; /* Fill dashboard section */
+  min-height: 0; /* Allow shrinking */
+  flex: 1; /* Fill available space */
+  overflow: hidden; /* Prevent overflow that creates bottom space */
 }
 
 .dashboard-content {
@@ -10620,14 +10717,16 @@ input[type="file"].form-control:focus {
 
   /* Remove fixed positioning - let chatbox-view system handle layout */
 
-  /* Adjust expanded content height for mobile keyboard */
-  .chatbox-expanded-content {
-    max-height: 60vh; /* Limit height to prevent keyboard overlap */
+  /* Remove height restrictions in chatbox-view */
+  body.chatbox-view .chatbox-expanded-content {
+    max-height: none; /* No height limits */
+    height: auto; /* Natural height */
     overflow: hidden;
   }
 
-  .chatbox-log {
-    max-height: calc(60vh - 120px); /* Account for input container */
+  body.chatbox-view .chatbox-log {
+    max-height: none; /* No height limits */
+    height: auto; /* Natural height */
     overflow-y: auto;
   }
 
@@ -10663,6 +10762,303 @@ input[type="file"].form-control:focus {
   textarea {
     font-size: 16px !important;
     transform: translateZ(0); /* Force hardware acceleration */
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   MOBILE KEYBOARD OPTIMIZATIONS
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* CSS Custom Properties for responsive breakpoints and stable positioning */
+:root {
+  --mobile-breakpoint: 768px;
+  --chatbox-input-height: 80px;
+  --keyboard-stable-height: 100vh; /* Fallback */
+  --keyboard-stable-height: 100dvh; /* Modern dynamic viewport */
+}
+
+/* Keyboard visible state - CSS-based stable positioning */
+@media (max-width: 768px) {
+  body.keyboard-visible {
+    /* Prevent any scroll-based content shifting */
+    overflow: hidden;
+    /* No height manipulation - let content flow naturally */
+  }
+
+  /* Chatbox-view mode - completely static layout */
+  body.keyboard-visible.chatbox-view {
+    /* Prevent all content movement and scrolling */
+    position: relative;
+    overflow: hidden;
+    /* Content stays exactly where it is */
+    height: 100vh;
+    height: 100dvh;
+    /* Prevent any scroll-based layout changes */
+    scroll-behavior: auto;
+    /* Lock scroll position */
+    overscroll-behavior: none;
+  }
+
+  /* Hide navigation elements when keyboard is active to maximize space (only in regular dashboard view) */
+  body.keyboard-visible:not(.chatbox-view) .shift-section .month-navigation-container,
+  body.keyboard-visible:not(.chatbox-view) .dashboard-month-nav {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+
+  /* Month nav is completely hidden in chatbox-view - no need for special handling */
+
+  /* Lock page position when keyboard appears - prevent any movement */
+  body.keyboard-visible.chatbox-view {
+    /* Lock scroll position completely */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    /* Prevent any scrolling or movement */
+    overscroll-behavior: none;
+  }
+
+  body.keyboard-visible.chatbox-view .dashboard-content {
+    /* Remove ALL spacing when keyboard appears */
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  /* CSS-based input container positioning for stability */
+  body.keyboard-visible .chatbox-input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top: 2px solid var(--border);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    /* CSS-only positioning - no JavaScript interference */
+    margin-bottom: 0;
+    /* Use CSS custom properties for consistent sizing */
+    height: var(--chatbox-input-height);
+    max-height: var(--chatbox-input-height);
+  }
+
+  /* Input container positioning for chatbox-view mode - keep in upper portion */
+  body.keyboard-visible.chatbox-view .chatbox-input-container {
+    /* Keep input in its natural position - don't move to bottom */
+    position: relative;
+    /* Input stays where it naturally is in the layout */
+    bottom: auto;
+    left: auto;
+    right: auto;
+    /* Normal z-index */
+    z-index: auto;
+    /* No special positioning - let it stay in upper portion */
+    transform: none;
+    margin: 0;
+  }
+
+  /* Ensure input field is properly positioned above keyboard */
+  body.keyboard-visible .chatbox-input {
+    background: var(--bg-primary);
+    border: 2px solid var(--primary);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    transform: translateZ(0); /* Force hardware acceleration for smooth scrolling */
+  }
+
+  /* Optimize chatbox log when keyboard is active - keep it visible */
+  body.keyboard-visible .chatbox-log {
+    max-height: 40vh; /* Increased from 30vh to keep more chat history visible */
+    min-height: 25vh; /* Ensure minimum visible area */
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    /* Prevent the log from being pushed out of view */
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Smooth transitions for keyboard state changes */
+  .chatbox-input-container,
+  .chatbox-input,
+  .chatbox-log,
+  .shift-section .month-navigation-container,
+  .dashboard-month-nav {
+    transition: all 0.3s ease;
+  }
+
+  /* Prevent content jumping during keyboard transitions */
+  body.keyboard-visible .snap-container {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Optimize expanded chatbox for keyboard interaction */
+  body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
+    /* Fixed height to prevent expansion when keyboard appears */
+    height: calc(100vh - var(--chatbox-input-height));
+    height: calc(100dvh - var(--chatbox-input-height));
+    max-height: calc(100vh - var(--chatbox-input-height));
+    max-height: calc(100dvh - var(--chatbox-input-height));
+    min-height: auto;
+    /* Prevent grid expansion */
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+  }
+
+  body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-expanded-content {
+    /* Keep content in exact same position - no movement */
+    position: relative;
+    top: 0;
+    /* Fixed dimensions to prevent any shifts */
+    height: calc(100vh - var(--chatbox-input-height));
+    height: calc(100dvh - var(--chatbox-input-height));
+    max-height: calc(100vh - var(--chatbox-input-height));
+    max-height: calc(100dvh - var(--chatbox-input-height));
+    min-height: auto;
+    overflow: hidden;
+    /* Prevent any movement or expansion */
+    flex: none;
+    margin: 0;
+    padding: 0;
+    /* Force hardware acceleration for stability */
+    transform: translateZ(0);
+  }
+
+  body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-log {
+    /* Flexible chat log that adapts to available space */
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    /* Allow JavaScript to dynamically adjust height based on input position */
+    transition: height 0.3s ease, max-height 0.3s ease;
+    /* Ensure smooth scrolling within chat log */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    /* Hardware acceleration for smooth performance */
+    transform: translateZ(0);
+  }
+
+  /* Enhanced input field behavior for mobile keyboard */
+  body.keyboard-visible .chatbox-input:focus {
+    /* Ensure input stays visible above keyboard */
+    position: relative;
+    z-index: 1002;
+    background: var(--bg-primary);
+    border: 2px solid var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Enable smooth scroll for better user experience during keyboard positioning */
+  body.keyboard-visible {
+    scroll-behavior: smooth; /* Smooth scroll for better visual experience */
+  }
+
+  body.keyboard-visible * {
+    scroll-behavior: smooth;
+  }
+
+  /* Smooth scrolling for chatbox-view when browser positions input */
+  body.keyboard-visible.chatbox-view {
+    scroll-behavior: smooth;
+  }
+
+  body.keyboard-visible.chatbox-view * {
+    scroll-behavior: smooth;
+  }
+
+  /* Prevent content overflow when keyboard is visible */
+  body.keyboard-visible .snap-section {
+    overflow: hidden;
+  }
+
+  /* Optimize chatbox pill positioning in keyboard mode */
+  body.keyboard-visible .chatbox-pill.expanded {
+    position: relative;
+    bottom: auto;
+    transform: none;
+  }
+
+  /* Ensure proper spacing for input container in keyboard mode */
+  body.keyboard-visible .chatbox-input-container {
+    margin-bottom: env(keyboard-inset-height, 0px); /* Use keyboard height if available */
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Ensure chatbox content doesn't get hidden behind fixed input */
+  body.keyboard-visible .chatbox-expanded-content {
+    /* Remove padding that causes expansion in chatbox-view */
+    padding-bottom: 0;
+    box-sizing: border-box;
+    /* Ensure content fits within viewport */
+    max-height: calc(100vh - var(--chatbox-input-height));
+    max-height: calc(100dvh - var(--chatbox-input-height));
+    overflow: hidden;
+  }
+
+  /* Adjust chatbox view layout when keyboard is visible - no forced heights */
+  body.keyboard-visible.chatbox-view .dashboard-chatbox-container {
+    /* Don't force viewport heights - use natural content height */
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    /* Remove all spacing that creates bottom gaps */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  /* Ensure smooth scrolling in chat log */
+  body.keyboard-visible .chatbox-log {
+    scroll-padding-bottom: 20px; /* Extra padding for smooth scrolling */
+  }
+}
+
+/* Additional mobile optimizations for all screen sizes */
+@media (max-width: 768px) {
+  /* Improve touch targets */
+  .chatbox-send-btn {
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Optimize textarea behavior */
+  .chatbox-input {
+    resize: none;
+    overflow-y: auto;
+    scroll-behavior: auto; /* Prevent smooth scroll that makes movement visible */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Allow chatbox input to trigger optimal scroll positioning */
+  body.chatbox-view .chatbox-input {
+    /* Allow browser to scroll input into optimal position above keyboard */
+    scroll-margin: 10px; /* Small margin for better positioning */
+    scroll-padding: 10px;
+  }
+
+  /* Prevent horizontal scrolling on mobile */
+  .chatbox-expanded-content,
+  .chatbox-log {
+    overflow-x: hidden;
+  }
+
+  /* Improve message readability on mobile */
+  .chatbox-message {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
 }
 

@@ -2,6 +2,11 @@
 const API_BASE = window.CONFIG?.apiBase || '';
 
 function setAppHeight() {
+  // Skip dynamic height calculations in chatbox-view mode to prevent viewport instability
+  if (document.body.classList.contains('chatbox-view')) {
+    return;
+  }
+
   // Use visual viewport for better mobile browser UI handling
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   document.documentElement.style.setProperty('--app-height', h + 'px');
@@ -43,6 +48,11 @@ function setThemeColor() {
 
 // Enhanced responsive month navigation handler - UPDATED: Always use dashboard navigation
 function handleResponsiveMonthNavigation() {
+  // Skip navigation calculations in chatbox-view mode to prevent viewport instability
+  if (document.body.classList.contains('chatbox-view')) {
+    return;
+  }
+
   // Get month navigation elements
   const dashboardNav = document.querySelector('.dashboard-month-nav');
   const shiftNav = document.querySelector('.shift-section .month-navigation-container');
@@ -80,20 +90,45 @@ window.addEventListener('orientationchange', () => {
 // Listen for scroll events that might trigger mobile browser UI changes
 let scrollTimeout;
 window.addEventListener('scroll', () => {
+  // Skip scroll-based height calculations in chatbox-view mode
+  if (document.body.classList.contains('chatbox-view')) {
+    return;
+  }
+
   clearTimeout(scrollTimeout);
   scrollTimeout = setTimeout(() => {
     setAppHeight();
   }, 50); // Debounced scroll handler
 });
 
-// Enhanced mobile keyboard handling
+// Enhanced mobile keyboard handling with improved UX
 function handleMobileKeyboard() {
   if (!window.visualViewport) return;
 
   let initialViewportHeight = window.visualViewport.height;
   let keyboardVisible = false;
+  let keyboardTransitionTimeout = null;
+  let scrollPosition = 0;
 
   function onViewportChange() {
+    // Skip viewport calculations in chatbox-view mode to prevent instability
+    if (document.body.classList.contains('chatbox-view')) {
+      // In chatbox-view, only handle basic keyboard state for CSS classes
+      const currentHeight = window.visualViewport.height;
+      const heightDifference = initialViewportHeight - currentHeight;
+      const wasKeyboardVisible = keyboardVisible;
+      keyboardVisible = heightDifference > 150;
+
+      if (keyboardVisible !== wasKeyboardVisible) {
+        if (keyboardVisible) {
+          document.body.classList.add('keyboard-visible');
+        } else {
+          document.body.classList.remove('keyboard-visible');
+        }
+      }
+      return;
+    }
+
     const currentHeight = window.visualViewport.height;
     const heightDifference = initialViewportHeight - currentHeight;
 
@@ -104,40 +139,306 @@ function handleMobileKeyboard() {
     // Only act on keyboard state changes
     if (keyboardVisible !== wasKeyboardVisible) {
       const chatboxPill = document.getElementById('chatboxPill');
+      const chatboxInput = document.getElementById('chatboxInput');
+
+      // Clear any pending transition timeout
+      if (keyboardTransitionTimeout) {
+        clearTimeout(keyboardTransitionTimeout);
+      }
 
       if (keyboardVisible) {
-        // Keyboard appeared
+        // Keyboard appeared - optimize layout
+
+        // Add keyboard visible class with smooth transition
         document.body.classList.add('keyboard-visible');
-        if (chatboxPill && chatboxPill.classList.contains('expanded')) {
-          // Adjust chatbox position when keyboard is visible
-          chatboxPill.style.bottom = '10px';
-        }
+
+        // No scroll position manipulation or viewport stabilization in any mode
+        // CSS-only positioning handles everything
+
+        // Hide non-essential navigation elements
+        hideNavigationElements();
+
       } else {
-        // Keyboard hidden
+        // Keyboard hidden - restore layout
+
         document.body.classList.remove('keyboard-visible');
-        if (chatboxPill && chatboxPill.classList.contains('expanded')) {
-          // Reset chatbox position
-          chatboxPill.style.bottom = '20px';
-        }
+
+        // No scroll position manipulation - CSS handles everything
+
+        // Show navigation elements again
+        showNavigationElements();
       }
     }
   }
 
+  function hideNavigationElements() {
+    // Skip hiding navigation elements in chatbox-view mode to prevent layout shifts
+    if (document.body.classList.contains('chatbox-view')) {
+      return; // Don't hide anything in chatbox-view - elements are already hidden by CSS
+    }
+
+    // Hide shifts section navigation (only in regular dashboard view)
+    const shiftNav = document.querySelector('.shift-section .month-navigation-container');
+    const dashboardNav = document.querySelector('.dashboard-month-nav');
+
+    if (shiftNav) {
+      shiftNav.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+      shiftNav.style.opacity = '0';
+      shiftNav.style.transform = 'translateY(-20px)';
+      shiftNav.style.pointerEvents = 'none';
+    }
+
+    if (dashboardNav) {
+      dashboardNav.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+      dashboardNav.style.opacity = '0';
+      dashboardNav.style.transform = 'translateY(-20px)';
+      dashboardNav.style.pointerEvents = 'none';
+    }
+  }
+
+  function showNavigationElements() {
+    // Skip showing navigation elements in chatbox-view mode to prevent layout shifts
+    if (document.body.classList.contains('chatbox-view')) {
+      return; // Don't show anything in chatbox-view - elements are controlled by CSS
+    }
+
+    // Show navigation elements again (only in regular dashboard view)
+    const shiftNav = document.querySelector('.shift-section .month-navigation-container');
+    const dashboardNav = document.querySelector('.dashboard-month-nav');
+
+    if (shiftNav) {
+      shiftNav.style.opacity = '';
+      shiftNav.style.transform = '';
+      shiftNav.style.pointerEvents = '';
+    }
+
+    if (dashboardNav) {
+      dashboardNav.style.opacity = '';
+      dashboardNav.style.transform = '';
+      dashboardNav.style.pointerEvents = '';
+    }
+  }
+
+  // Listen for viewport changes
   window.visualViewport.addEventListener('resize', onViewportChange);
 
-  // Update initial height on orientation change
+  // Handle orientation changes
   window.addEventListener('orientationchange', () => {
     setTimeout(() => {
       initialViewportHeight = window.visualViewport.height;
       keyboardVisible = false;
       document.body.classList.remove('keyboard-visible');
+      // No scroll position manipulation
+      showNavigationElements();
     }, 500);
   });
+
+  // Prevent any page movement when chatbox input is focused
+  document.addEventListener('focusin', (e) => {
+    if (e.target.matches('input, textarea, select')) {
+      // For chatbox input, prevent ALL movement - page stays exactly where it is
+      if (e.target.id === 'chatboxInput') {
+        // Store current scroll position
+        const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const currentScrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+        // Prevent any scroll movement
+        setTimeout(() => {
+          window.scrollTo(currentScrollLeft, currentScrollTop);
+        }, 0);
+
+        return;
+      }
+
+      // For other inputs outside chatbox-view, use gentle scrolling if needed
+      if (!document.body.classList.contains('chatbox-view')) {
+        setTimeout(() => {
+          if (keyboardVisible) {
+            const inputRect = e.target.getBoundingClientRect();
+            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+            // Only scroll if input is significantly hidden
+            if (inputRect.bottom > viewportHeight - 20) {
+              const scrollAmount = Math.min(inputRect.bottom - viewportHeight + 40, 100);
+              window.scrollBy({
+                top: scrollAmount,
+                behavior: 'smooth'
+              });
+            }
+          }
+        }, 300);
+      }
+    }
+  });
+
+  // Adjust chat layout when keyboard is active and input is focused
+  function adjustChatLayoutForKeyboard() {
+    if (!document.body.classList.contains('chatbox-view')) return;
+
+    const chatboxInput = document.getElementById('chatboxInput');
+    const chatboxLog = document.getElementById('chatboxLog');
+    const dashboardContent = document.querySelector('.chatbox-view .dashboard-content');
+
+    if (!chatboxInput || !chatboxLog) return;
+
+    // Get input position after browser scroll
+    const inputRect = chatboxInput.getBoundingClientRect();
+    const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+    // Calculate available space above input for chat content
+    // Account for collapsed spacing (no gaps, margins, or padding)
+    const availableHeight = inputRect.top - 40; // Reduced from 60px due to collapsed spacing
+
+    // Adjust chat log to fit in available space
+    if (availableHeight > 100) { // Minimum viable height
+      chatboxLog.style.maxHeight = availableHeight + 'px';
+      chatboxLog.style.height = availableHeight + 'px';
+
+      // Scroll chat log to bottom to show latest messages
+      setTimeout(() => {
+        chatboxLog.scrollTop = chatboxLog.scrollHeight;
+      }, 50);
+    }
+
+    // Also ensure dashboard content uses collapsed spacing
+    if (dashboardContent) {
+      dashboardContent.style.marginBottom = '0';
+      dashboardContent.style.gap = '0';
+      dashboardContent.style.paddingBottom = '0';
+    }
+  }
+
+  // Handle input blur events and restore layout
+  document.addEventListener('focusout', (e) => {
+    if (e.target.matches('input, textarea, select')) {
+      // Clear any pending timeouts
+      if (keyboardTransitionTimeout) {
+        clearTimeout(keyboardTransitionTimeout);
+      }
+
+      // Restore chat layout when chatbox input loses focus
+      if (e.target.id === 'chatboxInput') {
+        setTimeout(() => {
+          restoreChatLayout();
+        }, 100);
+      }
+    }
+  });
+
+  // Restore chat layout to normal when input is not focused
+  function restoreChatLayout() {
+    if (!document.body.classList.contains('chatbox-view')) return;
+
+    const chatboxLog = document.getElementById('chatboxLog');
+    const dashboardContent = document.querySelector('.chatbox-view .dashboard-content');
+
+    if (!chatboxLog) return;
+
+    // Reset chat log to normal size
+    chatboxLog.style.maxHeight = '';
+    chatboxLog.style.height = '';
+
+    // Restore normal dashboard content spacing
+    if (dashboardContent) {
+      dashboardContent.style.marginBottom = '';
+      dashboardContent.style.gap = '';
+      dashboardContent.style.paddingBottom = '';
+    }
+  }
 }
 
 // Initialize mobile keyboard handling
 if (window.innerWidth <= 768) {
   handleMobileKeyboard();
+}
+
+// Enhanced mobile input handling for better keyboard experience
+function enhanceMobileInputs() {
+  // Add touch-friendly behavior to all inputs
+  const inputs = document.querySelectorAll('input, textarea, select');
+
+  inputs.forEach(input => {
+    // Prevent zoom on focus for iOS
+    if (input.type !== 'file') {
+      input.style.fontSize = '16px';
+    }
+
+    // Add smooth focus transitions
+    input.addEventListener('focus', () => {
+      input.style.transition = 'border-color 0.2s ease, box-shadow 0.2s ease';
+    });
+
+    // Handle mobile-specific input behavior
+    if (input.tagName.toLowerCase() === 'textarea') {
+      // Special handling for chatbox input - prevent any scroll movement
+      if (input.id === 'chatboxInput') {
+        // Prevent scroll on focus
+        input.addEventListener('focus', (e) => {
+          e.preventDefault();
+          // Store and maintain scroll position
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+          setTimeout(() => {
+            window.scrollTo(scrollLeft, scrollTop);
+          }, 0);
+        });
+
+        input.addEventListener('input', () => {
+          // Simple auto-resize without any layout changes
+          input.style.height = 'auto';
+          const newHeight = Math.min(input.scrollHeight, 80);
+          input.style.height = newHeight + 'px';
+          // No layout manipulation - input stays in place
+        });
+      } else {
+        // Auto-resize other textareas normally
+        input.addEventListener('input', () => {
+          input.style.height = 'auto';
+          input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+        });
+      }
+    }
+  });
+}
+
+// Debugging function for viewport instability
+function debugViewportStability() {
+  if (window.location.search.includes('debug=viewport')) {
+    let lastHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    let changeCount = 0;
+
+    const logViewportChange = () => {
+      const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      if (Math.abs(currentHeight - lastHeight) > 5) {
+        changeCount++;
+        console.log(`Viewport change #${changeCount}: ${lastHeight}px → ${currentHeight}px`, {
+          isChatboxView: document.body.classList.contains('chatbox-view'),
+          isKeyboardVisible: document.body.classList.contains('keyboard-visible'),
+          activeElement: document.activeElement?.id || 'none'
+        });
+        lastHeight = currentHeight;
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', logViewportChange);
+    }
+    window.addEventListener('resize', logViewportChange);
+  }
+}
+
+// Initialize mobile input enhancements and debugging
+if (window.innerWidth <= 768) {
+  document.addEventListener('DOMContentLoaded', () => {
+    enhanceMobileInputs();
+    debugViewportStability();
+  });
+  // Also run on dynamic content changes
+  const observer = new MutationObserver(() => {
+    enhanceMobileInputs();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 // Initialize Supabase client
@@ -612,9 +913,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       const rect = shiftSection.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
 
-      // Show floating bar when shift section is visible (any part of it)
-      // This accounts for the section being tall and extending beyond viewport
-      const shouldBeVisible = rect.top < viewportHeight * 0.9 && rect.bottom > viewportHeight * 0.1;
+      // Calculate how much of the viewport the shifts section occupies
+      const visibleTop = Math.max(0, rect.top);
+      const visibleBottom = Math.min(viewportHeight, rect.bottom);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+      const viewportCoverage = visibleHeight / viewportHeight;
+
+      // Show floating bar only when shifts section occupies at least 60% of viewport
+      const shouldBeVisible = viewportCoverage >= 0.6;
 
       if (shouldBeVisible && !isVisible) {
         // Show with fade in animation
@@ -833,10 +1139,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       addGreetingMessage();
     }
 
-    // Focus input after animation
+    // Focus input after animation - prevent any page movement
     setTimeout(() => {
       if (chatElements.input) {
-        chatElements.input.focus();
+        // Store current scroll position before focus
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+        // Focus input with scroll prevention
+        chatElements.input.focus({ preventScroll: true });
+
+        // Ensure page hasn't moved
+        setTimeout(() => {
+          window.scrollTo(scrollLeft, scrollTop);
+        }, 0);
       }
     }, 300);
   }
@@ -867,8 +1183,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function autoResizeTextarea() {
     const textarea = chatElements.input;
+    if (!textarea) return;
+
+    // Reset height to auto to get accurate scrollHeight
     textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+
+    // Calculate max height based on keyboard visibility
+    const isKeyboardVisible = document.body.classList.contains('keyboard-visible');
+    const maxHeight = isKeyboardVisible ? 80 : 100; // Smaller max height when keyboard is visible
+
+    // Set new height with smooth transition
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = newHeight + 'px';
+
+    // No scroll manipulation for chatbox input - CSS positioning handles everything
+    // Input positioning is handled entirely by CSS fixed positioning
   }
 
   // Apply chatbox view - similar to stats view functionality
@@ -882,16 +1211,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Add chatbox view class to body
     body.classList.add('chatbox-view');
 
-    // Hide dashboard cards manually as backup
+    // Hide dashboard cards and shifts section manually as backup
     const totalCard = document.querySelector('.total-card');
     const nextShiftCard = document.querySelector('.next-shift-card');
     const nextPayrollCard = document.querySelector('.next-payroll-card');
     const monthNav = document.querySelector('.dashboard-month-nav');
+    const shiftSection = document.querySelector('.shift-section');
+    const floatingActionBar = document.querySelector('.floating-action-bar');
 
     if (totalCard) totalCard.style.display = 'none';
     if (nextShiftCard) nextShiftCard.style.display = 'none';
     if (nextPayrollCard) nextPayrollCard.style.display = 'none';
-    if (monthNav) monthNav.style.display = 'none';
+    // Completely hide month navigation - multiple approaches to ensure it's gone
+    if (monthNav) {
+      monthNav.style.display = 'none';
+      monthNav.style.visibility = 'hidden';
+      monthNav.style.height = '0';
+      monthNav.style.margin = '0';
+      monthNav.style.padding = '0';
+      monthNav.style.opacity = '0';
+    }
+    if (shiftSection) shiftSection.style.display = 'none'; // Hide shifts section - this was causing dead space!
+    if (floatingActionBar) floatingActionBar.style.display = 'none'; // Hide floating action bar
 
     // Move the chatbox to dashboard content if not already there
     if (chatboxContainer && dashboardContent && !dashboardContent.contains(chatboxContainer)) {
@@ -914,16 +1255,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Remove chatbox view class from body
     body.classList.remove('chatbox-view');
 
-    // Show dashboard cards again
+    // Show dashboard cards and shifts section again
     const totalCard = document.querySelector('.total-card');
     const nextShiftCard = document.querySelector('.next-shift-card');
     const nextPayrollCard = document.querySelector('.next-payroll-card');
     const monthNav = document.querySelector('.dashboard-month-nav');
+    const shiftSection = document.querySelector('.shift-section');
+    const floatingActionBar = document.querySelector('.floating-action-bar');
 
     if (totalCard) totalCard.style.display = '';
     if (nextShiftCard) nextShiftCard.style.display = '';
     if (nextPayrollCard) nextPayrollCard.style.display = '';
     if (monthNav) monthNav.style.display = '';
+    if (shiftSection) shiftSection.style.display = ''; // Restore shifts section
+    if (floatingActionBar) floatingActionBar.style.display = ''; // Restore floating action bar
 
     // Move the chatbox back to its original position
     const dashboardChatboxContainer = document.querySelector('.dashboard-chatbox-container');

@@ -398,11 +398,17 @@ export const app = {
         this.switchShiftView(this.shiftView);
 
         window.addEventListener('resize', () => {
-            this.updateStats(false);
+            // Skip stats updates in chatbox-view mode to prevent viewport instability
+            if (!document.body.classList.contains('chatbox-view')) {
+                this.updateStats(false);
+            }
         });
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', () => {
-                this.updateStats(false);
+                // Skip stats updates in chatbox-view mode to prevent viewport instability
+                if (!document.body.classList.contains('chatbox-view')) {
+                    this.updateStats(false);
+                }
             });
         }
 
