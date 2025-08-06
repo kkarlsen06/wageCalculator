@@ -6269,7 +6269,7 @@ input:checked + .slider:before {
 
 /* Individual sections */
 .snap-section {
-  height: var(--app-height, 100vh);
+  height: var(--app-height, 100dvh); /* Use dynamic viewport height for better mobile support */
   display: flex;
   flex-direction: column;
   position: relative;
@@ -6277,13 +6277,25 @@ input:checked + .slider:before {
 
 /* Dashboard section can expand when chatbox is open */
 .snap-section.dashboard-section {
-  min-height: var(--app-height, 100vh);
+  min-height: var(--app-height, 100dvh); /* Use dynamic viewport height */
   height: auto;
+}
+
+/* When chatbox is expanded, ensure proper layout flow */
+.snap-section.dashboard-section:has(.chatbox-pill.expanded) {
+  height: auto;
+  min-height: var(--app-height, 100dvh);
+}
+
+/* Fallback for browsers without :has() support */
+.chatbox-expanded-active .snap-section.dashboard-section {
+  height: auto;
+  min-height: var(--app-height, 100dvh);
 }
 
 /* Shift section can expand beyond viewport */
 .snap-section.shift-section {
-  min-height: var(--app-height, 100vh);
+  min-height: var(--app-height, 100dvh); /* Use dynamic viewport height */
   height: auto;
   background: transparent;
   padding-bottom: 100px; /* Add space for floating bar */
@@ -6955,6 +6967,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     flex-wrap: nowrap;
     overflow: hidden;
     min-width: 0;
+    white-space: nowrap; /* Force single line */
   }
 
   .next-shift-card .shift-date-number {
@@ -6984,6 +6997,14 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     flex-wrap: nowrap;
     gap: 3px; /* Slightly reduced gap */
     white-space: nowrap;
+  }
+
+  /* Ensure shift details stay on one line */
+  .next-shift-card .shift-details {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
 
   .next-shift-card .shift-time-arrow {

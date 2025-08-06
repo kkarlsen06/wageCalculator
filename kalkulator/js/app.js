@@ -1,6 +1,10 @@
 function setAppHeight() {
+  // Use visual viewport for better mobile browser UI handling
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   document.documentElement.style.setProperty('--app-height', h + 'px');
+
+  // Also set dynamic viewport height for modern browsers
+  document.documentElement.style.setProperty('--dvh', h + 'px');
 }
 
 function setThemeColor() {
@@ -606,7 +610,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       chatElements.close.addEventListener('click', function(e) {
         e.stopPropagation();
         e.preventDefault();
-        console.log('Close button clicked'); // Debug log
         collapseChatbox();
       });
     }
@@ -671,6 +674,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatElements.expandedContent.style.display = 'block';
     chatElements.close.style.display = 'flex';
 
+    // Add class to body for CSS targeting (fallback for browsers without :has() support)
+    document.body.classList.add('chatbox-expanded-active');
+
     // Focus input after animation
     setTimeout(() => {
       if (chatElements.input) {
@@ -680,7 +686,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function collapseChatbox() {
-    console.log('collapseChatbox called'); // Debug log
     isExpanded = false;
     isInInputMode = false;
     hasFirstMessage = false;
@@ -691,6 +696,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatElements.pillInput.style.display = 'none';
     chatElements.pillInput.value = '';
     chatElements.placeholder.style.display = 'block';
+
+    // Remove class from body
+    document.body.classList.remove('chatbox-expanded-active');
 
     // Clear chat log
     if (chatElements.log) {
@@ -815,6 +823,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     hasFirstMessage = false;
     isExpanded = false;
     isInInputMode = false;
+
+    // Remove class from body
+    document.body.classList.remove('chatbox-expanded-active');
 
     // Reset UI to initial state
     if (chatElements.pill) {
