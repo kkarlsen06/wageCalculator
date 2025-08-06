@@ -576,7 +576,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function initChatbox() {
     chatElements = {
       pill: document.getElementById('chatboxPill'),
-      expanded: document.getElementById('chatboxExpanded'),
+      expandedContent: document.getElementById('chatboxExpandedContent'),
       close: document.getElementById('chatboxClose'),
       log: document.getElementById('chatboxLog'),
       input: document.getElementById('chatboxInput'),
@@ -585,7 +585,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       pillInput: document.getElementById('chatboxPillInput')
     };
 
-    if (!chatElements.pill || !chatElements.expanded) {
+    if (!chatElements.pill || !chatElements.expandedContent) {
       console.warn('Chatbox elements not found');
       return;
     }
@@ -594,14 +594,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function setupChatEventListeners() {
-    // Pill click to enter input mode
-    chatElements.pill.addEventListener('click', enterInputMode);
+    // Pill content click to enter input mode (but not when clicking close button)
+    chatElements.pill.addEventListener('click', function(e) {
+      if (!e.target.closest('.chatbox-close')) {
+        enterInputMode();
+      }
+    });
 
     // Close button
-    chatElements.close.addEventListener('click', collapseChatbox);
+    chatElements.close.addEventListener('click', function(e) {
+      e.stopPropagation();
+      collapseChatbox();
+    });
 
     // Send button in expanded view
-    chatElements.send.addEventListener('click', sendExpandedMessage);
+    if (chatElements.send) {
+      chatElements.send.addEventListener('click', sendExpandedMessage);
+    }
 
     // Enter key in pill input
     chatElements.pillInput.addEventListener('keydown', function(e) {
@@ -614,15 +623,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Enter key in expanded input (with Shift+Enter for new line)
-    chatElements.input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendExpandedMessage();
-      }
-    });
+    if (chatElements.input) {
+      chatElements.input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendExpandedMessage();
+        }
+      });
 
-    // Auto-resize textarea in expanded view
-    chatElements.input.addEventListener('input', autoResizeTextarea);
+      // Auto-resize textarea in expanded view
+      chatElements.input.addEventListener('input', autoResizeTextarea);
+    }
 
     // Click outside to exit input mode
     document.addEventListener('click', function(e) {
@@ -652,21 +663,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function expandChatbox() {
     isExpanded = true;
-    chatElements.expanded.style.display = 'block';
+    chatElements.pill.classList.add('expanded');
+    chatElements.expandedContent.style.display = 'block';
+    chatElements.close.style.display = 'flex';
 
     // Focus input after animation
     setTimeout(() => {
-      chatElements.input.focus();
+      if (chatElements.input) {
+        chatElements.input.focus();
+      }
     }, 300);
   }
 
   function collapseChatbox() {
     isExpanded = false;
     isInInputMode = false;
-    chatElements.expanded.style.display = 'none';
+    hasFirstMessage = false;
+
+    chatElements.pill.classList.remove('expanded');
+    chatElements.expandedContent.style.display = 'none';
+    chatElements.close.style.display = 'none';
     chatElements.pillInput.style.display = 'none';
     chatElements.pillInput.value = '';
     chatElements.placeholder.style.display = 'block';
+
+    // Clear chat log
+    if (chatElements.log) {
+      chatElements.log.innerHTML = '';
+    }
+    chatMessages = [
+      { role: 'system', content: 'You are a helpful wage-bot.' }
+    ];
   }
 
   function autoResizeTextarea() {
@@ -785,8 +812,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     isInInputMode = false;
 
     // Reset UI to initial state
-    if (chatElements.expanded) {
-      chatElements.expanded.style.display = 'none';
+    if (chatElements.pill) {
+      chatElements.pill.classList.remove('expanded');
+    }
+    if (chatElements.expandedContent) {
+      chatElements.expandedContent.style.display = 'none';
+    }
+    if (chatElements.close) {
+      chatElements.close.style.display = 'none';
     }
     if (chatElements.pillInput) {
       chatElements.pillInput.style.display = 'none';

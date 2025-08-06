@@ -9587,17 +9587,20 @@ input[type="file"].form-control:focus {
 .chatbox-container {
   margin-top: 16px;
   width: 100%;
+  /* Ensure this container takes up space in the layout flow */
+  position: relative;
+  z-index: 1;
 }
 
-/* Pill-style collapsed state */
+/* Pill-style container that can expand */
 .chatbox-pill {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 24px;
-  padding: 12px 20px;
-  cursor: pointer;
+  overflow: hidden;
   transition: all 0.3s ease;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Remove fixed padding - will be handled by content */
 }
 
 .chatbox-pill:hover {
@@ -9606,11 +9609,27 @@ input[type="file"].form-control:focus {
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* When expanded, remove hover effects */
+.chatbox-pill.expanded {
+  transform: none;
+  cursor: default;
+}
+
+.chatbox-pill.expanded:hover {
+  transform: none;
+}
+
 .chatbox-pill-content {
   display: flex;
   align-items: center;
   gap: 12px;
-  justify-content: flex-start; /* Changed from center to flex-start */
+  justify-content: flex-start;
+  padding: 12px 20px; /* Move padding here from pill container */
+  cursor: pointer;
+}
+
+.chatbox-pill.expanded .chatbox-pill-content {
+  cursor: default;
 }
 
 .chatbox-icon {
@@ -9653,43 +9672,6 @@ input[type="file"].form-control:focus {
   font-weight: 400;
 }
 
-/* Expanded chatbox state */
-.chatbox-expanded {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 24px; /* Match the pill border radius */
-  overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-  animation: chatboxExpand 0.3s ease-out;
-  margin-top: 8px; /* Add spacing between pill and expanded view */
-}
-
-@keyframes chatboxExpand {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.chatbox-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
-}
-
-.chatbox-title {
-  font-weight: 600;
-  font-size: 16px;
-  color: var(--text-primary);
-}
-
 .chatbox-close {
   background: none;
   border: none;
@@ -9700,6 +9682,7 @@ input[type="file"].form-control:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .chatbox-close:hover {
@@ -9710,6 +9693,25 @@ input[type="file"].form-control:focus {
   width: 16px;
   height: 16px;
   color: var(--text-secondary);
+}
+
+/* Expanded content within the pill */
+.chatbox-expanded-content {
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border);
+  animation: chatboxExpand 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes chatboxExpand {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 400px;
+  }
 }
 
 .chatbox-log {
