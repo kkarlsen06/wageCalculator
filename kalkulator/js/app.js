@@ -169,9 +169,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         nicknameElement.textContent = nickname;
       }
 
-      // Update chatbox placeholder with user name
-      if (window.chatbox && window.chatbox.updatePlaceholder) {
-        window.chatbox.updatePlaceholder();
+      // Update chatbox text with user name
+      if (window.chatbox && window.chatbox.updateText) {
+        window.chatbox.updateText();
       }
 
       // Load profile picture
@@ -660,8 +660,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       log: document.getElementById('chatboxLog'),
       input: document.getElementById('chatboxInput'),
       send: document.getElementById('chatboxSend'),
-      placeholder: document.getElementById('chatboxPillPlaceholder'),
-      pillInput: document.getElementById('chatboxPillInput')
+      pillText: document.getElementById('chatboxPillPlaceholder')
     };
 
     if (!chatElements.pill || !chatElements.expandedContent) {
@@ -678,27 +677,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       // Check if Supabase client is available
       if (!window.supa || !window.supa.auth) {
-        console.log('Supabase client not yet available, using default placeholder');
-        if (chatElements.placeholder) {
-          chatElements.placeholder.textContent = 'Trenger du hjelp?';
+        console.log('Supabase client not yet available, using default text');
+        if (chatElements.pillText) {
+          chatElements.pillText.textContent = 'Trenger du hjelp?';
         }
         return;
       }
 
       const { data: { user } } = await window.supa.auth.getUser();
-      if (!user || !chatElements.placeholder) return;
+      if (!user || !chatElements.pillText) return;
 
       // Use first name if available, otherwise use first part of email, fallback to 'Bruker'
       const userName = user.user_metadata?.first_name ||
                       user.email?.split('@')[0] ||
                       'Bruker';
 
-      chatElements.placeholder.textContent = `Trenger du hjelp, ${userName}?`;
+      chatElements.pillText.textContent = `Trenger du hjelp, ${userName}?`;
     } catch (err) {
-      console.error('Error updating chatbox placeholder:', err);
+      console.error('Error updating chatbox text:', err);
       // Fallback to default
-      if (chatElements.placeholder) {
-        chatElements.placeholder.textContent = 'Trenger du hjelp, Bruker?';
+      if (chatElements.pillText) {
+        chatElements.pillText.textContent = 'Trenger du hjelp, Bruker?';
       }
     }
   }
@@ -743,6 +742,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Note: Click outside handler removed since we no longer use input mode
   }
 
+  // Add personalized greeting message
+  async function addGreetingMessage() {
+    try {
+      // Get current time for appropriate greeting
+      const now = new Date();
+      const hour = now.getHours();
+      let timeGreeting;
+
+      if (hour >= 5 && hour < 12) {
+        timeGreeting = 'God morgen';
+      } else if (hour >= 12 && hour < 17) {
+        timeGreeting = 'God dag';
+      } else if (hour >= 17 && hour < 22) {
+        timeGreeting = 'God kveld';
+      } else {
+        timeGreeting = 'God natt';
+      }
+
+      // Get user name for personalization
+      let userName = 'Bruker';
+      try {
+        if (window.supa && window.supa.auth) {
+          const { data: { user } } = await window.supa.auth.getUser();
+          if (user) {
+            userName = user.user_metadata?.first_name ||
+                      user.email?.split('@')[0] ||
+                      'Bruker';
+          }
+        }
+      } catch (err) {
+        console.log('Could not get user info for greeting:', err);
+      }
+
+      // Create engaging greeting message
+      const greetingMessages = [
+        `${timeGreeting}, ${userName}! 👋 Jeg er her for å hjelpe deg med å registrere skift og holde oversikt over arbeidstiden din. Hva kan jeg hjelpe deg med i dag?`,
+        `${timeGreeting}! 🌟 Klar for å gjøre arbeidsdagen din enklere? Jeg kan hjelpe deg registrere skift, legge til serier, eller svare på spørsmål om appen.`,
+        `Hei ${userName}! ${timeGreeting} ✨ Jeg er din personlige assistent for skiftregistrering. Spør meg om hva som helst - fra å legge til nye skift til å forstå statistikkene dine!`
+      ];
+
+      // Select a random greeting
+      const randomGreeting = greetingMessages[Math.floor(Math.random() * greetingMessages.length)];
+
+      // Add the greeting message
+      appendMessage('assistant', randomGreeting);
+
+    } catch (err) {
+      console.error('Error creating greeting message:', err);
+      // Fallback greeting
+      appendMessage('assistant', 'Hei! 👋 Jeg er her for å hjelpe deg med å registrere skift og holde oversikt over arbeidstiden din. Hva kan jeg hjelpe deg med?');
+    }
+  }
+
   // Note: enterInputMode and exitInputMode functions removed since we now expand directly
 
   function expandChatbox() {
@@ -757,6 +809,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Add class to body for CSS targeting (fallback for browsers without :has() support)
     document.body.classList.add('chatbox-expanded-active');
+
+    // Add default greeting message if chat log is empty
+    if (chatElements.log && chatElements.log.children.length === 0) {
+      addGreetingMessage();
+    }
 
     // Focus input after animation
     setTimeout(() => {
@@ -776,9 +833,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatElements.pill.classList.remove('expanded');
     chatElements.expandedContent.style.display = 'none';
     chatElements.close.style.display = 'none';
-    chatElements.pillInput.style.display = 'none';
-    chatElements.pillInput.value = '';
-    chatElements.placeholder.style.display = 'block';
+    // Pill text is always visible - no need to hide/show
 
     // Remove class from body
     document.body.classList.remove('chatbox-expanded-active');
@@ -1286,13 +1341,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (chatElements.close) {
       chatElements.close.style.display = 'none';
     }
-    if (chatElements.pillInput) {
-      chatElements.pillInput.style.display = 'none';
-      chatElements.pillInput.value = '';
-    }
-    if (chatElements.placeholder) {
-      chatElements.placeholder.style.display = 'block';
-    }
+    // Pill text is always visible - no need to manipulate display
   }
 
   // Expose functions globally for app integration
@@ -1301,7 +1350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     clear: clearChatLog,
     expand: expandChatbox,
     collapse: collapseChatbox,
-    updatePlaceholder: updateChatboxPlaceholder
+    updateText: updateChatboxPlaceholder
   };
 
   // Auto-initialize when DOM is ready

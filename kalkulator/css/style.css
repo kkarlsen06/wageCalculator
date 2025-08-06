@@ -9842,13 +9842,13 @@ input[type="file"].form-control:focus {
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Keep original shadow */
 }
 
-.chatbox-pill.expanded .chatbox-pill-input-container {
-  pointer-events: none; /* Disable input interactions */
+.chatbox-pill.expanded .chatbox-pill-text-container {
+  pointer-events: none; /* Disable text interactions when expanded */
 }
 
-.chatbox-pill.expanded .chatbox-pill-placeholder {
+.chatbox-pill.expanded .chatbox-pill-text {
   cursor: default;
-  pointer-events: none; /* Disable placeholder interactions */
+  pointer-events: none; /* Disable text interactions when expanded */
 }
 
 /* Ensure close button remains clickable when expanded */
@@ -9877,47 +9877,26 @@ input[type="file"].form-control:focus {
   order: -1; /* Ensure icon stays at the far left */
 }
 
-.chatbox-pill-input-container {
+.chatbox-pill-text-container {
   flex: 1;
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.chatbox-pill-placeholder {
+.chatbox-pill-text {
   color: var(--text-secondary); /* Gray color as requested */
   font-size: 16px; /* Minimum 16px to prevent iOS zoom */
-  font-weight: 400; /* Lighter weight for placeholder */
-  cursor: text;
+  font-weight: 400; /* Lighter weight for text */
+  cursor: pointer;
   user-select: none;
   width: 100%;
 }
 
-.chatbox-pill-input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: white; /* White text as requested */
-  font-size: 16px; /* Minimum 16px to prevent iOS zoom */
-  font-weight: 500;
-  width: 100%;
-  font-family: inherit;
-  /* Prevent layout shifts during focus transitions */
-  transition: none;
-  /* Ensure consistent height */
-  line-height: 1.4;
-  min-height: 22px;
-}
+/* Pill input styles removed - now using static text only */
 
-.chatbox-pill-input::placeholder {
-  color: var(--text-secondary);
-  font-weight: 400;
-}
-
-/* Ensure consistent layout between placeholder and input */
-.chatbox-pill-placeholder,
-.chatbox-pill-input {
-  /* Match dimensions exactly to prevent layout shifts */
+.chatbox-pill-text {
+  /* Match dimensions for consistent layout */
   line-height: 1.4;
   min-height: 22px;
   display: flex;
@@ -10279,7 +10258,7 @@ input[type="file"].form-control:focus {
 
 .chatbox-input-container {
   display: flex;
-  align-items: flex-end;
+  align-items: center; /* Changed from flex-end to center for proper vertical alignment */
   gap: 12px;
   padding: 16px 20px;
   background: var(--bg-secondary);
@@ -10290,7 +10269,7 @@ input[type="file"].form-control:focus {
   flex: 1;
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 24px; /* Match pill corner radius */
   padding: 12px 16px;
   font-size: 14px;
   color: var(--text-primary);
@@ -10313,7 +10292,7 @@ input[type="file"].form-control:focus {
 .chatbox-send-btn {
   background: var(--primary);
   border: none;
-  border-radius: 8px;
+  border-radius: 24px; /* Match pill corner radius */
   padding: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -10352,11 +10331,7 @@ input[type="file"].form-control:focus {
     height: 18px;
   }
 
-  .chatbox-pill-placeholder {
-    font-size: 16px; /* Minimum 16px to prevent iOS zoom */
-  }
-
-  .chatbox-pill-input {
+  .chatbox-pill-text {
     font-size: 16px; /* Minimum 16px to prevent iOS zoom */
   }
 
@@ -10438,40 +10413,28 @@ input[type="file"].form-control:focus {
   }
 
   /* Improve input focus behavior */
-  .chatbox-input:focus,
-  .chatbox-pill-input:focus {
+  .chatbox-input:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 
-  /* Prevent layout shifts on mobile during focus transitions */
-  .chatbox-pill-input-container {
+  /* Ensure text container maintains consistent layout */
+  .chatbox-pill-text-container {
     /* Ensure container maintains consistent height */
     min-height: 22px;
     display: flex;
     align-items: center;
   }
 
-  .chatbox-pill-placeholder {
-    /* Ensure placeholder takes full width to prevent shifts */
+  .chatbox-pill-text {
+    /* Ensure text takes full width */
     width: 100%;
     display: block;
-  }
-
-  .chatbox-pill-input {
-    /* Ensure input takes full width and matches placeholder */
-    width: 100%;
-    display: block;
-    /* Prevent any visual changes during focus */
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
   }
 
   /* Prevent zoom on input focus for iOS */
   .chatbox-input,
-  .chatbox-pill-input,
   .form-control,
   input[type="text"],
   input[type="email"],
