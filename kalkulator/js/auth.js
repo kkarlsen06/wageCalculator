@@ -1,3 +1,6 @@
+// API Base URL configuration
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
 // Initialize Supabase client when DOM is loaded
 let supa;
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
@@ -69,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   if (session && !isRecoveryFlow && !isInPasswordRecovery) {
     try {
-      const ok = await fetch('/settings', {
+      const ok = await fetch(`${API_BASE}/settings`, {
         headers: { Authorization: `Bearer ${session.access_token}` }
       });
       if (ok.status === 200) {          // token accepted by backend

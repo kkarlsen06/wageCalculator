@@ -80,6 +80,30 @@ kompensasjonskalkulator/
    # Gå til http://localhost:8000
    ```
 
+## 🔧 Miljøvariabler
+
+For å kjøre applikasjonen lokalt med backend-funksjonalitet (chat, innstillinger), må du sette opp miljøvariabler:
+
+### Lokal utvikling
+```bash
+# Kopier eksempelfilen og tilpass verdier
+cp .env.local.example .env.local
+
+# Start utviklingsserver
+npm run dev
+```
+
+### Produksjon (Netlify)
+I Netlify Site Settings → Environment variables, legg til:
+```
+VITE_API_BASE=https://wagecalculator-gbpd.onrender.com
+```
+
+**Miljøvariabler:**
+- `VITE_API_BASE`: Base URL for API-endepunkter
+  - Lokal utvikling: `http://localhost:5173`
+  - Produksjon: `https://wagecalculator-gbpd.onrender.com`
+
 ## 📱 Responsivt design
 
 Applikasjonen er fullt responsiv og fungerer på:

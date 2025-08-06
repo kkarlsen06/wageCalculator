@@ -1,3 +1,6 @@
+// API Base URL configuration
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
 function setAppHeight() {
   // Use visual viewport for better mobile browser UI handling
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -237,13 +240,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     let nameLetters = [];
     if (firstName) {
       const nameParts = firstName.trim().split(' ');
-      
+
       if (nameParts.length > 1) {
         // Multi-part name - create spans for potential responsive breaking
         nameParts.forEach((part, partIndex) => {
           const partSpan = document.createElement('span');
           partSpan.className = 'name-part';
-          
+
           [...part].forEach((char, charIndex) => {
             const span = document.createElement('span');
             span.className = 'letter';
@@ -251,9 +254,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             partSpan.appendChild(span);
             nameLetters.push(span);
           });
-          
+
           nameLine.appendChild(partSpan);
-          
+
           // Add space between parts (except for the last part)
           if (partIndex < nameParts.length - 1) {
             const spaceSpan = document.createElement('span');
@@ -320,7 +323,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log(`App.html: Checking session (attempt ${retryCount + 1}/${maxRetries})`);
     const { data: { session: currentSession } } = await supa.auth.getSession();
     session = currentSession;
-    
+
     if (!session) {
       retryCount++;
       if (retryCount < maxRetries) {
@@ -381,7 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const match = onClick.match(/app\.(\w+)\((.*?)\)/);
             if (match) {
               const [, functionName, params] = match;
-              
+
               // Handle different parameter types
               let parsedParams = [];
               if (params.trim()) {
@@ -405,7 +408,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   parsedParams = [parseInt(params)];
                 }
               }
-              
+
               // Execute the function
               if (app[functionName]) {
                 console.log(`Executing ${functionName} with params:`, parsedParams);
@@ -428,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let eventListenersAdded = false;
   function addEventListeners() {
     if (eventListenersAdded) return; // Prevent duplicate listeners
-    
+
     // Consolidated click event delegation
     document.body.addEventListener('click', (event) => {
       // Delete shift buttons
@@ -500,7 +503,7 @@ document.addEventListener('DOMContentLoaded', async () => {
            'editShiftModal': () => app.closeEditShift(),
            'settingsModal': () => app.closeSettings()
          };
-         
+
          for (const [modalId, closeAction] of Object.entries(modalActions)) {
            const modal = document.getElementById(modalId);
            if (modal && modal.style.display === 'block') {
@@ -510,7 +513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
          }
        }
      });
-    
+
     eventListenersAdded = true;
   }
 
@@ -832,7 +835,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      const response = await fetch('/chat', {
+      const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
