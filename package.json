@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "En moderne webapplikasjon for å beregne lønn basert på vakter, arbeidstid og tariffbaserte timelønn. Applikasjonen er spesielt utviklet for ansatte med varierende arbeidstid og støtter komplekse lønnssystemer med grunnlønn og ulike tillegg.",
   "main": "server.js",
+  
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "test": "node test-duplicate-shifts.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test":  "node test-duplicate-shifts.js"
   },
   "repository": {
     "type": "git",

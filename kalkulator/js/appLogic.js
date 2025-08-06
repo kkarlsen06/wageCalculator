@@ -2678,6 +2678,11 @@ export const app = {
                 nicknameElement.textContent = nickname;
             }
 
+            // Update chatbox placeholder with user name
+            if (window.chatbox && window.chatbox.updatePlaceholder) {
+                window.chatbox.updatePlaceholder();
+            }
+
             // Also load the profile picture for the top bar
             try {
                 const { data: settings } = await window.supa
@@ -2700,6 +2705,10 @@ export const app = {
             const nicknameElement = document.getElementById('userNickname');
             if (nicknameElement) {
                 nicknameElement.textContent = 'Bruker';
+            }
+            // Update chatbox placeholder with fallback
+            if (window.chatbox && window.chatbox.updatePlaceholder) {
+                window.chatbox.updatePlaceholder();
             }
             // Show placeholder profile picture
             this.updateTopBarProfilePicture(null);
@@ -4055,6 +4064,18 @@ export const app = {
                 const typeClass = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
                 const seriesBadge = shift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
+                // Check if this shift has overlaps
+                const hasOverlaps = this.shiftHasOverlaps(shift);
+                const warningIndicator = hasOverlaps ? `
+                    <span class="shift-warning-indicator" title="Denne vakten overlapper med andre vakter">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </span>
+                ` : '';
+
                 // Check if this shift is on the current date
                 const today = new Date();
                 const isCurrentDate = shift.date.getDate() === today.getDate() &&
@@ -4068,7 +4089,7 @@ export const app = {
                             <div class="shift-date">
                                 <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
                                 <span class="shift-date-separator"></span>
-                                <span class="shift-date-weekday">${weekday}${seriesBadge}</span>
+                                <span class="shift-date-weekday">${weekday}${seriesBadge}${warningIndicator}</span>
                             </div>
                             <div class="shift-details">
                                 <div class="shift-time-with-hours">
@@ -4307,13 +4328,25 @@ export const app = {
                 // Create the shift item using the exact same structure as in the shift list
                 const typeClass = lastShift.type === 0 ? 'weekday' : (lastShift.type === 1 ? 'saturday' : 'sunday');
 
+                // Check if this shift has overlaps
+                const hasOverlaps = this.shiftHasOverlaps(lastShift);
+                const warningIndicator = hasOverlaps ? `
+                    <span class="shift-warning-indicator" title="Denne vakten overlapper med andre vakter">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </span>
+                ` : '';
+
                 // No highlighting for last shift (remove active class)
                 nextShiftContent.innerHTML = `
                     <div class="shift-item ${typeClass}" data-shift-id="${lastShift.id}" style="cursor: pointer; position: relative;">
                         <div class="next-shift-badge">Siste</div>
                         <div class="shift-info">
                             <div class="shift-date">
-                                <span class="shift-date-weekday">${dateDisplay}</span>
+                                <span class="shift-date-weekday">${dateDisplay}${warningIndicator}</span>
                             </div>
                             <div class="shift-details">
                                 <div class="shift-time-with-hours">
@@ -4412,17 +4445,29 @@ export const app = {
                 dateSuffix = ' (i morgen)';
             }
             
+            // Check if this shift has overlaps
+            const hasOverlaps = this.shiftHasOverlaps(nextShift);
+            const warningIndicator = hasOverlaps ? `
+                <span class="shift-warning-indicator" title="Denne vakten overlapper med andre vakter">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </span>
+            ` : '';
+
             // Determine if the shift should be highlighted (active)
             const isToday = shiftDate.toDateString() === today.toDateString();
             const isTomorrow = shiftDate.toDateString() === tomorrow.toDateString();
             const activeClass = (isToday || isTomorrow) ? ' active' : '';
-            
+
             nextShiftContent.innerHTML = `
                 <div class="shift-item ${typeClass}${activeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer; position: relative;">
                     <div class="next-shift-badge">Neste</div>
                     <div class="shift-info">
                         <div class="shift-date">
-                            <span class="shift-date-weekday">${dateDisplay}</span>
+                            <span class="shift-date-weekday">${dateDisplay}${warningIndicator}</span>
                             <span class="shift-countdown-timer">  ${dateSuffix}</span>
                         </div>
                         <div class="shift-details">
@@ -4524,13 +4569,25 @@ export const app = {
         
         const typeClass = currentShift.type === 0 ? 'weekday' : (currentShift.type === 1 ? 'saturday' : 'sunday');
         const seriesBadge = currentShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
-        
+
+        // Check if this shift has overlaps
+        const hasOverlaps = this.shiftHasOverlaps(currentShift);
+        const warningIndicator = hasOverlaps ? `
+            <span class="shift-warning-indicator" title="Denne vakten overlapper med andre vakter">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </span>
+        ` : '';
+
         nextShiftContent.innerHTML = `
             <div class="shift-item ${typeClass} active" data-shift-id="${currentShift.id}" style="cursor: pointer; position: relative;">
                 <div class="next-shift-badge">NÅ</div>
                 <div class="shift-info">
                     <div class="shift-date">
-                        <span class="shift-date-weekday">${dateDisplay}${seriesBadge}</span>
+                        <span class="shift-date-weekday">${dateDisplay}${seriesBadge}${warningIndicator}</span>
                         <span class="shift-countdown-timer">  ${timeRemainingText}</span>
                     </div>
                     <div class="shift-details">
@@ -4741,13 +4798,25 @@ export const app = {
         const typeClass = bestShift.type === 0 ? 'weekday' : (bestShift.type === 1 ? 'saturday' : 'sunday');
         const seriesBadge = bestShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
+        // Check if this shift has overlaps
+        const hasOverlaps = this.shiftHasOverlaps(bestShift);
+        const warningIndicator = hasOverlaps ? `
+            <span class="shift-warning-indicator" title="Denne vakten overlapper med andre vakter">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </span>
+        ` : '';
+
         // No highlighting for best shift (remove active class)
         nextShiftContent.innerHTML = `
             <div class="shift-item ${typeClass}" data-shift-id="${bestShift.id}" style="cursor: pointer; position: relative;">
                 <div class="next-shift-badge">Beste</div>
                 <div class="shift-info">
                     <div class="shift-date">
-                        <span class="shift-date-weekday">${dateDisplay}${seriesBadge}</span>
+                        <span class="shift-date-weekday">${dateDisplay}${seriesBadge}${warningIndicator}</span>
                     </div>
                     <div class="shift-details">
                         <div class="shift-time-with-hours">
@@ -6761,6 +6830,176 @@ export const app = {
         const start = Math.max(startA, startB);
         const end = Math.min(endA, endB);
         return Math.max(0, end - start);
+    },
+
+    // Check if two shifts have overlapping time periods
+    shiftsOverlap(shift1, shift2) {
+        // Convert dates to compare
+        const date1 = new Date(shift1.date);
+        const date2 = new Date(shift2.date);
+
+        // Get start and end times in minutes for both shifts
+        const start1Minutes = this.timeToMinutes(shift1.startTime);
+        let end1Minutes = this.timeToMinutes(shift1.endTime);
+        const start2Minutes = this.timeToMinutes(shift2.startTime);
+        let end2Minutes = this.timeToMinutes(shift2.endTime);
+
+        // Handle shifts that cross midnight
+        if (end1Minutes < start1Minutes) {
+            end1Minutes += 24 * 60;
+        }
+        if (end2Minutes < start2Minutes) {
+            end2Minutes += 24 * 60;
+        }
+
+        // Check for same day overlap
+        if (date1.getTime() === date2.getTime()) {
+            return this.calculateOverlap(start1Minutes, end1Minutes, start2Minutes, end2Minutes) > 0;
+        }
+
+        // Check for consecutive day overlap (shift1 on day N, shift2 on day N+1)
+        const nextDay = new Date(date1);
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        if (nextDay.getTime() === date2.getTime()) {
+            // If shift1 crosses midnight, check if it overlaps with shift2 start
+            if (end1Minutes > 24 * 60) {
+                const shift1NextDayEnd = end1Minutes - 24 * 60;
+                return shift1NextDayEnd > start2Minutes;
+            }
+        }
+
+        // Check for consecutive day overlap (shift2 on day N, shift1 on day N+1)
+        const nextDay2 = new Date(date2);
+        nextDay2.setDate(nextDay2.getDate() + 1);
+
+        if (nextDay2.getTime() === date1.getTime()) {
+            // If shift2 crosses midnight, check if it overlaps with shift1 start
+            if (end2Minutes > 24 * 60) {
+                const shift2NextDayEnd = end2Minutes - 24 * 60;
+                return shift2NextDayEnd > start1Minutes;
+            }
+        }
+
+        return false;
+    },
+
+    // Get all shifts that overlap with a given shift
+    getOverlappingShifts(targetShift) {
+        return this.shifts.filter(shift => {
+            // Don't compare shift with itself
+            if (shift.id === targetShift.id) return false;
+            return this.shiftsOverlap(targetShift, shift);
+        });
+    },
+
+    // Check if a shift has any overlaps
+    shiftHasOverlaps(shift) {
+        return this.getOverlappingShifts(shift).length > 0;
+    },
+
+    // Test function for overlap detection (for development/debugging)
+    testOverlapDetection() {
+        console.log('Testing overlap detection...');
+
+        // Create test shifts
+        const testShift1 = {
+            id: 'test1',
+            date: new Date('2024-01-15'),
+            startTime: '09:00',
+            endTime: '17:00',
+            type: 0
+        };
+
+        const testShift2 = {
+            id: 'test2',
+            date: new Date('2024-01-15'),
+            startTime: '16:00',
+            endTime: '22:00',
+            type: 0
+        };
+
+        const testShift3 = {
+            id: 'test3',
+            date: new Date('2024-01-15'),
+            startTime: '23:00',
+            endTime: '07:00', // Crosses midnight
+            type: 0
+        };
+
+        const testShift4 = {
+            id: 'test4',
+            date: new Date('2024-01-16'),
+            startTime: '06:00',
+            endTime: '14:00',
+            type: 0
+        };
+
+        // Test same day overlap
+        console.log('Shift1 and Shift2 overlap (same day):', this.shiftsOverlap(testShift1, testShift2)); // Should be true
+
+        // Test midnight crossing overlap
+        console.log('Shift3 and Shift4 overlap (midnight crossing):', this.shiftsOverlap(testShift3, testShift4)); // Should be true
+
+        // Test no overlap
+        console.log('Shift1 and Shift4 overlap (no overlap):', this.shiftsOverlap(testShift1, testShift4)); // Should be false
+
+        console.log('Overlap detection test completed.');
+    },
+
+    // Add test overlapping shifts for demonstration (for development/debugging)
+    addTestOverlappingShifts() {
+        console.log('Adding test overlapping shifts...');
+
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        // Create overlapping shifts for today
+        const testShifts = [
+            {
+                id: 'test-overlap-1',
+                date: new Date(today),
+                startTime: '09:00',
+                endTime: '17:00',
+                type: 0,
+                seriesId: null
+            },
+            {
+                id: 'test-overlap-2',
+                date: new Date(today),
+                startTime: '16:00',
+                endTime: '22:00',
+                type: 0,
+                seriesId: null
+            },
+            {
+                id: 'test-overlap-3',
+                date: new Date(today),
+                startTime: '23:00',
+                endTime: '07:00', // Crosses midnight
+                type: 0,
+                seriesId: null
+            },
+            {
+                id: 'test-overlap-4',
+                date: new Date(tomorrow),
+                startTime: '06:00',
+                endTime: '14:00',
+                type: 0,
+                seriesId: null
+            }
+        ];
+
+        // Add to shifts array
+        testShifts.forEach(shift => {
+            this.shifts.push(shift);
+        });
+
+        // Refresh UI to show the overlapping shifts with warning indicators
+        this.refreshUI();
+
+        console.log('Test overlapping shifts added. Check the shift list for warning indicators.');
     },
     formatCurrency(amount) {
         const currencySuffix = this.currencyFormat ? ' NOK' : ' kr';

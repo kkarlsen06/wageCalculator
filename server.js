@@ -964,8 +964,10 @@ async function handleTool(call, user_id) {
 // ---------- export / run ----------
 export default app;
 
+// Start server (kun når filen kjøres direkte)
 if (import.meta.url === `file://${process.argv[1]}`) {
-  app.listen(5173, () =>
-    console.log('✔ Server running → http://localhost:5173')
+  const PORT = process.env.PORT || 5173;
+  app.listen(PORT, () =>
+    console.log(`✔ Server running → http://localhost:${PORT}`)
   );
 }

@@ -3581,6 +3581,48 @@ input:checked + .slider:before {
   vertical-align: middle;
 }
 
+/* Warning Indicator for Overlapping Shifts */
+.shift-warning-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 8px;
+  color: var(--warning);
+  flex-shrink: 0;
+  opacity: 0.9;
+  transition: all var(--speed-normal) var(--ease-default);
+  vertical-align: middle;
+  cursor: help;
+}
+
+.shift-warning-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.shift-warning-indicator svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* Responsive adjustments for warning indicator */
+@media (max-width: 480px) {
+  .shift-warning-indicator {
+    width: 14px;
+    height: 14px;
+    margin-left: 6px;
+  }
+
+  .shift-warning-indicator svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
 /* Content section with proper spacing from header */
 .content {
   padding-top: 0;
@@ -9999,11 +10041,8 @@ input[type="file"].form-control:focus {
 
 /* Mobile responsive adjustments for chatbox */
 @media (max-width: 768px) {
-  .chatbox-pill {
-    padding: 10px 16px;
-  }
-
   .chatbox-pill-content {
+    padding: 8px 16px; /* Slimmer padding for mobile */
     gap: 10px;
   }
 
@@ -10052,6 +10091,19 @@ input[type="file"].form-control:focus {
     padding: 8px 12px;
     font-size: 13px;
     max-width: 80%; /* Slightly wider on mobile for readability */
+  }
+}
+
+/* Extra small mobile devices - make chatbox pill even slimmer */
+@media (max-width: 480px) {
+  .chatbox-pill-content {
+    padding: 6px 14px; /* Even slimmer for small mobile */
+    gap: 8px;
+  }
+
+  .chatbox-icon {
+    width: 16px;
+    height: 16px;
   }
 }
 

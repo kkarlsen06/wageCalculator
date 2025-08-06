@@ -112,6 +112,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         nicknameElement.textContent = nickname;
       }
 
+      // Update chatbox placeholder with user name
+      if (window.chatbox && window.chatbox.updatePlaceholder) {
+        window.chatbox.updatePlaceholder();
+      }
+
       // Load profile picture
       try {
         const { data: settings } = await supa
@@ -609,6 +614,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     setupChatEventListeners();
+    updateChatboxPlaceholder(); // Set initial placeholder with user name
+  }
+
+  // Update chatbox placeholder with user's name
+  async function updateChatboxPlaceholder() {
+    try {
+      const { data: { user } } = await supa.auth.getUser();
+      if (!user || !chatElements.placeholder) return;
+
+      // Use first name if available, otherwise use first part of email, fallback to 'Bruker'
+      const userName = user.user_metadata?.first_name ||
+                      user.email?.split('@')[0] ||
+                      'Bruker';
+
+      chatElements.placeholder.textContent = `Trenger du hjelp, ${userName}?`;
+    } catch (err) {
+      console.error('Error updating chatbox placeholder:', err);
+      // Fallback to default
+      if (chatElements.placeholder) {
+        chatElements.placeholder.textContent = 'Trenger du hjelp, Bruker?';
+      }
+    }
   }
 
   function setupChatEventListeners() {
@@ -923,7 +950,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     init: initChatbox,
     clear: clearChatLog,
     expand: expandChatbox,
-    collapse: collapseChatbox
+    collapse: collapseChatbox,
+    updatePlaceholder: updateChatboxPlaceholder
   };
 
   // Auto-initialize when DOM is ready
