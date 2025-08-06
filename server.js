@@ -73,16 +73,18 @@ const addSeriesSchema = {
 
 const editShiftSchema = {
   name: 'editShift',
-  description: 'Edit an existing work shift by ID',
+  description: 'Edit an existing work shift by ID or by date+time',
   parameters: {
     type: 'object',
     properties: {
-      shift_id: { type: 'integer', description: 'ID of shift to edit' },
-      shift_date: { type: 'string', description: 'New date YYYY-MM-DD (optional)' },
-      start_time: { type: 'string', description: 'New start time HH:mm (optional)' },
-      end_time: { type: 'string', description: 'New end time HH:mm (optional)' }
+      shift_id: { type: 'integer', description: 'ID of shift to edit (optional if shift_date+start_time provided)' },
+      shift_date: { type: 'string', description: 'Date of shift to find/edit YYYY-MM-DD' },
+      start_time: { type: 'string', description: 'Start time of shift to find HH:mm' },
+      new_start_time: { type: 'string', description: 'New start time HH:mm (optional)' },
+      new_end_time: { type: 'string', description: 'New end time HH:mm (optional)' },
+      end_time: { type: 'string', description: 'New end time HH:mm (optional, legacy)' }
     },
-    required: ['shift_id']
+    required: []
   }
 };
 
@@ -247,7 +249,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   const systemContextHint = {
     role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan også hente skift med getShifts – for eksempel "hvilke vakter har jeg neste uke" eller "vis alt i uke 42". Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. Bekreft før masse-sletting.`
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan redigere et skift ved å oppgi dato og starttid hvis du ikke har ID-en. Bruk editShift direkte med shift_date og start_time for å finne skiftet, og new_start_time/new_end_time for nye tider. Du kan også hente skift med getShifts – for eksempel "hvilke vakter har jeg neste uke" eller "vis alt i uke 42". Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. Bekreft før masse-sletting.`
   };
   const fullMessages = [systemContextHint, ...messages];
 
@@ -339,28 +341,64 @@ app.post('/chat', authenticateUser, async (req, res) => {
     }
 
     if (fnName === 'editShift') {
-      // Verify shift exists and belongs to user
-      const { data: existingShift } = await supabase
-        .from('user_shifts')
-        .select('*')
-        .eq('id', args.shift_id)
-        .eq('user_id', req.user_id)
-        .maybeSingle();
+      let existingShift = null;
+      let shiftId = args.shift_id;
 
-      if (!existingShift) {
-        toolResult = 'ERROR: Skiftet ble ikke funnet eller tilhører ikke deg';
+      // Find shift by ID or by date+time
+      if (args.shift_id) {
+        // Find by ID (existing behavior)
+        const { data } = await supabase
+          .from('user_shifts')
+          .select('*')
+          .eq('id', args.shift_id)
+          .eq('user_id', req.user_id)
+          .maybeSingle();
+        existingShift = data;
+      } else if (args.shift_date && args.start_time) {
+        // Find by date+time (new behavior)
+        const { data } = await supabase
+          .from('user_shifts')
+          .select('*')
+          .eq('user_id', req.user_id)
+          .eq('shift_date', args.shift_date)
+          .eq('start_time', args.start_time);
+
+        if (!data || data.length === 0) {
+          toolResult = 'ERROR: Fant ikke skiftet for den datoen og tiden';
+        } else if (data.length > 1) {
+          toolResult = 'ERROR: Flere skift funnet for samme dato og tid. Vennligst presiser hvilken du vil redigere';
+        } else {
+          existingShift = data[0];
+          shiftId = existingShift.id;
+        }
       } else {
+        toolResult = 'ERROR: Du må oppgi enten shift_id eller både shift_date og start_time';
+      }
+
+      if (existingShift && !toolResult.startsWith('ERROR:')) {
         // Build update object with only provided fields
         const updateData = {};
-        if (args.shift_date) updateData.shift_date = args.shift_date;
-        if (args.start_time) updateData.start_time = args.start_time;
-        if (args.end_time) updateData.end_time = args.end_time;
+
+        // Handle new field names with fallback to legacy names
+        const newStartTime = args.new_start_time || args.start_time;
+        const newEndTime = args.new_end_time || args.end_time;
+
+        // Only update shift_date if it's different from current (and not used for finding)
+        if (args.shift_date && args.shift_date !== existingShift.shift_date) {
+          updateData.shift_date = args.shift_date;
+        }
+        if (newStartTime && newStartTime !== existingShift.start_time) {
+          updateData.start_time = newStartTime;
+        }
+        if (newEndTime && newEndTime !== existingShift.end_time) {
+          updateData.end_time = newEndTime;
+        }
 
         // Check for collision with other shifts (excluding current shift)
         if (Object.keys(updateData).length > 0) {
-          const checkDate = args.shift_date || existingShift.shift_date;
-          const checkStart = args.start_time || existingShift.start_time;
-          const checkEnd = args.end_time || existingShift.end_time;
+          const checkDate = updateData.shift_date || existingShift.shift_date;
+          const checkStart = updateData.start_time || existingShift.start_time;
+          const checkEnd = updateData.end_time || existingShift.end_time;
 
           const { data: collision } = await supabase
             .from('user_shifts')
@@ -369,7 +407,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
             .eq('shift_date', checkDate)
             .eq('start_time', checkStart)
             .eq('end_time', checkEnd)
-            .neq('id', args.shift_id)
+            .neq('id', shiftId)
             .maybeSingle();
 
           if (collision) {
@@ -379,21 +417,23 @@ app.post('/chat', authenticateUser, async (req, res) => {
             const { error } = await supabase
               .from('user_shifts')
               .update(updateData)
-              .eq('id', args.shift_id)
+              .eq('id', shiftId)
               .eq('user_id', req.user_id);
 
             if (error) {
               toolResult = 'ERROR: Kunne ikke oppdatere skiftet';
             } else {
-              const newStart = args.start_time || existingShift.start_time;
-              const newEnd = args.end_time || existingShift.end_time;
-              const hours = hoursBetween(newStart, newEnd);
+              const finalStart = updateData.start_time || existingShift.start_time;
+              const finalEnd = updateData.end_time || existingShift.end_time;
+              const hours = hoursBetween(finalStart, finalEnd);
               toolResult = `OK: Skift oppdatert (${hours} timer)`;
             }
           }
         } else {
           toolResult = 'ERROR: Ingen endringer spesifisert';
         }
+      } else if (!toolResult.startsWith('ERROR:')) {
+        toolResult = 'ERROR: Skiftet ble ikke funnet eller tilhører ikke deg';
       }
     }
 
