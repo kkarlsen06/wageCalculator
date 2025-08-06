@@ -569,6 +569,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let chatElements = {};
   let isExpanded = false;
+  let isInInputMode = false;
+  let hasFirstMessage = false;
 
   // Initialize chatbox when DOM is ready
   function initChatbox() {
@@ -578,7 +580,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       close: document.getElementById('chatboxClose'),
       log: document.getElementById('chatboxLog'),
       input: document.getElementById('chatboxInput'),
-      send: document.getElementById('chatboxSend')
+      send: document.getElementById('chatboxSend'),
+      placeholder: document.getElementById('chatboxPillPlaceholder'),
+      pillInput: document.getElementById('chatboxPillInput')
     };
 
     if (!chatElements.pill || !chatElements.expanded) {
@@ -590,30 +594,64 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function setupChatEventListeners() {
-    // Pill click to expand
-    chatElements.pill.addEventListener('click', expandChatbox);
+    // Pill click to enter input mode
+    chatElements.pill.addEventListener('click', enterInputMode);
 
     // Close button
     chatElements.close.addEventListener('click', collapseChatbox);
 
-    // Send button
-    chatElements.send.addEventListener('click', sendMessage);
+    // Send button in expanded view
+    chatElements.send.addEventListener('click', sendExpandedMessage);
 
-    // Enter key in input (with Shift+Enter for new line)
-    chatElements.input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
+    // Enter key in pill input
+    chatElements.pillInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
         e.preventDefault();
-        sendMessage();
+        sendPillMessage();
+      } else if (e.key === 'Escape') {
+        exitInputMode();
       }
     });
 
-    // Auto-resize textarea
+    // Enter key in expanded input (with Shift+Enter for new line)
+    chatElements.input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendExpandedMessage();
+      }
+    });
+
+    // Auto-resize textarea in expanded view
     chatElements.input.addEventListener('input', autoResizeTextarea);
+
+    // Click outside to exit input mode
+    document.addEventListener('click', function(e) {
+      if (isInInputMode && !chatElements.pill.contains(e.target)) {
+        exitInputMode();
+      }
+    });
+  }
+
+  function enterInputMode() {
+    if (isInInputMode) return;
+
+    isInInputMode = true;
+    chatElements.placeholder.style.display = 'none';
+    chatElements.pillInput.style.display = 'block';
+    chatElements.pillInput.focus();
+  }
+
+  function exitInputMode() {
+    if (!isInInputMode) return;
+
+    isInInputMode = false;
+    chatElements.pillInput.style.display = 'none';
+    chatElements.pillInput.value = '';
+    chatElements.placeholder.style.display = 'block';
   }
 
   function expandChatbox() {
     isExpanded = true;
-    chatElements.pill.style.display = 'none';
     chatElements.expanded.style.display = 'block';
 
     // Focus input after animation
@@ -624,8 +662,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function collapseChatbox() {
     isExpanded = false;
+    isInInputMode = false;
     chatElements.expanded.style.display = 'none';
-    chatElements.pill.style.display = 'block';
+    chatElements.pillInput.style.display = 'none';
+    chatElements.pillInput.value = '';
+    chatElements.placeholder.style.display = 'block';
   }
 
   function autoResizeTextarea() {
@@ -635,6 +676,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function appendMessage(role, text) {
+    // Ensure expanded view is shown after first message
+    if (!hasFirstMessage && !isExpanded) {
+      hasFirstMessage = true;
+      expandChatbox();
+    }
+
     const messageDiv = document.createElement('div');
     messageDiv.className = `chatbox-message ${role}`;
     messageDiv.textContent = text;
@@ -643,20 +690,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatElements.log.scrollTop = chatElements.log.scrollHeight;
   }
 
-  async function sendMessage() {
-    const text = chatElements.input.value.trim();
+  async function sendPillMessage() {
+    const text = chatElements.pillInput.value.trim();
     if (!text) return;
 
-    // Disable send button during request
-    chatElements.send.disabled = true;
+    // Exit input mode
+    exitInputMode();
 
-    // Add user message
-    appendMessage('user', text);
-    chatMessages.push({ role: 'user', content: text });
+    // Send the message
+    await sendMessage(text);
+  }
+
+  async function sendExpandedMessage() {
+    const text = chatElements.input.value.trim();
+    if (!text) return;
 
     // Clear input
     chatElements.input.value = '';
     autoResizeTextarea();
+
+    // Send the message
+    await sendMessage(text);
+  }
+
+  async function sendMessage(messageText) {
+    // Disable send button during request
+    if (chatElements.send) {
+      chatElements.send.disabled = true;
+    }
+
+    // Add user message
+    appendMessage('user', messageText);
+    chatMessages.push({ role: 'user', content: messageText });
 
     try {
       // Get JWT token from Supabase session
@@ -699,7 +764,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Chat error:', error);
       appendMessage('system', 'Feil ved sending av melding. Prøv igjen senere.');
     } finally {
-      chatElements.send.disabled = false;
+      if (chatElements.send) {
+        chatElements.send.disabled = false;
+      }
     }
   }
 
@@ -712,9 +779,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       { role: 'system', content: 'You are a helpful wage-bot.' }
     ];
 
-    // Collapse chatbox if expanded
-    if (isExpanded) {
-      collapseChatbox();
+    // Reset all states
+    hasFirstMessage = false;
+    isExpanded = false;
+    isInInputMode = false;
+
+    // Reset UI to initial state
+    if (chatElements.expanded) {
+      chatElements.expanded.style.display = 'none';
+    }
+    if (chatElements.pillInput) {
+      chatElements.pillInput.style.display = 'none';
+      chatElements.pillInput.value = '';
+    }
+    if (chatElements.placeholder) {
+      chatElements.placeholder.style.display = 'block';
     }
   }
 

@@ -117,14 +117,20 @@
 
                       <!-- Chat Bot Section -->
                       <section id="chatbox" class="chatbox-container">
+                          <!-- Pill state with inline input capability -->
                           <div class="chatbox-pill" id="chatboxPill">
                               <div class="chatbox-pill-content">
                                   <svg class="chatbox-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                   </svg>
-                                  <span class="chatbox-pill-text">Spør om vakter...</span>
+                                  <div class="chatbox-pill-input-container">
+                                      <span class="chatbox-pill-placeholder" id="chatboxPillPlaceholder">Fortell meg om vaktene dine...</span>
+                                      <input type="text" class="chatbox-pill-input" id="chatboxPillInput" style="display: none;" />
+                                  </div>
                               </div>
                           </div>
+
+                          <!-- Expanded chat interface (shown after first message) -->
                           <div class="chatbox-expanded" id="chatboxExpanded" style="display: none;">
                               <div class="chatbox-header">
                                   <span class="chatbox-title">Vakt-assistent</span>
