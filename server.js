@@ -75,13 +75,15 @@ const addSeriesSchema = {
 
 const editShiftSchema = {
   name: 'editShift',
-  description: 'Edit an existing work shift by ID or by date+time',
+  description: 'Edit an existing work shift. Can identify shift by ID, specific date/time, or natural language (e.g., "tomorrow", "Monday", "next week"). Can update date, start time, end time, or shift type.',
   parameters: {
     type: 'object',
     properties: {
-      shift_id: { type: 'integer', description: 'ID of shift to edit (optional if shift_date+start_time provided)' },
-      shift_date: { type: 'string', description: 'Date of shift to find/edit YYYY-MM-DD' },
-      start_time: { type: 'string', description: 'Start time of shift to find HH:mm' },
+      shift_id: { type: 'integer', description: 'ID of shift to edit (optional if other identifiers provided)' },
+      shift_date: { type: 'string', description: 'Specific date of shift to edit YYYY-MM-DD (optional)' },
+      start_time: { type: 'string', description: 'Start time of shift to edit HH:mm (optional, used with shift_date)' },
+      date_reference: { type: 'string', description: 'Natural language date reference like "tomorrow", "Monday", "next Tuesday", "today" (optional)' },
+      time_reference: { type: 'string', description: 'Time reference like "morning shift", "evening shift", or specific time "09:00" (optional)' },
       new_start_time: { type: 'string', description: 'New start time HH:mm (optional)' },
       new_end_time: { type: 'string', description: 'New end time HH:mm (optional)' },
       end_time: { type: 'string', description: 'New end time HH:mm (optional, legacy)' }
@@ -92,13 +94,17 @@ const editShiftSchema = {
 
 const deleteShiftSchema = {
   name: 'deleteShift',
-  description: 'Delete a single work shift by ID',
+  description: 'Delete a single work shift. Can identify shift by ID, specific date/time, or natural language (e.g., "tomorrow", "Monday", "the shift at 9am today").',
   parameters: {
     type: 'object',
     properties: {
-      shift_id: { type: 'integer', description: 'ID of shift to delete' }
+      shift_id: { type: 'integer', description: 'ID of shift to delete (optional if other identifiers provided)' },
+      shift_date: { type: 'string', description: 'Specific date of shift to delete YYYY-MM-DD (optional)' },
+      start_time: { type: 'string', description: 'Start time of shift to delete HH:mm (optional, used with shift_date)' },
+      date_reference: { type: 'string', description: 'Natural language date reference like "tomorrow", "Monday", "next Tuesday", "today" (optional)' },
+      time_reference: { type: 'string', description: 'Time reference like "morning shift", "evening shift", or specific time "09:00" (optional)' }
     },
-    required: ['shift_id']
+    required: []
   }
 };
 
@@ -145,13 +151,30 @@ const getShiftsSchema = {
   }
 };
 
+const copyShiftSchema = {
+  name: 'copyShift',
+  description: 'Find a shift by natural language reference and copy it to future dates. Combines finding and copying in one operation.',
+  parameters: {
+    type: 'object',
+    properties: {
+      source_date_reference: { type: 'string', description: 'Natural language reference to source shift date like "Monday", "last Tuesday", "yesterday"' },
+      source_time_reference: { type: 'string', description: 'Time reference for source shift like "morning", "evening", or specific time "09:00" (optional)' },
+      target_dates: { type: 'array', items: { type: 'string' }, description: 'Array of target dates in YYYY-MM-DD format to copy the shift to' },
+      target_date_references: { type: 'array', items: { type: 'string' }, description: 'Array of natural language date references like ["next Monday", "next Tuesday"] (alternative to target_dates)' },
+      weeks_ahead: { type: 'integer', description: 'Number of weeks ahead to copy the shift (alternative to target_dates/target_date_references)' }
+    },
+    required: ['source_date_reference']
+  }
+};
+
 const tools = [
   { type: 'function', function: addShiftSchema },
   { type: 'function', function: addSeriesSchema },
   { type: 'function', function: editShiftSchema },
   { type: 'function', function: deleteShiftSchema },
   { type: 'function', function: deleteSeriesSchema },
-  { type: 'function', function: getShiftsSchema }
+  { type: 'function', function: getShiftsSchema },
+  { type: 'function', function: copyShiftSchema }
 ];
 
 // ---------- helpers ----------
@@ -257,6 +280,118 @@ function getNextWeeksDateRange(numWeeks = 1) {
   };
 }
 
+// Parse natural language date references
+function parseNaturalDate(dateReference) {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  const dayNames = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'];
+  const dayNamesEn = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+  const ref = dateReference.toLowerCase().trim();
+
+  // Handle specific cases
+  if (ref === 'today' || ref === 'i dag' || ref === 'idag') {
+    return today.toISOString().slice(0, 10);
+  }
+
+  if (ref === 'tomorrow' || ref === 'i morgen' || ref === 'imorgen') {
+    return tomorrow.toISOString().slice(0, 10);
+  }
+
+  // Handle weekday names (Norwegian and English)
+  const allDayNames = [...dayNames, ...dayNamesEn];
+  for (let i = 0; i < allDayNames.length; i++) {
+    const dayName = allDayNames[i];
+    if (ref === dayName || ref === `neste ${dayName}` || ref === `next ${dayName}`) {
+      const targetDay = i % 7; // Get day index (0 = Sunday, 1 = Monday, etc.)
+      const currentDay = today.getDay();
+
+      let daysToAdd;
+      if (ref.includes('neste') || ref.includes('next')) {
+        // Next occurrence of this weekday (at least 7 days from now)
+        daysToAdd = 7 + ((targetDay - currentDay + 7) % 7);
+      } else {
+        // Next occurrence of this weekday (could be today if it matches)
+        daysToAdd = (targetDay - currentDay + 7) % 7;
+        if (daysToAdd === 0 && targetDay !== currentDay) {
+          daysToAdd = 7; // If it's the same day, go to next week
+        }
+      }
+
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + daysToAdd);
+      return targetDate.toISOString().slice(0, 10);
+    }
+  }
+
+  // If no match found, return null
+  return null;
+}
+
+// Find shifts by natural language reference
+async function findShiftsByReference(user_id, dateReference, timeReference) {
+  let targetDate = null;
+
+  // Parse date reference
+  if (dateReference) {
+    targetDate = parseNaturalDate(dateReference);
+  }
+
+  if (!targetDate) {
+    return { shifts: [], error: 'Kunne ikke forstå datoen' };
+  }
+
+  // Get shifts for the target date
+  const { data: shifts, error } = await supabase
+    .from('user_shifts')
+    .select('*')
+    .eq('user_id', user_id)
+    .eq('shift_date', targetDate)
+    .order('start_time');
+
+  if (error) {
+    return { shifts: [], error: 'Kunne ikke hente skift' };
+  }
+
+  if (!shifts || shifts.length === 0) {
+    return { shifts: [], error: `Ingen skift funnet for ${targetDate}` };
+  }
+
+  // Filter by time reference if provided
+  if (timeReference) {
+    const timeRef = timeReference.toLowerCase().trim();
+    let filteredShifts = shifts;
+
+    if (timeRef.includes('morgen') || timeRef.includes('morning')) {
+      // Morning shifts (before 12:00)
+      filteredShifts = shifts.filter(shift => {
+        const startHour = parseInt(shift.start_time.split(':')[0]);
+        return startHour < 12;
+      });
+    } else if (timeRef.includes('kveld') || timeRef.includes('evening') || timeRef.includes('night')) {
+      // Evening/night shifts (after 16:00)
+      filteredShifts = shifts.filter(shift => {
+        const startHour = parseInt(shift.start_time.split(':')[0]);
+        return startHour >= 16;
+      });
+    } else if (timeRef.match(/^\d{1,2}:?\d{0,2}$/)) {
+      // Specific time reference
+      const normalizedTime = timeRef.includes(':') ? timeRef : `${timeRef}:00`;
+      filteredShifts = shifts.filter(shift => shift.start_time === normalizedTime);
+    }
+
+    if (filteredShifts.length === 0) {
+      return { shifts: [], error: `Ingen skift funnet for ${targetDate} med tidspunkt ${timeReference}` };
+    }
+
+    return { shifts: filteredShifts, error: null };
+  }
+
+  return { shifts, error: null };
+}
+
 // ---------- /settings ----------
 app.get('/settings', authenticateUser, async (req, res) => {
   const { data, error } = await supabase
@@ -290,7 +425,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   const systemContextHint = {
     role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan redigere et skift ved å oppgi dato og starttid hvis du ikke har ID-en. Bruk editShift direkte med shift_date og start_time for å finne skiftet, og new_start_time/new_end_time for nye tider. For getShifts: "denne uka"/"hvilke vakter har jeg denne uka" → bruk criteria_type=week (uten week_number/year), "neste uke" → bruk criteria_type=next, "uke 42" → bruk criteria_type=week med week_number=42. Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. VIKTIG: Vis alltid datoer i dd.mm.yyyy format (f.eks. 15.03.2024) når du snakker med brukeren, ikke yyyy-mm-dd format. Når brukeren ber om å slette flere vakter (for eksempel "slett vaktene mine neste uke"), bruk deleteSeries. Spør én gang om bekreftelse først før du utfører slettingen, men IKKE spør om bekreftelse for rene leseoperasjoner som getShifts. VIKTIG: Når tool-svaret inneholder status:"ok" og ID-lister (inserted/updated/deleted), ikke be om ny bekreftelse - bruk ID-ene for videre operasjoner. For addSeries: bruk interval_weeks=2 for "annenhver uke", offset_start for å justere startpunkt. For deleteSeries: bruk shift_ids array for presise slettinger når du har ID-ene.`
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries, getShifts eller copyShift ved behov. Du kan redigere et skift ved å oppgi dato og starttid hvis du ikke har ID-en. Bruk editShift direkte med shift_date og start_time for å finne skiftet, og new_start_time/new_end_time for nye tider. For getShifts: "denne uka"/"hvilke vakter har jeg denne uka" → bruk criteria_type=week (uten week_number/year), "neste uke" → bruk criteria_type=next, "uke 42" → bruk criteria_type=week med week_number=42. Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. VIKTIG: Vis alltid datoer i dd.mm.yyyy format (f.eks. 15.03.2024) når du snakker med brukeren, ikke yyyy-mm-dd format. Når brukeren ber om å slette flere vakter (for eksempel "slett vaktene mine neste uke"), bruk deleteSeries. Spør én gang om bekreftelse først før du utfører slettingen, men IKKE spør om bekreftelse for rene leseoperasjoner som getShifts. VIKTIG: Når tool-svaret inneholder status:"ok" og ID-lister (inserted/updated/deleted), ikke be om ny bekreftelse - bruk ID-ene for videre operasjoner. For addSeries: bruk interval_weeks=2 for "annenhver uke", offset_start for å justere startpunkt. For deleteSeries: bruk shift_ids array for presise slettinger når du har ID-ene. COPYSHIFT: Bruk copyShift for å kopiere skift til andre datoer. Eksempler: "kopier mandagsskiftet mitt til neste uke" → copyShift(source_date_reference="Monday", weeks_ahead=1), "kopier tirsdagsskiftet til torsdag og fredag" → copyShift(source_date_reference="Tuesday", target_date_references=["Thursday", "Friday"]), "kopier morgenskiftet mitt i dag til de neste 3 ukene" → copyShift(source_date_reference="today", source_time_reference="morning", weeks_ahead=3). MULTIPLE TOOL CALLS: Du kan gjøre flere tool-kall i samme respons når det trengs. For eksempel: hvis brukeren sier "vis meg vaktene mine denne uka, så slett fredagsskiftet", gjør getShifts først, deretter deleteShift. Ikke si "vent litt" eller be brukeren vente - gjør alle nødvendige operasjoner i én respons.`
   };
   const fullMessages = [systemContextHint, ...messages];
 
@@ -523,7 +658,7 @@ async function handleTool(call, user_id) {
       let existingShift = null;
       let shiftId = args.shift_id;
 
-      // Find shift by ID or by date+time
+      // Find shift by ID, specific date+time, or natural language reference
       if (args.shift_id) {
         // Find by ID (existing behavior)
         const { data } = await supabase
@@ -534,7 +669,7 @@ async function handleTool(call, user_id) {
           .maybeSingle();
         existingShift = data;
       } else if (args.shift_date && args.start_time) {
-        // Find by date+time (new behavior)
+        // Find by specific date+time
         const { data } = await supabase
           .from('user_shifts')
           .select('*')
@@ -562,13 +697,46 @@ async function handleTool(call, user_id) {
           existingShift = data[0];
           shiftId = existingShift.id;
         }
+      } else if (args.date_reference) {
+        // Find by natural language reference
+        const { shifts, error } = await findShiftsByReference(user_id, args.date_reference, args.time_reference);
+
+        if (error) {
+          toolResult = JSON.stringify({
+            status: 'error',
+            inserted: [],
+            updated: [],
+            deleted: [],
+            shift_summary: error
+          });
+        } else if (shifts.length === 0) {
+          toolResult = JSON.stringify({
+            status: 'error',
+            inserted: [],
+            updated: [],
+            deleted: [],
+            shift_summary: 'Ingen skift funnet for den referansen'
+          });
+        } else if (shifts.length > 1) {
+          const shiftList = shifts.map(s => `${s.start_time}-${s.end_time}`).join(', ');
+          toolResult = JSON.stringify({
+            status: 'error',
+            inserted: [],
+            updated: [],
+            deleted: [],
+            shift_summary: `Flere skift funnet (${shiftList}). Vennligst presiser hvilken du vil redigere`
+          });
+        } else {
+          existingShift = shifts[0];
+          shiftId = existingShift.id;
+        }
       } else {
         toolResult = JSON.stringify({
           status: 'error',
           inserted: [],
           updated: [],
           deleted: [],
-          shift_summary: 'Du må oppgi enten shift_id eller både shift_date og start_time'
+          shift_summary: 'Du må oppgi enten shift_id, shift_date+start_time, eller date_reference'
         });
       }
 
@@ -667,28 +835,81 @@ async function handleTool(call, user_id) {
     }
 
     if (fnName === 'deleteShift') {
-      // Verify shift exists and belongs to user
-      const { data: existingShift } = await supabase
-        .from('user_shifts')
-        .select('*')
-        .eq('id', args.shift_id)
-        .eq('user_id', user_id)
-        .maybeSingle();
+      let existingShift = null;
+      let shiftId = args.shift_id;
 
-      if (!existingShift) {
+      // Find shift by ID, specific date+time, or natural language reference
+      if (args.shift_id) {
+        // Find by ID (existing behavior)
+        const { data } = await supabase
+          .from('user_shifts')
+          .select('*')
+          .eq('id', args.shift_id)
+          .eq('user_id', user_id)
+          .maybeSingle();
+        existingShift = data;
+      } else if (args.shift_date && args.start_time) {
+        // Find by specific date+time
+        const { data } = await supabase
+          .from('user_shifts')
+          .select('*')
+          .eq('user_id', user_id)
+          .eq('shift_date', args.shift_date)
+          .eq('start_time', args.start_time)
+          .maybeSingle();
+        existingShift = data;
+        if (existingShift) {
+          shiftId = existingShift.id;
+        }
+      } else if (args.date_reference) {
+        // Find by natural language reference
+        const { shifts, error } = await findShiftsByReference(user_id, args.date_reference, args.time_reference);
+
+        if (error) {
+          toolResult = JSON.stringify({
+            status: 'error',
+            inserted: [],
+            updated: [],
+            deleted: [],
+            shift_summary: error
+          });
+        } else if (shifts.length === 0) {
+          toolResult = JSON.stringify({
+            status: 'error',
+            inserted: [],
+            updated: [],
+            deleted: [],
+            shift_summary: 'Ingen skift funnet for den referansen'
+          });
+        } else if (shifts.length > 1) {
+          const shiftList = shifts.map(s => `${s.start_time}-${s.end_time}`).join(', ');
+          toolResult = JSON.stringify({
+            status: 'error',
+            inserted: [],
+            updated: [],
+            deleted: [],
+            shift_summary: `Flere skift funnet (${shiftList}). Vennligst presiser hvilken du vil slette`
+          });
+        } else {
+          existingShift = shifts[0];
+          shiftId = existingShift.id;
+        }
+      } else {
         toolResult = JSON.stringify({
           status: 'error',
           inserted: [],
           updated: [],
           deleted: [],
-          shift_summary: 'Skiftet ble ikke funnet eller tilhører ikke deg'
+          shift_summary: 'Du må oppgi enten shift_id, shift_date+start_time, eller date_reference'
         });
-      } else {
-        // Delete the shift
+      }
+
+      // Proceed with deletion if shift was found
+      if (existingShift && !toolResult) {
         const { error } = await supabase
           .from('user_shifts')
           .delete()
-          .eq('id', args.shift_id)
+          .eq('id', shiftId)
           .eq('user_id', user_id);
 
         if (error) {
@@ -709,6 +930,14 @@ async function handleTool(call, user_id) {
             shift_summary: `1 skift slettet (${hours} timer)`
           });
         }
+      } else if (!existingShift && !toolResult) {
+        toolResult = JSON.stringify({
+          status: 'error',
+          inserted: [],
+          updated: [],
+          deleted: [],
+          shift_summary: 'Skiftet ble ikke funnet eller tilhører ikke deg'
+        });
       }
     }
 
@@ -954,6 +1183,141 @@ async function handleTool(call, user_id) {
           ).join(', ');
 
           toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours} timer totalt). Skift: ${formattedShifts}`;
+        }
+      }
+    }
+
+    if (fnName === 'copyShift') {
+      // Find the source shift using natural language reference
+      const { shifts: sourceShifts, error } = await findShiftsByReference(
+        user_id,
+        args.source_date_reference,
+        args.source_time_reference
+      );
+
+      if (error) {
+        toolResult = JSON.stringify({
+          status: 'error',
+          inserted: [],
+          updated: [],
+          deleted: [],
+          shift_summary: `Kunne ikke finne kildeskift: ${error}`
+        });
+      } else if (sourceShifts.length === 0) {
+        toolResult = JSON.stringify({
+          status: 'error',
+          inserted: [],
+          updated: [],
+          deleted: [],
+          shift_summary: 'Ingen skift funnet for den referansen'
+        });
+      } else if (sourceShifts.length > 1) {
+        const shiftList = sourceShifts.map(s => `${s.start_time}-${s.end_time}`).join(', ');
+        toolResult = JSON.stringify({
+          status: 'error',
+          inserted: [],
+          updated: [],
+          deleted: [],
+          shift_summary: `Flere skift funnet (${shiftList}). Vennligst presiser hvilken du vil kopiere`
+        });
+      } else {
+        // Found exactly one source shift
+        const sourceShift = sourceShifts[0];
+        let targetDates = [];
+
+        // Determine target dates
+        if (args.target_dates && args.target_dates.length > 0) {
+          targetDates = args.target_dates;
+        } else if (args.target_date_references && args.target_date_references.length > 0) {
+          // Parse natural language target date references
+          for (const ref of args.target_date_references) {
+            const parsedDate = parseNaturalDate(ref);
+            if (parsedDate) {
+              targetDates.push(parsedDate);
+            }
+          }
+        } else if (args.weeks_ahead) {
+          // Generate dates for the same weekday for the specified number of weeks ahead
+          const sourceDate = new Date(sourceShift.shift_date);
+          const sourceDayOfWeek = sourceDate.getDay();
+
+          for (let week = 1; week <= args.weeks_ahead; week++) {
+            const targetDate = new Date(sourceDate);
+            targetDate.setDate(sourceDate.getDate() + (week * 7));
+            targetDates.push(targetDate.toISOString().slice(0, 10));
+          }
+        }
+
+        if (targetDates.length === 0) {
+          toolResult = JSON.stringify({
+            status: 'error',
+            inserted: [],
+            updated: [],
+            deleted: [],
+            shift_summary: 'Ingen måldatoer spesifisert eller kunne ikke tolke datoene'
+          });
+        } else {
+          // Create shifts for target dates
+          const newShifts = targetDates.map(date => ({
+            user_id,
+            shift_date: date,
+            start_time: sourceShift.start_time,
+            end_time: sourceShift.end_time,
+            shift_type: sourceShift.shift_type || 0
+          }));
+
+          // Check for existing shifts to avoid duplicates
+          const { data: existingShifts } = await supabase
+            .from('user_shifts')
+            .select('shift_date, start_time, end_time')
+            .eq('user_id', user_id)
+            .in('shift_date', targetDates);
+
+          const existingKeys = new Set(
+            existingShifts?.map(s => `${s.shift_date}|${s.start_time}|${s.end_time}`) || []
+          );
+
+          const shiftsToInsert = newShifts.filter(shift =>
+            !existingKeys.has(`${shift.shift_date}|${shift.start_time}|${shift.end_time}`)
+          );
+
+          if (shiftsToInsert.length === 0) {
+            toolResult = JSON.stringify({
+              status: 'error',
+              inserted: [],
+              updated: [],
+              deleted: [],
+              shift_summary: 'Alle skift eksisterer allerede for de spesifiserte datoene'
+            });
+          } else {
+            // Insert new shifts
+            const { data: insertedShifts, error: insertError } = await supabase
+              .from('user_shifts')
+              .insert(shiftsToInsert)
+              .select();
+
+            if (insertError) {
+              toolResult = JSON.stringify({
+                status: 'error',
+                inserted: [],
+                updated: [],
+                deleted: [],
+                shift_summary: 'Kunne ikke kopiere skift'
+              });
+            } else {
+              const totalHours = shiftsToInsert.reduce((sum, shift) => {
+                return sum + hoursBetween(shift.start_time, shift.end_time);
+              }, 0);
+
+              toolResult = JSON.stringify({
+                status: 'ok',
+                inserted: insertedShifts || shiftsToInsert,
+                updated: [],
+                deleted: [],
+                shift_summary: `${shiftsToInsert.length} skift kopiert fra ${sourceShift.shift_date} (${totalHours} timer totalt)`
+              });
+            }
+          }
         }
       }
     }
