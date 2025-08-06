@@ -9812,8 +9812,11 @@ input[type="file"].form-control:focus {
 
 /* Pill-style container that can expand */
 .chatbox-pill {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  /* Match header's translucent background with frosted glass effect */
+  background: rgba(18, 18, 18, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(42, 42, 47, 0.6);
   border-radius: 24px;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -9822,7 +9825,7 @@ input[type="file"].form-control:focus {
 }
 
 .chatbox-pill:hover {
-  background: var(--bg-tertiary);
+  background: rgba(30, 30, 30, 0.85);
   transform: translateY(-1px);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -9835,7 +9838,7 @@ input[type="file"].form-control:focus {
 
 .chatbox-pill.expanded:hover {
   transform: none;
-  background: var(--bg-secondary); /* Keep original background */
+  background: rgba(18, 18, 18, 0.75); /* Keep original translucent background */
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Keep original shadow */
 }
 
