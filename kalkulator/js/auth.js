@@ -3,7 +3,7 @@ let supa;
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
 // Auth helper function to get access token with automatic refresh
-export async function getAccessToken() {
+async function getAccessToken() {
   const { data: { session } } = await supa.auth.getSession();
   if (session?.access_token) return session.access_token;
 
@@ -24,8 +24,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Clear any stale tokens before checking session
   await supa.auth.signOut();
 
-  // Make supa available globally
+  // Make supa and getAccessToken available globally
   window.supa = supa;
+  window.getAccessToken = getAccessToken;
 
   // Enable auth mode for proper scrolling
   document.documentElement.classList.add('auth-mode');
