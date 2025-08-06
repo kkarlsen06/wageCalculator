@@ -115,6 +115,8 @@ app.post('/chat', authenticateUser, async (req, res) => {
   });
 
   const choice = completion.choices[0].message;
+  let systemMessage = null;
+
   if (choice.function_call) {
     const { name, arguments: argStr } = choice.function_call;
     const args = JSON.parse(argStr);
@@ -130,16 +132,28 @@ app.post('/chat', authenticateUser, async (req, res) => {
         .eq('end_time', args.end_time)
         .maybeSingle();
 
-      if (!dupCheck) {
-        const { error } = await supabase.from('user_shifts').insert({
-          user_id:     req.user_id,
-          shift_date:  args.shift_date,
-          start_time:  args.start_time,
-          end_time:    args.end_time,
-          shift_type:  0
+      if (dupCheck) {
+        // Get all shifts to return with system message
+        const { data: allShifts } = await supabase
+          .from('user_shifts')
+          .select('*')
+          .eq('user_id', req.user_id)
+          .order('shift_date');
+
+        return res.json({
+          system: `Skiftet ${args.shift_date} ${args.start_time}–${args.end_time} finnes allerede.`,
+          shifts: allShifts || []
         });
-        if (error) return res.status(500).json({ error: 'Failed to save shift' });
       }
+
+      const { error } = await supabase.from('user_shifts').insert({
+        user_id:     req.user_id,
+        shift_date:  args.shift_date,
+        start_time:  args.start_time,
+        end_time:    args.end_time,
+        shift_type:  0
+      });
+      if (error) return res.status(500).json({ error: 'Failed to save shift' });
     }
 
     if (name === 'addSeries') {
@@ -168,6 +182,20 @@ app.post('/chat', authenticateUser, async (req, res) => {
         !existingKeys.has(`${row.shift_date}|${row.start_time}|${row.end_time}`)
       );
 
+      if (newRows.length === 0) {
+        // All dates already exist - return system message
+        const { data: allShifts } = await supabase
+          .from('user_shifts')
+          .select('*')
+          .eq('user_id', req.user_id)
+          .order('shift_date');
+
+        return res.json({
+          system: "Added 0 shifts – alle eksisterte fra før.",
+          shifts: allShifts || []
+        });
+      }
+
       if (newRows.length > 0) {
         const { error } = await supabase.from('user_shifts').insert(newRows);
         if (error) return res.status(500).json({ error: 'Failed to save series' });
@@ -178,6 +206,11 @@ app.post('/chat', authenticateUser, async (req, res) => {
     }
   }
 
+  // Guarantee fallback - ensure we always have content to return
+  if (!choice.content && !choice.function_call) {
+    choice.content = "Jeg forstod ikke kommandoen.";
+  }
+
   // always return updated shift list + assistant message
   const { data: shifts } = await supabase
     .from('user_shifts')
@@ -185,7 +218,10 @@ app.post('/chat', authenticateUser, async (req, res) => {
     .eq('user_id', req.user_id)
     .order('shift_date');
 
-  res.json({ assistant: choice.content, shifts });
+  res.json({
+    assistant: choice.content || systemMessage,
+    shifts: shifts || []
+  });
 });
 
 // ---------- export / run ----------
