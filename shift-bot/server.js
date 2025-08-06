@@ -51,11 +51,11 @@ const functions = [{
   parameters: {
     type: "object",
     properties: {
-      date:  { type: "string", description: "YYYY-MM-DD" },
-      start: { type: "string", description: "HH:mm" },
-      end:   { type: "string", description: "HH:mm" }
+      shift_date: { type: "string", description: "YYYY-MM-DD" },
+      start_time: { type: "string", description: "HH:mm" },
+      end_time:   { type: "string", description: "HH:mm" }
     },
-    required: ["date","start","end"]
+    required: ["shift_date","start_time","end_time"]
   }
 }];
 
@@ -66,7 +66,7 @@ const functions = [{
 app.get('/settings', authenticateUser, async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from('settings')
+      .from('user_settings')
       .select('hourly_rate')
       .eq('user_id', req.user_id)
       .single();
@@ -105,12 +105,13 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
       // Save shift to Supabase
       const { error } = await supabase
-        .from('shifts')
+        .from('user_shifts')
         .insert({
           user_id: req.user_id,
-          date: args.date,
-          start: args.start,
-          end: args.end
+          shift_date: args.shift_date,
+          start_time: args.start_time,
+          end_time: args.end_time,
+          shift_type: 0 // Default to regular shift type
         })
         .select();
 
@@ -121,10 +122,10 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
       // Fetch all user shifts to return in response
       const { data: allShifts, error: fetchError } = await supabase
-        .from('shifts')
+        .from('user_shifts')
         .select('*')
         .eq('user_id', req.user_id)
-        .order('date', { ascending: true });
+        .order('shift_date', { ascending: true });
 
       if (fetchError) {
         console.error('Error fetching shifts:', fetchError);
@@ -132,17 +133,17 @@ app.post('/chat', authenticateUser, async (req, res) => {
       }
 
       return res.json({
-        system: `Shift on ${args.date} ${args.start}–${args.end} saved.`,
+        system: `Shift on ${args.shift_date} ${args.start_time}–${args.end_time} saved.`,
         shifts: allShifts || []
       });
     }
 
   // Otherwise just relay GPT’s text
     const { data: allShifts, error: fetchError } = await supabase
-      .from('shifts')
+      .from('user_shifts')
       .select('*')
       .eq('user_id', req.user_id)
-      .order('date', { ascending: true });
+      .order('shift_date', { ascending: true });
 
     if (fetchError) {
       console.error('Error fetching shifts:', fetchError);
@@ -156,6 +157,17 @@ app.post('/chat', authenticateUser, async (req, res) => {
   }
 });
 
-app.listen(5173, () =>
-  console.log('✔ Server running →  http://localhost:5173')
-);
+// Export app for testing
+export default app;
+
+// Also export for CommonJS (for Jest tests)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = app;
+}
+
+// Only start server if this file is run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(5173, () =>
+    console.log('✔ Server running →  http://localhost:5173')
+  );
+}
