@@ -7458,35 +7458,74 @@ export const app = {
         }
     },
     
-    async clearAllData() {
-        if (!confirm('Er du sikker på at du vil slette alle vakter og innstillinger? Dette kan ikke angres.')) {
+    async clearAllShifts() {
+        if (!confirm('Er du sikker på at du vil slette alle vakter? Dette kan ikke angres.')) {
             return;
         }
-        
+
         try {
             const { data: { user } } = await window.supa.auth.getUser();
             if (!user) return;
-            
+
             // Delete all shifts
             const { error: shiftsError } = await window.supa
                 .from('user_shifts')
                 .delete()
                 .eq('user_id', user.id);
-                
+
+            if (shiftsError) {
+                console.error('Error deleting shifts:', shiftsError);
+                alert('Kunne ikke slette vakter fra databasen');
+                return;
+            }
+
+            // Reset local shift state
+            this.shifts = [];
+            this.userShifts = [];
+            this.updateDisplay();
+
+            // Clear chat log
+            if (window.chatbox && window.chatbox.clear) {
+                window.chatbox.clear();
+            }
+
+            alert('Alle vakter er slettet');
+
+        } catch (e) {
+            console.error('Error in clearAllShifts:', e);
+            alert('En feil oppstod ved sletting av vakter');
+        }
+    },
+
+    async clearAllData() {
+        if (!confirm('Er du sikker på at du vil slette alle vakter og innstillinger? Dette kan ikke angres.')) {
+            return;
+        }
+
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+
+            // Delete all shifts
+            const { error: shiftsError } = await window.supa
+                .from('user_shifts')
+                .delete()
+                .eq('user_id', user.id);
+
             if (shiftsError) {
                 console.error('Error deleting shifts:', shiftsError);
             }
-            
+
             // Delete user settings
             const { error: settingsError } = await window.supa
                 .from('user_settings')
                 .delete()
                 .eq('user_id', user.id);
-                
+
             if (settingsError) {
                 console.error('Error deleting settings:', settingsError);
             }
-            
+
             // Reset local state
             this.shifts = [];
             this.userShifts = [];
@@ -7498,9 +7537,9 @@ export const app = {
             if (window.chatbox && window.chatbox.clear) {
                 window.chatbox.clear();
             }
-            
+
             alert('Alle data er slettet');
-            
+
         } catch (e) {
             console.error('Error in clearAllData:', e);
             alert('En feil oppstod ved sletting av data');
