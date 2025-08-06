@@ -938,6 +938,16 @@ body.chatbox-view .floating-action-bar {
   display: none !important;
 }
 
+/* Ensure header remains visible in chatbox view */
+body.chatbox-view .header {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
 /* Ensure proper spacing between dashboard and shifts in chatbox view */
 .chatbox-view .dashboard-section {
   margin-bottom: 0; /* Remove bottom margin to reduce gap */

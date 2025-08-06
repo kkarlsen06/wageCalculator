@@ -1210,7 +1210,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     res.setHeader('Access-Control-Allow-Origin', '*');
 
     // Send initial status
-    res.write(`data: ${JSON.stringify({ type: 'status', message: 'Starter GPT-forespørsel...' })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'status', message: 'Starter GPT-forespørsel' })}\n\n`);
   }
 
   // First call: Let GPT choose tools - force tool usage for multi-step operations
@@ -1257,7 +1257,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       res.write(`data: ${JSON.stringify({
         type: 'tool_calls_start',
         count: choice.tool_calls.length,
-        message: `Utfører ${choice.tool_calls.length} operasjon${choice.tool_calls.length > 1 ? 'er' : ''}...`
+        message: `Utfører ${choice.tool_calls.length} operasjon${choice.tool_calls.length > 1 ? 'er' : ''}`
       })}\n\n`);
     }
 
@@ -1267,7 +1267,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
           type: 'tool_call_start',
           name: call.function.name,
           arguments: JSON.parse(call.function.arguments),
-          message: `Utfører ${call.function.name}...`
+          message: `Utfører ${call.function.name}`
         })}\n\n`);
       }
 
