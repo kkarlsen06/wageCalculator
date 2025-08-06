@@ -2112,6 +2112,34 @@ export const app = {
         return lastPayrollDate;
     },
 
+    getPayrollDateForMonth(month, year) {
+        // Calculate payroll date for a specific month and year
+        // month is 1-based (1-12), year is 4-digit year
+
+        // Create payroll date for the specified month
+        let payrollDate = new Date(year, month - 1, this.payrollDay); // month-1 because Date constructor uses 0-based months
+
+        // Handle months with fewer days (e.g., February with 28/29 days)
+        // If the payroll day doesn't exist in the target month, use the last day of that month
+        const targetMonth = payrollDate.getMonth();
+        const lastDayOfMonth = new Date(payrollDate.getFullYear(), targetMonth + 1, 0).getDate();
+
+        if (this.payrollDay > lastDayOfMonth) {
+            payrollDate.setDate(lastDayOfMonth);
+        }
+
+        // Adjust for weekends - move to preceding Friday if payroll falls on weekend
+        const dayOfWeek = payrollDate.getDay(); // 0 = Sunday, 6 = Saturday
+
+        if (dayOfWeek === 0) { // Sunday
+            payrollDate.setDate(payrollDate.getDate() - 2); // Move to Friday
+        } else if (dayOfWeek === 6) { // Saturday
+            payrollDate.setDate(payrollDate.getDate() - 1); // Move to Friday
+        }
+
+        return payrollDate;
+    },
+
     populateCustomBonusSlots() {
         const types = ['weekday', 'saturday', 'sunday'];
         
@@ -4852,15 +4880,23 @@ export const app = {
         // Always show the card
         nextPayrollCard.style.display = 'block';
 
-        // Get next payroll date
-        const nextPayrollDate = this.getNextPayrollDate();
-        const now = new Date();
+        // Use the selected month from month picker instead of current month
+        const selectedMonth = this.currentMonth; // 1-based
+        const selectedYear = this.currentYear;
 
-        // Calculate previous month's earnings
-        const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        // Calculate the previous month relative to the selected month
+        let previousMonth = selectedMonth - 1;
+        let previousYear = selectedYear;
+
+        if (previousMonth < 1) {
+            previousMonth = 12;
+            previousYear = selectedYear - 1;
+        }
+
+        // Get shifts for the previous month relative to selected month
         const previousMonthShifts = this.shifts.filter(shift =>
-            shift.date.getMonth() === previousMonth.getMonth() &&
-            shift.date.getFullYear() === previousMonth.getFullYear()
+            shift.date.getMonth() === (previousMonth - 1) && // Convert to 0-based for comparison
+            shift.date.getFullYear() === previousYear
         );
 
         if (previousMonthShifts.length === 0) {
@@ -4887,26 +4923,44 @@ export const app = {
             totalEarnings * (1 - this.taxPercentage / 100) :
             totalEarnings;
 
-        // Calculate days until payroll
-        const daysUntilPayroll = Math.ceil((nextPayrollDate - now) / (1000 * 60 * 60 * 24));
-        let countdownText = '';
+        // Calculate payroll date for the selected month
+        const payrollDate = this.getPayrollDateForMonth(selectedMonth, selectedYear);
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1; // Convert to 1-based
+        const currentYear = now.getFullYear();
 
-        if (daysUntilPayroll === 0) {
-            countdownText = 'I dag';
-        } else if (daysUntilPayroll === 1) {
-            countdownText = 'I morgen';
-        } else {
-            // Always show countdown in days, never show the actual date
-            countdownText = `Om ${daysUntilPayroll} dager`;
-        }
+        // Create label text showing which month the earnings are from
+        const previousMonthName = this.MONTHS[previousMonth - 1]; // Convert to 0-based for array access
+        const labelText = `Opptjent i ${previousMonthName}`;
 
-        // Format the payroll date for shift details display
-        const payrollDay = nextPayrollDate.getDate();
-        const payrollMonth = this.MONTHS[nextPayrollDate.getMonth()];
+        // Format the payroll date for display
+        const payrollDay = payrollDate.getDate();
+        const payrollMonth = this.MONTHS[payrollDate.getMonth()];
         const payrollDateText = `${payrollDay}. ${payrollMonth}`;
 
-        // Determine if payroll is soon (within 7 days)
-        const activeClass = daysUntilPayroll <= 7 ? ' active' : '';
+        // Determine if we're viewing the current month/year
+        const isCurrentMonth = selectedMonth === currentMonth && selectedYear === currentYear;
+
+        // Create clock icon text based on whether we're viewing current month or not
+        let clockIconText;
+        if (isCurrentMonth) {
+            // Show countdown for current month
+            const daysUntilPayroll = Math.ceil((payrollDate - now) / (1000 * 60 * 60 * 24));
+            if (daysUntilPayroll === 0) {
+                clockIconText = 'I dag';
+            } else if (daysUntilPayroll === 1) {
+                clockIconText = 'I morgen';
+            } else {
+                clockIconText = `Om ${daysUntilPayroll} dager`;
+            }
+        } else {
+            // Show payroll date for past/future months
+            clockIconText = payrollDateText;
+        }
+
+        // Determine if this is a past or future payroll
+        const isPastPayroll = payrollDate < now;
+        const activeClass = !isPastPayroll && isCurrentMonth && Math.ceil((payrollDate - now) / (1000 * 60 * 60 * 24)) <= 7 ? ' active' : '';
 
         // Show payroll details
         nextPayrollContent.style.display = 'flex';
@@ -4917,7 +4971,7 @@ export const app = {
                 <div class="next-payroll-badge">Lønn</div>
                 <div class="shift-info">
                     <div class="shift-date">
-                        <span class="shift-countdown-timer">${countdownText}</span>
+                        <span class="shift-countdown-timer">${labelText}</span>
                     </div>
                     <div class="shift-details">
                         <div class="shift-time-with-hours">
@@ -4925,7 +4979,7 @@ export const app = {
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <path d="M12 6v6l4 2"></path>
                             </svg>
-                            <span>${payrollDateText}</span>
+                            <span>${clockIconText}</span>
                         </div>
                     </div>
                 </div>
@@ -6984,6 +7038,63 @@ export const app = {
         console.log('Shift1 and Shift4 overlap (no overlap):', this.shiftsOverlap(testShift1, testShift4)); // Should be false
 
         console.log('Overlap detection test completed.');
+    },
+
+    // Add test shifts for payroll card testing (for development/debugging)
+    addTestPayrollShifts() {
+        console.log('Adding test payroll shifts...');
+
+        const now = new Date();
+        const currentMonth = now.getMonth(); // 0-based
+        const currentYear = now.getFullYear();
+
+        // Add shifts for the previous month
+        const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+        // Create test shifts for previous month
+        const testShifts = [
+            {
+                id: 'test-payroll-1',
+                date: new Date(previousYear, previousMonth, 5),
+                startTime: '09:00',
+                endTime: '17:00',
+                type: 0, // Weekday
+                seriesId: null
+            },
+            {
+                id: 'test-payroll-2',
+                date: new Date(previousYear, previousMonth, 12),
+                startTime: '10:00',
+                endTime: '18:00',
+                type: 0, // Weekday
+                seriesId: null
+            },
+            {
+                id: 'test-payroll-3',
+                date: new Date(previousYear, previousMonth, 19),
+                startTime: '08:00',
+                endTime: '16:00',
+                type: 1, // Saturday
+                seriesId: null
+            },
+            {
+                id: 'test-payroll-4',
+                date: new Date(previousYear, previousMonth, 26),
+                startTime: '09:00',
+                endTime: '17:00',
+                type: 0, // Weekday
+                seriesId: null
+            }
+        ];
+
+        // Add to shifts array
+        testShifts.forEach(shift => {
+            this.shifts.push(shift);
+        });
+
+        console.log(`Added ${testShifts.length} test shifts for payroll card testing`);
+        this.updateDisplay();
     },
 
     // Add test overlapping shifts for demonstration (for development/debugging)

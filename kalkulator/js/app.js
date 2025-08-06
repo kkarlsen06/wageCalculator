@@ -803,13 +803,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Select a random greeting
       const randomGreeting = greetingMessages[Math.floor(Math.random() * greetingMessages.length)];
 
-      // Add the greeting message
-      appendMessage('assistant', randomGreeting);
+      // Add the greeting message with streaming animation
+      appendMessage('assistant', randomGreeting, { streaming: true, streamSpeed: 20 });
 
     } catch (err) {
       console.error('Error creating greeting message:', err);
-      // Fallback greeting
-      appendMessage('assistant', 'Hei! 👋 Jeg er her for å hjelpe deg med å registrere skift og holde oversikt over arbeidstiden din. Hva kan jeg hjelpe deg med?');
+      // Fallback greeting with streaming animation
+      appendMessage('assistant', 'Hei! 👋 Jeg er her for å hjelpe deg med å registrere skift og holde oversikt over arbeidstiden din. Hva kan jeg hjelpe deg med?', { streaming: true, streamSpeed: 20 });
     }
   }
 
@@ -937,7 +937,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  function appendMessage(role, text) {
+  function appendMessage(role, text, options = {}) {
     // Ensure expanded view is shown after first message
     if (!hasFirstMessage && !isExpanded) {
       hasFirstMessage = true;
@@ -951,9 +951,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (text.includes('<span class="dots">')) {
       messageDiv.innerHTML = text;
     } else if (role === 'assistant') {
-      // Render Markdown for assistant messages
-      const html = DOMPurify.sanitize(marked.parse(text));
-      messageDiv.innerHTML = html;
+      // Check if streaming animation is requested
+      if (options.streaming) {
+        // Start with empty content for streaming
+        messageDiv.innerHTML = '';
+        chatElements.log.appendChild(messageDiv);
+        chatElements.log.scrollTop = chatElements.log.scrollHeight;
+
+        // Start streaming animation
+        streamText(messageDiv, text, options.streamSpeed || 75);
+        return messageDiv;
+      } else {
+        // Render Markdown for assistant messages
+        const html = DOMPurify.sanitize(marked.parse(text));
+        messageDiv.innerHTML = html;
+      }
     } else {
       // Plain text for user messages
       messageDiv.textContent = text;
@@ -964,6 +976,129 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Return the message element so it can be removed if needed
     return messageDiv;
+  }
+
+  // Stream text in token-like chunks with realistic typing animation
+  function streamText(element, text, speed = 25) {
+    // Split text into tokens (word fragments, punctuation, spaces)
+    const tokens = tokenizeText(text);
+    let currentTokenIndex = 0;
+    let currentText = '';
+
+    // Add a subtle cursor during typing (no blinking to avoid visual artifacts)
+    const cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    cursor.textContent = '▊';
+    cursor.style.opacity = '0.7';
+
+    function streamNextToken() {
+      if (currentTokenIndex < tokens.length) {
+        currentText += tokens[currentTokenIndex];
+        currentTokenIndex++;
+
+        // Create content with cursor inline to avoid line breaks
+        const html = DOMPurify.sanitize(marked.parse(currentText));
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+
+        // Add cursor to the last element or create a span for it
+        const lastElement = tempDiv.lastElementChild || tempDiv;
+        if (lastElement.tagName === 'P') {
+          // Add cursor inside the paragraph to keep it inline
+          lastElement.appendChild(cursor.cloneNode(true));
+        } else {
+          // For other elements, add cursor after
+          tempDiv.appendChild(cursor.cloneNode(true));
+        }
+
+        // Update element content
+        element.innerHTML = tempDiv.innerHTML;
+
+        // Auto-scroll to bottom
+        chatElements.log.scrollTop = chatElements.log.scrollHeight;
+
+        // Continue streaming with variable speed based on token type
+        const currentToken = tokens[currentTokenIndex - 1];
+        let nextDelay = speed;
+
+        // Adjust speed based on token characteristics
+        if (currentToken === ' ') {
+          nextDelay = speed * 0.5; // Faster for spaces
+        } else if (currentToken.match(/[.!?]/)) {
+          nextDelay = speed * 2; // Slower after punctuation
+        } else if (currentToken.length > 3) {
+          nextDelay = speed * 1.2; // Slightly slower for longer tokens
+        }
+
+        // Add slight randomness for natural feel
+        nextDelay += Math.random() * 10;
+
+        setTimeout(streamNextToken, nextDelay);
+      } else {
+        // Remove cursor when done
+        cursor.remove();
+
+        // Final render to ensure proper markdown formatting
+        const finalHtml = DOMPurify.sanitize(marked.parse(text));
+        element.innerHTML = finalHtml;
+
+        // Final scroll
+        chatElements.log.scrollTop = chatElements.log.scrollHeight;
+      }
+    }
+
+    // Start streaming after a brief delay
+    setTimeout(streamNextToken, 100);
+  }
+
+  // Tokenize text into realistic chunks (similar to how LLMs generate tokens)
+  function tokenizeText(text) {
+    const tokens = [];
+    let currentToken = '';
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+
+      // Handle different character types
+      if (char.match(/\s/)) {
+        // Space or whitespace - finish current token and add space as separate token
+        if (currentToken) {
+          tokens.push(currentToken);
+          currentToken = '';
+        }
+        tokens.push(char);
+      } else if (char.match(/[.!?,:;]/)) {
+        // Punctuation - finish current token and add punctuation as separate token
+        if (currentToken) {
+          tokens.push(currentToken);
+          currentToken = '';
+        }
+        tokens.push(char);
+      } else if (char.match(/[()[\]{}]/)) {
+        // Brackets - finish current token and add bracket as separate token
+        if (currentToken) {
+          tokens.push(currentToken);
+          currentToken = '';
+        }
+        tokens.push(char);
+      } else {
+        // Regular character - add to current token
+        currentToken += char;
+
+        // Create token chunks of 2-4 characters for realistic streaming
+        if (currentToken.length >= 2 && Math.random() > 0.6) {
+          tokens.push(currentToken);
+          currentToken = '';
+        }
+      }
+    }
+
+    // Add any remaining token
+    if (currentToken) {
+      tokens.push(currentToken);
+    }
+
+    return tokens;
   }
 
   // Note: sendPillMessage function removed since we now expand directly
@@ -1026,7 +1161,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         body: JSON.stringify({
           messages: chatMessages,
-          stream: true
+          stream: true,
+          // Pass current viewing context from the interface
+          currentMonth: window.app?.currentMonth || new Date().getMonth() + 1,
+          currentYear: window.app?.currentYear || new Date().getFullYear()
         })
       });
 

@@ -1382,6 +1382,11 @@ body.chatbox-view .dashboard-month-nav {
     display: none;
   }
 
+  /* Spacing handled by dashboard gap system - no additional margin needed */
+  .chatbox-container + .dashboard-month-nav {
+    margin-top: 0; /* Spacing handled by dashboard gap system */
+  }
+
   /* AGGRESSIVE STAT CARD HEIGHT REDUCTION FOR SMALL PHONES */
   /* Reduce total-card dimensions significantly to fit small viewports */
   .total-card {
@@ -1800,13 +1805,16 @@ body.chatbox-view .dashboard-month-nav {
   }
 }
 
-/* Dashboard month navigation specific styling - positioned underneath Next Payroll card */
+/* Dashboard month navigation specific styling - positioned underneath ChatGPT chat pill/button */
 .dashboard-month-nav {
   /* Spacing handled by dashboard gap system for consistency */
   margin-top: 0;
   margin-bottom: 0;
   padding-top: 0;
   padding-bottom: 0;
+  /* Ensure proper z-index to avoid conflicts with chat interface */
+  z-index: 10;
+  position: relative;
 }
 
 .dashboard-month-nav .month-navigation {
@@ -1837,6 +1845,11 @@ body.chatbox-view .dashboard-month-nav {
 @media (max-width: 1023px) {
   .dashboard-month-nav {
     margin-top: 0; /* Remove margin - spacing handled by dashboard gap system */
+  }
+
+  /* Spacing handled by dashboard gap system - no additional margin needed */
+  .chatbox-container + .dashboard-month-nav {
+    margin-top: 0; /* Spacing handled by dashboard gap system */
   }
 
   .dashboard-month-nav .month-navigation {
@@ -1902,6 +1915,13 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
   display: none !important; /* Hide shifts section navigation */
 }
 
+/* Specific spacing for month picker when positioned after ChatGPT chat interface */
+.chatbox-container + .dashboard-month-nav {
+  /* Remove margin - spacing handled by dashboard gap system for consistency */
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .month-nav-btn {
   /* Apply consistent button styling with circular shape - enlarged for better touch accessibility */
   background: var(--bg-tertiary);
@@ -1922,22 +1942,37 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
   transition: all var(--speed-normal) var(--ease-default);
   width: 48px; /* Increased from 40px for better touch target */
   height: 48px; /* Increased from 40px for better touch target */
+  /* Subtle 3D Bevel Effect - consistent with other card elements */
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.06), /* Subtle depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
 }
 
 .month-nav-btn:hover {
   border-color: rgba(99, 102, 241, 0.3);
   background-color: rgba(255, 255, 255, 0.02);
   transform: translateY(-1px);
+  /* Enhanced 3D Bevel Effect on hover - slightly more prominent for interactivity feedback */
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    0 4px 12px rgba(0, 0, 0, 0.08), /* Enhanced depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.07), /* Enhanced top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12), /* Enhanced bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.04), /* Enhanced left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.07); /* Enhanced right inner shadow */
 }
 
 .month-nav-btn:active {
   transform: translateY(0);
+  /* Pressed 3D Bevel Effect - subtle inward appearance */
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    0 1px 3px rgba(0, 0, 0, 0.04), /* Reduced depth shadow */
+    inset 0 1px 0 rgba(0, 0, 0, 0.08), /* Inverted top shadow for pressed effect */
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03), /* Inverted bottom highlight for pressed effect */
+    inset 1px 0 0 rgba(0, 0, 0, 0.04), /* Inverted left shadow for pressed effect */
+    inset -1px 0 0 rgba(255, 255, 255, 0.02); /* Inverted right highlight for pressed effect */
 }
 
 .month-display {
@@ -2007,6 +2042,13 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
   padding: 12px;
   color: var(--text-primary);
   font-size: var(--text-base); /* Prevents zoom on iOS */
+  /* Subtle 3D Bevel Effect - consistent with other interactive elements */
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04), /* Very subtle depth shadow */
+    inset 0 1px 0 rgba(0, 0, 0, 0.08), /* Subtle inward top shadow for input appearance */
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03), /* Subtle inward bottom highlight */
+    inset 1px 0 0 rgba(0, 0, 0, 0.04), /* Subtle inward left shadow */
+    inset -1px 0 0 rgba(255, 255, 255, 0.02); /* Subtle inward right highlight */
   width: 100%;
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.04),
@@ -2036,10 +2078,14 @@ select.form-control {
   outline: none;
   border-color: rgba(99, 102, 241, 0.6);
   background-color: rgba(255, 255, 255, 0.03);
+  /* Enhanced 3D Bevel Effect on focus - slightly more prominent for interactivity feedback */
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    0 0 0 3px rgba(99, 102, 241, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 4px 12px rgba(0, 0, 0, 0.08), /* Enhanced depth shadow */
+    0 0 0 3px rgba(99, 102, 241, 0.1), /* Focus ring */
+    inset 0 1px 0 rgba(0, 0, 0, 0.1), /* Enhanced inward top shadow */
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05), /* Enhanced inward bottom highlight */
+    inset 1px 0 0 rgba(0, 0, 0, 0.06), /* Enhanced inward left shadow */
+    inset -1px 0 0 rgba(255, 255, 255, 0.03); /* Enhanced inward right highlight */
 }
 
 .form-control:focus-visible {
@@ -2279,18 +2325,39 @@ input[type="time"].form-control[value=""]:focus {
   color: var(--bg-primary);
   width: 100%;
   opacity: 0.9;
+  /* Subtle 3D Bevel Effect - consistent with other interactive elements */
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.06), /* Subtle depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
 }
 
 .btn-secondary {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   border: 1px solid var(--border);
+  /* Subtle 3D Bevel Effect - consistent with other interactive elements */
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.06), /* Subtle depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
 }
 
 /* Styling for tilbake-knapper */
 .btn-secondary:hover {
   background-color: rgba(255, 255, 255, 0.03);
   border-color: rgba(99, 102, 241, 0.3);
+  /* Enhanced 3D Bevel Effect on hover - slightly more prominent for interactivity feedback */
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.08), /* Enhanced depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.07), /* Enhanced top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12), /* Enhanced bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.04), /* Enhanced left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.07); /* Enhanced right inner shadow */
 }
 
 /* Settings modal button styling */
@@ -2404,6 +2471,13 @@ input[type="time"].form-control[value=""]:focus {
   max-width: 600px;
   width: 100vw;
   height: 100vh;
+  /* Subtle 3D Bevel Effect - consistent with other card elements */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12), /* Enhanced depth shadow for modals */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
   overflow-y: auto;
   position: relative;
   border: 1px solid var(--border);
@@ -3695,13 +3769,13 @@ input:checked + .slider:before {
   /* spacing now handled by parent gap */
   margin-bottom: 0;
   border: none; /* Remove border/outline */
-  /* Subtle 3D Bevel Effect - refined raised appearance */
+  /* Subtle 3D Bevel Effect - refined raised appearance with reduced intensity */
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
-    inset 0 1px 0 rgba(255, 255, 255, 0.1), /* Subtle top inner highlight */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2), /* Subtle bottom inner shadow */
-    inset 1px 0 0 rgba(255, 255, 255, 0.05), /* Subtle left inner highlight */
-    inset -1px 0 0 rgba(0, 0, 0, 0.1); /* Subtle right inner shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Reduced top inner highlight (was 0.1) */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Reduced bottom inner shadow (was 0.2) */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Reduced left inner highlight (was 0.05) */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Reduced right inner shadow (was 0.1) */
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -3711,13 +3785,13 @@ input:checked + .slider:before {
 .total-card:hover {
   background-color: rgba(255, 255, 255, 0.02);
   transform: translateY(-2px);
-  /* Subtle 3D Bevel Effect on hover - refined appearance */
+  /* Subtle 3D Bevel Effect on hover - refined appearance with reduced intensity */
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.18), /* Enhanced depth shadow */
-    inset 0 2px 0 rgba(255, 255, 255, 0.13), /* Refined top inner highlight */
-    inset 0 -2px 0 rgba(0, 0, 0, 0.23), /* Refined bottom inner shadow */
-    inset 2px 0 0 rgba(255, 255, 255, 0.08), /* Refined left inner highlight */
-    inset -2px 0 0 rgba(0, 0, 0, 0.13); /* Refined right inner shadow */
+    inset 0 2px 0 rgba(255, 255, 255, 0.07), /* Reduced top inner highlight (was 0.13) */
+    inset 0 -2px 0 rgba(0, 0, 0, 0.12), /* Reduced bottom inner shadow (was 0.23) */
+    inset 2px 0 0 rgba(255, 255, 255, 0.04), /* Reduced left inner highlight (was 0.08) */
+    inset -2px 0 0 rgba(0, 0, 0, 0.07); /* Reduced right inner shadow (was 0.13) */
 }
 
 .total-card::before {
@@ -4256,13 +4330,13 @@ input:checked + .slider:before {
   padding: 18px;
   margin: 0;
   border: none;
-  /* Subtle 3D Bevel Effect - consistent with payroll card */
+  /* Subtle 3D Bevel Effect - consistent with payroll card, reduced intensity */
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.15), /* Same depth shadow as payroll card */
-    inset 0 1px 0 rgba(255, 255, 255, 0.1), /* Subtle top inner highlight */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2), /* Subtle bottom inner shadow */
-    inset 1px 0 0 rgba(255, 255, 255, 0.05), /* Subtle left inner highlight */
-    inset -1px 0 0 rgba(0, 0, 0, 0.1); /* Subtle right inner shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Reduced top inner highlight (was 0.1) */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Reduced bottom inner shadow (was 0.2) */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Reduced left inner highlight (was 0.05) */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Reduced right inner shadow (was 0.1) */
   transition: all var(--speed-normal) var(--ease-default);
   min-height: 80px;
   position: relative;
@@ -4278,13 +4352,13 @@ input:checked + .slider:before {
   border-radius: 24px; /* Fully rounded edges */
   padding: 18px;
   margin: 0;
-  /* Subtle 3D Bevel Effect - refined raised appearance matching total card */
+  /* Subtle 3D Bevel Effect - refined raised appearance matching total card, reduced intensity */
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
-    inset 0 1px 0 rgba(255, 255, 255, 0.1), /* Subtle top inner highlight */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2), /* Subtle bottom inner shadow */
-    inset 1px 0 0 rgba(255, 255, 255, 0.05), /* Subtle left inner highlight */
-    inset -1px 0 0 rgba(0, 0, 0, 0.1); /* Subtle right inner shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Reduced top inner highlight (was 0.1) */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Reduced bottom inner shadow (was 0.2) */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Reduced left inner highlight (was 0.05) */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Reduced right inner shadow (was 0.1) */
   transition: all var(--speed-normal) var(--ease-default);
   min-height: 80px;
   position: relative;
@@ -4297,25 +4371,25 @@ input:checked + .slider:before {
 /* Active next shift - when it's today or tomorrow */
 .next-shift-card .shift-item.active {
   background: var(--gradient-secondary);
-  /* Subtle 3D Bevel Effect for active state */
+  /* Subtle 3D Bevel Effect for active state - reduced intensity */
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.08), /* Existing depth shadow */
-    inset 0 2px 0 rgba(255, 255, 255, 0.13), /* Refined top inner highlight */
-    inset 0 -2px 0 rgba(0, 0, 0, 0.23), /* Refined bottom inner shadow */
-    inset 2px 0 0 rgba(255, 255, 255, 0.08), /* Refined left inner highlight */
-    inset -2px 0 0 rgba(0, 0, 0, 0.13); /* Refined right inner shadow */
+    inset 0 2px 0 rgba(255, 255, 255, 0.07), /* Reduced top inner highlight (was 0.13) */
+    inset 0 -2px 0 rgba(0, 0, 0, 0.12), /* Reduced bottom inner shadow (was 0.23) */
+    inset 2px 0 0 rgba(255, 255, 255, 0.04), /* Reduced left inner highlight (was 0.08) */
+    inset -2px 0 0 rgba(0, 0, 0, 0.07); /* Reduced right inner shadow (was 0.13) */
 }
 
 /* Active next payroll - when it's soon */
 .next-payroll-card .payroll-item.active {
   background: rgba(18, 18, 18, 0.85); /* Slightly more opaque when active */
-  /* Subtle 3D Bevel Effect for active state */
+  /* Subtle 3D Bevel Effect for active state - reduced intensity */
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
-    inset 0 2px 0 rgba(255, 255, 255, 0.13), /* Refined top inner highlight */
-    inset 0 -2px 0 rgba(0, 0, 0, 0.23), /* Refined bottom inner shadow */
-    inset 2px 0 0 rgba(255, 255, 255, 0.08), /* Refined left inner highlight */
-    inset -2px 0 0 rgba(0, 0, 0, 0.13); /* Refined right inner shadow */
+    inset 0 2px 0 rgba(255, 255, 255, 0.07), /* Reduced top inner highlight (was 0.13) */
+    inset 0 -2px 0 rgba(0, 0, 0, 0.12), /* Reduced bottom inner shadow (was 0.23) */
+    inset 2px 0 0 rgba(255, 255, 255, 0.04), /* Reduced left inner highlight (was 0.08) */
+    inset -2px 0 0 rgba(0, 0, 0, 0.07); /* Reduced right inner shadow (was 0.13) */
 }
 
 .next-shift-empty {
@@ -9870,10 +9944,14 @@ input[type="file"].form-control:focus {
 /* ===== CHATBOX STYLES ===== */
 
 .chatbox-container {
-  margin-top: 16px;
+  /* Remove margin - spacing handled by dashboard gap system for consistency */
+  margin-top: 0;
+  margin-bottom: 0;
   width: 100%;
   /* Ensure this container takes up space in the layout flow */
   position: relative;
+  /* Ensure proper z-index for interaction with month picker below */
+  z-index: 100;
 }
 
 /* Pill-style container that can expand */
@@ -9886,14 +9964,26 @@ input[type="file"].form-control:focus {
   border-radius: 24px;
   overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Subtle 3D Bevel Effect - consistent with other card elements */
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08), /* Subtle depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
   /* Remove fixed padding - will be handled by content */
 }
 
 .chatbox-pill:hover {
   background: rgba(30, 30, 30, 0.85);
   transform: translateY(-1px);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);
+  /* Enhanced 3D Bevel Effect on hover - slightly more prominent for interactivity feedback */
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12), /* Enhanced depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.07), /* Enhanced top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12), /* Enhanced bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.04), /* Enhanced left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.07); /* Enhanced right inner shadow */
 }
 
 /* When expanded, remove hover effects and disable interaction */
@@ -9905,7 +9995,13 @@ input[type="file"].form-control:focus {
 .chatbox-pill.expanded:hover {
   transform: none;
   background: rgba(18, 18, 18, 0.75); /* Keep original translucent background */
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Keep original shadow */
+  /* Keep original subtle bevel effect when expanded */
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08), /* Subtle depth shadow */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
 }
 
 .chatbox-pill.expanded .chatbox-pill-text-container {
@@ -9925,22 +10021,49 @@ input[type="file"].form-control:focus {
 .chatbox-pill-content {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0; /* Remove gap since we're using badge positioning */
   justify-content: flex-start;
-  padding: 12px 20px; /* Move padding here from pill container */
+  padding: 12px 20px 12px 44px; /* Add left padding to account for badge */
   cursor: pointer;
+  position: relative; /* For absolute positioning of badge */
 }
 
 .chatbox-pill.expanded .chatbox-pill-content {
   cursor: default;
+  padding-left: 60px; /* Increase left padding to accommodate wider badge */
+}
+
+/* ChatGPT icon badge - similar to Next Shift/Payroll badges */
+.chatbox-icon-badge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(135deg,
+    rgba(0, 245, 255, 0.12) 0%,
+    rgba(0, 212, 255, 0.12) 50%,
+    rgba(58, 190, 246, 0.12) 100%);
+  color: var(--text-secondary);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px 0 0 24px; /* Rounded left corners, flat right edge */
+  transition: all 0.3s ease; /* Smooth transition for expansion */
+}
+
+/* Expanded state - extend badge and flatten bottom edge */
+.chatbox-pill.expanded .chatbox-icon-badge {
+  width: 48px; /* Extend to fill more left space */
+  border-radius: 24px 0 0 0; /* Only top-left rounded, flat right and bottom edges */
 }
 
 .chatbox-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   color: var(--text-secondary);
   flex-shrink: 0;
-  order: -1; /* Ensure icon stays at the far left */
 }
 
 .chatbox-pill-text-container {
@@ -9951,7 +10074,7 @@ input[type="file"].form-control:focus {
 }
 
 .chatbox-pill-text {
-  color: var(--text-secondary); /* Gray color as requested */
+  color: rgba(156, 163, 175, 0.7); /* More muted gray color */
   font-size: 16px; /* Minimum 16px to prevent iOS zoom */
   font-weight: 400; /* Lighter weight for text */
   cursor: pointer;
@@ -10068,6 +10191,24 @@ input[type="file"].form-control:focus {
   color: var(--text-primary);
   align-self: flex-start; /* Align to left using flexbox */
   border: 1px solid var(--border);
+}
+
+/* Typing cursor for streaming messages - inline and subtle */
+.typing-cursor {
+  display: inline-block;
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-size: 1em;
+  vertical-align: baseline;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  white-space: nowrap;
+  /* Ensure it stays inline with text */
+  position: relative;
+  top: 0;
 }
 
 .chatbox-message.system {
@@ -10385,16 +10526,43 @@ input[type="file"].form-control:focus {
   color: white;
 }
 
+/* Responsive border radius for chatbox icon badge */
+@media (max-width: 480px) {
+  .chatbox-icon-badge {
+    border-radius: 20px 0 0 20px; /* Rounded left corners, flat right edge */
+  }
+
+  .chatbox-pill.expanded .chatbox-icon-badge {
+    width: 44px; /* Slightly smaller extension on mobile */
+    border-radius: 20px 0 0 0; /* Only top-left rounded, flat right and bottom edges */
+  }
+}
+
+@media (max-width: 360px) {
+  .chatbox-icon-badge {
+    border-radius: 16px 0 0 16px; /* Rounded left corners, flat right edge */
+  }
+
+  .chatbox-pill.expanded .chatbox-icon-badge {
+    width: 40px; /* Even smaller extension on very small screens */
+    border-radius: 16px 0 0 0; /* Only top-left rounded, flat right and bottom edges */
+  }
+}
+
 /* Mobile responsive adjustments for chatbox */
 @media (max-width: 768px) {
   .chatbox-pill-content {
-    padding: 16px 24px; /* Increased padding for better mobile appearance */
-    gap: 14px;
+    padding: 16px 24px 16px 44px; /* Increased padding for better mobile appearance, maintain left padding for badge */
+    gap: 0;
+  }
+
+  .chatbox-pill.expanded .chatbox-pill-content {
+    padding-left: 56px; /* Adjust for wider badge on mobile */
   }
 
   .chatbox-icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 
   .chatbox-pill-text {
@@ -10439,13 +10607,17 @@ input[type="file"].form-control:focus {
 /* Extra small mobile devices - still maintain good padding */
 @media (max-width: 480px) {
   .chatbox-pill-content {
-    padding: 14px 22px; /* Maintain substantial padding even on small screens */
-    gap: 12px;
+    padding: 14px 22px 14px 44px; /* Maintain substantial padding even on small screens, keep left padding for badge */
+    gap: 0;
+  }
+
+  .chatbox-pill.expanded .chatbox-pill-content {
+    padding-left: 52px; /* Adjust for wider badge on small screens */
   }
 
   .chatbox-icon {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
   }
 }
 

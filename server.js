@@ -173,6 +173,45 @@ const copyShiftSchema = {
   }
 };
 
+const getWageDataByWeekSchema = {
+  name: 'getWageDataByWeek',
+  description: 'Get detailed wage data for a specific week including shift duration, earnings breakdown, and totals.',
+  parameters: {
+    type: 'object',
+    properties: {
+      week_number: { type: 'integer', description: 'Week number (1-53). Optional - if not provided, gets current week.' },
+      year: { type: 'integer', description: 'Year for week query. Optional - if not provided, gets current week.' }
+    },
+    required: []
+  }
+};
+
+const getWageDataByMonthSchema = {
+  name: 'getWageDataByMonth',
+  description: 'Get detailed wage data for a specific month including shift duration, earnings breakdown, and totals.',
+  parameters: {
+    type: 'object',
+    properties: {
+      month: { type: 'integer', description: 'Month number (1-12). Optional - if not provided, uses current viewing month.' },
+      year: { type: 'integer', description: 'Year. Optional - if not provided, uses current viewing year.' }
+    },
+    required: []
+  }
+};
+
+const getWageDataByDateRangeSchema = {
+  name: 'getWageDataByDateRange',
+  description: 'Get detailed wage data for a custom date range including shift duration, earnings breakdown, and totals.',
+  parameters: {
+    type: 'object',
+    properties: {
+      from_date: { type: 'string', description: 'Start date YYYY-MM-DD' },
+      to_date: { type: 'string', description: 'End date YYYY-MM-DD' }
+    },
+    required: ['from_date', 'to_date']
+  }
+};
+
 const tools = [
   { type: 'function', function: addShiftSchema },
   { type: 'function', function: addSeriesSchema },
@@ -180,10 +219,266 @@ const tools = [
   { type: 'function', function: deleteShiftSchema },
   { type: 'function', function: deleteSeriesSchema },
   { type: 'function', function: getShiftsSchema },
-  { type: 'function', function: copyShiftSchema }
+  { type: 'function', function: copyShiftSchema },
+  { type: 'function', function: getWageDataByWeekSchema },
+  { type: 'function', function: getWageDataByMonthSchema },
+  { type: 'function', function: getWageDataByDateRangeSchema }
 ];
 
 // ---------- helpers ----------
+
+// Wage calculation constants and helpers
+const PAUSE_THRESHOLD = 5.5;
+const PAUSE_DEDUCTION = 0.5;
+const PRESET_WAGE_RATES = {
+  '-1': 129.91,  // under16
+  '-2': 132.90,  // under18
+  1: 184.54,
+  2: 185.38,
+  3: 187.46,
+  4: 193.05,
+  5: 210.81,
+  6: 256.14
+};
+const PRESET_BONUSES = {
+  weekday: [
+    { from: '18:00', to: '06:00', rate: 15.5 }
+  ],
+  saturday: [
+    { from: '00:00', to: '24:00', rate: 15.5 }
+  ],
+  sunday: [
+    { from: '00:00', to: '24:00', rate: 31.0 }
+  ]
+};
+
+function timeToMinutes(timeStr) {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+function calculateOverlap(start1, end1, start2, end2) {
+  const overlapStart = Math.max(start1, start2);
+  const overlapEnd = Math.min(end1, end2);
+  return Math.max(0, overlapEnd - overlapStart);
+}
+
+function calculateBonus(startTime, endTime, bonusSegments) {
+  let totalBonus = 0;
+  const startMinutes = timeToMinutes(startTime);
+  let endMinutes = timeToMinutes(endTime);
+
+  // Handle shifts that continue past midnight
+  if (endMinutes <= startMinutes) {
+    endMinutes += 24 * 60;
+  }
+
+  for (const segment of bonusSegments) {
+    const segStart = timeToMinutes(segment.from);
+    let segEnd = timeToMinutes(segment.to);
+    if (segEnd <= segStart) {
+      segEnd += 24 * 60;
+    }
+    const overlap = calculateOverlap(startMinutes, endMinutes, segStart, segEnd);
+    totalBonus += (overlap / 60) * segment.rate;
+  }
+  return totalBonus;
+}
+
+async function getUserSettings(user_id) {
+  const { data: settings, error } = await supabase
+    .from('user_settings')
+    .select('*')
+    .eq('user_id', user_id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching user settings:', error);
+    return null;
+  }
+
+  return settings;
+}
+
+// Date resolution functions for temporal references
+function resolveDateReference(reference, viewingMonth, viewingYear) {
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+  const currentYear = today.getFullYear();
+
+  // Normalize reference to lowercase
+  const ref = reference.toLowerCase().trim();
+
+  // Handle month references
+  if (ref.includes('denne måneden') || ref.includes('inneværende måned') || ref === 'denne måned') {
+    const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
+    const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
+    return { from_date: firstDay, to_date: lastDay, description: `${getMonthName(viewingMonth)} ${viewingYear}` };
+  }
+
+  if (ref.includes('forrige måned') || ref.includes('sist måned')) {
+    let prevMonth = viewingMonth - 1;
+    let prevYear = viewingYear;
+    if (prevMonth < 1) {
+      prevMonth = 12;
+      prevYear = viewingYear - 1;
+    }
+    const firstDay = new Date(prevYear, prevMonth - 1, 1).toISOString().slice(0, 10);
+    const lastDay = new Date(prevYear, prevMonth, 0).toISOString().slice(0, 10);
+    return { from_date: firstDay, to_date: lastDay, description: `${getMonthName(prevMonth)} ${prevYear}` };
+  }
+
+  if (ref.includes('neste måned')) {
+    let nextMonth = viewingMonth + 1;
+    let nextYear = viewingYear;
+    if (nextMonth > 12) {
+      nextMonth = 1;
+      nextYear = viewingYear + 1;
+    }
+    const firstDay = new Date(nextYear, nextMonth - 1, 1).toISOString().slice(0, 10);
+    const lastDay = new Date(nextYear, nextMonth, 0).toISOString().slice(0, 10);
+    return { from_date: firstDay, to_date: lastDay, description: `${getMonthName(nextMonth)} ${nextYear}` };
+  }
+
+  // Handle week references
+  if (ref.includes('denne uka') || ref.includes('denne uken') || ref === 'denne uke') {
+    const { start, end } = getCurrentWeekDateRange();
+    return { from_date: start, to_date: end, description: 'denne uka' };
+  }
+
+  if (ref.includes('forrige uke') || ref.includes('sist uke')) {
+    const { start, end } = getPreviousWeekDateRange();
+    return { from_date: start, to_date: end, description: 'forrige uke' };
+  }
+
+  if (ref.includes('neste uke')) {
+    const { start, end } = getNextWeeksDateRange(1);
+    return { from_date: start, to_date: end, description: 'neste uke' };
+  }
+
+  // Handle quarter references
+  if (ref.includes('dette kvartalet') || ref.includes('inneværende kvartal')) {
+    const quarter = Math.ceil(viewingMonth / 3);
+    const firstMonth = (quarter - 1) * 3 + 1;
+    const lastMonth = quarter * 3;
+    const firstDay = new Date(viewingYear, firstMonth - 1, 1).toISOString().slice(0, 10);
+    const lastDay = new Date(viewingYear, lastMonth, 0).toISOString().slice(0, 10);
+    return { from_date: firstDay, to_date: lastDay, description: `Q${quarter} ${viewingYear}` };
+  }
+
+  // Handle year references
+  if (ref.includes('i år') || ref.includes('dette året')) {
+    const firstDay = new Date(viewingYear, 0, 1).toISOString().slice(0, 10);
+    const lastDay = new Date(viewingYear, 11, 31).toISOString().slice(0, 10);
+    return { from_date: firstDay, to_date: lastDay, description: `${viewingYear}` };
+  }
+
+  if (ref.includes('i fjor') || ref.includes('forrige år')) {
+    const prevYear = viewingYear - 1;
+    const firstDay = new Date(prevYear, 0, 1).toISOString().slice(0, 10);
+    const lastDay = new Date(prevYear, 11, 31).toISOString().slice(0, 10);
+    return { from_date: firstDay, to_date: lastDay, description: `${prevYear}` };
+  }
+
+  // Return null if no pattern matches
+  return null;
+}
+
+function getMonthName(monthNumber) {
+  const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+  return monthNames[monthNumber - 1];
+}
+
+function getPreviousWeekDateRange() {
+  const today = new Date();
+  const currentDay = today.getDay();
+  const mondayOffset = currentDay === 0 ? 6 : currentDay - 1; // Sunday = 0, so 6 days back to Monday
+
+  // Get last week's Monday
+  const lastWeekMonday = new Date(today);
+  lastWeekMonday.setDate(today.getDate() - mondayOffset - 7);
+
+  // Get last week's Sunday
+  const lastWeekSunday = new Date(lastWeekMonday);
+  lastWeekSunday.setDate(lastWeekMonday.getDate() + 6);
+
+  return {
+    start: lastWeekMonday.toISOString().slice(0, 10),
+    end: lastWeekSunday.toISOString().slice(0, 10)
+  };
+}
+
+function calculateShiftEarnings(shift, userSettings) {
+  const startMinutes = timeToMinutes(shift.start_time);
+  let endMinutes = timeToMinutes(shift.end_time);
+
+  // Handle shifts that cross midnight
+  if (endMinutes < startMinutes) {
+    endMinutes += 24 * 60;
+  } else if (endMinutes === startMinutes) {
+    // Assume 24-hour shift if times are identical
+    endMinutes += 24 * 60;
+  }
+
+  const durationHours = (endMinutes - startMinutes) / 60;
+
+  if (durationHours <= 0) {
+    return {
+      hours: 0,
+      totalHours: 0,
+      paidHours: 0,
+      pauseDeducted: false,
+      baseWage: 0,
+      bonus: 0,
+      total: 0
+    };
+  }
+
+  let paidHours = durationHours;
+  let adjustedEndMinutes = endMinutes;
+
+  // Apply pause deduction if enabled
+  const pauseDeduction = userSettings?.pause_deduction !== false;
+  if (pauseDeduction && durationHours > PAUSE_THRESHOLD) {
+    paidHours -= PAUSE_DEDUCTION;
+    adjustedEndMinutes -= PAUSE_DEDUCTION * 60;
+  }
+
+  // Get wage rate
+  const usePreset = userSettings?.use_preset !== false;
+  const wageRate = usePreset
+    ? PRESET_WAGE_RATES[userSettings?.wage_level || userSettings?.current_wage_level || 1]
+    : (userSettings?.custom_wage || 200);
+
+  const baseWage = paidHours * wageRate;
+
+  // Get bonuses
+  const bonuses = usePreset ? PRESET_BONUSES : (userSettings?.custom_bonuses || {
+    weekday: [],
+    saturday: [],
+    sunday: []
+  });
+
+  const bonusType = shift.shift_type === 0 ? 'weekday' : (shift.shift_type === 1 ? 'saturday' : 'sunday');
+  const bonusSegments = bonuses[bonusType] || [];
+
+  // Calculate end time after adjustments
+  const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
+  const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
+
+  const bonus = calculateBonus(shift.start_time, endTimeStr, bonusSegments);
+
+  return {
+    hours: parseFloat(paidHours.toFixed(2)),
+    totalHours: parseFloat(durationHours.toFixed(2)),
+    paidHours: parseFloat(paidHours.toFixed(2)),
+    pauseDeducted: pauseDeduction && durationHours > PAUSE_THRESHOLD,
+    baseWage: parseFloat(baseWage.toFixed(2)),
+    bonus: parseFloat(bonus.toFixed(2)),
+    total: parseFloat((baseWage + bonus).toFixed(2))
+  };
+}
+
 function generateSeriesDates(from, to, days, intervalWeeks = 1, offsetStart = 0) {
   const start = new Date(`${from}T00:00:00Z`);
   const end   = new Date(`${to}T00:00:00Z`);
@@ -414,7 +709,7 @@ app.get('/settings', authenticateUser, async (req, res) => {
 
 // ---------- /chat ----------
 app.post('/chat', authenticateUser, async (req, res) => {
-  const { messages, stream = false } = req.body;
+  const { messages, stream = false, currentMonth, currentYear } = req.body;
 
   // Get user message first for system prompt customization
   const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
@@ -432,8 +727,19 @@ app.post('/chat', authenticateUser, async (req, res) => {
   const today = new Date().toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
   const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
 
+  // Get current viewing context from frontend (defaults to current month/year if not provided)
+  const viewingMonth = currentMonth || new Date().getMonth() + 1;
+  const viewingYear = currentYear || new Date().getFullYear();
+  const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+  const viewingMonthName = monthNames[viewingMonth - 1];
+
   // Create a more specific system prompt based on the user message
   let systemContent = `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}.
+
+VIKTIG KONTEKST: Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet.
+Når brukeren sier "denne måneden" eller "inneværende måned", mener de ${viewingMonthName} ${viewingYear}.
+Når brukeren sier "forrige måned", mener de måneden før ${viewingMonthName} ${viewingYear}.
+Når brukeren sier "neste måned", mener de måneden etter ${viewingMonthName} ${viewingYear}.
 
 ABSOLUTT KRITISK - MULTIPLE TOOL CALLS REGEL:
 Når brukeren ber om flere operasjoner i SAMME melding, MÅ du utføre ALLE operasjonene i SAMME respons med flere tool_calls. Dette er OBLIGATORISK, ikke valgfritt!`;
@@ -449,20 +755,38 @@ Du skal gjøre NØYAKTIG disse to tool calls i denne rekkefølgen:
 
 IKKE gjør getShifts to ganger! IKKE spør om bekreftelse! Gjør begge operasjonene nå!`;
   } else if (userMessage.includes('måneden') || userMessage.includes('august') || userMessage.includes('måned')) {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
+    // Use the viewing context month instead of current month
+    const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
+    const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
 
     systemContent += `
 
 SPESIFIKK INSTRUKSJON for månedlig spørring:
-Bruk getShifts({"criteria_type": "date_range", "from_date": "${firstDay}", "to_date": "${lastDay}"}) for å hente alle vakter denne måneden.
-Du KAN absolutt hente vakter for hele måneder - ikke si at det ikke er mulig!`;
+Bruk getWageDataByMonth() for å hente detaljerte lønnsdata for ${viewingMonthName} ${viewingYear}, eller
+getShifts({"criteria_type": "date_range", "from_date": "${firstDay}", "to_date": "${lastDay}"}) for enklere vaktliste.
+Du KAN absolutt hente vakter for hele måneder - ikke si at det ikke er mulig!
+
+TILGJENGELIGE FUNKSJONER for lønnsdata:
+- getWageDataByWeek() - detaljerte lønnsdata for en uke
+- getWageDataByMonth() - detaljerte lønnsdata for en måned
+- getWageDataByDateRange(from_date, to_date) - detaljerte lønnsdata for egendefinert periode
+- getShifts() - enklere vaktliste uten lønnsberegninger`;
   }
 
   const systemContextHint = {
     role: 'system',
     content: `Du er en vaktplanleggingsassistent. I dag er ${today}, i morgen er ${tomorrow}. Brukerens navn er ${userName}.
+
+VIKTIG KONTEKST: Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet.
+- "denne måneden"/"inneværende måned" = ${viewingMonthName} ${viewingYear}
+- "forrige måned" = måneden før ${viewingMonthName} ${viewingYear}
+- "neste måned" = måneden etter ${viewingMonthName} ${viewingYear}
+
+LØNNSDATA FUNKSJONER:
+- getWageDataByWeek() - detaljerte lønnsdata for uke (timer, grunnlønn, tillegg, totalt)
+- getWageDataByMonth() - detaljerte lønnsdata for måned (bruker viewing context hvis ikke spesifisert)
+- getWageDataByDateRange(from_date, to_date) - detaljerte lønnsdata for periode
+- getShifts() - enklere vaktliste med grunnleggende lønnsinfo
 
 ${systemContent}
 
@@ -1368,17 +1692,39 @@ async function handleTool(call, user_id) {
         } else if (!shifts || shifts.length === 0) {
           toolResult = `NONE: Ingen skift funnet for ${criteriaDescription}`;
         } else {
-          // Calculate total hours
-          const totalHours = shifts.reduce((sum, shift) => {
-            return sum + hoursBetween(shift.start_time, shift.end_time);
-          }, 0);
+          // Get user settings for wage calculations
+          const userSettings = await getUserSettings(user_id);
 
-          // Format shifts for tool content (ID:xxx YYYY-MM-DD HH:mm-HH:mm)
-          const formattedShifts = shifts.map(shift =>
-            `ID:${shift.id} ${shift.shift_date} ${shift.start_time}-${shift.end_time}`
+          // Calculate detailed wage data for each shift
+          let totalHours = 0;
+          let totalEarnings = 0;
+
+          const detailedShifts = shifts.map(shift => {
+            const calc = calculateShiftEarnings(shift, userSettings);
+            totalHours += calc.hours;
+            totalEarnings += calc.total;
+
+            return {
+              id: shift.id,
+              date: shift.shift_date,
+              startTime: shift.start_time,
+              endTime: shift.end_time,
+              type: shift.shift_type,
+              duration: calc.totalHours,
+              paidHours: calc.hours,
+              baseWage: calc.baseWage,
+              bonus: calc.bonus,
+              totalEarnings: calc.total,
+              pauseDeducted: calc.pauseDeducted
+            };
+          });
+
+          // Format shifts for tool content with earnings info
+          const formattedShifts = detailedShifts.map(shift =>
+            `ID:${shift.id} ${shift.date} ${shift.startTime}-${shift.endTime} (${shift.paidHours}t, ${shift.totalEarnings}kr)`
           ).join(', ');
 
-          toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours} timer totalt). Skift: ${formattedShifts}`;
+          toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours.toFixed(1)} timer, ${totalEarnings.toFixed(0)}kr totalt). Skift: ${formattedShifts}`;
         }
       }
     }
@@ -1515,6 +1861,215 @@ async function handleTool(call, user_id) {
             }
           }
         }
+      }
+    }
+
+    // New wage data functions
+    if (fnName === 'getWageDataByWeek') {
+      let selectQuery = supabase
+        .from('user_shifts')
+        .select('*')
+        .eq('user_id', user_id)
+        .order('shift_date');
+
+      let criteriaDescription = '';
+
+      if (!args.week_number || !args.year) {
+        // If no week_number/year specified, get current week
+        const { start, end } = getCurrentWeekDateRange();
+        selectQuery = selectQuery.gte('shift_date', start).lte('shift_date', end);
+        criteriaDescription = 'denne uka';
+      } else {
+        const { start, end } = getWeekDateRange(args.week_number, args.year);
+        selectQuery = selectQuery.gte('shift_date', start).lte('shift_date', end);
+        criteriaDescription = `uke ${args.week_number} i ${args.year}`;
+      }
+
+      const { data: shifts, error } = await selectQuery;
+
+      if (error) {
+        toolResult = 'ERROR: Kunne ikke hente lønnsdata';
+      } else if (!shifts || shifts.length === 0) {
+        toolResult = `NONE: Ingen skift funnet for ${criteriaDescription}`;
+      } else {
+        // Get user settings for wage calculations
+        const userSettings = await getUserSettings(user_id);
+
+        // Calculate detailed wage data for each shift
+        let totalHours = 0;
+        let totalEarnings = 0;
+        let totalBaseWage = 0;
+        let totalBonus = 0;
+
+        const detailedShifts = shifts.map(shift => {
+          const calc = calculateShiftEarnings(shift, userSettings);
+          totalHours += calc.hours;
+          totalEarnings += calc.total;
+          totalBaseWage += calc.baseWage;
+          totalBonus += calc.bonus;
+
+          return {
+            id: shift.id,
+            date: shift.shift_date,
+            startTime: shift.start_time,
+            endTime: shift.end_time,
+            type: shift.shift_type,
+            duration: calc.totalHours,
+            paidHours: calc.hours,
+            baseWage: calc.baseWage,
+            bonus: calc.bonus,
+            totalEarnings: calc.total,
+            pauseDeducted: calc.pauseDeducted
+          };
+        });
+
+        toolResult = JSON.stringify({
+          period: criteriaDescription,
+          shifts: detailedShifts,
+          summary: {
+            totalShifts: shifts.length,
+            totalHours: parseFloat(totalHours.toFixed(2)),
+            totalEarnings: parseFloat(totalEarnings.toFixed(2)),
+            totalBaseWage: parseFloat(totalBaseWage.toFixed(2)),
+            totalBonus: parseFloat(totalBonus.toFixed(2)),
+            averageHoursPerShift: parseFloat((totalHours / shifts.length).toFixed(2)),
+            averageEarningsPerShift: parseFloat((totalEarnings / shifts.length).toFixed(2))
+          }
+        });
+      }
+    }
+
+    if (fnName === 'getWageDataByMonth') {
+      // Use viewing context if no month/year specified
+      const targetMonth = args.month || viewingMonth;
+      const targetYear = args.year || viewingYear;
+
+      const firstDay = new Date(targetYear, targetMonth - 1, 1).toISOString().slice(0, 10);
+      const lastDay = new Date(targetYear, targetMonth, 0).toISOString().slice(0, 10);
+
+      const { data: shifts, error } = await supabase
+        .from('user_shifts')
+        .select('*')
+        .eq('user_id', user_id)
+        .gte('shift_date', firstDay)
+        .lte('shift_date', lastDay)
+        .order('shift_date');
+
+      const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+      const criteriaDescription = `${monthNames[targetMonth - 1]} ${targetYear}`;
+
+      if (error) {
+        toolResult = 'ERROR: Kunne ikke hente lønnsdata';
+      } else if (!shifts || shifts.length === 0) {
+        toolResult = `NONE: Ingen skift funnet for ${criteriaDescription}`;
+      } else {
+        // Get user settings for wage calculations
+        const userSettings = await getUserSettings(user_id);
+
+        // Calculate detailed wage data for each shift
+        let totalHours = 0;
+        let totalEarnings = 0;
+        let totalBaseWage = 0;
+        let totalBonus = 0;
+
+        const detailedShifts = shifts.map(shift => {
+          const calc = calculateShiftEarnings(shift, userSettings);
+          totalHours += calc.hours;
+          totalEarnings += calc.total;
+          totalBaseWage += calc.baseWage;
+          totalBonus += calc.bonus;
+
+          return {
+            id: shift.id,
+            date: shift.shift_date,
+            startTime: shift.start_time,
+            endTime: shift.end_time,
+            type: shift.shift_type,
+            duration: calc.totalHours,
+            paidHours: calc.hours,
+            baseWage: calc.baseWage,
+            bonus: calc.bonus,
+            totalEarnings: calc.total,
+            pauseDeducted: calc.pauseDeducted
+          };
+        });
+
+        toolResult = JSON.stringify({
+          period: criteriaDescription,
+          shifts: detailedShifts,
+          summary: {
+            totalShifts: shifts.length,
+            totalHours: parseFloat(totalHours.toFixed(2)),
+            totalEarnings: parseFloat(totalEarnings.toFixed(2)),
+            totalBaseWage: parseFloat(totalBaseWage.toFixed(2)),
+            totalBonus: parseFloat(totalBonus.toFixed(2)),
+            averageHoursPerShift: parseFloat((totalHours / shifts.length).toFixed(2)),
+            averageEarningsPerShift: parseFloat((totalEarnings / shifts.length).toFixed(2))
+          }
+        });
+      }
+    }
+
+    if (fnName === 'getWageDataByDateRange') {
+      const { data: shifts, error } = await supabase
+        .from('user_shifts')
+        .select('*')
+        .eq('user_id', user_id)
+        .gte('shift_date', args.from_date)
+        .lte('shift_date', args.to_date)
+        .order('shift_date');
+
+      const criteriaDescription = `${args.from_date} til ${args.to_date}`;
+
+      if (error) {
+        toolResult = 'ERROR: Kunne ikke hente lønnsdata';
+      } else if (!shifts || shifts.length === 0) {
+        toolResult = `NONE: Ingen skift funnet for perioden ${criteriaDescription}`;
+      } else {
+        // Get user settings for wage calculations
+        const userSettings = await getUserSettings(user_id);
+
+        // Calculate detailed wage data for each shift
+        let totalHours = 0;
+        let totalEarnings = 0;
+        let totalBaseWage = 0;
+        let totalBonus = 0;
+
+        const detailedShifts = shifts.map(shift => {
+          const calc = calculateShiftEarnings(shift, userSettings);
+          totalHours += calc.hours;
+          totalEarnings += calc.total;
+          totalBaseWage += calc.baseWage;
+          totalBonus += calc.bonus;
+
+          return {
+            id: shift.id,
+            date: shift.shift_date,
+            startTime: shift.start_time,
+            endTime: shift.end_time,
+            type: shift.shift_type,
+            duration: calc.totalHours,
+            paidHours: calc.hours,
+            baseWage: calc.baseWage,
+            bonus: calc.bonus,
+            totalEarnings: calc.total,
+            pauseDeducted: calc.pauseDeducted
+          };
+        });
+
+        toolResult = JSON.stringify({
+          period: criteriaDescription,
+          shifts: detailedShifts,
+          summary: {
+            totalShifts: shifts.length,
+            totalHours: parseFloat(totalHours.toFixed(2)),
+            totalEarnings: parseFloat(totalEarnings.toFixed(2)),
+            totalBaseWage: parseFloat(totalBaseWage.toFixed(2)),
+            totalBonus: parseFloat(totalBonus.toFixed(2)),
+            averageHoursPerShift: parseFloat((totalHours / shifts.length).toFixed(2)),
+            averageEarningsPerShift: parseFloat((totalEarnings / shifts.length).toFixed(2))
+          }
+        });
       }
     }
 
