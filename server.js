@@ -102,17 +102,17 @@ const deleteShiftSchema = {
 
 const deleteSeriesSchema = {
   name: 'deleteSeries',
-  description: 'Delete multiple shifts by criteria (week, date range, or series)',
+  description: 'Delete multiple shifts by criteria (week, date range, or series). For "next week" use criteria_type=week without week_number/year.',
   parameters: {
     type: 'object',
     properties: {
       criteria_type: {
         type: 'string',
         enum: ['week', 'date_range', 'series_id'],
-        description: 'Type of deletion criteria'
+        description: 'Type of deletion criteria. Use "week" for next week deletion.'
       },
-      week_number: { type: 'integer', description: 'Week number (1-53) when criteria_type=week' },
-      year: { type: 'integer', description: 'Year for week deletion' },
+      week_number: { type: 'integer', description: 'Week number (1-53) when criteria_type=week. Optional - if not provided, deletes next week.' },
+      year: { type: 'integer', description: 'Year for week deletion. Optional - if not provided, deletes next week.' },
       from_date: { type: 'string', description: 'Start date YYYY-MM-DD when criteria_type=date_range' },
       to_date: { type: 'string', description: 'End date YYYY-MM-DD when criteria_type=date_range' },
       series_id: { type: 'string', description: 'Series ID when criteria_type=series_id' }
@@ -249,7 +249,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   const systemContextHint = {
     role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan redigere et skift ved å oppgi dato og starttid hvis du ikke har ID-en. Bruk editShift direkte med shift_date og start_time for å finne skiftet, og new_start_time/new_end_time for nye tider. Du kan også hente skift med getShifts – for eksempel "hvilke vakter har jeg neste uke" eller "vis alt i uke 42". Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. VIKTIG: Vis alltid datoer i dd.mm.yyyy format (f.eks. 15.03.2024) når du snakker med brukeren, ikke yyyy-mm-dd format. Bekreft før masse-sletting.`
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan redigere et skift ved å oppgi dato og starttid hvis du ikke har ID-en. Bruk editShift direkte med shift_date og start_time for å finne skiftet, og new_start_time/new_end_time for nye tider. Du kan også hente skift med getShifts – for eksempel "hvilke vakter har jeg neste uke" eller "vis alt i uke 42". Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. VIKTIG: Vis alltid datoer i dd.mm.yyyy format (f.eks. 15.03.2024) når du snakker med brukeren, ikke yyyy-mm-dd format. Når brukeren ber om å slette flere vakter (for eksempel "slett vaktene mine neste uke"), bruk deleteSeries. Spør én gang om bekreftelse først før du utfører slettingen.`
   };
   const fullMessages = [systemContextHint, ...messages];
 
@@ -559,7 +559,10 @@ async function handleTool(call, user_id) {
 
       if (args.criteria_type === 'week') {
         if (!args.week_number || !args.year) {
-          toolResult = 'ERROR: Uke-nummer og år må spesifiseres for uke-sletting';
+          // If no week_number/year specified, delete next week
+          const { start, end } = getNextWeeksDateRange(1);
+          deleteQuery = deleteQuery.gte('shift_date', start).lte('shift_date', end);
+          criteriaDescription = 'neste uke';
         } else {
           const { start, end } = getWeekDateRange(args.week_number, args.year);
           deleteQuery = deleteQuery.gte('shift_date', start).lte('shift_date', end);
@@ -592,8 +595,14 @@ async function handleTool(call, user_id) {
           .eq('user_id', user_id);
 
         if (args.criteria_type === 'week') {
-          const { start, end } = getWeekDateRange(args.week_number, args.year);
-          countQuery = countQuery.gte('shift_date', start).lte('shift_date', end);
+          if (!args.week_number || !args.year) {
+            // If no week_number/year specified, count next week
+            const { start, end } = getNextWeeksDateRange(1);
+            countQuery = countQuery.gte('shift_date', start).lte('shift_date', end);
+          } else {
+            const { start, end } = getWeekDateRange(args.week_number, args.year);
+            countQuery = countQuery.gte('shift_date', start).lte('shift_date', end);
+          }
         } else if (args.criteria_type === 'date_range') {
           countQuery = countQuery.gte('shift_date', args.from_date).lte('shift_date', args.to_date);
         } else if (args.criteria_type === 'series_id') {
