@@ -71,9 +71,60 @@ const addSeriesSchema = {
   }
 };
 
+const editShiftSchema = {
+  name: 'editShift',
+  description: 'Edit an existing work shift by ID',
+  parameters: {
+    type: 'object',
+    properties: {
+      shift_id: { type: 'integer', description: 'ID of shift to edit' },
+      shift_date: { type: 'string', description: 'New date YYYY-MM-DD (optional)' },
+      start_time: { type: 'string', description: 'New start time HH:mm (optional)' },
+      end_time: { type: 'string', description: 'New end time HH:mm (optional)' }
+    },
+    required: ['shift_id']
+  }
+};
+
+const deleteShiftSchema = {
+  name: 'deleteShift',
+  description: 'Delete a single work shift by ID',
+  parameters: {
+    type: 'object',
+    properties: {
+      shift_id: { type: 'integer', description: 'ID of shift to delete' }
+    },
+    required: ['shift_id']
+  }
+};
+
+const deleteSeriesSchema = {
+  name: 'deleteSeries',
+  description: 'Delete multiple shifts by criteria (week, date range, or series)',
+  parameters: {
+    type: 'object',
+    properties: {
+      criteria_type: {
+        type: 'string',
+        enum: ['week', 'date_range', 'series_id'],
+        description: 'Type of deletion criteria'
+      },
+      week_number: { type: 'integer', description: 'Week number (1-53) when criteria_type=week' },
+      year: { type: 'integer', description: 'Year for week deletion' },
+      from_date: { type: 'string', description: 'Start date YYYY-MM-DD when criteria_type=date_range' },
+      to_date: { type: 'string', description: 'End date YYYY-MM-DD when criteria_type=date_range' },
+      series_id: { type: 'string', description: 'Series ID when criteria_type=series_id' }
+    },
+    required: ['criteria_type']
+  }
+};
+
 const tools = [
   { type: 'function', function: addShiftSchema },
-  { type: 'function', function: addSeriesSchema }
+  { type: 'function', function: addSeriesSchema },
+  { type: 'function', function: editShiftSchema },
+  { type: 'function', function: deleteShiftSchema },
+  { type: 'function', function: deleteSeriesSchema }
 ];
 
 // ---------- helpers ----------
@@ -87,10 +138,35 @@ function generateSeriesDates(from, to, days) {
   }
   return out;
 }
+
 function hoursBetween(start, end) {
   const [sh, sm] = start.split(':').map(Number);
   const [eh, em] = end.split(':').map(Number);
   return ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+}
+
+function getWeekDateRange(weekNumber, year) {
+  // Get first day of year
+  const firstDay = new Date(year, 0, 1);
+
+  // Find first Monday of the year (ISO week starts on Monday)
+  const firstMonday = new Date(firstDay);
+  const dayOfWeek = firstDay.getDay();
+  const daysToMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+  firstMonday.setDate(firstDay.getDate() + daysToMonday);
+
+  // Calculate start of target week
+  const weekStart = new Date(firstMonday);
+  weekStart.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+
+  // Calculate end of target week (Sunday)
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+
+  return {
+    start: weekStart.toISOString().slice(0, 10),
+    end: weekEnd.toISOString().slice(0, 10)
+  };
 }
 
 // ---------- /settings ----------
@@ -126,7 +202,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   const systemContextHint = {
     role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige.`
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere og slette skift. Bruk editShift, deleteShift eller deleteSeries ved behov, og bekreft før masse-sletting.`
   };
   const fullMessages = [systemContextHint, ...messages];
 
@@ -217,6 +293,163 @@ app.post('/chat', authenticateUser, async (req, res) => {
       }
     }
 
+    if (fnName === 'editShift') {
+      // Verify shift exists and belongs to user
+      const { data: existingShift } = await supabase
+        .from('user_shifts')
+        .select('*')
+        .eq('id', args.shift_id)
+        .eq('user_id', req.user_id)
+        .maybeSingle();
+
+      if (!existingShift) {
+        toolResult = 'ERROR: Skiftet ble ikke funnet eller tilhører ikke deg';
+      } else {
+        // Build update object with only provided fields
+        const updateData = {};
+        if (args.shift_date) updateData.shift_date = args.shift_date;
+        if (args.start_time) updateData.start_time = args.start_time;
+        if (args.end_time) updateData.end_time = args.end_time;
+
+        // Check for collision with other shifts (excluding current shift)
+        if (Object.keys(updateData).length > 0) {
+          const checkDate = args.shift_date || existingShift.shift_date;
+          const checkStart = args.start_time || existingShift.start_time;
+          const checkEnd = args.end_time || existingShift.end_time;
+
+          const { data: collision } = await supabase
+            .from('user_shifts')
+            .select('id')
+            .eq('user_id', req.user_id)
+            .eq('shift_date', checkDate)
+            .eq('start_time', checkStart)
+            .eq('end_time', checkEnd)
+            .neq('id', args.shift_id)
+            .maybeSingle();
+
+          if (collision) {
+            toolResult = 'ERROR: Et skift med samme tid eksisterer allerede';
+          } else {
+            // Perform update
+            const { error } = await supabase
+              .from('user_shifts')
+              .update(updateData)
+              .eq('id', args.shift_id)
+              .eq('user_id', req.user_id);
+
+            if (error) {
+              toolResult = 'ERROR: Kunne ikke oppdatere skiftet';
+            } else {
+              const newStart = args.start_time || existingShift.start_time;
+              const newEnd = args.end_time || existingShift.end_time;
+              const hours = hoursBetween(newStart, newEnd);
+              toolResult = `OK: Skift oppdatert (${hours} timer)`;
+            }
+          }
+        } else {
+          toolResult = 'ERROR: Ingen endringer spesifisert';
+        }
+      }
+    }
+
+    if (fnName === 'deleteShift') {
+      // Verify shift exists and belongs to user
+      const { data: existingShift } = await supabase
+        .from('user_shifts')
+        .select('*')
+        .eq('id', args.shift_id)
+        .eq('user_id', req.user_id)
+        .maybeSingle();
+
+      if (!existingShift) {
+        toolResult = 'ERROR: Skiftet ble ikke funnet eller tilhører ikke deg';
+      } else {
+        // Delete the shift
+        const { error } = await supabase
+          .from('user_shifts')
+          .delete()
+          .eq('id', args.shift_id)
+          .eq('user_id', req.user_id);
+
+        if (error) {
+          toolResult = 'ERROR: Kunne ikke slette skiftet';
+        } else {
+          const hours = hoursBetween(existingShift.start_time, existingShift.end_time);
+          toolResult = `OK: Skift slettet (${hours} timer)`;
+        }
+      }
+    }
+
+    if (fnName === 'deleteSeries') {
+      let deleteQuery = supabase
+        .from('user_shifts')
+        .delete()
+        .eq('user_id', req.user_id);
+
+      let criteriaDescription = '';
+
+      if (args.criteria_type === 'week') {
+        if (!args.week_number || !args.year) {
+          toolResult = 'ERROR: Uke-nummer og år må spesifiseres for uke-sletting';
+        } else {
+          const { start, end } = getWeekDateRange(args.week_number, args.year);
+          deleteQuery = deleteQuery.gte('shift_date', start).lte('shift_date', end);
+          criteriaDescription = `uke ${args.week_number} i ${args.year}`;
+        }
+      } else if (args.criteria_type === 'date_range') {
+        if (!args.from_date || !args.to_date) {
+          toolResult = 'ERROR: Fra-dato og til-dato må spesifiseres for periode-sletting';
+        } else {
+          deleteQuery = deleteQuery.gte('shift_date', args.from_date).lte('shift_date', args.to_date);
+          criteriaDescription = `periode ${args.from_date} til ${args.to_date}`;
+        }
+      } else if (args.criteria_type === 'series_id') {
+        if (!args.series_id) {
+          toolResult = 'ERROR: Serie-ID må spesifiseres for serie-sletting';
+        } else {
+          deleteQuery = deleteQuery.eq('series_id', args.series_id);
+          criteriaDescription = `serie ${args.series_id}`;
+        }
+      } else {
+        toolResult = 'ERROR: Ugyldig slette-kriterium';
+      }
+
+      // Only proceed if no error so far
+      if (!toolResult.startsWith('ERROR:')) {
+        // First, count how many shifts will be deleted
+        let countQuery = supabase
+          .from('user_shifts')
+          .select('*', { count: 'exact' })
+          .eq('user_id', req.user_id);
+
+        if (args.criteria_type === 'week') {
+          const { start, end } = getWeekDateRange(args.week_number, args.year);
+          countQuery = countQuery.gte('shift_date', start).lte('shift_date', end);
+        } else if (args.criteria_type === 'date_range') {
+          countQuery = countQuery.gte('shift_date', args.from_date).lte('shift_date', args.to_date);
+        } else if (args.criteria_type === 'series_id') {
+          countQuery = countQuery.eq('series_id', args.series_id);
+        }
+
+        const { count, error: countError } = await countQuery;
+
+        if (countError) {
+          toolResult = 'ERROR: Kunne ikke telle skift for sletting';
+        } else if (count === 0) {
+          toolResult = `ERROR: Ingen skift funnet for ${criteriaDescription}`;
+        } else {
+          // Perform the deletion
+          const { error } = await deleteQuery;
+
+          if (error) {
+            toolResult = 'ERROR: Kunne ikke slette skiftene';
+          } else {
+            toolResult = `OK: ${count} skift slettet for ${criteriaDescription}`;
+          }
+        }
+      }
+    }
+
     // Add tool result to conversation and get GPT's response
     const messagesWithToolResult = [
       ...fullMessages,
@@ -242,9 +475,19 @@ app.post('/chat', authenticateUser, async (req, res) => {
       console.error('Second GPT call failed:', error);
       // Fallback message based on tool result
       if (toolResult.startsWith('OK:')) {
-        assistantMessage = 'Skiftet er lagret! 👍';
+        if (fnName === 'editShift') {
+          assistantMessage = 'Skiftet er oppdatert! 👍';
+        } else if (fnName === 'deleteShift') {
+          assistantMessage = 'Skiftet er slettet! 👍';
+        } else if (fnName === 'deleteSeries') {
+          assistantMessage = 'Skiftene er slettet! 👍';
+        } else {
+          assistantMessage = 'Skiftet er lagret! 👍';
+        }
       } else if (toolResult.startsWith('DUPLICATE:')) {
         assistantMessage = 'Dette skiftet er allerede registrert.';
+      } else if (toolResult.startsWith('ERROR:')) {
+        assistantMessage = 'Det oppstod en feil. Prøv igjen.';
       } else {
         assistantMessage = 'Operasjonen er utført.';
       }
