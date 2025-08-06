@@ -742,7 +742,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check if text contains HTML (for dots animation)
     if (text.includes('<span class="dots">')) {
       messageDiv.innerHTML = text;
+    } else if (role === 'assistant') {
+      // Render Markdown for assistant messages
+      const html = DOMPurify.sanitize(marked.parse(text));
+      messageDiv.innerHTML = html;
     } else {
+      // Plain text for user messages
       messageDiv.textContent = text;
     }
 
@@ -824,7 +829,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         ?? '⚠️ Ukjent svar fra serveren.';
 
       // Replace spinner content with response text in the same bubble
-      spinner.textContent = txt;
+      // Use Markdown rendering for assistant messages
+      if (data.assistant) {
+        const html = DOMPurify.sanitize(marked.parse(txt));
+        spinner.innerHTML = html;
+      } else {
+        spinner.textContent = txt;
+      }
       if (data.assistant) {
         chatMessages.push({ role: 'assistant', content: data.assistant });
       }
