@@ -123,17 +123,17 @@ const deleteSeriesSchema = {
 
 const getShiftsSchema = {
   name: 'getShifts',
-  description: 'Get existing shifts by criteria (week, date range, next weeks, or all)',
+  description: 'Get existing shifts by criteria (week, date range, next weeks, or all). For "denne uka" use criteria_type=week without week_number/year.',
   parameters: {
     type: 'object',
     properties: {
       criteria_type: {
         type: 'string',
         enum: ['week', 'date_range', 'next', 'all'],
-        description: 'Type of query criteria'
+        description: 'Type of query criteria. Use "week" for current week or "next" for next week.'
       },
-      week_number: { type: 'integer', description: 'Week number (1-53) when criteria_type=week' },
-      year: { type: 'integer', description: 'Year for week query' },
+      week_number: { type: 'integer', description: 'Week number (1-53) when criteria_type=week. Optional - if not provided, gets current week.' },
+      year: { type: 'integer', description: 'Year for week query. Optional - if not provided, gets current week.' },
       from_date: { type: 'string', description: 'Start date YYYY-MM-DD when criteria_type=date_range' },
       to_date: { type: 'string', description: 'End date YYYY-MM-DD when criteria_type=date_range' },
       num_weeks: { type: 'integer', description: 'Number of weeks to get when criteria_type=next (default 1)' }
@@ -193,6 +193,25 @@ function getWeekDateRange(weekNumber, year) {
   };
 }
 
+function getCurrentWeekDateRange() {
+  const today = new Date();
+  const currentDay = today.getDay();
+
+  // Find start of current week (Monday)
+  const startOfCurrentWeek = new Date(today);
+  const daysToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+  startOfCurrentWeek.setDate(today.getDate() + daysToMonday);
+
+  // End of current week (Sunday)
+  const endOfCurrentWeek = new Date(startOfCurrentWeek);
+  endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+
+  return {
+    start: startOfCurrentWeek.toISOString().slice(0, 10),
+    end: endOfCurrentWeek.toISOString().slice(0, 10)
+  };
+}
+
 function getNextWeeksDateRange(numWeeks = 1) {
   const today = new Date();
   const currentDay = today.getDay();
@@ -249,7 +268,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   const systemContextHint = {
     role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan redigere et skift ved å oppgi dato og starttid hvis du ikke har ID-en. Bruk editShift direkte med shift_date og start_time for å finne skiftet, og new_start_time/new_end_time for nye tider. Du kan også hente skift med getShifts – for eksempel "hvilke vakter har jeg neste uke" eller "vis alt i uke 42". Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. VIKTIG: Vis alltid datoer i dd.mm.yyyy format (f.eks. 15.03.2024) når du snakker med brukeren, ikke yyyy-mm-dd format. Når brukeren ber om å slette flere vakter (for eksempel "slett vaktene mine neste uke"), bruk deleteSeries. Spør én gang om bekreftelse først før du utfører slettingen.`
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige. Du kan nå legge til, redigere, slette og hente skift. Bruk editShift, deleteShift, deleteSeries eller getShifts ved behov. Du kan redigere et skift ved å oppgi dato og starttid hvis du ikke har ID-en. Bruk editShift direkte med shift_date og start_time for å finne skiftet, og new_start_time/new_end_time for nye tider. For getShifts: "denne uka"/"hvilke vakter har jeg denne uka" → bruk criteria_type=week (uten week_number/year), "neste uke" → bruk criteria_type=next, "uke 42" → bruk criteria_type=week med week_number=42. Når du bruker getShifts og får skift-data i tool-resultatet, presenter listen tydelig på norsk med datoer og tider. VIKTIG: Vis alltid datoer i dd.mm.yyyy format (f.eks. 15.03.2024) når du snakker med brukeren, ikke yyyy-mm-dd format. Når brukeren ber om å slette flere vakter (for eksempel "slett vaktene mine neste uke"), bruk deleteSeries. Spør én gang om bekreftelse først før du utfører slettingen, men IKKE spør om bekreftelse for rene leseoperasjoner som getShifts.`
   };
   const fullMessages = [systemContextHint, ...messages];
 
@@ -639,7 +658,10 @@ async function handleTool(call, user_id) {
 
       if (args.criteria_type === 'week') {
         if (!args.week_number || !args.year) {
-          toolResult = 'ERROR: Uke-nummer og år må spesifiseres for uke-spørring';
+          // If no week_number/year specified, get current week
+          const { start, end } = getCurrentWeekDateRange();
+          selectQuery = selectQuery.gte('shift_date', start).lte('shift_date', end);
+          criteriaDescription = 'denne uka';
         } else {
           const { start, end } = getWeekDateRange(args.week_number, args.year);
           selectQuery = selectQuery.gte('shift_date', start).lte('shift_date', end);
