@@ -34,7 +34,7 @@ async function testDuplicateShiftLogic() {
     ];
 
     const response = {
-      system: `Skiftet ${args.shift_date} ${args.start_time}–${args.end_time} finnes allerede.`,
+      system: `Skiftet ${args.shift_date} ${args.start_time}-${args.end_time} finnes allerede.`,
       shifts: allShifts
     };
 

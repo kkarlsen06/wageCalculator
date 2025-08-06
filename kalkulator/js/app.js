@@ -815,51 +815,54 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const data = await response.json();
 
+      // Log raw JSON response for debugging
+      console.debug('[/chat response]', data);
+
       // Remove spinner after response
       spinner.remove();
 
-      // Handle different response types - prioritize assistant, then system, then error
-      const txt = data.assistant ?? data.system ?? (data.error && '⚠️ ' + data.error);
-      if (txt) {
-        appendMessage('assistant', txt);
-        if (data.assistant) {
-          chatMessages.push({ role: 'assistant', content: data.assistant });
-        }
+      // Handle different response types with robust fallback
+      const txt = data.assistant
+        ?? data.system
+        ?? (data.error && `⚠️ ${data.error}`)
+        ?? (data.function_call && `⧗ (${data.function_call.name})`)
+        ?? '⚠️ Ukjent svar fra serveren.';
+
+      appendMessage('assistant', txt);
+      if (data.assistant) {
+        chatMessages.push({ role: 'assistant', content: data.assistant });
       }
 
       // Update shifts table if shifts data is provided
       if (Array.isArray(data.shifts)) {
-        // Filter out duplicates based on date+time combination before rendering
+        // Dedupe and update table
         const uniq = [];
         const seen = new Set();
         for (const s of data.shifts) {
-          const key = `${s.shift_date}|${s.start_time}|${s.end_time}`;
-          if (!seen.has(key)) {
-            seen.add(key);
+          const k = `${s.shift_date}|${s.start_time}|${s.end_time}`;
+          if (!seen.has(k)) {
+            seen.add(k);
             uniq.push(s);
           }
         }
 
-        // Update the shifts in the app and refresh display
+        // Render deduplicated shifts
         if (window.app && window.app.updateDisplay) {
-          // Add new shifts to the app's shifts array
+          // Convert shifts data to app format if needed
+          const newShifts = uniq.map(shift => ({
+            id: shift.id || Date.now() + Math.random(), // Generate temp ID if not provided
+            date: new Date(shift.date || shift.shift_date),
+            startTime: shift.startTime || shift.start_time,
+            endTime: shift.endTime || shift.end_time,
+            type: shift.type !== undefined ? shift.type : shift.shift_type,
+            seriesId: shift.seriesId || shift.series_id || null
+          }));
+
+          // Update app shifts and refresh display
           if (window.app.shifts && window.app.userShifts) {
-            // Convert shifts data to app format if needed
-            const newShifts = uniq.map(shift => ({
-              id: shift.id || Date.now() + Math.random(), // Generate temp ID if not provided
-              date: new Date(shift.date || shift.shift_date),
-              startTime: shift.startTime || shift.start_time,
-              endTime: shift.endTime || shift.end_time,
-              type: shift.type !== undefined ? shift.type : shift.shift_type,
-              seriesId: shift.seriesId || shift.series_id || null
-            }));
-
-            // Add to both arrays
-            window.app.shifts.push(...newShifts);
-            window.app.userShifts.push(...newShifts);
+            window.app.shifts = [...newShifts];
+            window.app.userShifts = [...newShifts];
           }
-
-          // Refresh the display
           window.app.updateDisplay();
         }
       }
