@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test":  "node test-duplicate-shifts.js"
+    "test":  "node dev-tests/test-duplicate-shifts.js"
   },
   "repository": {
     "type": "git",
