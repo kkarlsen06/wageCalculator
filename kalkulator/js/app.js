@@ -309,8 +309,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log(`App.html: No session found, waiting 200ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, 200));
       } else {
-        console.log(`App.html: No session after ${maxRetries} attempts, redirecting to login`);
-        window.location.href = './';
+        console.log(`App.html: No session after ${maxRetries} attempts, showing login form`);
+        console.log('[login] no session – showing form');
+        document.body.style.visibility = 'visible';
         return;
       }
     } else {
