@@ -830,8 +830,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     appendMessage('user', messageText);
     chatMessages.push({ role: 'user', content: messageText });
 
-    // Show thinking indicator with dots animation
-    const spinner = appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
+    // Detect if this is likely a multi-step operation
+    const isMultiStep = detectMultiStepOperation(messageText);
+
+    // Show appropriate thinking indicator
+    const spinner = isMultiStep
+      ? appendMessage('assistant', '<span class="multi-step-indicator">Utfører flere operasjoner... <span class="dots"><span>.</span><span>.</span><span>.</span></span></span>')
+      : appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
 
     try {
       // Get JWT token from Supabase session
@@ -919,6 +924,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         chatElements.send.disabled = false;
       }
     }
+  }
+
+  // Detect if message likely requires multiple operations
+  function detectMultiStepOperation(messageText) {
+    const text = messageText.toLowerCase();
+
+    // Patterns that typically require multiple operations
+    const multiStepPatterns = [
+      /vis.*og.*endre/,           // "vis vaktene og endre"
+      /vis.*og.*slett/,           // "vis vaktene og slett"
+      /hent.*og.*oppdater/,       // "hent vaktene og oppdater"
+      /legg til.*og.*legg til/,   // "legg til mandag og legg til tirsdag"
+      /legg til.*\d+:\d+.*og.*\d+:\d+/,  // "legg til mandag 09:00 og tirsdag 10:00"
+      /kopier.*til.*og/,          // "kopier til onsdag og fredag"
+      /slett.*og.*legg til/,      // "slett vaktene og legg til nye"
+      /endre.*og.*endre/,         // "endre mandag og endre tirsdag"
+      /\bog\b.*\bog\b/,           // multiple "og" (and) conjunctions
+      /,.*og/,                    // comma followed by "og"
+      /først.*så/,                // "først ... så"
+      /deretter/,                 // "deretter"
+      /etterpå/,                  // "etterpå"
+      /mandag.*og.*tirsdag/,      // specific day combinations
+      /tirsdag.*og.*onsdag/,
+      /onsdag.*og.*torsdag/,
+      /torsdag.*og.*fredag/,
+      /fredag.*og.*lørdag/,
+      /lørdag.*og.*søndag/
+    ];
+
+    return multiStepPatterns.some(pattern => pattern.test(text));
   }
 
   // Clear chat log function (for sign-out)
