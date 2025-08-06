@@ -799,7 +799,7 @@ export const app = {
             }
             
             this.shifts = [...this.userShifts];
-            this.updateDisplay();
+            this.refreshUI(this.shifts);
             this.closeAddShiftModal();
             
             // Show success animation instead of alert
@@ -908,8 +908,8 @@ export const app = {
             
             // Update this.shifts
             this.shifts = [...this.userShifts];
-            
-            this.updateDisplay();
+
+            this.refreshUI(this.shifts);
             
             document.getElementById('shiftForm').reset();
             this.selectedDates = [];
@@ -2087,6 +2087,31 @@ export const app = {
         return nextPayrollDate;
     },
 
+    getLastPayrollDate(nextPayrollDate) {
+        // Calculate the previous payroll date based on the next payroll date
+        const lastPayrollDate = new Date(nextPayrollDate);
+        lastPayrollDate.setMonth(lastPayrollDate.getMonth() - 1);
+
+        // Handle months with fewer days (e.g., March 31 -> February 28/29)
+        const targetMonth = lastPayrollDate.getMonth();
+        const lastDayOfMonth = new Date(lastPayrollDate.getFullYear(), targetMonth + 1, 0).getDate();
+
+        if (this.payrollDay > lastDayOfMonth) {
+            lastPayrollDate.setDate(lastDayOfMonth);
+        }
+
+        // Adjust for weekends - move to preceding Friday if payroll falls on weekend
+        const dayOfWeek = lastPayrollDate.getDay(); // 0 = Sunday, 6 = Saturday
+
+        if (dayOfWeek === 0) { // Sunday
+            lastPayrollDate.setDate(lastPayrollDate.getDate() - 2); // Move to Friday
+        } else if (dayOfWeek === 6) { // Saturday
+            lastPayrollDate.setDate(lastPayrollDate.getDate() - 1); // Move to Friday
+        }
+
+        return lastPayrollDate;
+    },
+
     populateCustomBonusSlots() {
         const types = ['weekday', 'saturday', 'sunday'];
         
@@ -2719,6 +2744,38 @@ export const app = {
             };
         }
     },
+    // Master refresh function for global UI updates after /chat responses
+    refreshUI(shifts) {
+        console.log('Refreshing all UI components after shift changes');
+
+        // Show loading state briefly to indicate refresh
+        this.showUIRefreshLoading();
+
+        // Use setTimeout to allow loading state to show before heavy calculations
+        setTimeout(() => {
+            try {
+                // Update all components that depend on shift data
+                this.renderShiftTable(shifts);      // Update shift table/list
+                this.updateWeekCards(shifts);       // Update weekly summaries
+                this.updatePayrollCard(shifts);     // Update next payroll card
+                this.updateStats();                 // Update monthly stats
+                this.updateWeeklyHoursChart();      // Update weekly chart
+                this.updateShiftCalendar();         // Update calendar view
+                this.updateNextShiftCard();         // Update next shift card
+                this.populateDateGrid();            // Update date grid
+                this.updateHeader();                // Update header
+                this.startNextShiftTimer();         // Restart countdown timer
+
+                console.log('UI refresh completed successfully');
+            } catch (error) {
+                console.error('Error during UI refresh:', error);
+            } finally {
+                // Hide loading state
+                this.hideUIRefreshLoading();
+            }
+        }, 50); // Brief delay to show loading state
+    },
+
     updateDisplay(shouldAnimate = false) {
         this.updateHeader();
         this.updateNextShiftCard(); // Move before updateStats to ensure correct viewport calculations
@@ -2729,6 +2786,125 @@ export const app = {
         this.updateShiftCalendar();
         this.populateDateGrid();
         this.startNextShiftTimer(); // Start the countdown timer
+    },
+
+    // Loading state management for UI refresh
+    showUIRefreshLoading() {
+        // Add loading overlay to main content areas
+        const mainContent = document.querySelector('.dashboard-content');
+        const statsContent = document.querySelector('.statistics-content');
+
+        if (mainContent && !mainContent.querySelector('.refresh-loading-overlay')) {
+            const overlay = this.createLoadingOverlay('Oppdaterer...');
+            overlay.classList.add('refresh-loading-overlay');
+            mainContent.appendChild(overlay);
+        }
+
+        if (statsContent && !statsContent.querySelector('.refresh-loading-overlay')) {
+            const overlay = this.createLoadingOverlay('Oppdaterer...');
+            overlay.classList.add('refresh-loading-overlay');
+            statsContent.appendChild(overlay);
+        }
+    },
+
+    hideUIRefreshLoading() {
+        // Remove loading overlays
+        const overlays = document.querySelectorAll('.refresh-loading-overlay');
+        overlays.forEach(overlay => overlay.remove());
+    },
+
+    createLoadingOverlay(text = 'Laster...') {
+        const overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        overlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: inherit;
+        `;
+
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner';
+        spinner.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        `;
+
+        const spinnerIcon = document.createElement('div');
+        spinnerIcon.style.cssText = `
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        `;
+
+        const spinnerText = document.createElement('span');
+        spinnerText.textContent = text;
+
+        spinner.appendChild(spinnerIcon);
+        spinner.appendChild(spinnerText);
+        overlay.appendChild(spinner);
+
+        return overlay;
+    },
+
+    // Render shift table (alias for existing updateShiftList)
+    renderShiftTable(shifts) {
+        this.updateShiftList();
+    },
+
+    // Update weekly summary cards
+    updateWeekCards(shifts) {
+        // Get shifts for current month
+        const monthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === this.currentMonth - 1 &&
+            shift.date.getFullYear() === this.currentYear
+        );
+
+        // Group shifts by week and calculate totals
+        const weeklyData = {};
+        monthShifts.forEach(shift => {
+            const weekNumber = this.getISOWeekNumber(shift.date);
+            if (!weeklyData[weekNumber]) {
+                weeklyData[weekNumber] = {
+                    hours: 0,
+                    earnings: 0,
+                    shifts: []
+                };
+            }
+            const calc = this.calculateShift(shift);
+            weeklyData[weekNumber].hours += calc.hours;
+            weeklyData[weekNumber].earnings += calc.total;
+            weeklyData[weekNumber].shifts.push(shift);
+        });
+
+        // Update weekly chart which displays this data
+        this.updateWeeklyHoursChart();
+
+        console.log('Week cards updated with data for', Object.keys(weeklyData).length, 'weeks');
+    },
+
+    // Enhanced payroll card update with proper period calculation
+    updatePayrollCard(shifts) {
+        // Use the existing updateNextPayrollCard function which handles the HTML structure correctly
+        this.updateNextPayrollCard();
+
+        console.log('Payroll card updated via existing updateNextPayrollCard function');
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
@@ -6788,7 +6964,7 @@ export const app = {
                 this.userShifts.splice(userIndex, 1);
             }
             
-            this.updateDisplay();
+            this.refreshUI(this.shifts);
             return true;
         } catch (e) {
             console.error('Error in deleteShift:', e);
@@ -7260,8 +7436,8 @@ export const app = {
             this.shifts = [...this.userShifts];
             
             // Update display
-            this.updateDisplay();
-            
+            this.refreshUI(this.shifts);
+
             // Close edit modal
             this.closeEditShift();
 

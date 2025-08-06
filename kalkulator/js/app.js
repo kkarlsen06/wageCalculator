@@ -852,8 +852,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
-      // Always call render to update shifts table
-      if (window.app && window.app.updateDisplay) {
+      // Always call refreshUI to update all components
+      if (window.app && window.app.refreshUI) {
         // Convert shifts data to app format if needed
         const newShifts = uniq.map(shift => ({
           id: shift.id || Date.now() + Math.random(),
@@ -864,12 +864,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           seriesId: shift.seriesId || shift.series_id || null
         }));
 
-        // Update app shifts and refresh display
+        // Update app shifts and refresh all UI components
         if (window.app.shifts && window.app.userShifts) {
           window.app.shifts = [...newShifts];
           window.app.userShifts = [...newShifts];
         }
-        window.app.updateDisplay();
+        window.app.refreshUI(newShifts);
       }
 
     } catch (error) {

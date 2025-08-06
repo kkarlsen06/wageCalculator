@@ -10054,3 +10054,28 @@ input[type="file"].form-control:focus {
     max-width: 80%; /* Slightly wider on mobile for readability */
   }
 }
+
+/* Loading spinner animation for UI refresh */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-overlay {
+  position: relative;
+}
+
+.refresh-loading-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(4px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+  border-radius: inherit !important;
+}
