@@ -3302,9 +3302,9 @@ input:checked + .slider:before {
   font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
 }
 
-/* Add consistent spacing between date and countdown text */
+/* Add single space between date and countdown text */
 .next-shift-card .shift-countdown-timer {
-  margin-left: 8px; /* Consistent spacing between date and countdown */
+  margin-left: 0.25em; /* Single space equivalent between date and countdown */
 }
 
 /* Color weekday text to match left border colors for Saturday and Sunday shifts */
@@ -6950,6 +6950,14 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
   min-width: 0; /* Allow shrinking below content size */
 }
 
+/* Base styling for payroll countdown text - match shift countdown exactly */
+.next-payroll-card .shift-countdown-timer {
+  /* No explicit font-size - inherits from parent (same as shift countdown) */
+  font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
+  white-space: nowrap; /* Prevent line breaks */
+  display: inline-block; /* Keep it inline but prevent wrapping */
+}
+
 /* Mobile responsive layout fixes for shift cards */
 @media (max-width: 480px) {
   /* Reduce overall card padding to give more space */
@@ -7110,6 +7118,12 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     font-size: 0.9em;
   }
 
+  /* Match payroll countdown text size with shift countdown exactly */
+  .next-payroll-card .shift-countdown-timer {
+    font-size: 0.9em; /* Match shift countdown exactly */
+    font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
+  }
+
   /* Slightly smaller time display */
   .next-shift-card .shift-time-with-hours {
     gap: 2px;
@@ -7129,10 +7143,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     margin-left: 8px;
   }
 
-  /* Reduce font sizes for small screens */
-  .next-payroll-card .shift-date {
-    font-size: 13px; /* Slightly smaller */
-  }
+  /* Remove font size override for payroll shift-date to allow countdown timer styling to take precedence */
 
   .next-payroll-card .shift-date-weekday {
     margin-right: 2px;
@@ -7172,6 +7183,12 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     font-size: 0.85em;
   }
 
+  /* Match payroll countdown text size with shift countdown exactly on very small screens */
+  .next-payroll-card .shift-countdown-timer {
+    font-size: 0.85em; /* Match shift countdown exactly */
+    font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
+  }
+
   /* Compact time display */
   .next-shift-card .shift-time-with-hours {
     gap: 1px;
@@ -7201,9 +7218,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     margin-left: 6px;
   }
 
-  .next-payroll-card .shift-date {
-    font-size: 12px;
-  }
+  /* Remove font size override for payroll shift-date to allow countdown timer styling to take precedence */
 
   .next-payroll-card .shift-date-weekday {
     margin-right: 1px;
