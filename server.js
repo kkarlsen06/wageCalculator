@@ -141,7 +141,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
           .order('shift_date');
 
         return res.json({
-          system: `Skiftet ${args.shift_date} ${args.start_time}-${args.end_time} finnes allerede.`,
+          system: "Skiftet finnes fra før.",
           shifts: allShifts || []
         });
       }

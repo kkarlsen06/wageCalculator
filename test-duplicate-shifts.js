@@ -34,12 +34,12 @@ async function testDuplicateShiftLogic() {
     ];
 
     const response = {
-      system: `Skiftet ${args.shift_date} ${args.start_time}-${args.end_time} finnes allerede.`,
+      system: "Skiftet finnes fra før.",
       shifts: allShifts
     };
 
     console.log('✅ Response:', JSON.stringify(response, null, 2));
-    console.log('✅ System message contains "finnes allerede":', response.system.includes('finnes allerede'));
+    console.log('✅ System message contains "finnes fra før":', response.system.includes('finnes fra før'));
     console.log('✅ Shifts array has length 1:', response.shifts.length === 1);
   }
 
