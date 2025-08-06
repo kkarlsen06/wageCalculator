@@ -9702,7 +9702,7 @@ input[type="file"].form-control:focus {
 
 /* Expanded content within the pill */
 .chatbox-expanded-content {
-  background: var(--bg-primary);
+  background: transparent; /* Remove darker background */
   border-top: 1px solid var(--border);
   animation: chatboxExpand 0.3s ease-out;
   overflow: hidden;
