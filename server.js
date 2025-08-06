@@ -111,15 +111,24 @@ app.get('/settings', authenticateUser, async (req, res) => {
 app.post('/chat', authenticateUser, async (req, res) => {
   const { messages } = req.body;
 
-  // Inject relative dates for GPT context
+  // Get user information for personalization
+  const { data: { user }, error: userError } = await supabase.auth.getUser(req.headers.authorization?.slice(7));
+  let userName = 'bruker';
+  if (!userError && user) {
+    userName = user.user_metadata?.first_name ||
+               user.email?.split('@')[0] ||
+               'bruker';
+  }
+
+  // Inject relative dates and user name for GPT context
   const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Oslo' });
   const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('sv-SE', { timeZone: 'Europe/Oslo' });
 
-  const systemDateHint = {
+  const systemContextHint = {
     role: 'system',
-    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}.`
+    content: `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige.`
   };
-  const fullMessages = [systemDateHint, ...messages];
+  const fullMessages = [systemContextHint, ...messages];
 
   // First call: Let GPT choose tools
   const completion = await openai.chat.completions.create({

@@ -110,10 +110,26 @@ app.get('/settings', authenticateUser, async (req, res) => {
 app.post('/chat', authenticateUser, async (req, res) => {
   const { messages } = req.body;
 
+  // Get user information for personalization
+  const { data: { user }, error: userError } = await supabase.auth.getUser(req.headers.authorization?.slice(7));
+  let userName = 'bruker';
+  if (!userError && user) {
+    userName = user.user_metadata?.first_name ||
+               user.email?.split('@')[0] ||
+               'bruker';
+  }
+
+  // Inject user name context for GPT
+  const systemContextHint = {
+    role: 'system',
+    content: `Brukerens navn er ${userName}, så du kan bruke navnet i svarene dine for å gjøre dem mer personlige.`
+  };
+  const messagesWithContext = [systemContextHint, ...messages];
+
   // First call: Let GPT choose tools
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
-    messages,
+    messages: messagesWithContext,
     tools,
     tool_choice: 'auto'
   });
@@ -160,7 +176,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
     // Add tool result to conversation and get GPT's response
     const messagesWithToolResult = [
-      ...messages,
+      ...messagesWithContext,
       choice,
       {
         role: 'tool',
