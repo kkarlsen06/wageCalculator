@@ -602,10 +602,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Close button
-    chatElements.close.addEventListener('click', function(e) {
-      e.stopPropagation();
-      collapseChatbox();
-    });
+    if (chatElements.close) {
+      chatElements.close.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log('Close button clicked'); // Debug log
+        collapseChatbox();
+      });
+    }
 
     // Send button in expanded view
     if (chatElements.send) {
@@ -676,6 +680,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function collapseChatbox() {
+    console.log('collapseChatbox called'); // Debug log
     isExpanded = false;
     isInInputMode = false;
     hasFirstMessage = false;

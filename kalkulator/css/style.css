@@ -9626,17 +9626,18 @@ input[type="file"].form-control:focus {
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Keep original shadow */
 }
 
-.chatbox-pill.expanded .chatbox-pill-content {
-  cursor: default;
-  pointer-events: none; /* Disable all interactions */
-}
-
 .chatbox-pill.expanded .chatbox-pill-input-container {
   pointer-events: none; /* Disable input interactions */
 }
 
 .chatbox-pill.expanded .chatbox-pill-placeholder {
   cursor: default;
+  pointer-events: none; /* Disable placeholder interactions */
+}
+
+/* Ensure close button remains clickable when expanded */
+.chatbox-pill.expanded .chatbox-close {
+  pointer-events: auto; /* Re-enable close button */
 }
 
 .chatbox-pill-content {
