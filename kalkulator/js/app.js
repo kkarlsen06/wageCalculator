@@ -315,7 +315,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Expose logout function
-  window.logout = async () => { await supa.auth.signOut(); window.location.href = './'; };
+  window.logout = async () => {
+    // Clear chat log before signing out
+    if (window.chatbox && window.chatbox.clear) {
+      window.chatbox.clear();
+    }
+    await supa.auth.signOut();
+    window.location.href = './';
+  };
 
   // After ensuring session, show welcome, init app, and display
   const { app } = await import('./appLogic.js?v=5');
@@ -551,3 +558,179 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
 });
+
+// ===== CHATBOX FUNCTIONALITY =====
+(function() {
+  'use strict';
+
+  let chatMessages = [
+    { role: 'system', content: 'You are a helpful wage-bot.' }
+  ];
+
+  let chatElements = {};
+  let isExpanded = false;
+
+  // Initialize chatbox when DOM is ready
+  function initChatbox() {
+    chatElements = {
+      pill: document.getElementById('chatboxPill'),
+      expanded: document.getElementById('chatboxExpanded'),
+      close: document.getElementById('chatboxClose'),
+      log: document.getElementById('chatboxLog'),
+      input: document.getElementById('chatboxInput'),
+      send: document.getElementById('chatboxSend')
+    };
+
+    if (!chatElements.pill || !chatElements.expanded) {
+      console.warn('Chatbox elements not found');
+      return;
+    }
+
+    setupChatEventListeners();
+  }
+
+  function setupChatEventListeners() {
+    // Pill click to expand
+    chatElements.pill.addEventListener('click', expandChatbox);
+
+    // Close button
+    chatElements.close.addEventListener('click', collapseChatbox);
+
+    // Send button
+    chatElements.send.addEventListener('click', sendMessage);
+
+    // Enter key in input (with Shift+Enter for new line)
+    chatElements.input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Auto-resize textarea
+    chatElements.input.addEventListener('input', autoResizeTextarea);
+  }
+
+  function expandChatbox() {
+    isExpanded = true;
+    chatElements.pill.style.display = 'none';
+    chatElements.expanded.style.display = 'block';
+
+    // Focus input after animation
+    setTimeout(() => {
+      chatElements.input.focus();
+    }, 300);
+  }
+
+  function collapseChatbox() {
+    isExpanded = false;
+    chatElements.expanded.style.display = 'none';
+    chatElements.pill.style.display = 'block';
+  }
+
+  function autoResizeTextarea() {
+    const textarea = chatElements.input;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+  }
+
+  function appendMessage(role, text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chatbox-message ${role}`;
+    messageDiv.textContent = text;
+
+    chatElements.log.appendChild(messageDiv);
+    chatElements.log.scrollTop = chatElements.log.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const text = chatElements.input.value.trim();
+    if (!text) return;
+
+    // Disable send button during request
+    chatElements.send.disabled = true;
+
+    // Add user message
+    appendMessage('user', text);
+    chatMessages.push({ role: 'user', content: text });
+
+    // Clear input
+    chatElements.input.value = '';
+    autoResizeTextarea();
+
+    try {
+      // Get JWT token from Supabase session
+      const { data: { session } } = await window.supa.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        appendMessage('system', 'Du må være innlogget for å bruke chat-funksjonen.');
+        return;
+      }
+
+      const response = await fetch('/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ messages: chatMessages })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.assistant) {
+        appendMessage('assistant', result.assistant);
+        chatMessages.push({ role: 'assistant', content: result.assistant });
+      } else if (result.system) {
+        appendMessage('assistant', result.system);
+        // If shifts were added, refresh the app data
+        if (result.shifts && window.app && window.app.loadShifts) {
+          await window.app.loadShifts();
+        }
+      } else {
+        appendMessage('system', 'Ingen svar mottatt fra serveren.');
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      appendMessage('system', 'Feil ved sending av melding. Prøv igjen senere.');
+    } finally {
+      chatElements.send.disabled = false;
+    }
+  }
+
+  // Clear chat log function (for sign-out)
+  function clearChatLog() {
+    if (chatElements.log) {
+      chatElements.log.innerHTML = '';
+    }
+    chatMessages = [
+      { role: 'system', content: 'You are a helpful wage-bot.' }
+    ];
+
+    // Collapse chatbox if expanded
+    if (isExpanded) {
+      collapseChatbox();
+    }
+  }
+
+  // Expose functions globally for app integration
+  window.chatbox = {
+    init: initChatbox,
+    clear: clearChatLog,
+    expand: expandChatbox,
+    collapse: collapseChatbox
+  };
+
+  // Auto-initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChatbox);
+  } else {
+    initChatbox();
+  }
+
+})();

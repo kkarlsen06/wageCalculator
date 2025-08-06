@@ -115,6 +115,41 @@
                           </div>
                       </div>
 
+                      <!-- Chat Bot Section -->
+                      <section id="chatbox" class="chatbox-container">
+                          <div class="chatbox-pill" id="chatboxPill">
+                              <div class="chatbox-pill-content">
+                                  <svg class="chatbox-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                  </svg>
+                                  <span class="chatbox-pill-text">Spør om vakter...</span>
+                              </div>
+                          </div>
+                          <div class="chatbox-expanded" id="chatboxExpanded" style="display: none;">
+                              <div class="chatbox-header">
+                                  <span class="chatbox-title">Vakt-assistent</span>
+                                  <button class="chatbox-close" id="chatboxClose" aria-label="Lukk chat">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                                      </svg>
+                                  </button>
+                              </div>
+                              <div class="chatbox-log" id="chatboxLog">
+                                  <!-- Chat messages will be populated here -->
+                              </div>
+                              <div class="chatbox-input-container">
+                                  <textarea id="chatboxInput" class="chatbox-input" placeholder="Skriv en melding..." rows="1"></textarea>
+                                  <button id="chatboxSend" class="chatbox-send-btn" aria-label="Send melding">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <line x1="22" y1="2" x2="11" y2="13"></line>
+                                          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                      </svg>
+                                  </button>
+                              </div>
+                          </div>
+                      </section>
+
 
 
 

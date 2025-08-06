@@ -2627,6 +2627,11 @@ export const app = {
         // Close dropdown first
         this.closeProfileDropdown();
 
+        // Clear chat log before logout
+        if (window.chatbox && window.chatbox.clear) {
+            window.chatbox.clear();
+        }
+
         // Call the global logout function
         if (typeof window.logout === 'function') {
             window.logout();
@@ -6827,6 +6832,11 @@ export const app = {
             this.setDefaultSettings();
             this.updateSettingsUI();
             this.updateDisplay();
+
+            // Clear chat log
+            if (window.chatbox && window.chatbox.clear) {
+                window.chatbox.clear();
+            }
             
             alert('Alle data er slettet');
             
