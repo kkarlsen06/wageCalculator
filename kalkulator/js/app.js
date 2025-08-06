@@ -1101,6 +1101,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     return tokens;
   }
 
+  // Stream text in real-time as chunks arrive from server
+  function streamTextRealtime(element) {
+    let displayedLength = 0;
+    const speed = 20; // Preferred speed from user preferences (15-30ms intervals)
+
+    function streamNextChunk() {
+      if (!element.isStreaming && displayedLength >= element.fullText.length) {
+        // Streaming complete - render final markdown
+        element.streamingActive = false;
+        const finalHtml = DOMPurify.sanitize(marked.parse(element.fullText));
+        element.innerHTML = finalHtml;
+        element.classList.remove('streaming-text');
+        chatElements.log.scrollTop = chatElements.log.scrollHeight;
+        return;
+      }
+
+      const targetText = element.fullText;
+      if (displayedLength < targetText.length) {
+        // Use word-based streaming (2-5 characters at a time)
+        const chunkSize = Math.min(Math.floor(Math.random() * 4) + 2, targetText.length - displayedLength);
+        displayedLength += chunkSize;
+
+        const displayText = targetText.substring(0, displayedLength);
+
+        // Add typing cursor during streaming
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = DOMPurify.sanitize(marked.parse(displayText));
+
+        // Add cursor
+        const cursor = document.createElement('span');
+        cursor.className = 'typing-cursor';
+        cursor.textContent = '▊';
+        cursor.style.opacity = '0.7';
+        tempDiv.appendChild(cursor);
+
+        element.innerHTML = tempDiv.innerHTML;
+        chatElements.log.scrollTop = chatElements.log.scrollHeight;
+
+        // Continue streaming with variable speed
+        const nextDelay = speed + Math.random() * 10; // Add slight randomness
+        setTimeout(streamNextChunk, nextDelay);
+      } else {
+        // Wait for more chunks or completion
+        setTimeout(streamNextChunk, 50);
+      }
+    }
+
+    streamNextChunk();
+  }
+
   // Note: sendPillMessage function removed since we now expand directly
 
   async function sendExpandedMessage() {
@@ -1125,13 +1175,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     appendMessage('user', messageText);
     chatMessages.push({ role: 'user', content: messageText });
 
-    // Detect if this is likely a multi-step operation
-    const isMultiStep = detectMultiStepOperation(messageText);
-
-    // Show appropriate thinking indicator
-    const spinner = isMultiStep
-      ? appendMessage('assistant', '<span class="multi-step-indicator">Utfører flere operasjoner... <span class="dots"><span>.</span><span>.</span><span>.</span></span></span>')
-      : appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
+    // Show thinking indicator - only dots, no hardcoded text
+    const spinner = appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
 
     // Get JWT token from Supabase session (declare outside try block)
     let token;
@@ -1371,30 +1416,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       case 'tool_call_complete':
         updateSpinnerText(spinnerElement, event.message + ' ✓');
         break;
-      case 'generating_response':
-        updateSpinnerText(spinnerElement, event.message);
-        break;
       case 'text_stream_start':
         // Replace spinner with empty text element for streaming
         streamingTextElement = document.createElement('div');
         streamingTextElement.className = 'streaming-text';
+        streamingTextElement.fullText = ''; // Store the full text being built
+        streamingTextElement.isStreaming = true;
+        streamingTextElement.streamingActive = false; // Track if streaming animation is active
         spinnerElement.parentNode.replaceChild(streamingTextElement, spinnerElement);
         break;
       case 'text_chunk':
-        // Add text chunk to streaming element
-        if (streamingTextElement) {
-          streamingTextElement.textContent += event.content;
-          // Auto-scroll to bottom
-          chatElements.log.scrollTop = chatElements.log.scrollHeight;
+        // Accumulate text chunks and stream them smoothly
+        if (streamingTextElement && streamingTextElement.isStreaming) {
+          streamingTextElement.fullText += event.content;
+
+          // If not already streaming, start the streaming animation
+          if (!streamingTextElement.streamingActive) {
+            streamingTextElement.streamingActive = true;
+            streamTextRealtime(streamingTextElement);
+          }
         }
         break;
       case 'text_stream_end':
-        // Convert final text to markdown
+        // Mark streaming as complete and let the streamText function handle final rendering
         if (streamingTextElement) {
-          const finalText = streamingTextElement.textContent;
-          const html = DOMPurify.sanitize(marked.parse(finalText));
-          streamingTextElement.innerHTML = html;
-          streamingTextElement.classList.remove('streaming-text');
+          streamingTextElement.isStreaming = false;
+          const finalText = streamingTextElement.fullText;
 
           // Add to chat messages
           chatMessages.push({ role: 'assistant', content: finalText });
@@ -1440,35 +1487,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Detect if message likely requires multiple operations
-  function detectMultiStepOperation(messageText) {
-    const text = messageText.toLowerCase();
 
-    // Patterns that typically require multiple operations
-    const multiStepPatterns = [
-      /vis.*og.*endre/,           // "vis vaktene og endre"
-      /vis.*og.*slett/,           // "vis vaktene og slett"
-      /hent.*og.*oppdater/,       // "hent vaktene og oppdater"
-      /legg til.*og.*legg til/,   // "legg til mandag og legg til tirsdag"
-      /legg til.*\d+:\d+.*og.*\d+:\d+/,  // "legg til mandag 09:00 og tirsdag 10:00"
-      /kopier.*til.*og/,          // "kopier til onsdag og fredag"
-      /slett.*og.*legg til/,      // "slett vaktene og legg til nye"
-      /endre.*og.*endre/,         // "endre mandag og endre tirsdag"
-      /\bog\b.*\bog\b/,           // multiple "og" (and) conjunctions
-      /,.*og/,                    // comma followed by "og"
-      /først.*så/,                // "først ... så"
-      /deretter/,                 // "deretter"
-      /etterpå/,                  // "etterpå"
-      /mandag.*og.*tirsdag/,      // specific day combinations
-      /tirsdag.*og.*onsdag/,
-      /onsdag.*og.*torsdag/,
-      /torsdag.*og.*fredag/,
-      /fredag.*og.*lørdag/,
-      /lørdag.*og.*søndag/
-    ];
-
-    return multiStepPatterns.some(pattern => pattern.test(text));
-  }
 
   // Clear chat log function (for sign-out)
   function clearChatLog() {

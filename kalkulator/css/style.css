@@ -5416,18 +5416,7 @@ input:checked + .slider:before {
 
 @keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
 
-/* Multi-step operation indicator */
-.multi-step-indicator {
-  color: var(--text-secondary);
-  font-style: italic;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
-.multi-step-indicator .dots {
-  color: var(--accent-primary);
-}
 
 /* Streaming status indicator */
 .stream-status {

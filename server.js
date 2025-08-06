@@ -824,8 +824,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   // First call: Let GPT choose tools - force tool usage for multi-step operations
   const isMultiStep = /\bog\b.*\bog\b|vis.*og.*endre|vis.*og.*slett|vis.*og.*gjør|legg til.*og.*legg til|hent.*og.*endre/.test(userMessage);
 
-  console.log('User message:', userMessage);
-  console.log('Detected as multi-step:', isMultiStep);
+
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
@@ -911,12 +910,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     ];
 
     // Second call: Let GPT formulate a user-friendly response with error handling
-    if (stream) {
-      res.write(`data: ${JSON.stringify({
-        type: 'generating_response',
-        message: 'Genererer svar...'
-      })}\n\n`);
-    }
+    // Skip the "generating_response" status message - go directly to streaming
 
     let assistantMessage = '';
     try {
