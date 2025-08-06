@@ -262,19 +262,97 @@ app.post('/chat', authenticateUser, async (req, res) => {
   });
 
   const choice = completion.choices[0].message;
-  const call = choice.tool_calls?.[0];
 
-  if (call) {
-    const fnName = call.function.name;
-    const args = JSON.parse(call.function.arguments);
-    let toolResult = '';
+  if (choice.tool_calls && choice.tool_calls.length > 0) {
+    // Handle multiple tool calls
+    const toolMessages = [];
 
-    if (fnName === 'addShift') {
+    for (const call of choice.tool_calls) {
+      const toolResult = await handleTool(call, req.user_id);
+      toolMessages.push({
+        role: 'tool',
+        tool_call_id: call.id,
+        name: call.function.name,
+        content: toolResult
+      });
+    }
+
+    // Add tool results to conversation and get GPT's response
+    const messagesWithToolResult = [
+      ...fullMessages,
+      {
+        role: 'assistant',
+        content: choice.content,
+        tool_calls: choice.tool_calls
+      },
+      ...toolMessages
+    ];
+
+    // Second call: Let GPT formulate a user-friendly response with error handling
+    let assistantMessage;
+    try {
+      const secondCompletion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: messagesWithToolResult,
+        tools,
+        tool_choice: 'none'
+      });
+      assistantMessage = secondCompletion.choices[0].message.content;
+    } catch (error) {
+      console.error('Second GPT call failed:', error);
+      // Fallback message based on tool results
+      const hasSuccess = toolMessages.some(msg => msg.content.startsWith('OK:'));
+      const hasError = toolMessages.some(msg => msg.content.startsWith('ERROR:'));
+
+      if (hasError) {
+        assistantMessage = 'Det oppstod en feil med en av operasjonene. Prøv igjen.';
+      } else if (hasSuccess) {
+        assistantMessage = 'Operasjonene er utført! 👍';
+      } else {
+        assistantMessage = 'Operasjonene er utført.';
+      }
+    }
+
+    // Get updated shift list
+    const { data: shifts } = await supabase
+      .from('user_shifts')
+      .select('*')
+      .eq('user_id', req.user_id)
+      .order('shift_date');
+
+    res.json({
+      assistant: assistantMessage,
+      shifts: shifts || []
+    });
+  } else {
+    // No tool call - just return GPT's direct response
+    const assistantMessage = choice.content || "Jeg forstod ikke kommandoen.";
+
+    const { data: shifts } = await supabase
+      .from('user_shifts')
+      .select('*')
+      .eq('user_id', req.user_id)
+      .order('shift_date');
+
+    res.json({
+      assistant: assistantMessage,
+      shifts: shifts || []
+    });
+  }
+});
+
+// ---------- handleTool function ----------
+async function handleTool(call, user_id) {
+  const fnName = call.function.name;
+  const args = JSON.parse(call.function.arguments);
+  let toolResult = '';
+
+  if (fnName === 'addShift') {
       // Check for duplicate shift before inserting
       const { data: dupCheck } = await supabase
         .from('user_shifts')
         .select('id')
-        .eq('user_id', req.user_id)
+        .eq('user_id', user_id)
         .eq('shift_date', args.shift_date)
         .eq('start_time', args.start_time)
         .eq('end_time', args.end_time)
@@ -284,59 +362,65 @@ app.post('/chat', authenticateUser, async (req, res) => {
         toolResult = 'DUPLICATE: Skiftet eksisterer allerede';
       } else {
         const { error } = await supabase.from('user_shifts').insert({
-          user_id:     req.user_id,
+          user_id:     user_id,
           shift_date:  args.shift_date,
           start_time:  args.start_time,
           end_time:    args.end_time,
           shift_type:  0
         });
-        if (error) return res.status(500).json({ error: 'Failed to save shift' });
-
-        const hours = hoursBetween(args.start_time, args.end_time);
-        toolResult = `OK: Skift lagret (${hours} timer)`;
+        if (error) {
+          toolResult = 'ERROR: Failed to save shift';
+        } else {
+          const hours = hoursBetween(args.start_time, args.end_time);
+          toolResult = `OK: Skift lagret (${hours} timer)`;
+        }
       }
     }
 
     if (fnName === 'addSeries') {
       const dates = generateSeriesDates(args.from, args.to, args.days);
-      if (!dates.length) return res.status(400).json({ error: 'No matching dates' });
-
-      const rows = dates.map(d => ({
-        user_id:    req.user_id,
-        shift_date: d.toISOString().slice(0, 10),
-        start_time: args.start,
-        end_time:   args.end,
-        shift_type: 0
-      }));
-
-      // Filter out duplicates before inserting
-      const { data: existingShifts } = await supabase
-        .from('user_shifts')
-        .select('shift_date, start_time, end_time')
-        .eq('user_id', req.user_id);
-
-      const existingKeys = new Set(
-        existingShifts?.map(s => `${s.shift_date}|${s.start_time}|${s.end_time}`) || []
-      );
-
-      const newRows = rows.filter(row =>
-        !existingKeys.has(`${row.shift_date}|${row.start_time}|${row.end_time}`)
-      );
-
-      if (newRows.length > 0) {
-        const { error } = await supabase.from('user_shifts').insert(newRows);
-        if (error) return res.status(500).json({ error: 'Failed to save series' });
-      }
-
-      const totalHours = hoursBetween(args.start, args.end) * newRows.length;
-      const duplicates = rows.length - newRows.length;
-
-      if (newRows.length === 0) {
-        toolResult = `DUPLICATE: Alle ${rows.length} skift eksisterte fra før`;
-      } else if (duplicates > 0) {
-        toolResult = `OK: ${newRows.length} nye skift lagret (${totalHours} timer), ${duplicates} eksisterte fra før`;
+      if (!dates.length) {
+        toolResult = 'ERROR: No matching dates';
       } else {
-        toolResult = `OK: ${newRows.length} skift lagret (${totalHours} timer)`;
+        const rows = dates.map(d => ({
+          user_id:    user_id,
+          shift_date: d.toISOString().slice(0, 10),
+          start_time: args.start,
+          end_time:   args.end,
+          shift_type: 0
+        }));
+
+        // Filter out duplicates before inserting
+        const { data: existingShifts } = await supabase
+          .from('user_shifts')
+          .select('shift_date, start_time, end_time')
+          .eq('user_id', user_id);
+
+        const existingKeys = new Set(
+          existingShifts?.map(s => `${s.shift_date}|${s.start_time}|${s.end_time}`) || []
+        );
+
+        const newRows = rows.filter(row =>
+          !existingKeys.has(`${row.shift_date}|${row.start_time}|${row.end_time}`)
+        );
+
+        if (newRows.length > 0) {
+          const { error } = await supabase.from('user_shifts').insert(newRows);
+          if (error) {
+            toolResult = 'ERROR: Failed to save series';
+          } else {
+            const totalHours = hoursBetween(args.start, args.end) * newRows.length;
+            const duplicates = rows.length - newRows.length;
+
+            if (duplicates > 0) {
+              toolResult = `OK: ${newRows.length} nye skift lagret (${totalHours} timer), ${duplicates} eksisterte fra før`;
+            } else {
+              toolResult = `OK: ${newRows.length} skift lagret (${totalHours} timer)`;
+            }
+          }
+        } else {
+          toolResult = `DUPLICATE: Alle ${rows.length} skift eksisterte fra før`;
+        }
       }
     }
 
@@ -351,7 +435,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
           .from('user_shifts')
           .select('*')
           .eq('id', args.shift_id)
-          .eq('user_id', req.user_id)
+          .eq('user_id', user_id)
           .maybeSingle();
         existingShift = data;
       } else if (args.shift_date && args.start_time) {
@@ -359,7 +443,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
         const { data } = await supabase
           .from('user_shifts')
           .select('*')
-          .eq('user_id', req.user_id)
+          .eq('user_id', user_id)
           .eq('shift_date', args.shift_date)
           .eq('start_time', args.start_time);
 
@@ -403,7 +487,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
           const { data: collision } = await supabase
             .from('user_shifts')
             .select('id')
-            .eq('user_id', req.user_id)
+            .eq('user_id', user_id)
             .eq('shift_date', checkDate)
             .eq('start_time', checkStart)
             .eq('end_time', checkEnd)
@@ -418,7 +502,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
               .from('user_shifts')
               .update(updateData)
               .eq('id', shiftId)
-              .eq('user_id', req.user_id);
+              .eq('user_id', user_id);
 
             if (error) {
               toolResult = 'ERROR: Kunne ikke oppdatere skiftet';
@@ -443,7 +527,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
         .from('user_shifts')
         .select('*')
         .eq('id', args.shift_id)
-        .eq('user_id', req.user_id)
+        .eq('user_id', user_id)
         .maybeSingle();
 
       if (!existingShift) {
@@ -454,7 +538,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
           .from('user_shifts')
           .delete()
           .eq('id', args.shift_id)
-          .eq('user_id', req.user_id);
+          .eq('user_id', user_id);
 
         if (error) {
           toolResult = 'ERROR: Kunne ikke slette skiftet';
@@ -469,7 +553,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
       let deleteQuery = supabase
         .from('user_shifts')
         .delete()
-        .eq('user_id', req.user_id);
+        .eq('user_id', user_id);
 
       let criteriaDescription = '';
 
@@ -505,7 +589,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
         let countQuery = supabase
           .from('user_shifts')
           .select('*', { count: 'exact' })
-          .eq('user_id', req.user_id);
+          .eq('user_id', user_id);
 
         if (args.criteria_type === 'week') {
           const { start, end } = getWeekDateRange(args.week_number, args.year);
@@ -539,7 +623,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
       let selectQuery = supabase
         .from('user_shifts')
         .select('*')
-        .eq('user_id', req.user_id)
+        .eq('user_id', user_id)
         .order('shift_date');
 
       let criteriaDescription = '';
@@ -595,85 +679,8 @@ app.post('/chat', authenticateUser, async (req, res) => {
       }
     }
 
-    // Add tool result to conversation and get GPT's response
-    const messagesWithToolResult = [
-      ...fullMessages,
-      {
-        role: 'assistant',
-        content: choice.content,
-        tool_calls: choice.tool_calls
-      },
-      {
-        role: 'tool',
-        tool_call_id: call.id,
-        name: call.function.name,
-        content: toolResult
-      }
-    ];
-
-    // Second call: Let GPT formulate a user-friendly response with error handling
-    let assistantMessage;
-    try {
-      const secondCompletion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: messagesWithToolResult,
-        tools,
-        tool_choice: 'none'
-      });
-      assistantMessage = secondCompletion.choices[0].message.content;
-    } catch (error) {
-      console.error('Second GPT call failed:', error);
-      // Fallback message based on tool result
-      if (toolResult.startsWith('OK:')) {
-        if (fnName === 'editShift') {
-          assistantMessage = 'Skiftet er oppdatert! 👍';
-        } else if (fnName === 'deleteShift') {
-          assistantMessage = 'Skiftet er slettet! 👍';
-        } else if (fnName === 'deleteSeries') {
-          assistantMessage = 'Skiftene er slettet! 👍';
-        } else if (fnName === 'getShifts') {
-          assistantMessage = 'Her er skiftene dine! 📅';
-        } else {
-          assistantMessage = 'Skiftet er lagret! 👍';
-        }
-      } else if (toolResult.startsWith('NONE:')) {
-        assistantMessage = 'Du har ingen vakter i den perioden.';
-      } else if (toolResult.startsWith('DUPLICATE:')) {
-        assistantMessage = 'Dette skiftet er allerede registrert.';
-      } else if (toolResult.startsWith('ERROR:')) {
-        assistantMessage = 'Det oppstod en feil. Prøv igjen.';
-      } else {
-        assistantMessage = 'Operasjonen er utført.';
-      }
-    }
-
-    // Get updated shift list
-    const { data: shifts } = await supabase
-      .from('user_shifts')
-      .select('*')
-      .eq('user_id', req.user_id)
-      .order('shift_date');
-
-    res.json({
-      assistant: assistantMessage,
-      shifts: shifts || []
-    });
-  } else {
-    // No tool call - just return GPT's direct response
-    const assistantMessage = choice.content || "Jeg forstod ikke kommandoen.";
-
-    const { data: shifts } = await supabase
-      .from('user_shifts')
-      .select('*')
-      .eq('user_id', req.user_id)
-      .order('shift_date');
-
-    res.json({
-      assistant: assistantMessage,
-      shifts: shifts || []
-    });
-  }
-});
+    return toolResult;
+}
 
 // ---------- export / run ----------
 export default app;
