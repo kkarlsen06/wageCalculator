@@ -1,5 +1,5 @@
 // API Base URL configuration
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const API_BASE = window.CONFIG?.apiBase || '';
 
 // Initialize Supabase client when DOM is loaded
 let supa;

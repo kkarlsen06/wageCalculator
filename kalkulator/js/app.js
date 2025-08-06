@@ -1,5 +1,5 @@
 // API Base URL configuration
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const API_BASE = window.CONFIG?.apiBase || '';
 
 function setAppHeight() {
   // Use visual viewport for better mobile browser UI handling
@@ -623,7 +623,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Update chatbox placeholder with user's name
   async function updateChatboxPlaceholder() {
     try {
-      const { data: { user } } = await supa.auth.getUser();
+      // Check if Supabase client is available
+      if (!window.supa || !window.supa.auth) {
+        console.log('Supabase client not yet available, using default placeholder');
+        if (chatElements.placeholder) {
+          chatElements.placeholder.textContent = 'Trenger du hjelp?';
+        }
+        return;
+      }
+
+      const { data: { user } } = await window.supa.auth.getUser();
       if (!user || !chatElements.placeholder) return;
 
       // Use first name if available, otherwise use first part of email, fallback to 'Bruker'
