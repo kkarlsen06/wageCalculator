@@ -948,9 +948,9 @@ async function handleTool(call, user_id) {
             return sum + hoursBetween(shift.start_time, shift.end_time);
           }, 0);
 
-          // Format shifts for tool content (YYYY-MM-DD HH:mm-HH:mm)
+          // Format shifts for tool content (ID:xxx YYYY-MM-DD HH:mm-HH:mm)
           const formattedShifts = shifts.map(shift =>
-            `${shift.shift_date} ${shift.start_time}-${shift.end_time}`
+            `ID:${shift.id} ${shift.shift_date} ${shift.start_time}-${shift.end_time}`
           ).join(', ');
 
           toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours} timer totalt). Skift: ${formattedShifts}`;
