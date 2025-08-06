@@ -3685,7 +3685,7 @@ export const app = {
 
                     tooltipContent.innerHTML = `
                         <span class="chart-tooltip-line">${dayName} ${dateStr}</span>
-                        <span class="chart-tooltip-line">${hours.toFixed(2).replace('.', ',')} timer</span>
+                        <span class="chart-tooltip-line">${hours.toFixed(2).replace('.', ',')}t</span>
                         <span class="chart-tooltip-line">${this.formatCurrency(earnings)}</span>
                     `;
                 }
@@ -6601,7 +6601,7 @@ export const app = {
         return amount.toFixed(2).replace('.', ',') + currencySuffix;
     },
     formatHours(hours) {
-        return hours.toFixed(2).replace('.', ',') + ' timer';
+        return hours.toFixed(2).replace('.', ',') + 't';
     },
     
     formatTimeShort(timeString) {
