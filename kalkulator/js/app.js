@@ -1326,7 +1326,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Reset all states
     hasFirstMessage = false;
     isExpanded = false;
-    isInInputMode = false;
 
     // Remove class from body
     document.body.classList.remove('chatbox-expanded-active');
