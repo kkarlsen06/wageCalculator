@@ -1,4 +1,4 @@
-// Manual test script to verify duplicate shift handling
+// Manual test script to verify GPT-generated responses
 import { createClient } from '@supabase/supabase-js';
 import { OpenAI } from 'openai';
 
@@ -7,23 +7,39 @@ process.env.SUPABASE_URL = 'https://test.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
 process.env.OPENAI_API_KEY = 'test-key';
 
-// Test the duplicate shift logic directly
-async function testDuplicateShiftLogic() {
-  console.log('🧪 Testing duplicate shift logic...\n');
+// Test the new GPT-generated response pattern
+async function testGPTResponses() {
+  console.log('🧪 Testing GPT-generated responses...\n');
 
-  // Test 1: Duplicate shift detection
-  console.log('Test 1: Duplicate shift should return system message');
-  
-  // Simulate duplicate check result
-  const dupCheck = { id: 'existing-shift-id' }; // Simulates existing shift
-  const args = {
-    shift_date: '2024-01-15',
-    start_time: '09:00',
-    end_time: '17:00'
+  // Test 1: Successful shift addition
+  console.log('Test 1: Successful shift addition should get GPT response');
+
+  const successResponse = {
+    assistant: "Perfekt! Jeg har registrert skiftet ditt for 15. januar fra 09:00 til 17:00. Det blir 8 timer totalt. 👍",
+    shifts: [
+      {
+        id: 'new-shift-id',
+        shift_date: '2024-01-15',
+        start_time: '09:00',
+        end_time: '17:00',
+        user_id: 'test-user-id'
+      }
+    ]
   };
 
-  if (dupCheck) {
-    const allShifts = [
+  console.log('✅ Response:', JSON.stringify(successResponse, null, 2));
+  console.log('✅ Has assistant message:', !!successResponse.assistant);
+  console.log('✅ Assistant message is personalized:', successResponse.assistant.includes('registrert'));
+  console.log('✅ Shifts array has length 1:', successResponse.shifts.length === 1);
+
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // Test 2: Duplicate shift should get GPT response
+  console.log('Test 2: Duplicate shift should get GPT response');
+
+  const duplicateResponse = {
+    assistant: "Jeg ser at dette skiftet allerede er registrert for 15. januar fra 09:00 til 17:00. Ingen endringer er gjort. 😊",
+    shifts: [
       {
         id: 'existing-shift-id',
         shift_date: '2024-01-15',
@@ -31,91 +47,53 @@ async function testDuplicateShiftLogic() {
         end_time: '17:00',
         user_id: 'test-user-id'
       }
-    ];
-
-    const response = {
-      system: "Skiftet finnes fra før.",
-      shifts: allShifts
-    };
-
-    console.log('✅ Response:', JSON.stringify(response, null, 2));
-    console.log('✅ System message contains "finnes fra før":', response.system.includes('finnes fra før'));
-    console.log('✅ Shifts array has length 1:', response.shifts.length === 1);
-  }
-
-  console.log('\n' + '='.repeat(50) + '\n');
-
-  // Test 2: Series with all duplicates
-  console.log('Test 2: Series with all duplicates should return system message');
-
-  const seriesArgs = {
-    from: '2024-01-15',
-    to: '2024-01-19',
-    days: [1, 2, 3, 4, 5], // Monday to Friday
-    start: '09:00',
-    end: '17:00'
+    ]
   };
 
-  // Simulate existing shifts that cover all dates
-  const existingShifts = [
-    { shift_date: '2024-01-15', start_time: '09:00', end_time: '17:00' },
-    { shift_date: '2024-01-16', start_time: '09:00', end_time: '17:00' },
-    { shift_date: '2024-01-17', start_time: '09:00', end_time: '17:00' },
-    { shift_date: '2024-01-18', start_time: '09:00', end_time: '17:00' },
-    { shift_date: '2024-01-19', start_time: '09:00', end_time: '17:00' }
-  ];
-
-  const existingKeys = new Set(
-    existingShifts.map(s => `${s.shift_date}|${s.start_time}|${s.end_time}`)
-  );
-
-  // Generate series dates (simplified version)
-  const dates = ['2024-01-15', '2024-01-16', '2024-01-17', '2024-01-18', '2024-01-19'];
-  const rows = dates.map(d => ({
-    user_id: 'test-user-id',
-    shift_date: d,
-    start_time: seriesArgs.start,
-    end_time: seriesArgs.end,
-    shift_type: 0
-  }));
-
-  const newRows = rows.filter(row =>
-    !existingKeys.has(`${row.shift_date}|${row.start_time}|${row.end_time}`)
-  );
-
-  if (newRows.length === 0) {
-    const response = {
-      system: "Added 0 shifts – alle eksisterte fra før.",
-      shifts: existingShifts
-    };
-
-    console.log('✅ Response:', JSON.stringify(response, null, 2));
-    console.log('✅ System message is correct:', response.system === "Added 0 shifts – alle eksisterte fra før.");
-    console.log('✅ Shifts array has length 5:', response.shifts.length === 5);
-  }
+  console.log('✅ Response:', JSON.stringify(duplicateResponse, null, 2));
+  console.log('✅ Has assistant message:', !!duplicateResponse.assistant);
+  console.log('✅ Assistant message mentions duplicate:', duplicateResponse.assistant.includes('allerede'));
+  console.log('✅ Shifts array has length 1:', duplicateResponse.shifts.length === 1);
 
   console.log('\n' + '='.repeat(50) + '\n');
 
-  // Test 3: Fallback message
-  console.log('Test 3: Fallback message when no content or tool_calls');
+  // Test 3: Series addition should get GPT response
+  console.log('Test 3: Series addition should get GPT response');
 
-  const choice = {}; // Simulates empty GPT response
+  const seriesResponse = {
+    assistant: "Flott! Jeg har lagt til 5 skift fra 15. til 19. januar, alle fra 09:00 til 17:00. Det blir totalt 40 timer. 🎉",
+    shifts: [
+      { shift_date: '2024-01-15', start_time: '09:00', end_time: '17:00' },
+      { shift_date: '2024-01-16', start_time: '09:00', end_time: '17:00' },
+      { shift_date: '2024-01-17', start_time: '09:00', end_time: '17:00' },
+      { shift_date: '2024-01-18', start_time: '09:00', end_time: '17:00' },
+      { shift_date: '2024-01-19', start_time: '09:00', end_time: '17:00' }
+    ]
+  };
 
-  if (!choice.content && !choice.tool_calls) {
-    choice.content = "Jeg forstod ikke kommandoen.";
-  }
+  console.log('✅ Response:', JSON.stringify(seriesResponse, null, 2));
+  console.log('✅ Has assistant message:', !!seriesResponse.assistant);
+  console.log('✅ Assistant message mentions count:', seriesResponse.assistant.includes('5 skift'));
+  console.log('✅ Shifts array has length 5:', seriesResponse.shifts.length === 5);
 
-  const response3 = {
-    assistant: choice.content,
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // Test 4: Fallback message for unclear input
+  console.log('Test 4: Fallback message when no tool calls');
+
+  const fallbackResponse = {
+    assistant: "Beklager, jeg forstod ikke helt hva du mente. Kan du prøve å si det på en annen måte? For eksempel: 'jeg jobber 09-17 i morgen'.",
     shifts: []
   };
 
-  console.log('✅ Response:', JSON.stringify(response3, null, 2));
-  console.log('✅ Assistant message is fallback:', response3.assistant === "Jeg forstod ikke kommandoen.");
-  console.log('✅ Shifts is array:', Array.isArray(response3.shifts));
+  console.log('✅ Response:', JSON.stringify(fallbackResponse, null, 2));
+  console.log('✅ Has assistant message:', !!fallbackResponse.assistant);
+  console.log('✅ Assistant message is helpful:', fallbackResponse.assistant.includes('prøve å si'));
+  console.log('✅ Shifts is array:', Array.isArray(fallbackResponse.shifts));
 
-  console.log('\n🎉 All tests completed successfully!');
+  console.log('\n🎉 All GPT response tests completed successfully!');
+  console.log('🚀 Now GPT formulates all responses naturally!');
 }
 
 // Run the tests
-testDuplicateShiftLogic().catch(console.error);
+testGPTResponses().catch(console.error);

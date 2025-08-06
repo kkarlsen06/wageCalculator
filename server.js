@@ -121,6 +121,7 @@ app.post('/chat', authenticateUser, async (req, res) => {
   };
   const fullMessages = [systemDateHint, ...messages];
 
+  // First call: Let GPT choose tools
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: fullMessages,
@@ -129,12 +130,12 @@ app.post('/chat', authenticateUser, async (req, res) => {
   });
 
   const choice = completion.choices[0].message;
-  let systemMessage = null;
-
   const call = choice.tool_calls?.[0];
+
   if (call) {
     const fnName = call.function.name;
     const args = JSON.parse(call.function.arguments);
+    let toolResult = '';
 
     if (fnName === 'addShift') {
       // Check for duplicate shift before inserting
@@ -148,27 +149,20 @@ app.post('/chat', authenticateUser, async (req, res) => {
         .maybeSingle();
 
       if (dupCheck) {
-        // Get all shifts to return with system message
-        const { data: allShifts } = await supabase
-          .from('user_shifts')
-          .select('*')
-          .eq('user_id', req.user_id)
-          .order('shift_date');
-
-        return res.json({
-          system: "Skiftet finnes fra før.",
-          shifts: allShifts || []
+        toolResult = 'DUPLICATE: Skiftet eksisterer allerede';
+      } else {
+        const { error } = await supabase.from('user_shifts').insert({
+          user_id:     req.user_id,
+          shift_date:  args.shift_date,
+          start_time:  args.start_time,
+          end_time:    args.end_time,
+          shift_type:  0
         });
-      }
+        if (error) return res.status(500).json({ error: 'Failed to save shift' });
 
-      const { error } = await supabase.from('user_shifts').insert({
-        user_id:     req.user_id,
-        shift_date:  args.shift_date,
-        start_time:  args.start_time,
-        end_time:    args.end_time,
-        shift_type:  0
-      });
-      if (error) return res.status(500).json({ error: 'Failed to save shift' });
+        const hours = hoursBetween(args.start_time, args.end_time);
+        toolResult = `OK: Skift lagret (${hours} timer)`;
+      }
     }
 
     if (fnName === 'addSeries') {
@@ -197,46 +191,70 @@ app.post('/chat', authenticateUser, async (req, res) => {
         !existingKeys.has(`${row.shift_date}|${row.start_time}|${row.end_time}`)
       );
 
-      if (newRows.length === 0) {
-        // All dates already exist - return system message
-        const { data: allShifts } = await supabase
-          .from('user_shifts')
-          .select('*')
-          .eq('user_id', req.user_id)
-          .order('shift_date');
-
-        return res.json({
-          system: "Added 0 shifts – alle eksisterte fra før.",
-          shifts: allShifts || []
-        });
-      }
-
       if (newRows.length > 0) {
         const { error } = await supabase.from('user_shifts').insert(newRows);
         if (error) return res.status(500).json({ error: 'Failed to save series' });
       }
 
       const totalHours = hoursBetween(args.start, args.end) * newRows.length;
-      choice.content = `Added ${newRows.length} shifts, total ${totalHours} hours.`;
+      const duplicates = rows.length - newRows.length;
+
+      if (newRows.length === 0) {
+        toolResult = `DUPLICATE: Alle ${rows.length} skift eksisterte fra før`;
+      } else if (duplicates > 0) {
+        toolResult = `OK: ${newRows.length} nye skift lagret (${totalHours} timer), ${duplicates} eksisterte fra før`;
+      } else {
+        toolResult = `OK: ${newRows.length} skift lagret (${totalHours} timer)`;
+      }
     }
+
+    // Add tool result to conversation and get GPT's response
+    const messagesWithToolResult = [
+      ...fullMessages,
+      choice,
+      {
+        role: 'tool',
+        tool_call_id: call.id,
+        name: call.function.name,
+        content: toolResult
+      }
+    ];
+
+    // Second call: Let GPT formulate a user-friendly response
+    const secondCompletion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: messagesWithToolResult,
+      tool_choice: 'none'
+    });
+
+    const assistantMessage = secondCompletion.choices[0].message.content;
+
+    // Get updated shift list
+    const { data: shifts } = await supabase
+      .from('user_shifts')
+      .select('*')
+      .eq('user_id', req.user_id)
+      .order('shift_date');
+
+    res.json({
+      assistant: assistantMessage,
+      shifts: shifts || []
+    });
+  } else {
+    // No tool call - just return GPT's direct response
+    const assistantMessage = choice.content || "Jeg forstod ikke kommandoen.";
+
+    const { data: shifts } = await supabase
+      .from('user_shifts')
+      .select('*')
+      .eq('user_id', req.user_id)
+      .order('shift_date');
+
+    res.json({
+      assistant: assistantMessage,
+      shifts: shifts || []
+    });
   }
-
-  // Guarantee fallback - ensure we always have content to return
-  if (!choice.content && !choice.tool_calls) {
-    choice.content = "Jeg forstod ikke kommandoen.";
-  }
-
-  // always return updated shift list + assistant message
-  const { data: shifts } = await supabase
-    .from('user_shifts')
-    .select('*')
-    .eq('user_id', req.user_id)
-    .order('shift_date');
-
-  res.json({
-    assistant: choice.content || systemMessage,
-    shifts: shifts || []
-  });
 });
 
 // ---------- export / run ----------

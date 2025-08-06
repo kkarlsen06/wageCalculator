@@ -110,6 +110,7 @@ app.get('/settings', authenticateUser, async (req, res) => {
 app.post('/chat', authenticateUser, async (req, res) => {
   const { messages } = req.body;
 
+  // First call: Let GPT choose tools
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages,
@@ -119,9 +120,11 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   const choice = completion.choices[0].message;
   const call = choice.tool_calls?.[0];
+
   if (call) {
     const fnName = call.function.name;
     const args = JSON.parse(call.function.arguments);
+    let toolResult = '';
 
     if (fnName === 'addShift') {
       const { error } = await supabase.from('user_shifts').insert({
@@ -132,6 +135,9 @@ app.post('/chat', authenticateUser, async (req, res) => {
         shift_type:  0
       });
       if (error) return res.status(500).json({ error: 'Failed to save shift' });
+
+      const hours = hoursBetween(args.start_time, args.end_time);
+      toolResult = `OK: Skift lagret (${hours} timer)`;
     }
 
     if (fnName === 'addSeries') {
@@ -149,18 +155,50 @@ app.post('/chat', authenticateUser, async (req, res) => {
       if (error) return res.status(500).json({ error: 'Failed to save series' });
 
       const totalHours = hoursBetween(args.start, args.end) * rows.length;
-      choice.content = `Added ${rows.length} shifts, total ${totalHours} hours.`;
+      toolResult = `OK: ${rows.length} skift lagret (${totalHours} timer)`;
     }
+
+    // Add tool result to conversation and get GPT's response
+    const messagesWithToolResult = [
+      ...messages,
+      choice,
+      {
+        role: 'tool',
+        tool_call_id: call.id,
+        name: call.function.name,
+        content: toolResult
+      }
+    ];
+
+    // Second call: Let GPT formulate a user-friendly response
+    const secondCompletion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: messagesWithToolResult,
+      tool_choice: 'none'
+    });
+
+    const assistantMessage = secondCompletion.choices[0].message.content;
+
+    // Get updated shift list
+    const { data: shifts } = await supabase
+      .from('user_shifts')
+      .select('*')
+      .eq('user_id', req.user_id)
+      .order('shift_date');
+
+    res.json({ assistant: assistantMessage, shifts: shifts || [] });
+  } else {
+    // No tool call - just return GPT's direct response
+    const assistantMessage = choice.content || "Jeg forstod ikke kommandoen.";
+
+    const { data: shifts } = await supabase
+      .from('user_shifts')
+      .select('*')
+      .eq('user_id', req.user_id)
+      .order('shift_date');
+
+    res.json({ assistant: assistantMessage, shifts: shifts || [] });
   }
-
-  // always return updated shift list + assistant message
-  const { data: shifts } = await supabase
-    .from('user_shifts')
-    .select('*')
-    .eq('user_id', req.user_id)
-    .order('shift_date');
-
-  res.json({ assistant: choice.content, shifts });
 });
 
 // ---------- export / run ----------
