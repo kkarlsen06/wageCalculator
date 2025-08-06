@@ -1,0 +1,13 @@
+[build]
+  publish = "kalkulator"   # mappen med index.html
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["openai", "@supabase/supabase-js", "cors", "dotenv"]
+
+# Redirect all API calls to the function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

@@ -27,6 +27,13 @@ En moderne webapplikasjon for å beregne lønn basert på vakter, arbeidstid og 
 - Oversikt over lønn, timer og vakter
 - Historikk over tidligere vakter
 
+### AI-drevet Chat-assistent
+- Intelligent chatbot for vaktregistrering
+- Naturlig språkbehandling på norsk
+- Automatisk parsing av vaktinformasjon
+- Støtte for enkeltskift og skiftserier
+- Redigering og sletting av eksisterende vakter
+
 ### Innstillinger
 - Tilpassbare lønnsrater
 - Personlige preferanser
@@ -35,49 +42,105 @@ En moderne webapplikasjon for å beregne lønn basert på vakter, arbeidstid og 
 ## 🛠️ Teknologi
 
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **Backend**: Netlify Functions (Node.js)
+- **AI Integration**: OpenAI GPT-4o-mini for chat functionality
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
 - **Styling**: Responsivt design med moderne CSS
 - **Hosting**: Netlify
-- **Database**: LocalStorage (planlagt: Firebase/Supabase)
 
 ## 🗂️ Prosjektstruktur
 
 ```
-kompensasjonskalkulator/
+wageCalculator/
 │
 ├── index.html              # Portfolio/hovedside
 ├── css/
-│   └── main.css           # Styling for hovedsiden
+│   └── style.css          # Styling for hovedsiden
 ├── kalkulator/            # Kalkulatorapplikasjon
-│   ├── index.html         # Innloggingsside
-│   ├── app.html           # Hovedkalkulator
+│   ├── index.html         # Hovedapplikasjon
+│   ├── login.html         # Innloggingsside
 │   ├── css/
 │   │   └── style.css      # Styling for kalkulatoren
 │   └── js/
 │       ├── auth.js        # Autentisering og brukerhåndtering
 │       ├── app.js         # UI-kontrollere og brukerinteraksjon
-│       └── appLogic.js    # Forretningslogikk og beregninger
+│       ├── appLogic.js    # Forretningslogikk og beregninger
+│       └── config.js      # Konfigurasjon (Supabase keys)
+├── netlify/
+│   └── functions/
+│       └── chat.js        # Serverless chat function (OpenAI + Supabase)
+├── server.js              # Legacy Express server (for local dev)
+├── package.json           # Node.js dependencies
+├── netlify.toml           # Netlify configuration
 ├── _redirects             # Netlify redirects og routing
 └── README.md              # Prosjektdokumentasjon
 ```
 
 ## 🧪 Lokalt oppsett
 
+### Forutsetninger
+- Node.js >=22
+- npm eller yarn
+- Netlify CLI (for serverless functions)
+
+### Installasjon
+
 1. **Klon repositoriet:**
    ```bash
-   git clone https://github.com/kkarlsen-productions/kompensasjonskalkulator.git
-   cd kompensasjonskalkulator
+   git clone https://github.com/kkarlsen06/wageCalculator.git
+   cd wageCalculator
    ```
 
-2. **Åpne i nettleser:**
-   - Åpne `index.html` for hovedsiden
-   - Naviger til `kalkulator/index.html` for kalkulatoren
-   - Eller bruk en lokal webserver for best opplevelse
-
-3. **Utvikling:**
+2. **Installer avhengigheter:**
    ```bash
-   # Eksempel med Python (valgfritt)
-   python -m http.server 8000
-   # Gå til http://localhost:8000
+   npm install
+   ```
+
+3. **Installer Netlify CLI:**
+   ```bash
+   npm install -g netlify-cli
+   ```
+
+4. **Sett opp miljøvariabler:**
+   Opprett en `.env` fil i prosjektets rot med følgende variabler:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   ```
+
+### Lokal utvikling
+
+**Med Netlify Functions (anbefalt for produksjon-lignende miljø):**
+```bash
+netlify dev
+```
+Dette starter en lokal server på `http://localhost:8888` med full støtte for serverless functions.
+
+**Med Express server (legacy):**
+```bash
+npm start
+```
+Dette starter Express-serveren på `http://localhost:5173`.
+
+### Deployment til Netlify
+
+1. **Koble til Netlify:**
+   ```bash
+   netlify init
+   ```
+
+2. **Sett miljøvariabler i Netlify Dashboard:**
+   - Gå til Site Settings → Environment Variables
+   - Legg til:
+     - `OPENAI_API_KEY`
+     - `SUPABASE_URL`
+     - `SUPABASE_SERVICE_ROLE_KEY`
+
+3. **Deploy:**
+   ```bash
+   netlify deploy --prod
    ```
 
 ## 📱 Responsivt design

@@ -832,7 +832,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      const response = await fetch('/chat', {
+      const response = await fetch('/.netlify/functions/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
