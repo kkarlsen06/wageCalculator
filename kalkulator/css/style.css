@@ -5312,6 +5312,23 @@ input:checked + .slider:before {
   font-weight: 500;
 }
 
+/* Streaming text with cursor effect */
+.streaming-text {
+  position: relative;
+}
+
+.streaming-text::after {
+  content: '▋';
+  color: var(--accent-primary);
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 /* Mobile responsiveness for profile picture upload */
 @media (max-width: 480px) {
   .profile-picture-upload-container {

@@ -901,6 +901,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
               if (parsed.type === 'complete') {
                 finalData = parsed;
+              } else if (parsed.type === 'text_stream_end') {
+                // For text streaming, we don't need to wait for 'complete'
+                // The text is already displayed, just need to handle shifts update
+                finalData = { assistant: 'streamed', shifts: [] };
               }
             } catch (e) {
               console.warn('Failed to parse streaming data:', data);
@@ -1047,6 +1051,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Handle streaming events from server
+  let streamingTextElement = null;
+
   function handleStreamEvent(event, spinnerElement) {
     switch (event.type) {
       case 'status':
@@ -1069,6 +1075,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         break;
       case 'generating_response':
         updateSpinnerText(spinnerElement, event.message);
+        break;
+      case 'text_stream_start':
+        // Replace spinner with empty text element for streaming
+        streamingTextElement = document.createElement('div');
+        streamingTextElement.className = 'streaming-text';
+        spinnerElement.parentNode.replaceChild(streamingTextElement, spinnerElement);
+        break;
+      case 'text_chunk':
+        // Add text chunk to streaming element
+        if (streamingTextElement) {
+          streamingTextElement.textContent += event.content;
+          // Auto-scroll to bottom
+          chatElements.log.scrollTop = chatElements.log.scrollHeight;
+        }
+        break;
+      case 'text_stream_end':
+        // Convert final text to markdown
+        if (streamingTextElement) {
+          const finalText = streamingTextElement.textContent;
+          const html = DOMPurify.sanitize(marked.parse(finalText));
+          streamingTextElement.innerHTML = html;
+          streamingTextElement.classList.remove('streaming-text');
+
+          // Add to chat messages
+          chatMessages.push({ role: 'assistant', content: finalText });
+          streamingTextElement = null;
+        }
+        break;
+      case 'shifts_update':
+        // Update shifts in the UI
+        if (event.shifts && window.app && window.app.refreshUI) {
+          const shifts = event.shifts || [];
+          const uniq = [];
+          const seen = new Set();
+          for (const s of shifts) {
+            const k = `${s.shift_date}|${s.start_time}|${s.end_time}`;
+            if (!seen.has(k)) {
+              seen.add(k);
+              uniq.push(s);
+            }
+          }
+
+          const newShifts = uniq.map(shift => ({
+            id: shift.id || Date.now() + Math.random(),
+            date: new Date(shift.date || shift.shift_date),
+            startTime: shift.startTime || shift.start_time,
+            endTime: shift.endTime || shift.end_time,
+            type: shift.type !== undefined ? shift.type : shift.shift_type,
+            seriesId: shift.seriesId || shift.series_id || null
+          }));
+
+          if (window.app.shifts && window.app.userShifts) {
+            window.app.shifts = [...newShifts];
+            window.app.userShifts = [...newShifts];
+          }
+          window.app.refreshUI(newShifts);
+        }
         break;
     }
   }

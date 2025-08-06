@@ -573,15 +573,62 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       })}\n\n`);
     }
 
-    let assistantMessage;
+    let assistantMessage = '';
     try {
-      const secondCompletion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: messagesWithToolResult,
-        tools,
-        tool_choice: 'none'
-      });
-      assistantMessage = secondCompletion.choices[0].message.content;
+      if (stream) {
+        // Use streaming for the final response
+        const streamCompletion = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: messagesWithToolResult,
+          tools,
+          tool_choice: 'none',
+          stream: true
+        });
+
+        // Send start of text streaming
+        res.write(`data: ${JSON.stringify({
+          type: 'text_stream_start'
+        })}\n\n`);
+
+        for await (const chunk of streamCompletion) {
+          const content = chunk.choices[0]?.delta?.content;
+          if (content) {
+            assistantMessage += content;
+            // Send each chunk of text
+            res.write(`data: ${JSON.stringify({
+              type: 'text_chunk',
+              content: content
+            })}\n\n`);
+          }
+        }
+
+        // Send end of text streaming
+        res.write(`data: ${JSON.stringify({
+          type: 'text_stream_end'
+        })}\n\n`);
+
+        // Get updated shift list for streaming
+        const { data: shifts } = await supabase
+          .from('user_shifts')
+          .select('*')
+          .eq('user_id', req.user_id)
+          .order('shift_date');
+
+        // Send shifts update
+        res.write(`data: ${JSON.stringify({
+          type: 'shifts_update',
+          shifts: shifts || []
+        })}\n\n`);
+      } else {
+        // Non-streaming version
+        const secondCompletion = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: messagesWithToolResult,
+          tools,
+          tool_choice: 'none'
+        });
+        assistantMessage = secondCompletion.choices[0].message.content;
+      }
     } catch (error) {
       console.error('Second GPT call failed:', error);
       // Fallback message based on tool results
