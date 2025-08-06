@@ -598,7 +598,11 @@ app.post('/chat', authenticateUser, async (req, res) => {
     // Add tool result to conversation and get GPT's response
     const messagesWithToolResult = [
       ...fullMessages,
-      choice,
+      {
+        role: 'assistant',
+        content: choice.content,
+        tool_calls: choice.tool_calls
+      },
       {
         role: 'tool',
         tool_call_id: call.id,
