@@ -708,7 +708,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Pill content click to enter input mode (but not when expanded or clicking close button)
     chatElements.pill.addEventListener('click', function(e) {
       if (!e.target.closest('.chatbox-close') && !isExpanded) {
-        enterInputMode();
+        // If input already has text and is visible, just focus it
+        if (chatElements.pillInput.style.display === 'block' && chatElements.pillInput.value.trim().length > 0) {
+          chatElements.pillInput.focus();
+        } else {
+          enterInputMode();
+        }
       }
     });
 
@@ -736,6 +741,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
+    // Handle blur event for pill input
+    chatElements.pillInput.addEventListener('blur', function(e) {
+      // Small delay to allow for click events to process first
+      setTimeout(() => {
+        exitInputMode();
+      }, 100);
+    });
+
+    // Handle focus event for pill input to ensure proper state
+    chatElements.pillInput.addEventListener('focus', function(e) {
+      isInInputMode = true;
+    });
+
     // Enter key in expanded input (with Shift+Enter for new line)
     if (chatElements.input) {
       chatElements.input.addEventListener('keydown', function(e) {
@@ -758,25 +776,44 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function enterInputMode() {
-    if (isInInputMode || isExpanded) return; // Don't allow input mode when expanded
+    if (isExpanded) return; // Don't allow input mode when expanded
 
     isInInputMode = true;
     chatElements.placeholder.style.display = 'none';
     chatElements.pillInput.style.display = 'block';
-    chatElements.pillInput.focus();
+
+    // Focus with a small delay to ensure proper rendering
+    setTimeout(() => {
+      chatElements.pillInput.focus();
+    }, 10);
   }
 
   function exitInputMode() {
     if (!isInInputMode) return;
 
     isInInputMode = false;
-    chatElements.pillInput.style.display = 'none';
-    chatElements.pillInput.value = '';
-    chatElements.placeholder.style.display = 'block';
+
+    // Only hide input and show placeholder if there's no text
+    // This preserves text when user taps outside
+    const hasText = chatElements.pillInput.value.trim().length > 0;
+
+    if (hasText) {
+      // Keep input visible if there's text, just remove focus
+      chatElements.pillInput.blur();
+      chatElements.placeholder.style.display = 'none';
+    } else {
+      // Hide input and show placeholder only if empty
+      chatElements.pillInput.style.display = 'none';
+      chatElements.placeholder.style.display = 'block';
+    }
   }
 
   function expandChatbox() {
     isExpanded = true;
+
+    // Apply chatbox view similar to stats view
+    applyChatboxView();
+
     chatElements.pill.classList.add('expanded');
     chatElements.expandedContent.style.display = 'block';
     chatElements.close.style.display = 'flex';
@@ -796,6 +833,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     isExpanded = false;
     isInInputMode = false;
     hasFirstMessage = false;
+
+    // Restore normal dashboard view
+    restoreNormalDashboardView();
 
     chatElements.pill.classList.remove('expanded');
     chatElements.expandedContent.style.display = 'none';
@@ -820,6 +860,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     const textarea = chatElements.input;
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+  }
+
+  // Apply chatbox view - similar to stats view functionality
+  function applyChatboxView() {
+    const body = document.body;
+    const dashboardContent = document.querySelector('.dashboard-content');
+    const chatboxContainer = document.querySelector('.chatbox-container');
+
+    if (!dashboardContent || !chatboxContainer) return;
+
+    // Add chatbox view class to body
+    body.classList.add('chatbox-view');
+
+    // Hide dashboard cards manually as backup
+    const totalCard = document.querySelector('.total-card');
+    const nextShiftCard = document.querySelector('.next-shift-card');
+    const nextPayrollCard = document.querySelector('.next-payroll-card');
+    const monthNav = document.querySelector('.dashboard-month-nav');
+
+    if (totalCard) totalCard.style.display = 'none';
+    if (nextShiftCard) nextShiftCard.style.display = 'none';
+    if (nextPayrollCard) nextPayrollCard.style.display = 'none';
+    if (monthNav) monthNav.style.display = 'none';
+
+    // Move the chatbox to dashboard content if not already there
+    if (chatboxContainer && dashboardContent && !dashboardContent.contains(chatboxContainer)) {
+      // Create a container for the chatbox in dashboard
+      const chatboxDashboardContainer = document.createElement('div');
+      chatboxDashboardContainer.className = 'dashboard-chatbox-container';
+      chatboxDashboardContainer.style.order = '1'; // Position first in dashboard
+
+      // Move the chatbox to the dashboard
+      chatboxDashboardContainer.appendChild(chatboxContainer);
+      dashboardContent.appendChild(chatboxDashboardContainer);
+    }
+  }
+
+  // Restore normal dashboard view
+  function restoreNormalDashboardView() {
+    const body = document.body;
+    const chatboxContainer = document.querySelector('.chatbox-container');
+
+    // Remove chatbox view class from body
+    body.classList.remove('chatbox-view');
+
+    // Show dashboard cards again
+    const totalCard = document.querySelector('.total-card');
+    const nextShiftCard = document.querySelector('.next-shift-card');
+    const nextPayrollCard = document.querySelector('.next-payroll-card');
+    const monthNav = document.querySelector('.dashboard-month-nav');
+
+    if (totalCard) totalCard.style.display = '';
+    if (nextShiftCard) nextShiftCard.style.display = '';
+    if (nextPayrollCard) nextPayrollCard.style.display = '';
+    if (monthNav) monthNav.style.display = '';
+
+    // Move the chatbox back to its original position
+    const dashboardChatboxContainer = document.querySelector('.dashboard-chatbox-container');
+    const originalChatboxParent = document.querySelector('.app-container');
+
+    if (dashboardChatboxContainer && chatboxContainer && originalChatboxParent) {
+      // Move chatbox back to its original position (after dashboard section)
+      originalChatboxParent.appendChild(chatboxContainer);
+      // Remove the temporary container
+      dashboardChatboxContainer.remove();
+    }
   }
 
   function appendMessage(role, text) {
@@ -855,7 +961,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const text = chatElements.pillInput.value.trim();
     if (!text) return;
 
-    // Exit input mode
+    // Clear the input and exit input mode
+    chatElements.pillInput.value = '';
     exitInputMode();
 
     // Send the message

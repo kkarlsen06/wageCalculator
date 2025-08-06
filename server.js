@@ -477,6 +477,11 @@ TOOL USAGE:
 
 MÅNEDLIGE SPØRRINGER: For "denne måneden", "august", "hvor mange vakter har jeg denne måneden" osv., bruk getShifts med criteria_type="date_range" og sett from_date til første dag i måneden og to_date til siste dag.
 
+FORMATERING: IKKE bruk bullet points (•) eller nummererte lister (1., 2., 3.). I stedet, bruk linjeskift og fet tekst for å lage lister. Eksempel:
+**04.08.2025** fra kl. 17:00 til 23:15
+**05.08.2025** fra kl. 16:00 til 23:15
+**08.08.2025** fra kl. 16:00 til 23:15
+
 ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE tools for FORSKJELLIGE operasjoner!`
   };
   const fullMessages = [systemContextHint, ...messages];

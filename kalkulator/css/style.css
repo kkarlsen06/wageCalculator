@@ -871,6 +871,25 @@ body.stats-view .dashboard-content .next-payroll-card {
   display: none !important;
 }
 
+/* Chatbox View Toggle Styles - Similar to stats view */
+.chatbox-view .dashboard-content {
+  /* In chatbox view, restructure dashboard to show only chatbox */
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+/* Hide all original dashboard cards in chatbox view with smooth transition */
+body.chatbox-view .dashboard-content .total-card,
+body.chatbox-view .dashboard-content .next-shift-card,
+body.chatbox-view .dashboard-content .next-payroll-card {
+  display: none !important;
+}
+
+/* Hide month navigation in chatbox view */
+body.chatbox-view .dashboard-month-nav {
+  display: none !important;
+}
+
 /* Add smooth transitions for dashboard cards */
 .total-card,
 .next-shift-card,
@@ -915,7 +934,25 @@ body.stats-view .dashboard-content .next-payroll-card {
   animation: statsContainerFadeIn 0.4s ease-out forwards;
 }
 
+/* Dashboard chatbox container styling for chatbox view */
+.dashboard-chatbox-container {
+  order: 1;
+  margin: 0;
+  width: 100%;
+  flex: 1;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: chatboxContainerFadeIn 0.4s ease-out forwards;
+}
+
 @keyframes statsContainerFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chatboxContainerFadeIn {
   to {
     opacity: 1;
     transform: translateY(0);
@@ -929,8 +966,32 @@ body.stats-view .dashboard-content .next-payroll-card {
   height: auto;
 }
 
-/* Ensure dashboard content uses flexbox ordering in stats view */
-.stats-view .dashboard-content {
+/* Ensure chatbox maintains proper styling when moved to dashboard */
+.chatbox-view .dashboard-chatbox-container .chatbox-pill {
+  margin: 0;
+  width: 100%;
+  height: auto;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatbox-view .dashboard-chatbox-container .chatbox-expanded-content {
+  flex: 1;
+  display: flex !important;
+  flex-direction: column;
+  min-height: 50vh;
+}
+
+.chatbox-view .dashboard-chatbox-container .chatbox-log {
+  flex: 1;
+  max-height: none;
+  min-height: 40vh;
+}
+
+/* Ensure dashboard content uses flexbox ordering in both views */
+.stats-view .dashboard-content,
+.chatbox-view .dashboard-content {
   display: flex;
   flex-direction: column;
 }
@@ -1747,27 +1808,16 @@ body.stats-view .dashboard-content .next-payroll-card {
   border-radius: 16px;
   padding: 12px 20px;
   transition: all 0.3s ease;
-  background: rgba(18, 18, 18, 0.75); /* Match Next Payroll card styling */
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: transparent; /* Remove background box */
+  backdrop-filter: none; /* Remove backdrop filter */
+  -webkit-backdrop-filter: none; /* Remove webkit backdrop filter */
   border: none;
-  /* Subtle 3D Bevel Effect matching other cards */
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-    inset 1px 0 0 rgba(255, 255, 255, 0.05),
-    inset -1px 0 0 rgba(0, 0, 0, 0.1);
+  box-shadow: none; /* Remove all shadows */
 }
 
 .dashboard-month-nav .month-navigation:hover {
   transform: translateY(-1px);
-  box-shadow:
-    0 6px 25px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
-    inset 1px 0 0 rgba(255, 255, 255, 0.07),
-    inset -1px 0 0 rgba(0, 0, 0, 0.12);
+  box-shadow: none; /* Remove hover shadows */
 }
 
 /* Ensure month display text is properly styled in dashboard */
@@ -9849,11 +9899,26 @@ input[type="file"].form-control:focus {
   font-weight: 500;
   width: 100%;
   font-family: inherit;
+  /* Prevent layout shifts during focus transitions */
+  transition: none;
+  /* Ensure consistent height */
+  line-height: 1.4;
+  min-height: 22px;
 }
 
 .chatbox-pill-input::placeholder {
   color: var(--text-secondary);
   font-weight: 400;
+}
+
+/* Ensure consistent layout between placeholder and input */
+.chatbox-pill-placeholder,
+.chatbox-pill-input {
+  /* Match dimensions exactly to prevent layout shifts */
+  line-height: 1.4;
+  min-height: 22px;
+  display: flex;
+  align-items: center;
 }
 
 .chatbox-close {
@@ -9968,15 +10033,17 @@ input[type="file"].form-control:focus {
 /* Enhanced markdown styling within chat messages */
 .chatbox-message ul,
 .chatbox-message ol {
-  margin: 12px 0;
-  padding-left: 24px;
+  margin: 12px 0 !important;
+  padding-left: 0 !important; /* No left padding needed with inside positioning */
   line-height: 1.5;
+  list-style-position: inside !important; /* Keep markers inside the text area */
 }
 
 .chatbox-message li {
   margin: 6px 0;
   padding: 0;
   line-height: 1.4;
+  /* Remove extra padding since we're using outside positioning with list padding */
 }
 
 .chatbox-message li:first-child {
@@ -10125,8 +10192,9 @@ input[type="file"].form-control:focus {
 .chatbox-message ol ol,
 .chatbox-message ul ol,
 .chatbox-message ol ul {
-  margin: 4px 0;
-  padding-left: 20px;
+  margin: 4px 0 !important;
+  padding-left: 16px !important; /* Small indent for nested lists */
+  list-style-position: inside !important; /* Keep nested markers inside */
 }
 
 /* Task lists (checkboxes) */
@@ -10161,10 +10229,17 @@ input[type="file"].form-control:focus {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Ensure proper text wrapping in all markdown elements */
+/* Ensure proper text wrapping and alignment in all markdown elements */
 .chatbox-message * {
   word-wrap: break-word;
   overflow-wrap: break-word;
+  box-sizing: border-box; /* Ensure padding/borders don't cause overflow */
+}
+
+/* Ensure all markdown elements stay within container bounds */
+.chatbox-message > * {
+  max-width: 100%;
+  margin-left: 0; /* Reset any default left margins */
 }
 
 /* Mobile-specific markdown adjustments */
@@ -10175,7 +10250,8 @@ input[type="file"].form-control:focus {
 
   .chatbox-message ul,
   .chatbox-message ol {
-    padding-left: 20px;
+    padding-left: 0 !important; /* No padding needed with inside positioning */
+    list-style-position: inside !important; /* Keep markers inside on mobile */
   }
 
   .chatbox-message pre {
@@ -10364,6 +10440,30 @@ input[type="file"].form-control:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Prevent layout shifts on mobile during focus transitions */
+  .chatbox-pill-input-container {
+    /* Ensure container maintains consistent height */
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+  }
+
+  .chatbox-pill-placeholder {
+    /* Ensure placeholder takes full width to prevent shifts */
+    width: 100%;
+    display: block;
+  }
+
+  .chatbox-pill-input {
+    /* Ensure input takes full width and matches placeholder */
+    width: 100%;
+    display: block;
+    /* Prevent any visual changes during focus */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   /* Prevent zoom on input focus for iOS */
