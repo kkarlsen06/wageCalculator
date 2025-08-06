@@ -818,9 +818,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Log raw JSON response for debugging
       console.debug('[/chat response]', data);
 
-      // Handle different response types with robust fallback
+      // Handle response - now only GPT-generated assistant messages
       const txt = data.assistant
-        ?? data.system
         ?? (data.error && `⚠️ ${data.error}`)
         ?? '⚠️ Ukjent svar fra serveren.';
 
