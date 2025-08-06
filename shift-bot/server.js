@@ -171,14 +171,24 @@ app.post('/chat', authenticateUser, async (req, res) => {
       }
     ];
 
-    // Second call: Let GPT formulate a user-friendly response
-    const secondCompletion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: messagesWithToolResult,
-      tool_choice: 'none'
-    });
-
-    const assistantMessage = secondCompletion.choices[0].message.content;
+    // Second call: Let GPT formulate a user-friendly response with error handling
+    let assistantMessage;
+    try {
+      const secondCompletion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: messagesWithToolResult,
+        tool_choice: 'none'
+      });
+      assistantMessage = secondCompletion.choices[0].message.content;
+    } catch (error) {
+      console.error('Second GPT call failed:', error);
+      // Fallback message based on tool result
+      if (toolResult.startsWith('OK:')) {
+        assistantMessage = 'Skiftet er lagret! 👍';
+      } else {
+        assistantMessage = 'Operasjonen er utført.';
+      }
+    }
 
     // Get updated shift list
     const { data: shifts } = await supabase
