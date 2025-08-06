@@ -448,6 +448,16 @@ Du skal gjøre NØYAKTIG disse to tool calls i denne rekkefølgen:
 2. editShift({"date_reference": "Friday", "new_start_time": "15:00"}) - for å endre fredagsvakten
 
 IKKE gjør getShifts to ganger! IKKE spør om bekreftelse! Gjør begge operasjonene nå!`;
+  } else if (userMessage.includes('måneden') || userMessage.includes('august') || userMessage.includes('måned')) {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
+
+    systemContent += `
+
+SPESIFIKK INSTRUKSJON for månedlig spørring:
+Bruk getShifts({"criteria_type": "date_range", "from_date": "${firstDay}", "to_date": "${lastDay}"}) for å hente alle vakter denne måneden.
+Du KAN absolutt hente vakter for hele måneder - ikke si at det ikke er mulig!`;
   }
 
   const systemContextHint = {
@@ -457,9 +467,15 @@ IKKE gjør getShifts to ganger! IKKE spør om bekreftelse! Gjør begge operasjon
 ${systemContent}
 
 TOOL USAGE:
-- getShifts: criteria_type="week" for denne uka, "next" for neste uke
+- getShifts:
+  * criteria_type="week" for denne uka
+  * criteria_type="next" for neste uke
+  * criteria_type="date_range" med from_date og to_date for måneder/perioder (f.eks. "denne måneden", "august", "siste 30 dager")
+  * criteria_type="all" for alle vakter
 - editShift: bruk date_reference="Friday" for fredagsvakter, eller shift_date + start_time
 - Vis datoer som dd.mm.yyyy til brukeren
+
+MÅNEDLIGE SPØRRINGER: For "denne måneden", "august", "hvor mange vakter har jeg denne måneden" osv., bruk getShifts med criteria_type="date_range" og sett from_date til første dag i måneden og to_date til siste dag.
 
 ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE tools for FORSKJELLIGE operasjoner!`
   };
