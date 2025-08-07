@@ -1110,12 +1110,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const randomGreeting = greetingMessages[Math.floor(Math.random() * greetingMessages.length)];
 
       // Add the greeting message with streaming animation
-      appendMessage('assistant', randomGreeting, { streaming: true, streamSpeed: 20 });
+      appendMessage('assistant', randomGreeting, { streaming: true, streamSpeed: 25 });
 
     } catch (err) {
       console.error('Error creating greeting message:', err);
       // Fallback greeting with streaming animation
-      appendMessage('assistant', 'Hei! 👋 Jeg er her for å hjelpe deg med å registrere skift og holde oversikt over arbeidstiden din. Hva kan jeg hjelpe deg med?', { streaming: true, streamSpeed: 20 });
+      appendMessage('assistant', 'Hei! 👋 Jeg er her for å hjelpe deg med å registrere skift og holde oversikt over arbeidstiden din. Hva kan jeg hjelpe deg med?', { streaming: true, streamSpeed: 25 });
     }
   }
 
@@ -1134,10 +1134,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Add class to body for CSS targeting (fallback for browsers without :has() support)
     document.body.classList.add('chatbox-expanded-active');
 
-    // Add default greeting message if chat log is empty
-    if (chatElements.log && chatElements.log.children.length === 0) {
-      addGreetingMessage();
-    }
+    // Note: Greeting message is now handled by the tab view system in appLogic.js
+    // to avoid duplicate greetings
 
     // Focus input after animation - prevent any page movement
     setTimeout(() => {
@@ -1460,7 +1458,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Stream text in real-time as chunks arrive from server
   function streamTextRealtime(element) {
     let displayedLength = 0;
-    const speed = 20; // Preferred speed from user preferences (15-30ms intervals)
+    const speed = 25; // Optimized speed within user preferences (15-30ms intervals)
 
     function streamNextChunk() {
       if (!element.isStreaming && displayedLength >= element.fullText.length) {
@@ -1475,8 +1473,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const targetText = element.fullText;
       if (displayedLength < targetText.length) {
-        // Use word-based streaming (2-5 characters at a time)
-        const chunkSize = Math.min(Math.floor(Math.random() * 4) + 2, targetText.length - displayedLength);
+        // Use word-based streaming (2-5 characters at a time) - optimized for smooth rendering
+        const chunkSize = Math.min(Math.floor(Math.random() * 3) + 2, targetText.length - displayedLength);
         displayedLength += chunkSize;
 
         const displayText = targetText.substring(0, displayedLength);
@@ -1880,8 +1878,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     clear: clearChatLog,
     expand: expandChatbox,
     collapse: collapseChatbox,
-    updateText: updateChatboxPlaceholder
+    updateText: updateChatboxPlaceholder,
+    appendMessage: appendMessage,
+    streamText: streamText,
+    tokenizeText: tokenizeText
   };
+
+  // Also expose streaming functions globally for legacy compatibility
+  window.streamText = streamText;
+  window.tokenizeText = tokenizeText;
 
   // Auto-initialize when DOM is ready
   if (document.readyState === 'loading') {

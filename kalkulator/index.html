@@ -41,9 +41,6 @@
                               <a href="../index.html" class="header-logo-link">
                                   <img src="../assets/kkarlsen_ikon_clean.png" class="header-logo" alt="kkarlsen logo">
                               </a>
-                              <button class="dashboard-toggle-btn" id="dashboardToggleBtn" onclick="app.toggleDashboardView()" aria-label="Bytt til statistikkvisning">
-                                  <span class="toggle-text">Stat.</span>
-                              </button>
                           </div>
                           <div class="header-right">
                                 <div class="user-profile-container">
@@ -67,6 +64,52 @@
                                     </div>
                                 </div>
                           </div>
+                      </div>
+                  </div>
+
+                  <!-- Tab Bar Navigation - positioned above all content -->
+                  <div class="tab-bar-container">
+                      <div class="tab-bar">
+                          <button class="tab-btn active" id="tabOversikt" data-view="dashboard" aria-label="Bytt til oversiktsvisning">
+                              <div class="tab-icon-badge">
+                                  <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <rect x="3" y="3" width="7" height="7"></rect>
+                                      <rect x="14" y="3" width="7" height="7"></rect>
+                                      <rect x="14" y="14" width="7" height="7"></rect>
+                                      <rect x="3" y="14" width="7" height="7"></rect>
+                                  </svg>
+                              </div>
+                              <span class="tab-text">Oversikt</span>
+                          </button>
+                          <button class="tab-btn" id="tabStatistikk" data-view="stats" aria-label="Bytt til statistikkvisning">
+                              <div class="tab-icon-badge">
+                                  <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <line x1="18" y1="20" x2="18" y2="10"></line>
+                                      <line x1="12" y1="20" x2="12" y2="4"></line>
+                                      <line x1="6" y1="20" x2="6" y2="14"></line>
+                                  </svg>
+                              </div>
+                              <span class="tab-text">Statistikk</span>
+                          </button>
+                          <button class="tab-btn" id="tabLonnAI" data-view="chatgpt" aria-label="Bytt til LønnAI chatbot">
+                              <div class="tab-icon-badge">
+                                  <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423L16.5 15.75l.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"></path>
+                              </svg>
+                              </div>
+                              <span class="tab-text">LønnAI</span>
+                          </button>
+                          <button class="tab-btn" id="tabAnsatte" data-view="employees" aria-label="Bytt til ansattvisning" style="display: none;">
+                              <div class="tab-icon-badge">
+                                  <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                      <circle cx="9" cy="7" r="4"></circle>
+                                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                  </svg>
+                              </div>
+                              <span class="tab-text">Ansatte</span>
+                          </button>
                       </div>
                   </div>
 
@@ -97,8 +140,8 @@
                           </div>
                       </div>
 
-                      <!-- Chat Bot Section -->
-                      <section id="chatbox" class="chatbox-container">
+                      <!-- Chat Bot Section - Now managed by tab bar -->
+                      <section id="chatbox" class="chatbox-container" style="display: none;">
                           <div class="chatbox-pill" id="chatboxPill">
                               <!-- Always visible pill header -->
                               <div class="chatbox-pill-content">
@@ -136,7 +179,8 @@
                               </div>
                           </div>
                       </section>
-                      <!-- Month Navigation - positioned directly underneath ChatGPT chat pill/button -->
+
+                      <!-- Month Navigation - positioned directly underneath tab bar -->
                       <!-- This navigation stays in dashboard section across all screen sizes -->
                       <div class="month-navigation-container dashboard-month-nav">
                           <div class="month-navigation">
@@ -708,9 +752,19 @@
                           <small class="form-hint">JPG, PNG eller WebP. Maksimal størrelse: 10MB. Du kan beskjære bildet før opplasting.</small>
                       </div>
 
-                      <div class="form-group">
-                          <button type="submit" class="btn btn-primary" onclick="app.updateProfile()">Oppdater profil</button>
+                      <!-- Wage Caregiver Setting -->
+                      <div class="form-group form-group-with-hint">
+                          <div class="toggle-container">
+                              <label for="isWageCaregiverToggle" class="toggle-label">Er lønnsansvarlig</label>
+                              <div class="toggle-switch">
+                                  <input type="checkbox" id="isWageCaregiverToggle" class="toggle-input" onchange="app.toggleWageCaregiver()">
+                                  <span class="toggle-slider"></span>
+                              </div>
+                          </div>
+                          <small class="form-hint">Aktiverer funksjoner for teamledere som beregner lønn for ansatte</small>
                       </div>
+
+
                   </form>
 
                   <p id="profile-update-msg" style="color: var(--success); min-height: 24px; text-align: center; font-size: 14px;"></p>

@@ -1514,19 +1514,7 @@ export const app = {
                 this.pauseDeductionMinutes = parseInt(settings.pause_deduction_minutes) || 30;
                 this.auditBreakCalculations = settings.audit_break_calculations !== false;
 
-                // Debug logging for break deduction settings
-                console.log('Loaded break deduction settings from Supabase:', {
-                    pause_deduction_enabled: settings.pause_deduction_enabled,
-                    pause_deduction_method: settings.pause_deduction_method,
-                    pause_threshold_hours: settings.pause_threshold_hours,
-                    pause_deduction_minutes: settings.pause_deduction_minutes,
-                    audit_break_calculations: settings.audit_break_calculations,
-                    parsed_enabled: this.pauseDeductionEnabled,
-                    parsed_method: this.pauseDeductionMethod,
-                    parsed_threshold: this.pauseThresholdHours,
-                    parsed_minutes: this.pauseDeductionMinutes,
-                    parsed_audit: this.auditBreakCalculations
-                });
+
 
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
@@ -1538,14 +1526,9 @@ export const app = {
                 this.taxDeductionEnabled = settings.tax_deduction_enabled === true;
                 this.taxPercentage = parseFloat(settings.tax_percentage) || 0.0;
                 this.payrollDay = parseInt(settings.payroll_day) || 15;
+                this.isWageCaregiver = settings.is_wage_caregiver === true;
 
-                // Debug logging for tax deduction settings
-                console.log('Loaded tax deduction settings:', {
-                    tax_deduction_enabled: settings.tax_deduction_enabled,
-                    tax_percentage: settings.tax_percentage,
-                    parsed_enabled: this.taxDeductionEnabled,
-                    parsed_percentage: this.taxPercentage
-                });
+
 
             } else {
                 // No settings found, set defaults
@@ -1554,6 +1537,8 @@ export const app = {
 
             // Update UI elements to reflect loaded settings
             this.updateSettingsUI();
+            // Update tab bar visibility based on settings
+            this.updateTabBarVisibility();
             // Don't call updateDisplay here - it will be called with animation in init()
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
@@ -1572,7 +1557,8 @@ export const app = {
         };
         this.taxDeductionEnabled = false;
         this.taxPercentage = 0.0;
-        this.payrollDay = 15; // Default payroll day (15th of each month)
+        this.payrollDay = 15;
+        this.isWageCaregiver = false; // Default payroll day (15th of each month)
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.currentYear = new Date().getFullYear(); // Default to current year
         this.pauseDeduction = false; // Legacy setting - kept for backward compatibility
@@ -1673,15 +1659,7 @@ export const app = {
         // Show/hide tax percentage section based on toggle state
         this.toggleTaxPercentageSection();
 
-        // Debug logging for UI update
-        console.log('Updated tax deduction UI:', {
-            toggle_element: !!taxDeductionToggle,
-            toggle_checked: taxDeductionToggle?.checked,
-            input_element: !!taxPercentageInput,
-            input_value: taxPercentageInput?.value,
-            app_state_enabled: this.taxDeductionEnabled,
-            app_state_percentage: this.taxPercentage
-        });
+
 
         const fullMinuteRangeToggle = document.getElementById('fullMinuteRangeToggle');
         if (fullMinuteRangeToggle) {
@@ -1708,12 +1686,21 @@ export const app = {
             defaultShiftsViewToggle.checked = this.defaultShiftsView === 'calendar';
         }
 
+        // Update wage caregiver toggle
+        const isWageCaregiverToggle = document.getElementById('isWageCaregiverToggle');
+        if (isWageCaregiverToggle) {
+            isWageCaregiverToggle.checked = this.isWageCaregiver;
+        }
+
         // Apply compact view CSS class to body if setting is enabled
         if (this.compactView) {
             document.body.classList.add('compact-view');
         } else {
             document.body.classList.remove('compact-view');
         }
+
+        // Update tab bar visibility based on wage caregiver setting
+        this.updateTabBarVisibility();
 
 
 
@@ -1799,14 +1786,7 @@ export const app = {
                 settingsData.pause_deduction_minutes = this.pauseDeductionMinutes;
                 settingsData.audit_break_calculations = this.auditBreakCalculations;
 
-                // Debug logging for break deduction settings
-                console.log('Saving break deduction settings (existing user):', {
-                    enabled: this.pauseDeductionEnabled,
-                    method: this.pauseDeductionMethod,
-                    threshold: this.pauseThresholdHours,
-                    minutes: this.pauseDeductionMinutes,
-                    audit: this.auditBreakCalculations
-                });
+
 
                 // Debug logging for tax deduction save
                 console.log('Saving tax deduction settings:', {
@@ -1830,14 +1810,7 @@ export const app = {
                 settingsData.pause_deduction_minutes = this.pauseDeductionMinutes;
                 settingsData.audit_break_calculations = this.auditBreakCalculations;
 
-                // Debug logging for break deduction settings
-                console.log('Saving break deduction settings:', {
-                    enabled: this.pauseDeductionEnabled,
-                    method: this.pauseDeductionMethod,
-                    threshold: this.pauseThresholdHours,
-                    minutes: this.pauseDeductionMinutes,
-                    audit: this.auditBreakCalculations
-                });
+
 
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
@@ -1850,6 +1823,7 @@ export const app = {
                 settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 settingsData.tax_percentage = this.taxPercentage;
                 settingsData.payroll_day = this.payrollDay;
+                settingsData.is_wage_caregiver = this.isWageCaregiver;
             }
 
             const { error } = await window.supa
@@ -1905,8 +1879,10 @@ export const app = {
                 this.taxDeductionEnabled = data.taxDeductionEnabled || false;
                 this.taxPercentage = data.taxPercentage || 0.0;
                 this.payrollDay = parseInt(data.payrollDay) || 15;
+                this.isWageCaregiver = data.isWageCaregiver || false;
 
                 this.updateSettingsUI();
+                this.updateTabBarVisibility(); // Ensure tab bar visibility is updated
             } else {
                 this.setDefaultSettings();
             }
@@ -2101,10 +2077,7 @@ export const app = {
     toggleTaxDeduction() {
         const toggle = document.getElementById('taxDeductionToggle');
         this.taxDeductionEnabled = toggle.checked;
-        console.log('Tax deduction toggled:', {
-            toggle_checked: toggle.checked,
-            new_state: this.taxDeductionEnabled
-        });
+
         this.toggleTaxPercentageSection();
         this.saveSettingsToSupabase();
         this.updateDisplay();
@@ -2145,21 +2118,12 @@ export const app = {
     },
 
     updateTaxDeductionUI() {
-        console.log('Updating tax deduction UI specifically');
-
         const taxDeductionToggle = document.getElementById('taxDeductionToggle');
         const taxPercentageInput = document.getElementById('taxPercentageInput');
         const taxPercentageSection = document.getElementById('taxPercentageSection');
 
-        console.log('Tax deduction UI elements found:', {
-            toggle: !!taxDeductionToggle,
-            input: !!taxPercentageInput,
-            section: !!taxPercentageSection
-        });
-
         if (taxDeductionToggle) {
             taxDeductionToggle.checked = this.taxDeductionEnabled;
-            console.log('Set toggle to:', this.taxDeductionEnabled);
         }
 
         if (taxPercentageInput) {
@@ -2959,7 +2923,8 @@ export const app = {
                 compactView: this.compactView,
                 defaultShiftsView: this.defaultShiftsView,
                 taxDeductionEnabled: this.taxDeductionEnabled,
-                taxPercentage: this.taxPercentage
+                taxPercentage: this.taxPercentage,
+                isWageCaregiver: this.isWageCaregiver
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
         } catch (e) {
@@ -3204,9 +3169,21 @@ export const app = {
             totalAmount * (1 - this.taxPercentage / 100) :
             totalAmount;
 
-        document.getElementById('totalAmount').textContent = this.formatCurrency(displayAmount);
-        document.getElementById('totalHours').textContent = totalHours.toFixed(1);
-        document.getElementById('shiftCount').textContent = monthShifts.length;
+        const totalAmountElement = document.getElementById('totalAmount');
+        const totalHoursElement = document.getElementById('totalHours');
+
+        if (totalAmountElement) {
+            totalAmountElement.textContent = this.formatCurrency(displayAmount);
+        }
+        if (totalHoursElement) {
+            totalHoursElement.textContent = totalHours.toFixed(1);
+        }
+
+        // Add proper element existence check for shiftCount
+        const shiftCountElement = document.getElementById('shiftCount');
+        if (shiftCountElement) {
+            shiftCountElement.textContent = monthShifts.length;
+        }
 
         // Ensure shifts card label is reset to "vakter" when not in drill-down mode
         const shiftCountLabel = document.querySelector('.shifts-count-label');
@@ -7070,18 +7047,7 @@ export const app = {
             bonus = adjustedWages.bonus;
             paidHours = adjustedWages.totalHours;
 
-            // Debug logging for wage period calculations
-            if (durationHours > 5.5) {
-                console.log('Break deduction calculation (client):', {
-                    method: breakResult.method,
-                    originalHours: durationHours,
-                    paidHours: paidHours,
-                    baseWage: baseWage,
-                    bonus: bonus,
-                    total: baseWage + bonus,
-                    wagePeriods: breakResult.auditTrail?.wagePeriods
-                });
-            }
+
         } else {
             // For end_of_shift and none methods, use traditional calculation
             if (breakResult.shouldDeduct) {
@@ -7353,10 +7319,7 @@ export const app = {
                 pauseDeducted: result.pauseDeducted
             };
 
-            // Show wage period breakdown for debugging
-            if (result.breakDeduction && result.breakDeduction.wagePeriods) {
-                console.log(`${method} wage periods:`, result.breakDeduction.wagePeriods);
-            }
+
 
             // Restore original settings
             this.pauseDeductionMethod = originalMethod;
@@ -7407,27 +7370,7 @@ export const app = {
                 'audit_break_calculations'
             ];
 
-            console.log('🔍 Break deduction column check:');
-            breakColumns.forEach(col => {
-                const exists = col in settings;
-                const value = settings[col];
-                console.log(`  ${exists ? '✅' : '❌'} ${col}: ${exists ? value : 'MISSING'}`);
-            });
 
-            const missingColumns = breakColumns.filter(col => !(col in settings));
-            if (missingColumns.length > 0) {
-                console.log('⚠️  Missing columns detected. Please run the database migration SQL:');
-                console.log(`
-ALTER TABLE user_settings
-ADD COLUMN IF NOT EXISTS pause_deduction_enabled BOOLEAN DEFAULT true,
-ADD COLUMN IF NOT EXISTS pause_deduction_method TEXT DEFAULT 'proportional' CHECK (pause_deduction_method IN ('proportional', 'base_only', 'end_of_shift', 'none')),
-ADD COLUMN IF NOT EXISTS pause_threshold_hours DECIMAL(3,1) DEFAULT 5.5 CHECK (pause_threshold_hours > 0),
-ADD COLUMN IF NOT EXISTS pause_deduction_minutes INTEGER DEFAULT 30 CHECK (pause_deduction_minutes > 0),
-ADD COLUMN IF NOT EXISTS audit_break_calculations BOOLEAN DEFAULT true;
-                `);
-            } else {
-                console.log('✅ All break deduction columns exist in database');
-            }
 
         } catch (e) {
             console.error('❌ Error checking columns:', e);
@@ -7570,7 +7513,6 @@ ADD COLUMN IF NOT EXISTS audit_break_calculations BOOLEAN DEFAULT true;
         const enableToggle = document.getElementById('pauseDeductionEnabledToggle');
         if (enableToggle) {
             enableToggle.addEventListener('change', (e) => {
-                console.log('Break deduction enabled changed:', e.target.checked);
                 this.pauseDeductionEnabled = e.target.checked;
                 this.toggleBreakDeductionSections();
                 this.updateDisplay();
@@ -7584,7 +7526,6 @@ ADD COLUMN IF NOT EXISTS audit_break_calculations BOOLEAN DEFAULT true;
         const methodSelect = document.getElementById('pauseDeductionMethodSelect');
         if (methodSelect) {
             methodSelect.addEventListener('change', (e) => {
-                console.log('Break deduction method changed:', e.target.value);
                 this.pauseDeductionMethod = e.target.value;
                 this.updateMethodExplanation();
                 this.updateDisplay();
@@ -8820,6 +8761,352 @@ ADD COLUMN IF NOT EXISTS audit_break_calculations BOOLEAN DEFAULT true;
         }
     },
 
+    // Tab bar functionality
+    setupTabBarEventListeners() {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const view = button.getAttribute('data-view');
+                this.switchToView(view);
+            });
+        });
+    },
+
+    switchToView(view) {
+        // Update active tab button
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+        });
+
+        // Immediately hide dashboard cards for non-dashboard views to prevent flash
+        if (view !== 'dashboard') {
+            const totalCard = document.querySelector('.total-card');
+            const nextShiftCard = document.querySelector('.next-shift-card');
+            const nextPayrollCard = document.querySelector('.next-payroll-card');
+            const monthNav = document.querySelector('.dashboard-month-nav');
+            const floatingActionBar = document.querySelector('.floating-action-bar');
+
+            if (totalCard) totalCard.style.display = 'none';
+            if (nextShiftCard) nextShiftCard.style.display = 'none';
+            if (nextPayrollCard) nextPayrollCard.style.display = 'none';
+            if (monthNav) monthNav.style.display = 'none';
+            if (floatingActionBar) floatingActionBar.style.display = 'none';
+        }
+
+        // Clean up all previous view states to prevent overlap
+        this.cleanupAllViews();
+
+        // Switch views immediately without delay for smooth transition
+        switch (view) {
+            case 'dashboard':
+                this.showDashboardView();
+                break;
+            case 'stats':
+                this.showStatsView();
+                break;
+            case 'chatgpt':
+                this.showChatGPTView();
+                break;
+            case 'employees':
+                this.showEmployeesView();
+                break;
+        }
+    },
+
+    cleanupAllViews() {
+        const body = document.body;
+
+        // Remove all view classes
+        body.classList.remove('stats-view', 'chatbox-view', 'employees-view');
+
+        // Hide all view-specific containers
+        const chatboxContainer = document.querySelector('.chatbox-container');
+        const employeesContainer = document.querySelector('.employees-container');
+        const dashboardStatsContainer = document.querySelector('.dashboard-stats-container');
+
+        if (chatboxContainer) {
+            chatboxContainer.style.display = 'none';
+            // Reset chatbox to collapsed state only if not switching to chatgpt view
+            const chatboxPill = document.getElementById('chatboxPill');
+            const expandedContent = document.getElementById('chatboxExpandedContent');
+            const chatboxClose = document.getElementById('chatboxClose');
+            if (chatboxPill) chatboxPill.classList.remove('expanded');
+            if (expandedContent) expandedContent.style.display = 'none';
+            if (chatboxClose) chatboxClose.style.display = 'none';
+        }
+
+        if (employeesContainer) {
+            employeesContainer.style.display = 'none';
+        }
+
+        // Before removing dashboardStatsContainer, move the chart back to statistics section
+        if (dashboardStatsContainer) {
+            const weeklyHoursChart = document.getElementById('weeklyHoursChart');
+            const statisticsSection = document.querySelector('.statistics-section');
+
+            if (weeklyHoursChart && statisticsSection) {
+                const statisticsContent = statisticsSection.querySelector('.statistics-content');
+                if (statisticsContent) {
+                    // Move chart back to statistics section
+                    statisticsContent.appendChild(weeklyHoursChart);
+                    console.log('Moved chart back to statistics section during cleanup');
+                }
+            }
+
+            // Now safe to remove the container
+            dashboardStatsContainer.remove();
+        }
+
+        // Note: Dashboard cards visibility is now handled in switchToView()
+        // to prevent flash during transitions. No need to reset them here.
+    },
+
+    showDashboardView() {
+        const body = document.body;
+
+        // Remove all view classes
+        body.classList.remove('stats-view', 'chatbox-view', 'employees-view');
+
+        // Show dashboard cards
+        const totalCard = document.querySelector('.total-card');
+        const nextShiftCard = document.querySelector('.next-shift-card');
+        const nextPayrollCard = document.querySelector('.next-payroll-card');
+        const monthNav = document.querySelector('.dashboard-month-nav');
+        const floatingActionBar = document.querySelector('.floating-action-bar');
+        const chatboxContainer = document.querySelector('.chatbox-container');
+
+        if (totalCard) totalCard.style.display = '';
+        if (nextShiftCard) nextShiftCard.style.display = '';
+        if (nextPayrollCard) nextPayrollCard.style.display = '';
+        if (monthNav) monthNav.style.display = 'flex';
+        if (floatingActionBar) floatingActionBar.style.display = 'flex';
+
+        // Hide chatbox container completely in dashboard view
+        if (chatboxContainer) {
+            chatboxContainer.style.display = 'none';
+            const chatboxPill = document.getElementById('chatboxPill');
+            const expandedContent = document.getElementById('chatboxExpandedContent');
+            if (chatboxPill) chatboxPill.classList.remove('expanded');
+            if (expandedContent) expandedContent.style.display = 'none';
+        }
+
+        // Remove stats container from dashboard if it exists, but first move chart back
+        const dashboardStatsContainer = document.querySelector('.dashboard-stats-container');
+        if (dashboardStatsContainer) {
+            const weeklyHoursChart = document.getElementById('weeklyHoursChart');
+            const statisticsSection = document.querySelector('.statistics-section');
+
+            if (weeklyHoursChart && statisticsSection) {
+                const statisticsContent = statisticsSection.querySelector('.statistics-content');
+                if (statisticsContent) {
+                    // Move chart back to statistics section
+                    statisticsContent.appendChild(weeklyHoursChart);
+                    console.log('Moved chart back to statistics section from dashboard view');
+                }
+            }
+
+            // Now safe to remove the container
+            dashboardStatsContainer.remove();
+        }
+    },
+
+    showStatsView() {
+        const body = document.body;
+
+        // Remove other view classes and add stats view
+        body.classList.remove('chatbox-view', 'employees-view');
+        body.classList.add('stats-view');
+
+        // Use existing stats view functionality
+        this.dashboardView = 'stats';
+        this.applyDashboardView();
+    },
+
+    showChatGPTView() {
+        const body = document.body;
+
+        // Remove other view classes and add chatbox view
+        body.classList.remove('stats-view', 'employees-view');
+        body.classList.add('chatbox-view');
+
+        // Show the chatbox container
+        const chatboxContainer = document.querySelector('.chatbox-container');
+        if (chatboxContainer) {
+            chatboxContainer.style.display = 'block';
+        }
+
+        // Immediately expand the chatbox to show chat log and input
+        this.expandChatboxForTabView();
+
+        // Dashboard cards are already hidden in switchToView() for smooth transitions
+    },
+
+    expandChatboxForTabView() {
+        const chatboxPill = document.getElementById('chatboxPill');
+        const expandedContent = document.getElementById('chatboxExpandedContent');
+        const chatboxClose = document.getElementById('chatboxClose');
+        const chatboxLog = document.getElementById('chatboxLog');
+
+        if (chatboxPill && expandedContent) {
+            // Add expanded class to pill
+            chatboxPill.classList.add('expanded');
+
+            // Show expanded content (chat log and input)
+            expandedContent.style.display = 'block';
+
+            // Show close button
+            if (chatboxClose) {
+                chatboxClose.style.display = 'block';
+            }
+
+            // Add greeting message if chat log is empty
+            if (chatboxLog && chatboxLog.children.length === 0) {
+                this.addChatGreetingMessage();
+            }
+
+            // Focus on the input field for immediate interaction
+            const chatboxInput = document.getElementById('chatboxInput');
+            if (chatboxInput) {
+                setTimeout(() => {
+                    chatboxInput.focus();
+                }, 100); // Small delay to ensure element is visible
+            }
+        }
+    },
+
+    addChatGreetingMessage() {
+        const chatboxLog = document.getElementById('chatboxLog');
+        if (!chatboxLog) return;
+
+        // Get user's first name for personalized greeting
+        const userNickname = document.getElementById('userNickname');
+        const userName = userNickname ? userNickname.textContent : 'Bruker';
+
+        // Create the greeting message text
+        const greetingText = `Hei ${userName}! 👋
+
+Jeg er LønnAI, din personlige assistent for vaktregistrering. Jeg kan hjelpe deg med å:
+
+• Registrere enkelvakter
+• Opprette vaktserier
+• Svare på spørsmål om lønn og tillegg
+• Gi tips om effektiv vaktplanlegging
+
+Hva kan jeg hjelpe deg med i dag?`;
+
+        // Use the modern appendMessage function with streaming animation
+        // Check if the modern chatbox system is available
+        if (window.chatbox && window.chatbox.appendMessage) {
+            window.chatbox.appendMessage('assistant', greetingText, { streaming: true, streamSpeed: 25 });
+        } else {
+            // Fallback to creating message element directly with proper bubble styling
+            const greetingMessage = document.createElement('div');
+            greetingMessage.className = 'chatbox-message assistant'; // Use modern assistant class
+
+            // Use the streaming function if available
+            if (typeof streamText === 'function') {
+                greetingMessage.innerHTML = '';
+                chatboxLog.appendChild(greetingMessage);
+                streamText(greetingMessage, greetingText, 25);
+            } else {
+                // Final fallback - direct HTML with proper markdown rendering
+                if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+                    const html = DOMPurify.sanitize(marked.parse(greetingText));
+                    greetingMessage.innerHTML = html;
+                } else {
+                    greetingMessage.textContent = greetingText;
+                }
+                chatboxLog.appendChild(greetingMessage);
+            }
+
+            // Scroll to bottom
+            setTimeout(() => {
+                chatboxLog.scrollTop = chatboxLog.scrollHeight;
+            }, 50);
+        }
+    },
+
+    showEmployeesView() {
+        const body = document.body;
+
+        // Remove other view classes and add employees view
+        body.classList.remove('stats-view', 'chatbox-view');
+        body.classList.add('employees-view');
+
+        // Dashboard cards are already hidden in switchToView() for smooth transitions
+
+        // Show placeholder content for employees view
+        this.showEmployeesPlaceholder();
+    },
+
+    showEmployeesPlaceholder() {
+        // Create or show employees placeholder content
+        let employeesContainer = document.querySelector('.employees-container');
+        if (!employeesContainer) {
+            employeesContainer = document.createElement('div');
+            employeesContainer.className = 'employees-container';
+            employeesContainer.innerHTML = `
+                <div class="employees-placeholder">
+                    <div class="placeholder-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <h3>Ansattfunksjoner</h3>
+                    <p>Denne funksjonen er under utvikling og vil snart være tilgjengelig for teamledere.</p>
+                </div>
+            `;
+
+            // Insert after the tab bar
+            const tabBarContainer = document.querySelector('.tab-bar-container');
+            if (tabBarContainer) {
+                tabBarContainer.parentNode.insertBefore(employeesContainer, tabBarContainer.nextSibling);
+            }
+        }
+        employeesContainer.style.display = 'block';
+    },
+
+    updateTabBarVisibility() {
+        const ansatteTab = document.getElementById('tabAnsatte');
+        if (ansatteTab) {
+            ansatteTab.style.display = this.isWageCaregiver ? 'flex' : 'none';
+        }
+    },
+
+    setupChatboxCloseOverride() {
+        const chatboxClose = document.getElementById('chatboxClose');
+        if (chatboxClose) {
+            // Remove existing event listeners by cloning the element
+            const newCloseButton = chatboxClose.cloneNode(true);
+            chatboxClose.parentNode.replaceChild(newCloseButton, chatboxClose);
+
+            // Add new event listener that switches to dashboard view
+            newCloseButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+
+                // Switch to dashboard view using tab bar
+                this.switchToView('dashboard');
+            });
+        }
+    },
+
+    toggleWageCaregiver() {
+        const toggle = document.getElementById('isWageCaregiverToggle');
+        if (toggle) {
+            this.isWageCaregiver = toggle.checked;
+
+            // Save to both Supabase and localStorage
+            this.saveSettingsToSupabase();
+            this.saveToLocalStorage();
+            this.updateTabBarVisibility();
+        }
+    },
+
     // Export data functionality
     exportData(format) {
         try {
@@ -9378,6 +9665,25 @@ ADD COLUMN IF NOT EXISTS audit_break_calculations BOOLEAN DEFAULT true;
                 // The actual view switching is still controlled by the user's manual selection
             });
         }
+
+        // Wage caregiver toggle - add click event to slider as well
+        const isWageCaregiverToggle = document.getElementById('isWageCaregiverToggle');
+        const toggleSlider = document.querySelector('#isWageCaregiverToggle + .toggle-slider');
+
+        if (isWageCaregiverToggle && toggleSlider) {
+            // Add click event to slider to ensure it works
+            toggleSlider.addEventListener('click', (e) => {
+                e.preventDefault();
+                isWageCaregiverToggle.checked = !isWageCaregiverToggle.checked;
+                this.toggleWageCaregiver();
+            });
+        }
+
+        // Tab bar event listeners
+        this.setupTabBarEventListeners();
+
+        // Override chatbox close button for tab-based navigation
+        this.setupChatboxCloseOverride();
     },
 
     // Setup export period options and event listeners

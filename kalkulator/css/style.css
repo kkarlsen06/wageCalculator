@@ -965,8 +965,21 @@ body.chatbox-view .header {
 /* Add smooth transitions for dashboard cards */
 .total-card,
 .next-shift-card,
-.next-payroll-card {
-  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+.next-payroll-card,
+.dashboard-month-nav,
+.floating-action-bar {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s ease-out;
+}
+
+/* Immediate hiding for smooth tab transitions */
+.total-card[style*="display: none"],
+.next-shift-card[style*="display: none"],
+.next-payroll-card[style*="display: none"],
+.dashboard-month-nav[style*="display: none"],
+.floating-action-bar[style*="display: none"] {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: none; /* Immediate hiding */
 }
 
 /* Position month picker prominently in stats view */
@@ -1092,12 +1105,13 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 }
 
 .chatbox-view .dashboard-chatbox-container .chatbox-log {
-  /* Take all available space in expanded content */
+  /* Take all available space in expanded content but with height limits */
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Fill available space */
-  min-height: 0;
+  /* Height restrictions for tab view */
+  max-height: 60vh;
+  min-height: 200px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   margin: 0;
@@ -5349,19 +5363,18 @@ input:checked + .slider:before {
 
 /* Mobile optimizations for header */
 @media (max-width: 768px) {
+  .header {
+    /* Significantly reduce header height on mobile */
+    padding: 12px 20px; /* Reduced from 20px to 12px vertical padding */
+    min-height: 60px; /* Reduced from 80px to 60px */
+    /* Adjust safe area handling for reduced height */
+    padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
+  }
+
   .header-info {
     gap: 8px; /* Reduce gap on mobile */
     min-height: 20px; /* Fixed minimum height to prevent expansion */
     justify-content: center; /* Center content on mobile for better alignment */
-  }
-
-  /* Prevent header height changes */
-  .header {
-    min-height: auto;
-    max-height: none;
-  }
-
-  .header-info {
     align-items: center;
     height: 20px; /* Fixed height */
     overflow: visible; /* Keep visible for mobile */
@@ -10103,6 +10116,417 @@ input[type="file"].form-control:focus {
   }
 }
 
+/* ===== TAB BAR STYLES ===== */
+
+.tab-bar-container {
+  /* Remove margin and make it seamlessly connect to header */
+  margin-top: 0;
+  margin-bottom: 0;
+  width: 100%;
+  /* Position to create stacking effect behind header */
+  position: relative;
+  top: -20px; /* Extend much further up to completely close gap */
+  /* Lower z-index to appear behind header but above dashboard content */
+  z-index: 90;
+  /* Ensure tab bar stays visible during view transitions */
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Tab bar styling as extension of header with stacking effect */
+.tab-bar {
+  /* Match header's exact styling for seamless extension */
+  background: rgba(18, 18, 18, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(42, 42, 47, 0.6);
+  border-top: none; /* Remove top border to connect with header */
+  border-radius: 0 0 24px 24px; /* Only bottom corners rounded to match header extension */
+  overflow: hidden;
+  transition: all 0.3s ease;
+  /* Enhanced shadow for stacking effect */
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.15),
+    0 -2px 10px rgba(0, 0, 0, 0.05); /* Subtle upward shadow for depth */
+
+  /* Create seamless connection by extending background upward */
+  position: relative;
+
+  /* Flexbox layout for tab buttons */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 20px 8px 20px; /* Further extended top padding to close gap */
+  gap: 2px;
+  /* Minimum height to ensure proper proportions */
+  min-height: 80px; /* Increased height for extended stacking effect */
+}
+
+/* Create seamless connection with extended pseudo-element */
+.tab-bar::before {
+  content: '';
+  position: absolute;
+  top: -20px; /* Extend much further up to completely close gap */
+  left: -1px;
+  right: -1px;
+  height: 22px; /* Much taller to cover the extended area */
+  background: rgba(18, 18, 18, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  z-index: -1; /* Behind the main tab bar content */
+  border-left: 1px solid rgba(42, 42, 47, 0.6);
+  border-right: 1px solid rgba(42, 42, 47, 0.6);
+}
+
+/* Individual tab button styling */
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  position: relative;
+  overflow: hidden;
+  min-height: 44px; /* Touch-friendly minimum */
+}
+
+/* Tab button hover state */
+.tab-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* Active tab button styling */
+.tab-btn.active {
+  background: rgba(0, 245, 255, 0.12);
+  color: var(--text-primary);
+  box-shadow:
+    0 2px 8px rgba(0, 245, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Tab icon badge - similar to ChatGPT icon badge */
+.tab-icon-badge {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg,
+    rgba(0, 245, 255, 0.12) 0%,
+    rgba(0, 212, 255, 0.12) 50%,
+    rgba(58, 190, 246, 0.12) 100%);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active .tab-icon-badge {
+  background: linear-gradient(135deg,
+    rgba(0, 245, 255, 0.2) 0%,
+    rgba(0, 212, 255, 0.2) 50%,
+    rgba(58, 190, 246, 0.2) 100%);
+  color: var(--text-primary);
+}
+
+/* Tab icon styling */
+.tab-icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+/* Tab text styling */
+.tab-text {
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.01em;
+}
+
+/* Mobile responsive adjustments for tab bar */
+@media (max-width: 768px) {
+  .tab-bar-container {
+    /* Maintain stacking effect on mobile */
+    margin-top: 0;
+    top: -12px; /* Increased stacking effect for mobile to close gap */
+  }
+
+  .tab-bar {
+    padding: 20px 16px 6px 16px; /* Increased top padding for mobile gap closure */
+    gap: 1px;
+    min-height: 64px; /* Increased height for mobile stacking */
+    border-radius: 0 0 20px 20px; /* Slightly smaller radius for mobile */
+  }
+
+  .tab-bar::before {
+    top: -12px; /* Increased extension for mobile to close gap */
+    height: 14px; /* Larger extension height for mobile */
+  }
+
+  .tab-btn {
+    padding: 8px 10px;
+    gap: 6px;
+    min-height: 38px; /* Reduced from 40px */
+  }
+
+  .tab-icon-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+  }
+
+  .tab-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .tab-text {
+    font-size: 12px;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .header {
+    /* Even more compact header for very small screens */
+    padding: 10px 16px; /* Further reduced padding */
+    min-height: 50px; /* Even smaller minimum height */
+    padding-top: max(10px, calc(10px + env(safe-area-inset-top)));
+  }
+
+  .tab-bar-container {
+    /* Maintain stacking effect for very small screens */
+    margin-top: 0;
+    top: -10px; /* Increased stacking for very small screens to close gap */
+  }
+
+  .tab-bar {
+    min-height: 56px; /* Increased for very small screens with stacking */
+    padding: 18px 12px 4px 12px; /* Increased top padding to close gap */
+  }
+
+  .tab-bar::before {
+    top: -10px; /* Increased extension for very small screens */
+    height: 12px; /* Larger extension height to close gap */
+  }
+
+  .tab-btn {
+    padding: 6px 8px;
+    gap: 4px;
+    flex-direction: row; /* Changed from column to row for horizontal layout */
+    min-height: 34px; /* Reduced from 36px */
+  }
+
+  .tab-icon-badge {
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+  }
+
+  .tab-icon {
+    width: 10px;
+    height: 10px;
+  }
+
+  .tab-text {
+    font-size: 10px;
+    line-height: 1;
+  }
+}
+
+/* Employees view styles */
+.employees-container {
+  margin-top: 20px; /* Add spacing from tab bar */
+  margin-bottom: 0;
+  width: 100%;
+  display: none; /* Hidden by default */
+}
+
+.employees-placeholder {
+  background: rgba(18, 18, 18, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(42, 42, 47, 0.6);
+  border-radius: 24px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.employees-placeholder .placeholder-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.employees-placeholder .placeholder-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.employees-placeholder h3 {
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 12px 0;
+}
+
+.employees-placeholder p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Hide employees container in other views */
+body:not(.employees-view) .employees-container {
+  display: none !important;
+}
+
+/* Show employees container in employees view */
+body.employees-view .employees-container {
+  display: block !important;
+}
+
+/* Ensure tab bar remains visible in all view states */
+body.stats-view .tab-bar-container,
+body.chatbox-view .tab-bar-container,
+body.employees-view .tab-bar-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 500 !important;
+}
+
+/* Smooth transitions for view switching */
+.dashboard-content,
+.chatbox-container,
+.employees-container,
+.statistics-section {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s ease-out;
+}
+
+/* Ensure smooth appearance of view-specific content */
+body.stats-view .dashboard-stats-container,
+body.chatbox-view .chatbox-container,
+body.employees-view .employees-container {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* Prevent content overlap during transitions */
+body.stats-view .chatbox-container,
+body.employees-view .chatbox-container {
+  display: none !important;
+}
+
+body.chatbox-view .employees-container {
+  display: none !important;
+}
+
+/* Ensure chatbox is properly positioned in chatbox view */
+body.chatbox-view .chatbox-container {
+  display: block !important;
+  position: relative;
+  z-index: 100;
+}
+
+/* ===== TOGGLE SWITCH STYLES ===== */
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.toggle-label {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.toggle-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+  z-index: -1;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-secondary);
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-input:checked + .toggle-slider {
+  background: rgba(0, 245, 255, 0.2);
+  border-color: rgba(0, 245, 255, 0.4);
+}
+
+.toggle-input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+  background: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 245, 255, 0.3);
+}
+
+.toggle-slider:hover {
+  background: var(--bg-secondary);
+}
+
+.toggle-input:checked + .toggle-slider:hover {
+  background: rgba(0, 245, 255, 0.25);
+}
+
 /* ===== CHATBOX STYLES ===== */
 
 .chatbox-container {
@@ -10300,7 +10724,8 @@ input[type="file"].form-control:focus {
 }
 
 .chatbox-log {
-  max-height: 300px; /* Maximum height before scrolling */
+  max-height: 400px; /* Increased maximum height for better readability */
+  min-height: 150px; /* Minimum height to ensure usability */
   overflow-y: auto;
   padding: 16px 20px;
   background: transparent; /* Remove darker background */
@@ -10309,7 +10734,6 @@ input[type="file"].form-control:focus {
   display: flex;
   flex-direction: column;
   gap: 8px; /* Add consistent spacing between messages */
-  min-height: 0; /* Allow shrinking */
 }
 
 .chatbox-log::-webkit-scrollbar {
@@ -10346,6 +10770,7 @@ input[type="file"].form-control:focus {
   align-self: flex-end; /* Align to right using flexbox */
   text-align: right;
   border: 1px solid var(--border);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle inner shadow for consistency */
 }
 
 .chatbox-message.assistant {
@@ -10353,6 +10778,7 @@ input[type="file"].form-control:focus {
   color: var(--text-primary);
   align-self: flex-start; /* Align to left using flexbox */
   border: 1px solid var(--border);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle inner shadow for consistency */
 }
 
 /* Typing cursor for streaming messages - inline and subtle */
@@ -10379,6 +10805,7 @@ input[type="file"].form-control:focus {
   align-self: flex-start; /* Align to left using flexbox */
   font-style: italic;
   border: 1px solid var(--border);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle inner shadow for consistency */
 }
 
 /* Enhanced markdown styling within chat messages */
@@ -10740,9 +11167,9 @@ input[type="file"].form-control:focus {
   }
 
   .chatbox-log {
-    max-height: 250px; /* Maximum height before scrolling on mobile */
+    max-height: 300px; /* Increased maximum height for mobile */
+    min-height: 120px; /* Minimum height for mobile usability */
     padding: 12px 16px;
-    min-height: 0; /* Allow shrinking */
   }
 
   .chatbox-input-container {
@@ -11142,11 +11569,11 @@ input[type="file"].form-control:focus {
 @supports (height: 100dvh) {
   @media (max-width: 768px) {
     .chatbox-expanded-content {
-      max-height: 60dvh;
+      max-height: 40dvh; /* Limit to 40% of viewport height as requested */
     }
 
     .chatbox-log {
-      max-height: calc(60dvh - 120px);
+      max-height: calc(40dvh - 120px); /* Maintain 40% limit with space for input */
     }
   }
 }
