@@ -1778,6 +1778,7 @@ export const app = {
                 if ('tax_deduction_enabled' in existingSettings) settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 if ('tax_percentage' in existingSettings) settingsData.tax_percentage = this.taxPercentage;
                 if ('payroll_day' in existingSettings) settingsData.payroll_day = this.payrollDay;
+                if ('is_wage_caregiver' in existingSettings) settingsData.is_wage_caregiver = this.isWageCaregiver;
 
                 // New break deduction settings - try to save them even if columns don't exist yet
                 settingsData.pause_deduction_enabled = this.pauseDeductionEnabled;
@@ -1785,6 +1786,9 @@ export const app = {
                 settingsData.pause_threshold_hours = this.pauseThresholdHours;
                 settingsData.pause_deduction_minutes = this.pauseDeductionMinutes;
                 settingsData.audit_break_calculations = this.auditBreakCalculations;
+
+                // Always try to save isWageCaregiver even if column doesn't exist yet
+                settingsData.is_wage_caregiver = this.isWageCaregiver;
 
 
 
