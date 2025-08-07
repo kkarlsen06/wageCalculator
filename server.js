@@ -1085,6 +1085,21 @@ async function findShiftsByReference(user_id, dateReference, timeReference) {
   return { shifts, error: null };
 }
 
+// ---------- /config ----------
+app.get('/config', async (req, res) => {
+  try {
+    // Feature flags configuration
+    const features = {
+      employees: process.env.FEATURE_EMPLOYEES !== 'false' // Default ON, can be disabled via env var
+    };
+
+    res.json({ features });
+  } catch (error) {
+    console.error('Error fetching config:', error);
+    res.status(500).json({ error: 'Failed to fetch configuration' });
+  }
+});
+
 // ---------- /settings ----------
 app.get('/settings', authenticateUser, async (req, res) => {
   const { data, error } = await supabase
@@ -1097,6 +1112,119 @@ app.get('/settings', authenticateUser, async (req, res) => {
     return res.status(500).json({ error: 'Failed to fetch settings' });
 
   res.json({ hourly_rate: data?.hourly_rate ?? 0 });
+});
+
+// ---------- /health/employees ----------
+app.get('/health/employees', async (req, res) => {
+  try {
+    const healthChecks = {
+      timestamp: new Date().toISOString(),
+      status: 'healthy',
+      checks: {}
+    };
+
+    // 1. Check RLS on employees table
+    try {
+      const { data: rlsEmployees, error: rlsEmployeesError } = await supabase
+        .rpc('check_rls_enabled', { table_name: 'employees' });
+
+      healthChecks.checks.employees_rls = {
+        status: rlsEmployeesError ? 'error' : 'ok',
+        enabled: !rlsEmployeesError && rlsEmployees,
+        error: rlsEmployeesError?.message
+      };
+    } catch (error) {
+      healthChecks.checks.employees_rls = {
+        status: 'error',
+        enabled: false,
+        error: 'Failed to check RLS: ' + error.message
+      };
+    }
+
+    // 2. Check RLS on user_shifts table
+    try {
+      const { data: rlsShifts, error: rlsShiftsError } = await supabase
+        .rpc('check_rls_enabled', { table_name: 'user_shifts' });
+
+      healthChecks.checks.user_shifts_rls = {
+        status: rlsShiftsError ? 'error' : 'ok',
+        enabled: !rlsShiftsError && rlsShifts,
+        error: rlsShiftsError?.message
+      };
+    } catch (error) {
+      healthChecks.checks.user_shifts_rls = {
+        status: 'error',
+        enabled: false,
+        error: 'Failed to check RLS: ' + error.message
+      };
+    }
+
+    // 3. Check FK constraint user_shifts.employee_id -> employees.id ON DELETE SET NULL
+    try {
+      const { data: fkConstraint, error: fkError } = await supabase
+        .rpc('check_foreign_key_constraint', {
+          table_name: 'user_shifts',
+          column_name: 'employee_id',
+          referenced_table: 'employees',
+          referenced_column: 'id'
+        });
+
+      healthChecks.checks.employee_id_fk = {
+        status: fkError ? 'error' : 'ok',
+        exists: !fkError && fkConstraint,
+        on_delete_action: 'SET NULL', // Expected action
+        error: fkError?.message
+      };
+    } catch (error) {
+      healthChecks.checks.employee_id_fk = {
+        status: 'error',
+        exists: false,
+        error: 'Failed to check FK constraint: ' + error.message
+      };
+    }
+
+    // 4. Check employee-avatars bucket exists
+    try {
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+
+      const avatarBucket = buckets?.find(bucket => bucket.name === 'employee-avatars');
+
+      healthChecks.checks.employee_avatars_bucket = {
+        status: bucketsError ? 'error' : (avatarBucket ? 'ok' : 'missing'),
+        exists: !!avatarBucket,
+        bucket_name: 'employee-avatars',
+        error: bucketsError?.message
+      };
+    } catch (error) {
+      healthChecks.checks.employee_avatars_bucket = {
+        status: 'error',
+        exists: false,
+        error: 'Failed to check bucket: ' + error.message
+      };
+    }
+
+    // Determine overall health status
+    const hasErrors = Object.values(healthChecks.checks).some(check => check.status === 'error');
+    const hasMissing = Object.values(healthChecks.checks).some(check => check.status === 'missing');
+
+    if (hasErrors) {
+      healthChecks.status = 'unhealthy';
+    } else if (hasMissing) {
+      healthChecks.status = 'degraded';
+    }
+
+    const statusCode = healthChecks.status === 'healthy' ? 200 :
+                      healthChecks.status === 'degraded' ? 200 : 503;
+
+    res.status(statusCode).json(healthChecks);
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(503).json({
+      timestamp: new Date().toISOString(),
+      status: 'unhealthy',
+      error: 'Health check failed: ' + error.message
+    });
+  }
 });
 
 // ---------- /chat ----------
@@ -1420,6 +1548,89 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         shifts: shifts || []
       });
     }
+  }
+});
+
+// ---------- employee avatar signed URL endpoints ----------
+// Bucket: 'employee-avatars' (private). Path: {manager_id}/{employee_id}/avatar.<ext>
+
+/**
+ * Create a short-lived, signed upload URL for an employee avatar.
+ * Body (optional): { "ext": "png" | "jpg" | "jpeg" | "webp" }
+ */
+app.post('/employees/:id/avatar-upload-url', authenticateUser, async (req, res) => {
+  try {
+    const managerId  = req.user_id;
+    const employeeId = req.params.id;
+
+    // Verify the employee belongs to the current manager
+    const { data: emp, error: empErr } = await supabase
+      .from('employees')
+      .select('manager_id')
+      .eq('id', employeeId)
+      .single();
+
+    if (empErr || !emp || emp.manager_id !== managerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // Validate/normalize extension
+    const rawExt = (req.body?.ext || 'png').toString().toLowerCase();
+    const safeExt = ['png', 'jpg', 'jpeg', 'webp'].includes(rawExt) ? rawExt : 'png';
+
+    const path = `${managerId}/${employeeId}/avatar.${safeExt}`;
+    const storage = supabase.storage.from('employee-avatars');
+
+    // Prefer createSignedUploadUrl when available
+    if (typeof storage.createSignedUploadUrl === 'function') {
+      const { data, error } = await storage.createSignedUploadUrl(path);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json({ path, ...data });
+    }
+
+    // Fallback if SDK doesn’t support signed upload URLs yet
+    return res.status(501).json({
+      error: 'Signed upload URL not supported in this SDK version. Use server-side upload or upgrade @supabase/supabase-js.'
+    });
+  } catch (e) {
+    console.error('avatar-upload-url error:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Get a signed READ URL for an employee avatar (defaults to png path if none saved).
+ * Query params: ?expiresIn=3600 (seconds)
+ */
+app.get('/employees/:id/avatar-read-url', authenticateUser, async (req, res) => {
+  try {
+    const managerId  = req.user_id;
+    const employeeId = req.params.id;
+    const expiresIn  = Number(req.query.expiresIn) || 3600;
+
+    const { data: emp, error: empErr } = await supabase
+      .from('employees')
+      .select('manager_id, profile_picture_url')
+      .eq('id', employeeId)
+      .single();
+
+    if (empErr || !emp || emp.manager_id !== managerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const defaultPath = `${managerId}/${employeeId}/avatar.png`;
+    const path = emp.profile_picture_url || defaultPath;
+
+    const { data, error } = await supabase
+      .storage
+      .from('employee-avatars')
+      .createSignedUrl(path, expiresIn);
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ url: data.signedUrl, path });
+  } catch (e) {
+    console.error('avatar-read-url error:', e);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
