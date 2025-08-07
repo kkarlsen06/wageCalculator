@@ -8858,8 +8858,25 @@ export const app = {
             dashboardStatsContainer.remove();
         }
 
+        // Ensure month navigation is always visible after cleanup
+        this.ensureMonthPickerVisibility();
+
         // Note: Dashboard cards visibility is now handled in switchToView()
         // to prevent flash during transitions. No need to reset them here.
+    },
+
+    // Helper function to ensure month picker remains visible across all views
+    ensureMonthPickerVisibility() {
+        const monthNav = document.querySelector('.dashboard-month-nav');
+        if (monthNav) {
+            monthNav.style.display = 'flex';
+            monthNav.style.visibility = 'visible';
+            monthNav.style.opacity = '1';
+            monthNav.style.position = 'relative';
+            monthNav.style.left = 'auto';
+            monthNav.style.height = 'auto';
+            monthNav.style.width = 'auto';
+        }
     },
 
     showDashboardView() {
@@ -8872,14 +8889,14 @@ export const app = {
         const totalCard = document.querySelector('.total-card');
         const nextShiftCard = document.querySelector('.next-shift-card');
         const nextPayrollCard = document.querySelector('.next-payroll-card');
-        const monthNav = document.querySelector('.dashboard-month-nav');
         const floatingActionBar = document.querySelector('.floating-action-bar');
         const chatboxContainer = document.querySelector('.chatbox-container');
 
         if (totalCard) totalCard.style.display = '';
         if (nextShiftCard) nextShiftCard.style.display = '';
         if (nextPayrollCard) nextPayrollCard.style.display = '';
-        if (monthNav) monthNav.style.display = 'flex';
+        // Ensure month navigation is always visible and properly styled
+        this.ensureMonthPickerVisibility();
         if (floatingActionBar) floatingActionBar.style.display = 'flex';
 
         // Hide chatbox container completely in dashboard view
@@ -8935,6 +8952,9 @@ export const app = {
         if (chatboxContainer) {
             chatboxContainer.style.display = 'block';
         }
+
+        // Ensure month navigation remains visible in chatbox view
+        this.ensureMonthPickerVisibility();
 
         // Immediately expand the chatbox to show chat log and input
         this.expandChatboxForTabView();
@@ -9033,6 +9053,9 @@ Hva kan jeg hjelpe deg med i dag?`;
         // Remove other view classes and add employees view
         body.classList.remove('stats-view', 'chatbox-view');
         body.classList.add('employees-view');
+
+        // Ensure month navigation remains visible in employees view
+        this.ensureMonthPickerVisibility();
 
         // Dashboard cards are already hidden in switchToView() for smooth transitions
 

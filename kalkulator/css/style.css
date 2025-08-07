@@ -908,17 +908,9 @@ body.chatbox-view .dashboard-content .next-payroll-card {
   display: none !important;
 }
 
-/* Hide ALL month navigation elements completely in chatbox view */
-body.chatbox-view .dashboard-month-nav,
-body.chatbox-view .month-navigation-container,
-body.chatbox-view .month-navigation,
-body.chatbox-view .month-nav-btn,
-body.chatbox-view .month-display,
-.chatbox-view .dashboard-month-nav,
-.chatbox-view .month-navigation-container,
-.chatbox-view .month-navigation,
-.chatbox-view .month-nav-btn,
-.chatbox-view .month-display {
+/* Keep month navigation visible in chatbox view - only hide shift section navigation */
+body.chatbox-view .shift-section .month-navigation-container,
+.chatbox-view .shift-section .month-navigation-container {
   display: none !important;
   visibility: hidden !important;
   height: 0 !important;
@@ -928,6 +920,18 @@ body.chatbox-view .month-display,
   opacity: 0 !important;
   position: absolute !important;
   left: -9999px !important;
+}
+
+/* Ensure dashboard month navigation remains visible in chatbox view */
+body.chatbox-view .dashboard-month-nav,
+.chatbox-view .dashboard-month-nav {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  left: auto !important;
+  height: auto !important;
+  width: auto !important;
 }
 
 /* Keep shifts section visible in chatbox view (similar to stats view) */
@@ -1391,14 +1395,25 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   display: none !important;
 }
 
-/* Month navigation container when positioned in dashboard - UPDATED: Hidden by default, shown in stats view */
+/* Month navigation container when positioned in dashboard - UPDATED: Always visible across all views */
 .dashboard-content .month-navigation-container {
-  display: none !important; /* Hide dashboard navigation completely by default */
+  display: flex !important; /* Always show dashboard navigation across all views */
 }
 
-/* Show dashboard month navigation in stats view */
-.stats-view .dashboard-content .month-navigation-container {
-  display: flex !important; /* Show dashboard navigation in stats view */
+/* Ensure dashboard month navigation remains visible in all view states */
+.stats-view .dashboard-content .month-navigation-container,
+.chatbox-view .dashboard-content .month-navigation-container,
+.employees-view .dashboard-content .month-navigation-container,
+.stats-view .dashboard-month-nav,
+.chatbox-view .dashboard-month-nav,
+.employees-view .dashboard-month-nav {
+  display: flex !important; /* Ensure visibility in all view states */
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  left: auto !important;
+  height: auto !important;
+  width: auto !important;
 }
 
 /* Remove pseudo-elements approach and use direct spacing */
@@ -1450,27 +1465,27 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   }
 }
 
-/* Large mobile devices in landscape - UPDATED: Always show shifts section navigation */
+/* Large mobile devices in landscape - UPDATED: Always show dashboard navigation across all views */
 /* iPhone Pro Max landscape: viewport reports 439x956, but height (956) indicates landscape capability */
 @media (orientation: landscape) and (min-height: 400px) and (max-width: 1023px) {
   .dashboard-month-nav {
-    display: none; /* Hide dashboard navigation */
+    display: flex !important; /* Always show dashboard navigation across all views */
   }
 
   .shift-section .month-navigation-container {
-    display: flex; /* Always show shifts section navigation */
+    display: none !important; /* Hide shifts section navigation to avoid duplication */
   }
 }
 
-/* Large mobile portrait and tablet portrait - UPDATED: Always show shifts section navigation */
+/* Large mobile portrait and tablet portrait - UPDATED: Always show dashboard navigation across all views */
 /* iPhone Pro Max portrait (439px) and larger devices */
 @media (min-width: 430px) and (max-width: 1023px) and (orientation: portrait) {
   .dashboard-month-nav {
-    display: none; /* Hide dashboard navigation */
+    display: flex !important; /* Always show dashboard navigation across all views */
   }
 
   .shift-section .month-navigation-container {
-    display: flex; /* Always show shifts section navigation */
+    display: none !important; /* Hide shifts section navigation to avoid duplication */
   }
 }
 
@@ -1905,15 +1920,15 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   }
 }
 
-/* Override for small landscape devices - still use shift section */
+/* Override for small landscape devices - UPDATED: Always show dashboard navigation across all views */
 /* Small phones in landscape mode don't have enough effective space */
 @media (orientation: landscape) and (max-height: 399px) {
   .dashboard-month-nav {
-    display: none !important;
+    display: flex !important; /* Always show dashboard navigation across all views */
   }
 
   .shift-section .month-navigation-container {
-    display: flex !important;
+    display: none !important; /* Hide shifts section navigation to avoid duplication */
   }
 }
 
