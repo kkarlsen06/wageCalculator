@@ -11,7 +11,13 @@
     "test": "node dev-tests/test-duplicate-shifts.js",
     "test:feature-flags": "node dev-tests/test-feature-flags.js",
     "test:health": "node dev-tests/test-health-employees.js",
-    "test:all": "npm run test && npm run test:feature-flags && npm run test:health"
+    "test:employees": "node dev-tests/test-employees-crud.js",
+    "test:employees-complete": "node dev-tests/test-employees-complete.js",
+    "test:employee-carousel": "node dev-tests/run-employee-tests.js",
+    "test:employee-modal": "node dev-tests/test-employee-modal.js",
+    "test:employee-crud-flows": "node dev-tests/test-employee-crud-flows.js",
+    "demo:employees": "node dev-tests/demo-employees.js",
+    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel"
   },
   "repository": {
     "type": "git",

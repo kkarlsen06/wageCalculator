@@ -1,10 +1,177 @@
-# Employee Feature Flag System
+# Employee Management System
 
-This document describes the employee feature flag system implementation, including enabling/disabling procedures, rollback strategies, risk assessment, and health monitoring.
+This document describes the complete employee management system implementation, including CRUD operations, avatar management, feature flags, and health monitoring.
 
 ## Overview
 
-The employee feature flag system allows controlled rollout of employee management functionality while maintaining backwards compatibility. The system follows the PLACEHOLDER_EMPLOYEES_V1 ruleset where employees are manager-owned placeholders, not real user accounts.
+The employee management system provides complete CRUD operations for managing employees, avatar handling via signed URLs, and controlled rollout via feature flags. The system follows the PLACEHOLDER_EMPLOYEES_V1 ruleset where employees are manager-owned placeholders, not real user accounts.
+
+## API Endpoints
+
+### Employee CRUD Operations
+
+#### GET /employees
+List all employees for the authenticated manager.
+
+**Query Parameters:**
+- `include_archived=1` - Include archived employees in the response (default: exclude)
+
+**Response:**
+```json
+{
+  "employees": [
+    {
+      "id": "uuid",
+      "name": "Employee Name",
+      "email": "email@example.com",
+      "hourly_wage": 250.50,
+      "birth_date": "1990-05-15",
+      "display_color": "#3498db",
+      "profile_picture_url": "path/to/avatar.png",
+      "created_at": "2025-01-08T10:00:00Z",
+      "archived_at": null
+    }
+  ]
+}
+```
+
+#### POST /employees
+Create a new employee.
+
+**Request Body:**
+```json
+{
+  "name": "Employee Name",           // Required
+  "email": "email@example.com",     // Optional, must be valid email format
+  "hourly_wage": 250.50,            // Optional, must be >= 0
+  "birth_date": "1990-05-15",       // Optional, must be YYYY-MM-DD format
+  "display_color": "#3498db"        // Optional
+}
+```
+
+**Validation Rules:**
+- `name`: Required, non-empty string
+- `email`: Optional, valid email format if provided
+- `hourly_wage`: Optional, number >= 0 if provided
+- `birth_date`: Optional, YYYY-MM-DD format if provided
+- `(manager_id, name)`: Must be unique among non-archived employees
+
+**Response:** `201 Created`
+```json
+{
+  "employee": {
+    "id": "uuid",
+    "name": "Employee Name",
+    "email": "email@example.com",
+    "hourly_wage": 250.50,
+    "birth_date": "1990-05-15",
+    "display_color": "#3498db",
+    "profile_picture_url": null,
+    "created_at": "2025-01-08T10:00:00Z",
+    "archived_at": null
+  }
+}
+```
+
+#### PUT /employees/:id
+Update an existing employee.
+
+**Request Body:** Same as POST, all fields optional
+**Validation:** Same rules as POST
+**Authorization:** Employee must belong to authenticated manager
+
+**Response:** `200 OK` with updated employee object
+
+#### DELETE /employees/:id
+Soft delete (archive) an employee.
+
+**Authorization:** Employee must belong to authenticated manager
+**Effect:** Sets `archived_at` timestamp, preserves history
+**FK Behavior:** Related `user_shifts.employee_id` set to NULL automatically
+
+**Response:** `200 OK`
+```json
+{
+  "employee": {
+    "id": "uuid",
+    "archived_at": "2025-01-08T10:30:00Z",
+    // ... other fields
+  },
+  "message": "Employee archived successfully"
+}
+```
+
+### Avatar Management
+
+#### POST /employees/:id/avatar-upload-url
+Generate a signed upload URL for employee avatar.
+
+**Request Body:**
+```json
+{
+  "ext": "png"  // Optional: "png", "jpg", "jpeg", "webp" (default: "png")
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "path": "manager_id/employee_id/avatar.png",
+  "signedUrl": "https://...",
+  "token": "upload-token"
+}
+```
+
+#### GET /employees/:id/avatar-read-url
+Generate a signed read URL for employee avatar.
+
+**Query Parameters:**
+- `expiresIn=3600` - URL expiration in seconds (default: 3600)
+
+**Response:** `200 OK`
+```json
+{
+  "url": "https://signed-read-url",
+  "path": "manager_id/employee_id/avatar.png"
+}
+```
+
+### Error Responses
+
+**400 Bad Request** - Validation errors
+```json
+{
+  "error": "Name is required"
+}
+```
+
+**401 Unauthorized** - Missing or invalid auth token
+```json
+{
+  "error": "Missing or invalid Authorization header"
+}
+```
+
+**403 Forbidden** - Cross-tenant access attempt
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+**409 Conflict** - Duplicate name or already archived
+```json
+{
+  "error": "An employee with this name already exists"
+}
+```
+
+**500 Internal Server Error** - Server errors
+```json
+{
+  "error": "Failed to create employee"
+}
+```
 
 ## Architecture
 
@@ -201,24 +368,68 @@ UPDATE employees SET archived = true WHERE archived = false;
 ### Unit Tests
 ```bash
 # Run feature flag tests
-node dev-tests/test-feature-flags.js
+npm run test:feature-flags
+
+# Run health endpoint tests
+npm run test:health
+
+# Run employee CRUD tests
+npm run test:employees
+
+# Run comprehensive employee tests
+npm run test:employees-complete
+
+# Run all tests
+npm run test:all
 ```
 
 ### Integration Tests
-```bash
-# Run health endpoint tests
-node dev-tests/test-health-employees.js
-```
+
+#### Employee CRUD Tests (`test-employees-crud.js`)
+- Employee creation with validation
+- Employee listing (with/without archived)
+- Employee updates
+- Employee archiving (soft delete)
+- Cross-tenant security
+
+#### Comprehensive Tests (`test-employees-complete.js`)
+- Complete CRUD workflow
+- Input validation for all fields
+- Avatar signed URL generation
+- Security and access control
+- Duplicate name validation
+- Archive/unarchive behavior
+
+#### Health Tests (`test-health-employees.js`)
+- RLS policy verification
+- FK constraint validation
+- Storage bucket checks
 
 ### Manual Testing Checklist
 
+#### Core Functionality
+- [ ] Employee CRUD operations work correctly
+- [ ] Input validation prevents invalid data
+- [ ] Unique name constraint enforced per manager
+- [ ] Soft delete preserves history
+- [ ] Avatar upload/download via signed URLs
+- [ ] Cross-tenant access properly blocked
+
+#### Feature Flags
 - [ ] Feature flag toggle works
 - [ ] Client-side fallback behavior
 - [ ] Health endpoint returns correct status
+
+#### Database Integrity
 - [ ] RLS policies enforced
-- [ ] FK constraints working
-- [ ] Avatar upload/download via signed URLs
+- [ ] FK constraints working (ON DELETE SET NULL)
 - [ ] Backwards compatibility maintained
+
+#### Security
+- [ ] Authentication required for all endpoints
+- [ ] Manager ownership validated on all operations
+- [ ] No access to other managers' employees
+- [ ] Signed URLs properly scoped to manager/employee
 
 ## Troubleshooting
 

@@ -274,13 +274,21 @@ export const app = {
     lastRenderedShiftsKey: '',
     // Performance optimization for month navigation
     monthNavigationTimeout: null, // Debounce timer for month navigation
+
+    // Employee Management State
+    employees: [], // Array of employee objects
+    selectedEmployeeId: null, // null = "All", string = specific employee ID
+    employeeCache: new Map(), // Per-employee data cache for performance
+    employeesLoading: false, // Loading state for employee operations
+    employeesError: null, // Error state for employee operations
+    employeeAvatarCache: new Map(), // Cache for employee avatar URLs
     async init() {
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
-        
+
         // Initialize DOM cache
         domCache.init();
-        
+
         // Reset progress bar to initial state
         const fill = domCache.progressFill;
         if (fill) {
@@ -288,7 +296,10 @@ export const app = {
             fill.style.width = '0%';
             fill.style.transition = 'none';
         }
-        
+
+        // Initialize employee state from URL params and localStorage
+        this.initializeEmployeeState();
+
         // Show UI elements
         this.populateTimeSelects();
         
@@ -8823,6 +8834,11 @@ export const app = {
         // Remove all view classes
         body.classList.remove('stats-view', 'chatbox-view', 'employees-view');
 
+        // Clean up employee carousel performance resources
+        if (this.employeeCarousel) {
+            this.employeeCarousel.cleanup?.();
+        }
+
         // Hide all view-specific containers
         const chatboxContainer = document.querySelector('.chatbox-container');
         const employeesContainer = document.querySelector('.employees-container');
@@ -9062,28 +9078,43 @@ Hva kan jeg hjelpe deg med i dag?`;
 
         // Dashboard cards are already hidden in switchToView() for smooth transitions
 
-        // Show placeholder content for employees view
+        // Show employees content with carousel
         this.showEmployeesPlaceholder();
+
+        // Load employees if not already loaded
+        if (this.employees.length === 0 && !this.employeesLoading) {
+            this.loadEmployees().catch(error => {
+                console.error('Failed to load employees:', error);
+            });
+        }
+
+        // Store current view for cleanup purposes
+        this.currentView = 'employees';
+
+        // Preload avatars for better performance
+        if (this.employeeCarousel) {
+            this.employeeCarousel.preloadAvatars?.();
+        }
     },
 
     showEmployeesPlaceholder() {
-        // Create or show employees placeholder content
+        // Create or show employees container with carousel
         let employeesContainer = document.querySelector('.employees-container');
         if (!employeesContainer) {
             employeesContainer = document.createElement('div');
             employeesContainer.className = 'employees-container';
             employeesContainer.innerHTML = `
-                <div class="employees-placeholder">
-                    <div class="placeholder-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
+                <div class="employees-header">
+                    <h2>Ansatte</h2>
+                    <div class="employees-summary" id="employeesSummary">
+                        <!-- Will be populated with employee count -->
                     </div>
-                    <h3>Ansattfunksjoner</h3>
-                    <p>Denne funksjonen er under utvikling og vil snart være tilgjengelig for teamledere.</p>
+                </div>
+                <div class="employee-carousel-container" id="employeeCarouselContainer">
+                    <!-- Employee carousel will be rendered here -->
+                </div>
+                <div class="employees-content" id="employeesContent">
+                    <!-- Additional employee content will go here -->
                 </div>
             `;
 
@@ -9094,6 +9125,71 @@ Hva kan jeg hjelpe deg med i dag?`;
             }
         }
         employeesContainer.style.display = 'block';
+
+        // Initialize employee carousel
+        this.initializeEmployeeCarousel();
+    },
+
+    /**
+     * Initialize the employee carousel
+     */
+    async initializeEmployeeCarousel() {
+        try {
+            const container = document.getElementById('employeeCarouselContainer');
+            if (!container) return;
+
+            // Import and create carousel
+            const { EmployeeCarousel } = await import('./employeeCarousel.js');
+
+            // Destroy existing carousel if it exists
+            if (this.employeeCarousel) {
+                this.employeeCarousel.destroy();
+            }
+
+            // Create new carousel
+            this.employeeCarousel = new EmployeeCarousel(container, this);
+
+            // Load employees if not already loaded
+            if (this.employees.length === 0 && !this.employeesLoading) {
+                await this.loadEmployees();
+            }
+
+            // Update summary
+            this.updateEmployeesSummary();
+
+        } catch (error) {
+            console.error('Error initializing employee carousel:', error);
+        }
+    },
+
+    /**
+     * Update employee carousel (called when employees change)
+     */
+    updateEmployeeCarousel() {
+        if (this.employeeCarousel) {
+            this.employeeCarousel.update();
+        }
+        this.updateEmployeesSummary();
+    },
+
+    /**
+     * Update employees summary display
+     */
+    updateEmployeesSummary() {
+        const summaryElement = document.getElementById('employeesSummary');
+        if (!summaryElement) return;
+
+        const activeEmployees = this.employees.filter(emp => !emp.archived_at);
+        const selectedEmployee = this.getSelectedEmployee();
+
+        let summaryText = '';
+        if (selectedEmployee) {
+            summaryText = `Viser data for: ${selectedEmployee.name}`;
+        } else {
+            summaryText = `${activeEmployees.length} aktive ansatte`;
+        }
+
+        summaryElement.textContent = summaryText;
     },
 
     updateTabBarVisibility() {
@@ -9938,6 +10034,308 @@ Hva kan jeg hjelpe deg med i dag?`;
             // Update the selected dates info
             this.updateSelectedDatesInfo();
         }, 10); // Reduced timeout since we no longer need to restore global state
+    },
+
+    // ===== EMPLOYEE MANAGEMENT METHODS =====
+
+    /**
+     * Initialize employee state from URL parameters and localStorage
+     */
+    initializeEmployeeState() {
+        try {
+            // Check URL parameters first
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlEmployeeId = urlParams.get('employee');
+
+            // Check localStorage for persisted selection
+            const savedEmployeeId = localStorage.getItem('selectedEmployeeId');
+
+            // Set selectedEmployeeId (URL takes precedence)
+            if (urlEmployeeId !== null) {
+                this.selectedEmployeeId = urlEmployeeId === 'all' ? null : urlEmployeeId;
+            } else if (savedEmployeeId !== null) {
+                this.selectedEmployeeId = savedEmployeeId === 'null' ? null : savedEmployeeId;
+            }
+
+            // Initialize employee cache
+            this.employeeCache.clear();
+            this.employeeAvatarCache.clear();
+
+        } catch (error) {
+            console.error('Error initializing employee state:', error);
+            this.selectedEmployeeId = null;
+        }
+    },
+
+    /**
+     * Set selected employee and persist the selection
+     * @param {string|null} employeeId - Employee ID or null for "All"
+     */
+    setSelectedEmployee(employeeId) {
+        try {
+            this.selectedEmployeeId = employeeId;
+
+            // Persist to localStorage
+            localStorage.setItem('selectedEmployeeId', employeeId === null ? 'null' : employeeId);
+
+            // Update URL parameter without page reload
+            const url = new URL(window.location);
+            if (employeeId === null) {
+                url.searchParams.set('employee', 'all');
+            } else {
+                url.searchParams.set('employee', employeeId);
+            }
+            window.history.replaceState({}, '', url);
+
+            // Trigger re-render of relevant components
+            this.onEmployeeSelectionChange();
+
+        } catch (error) {
+            console.error('Error setting selected employee:', error);
+        }
+    },
+
+    /**
+     * Get the currently selected employee object
+     * @returns {Object|null} Employee object or null if "All" is selected
+     */
+    getSelectedEmployee() {
+        if (this.selectedEmployeeId === null) {
+            return null;
+        }
+        return this.employees.find(emp => emp.id === this.selectedEmployeeId) || null;
+    },
+
+    /**
+     * Check if a specific employee is currently selected
+     * @param {string} employeeId - Employee ID to check
+     * @returns {boolean} True if the employee is selected
+     */
+    isEmployeeSelected(employeeId) {
+        return this.selectedEmployeeId === employeeId;
+    },
+
+    /**
+     * Check if "All" employees is currently selected
+     * @returns {boolean} True if "All" is selected
+     */
+    isAllEmployeesSelected() {
+        return this.selectedEmployeeId === null;
+    },
+
+    /**
+     * Handle employee selection change - override in components that need to react
+     */
+    onEmployeeSelectionChange() {
+        // This method can be overridden or extended by components
+        // that need to react to employee selection changes
+        console.log('Employee selection changed to:', this.selectedEmployeeId);
+
+        // Update any UI components that depend on employee selection
+        this.updateEmployeeCarousel?.();
+        this.updateShiftList?.();
+        this.updateStats?.();
+    },
+
+    /**
+     * Get cached data for an employee
+     * @param {string} employeeId - Employee ID
+     * @param {string} key - Cache key
+     * @returns {any} Cached data or undefined
+     */
+    getEmployeeCache(employeeId, key) {
+        const employeeData = this.employeeCache.get(employeeId);
+        return employeeData ? employeeData[key] : undefined;
+    },
+
+    /**
+     * Set cached data for an employee
+     * @param {string} employeeId - Employee ID
+     * @param {string} key - Cache key
+     * @param {any} value - Data to cache
+     */
+    setEmployeeCache(employeeId, key, value) {
+        if (!this.employeeCache.has(employeeId)) {
+            this.employeeCache.set(employeeId, {});
+        }
+        this.employeeCache.get(employeeId)[key] = value;
+    },
+
+    /**
+     * Clear cache for a specific employee
+     * @param {string} employeeId - Employee ID
+     */
+    clearEmployeeCache(employeeId) {
+        this.employeeCache.delete(employeeId);
+        this.employeeAvatarCache.delete(employeeId);
+    },
+
+    /**
+     * Clear all employee caches
+     */
+    clearAllEmployeeCaches() {
+        this.employeeCache.clear();
+        this.employeeAvatarCache.clear();
+    },
+
+    /**
+     * Load employees from the server
+     * @param {boolean} includeArchived - Include archived employees
+     * @returns {Promise<void>}
+     */
+    async loadEmployees(includeArchived = false) {
+        try {
+            this.employeesLoading = true;
+            this.employeesError = null;
+
+            // Import employee service dynamically
+            const { employeeService } = await import('./employeeService.js');
+
+            // Fetch employees
+            const employees = await employeeService.fetchEmployees(includeArchived);
+
+            // Update state
+            this.employees = employees;
+
+            // Trigger UI updates
+            this.onEmployeesLoaded();
+
+        } catch (error) {
+            console.error('Error loading employees:', error);
+            this.employeesError = error.message;
+            this.employees = [];
+        } finally {
+            this.employeesLoading = false;
+        }
+    },
+
+    /**
+     * Handle employees loaded - override in components that need to react
+     */
+    onEmployeesLoaded() {
+        console.log('Employees loaded:', this.employees.length);
+
+        // Update employee carousel if it exists
+        this.updateEmployeeCarousel?.();
+
+        // Validate selected employee still exists
+        if (this.selectedEmployeeId && !this.employees.find(emp => emp.id === this.selectedEmployeeId)) {
+            console.warn('Selected employee no longer exists, resetting to "All"');
+            this.setSelectedEmployee(null);
+        }
+
+        // Update any open modals
+        this.updateEmployeeModals?.();
+    },
+
+    /**
+     * Update employee modals when data changes
+     */
+    updateEmployeeModals() {
+        // This method can be called when employee data changes
+        // to update any open modals or forms
+        console.log('Updating employee modals with new data');
+    },
+
+    /**
+     * Show employee modal for creating new employee
+     */
+    async showCreateEmployeeModal() {
+        try {
+            // Import employee modal
+            const { EmployeeModal } = await import('./employeeModal.js');
+
+            // Create modal instance if not exists
+            if (!this.employeeModal) {
+                this.employeeModal = new EmployeeModal(this);
+            }
+
+            // Show create modal
+            await this.employeeModal.showCreate();
+
+        } catch (error) {
+            console.error('Error showing create employee modal:', error);
+        }
+    },
+
+    /**
+     * Show employee modal for editing existing employee
+     * @param {Object} employee - Employee to edit
+     */
+    async showEditEmployeeModal(employee) {
+        try {
+            // Import employee modal
+            const { EmployeeModal } = await import('./employeeModal.js');
+
+            // Create modal instance if not exists
+            if (!this.employeeModal) {
+                this.employeeModal = new EmployeeModal(this);
+            }
+
+            // Show edit modal
+            await this.employeeModal.showEdit(employee);
+
+        } catch (error) {
+            console.error('Error showing edit employee modal:', error);
+        }
+    },
+
+    /**
+     * Get employee avatar URL with caching
+     * @param {string} employeeId - Employee ID
+     * @returns {Promise<string|null>} Avatar URL or null
+     */
+    async getEmployeeAvatarUrl(employeeId) {
+        try {
+            // Check cache first
+            const cached = this.employeeAvatarCache.get(employeeId);
+            if (cached && Date.now() - cached.timestamp < 30 * 60 * 1000) { // 30 minutes
+                return cached.url;
+            }
+
+            // Import employee service dynamically
+            const { employeeService } = await import('./employeeService.js');
+
+            // Get avatar URL
+            const avatarUrl = await employeeService.getAvatarReadUrl(employeeId);
+
+            // Cache the result
+            this.employeeAvatarCache.set(employeeId, {
+                url: avatarUrl,
+                timestamp: Date.now()
+            });
+
+            return avatarUrl;
+
+        } catch (error) {
+            console.error('Error getting employee avatar URL:', error);
+            return null;
+        }
+    },
+
+    /**
+     * Generate employee initials for display
+     * @param {Object} employee - Employee object
+     * @returns {string} Employee initials (max 2 characters)
+     */
+    getEmployeeInitials(employee) {
+        if (!employee?.name) return '?';
+
+        const names = employee.name.trim().split(/\s+/);
+        if (names.length === 1) {
+            return names[0].substring(0, 2).toUpperCase();
+        }
+
+        return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    },
+
+    /**
+     * Get employee display color
+     * @param {Object} employee - Employee object
+     * @returns {string} CSS color value
+     */
+    getEmployeeDisplayColor(employee) {
+        return employee?.display_color || '#6366f1'; // Default to accent color
     }
 };
 

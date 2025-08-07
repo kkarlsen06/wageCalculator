@@ -55,7 +55,8 @@ const addShiftSchema = {
     properties: {
       shift_date: { type: 'string', description: 'YYYY-MM-DD' },
       start_time: { type: 'string', description: 'HH:mm' },
-      end_time:   { type: 'string', description: 'HH:mm' }
+      end_time:   { type: 'string', description: 'HH:mm' },
+      employee_id: { type: 'string', description: 'Optional employee ID to assign shift to' }
     },
     required: ['shift_date', 'start_time', 'end_time']
   }
@@ -92,7 +93,8 @@ const editShiftSchema = {
       time_reference: { type: 'string', description: 'Time reference like "morning shift", "evening shift", or specific time "09:00" (optional)' },
       new_start_time: { type: 'string', description: 'New start time HH:mm (optional)' },
       new_end_time: { type: 'string', description: 'New end time HH:mm (optional)' },
-      end_time: { type: 'string', description: 'New end time HH:mm (optional, legacy)' }
+      end_time: { type: 'string', description: 'New end time HH:mm (optional, legacy)' },
+      employee_id: { type: 'string', description: 'Optional employee ID to assign shift to' }
     },
     required: []
   }
@@ -1023,6 +1025,46 @@ function parseNaturalDate(dateReference) {
   return null;
 }
 
+// Validate employee_id belongs to authenticated manager
+async function validateEmployeeOwnership(managerId, employeeId) {
+  if (!employeeId) {
+    return { valid: true }; // No employee_id provided is valid (optional)
+  }
+
+  try {
+    const { data: employee, error } = await supabase
+      .from('employees')
+      .select('id, name, display_color')
+      .eq('id', employeeId)
+      .eq('manager_id', managerId)
+      .is('archived_at', null) // Only active employees
+      .single();
+
+    if (error || !employee) {
+      return {
+        valid: false,
+        error: 'Employee not found or does not belong to you',
+        statusCode: 403
+      };
+    }
+
+    return {
+      valid: true,
+      employee: {
+        id: employee.id,
+        name: employee.name,
+        display_color: employee.display_color
+      }
+    };
+  } catch (error) {
+    return {
+      valid: false,
+      error: 'Failed to validate employee ownership',
+      statusCode: 500
+    };
+  }
+}
+
 // Find shifts by natural language reference
 async function findShiftsByReference(user_id, dateReference, timeReference) {
   let targetDate = null;
@@ -1551,6 +1593,270 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   }
 });
 
+// ---------- employee CRUD endpoints ----------
+
+/**
+ * GET /employees - List all employees for the authenticated manager
+ * Query params: ?include_archived=1 to include archived employees
+ */
+app.get('/employees', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const includeArchived = req.query.include_archived === '1';
+
+    let query = supabase
+      .from('employees')
+      .select('id, name, email, hourly_wage, birth_date, display_color, profile_picture_url, created_at, archived_at')
+      .eq('manager_id', managerId)
+      .order('name');
+
+    // By default, exclude archived employees
+    if (!includeArchived) {
+      query = query.is('archived_at', null);
+    }
+
+    const { data: employees, error } = await query;
+
+    if (error) {
+      console.error('Error fetching employees:', error);
+      return res.status(500).json({ error: 'Failed to fetch employees' });
+    }
+
+    res.json({ employees: employees || [] });
+  } catch (e) {
+    console.error('GET /employees error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /employees - Create a new employee
+ * Body: { name, email?, hourly_wage?, birth_date?, display_color? }
+ */
+app.post('/employees', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const { name, email, hourly_wage, birth_date, display_color } = req.body;
+
+    // Validation: name is required
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+
+    // Validation: hourly_wage must be >= 0 if provided
+    if (hourly_wage !== undefined && hourly_wage !== null) {
+      const wage = parseFloat(hourly_wage);
+      if (isNaN(wage) || wage < 0) {
+        return res.status(400).json({ error: 'Hourly wage must be a number >= 0' });
+      }
+    }
+
+    // Validation: email format if provided
+    if (email && typeof email === 'string' && email.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+    }
+
+    // Validation: birth_date format if provided (YYYY-MM-DD)
+    if (birth_date && typeof birth_date === 'string' && birth_date.trim().length > 0) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(birth_date.trim())) {
+        return res.status(400).json({ error: 'Birth date must be in YYYY-MM-DD format' });
+      }
+    }
+
+    // Check for unique (manager_id, name) constraint
+    const { data: existingEmployee, error: checkError } = await supabase
+      .from('employees')
+      .select('id')
+      .eq('manager_id', managerId)
+      .eq('name', name.trim())
+      .is('archived_at', null)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error checking existing employee:', checkError);
+      return res.status(500).json({ error: 'Failed to validate employee name' });
+    }
+
+    if (existingEmployee) {
+      return res.status(409).json({ error: 'An employee with this name already exists' });
+    }
+
+    // Prepare employee data
+    const employeeData = {
+      manager_id: managerId,
+      name: name.trim(),
+      email: email && email.trim().length > 0 ? email.trim() : null,
+      hourly_wage: hourly_wage !== undefined && hourly_wage !== null ? parseFloat(hourly_wage) : null,
+      birth_date: birth_date && birth_date.trim().length > 0 ? birth_date.trim() : null,
+      display_color: display_color && display_color.trim().length > 0 ? display_color.trim() : null
+    };
+
+    const { data: newEmployee, error: insertError } = await supabase
+      .from('employees')
+      .insert(employeeData)
+      .select('id, name, email, hourly_wage, birth_date, display_color, profile_picture_url, created_at, archived_at')
+      .single();
+
+    if (insertError) {
+      console.error('Error creating employee:', insertError);
+      return res.status(500).json({ error: 'Failed to create employee' });
+    }
+
+    res.status(201).json({ employee: newEmployee });
+  } catch (e) {
+    console.error('POST /employees error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /employees/:id - Update an existing employee
+ * Body: { name?, email?, hourly_wage?, birth_date?, display_color? }
+ */
+app.put('/employees/:id', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const employeeId = req.params.id;
+    const { name, email, hourly_wage, birth_date, display_color } = req.body;
+
+    // Verify the employee belongs to the current manager
+    const { data: existingEmployee, error: fetchError } = await supabase
+      .from('employees')
+      .select('id, name, manager_id')
+      .eq('id', employeeId)
+      .single();
+
+    if (fetchError || !existingEmployee || existingEmployee.manager_id !== managerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // Validation: name is required if provided
+    if (name !== undefined && (!name || typeof name !== 'string' || name.trim().length === 0)) {
+      return res.status(400).json({ error: 'Name cannot be empty' });
+    }
+
+    // Validation: hourly_wage must be >= 0 if provided
+    if (hourly_wage !== undefined && hourly_wage !== null) {
+      const wage = parseFloat(hourly_wage);
+      if (isNaN(wage) || wage < 0) {
+        return res.status(400).json({ error: 'Hourly wage must be a number >= 0' });
+      }
+    }
+
+    // Validation: email format if provided
+    if (email !== undefined && email !== null && typeof email === 'string' && email.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+    }
+
+    // Validation: birth_date format if provided (YYYY-MM-DD)
+    if (birth_date !== undefined && birth_date !== null && typeof birth_date === 'string' && birth_date.trim().length > 0) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(birth_date.trim())) {
+        return res.status(400).json({ error: 'Birth date must be in YYYY-MM-DD format' });
+      }
+    }
+
+    // Check for unique (manager_id, name) constraint if name is being updated
+    if (name !== undefined && name.trim() !== existingEmployee.name) {
+      const { data: duplicateEmployee, error: checkError } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('manager_id', managerId)
+        .eq('name', name.trim())
+        .neq('id', employeeId)
+        .is('archived_at', null)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error checking duplicate employee name:', checkError);
+        return res.status(500).json({ error: 'Failed to validate employee name' });
+      }
+
+      if (duplicateEmployee) {
+        return res.status(409).json({ error: 'An employee with this name already exists' });
+      }
+    }
+
+    // Prepare update data (only include fields that are provided)
+    const updateData = {};
+    if (name !== undefined) updateData.name = name.trim();
+    if (email !== undefined) updateData.email = email && email.trim().length > 0 ? email.trim() : null;
+    if (hourly_wage !== undefined) updateData.hourly_wage = hourly_wage !== null ? parseFloat(hourly_wage) : null;
+    if (birth_date !== undefined) updateData.birth_date = birth_date && birth_date.trim().length > 0 ? birth_date.trim() : null;
+    if (display_color !== undefined) updateData.display_color = display_color && display_color.trim().length > 0 ? display_color.trim() : null;
+
+    const { data: updatedEmployee, error: updateError } = await supabase
+      .from('employees')
+      .update(updateData)
+      .eq('id', employeeId)
+      .eq('manager_id', managerId)
+      .select('id, name, email, hourly_wage, birth_date, display_color, profile_picture_url, created_at, archived_at')
+      .single();
+
+    if (updateError) {
+      console.error('Error updating employee:', updateError);
+      return res.status(500).json({ error: 'Failed to update employee' });
+    }
+
+    res.json({ employee: updatedEmployee });
+  } catch (e) {
+    console.error('PUT /employees/:id error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /employees/:id - Soft delete an employee (set archived_at)
+ */
+app.delete('/employees/:id', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const employeeId = req.params.id;
+
+    // Verify the employee belongs to the current manager
+    const { data: existingEmployee, error: fetchError } = await supabase
+      .from('employees')
+      .select('id, manager_id, archived_at')
+      .eq('id', employeeId)
+      .single();
+
+    if (fetchError || !existingEmployee || existingEmployee.manager_id !== managerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // Check if already archived
+    if (existingEmployee.archived_at) {
+      return res.status(409).json({ error: 'Employee is already archived' });
+    }
+
+    // Soft delete by setting archived_at timestamp
+    const { data: archivedEmployee, error: archiveError } = await supabase
+      .from('employees')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', employeeId)
+      .eq('manager_id', managerId)
+      .select('id, name, email, hourly_wage, birth_date, display_color, profile_picture_url, created_at, archived_at')
+      .single();
+
+    if (archiveError) {
+      console.error('Error archiving employee:', archiveError);
+      return res.status(500).json({ error: 'Failed to archive employee' });
+    }
+
+    res.json({ employee: archivedEmployee, message: 'Employee archived successfully' });
+  } catch (e) {
+    console.error('DELETE /employees/:id error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ---------- employee avatar signed URL endpoints ----------
 // Bucket: 'employee-avatars' (private). Path: {manager_id}/{employee_id}/avatar.<ext>
 
@@ -1634,6 +1940,325 @@ app.get('/employees/:id/avatar-read-url', authenticateUser, async (req, res) => 
   }
 });
 
+// ---------- shift CRUD endpoints ----------
+
+/**
+ * GET /shifts - List shifts for the authenticated manager
+ * Query params:
+ *   ?employee_id=uuid - Filter by specific employee
+ *   ?from=YYYY-MM-DD - Start date filter
+ *   ?to=YYYY-MM-DD - End date filter
+ */
+app.get('/shifts', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const { employee_id, from, to } = req.query;
+
+    // Validate employee_id if provided
+    if (employee_id) {
+      const validation = await validateEmployeeOwnership(managerId, employee_id);
+      if (!validation.valid) {
+        return res.status(validation.statusCode || 400).json({ error: validation.error });
+      }
+    }
+
+    // Build query
+    let query = supabase
+      .from('user_shifts')
+      .select('id, shift_date, start_time, end_time, shift_type, employee_id, created_at')
+      .eq('user_id', managerId)
+      .order('shift_date', { ascending: true })
+      .order('start_time', { ascending: true });
+
+    // Apply filters
+    if (employee_id) {
+      query = query.eq('employee_id', employee_id);
+    }
+    if (from) {
+      query = query.gte('shift_date', from);
+    }
+    if (to) {
+      query = query.lte('shift_date', to);
+    }
+
+    const { data: shifts, error: shiftsError } = await query;
+
+    if (shiftsError) {
+      console.error('Error fetching shifts:', shiftsError);
+      return res.status(500).json({ error: 'Failed to fetch shifts' });
+    }
+
+    // Get employee context for shifts that have employee_id
+    const employeeIds = [...new Set(shifts.filter(s => s.employee_id).map(s => s.employee_id))];
+    let employeeMap = {};
+
+    if (employeeIds.length > 0) {
+      const { data: employees, error: empError } = await supabase
+        .from('employees')
+        .select('id, name, display_color')
+        .eq('manager_id', managerId)
+        .in('id', employeeIds)
+        .is('archived_at', null);
+
+      if (!empError && employees) {
+        employeeMap = employees.reduce((acc, emp) => {
+          acc[emp.id] = { id: emp.id, name: emp.name, display_color: emp.display_color };
+          return acc;
+        }, {});
+      }
+    }
+
+    // Add employee context to shifts
+    const shiftsWithContext = shifts.map(shift => ({
+      ...shift,
+      employee: shift.employee_id ? employeeMap[shift.employee_id] || null : null
+    }));
+
+    return res.json({ shifts: shiftsWithContext });
+  } catch (error) {
+    console.error('GET /shifts error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /shifts - Create a new shift
+ * Body: { shift_date, start_time, end_time, employee_id? }
+ */
+app.post('/shifts', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const { shift_date, start_time, end_time, employee_id } = req.body;
+
+    // Validation
+    if (!shift_date || !start_time || !end_time) {
+      return res.status(400).json({
+        error: 'Missing required fields: shift_date, start_time, end_time'
+      });
+    }
+
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
+      return res.status(400).json({ error: 'Invalid shift_date format. Use YYYY-MM-DD' });
+    }
+
+    // Validate time format
+    if (!/^\d{2}:\d{2}$/.test(start_time) || !/^\d{2}:\d{2}$/.test(end_time)) {
+      return res.status(400).json({ error: 'Invalid time format. Use HH:mm' });
+    }
+
+    // Validate employee_id if provided
+    let employeeContext = null;
+    if (employee_id) {
+      const validation = await validateEmployeeOwnership(managerId, employee_id);
+      if (!validation.valid) {
+        return res.status(validation.statusCode || 400).json({ error: validation.error });
+      }
+      employeeContext = validation.employee;
+    }
+
+    // Check for duplicate shift
+    const { data: existingShift } = await supabase
+      .from('user_shifts')
+      .select('id')
+      .eq('user_id', managerId)
+      .eq('shift_date', shift_date)
+      .eq('start_time', start_time)
+      .eq('end_time', end_time)
+      .maybeSingle();
+
+    if (existingShift) {
+      return res.status(409).json({ error: 'Shift already exists' });
+    }
+
+    // Determine shift type based on day of week
+    const shiftDate = new Date(shift_date + 'T00:00:00Z');
+    const dayOfWeek = shiftDate.getDay();
+    const shift_type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0); // Sunday=2, Saturday=1, Weekday=0
+
+    // Create shift
+    const { data: newShift, error: insertError } = await supabase
+      .from('user_shifts')
+      .insert({
+        user_id: managerId,
+        shift_date,
+        start_time,
+        end_time,
+        shift_type,
+        employee_id: employee_id || null
+      })
+      .select('id, shift_date, start_time, end_time, shift_type, employee_id, created_at')
+      .single();
+
+    if (insertError) {
+      console.error('Error creating shift:', insertError);
+      return res.status(500).json({ error: 'Failed to create shift' });
+    }
+
+    // Add employee context to response
+    const shiftWithContext = {
+      ...newShift,
+      employee: employeeContext
+    };
+
+    return res.status(201).json({ shift: shiftWithContext });
+  } catch (error) {
+    console.error('POST /shifts error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /shifts/:id - Update an existing shift
+ * Body: { shift_date?, start_time?, end_time?, employee_id? }
+ */
+app.put('/shifts/:id', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const shiftId = req.params.id;
+    const { shift_date, start_time, end_time, employee_id } = req.body;
+
+    // Verify the shift belongs to the current manager
+    const { data: existingShift, error: fetchError } = await supabase
+      .from('user_shifts')
+      .select('*')
+      .eq('id', shiftId)
+      .eq('user_id', managerId)
+      .single();
+
+    if (fetchError || !existingShift) {
+      return res.status(404).json({ error: 'Shift not found' });
+    }
+
+    // Validate employee_id if provided
+    let employeeContext = null;
+    if (employee_id !== undefined) {
+      if (employee_id === null) {
+        // Explicitly setting to null is valid (removing employee assignment)
+        employeeContext = null;
+      } else {
+        const validation = await validateEmployeeOwnership(managerId, employee_id);
+        if (!validation.valid) {
+          return res.status(validation.statusCode || 400).json({ error: validation.error });
+        }
+        employeeContext = validation.employee;
+      }
+    }
+
+    // Validate date format if provided
+    if (shift_date && !/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
+      return res.status(400).json({ error: 'Invalid shift_date format. Use YYYY-MM-DD' });
+    }
+
+    // Validate time format if provided
+    if (start_time && !/^\d{2}:\d{2}$/.test(start_time)) {
+      return res.status(400).json({ error: 'Invalid start_time format. Use HH:mm' });
+    }
+    if (end_time && !/^\d{2}:\d{2}$/.test(end_time)) {
+      return res.status(400).json({ error: 'Invalid end_time format. Use HH:mm' });
+    }
+
+    // Build update object
+    const updateData = {};
+    if (shift_date !== undefined) updateData.shift_date = shift_date;
+    if (start_time !== undefined) updateData.start_time = start_time;
+    if (end_time !== undefined) updateData.end_time = end_time;
+    if (employee_id !== undefined) updateData.employee_id = employee_id;
+
+    // Update shift_type if date is changing
+    if (shift_date) {
+      const shiftDate = new Date(shift_date + 'T00:00:00Z');
+      const dayOfWeek = shiftDate.getDay();
+      updateData.shift_type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
+    }
+
+    // Check for duplicate if key fields are changing
+    const finalDate = shift_date || existingShift.shift_date;
+    const finalStartTime = start_time || existingShift.start_time;
+    const finalEndTime = end_time || existingShift.end_time;
+
+    if (shift_date || start_time || end_time) {
+      const { data: duplicateShift } = await supabase
+        .from('user_shifts')
+        .select('id')
+        .eq('user_id', managerId)
+        .eq('shift_date', finalDate)
+        .eq('start_time', finalStartTime)
+        .eq('end_time', finalEndTime)
+        .neq('id', shiftId)
+        .maybeSingle();
+
+      if (duplicateShift) {
+        return res.status(409).json({ error: 'A shift with these details already exists' });
+      }
+    }
+
+    // Update the shift
+    const { data: updatedShift, error: updateError } = await supabase
+      .from('user_shifts')
+      .update(updateData)
+      .eq('id', shiftId)
+      .eq('user_id', managerId)
+      .select('id, shift_date, start_time, end_time, shift_type, employee_id, created_at')
+      .single();
+
+    if (updateError) {
+      console.error('Error updating shift:', updateError);
+      return res.status(500).json({ error: 'Failed to update shift' });
+    }
+
+    // Add employee context to response
+    const shiftWithContext = {
+      ...updatedShift,
+      employee: employeeContext
+    };
+
+    return res.json({ shift: shiftWithContext });
+  } catch (error) {
+    console.error('PUT /shifts/:id error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /shifts/:id - Delete a shift
+ */
+app.delete('/shifts/:id', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const shiftId = req.params.id;
+
+    // Verify the shift belongs to the current manager
+    const { data: existingShift, error: fetchError } = await supabase
+      .from('user_shifts')
+      .select('id, shift_date, start_time, end_time')
+      .eq('id', shiftId)
+      .eq('user_id', managerId)
+      .single();
+
+    if (fetchError || !existingShift) {
+      return res.status(404).json({ error: 'Shift not found' });
+    }
+
+    // Delete the shift
+    const { error: deleteError } = await supabase
+      .from('user_shifts')
+      .delete()
+      .eq('id', shiftId)
+      .eq('user_id', managerId);
+
+    if (deleteError) {
+      console.error('Error deleting shift:', deleteError);
+      return res.status(500).json({ error: 'Failed to delete shift' });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error('DELETE /shifts/:id error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ---------- handleTool function ----------
 async function handleTool(call, user_id) {
   const fnName = call.function.name;
@@ -1641,6 +2266,21 @@ async function handleTool(call, user_id) {
   let toolResult = '';
 
   if (fnName === 'addShift') {
+      // Validate employee_id if provided
+      if (args.employee_id) {
+        const validation = await validateEmployeeOwnership(user_id, args.employee_id);
+        if (!validation.valid) {
+          toolResult = JSON.stringify({
+            status: 'error',
+            inserted: [],
+            updated: [],
+            deleted: [],
+            shift_summary: validation.error
+          });
+          return toolResult;
+        }
+      }
+
       // Check for duplicate shift before inserting
       const { data: dupCheck } = await supabase
         .from('user_shifts')
@@ -1667,7 +2307,8 @@ async function handleTool(call, user_id) {
             shift_date:  args.shift_date,
             start_time:  args.start_time,
             end_time:    args.end_time,
-            shift_type:  0
+            shift_type:  0,
+            employee_id: args.employee_id || null
           })
           .select('id, shift_date, start_time, end_time')
           .single();
@@ -1858,6 +2499,21 @@ async function handleTool(call, user_id) {
       }
 
       if (existingShift && !toolResult.startsWith('ERROR:')) {
+        // Validate employee_id if provided
+        if (args.employee_id !== undefined) {
+          const validation = await validateEmployeeOwnership(user_id, args.employee_id);
+          if (!validation.valid) {
+            toolResult = JSON.stringify({
+              status: 'error',
+              inserted: [],
+              updated: [],
+              deleted: [],
+              shift_summary: validation.error
+            });
+            return toolResult;
+          }
+        }
+
         // Build update object with only provided fields
         const updateData = {};
 
@@ -1874,6 +2530,9 @@ async function handleTool(call, user_id) {
         }
         if (newEndTime && newEndTime !== existingShift.end_time) {
           updateData.end_time = newEndTime;
+        }
+        if (args.employee_id !== undefined) {
+          updateData.employee_id = args.employee_id;
         }
 
         // Check for collision with other shifts (excluding current shift)
@@ -2292,6 +2951,26 @@ async function handleTool(call, user_id) {
           // Get user settings for wage calculations
           const userSettings = await getUserSettings(user_id);
 
+          // Get employee context for shifts that have employee_id
+          const employeeIds = [...new Set(shifts.filter(s => s.employee_id).map(s => s.employee_id))];
+          let employeeMap = {};
+
+          if (employeeIds.length > 0) {
+            const { data: employees, error: empError } = await supabase
+              .from('employees')
+              .select('id, name, display_color')
+              .eq('manager_id', user_id)
+              .in('id', employeeIds)
+              .is('archived_at', null);
+
+            if (!empError && employees) {
+              employeeMap = employees.reduce((acc, emp) => {
+                acc[emp.id] = { id: emp.id, name: emp.name, display_color: emp.display_color };
+                return acc;
+              }, {});
+            }
+          }
+
           // Calculate detailed wage data for each shift
           let totalHours = 0;
           let totalEarnings = 0;
@@ -2312,14 +2991,16 @@ async function handleTool(call, user_id) {
               baseWage: calc.baseWage,
               bonus: calc.bonus,
               totalEarnings: calc.total,
-              pauseDeducted: calc.pauseDeducted
+              pauseDeducted: calc.pauseDeducted,
+              employee: shift.employee_id ? employeeMap[shift.employee_id] || null : null
             };
           });
 
           // Format shifts for tool content with earnings info
-          const formattedShifts = detailedShifts.map(shift =>
-            `ID:${shift.id} ${shift.date} ${shift.startTime}-${shift.endTime} (${shift.paidHours}t, ${shift.totalEarnings}kr)`
-          ).join(', ');
+          const formattedShifts = detailedShifts.map(shift => {
+            const employeeInfo = shift.employee ? ` [${shift.employee.name}]` : '';
+            return `ID:${shift.id} ${shift.date} ${shift.startTime}-${shift.endTime}${employeeInfo} (${shift.paidHours}t, ${shift.totalEarnings}kr)`;
+          }).join(', ');
 
           toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours.toFixed(1)} timer, ${totalEarnings.toFixed(0)}kr totalt). Skift: ${formattedShifts}`;
         }
