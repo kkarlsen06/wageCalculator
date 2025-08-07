@@ -887,7 +887,7 @@ body.stats-view .dashboard-content .next-payroll-card {
 /* Chatbox View Toggle Styles - Proper spacing without bottom gaps */
 .chatbox-view .dashboard-content {
   /* In chatbox view, proper spacing from header but no bottom gaps */
-  gap: 0; /* No gap between elements */
+  gap: 20px; /* Consistent gap with other views for proper month picker spacing */
   margin: 0; /* No margins */
   padding: 20px 0 0 0; /* Top padding for header spacing, no bottom padding */
   /* Simple flexbox layout that fills available space */
@@ -1573,7 +1573,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 
   /* Reduce dashboard content gaps and padding */
   .dashboard-content {
-    padding-top: 10px; /* Reduced from 15px */
+    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
     padding-bottom: 10px;
     gap: 12px; /* Reduced from 20px */
   }
@@ -1710,7 +1710,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 
   /* Ultra-compact dashboard spacing */
   .dashboard-content {
-    padding-top: 8px; /* Minimal padding */
+    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
     padding-bottom: 8px;
     gap: 10px; /* Minimal gap */
   }
@@ -1835,7 +1835,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   }
 
   .dashboard-content {
-    padding-top: 6px; /* Ultra-minimal for landscape */
+    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
     padding-bottom: 6px;
     gap: 8px; /* Very tight spacing */
   }
@@ -6793,7 +6793,7 @@ body.chatbox-view .dashboard-section .app-container {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding-top: 20px;
+  padding-top: 0; /* Reduced from 20px to account for tab-bar-container negative top positioning */
   padding-bottom: 20px;
   gap: 20px;
   position: relative;
@@ -7726,7 +7726,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 /* Ensure proper layout on mobile */
 @media (max-width: 768px) {
   .dashboard-content {
-    padding-top: 15px;
+    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning on mobile */
     padding-bottom: 15px;
   }
 
@@ -7790,7 +7790,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 /* Large mobile devices and tablets - ensure month navigation remains visible */
 @media (min-width: 481px) and (max-width: 768px) {
   .dashboard-content {
-    padding-top: 12px;
+    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
     padding-bottom: 12px;
     gap: 16px;
   }
@@ -7830,7 +7830,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 /* Mobile landscape and very short viewports - aggressive space optimization */
 @media (max-height: 600px) and (orientation: landscape) {
   .dashboard-content {
-    padding-top: 8px;
+    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
     padding-bottom: 8px;
     gap: 12px;
   }
@@ -7916,7 +7916,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 
 .compact-view .dashboard-content {
   gap: 15px;
-  padding-top: 15px;
+  padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
   padding-bottom: 15px;
 }
 

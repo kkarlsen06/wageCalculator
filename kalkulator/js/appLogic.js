@@ -4623,19 +4623,19 @@ export const app = {
                 dateDisplay = `${day}. ${month}${seriesBadge}`;
             }
             
-            // Add time remaining for today's shifts or "i morgen" for tomorrow's shifts
+            // Add time remaining for today's shifts
             let dateSuffix = '';
             if (shiftDate.toDateString() === today.toDateString()) {
                 // Calculate time remaining until shift starts
                 const [startHour, startMinute] = nextShift.startTime.split(':').map(Number);
                 const shiftStartTime = new Date(shiftDate);
                 shiftStartTime.setHours(startHour, startMinute, 0, 0);
-                
+
                 const timeDifference = shiftStartTime - now;
                 const hoursRemaining = Math.floor(timeDifference / (1000 * 60 * 60));
                 const minutesRemaining = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
                 const secondsRemaining = Math.floor((timeDifference % (1000 * 60)) / 1000);
-                
+
                 if (hoursRemaining > 0) {
                     dateSuffix = ` <span class="countdown-wrapper">(<span class="countdown-hours">${hoursRemaining}t</span> <span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span>)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens"><span class="countdown-hours">${hoursRemaining}t</span> <span class="countdown-minutes">${minutesRemaining}m</span> <span class="countdown-seconds">${secondsRemaining}s</span></span>`;
                 } else if (minutesRemaining > 0) {
@@ -4647,9 +4647,8 @@ export const app = {
                     // Stop timer when shift starts
                     this.stopNextShiftTimer();
                 }
-            } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
-                dateSuffix = ' (i morgen)';
             }
+            // Note: No dateSuffix needed for tomorrow's shifts since dateDisplay already contains "I morgen"
             
             // Check if this shift has overlaps
             const hasOverlaps = this.shiftHasOverlaps(nextShift);
@@ -9689,9 +9688,16 @@ Hva kan jeg hjelpe deg med i dag?`;
             });
         }
 
-        // Wage caregiver toggle - add click event to slider as well
+        // Wage caregiver toggle - add both change and click event listeners
         const isWageCaregiverToggle = document.getElementById('isWageCaregiverToggle');
         const toggleSlider = document.querySelector('#isWageCaregiverToggle + .toggle-slider');
+
+        if (isWageCaregiverToggle) {
+            // Add change event listener to the checkbox itself
+            isWageCaregiverToggle.addEventListener('change', () => {
+                this.toggleWageCaregiver();
+            });
+        }
 
         if (isWageCaregiverToggle && toggleSlider) {
             // Add click event to slider to ensure it works
