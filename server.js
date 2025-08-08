@@ -1382,6 +1382,16 @@ TILGJENGELIGE FUNKSJONER for lønnsdata:
     role: 'system',
     content: `Du er en vaktplanleggingsassistent. I dag er ${today}, i morgen er ${tomorrow}. Brukerens navn er ${userName}.
 
+KRITISK: ALLTID bruk tools når brukeren ber om å:
+- Legge til, slette, endre, kopiere vakter
+- Hente/vise vakter eller lønnsdata
+- Gjøre NOEN handling med vaktdata
+
+Bare svar uten tools når brukeren:
+- Stiller generelle spørsmål
+- Ber om forklaringer
+- Sier takk/hilser
+
 VIKTIG KONTEKST: Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet.
 - "denne måneden"/"inneværende måned" = ${viewingMonthName} ${viewingYear}
 - "forrige måned" = måneden før ${viewingMonthName} ${viewingYear}
@@ -1440,8 +1450,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     res.write(`data: ${JSON.stringify({ type: 'status', message: 'Starter GPT-forespørsel' })}\n\n`);
   }
 
-  // First call: Let GPT choose tools - force tool usage for multi-step operations
-  const isMultiStep = /\bog\b.*\bog\b|vis.*og.*endre|vis.*og.*slett|vis.*og.*gjør|legg til.*og.*legg til|hent.*og.*endre/.test(userMessage);
+  // Let GPT decide when to use tools based on clear system instructions
 
   // Check if this is the first request in conversation
   const isFirstRequest = !req.body.previous_response_id;
@@ -1455,7 +1464,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     model: OPENAI_MODEL,
     input: fullMessages,
     tools,
-    tool_choice: isMultiStep ? 'required' : 'auto',
+    tool_choice: 'auto',
     store: isFirstRequest,
     previous_response_id: req.body.previous_response_id,
     ...RESPONSES_CONFIG
@@ -1489,7 +1498,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         model: OPENAI_MODEL,
         input: fullMessages,
         tools,
-        tool_choice: isMultiStep ? 'required' : 'auto',
+        tool_choice: 'auto',
         store: true,
         // Remove previous_response_id to start fresh
         ...RESPONSES_CONFIG
