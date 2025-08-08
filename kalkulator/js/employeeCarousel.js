@@ -146,10 +146,6 @@ export class EmployeeCarousel {
             console.error('Error rendering employee carousel:', error);
             this.showErrorState();
             this.announceError();
-
-        } catch (error) {
-            console.error('Error rendering employee carousel:', error);
-            this.showErrorState();
         }
     }
 
