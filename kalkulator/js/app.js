@@ -970,6 +970,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let chatMessages = [
     { role: 'system', content: 'Du er en chatbot som hjelper brukeren å registrere skift via addShift eller addSeries. Svar alltid på norsk.' }
   ];
+  let lastResponseId = null; // Track response ID for conversation continuity
 
   let chatElements = {};
   let isExpanded = false;
@@ -1559,8 +1560,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          messages: chatMessages,
+          messages: lastResponseId ? [{ role: 'user', content: messageText }] : chatMessages, // Always include current user message
           stream: true,
+          previous_response_id: lastResponseId,
           // Pass current viewing context from the interface
           currentMonth: window.app?.currentMonth || new Date().getMonth() + 1,
           currentYear: window.app?.currentYear || new Date().getFullYear()
@@ -1619,6 +1621,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Log raw JSON response for debugging
       console.debug('[/chat response]', data);
+
+      // Update response ID for conversation continuity
+      if (data.response_id) {
+        lastResponseId = data.response_id;
+      }
 
       // Handle response - now only GPT-generated assistant messages
       const txt = data.assistant
@@ -1682,8 +1689,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            messages: chatMessages,
-            stream: false
+            messages: lastResponseId ? [{ role: 'user', content: messageText }] : chatMessages,
+            stream: false,
+            previous_response_id: lastResponseId
           })
         });
 
@@ -1749,6 +1757,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Handle streaming events from server
   let streamingTextElement = null;
+  let currentPreambleElement = null;
 
   function handleStreamEvent(event, spinnerElement) {
     switch (event.type) {
@@ -1769,6 +1778,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         break;
       case 'tool_call_complete':
         updateSpinnerText(spinnerElement, event.message + ' ✓');
+        // Clear preamble element after tool completion
+        if (currentPreambleElement) {
+          currentPreambleElement = null;
+        }
+        break;
+      case 'tool_preamble':
+        // Display tool call preamble in italic grey styling
+        if (!currentPreambleElement) {
+          currentPreambleElement = document.createElement('div');
+          currentPreambleElement.className = 'tool-preamble';
+          currentPreambleElement.style.cssText = 'font-style: italic; color: #666; margin-bottom: 8px; font-size: 0.9em;';
+          currentPreambleElement.textContent = event.content || '(planning...)';
+          spinnerElement.parentNode.insertBefore(currentPreambleElement, spinnerElement);
+        }
+        break;
+      case 'tool_preamble_delta':
+        // Update preamble text with streaming delta
+        if (currentPreambleElement) {
+          currentPreambleElement.textContent += event.content;
+        }
+        break;
+      case 'budget_warning':
+        // Display budget warning
+        const warningElement = document.createElement('div');
+        warningElement.className = 'budget-warning';
+        warningElement.style.cssText = 'background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 8px; border-radius: 4px; margin: 8px 0; font-size: 0.9em;';
+        warningElement.textContent = `⚠️ ${event.message}`;
+        spinnerElement.parentNode.insertBefore(warningElement, spinnerElement);
         break;
       case 'text_stream_start':
         // Replace spinner with empty text element for streaming
@@ -1851,6 +1888,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatMessages = [
       { role: 'system', content: 'Du er en chatbot som hjelper brukeren å registrere skift via addShift eller addSeries. Svar alltid på norsk.' }
     ];
+    lastResponseId = null; // Reset conversation state
 
     // Reset all states
     hasFirstMessage = false;

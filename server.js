@@ -31,6 +31,17 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// ---------- OpenAI Responses API Configuration ----------
+const OPENAI_MODEL = "gpt-5-nano";
+const RESPONSES_CONFIG = {
+  reasoning: { effort: "minimal" },
+  verbosity: "low"
+};
+
+// Budget monitoring
+let toolBudgetSpent = 0;
+const TOOL_BUDGET_LIMIT = 1000; // Adjust as needed
+
 // ---------- auth middleware ----------
 async function authenticateUser(req, res, next) {
   const auth = req.headers.authorization || '';
@@ -1386,23 +1397,53 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   // First call: Let GPT choose tools - force tool usage for multi-step operations
   const isMultiStep = /\bog\b.*\bog\b|vis.*og.*endre|vis.*og.*slett|vis.*og.*gjør|legg til.*og.*legg til|hent.*og.*endre/.test(userMessage);
 
+  // Check if this is the first request in conversation
+  const isFirstRequest = !req.body.previous_response_id;
 
+  // Reset budget counter for new conversations
+  if (isFirstRequest) {
+    toolBudgetSpent = 0;
+  }
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: fullMessages,
-    tools,
-    tool_choice: isMultiStep ? 'required' : 'auto'
-  });
+  let completion;
+  try {
+    completion = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: fullMessages,
+      tools,
+      tool_choice: isMultiStep ? 'required' : 'auto',
+      store: isFirstRequest,
+      previous_response_id: req.body.previous_response_id,
+      ...RESPONSES_CONFIG
+    });
+  } catch (error) {
+    // Handle stale response_id - retry with full history
+    if (error.status >= 400 && error.status < 500 && req.body.previous_response_id) {
+      console.log('Retrying with full history due to stale response_id');
+      completion = await openai.responses.create({
+        model: OPENAI_MODEL,
+        input: fullMessages,
+        tools,
+        tool_choice: isMultiStep ? 'required' : 'auto',
+        store: true,
+        ...RESPONSES_CONFIG
+      });
+    } else {
+      throw error;
+    }
+  }
 
-  const choice = completion.choices[0].message;
+  const choice = completion.response || completion.choices?.[0]?.message || completion;
+
+  // Defensive normalize tool calls
+  const toolCalls = choice.tool_calls || choice.tools || [];
 
   // Log what GPT decided to do
   console.log('=== GPT RESPONSE ===');
-  console.log('Content:', choice.content);
-  console.log('Tool calls:', choice.tool_calls?.length || 0);
-  if (choice.tool_calls) {
-    choice.tool_calls.forEach((call, i) => {
+  console.log('Content:', choice.output_text ?? choice.content ?? "");
+  console.log('Tool calls:', toolCalls.length || 0);
+  if (toolCalls.length > 0) {
+    toolCalls.forEach((call, i) => {
       console.log(`Tool ${i+1}: ${call.function.name}(${call.function.arguments})`);
     });
   }
@@ -1411,15 +1452,15 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   if (stream) {
     res.write(`data: ${JSON.stringify({
       type: 'gpt_response',
-      content: choice.content,
-      tool_calls: choice.tool_calls?.map(call => ({
+      content: choice.output_text ?? choice.content ?? "",
+      tool_calls: toolCalls.map(call => ({
         name: call.function.name,
         arguments: call.function.arguments
-      })) || []
+      }))
     })}\n\n`);
   }
 
-  if (choice.tool_calls && choice.tool_calls.length > 0) {
+  if (toolCalls.length > 0) {
     // Handle multiple tool calls
     const toolMessages = [];
 
@@ -1431,17 +1472,22 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       })}\n\n`);
     }
 
-    for (const call of choice.tool_calls) {
+    for (const call of toolCalls) {
+      // Parse tool arguments (Responses often returns as string)
+      const args = typeof call.function.arguments === 'string'
+        ? JSON.parse(call.function.arguments)
+        : call.function.arguments;
+
       if (stream) {
         res.write(`data: ${JSON.stringify({
           type: 'tool_call_start',
           name: call.function.name,
-          arguments: JSON.parse(call.function.arguments),
+          arguments: args,
           message: `Utfører ${call.function.name}`
         })}\n\n`);
       }
 
-      const toolResult = await handleTool(call, req.user_id);
+      const toolResult = await handleTool({ ...call, function: { ...call.function, arguments: args } }, req.user_id);
 
       if (stream) {
         res.write(`data: ${JSON.stringify({
@@ -1452,11 +1498,13 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         })}\n\n`);
       }
 
+      // Ensure tool message content is string
+      const toolContent = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
       toolMessages.push({
         role: 'tool',
         tool_call_id: call.id,
         name: call.function.name,
-        content: toolResult
+        content: toolContent
       });
     }
 
@@ -1465,8 +1513,8 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       ...fullMessages,
       {
         role: 'assistant',
-        content: choice.content,
-        tool_calls: choice.tool_calls
+        content: choice.output_text ?? choice.content ?? "",
+        tool_calls: toolCalls
       },
       ...toolMessages
     ];
@@ -1475,31 +1523,88 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     // Skip the "generating_response" status message - go directly to streaming
 
     let assistantMessage = '';
+    let streamCompletion = null;
+    let secondCompletion = null;
     try {
       if (stream) {
         // Use streaming for the final response
-        const streamCompletion = await openai.chat.completions.create({
-          model: 'gpt-4.1',
-          messages: messagesWithToolResult,
-          tools,
-          tool_choice: 'none',
-          stream: true
-        });
+        try {
+          streamCompletion = await openai.responses.create({
+            model: OPENAI_MODEL,
+            input: messagesWithToolResult,
+            tools,
+            tool_choice: 'none',
+            stream: true,
+            previous_response_id: completion.id,
+            ...RESPONSES_CONFIG
+          });
+        } catch (error) {
+          // Handle stale response_id - retry with store: true
+          if (error.status >= 400 && error.status < 500) {
+            streamCompletion = await openai.responses.create({
+              model: OPENAI_MODEL,
+              input: messagesWithToolResult,
+              tools,
+              tool_choice: 'none',
+              stream: true,
+              store: true,
+              ...RESPONSES_CONFIG
+            });
+          } else {
+            throw error;
+          }
+        }
 
         // Send start of text streaming
         res.write(`data: ${JSON.stringify({
           type: 'text_stream_start'
         })}\n\n`);
 
+        let streamResponseId = null;
         for await (const chunk of streamCompletion) {
-          const content = chunk.choices[0]?.delta?.content;
-          if (content) {
-            assistantMessage += content;
-            // Send each chunk of text
+          // Debug log to check chunk structure
+          if (process.env.DEBUG_STREAM === '1') {
+            console.log('Streaming chunk:', JSON.stringify(chunk, null, 2));
+          }
+
+          // Capture response ID from first chunk
+          if (!streamResponseId) {
+            streamResponseId = chunk.response_id || chunk.id || chunk.response?.id || null;
+          }
+
+          // Handle new chunk types from Responses API
+          if (chunk.type === 'text_delta') {
+            const content = chunk.delta?.text || chunk.text;
+            if (content) {
+              assistantMessage += content;
+              res.write(`data: ${JSON.stringify({
+                type: 'text_chunk',
+                content: content
+              })}\n\n`);
+            }
+          } else if (chunk.type === 'tool_call_preamble') {
+            // Send preamble text for UI display
             res.write(`data: ${JSON.stringify({
-              type: 'text_chunk',
-              content: content
+              type: 'tool_preamble',
+              content: chunk.text || '(planning...)'
             })}\n\n`);
+          } else if (chunk.type === 'tool_call_preamble_delta') {
+            // Send preamble delta for streaming preamble
+            res.write(`data: ${JSON.stringify({
+              type: 'tool_preamble_delta',
+              content: chunk.delta?.text || ''
+            })}\n\n`);
+          } else if (chunk.type === 'tool_call_complete' && chunk.usage?.tool_tokens) {
+            // Update budget monitoring with actual usage
+            toolBudgetSpent += chunk.usage.tool_tokens;
+            if (toolBudgetSpent > TOOL_BUDGET_LIMIT) {
+              res.write(`data: ${JSON.stringify({
+                type: 'budget_warning',
+                message: `Tool budget exceeded: ${toolBudgetSpent}/${TOOL_BUDGET_LIMIT} tokens`,
+                spent: toolBudgetSpent,
+                limit: TOOL_BUDGET_LIMIT
+              })}\n\n`);
+            }
           }
         }
 
@@ -1522,13 +1627,31 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         })}\n\n`);
       } else {
         // Non-streaming version
-        const secondCompletion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: messagesWithToolResult,
-          tools,
-          tool_choice: 'none'
-        });
-        assistantMessage = secondCompletion.choices[0].message.content;
+        try {
+          secondCompletion = await openai.responses.create({
+            model: OPENAI_MODEL,
+            input: messagesWithToolResult,
+            tools,
+            tool_choice: 'none',
+            previous_response_id: completion.id,
+            ...RESPONSES_CONFIG
+          });
+        } catch (error) {
+          // Handle stale response_id - retry with store: true
+          if (error.status >= 400 && error.status < 500) {
+            secondCompletion = await openai.responses.create({
+              model: OPENAI_MODEL,
+              input: messagesWithToolResult,
+              tools,
+              tool_choice: 'none',
+              store: true,
+              ...RESPONSES_CONFIG
+            });
+          } else {
+            throw error;
+          }
+        }
+        assistantMessage = secondCompletion.response?.output_text ?? secondCompletion.content ?? "";
       }
     } catch (error) {
       console.error('Second GPT call failed:', error);
@@ -1556,19 +1679,21 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       res.write(`data: ${JSON.stringify({
         type: 'complete',
         assistant: assistantMessage,
-        shifts: shifts || []
+        shifts: shifts || [],
+        response_id: streamResponseId || completion.id
       })}\n\n`);
       res.write('data: [DONE]\n\n');
       res.end();
     } else {
       res.json({
         assistant: assistantMessage,
-        shifts: shifts || []
+        shifts: shifts || [],
+        response_id: secondCompletion?.response?.id || secondCompletion?.id || completion.id
       });
     }
   } else {
     // No tool call - just return GPT's direct response
-    const assistantMessage = choice.content || "Jeg forstod ikke kommandoen.";
+    const assistantMessage = choice.output_text ?? choice.content ?? "Jeg forstod ikke kommandoen.";
 
     const { data: shifts } = await supabase
       .from('user_shifts')
@@ -1580,17 +1705,30 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       res.write(`data: ${JSON.stringify({
         type: 'complete',
         assistant: assistantMessage,
-        shifts: shifts || []
+        shifts: shifts || [],
+        response_id: completion.id
       })}\n\n`);
       res.write('data: [DONE]\n\n');
       res.end();
     } else {
       res.json({
         assistant: assistantMessage,
-        shifts: shifts || []
+        shifts: shifts || [],
+        response_id: completion.id
       });
     }
   }
+});
+
+// ---------- config endpoint ----------
+app.get('/config', (req, res) => {
+  res.json({
+    model: OPENAI_MODEL,
+    responses_config: RESPONSES_CONFIG,
+    budget_limit: TOOL_BUDGET_LIMIT,
+    server_version: "1.0.0",
+    git_commit: process.env.GIT_COMMIT || "unknown"
+  });
 });
 
 // ---------- employee CRUD endpoints ----------
