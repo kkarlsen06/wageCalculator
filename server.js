@@ -224,7 +224,7 @@ const getWageDataByDateRangeSchema = {
   }
 };
 
-const tools = [
+const chatCompletionsTools = [
   { type: 'function', function: addShiftSchema },
   { type: 'function', function: addSeriesSchema },
   { type: 'function', function: editShiftSchema },
@@ -236,6 +236,14 @@ const tools = [
   { type: 'function', function: getWageDataByMonthSchema },
   { type: 'function', function: getWageDataByDateRangeSchema }
 ];
+
+// Transform tools for Responses API (requires name at top level)
+const tools = chatCompletionsTools.map(tool => ({
+  type: 'function',
+  name: tool.function.name,
+  description: tool.function.description,
+  parameters: tool.function.parameters
+}));
 
 // ---------- helpers ----------
 
@@ -1404,29 +1412,46 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     toolBudgetSpent = 0;
   }
 
+  const requestPayload = {
+    model: OPENAI_MODEL,
+    input: fullMessages,
+    tools,
+    tool_choice: isMultiStep ? 'required' : 'auto',
+    store: isFirstRequest,
+    previous_response_id: req.body.previous_response_id,
+    ...RESPONSES_CONFIG
+  };
+
+  console.log('=== OPENAI REQUEST PAYLOAD ===');
+  console.log(JSON.stringify(requestPayload, null, 2));
+  console.log('===============================');
+
   let completion;
   try {
-    completion = await openai.responses.create({
-      model: OPENAI_MODEL,
-      input: fullMessages,
-      tools,
-      tool_choice: isMultiStep ? 'required' : 'auto',
-      store: isFirstRequest,
-      previous_response_id: req.body.previous_response_id,
-      ...RESPONSES_CONFIG
-    });
+    completion = await openai.responses.create(requestPayload);
   } catch (error) {
+    console.error('=== OPENAI API ERROR ===');
+    console.error('Status:', error.status);
+    console.error('Message:', error.message);
+    console.error('Error body:', error.error || error.body);
+    console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    console.error('========================');
+
     // Handle stale response_id - retry with full history
     if (error.status >= 400 && error.status < 500 && req.body.previous_response_id) {
       console.log('Retrying with full history due to stale response_id');
-      completion = await openai.responses.create({
+      const retryPayload = {
         model: OPENAI_MODEL,
         input: fullMessages,
         tools,
         tool_choice: isMultiStep ? 'required' : 'auto',
         store: true,
         ...RESPONSES_CONFIG
-      });
+      };
+      console.log('=== RETRY PAYLOAD ===');
+      console.log(JSON.stringify(retryPayload, null, 2));
+      console.log('====================');
+      completion = await openai.responses.create(retryPayload);
     } else {
       throw error;
     }
@@ -1441,9 +1466,14 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   console.log('=== GPT RESPONSE ===');
   console.log('Content:', choice.output_text ?? choice.content ?? "");
   console.log('Tool calls:', toolCalls.length || 0);
+  console.log('Raw choice object:', JSON.stringify(choice, null, 2));
   if (toolCalls.length > 0) {
     toolCalls.forEach((call, i) => {
-      console.log(`Tool ${i+1}: ${call.function.name}(${call.function.arguments})`);
+      console.log(`Tool ${i+1}:`, JSON.stringify(call, null, 2));
+      // Handle both old and new formats
+      const name = call.function?.name || call.name;
+      const args = call.function?.arguments || call.arguments;
+      console.log(`Tool ${i+1}: ${name}(${args})`);
     });
   }
   console.log('==================');
@@ -1453,8 +1483,8 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       type: 'gpt_response',
       content: choice.output_text ?? choice.content ?? "",
       tool_calls: toolCalls.map(call => ({
-        name: call.function.name,
-        arguments: call.function.arguments
+        name: call.function?.name || call.name,
+        arguments: call.function?.arguments || call.arguments
       }))
     })}\n\n`);
   }
@@ -1472,28 +1502,39 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     }
 
     for (const call of toolCalls) {
+      // Handle both old and new tool call formats
+      const toolName = call.function?.name || call.name;
+      const toolArgs = call.function?.arguments || call.arguments;
+
       // Parse tool arguments (Responses often returns as string)
-      const args = typeof call.function.arguments === 'string'
-        ? JSON.parse(call.function.arguments)
-        : call.function.arguments;
+      const args = typeof toolArgs === 'string' ? JSON.parse(toolArgs) : toolArgs;
 
       if (stream) {
         res.write(`data: ${JSON.stringify({
           type: 'tool_call_start',
-          name: call.function.name,
+          name: toolName,
           arguments: args,
-          message: `Utfører ${call.function.name}`
+          message: `Utfører ${toolName}`
         })}\n\n`);
       }
 
-      const toolResult = await handleTool({ ...call, function: { ...call.function, arguments: args } }, req.user_id);
+      // Normalize call object for handleTool
+      const normalizedCall = {
+        ...call,
+        function: {
+          name: toolName,
+          arguments: args
+        }
+      };
+
+      const toolResult = await handleTool(normalizedCall, req.user_id);
 
       if (stream) {
         res.write(`data: ${JSON.stringify({
           type: 'tool_call_complete',
-          name: call.function.name,
+          name: toolName,
           result: toolResult.substring(0, 200) + (toolResult.length > 200 ? '...' : ''),
-          message: `${call.function.name} fullført`
+          message: `${toolName} fullført`
         })}\n\n`);
       }
 
@@ -1502,7 +1543,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       toolMessages.push({
         role: 'tool',
         tool_call_id: call.id,
-        name: call.function.name,
+        name: toolName,
         content: toolContent
       });
     }
@@ -1527,20 +1568,34 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     try {
       if (stream) {
         // Use streaming for the final response
+        const streamPayload = {
+          model: OPENAI_MODEL,
+          input: messagesWithToolResult,
+          tools,
+          tool_choice: 'none',
+          stream: true,
+          previous_response_id: completion.id,
+          ...RESPONSES_CONFIG
+        };
+
+        console.log('=== STREAMING REQUEST PAYLOAD ===');
+        console.log(JSON.stringify(streamPayload, null, 2));
+        console.log('==================================');
+
         try {
-          streamCompletion = await openai.responses.create({
-            model: OPENAI_MODEL,
-            input: messagesWithToolResult,
-            tools,
-            tool_choice: 'none',
-            stream: true,
-            previous_response_id: completion.id,
-            ...RESPONSES_CONFIG
-          });
+          streamCompletion = await openai.responses.create(streamPayload);
         } catch (error) {
+          console.error('=== STREAMING API ERROR ===');
+          console.error('Status:', error.status);
+          console.error('Message:', error.message);
+          console.error('Error body:', error.error || error.body);
+          console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+          console.error('===========================');
+
           // Handle stale response_id - retry with store: true
           if (error.status >= 400 && error.status < 500) {
-            streamCompletion = await openai.responses.create({
+            console.log('Retrying streaming with store: true');
+            const retryStreamPayload = {
               model: OPENAI_MODEL,
               input: messagesWithToolResult,
               tools,
@@ -1548,7 +1603,11 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
               stream: true,
               store: true,
               ...RESPONSES_CONFIG
-            });
+            };
+            console.log('=== RETRY STREAMING PAYLOAD ===');
+            console.log(JSON.stringify(retryStreamPayload, null, 2));
+            console.log('===============================');
+            streamCompletion = await openai.responses.create(retryStreamPayload);
           } else {
             throw error;
           }
@@ -1561,14 +1620,17 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
 
         let streamResponseId = null;
         for await (const chunk of streamCompletion) {
-          // Debug log to check chunk structure
-          if (process.env.DEBUG_STREAM === '1') {
-            console.log('Streaming chunk:', JSON.stringify(chunk, null, 2));
-          }
+          // Debug log to check chunk structure (always log for debugging)
+          console.log('=== STREAMING CHUNK ===');
+          console.log(JSON.stringify(chunk, null, 2));
+          console.log('======================');
 
           // Capture response ID from first chunk
           if (!streamResponseId) {
             streamResponseId = chunk.response_id || chunk.id || chunk.response?.id || null;
+            if (streamResponseId) {
+              console.log('Captured stream response ID:', streamResponseId);
+            }
           }
 
           // Handle new chunk types from Responses API
