@@ -1444,7 +1444,9 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
 
   let completion;
   try {
+    console.log('Making OpenAI Responses API call...');
     completion = await openai.responses.create(requestPayload);
+    console.log('OpenAI Responses API call completed successfully');
   } catch (error) {
     console.error('=== OPENAI API ERROR ===');
     console.error('Status:', error.status);
@@ -1473,23 +1475,25 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     }
   }
 
-  const choice = completion.response || completion.choices?.[0]?.message || completion;
-
-  // Debug logging for OpenAI response
+  // Handle GPT-5 Responses API format
+  const choice = completion.response || completion;
   console.log('OpenAI Response - Choice structure:', Object.keys(choice));
   console.log('OpenAI Response - Has output:', !!choice.output);
-  console.log('OpenAI Response - Has tool_calls:', !!choice.tool_calls);
+  console.log('OpenAI Response - Output length:', choice.output?.length || 0);
 
-  // Extract tool calls from the new Responses API format
+  // Extract tool calls from GPT-5 Responses API format
   let toolCalls = [];
   if (choice.output) {
-    // New Responses API format - tool calls are in the output array
+    // GPT-5 Responses API format - tool calls are in the output array
     toolCalls = choice.output.filter(item => item.type === 'function_call');
-    console.log('Tool calls from output array:', toolCalls.length);
+    console.log('Tool calls found in output array:', toolCalls.length);
+
+    // Debug: log all output items to see what we're getting
+    choice.output.forEach((item, index) => {
+      console.log(`Output item ${index}:`, item.type, item.name || 'no name');
+    });
   } else {
-    // Fallback to old format
-    toolCalls = choice.tool_calls || choice.tools || [];
-    console.log('Tool calls from fallback format:', toolCalls.length);
+    console.log('No output array found in response');
   }
 
   // Minimal logging
