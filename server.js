@@ -1429,10 +1429,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     ...RESPONSES_CONFIG
   };
 
-  // Debug logging (commented out to reduce console noise)
-  // console.log('=== OPENAI REQUEST PAYLOAD ===');
-  // console.log(JSON.stringify(requestPayload, null, 2));
-  // console.log('===============================');
+  // Making request to OpenAI
 
   let completion;
   try {
@@ -1472,28 +1469,19 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   if (choice.output) {
     // New Responses API format - tool calls are in the output array
     toolCalls = choice.output.filter(item => item.type === 'function_call');
-    // Debug logging (commented out to reduce console noise)
-    // console.log('=== EXTRACTED TOOL CALLS FROM OUTPUT ===');
-    // console.log('choice.output:', JSON.stringify(choice.output, null, 2));
-    // console.log('Filtered toolCalls:', JSON.stringify(toolCalls, null, 2));
-    // console.log('==========================================');
+    // Tool calls extracted from new API format
   } else {
     // Fallback to old format
     toolCalls = choice.tool_calls || choice.tools || [];
-    // Debug logging (commented out to reduce console noise)
-    // console.log('=== USING FALLBACK TOOL CALLS ===');
-    // console.log('toolCalls:', JSON.stringify(toolCalls, null, 2));
-    // console.log('==================================');
+    // Using fallback tool calls format
   }
 
-  // Log what GPT decided to do (reduced logging)
-  console.log('=== GPT RESPONSE ===');
-  console.log('Content:', choice.output_text ?? choice.content ?? "");
-  console.log('Tool calls:', toolCalls.length || 0);
-  // console.log('Raw choice object:', JSON.stringify(choice, null, 2)); // Commented out to reduce noise
+  // Minimal logging
+  if (toolCalls.length > 0) {
+    console.log(`GPT called ${toolCalls.length} tool(s)`);
+  }
   if (toolCalls.length > 0) {
     toolCalls.forEach((call, i) => {
-      console.log(`Tool ${i+1}: ${call.name}(${call.arguments})`);
       // Handle both old and new formats
       const name = call.function?.name || call.name;
       const args = call.function?.arguments || call.arguments;
@@ -1530,13 +1518,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       const toolName = call.function?.name || call.name;
       const toolArgs = call.function?.arguments || call.arguments;
 
-      // Debug logging (commented out to reduce console noise)
-      // console.log('=== TOOL CALL DEBUG ===');
-      // console.log('Call object:', JSON.stringify(call, null, 2));
-      // console.log('Tool name:', toolName);
-      // console.log('Tool args (raw):', toolArgs);
-      // console.log('Tool args type:', typeof toolArgs);
-      // console.log('======================');
+      // Minimal debug logging removed
 
       // Parse tool arguments (Responses often returns as string)
       let args;
@@ -1597,10 +1579,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       ...toolMessages
     ];
 
-    // Debug logging (commented out to reduce console noise)
-    // console.log('=== MESSAGES WITH TOOL RESULT DEBUG ===');
-    // console.log('messagesWithToolResult:', JSON.stringify(messagesWithToolResult, null, 2));
-    // console.log('========================================');
+    // Messages prepared for second GPT call
 
     // Second call: Let GPT formulate a user-friendly response with error handling
     // Skip the "generating_response" status message - go directly to streaming
