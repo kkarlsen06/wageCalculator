@@ -1551,6 +1551,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
+      // Debug logging for context tracking
+      console.log('Chat request - Message count:', chatMessages.length);
+      console.log('Chat request - Has previous response ID:', !!lastResponseId);
+      console.log('Chat request - Last 3 messages:', chatMessages.slice(-3));
 
       // Use streaming for better user experience
       const response = await fetch(`${API_BASE}/chat`, {
@@ -1560,7 +1564,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          messages: lastResponseId ? [{ role: 'user', content: messageText }] : chatMessages, // Always include current user message
+          messages: chatMessages, // Always send full conversation history for proper context
           stream: true,
           previous_response_id: lastResponseId,
           // Pass current viewing context from the interface
@@ -1689,7 +1693,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            messages: lastResponseId ? [{ role: 'user', content: messageText }] : chatMessages,
+            messages: chatMessages, // Always send full conversation history for proper context
             stream: false,
             previous_response_id: lastResponseId
           })

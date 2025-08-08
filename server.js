@@ -1397,6 +1397,11 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   };
   const fullMessages = [systemContextHint, ...messages];
 
+  // Debug logging for context tracking
+  console.log('Chat request - Message count:', messages.length);
+  console.log('Chat request - Has previous response ID:', !!req.body.previous_response_id);
+  console.log('Chat request - Last user message:', messages[messages.length - 1]?.content?.substring(0, 100));
+
   // Set up streaming if requested
   if (stream) {
     res.setHeader('Content-Type', 'text/event-stream');
@@ -1733,7 +1738,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         type: 'complete',
         assistant: assistantMessage,
         shifts: shifts || [],
-        response_id: streamResponseId || completion.id
+        response_id: completion.id // Always use the Responses API completion ID for continuity
       })}\n\n`);
       res.write('data: [DONE]\n\n');
       res.end();
@@ -1741,7 +1746,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       res.json({
         assistant: assistantMessage,
         shifts: shifts || [],
-        response_id: secondCompletion?.response?.id || secondCompletion?.id || completion.id
+        response_id: completion.id // Always use the Responses API completion ID for continuity
       });
     }
   } else {
