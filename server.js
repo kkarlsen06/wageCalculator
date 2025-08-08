@@ -1346,7 +1346,9 @@ Når brukeren sier "forrige måned", mener de måneden før ${viewingMonthName} 
 Når brukeren sier "neste måned", mener de måneden etter ${viewingMonthName} ${viewingYear}.
 
 ABSOLUTT KRITISK - MULTIPLE TOOL CALLS REGEL:
-Når brukeren ber om flere operasjoner i SAMME melding, MÅ du utføre ALLE operasjonene i SAMME respons med flere tool_calls. Dette er OBLIGATORISK, ikke valgfritt!`;
+Du KAN og MÅ gjøre flere tool calls i samme respons når brukeren ber om flere operasjoner!
+Eksempel: "legg til vakt på lørdag og slett den på fredag" = to tool calls i samme respons.
+Dette er OBLIGATORISK, ikke valgfritt! ALDRI si at du ikke kan gjøre flere ting samtidig!`;
 
   // Add specific instructions for common patterns
   if (userMessage.includes('vis') && userMessage.includes('endre')) {
@@ -1358,6 +1360,16 @@ Du skal gjøre NØYAKTIG disse to tool calls i denne rekkefølgen:
 2. editShift({"date_reference": "Friday", "new_start_time": "15:00"}) - for å endre fredagsvakten
 
 IKKE gjør getShifts to ganger! IKKE spør om bekreftelse! Gjør begge operasjonene nå!`;
+  } else if ((userMessage.includes('legg til') || userMessage.includes('lag')) &&
+             (userMessage.includes('slett') || userMessage.includes('fjern'))) {
+    systemContent += `
+
+SPESIFIKK INSTRUKSJON for din forespørsel:
+Du skal gjøre to tool calls i samme respons:
+1. addShift() - for å legge til den nye vakten
+2. deleteShift() - for å slette den andre vakten
+
+GJØR BEGGE operasjonene NÅ i samme respons! IKKE spør om bekreftelse!`;
   } else if (userMessage.includes('måneden') || userMessage.includes('august') || userMessage.includes('måned')) {
     // Use the viewing context month instead of current month
     const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
@@ -1385,6 +1397,8 @@ KRITISK: ALLTID bruk tools når brukeren ber om å:
 - Legge til, slette, endre, kopiere vakter
 - Hente/vise vakter eller lønnsdata
 - Gjøre NOEN handling med vaktdata
+
+MULTIPLE TOOL CALLS: Du KAN og SKAL gjøre flere tool calls i samme respons når brukeren ber om flere operasjoner! Dette er en standard funksjon som alltid fungerer.
 
 Bare svar uten tools når brukeren:
 - Stiller generelle spørsmål
@@ -1429,7 +1443,14 @@ SVARSTIL: Bruk korte, direkte svar med minst mulig utenomsnakk. Ikke skriv statu
 Ikke gjenta samme tool call med identiske parametere.
 Når flere operasjoner trengs, kall flere tools i samme respons. Unngå forklarende forsnakk.
 
-ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE tools for FORSKJELLIGE operasjoner!`
+ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE tools for FORSKJELLIGE operasjoner!
+
+MULTIPLE TOOL CALLS EKSEMPLER:
+- "legg til vakt lørdag og slett fredag" → addShift() + deleteShift() i samme respons
+- "vis denne uka og endre mandag til 15:00" → getShifts() + editShift() i samme respons
+- "kopier tirsdag til onsdag og slett torsdag" → copyShift() + deleteShift() i samme respons
+
+DU KAN ABSOLUTT gjøre flere tool calls samtidig! Dette er en standard funksjon!`
   };
   const fullMessages = [systemContextHint, ...messages];
 

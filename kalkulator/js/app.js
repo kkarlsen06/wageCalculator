@@ -1788,11 +1788,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         break;
       case 'tool_preamble':
-        // Display tool call preamble in italic grey styling
+        // Display tool call preamble as a proper chat bubble
         if (!currentPreambleElement) {
           currentPreambleElement = document.createElement('div');
-          currentPreambleElement.className = 'tool-preamble';
-          currentPreambleElement.style.cssText = 'font-style: italic; color: #666; margin-bottom: 8px; font-size: 0.9em;';
+          currentPreambleElement.className = 'chatbox-message assistant';
+          currentPreambleElement.style.cssText = 'font-style: italic; opacity: 0.8; margin-bottom: 8px;';
           currentPreambleElement.textContent = event.content || '(planning...)';
           spinnerElement.parentNode.insertBefore(currentPreambleElement, spinnerElement);
         }
@@ -1804,17 +1804,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         break;
       case 'budget_warning':
-        // Display budget warning
+        // Display budget warning as a proper chat bubble
         const warningElement = document.createElement('div');
-        warningElement.className = 'budget-warning';
-        warningElement.style.cssText = 'background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 8px; border-radius: 4px; margin: 8px 0; font-size: 0.9em;';
+        warningElement.className = 'chatbox-message assistant';
+        warningElement.style.cssText = 'background: #fff3cd; border: 1px solid #ffeaa7; color: #856404;';
         warningElement.textContent = `⚠️ ${event.message}`;
         spinnerElement.parentNode.insertBefore(warningElement, spinnerElement);
         break;
       case 'text_stream_start':
-        // Replace spinner with empty text element for streaming
+        // Replace spinner with empty text element for streaming as a proper chat bubble
         streamingTextElement = document.createElement('div');
-        streamingTextElement.className = 'streaming-text';
+        streamingTextElement.className = 'chatbox-message assistant streaming-text';
         streamingTextElement.fullText = ''; // Store the full text being built
         streamingTextElement.isStreaming = true;
         streamingTextElement.streamingActive = false; // Track if streaming animation is active
@@ -1871,6 +1871,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.app.userShifts = [...newShifts];
           }
           window.app.refreshUI(newShifts);
+        }
+        break;
+      case 'stream_error':
+      case 'error':
+        // Display error as a proper chat bubble
+        const errorElement = document.createElement('div');
+        errorElement.className = 'chatbox-message assistant';
+        errorElement.style.cssText = 'background: #fee; border: 1px solid #fcc; color: #c33;';
+        errorElement.textContent = `⚠️ ${event.message || 'Det oppstod en feil'}`;
+        spinnerElement.parentNode.insertBefore(errorElement, spinnerElement);
+        // Remove the spinner since we're showing an error
+        if (spinnerElement.parentNode) {
+          spinnerElement.remove();
         }
         break;
     }
