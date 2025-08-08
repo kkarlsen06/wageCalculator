@@ -251,6 +251,24 @@ const tools = chatCompletionsTools.map(tool => ({
   parameters: tool.function.parameters
 }));
 
+// ---- Responses API helpers ----
+function extractResponsesOutputText(choice) {
+  let out = '';
+  if (!choice || !Array.isArray(choice.output)) return out;
+
+  for (const item of choice.output) {
+    if (item.type === 'message' && Array.isArray(item.content)) {
+      for (const c of item.content) {
+        // Accept both "output_text" and "text" variants defensively
+        if ((c.type === 'output_text' || c.type === 'text') && typeof c.text === 'string') {
+          out += c.text;
+        }
+      }
+    }
+  }
+  return out.trim();
+}
+
 // ---------- helpers ----------
 
 // Wage calculation constants and helpers
@@ -1151,8 +1169,8 @@ async function findShiftsByReference(user_id, dateReference, timeReference) {
   return { shifts, error: null };
 }
 
-// ---------- /config ----------
-app.get('/config', async (req, res) => {
+// ---------- /features ----------
+app.get('/features', async (req, res) => {
   try {
     // Feature flags configuration
     const features = {
@@ -1397,6 +1415,11 @@ FORMATERING: IKKE bruk bullet points (•) eller nummererte lister (1., 2., 3.).
 **05.08.2025** fra kl. 16:00 til 23:15
 **08.08.2025** fra kl. 16:00 til 23:15
 
+SVARSTIL: Bruk korte, direkte svar med minst mulig utenomsnakk. Ikke skriv statusmeldinger før/etter tool calls.
+
+Ikke gjenta samme tool call med identiske parametere.
+Når flere operasjoner trengs, kall flere tools i samme respons. Unngå forklarende forsnakk.
+
 ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE tools for FORSKJELLIGE operasjoner!`
   };
   const fullMessages = [systemContextHint, ...messages];
@@ -1516,9 +1539,10 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   console.log('==================');
 
   if (stream) {
+    const safeText = extractResponsesOutputText(choice);
     res.write(`data: ${JSON.stringify({
       type: 'gpt_response',
-      content: choice.output_text ?? choice.content ?? "",
+      content: safeText,
       tool_calls: toolCalls.map(call => ({
         name: call.function?.name || call.name,
         arguments: call.function?.arguments || call.arguments
@@ -1541,6 +1565,14 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     }
 
     for (const call of toolCalls) {
+      // Budget check before executing each tool
+      if (toolBudgetSpent >= TOOL_BUDGET_LIMIT) {
+        if (stream) {
+          res.write(`data: ${JSON.stringify({ type: 'tool_budget_exceeded' })}\n\n`);
+        }
+        break;
+      }
+
       // Handle both old and new tool call formats
       const toolName = call.function?.name || call.name;
       const toolArgs = call.function?.arguments || call.arguments;
@@ -1579,6 +1611,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       };
 
       const toolResult = await handleTool(normalizedCall, req.user_id);
+      toolBudgetSpent += 1; // simple counter; swap with real token/cost metric later
 
       if (stream) {
         res.write(`data: ${JSON.stringify({
@@ -1614,11 +1647,12 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       }
     }));
 
+    const safeText = extractResponsesOutputText(choice);
     const messagesWithToolResult = [
       ...fullMessages,
       {
         role: 'assistant',
-        content: choice.output_text ?? choice.content ?? "",
+        content: safeText,
         tool_calls: chatCompletionsToolCalls
       },
       ...toolMessages
@@ -1643,6 +1677,10 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
           tool_choice: 'none',
           stream: true
         };
+        // Optional: allow toggling via env if model supports
+        if (process.env.CHAT_REASONING_EFFORT) {
+          streamPayload.reasoning_effort = process.env.CHAT_REASONING_EFFORT; // e.g. "low" | "medium" | "high"
+        }
 
         // Making streaming request
 
@@ -1718,12 +1756,18 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       } else {
         // Non-streaming version - use Chat Completions API for tool message support
         try {
-          secondCompletion = await openai.chat.completions.create({
+          // Build the payload object, then conditionally add reasoning_effort
+          const nonStreamPayload = {
             model: OPENAI_MODEL,
             messages: messagesWithToolResult,
             tools: chatCompletionsTools,
             tool_choice: 'none'
-          });
+          };
+          // Optional: allow toggling via env if model supports
+          if (process.env.CHAT_REASONING_EFFORT) {
+            nonStreamPayload.reasoning_effort = process.env.CHAT_REASONING_EFFORT; // e.g. "low" | "medium" | "high"
+          }
+          secondCompletion = await openai.chat.completions.create(nonStreamPayload);
         } catch (error) {
           // Retry with Chat Completions API
           console.error('Chat completions failed, retrying:', error.message);
@@ -1744,6 +1788,11 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       } else {
         assistantMessage = 'Operasjonene er utført.';
       }
+    }
+
+    // UX polish: ensure assistant message isn't empty
+    if (!assistantMessage || !assistantMessage.trim()) {
+      assistantMessage = 'Ferdig! Si fra hvis du vil se detaljer.';
     }
 
     // Get updated shift list
@@ -1771,7 +1820,8 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     }
   } else {
     // No tool call - just return GPT's direct response
-    const assistantMessage = choice.output_text ?? choice.content ?? "Jeg forstod ikke kommandoen.";
+    const safeText = extractResponsesOutputText(choice);
+    const assistantMessage = safeText || "Jeg forstod ikke kommandoen.";
 
     const { data: shifts } = await supabase
       .from('user_shifts')
@@ -2498,21 +2548,15 @@ app.delete('/shifts/:id', authenticateUser, async (req, res) => {
 // ---------- handleTool function ----------
 async function handleTool(call, user_id) {
   const fnName = call.function.name;
-  // Handle both string and object arguments
+  // Handle both string and object arguments with additional guards
+  let argsRaw = call.function?.arguments || call.arguments || "{}";
+  if (typeof argsRaw !== 'string') argsRaw = JSON.stringify(argsRaw);
+  if (argsRaw.trim() === "") argsRaw = "{}";
   let args;
   try {
-    args = typeof call.function.arguments === 'string'
-      ? JSON.parse(call.function.arguments)
-      : call.function.arguments;
-  } catch (error) {
-    console.error('Error parsing tool arguments:', error);
-    return JSON.stringify({
-      status: 'error',
-      inserted: [],
-      updated: [],
-      deleted: [],
-      shift_summary: 'Feil i argumenter'
-    });
+    args = JSON.parse(argsRaw);
+  } catch {
+    args = {};
   }
 
   if (!args) {
