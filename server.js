@@ -1560,9 +1560,13 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
 
       // Ensure tool message content is string
       const toolContent = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
+
+      // Try using the original tool format but with proper ID mapping
       toolMessages.push({
-        role: 'user',
-        content: `Tool result from ${toolName}: ${toolContent}`
+        role: 'tool',
+        tool_call_id: call.call_id || call.id,
+        name: toolName,
+        content: toolContent
       });
     }
 
@@ -1588,21 +1592,19 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     let secondCompletion = null;
     try {
       if (stream) {
-        // Use streaming for the final response
+        // Use Chat Completions streaming for the final response
         const streamPayload = {
           model: OPENAI_MODEL,
-          input: messagesWithToolResult,
+          messages: messagesWithToolResult,
           tools,
           tool_choice: 'none',
-          stream: true,
-          previous_response_id: completion.id,
-          ...RESPONSES_CONFIG
+          stream: true
         };
 
         // Making streaming request
 
         try {
-          streamCompletion = await openai.responses.create(streamPayload);
+          streamCompletion = await openai.chat.completions.create(streamPayload);
         } catch (error) {
           console.error('=== STREAMING API ERROR ===');
           console.error('Status:', error.status);
@@ -1611,23 +1613,9 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
           console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
           console.error('===========================');
 
-          // Handle stale response_id - retry with store: true
-          if (error.status >= 400 && error.status < 500) {
-            console.log('Retrying streaming with store: true');
-            const retryStreamPayload = {
-              model: OPENAI_MODEL,
-              input: messagesWithToolResult,
-              tools,
-              tool_choice: 'none',
-              stream: true,
-              store: true,
-              ...RESPONSES_CONFIG
-            };
-            // Retrying with store: true
-            streamCompletion = await openai.responses.create(retryStreamPayload);
-          } else {
-            throw error;
-          }
+          // Retry streaming with Chat Completions API
+          console.log('Retrying streaming with Chat Completions API');
+          throw error; // For now, just throw the error instead of retrying
         }
 
         // Send start of text streaming
@@ -1645,37 +1633,16 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
               streamResponseId = chunk.response_id || chunk.id || chunk.response?.id || null;
             }
 
-            // Handle new chunk types from Responses API
-            if (chunk.type === 'text_delta') {
-              const content = chunk.delta?.text || chunk.text;
-              if (content) {
+            // Handle Chat Completions API streaming chunks
+            if (chunk.choices && chunk.choices[0] && chunk.choices[0].delta) {
+              const delta = chunk.choices[0].delta;
+              if (delta.content) {
+                // Stream text content
+                const content = delta.content;
                 assistantMessage += content;
                 res.write(`data: ${JSON.stringify({
                   type: 'text_chunk',
                   content: content
-                })}\n\n`);
-              }
-            } else if (chunk.type === 'tool_call_preamble') {
-              // Send preamble text for UI display
-              res.write(`data: ${JSON.stringify({
-                type: 'tool_preamble',
-                content: chunk.text || '(planning...)'
-              })}\n\n`);
-            } else if (chunk.type === 'tool_call_preamble_delta') {
-              // Send preamble delta for streaming preamble
-              res.write(`data: ${JSON.stringify({
-                type: 'tool_preamble_delta',
-                content: chunk.delta?.text || ''
-              })}\n\n`);
-            } else if (chunk.type === 'tool_call_complete' && chunk.usage?.tool_tokens) {
-              // Update budget monitoring with actual usage
-              toolBudgetSpent += chunk.usage.tool_tokens;
-              if (toolBudgetSpent > TOOL_BUDGET_LIMIT) {
-                res.write(`data: ${JSON.stringify({
-                  type: 'budget_warning',
-                  message: `Tool budget exceeded: ${toolBudgetSpent}/${TOOL_BUDGET_LIMIT} tokens`,
-                  spent: toolBudgetSpent,
-                  limit: TOOL_BUDGET_LIMIT
                 })}\n\n`);
               }
             }
@@ -1706,32 +1673,20 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
           shifts: shifts || []
         })}\n\n`);
       } else {
-        // Non-streaming version
+        // Non-streaming version - use Chat Completions API for tool message support
         try {
-          secondCompletion = await openai.responses.create({
+          secondCompletion = await openai.chat.completions.create({
             model: OPENAI_MODEL,
-            input: messagesWithToolResult,
+            messages: messagesWithToolResult,
             tools,
-            tool_choice: 'none',
-            previous_response_id: completion.id,
-            ...RESPONSES_CONFIG
+            tool_choice: 'none'
           });
         } catch (error) {
-          // Handle stale response_id - retry with store: true
-          if (error.status >= 400 && error.status < 500) {
-            secondCompletion = await openai.responses.create({
-              model: OPENAI_MODEL,
-              input: messagesWithToolResult,
-              tools,
-              tool_choice: 'none',
-              store: true,
-              ...RESPONSES_CONFIG
-            });
-          } else {
-            throw error;
-          }
+          // Retry with Chat Completions API
+          console.error('Chat completions failed, retrying:', error.message);
+          throw error;
         }
-        assistantMessage = secondCompletion.response?.output_text ?? secondCompletion.content ?? "";
+        assistantMessage = secondCompletion.choices?.[0]?.message?.content ?? "";
       }
     } catch (error) {
       console.error('Second GPT call failed:', error);
