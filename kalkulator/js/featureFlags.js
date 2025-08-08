@@ -123,5 +123,4 @@ if (typeof module !== 'undefined' && module.exports) {
     window.featureFlags = featureFlags;
 }
 
-// ES6 exports for Node.js modules
-export { FeatureFlags, useFeatureFlags, useFeature, featureFlags };
+

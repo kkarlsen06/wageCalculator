@@ -32,7 +32,7 @@ const supabase = createClient(
 );
 
 // ---------- OpenAI Responses API Configuration ----------
-const OPENAI_MODEL = "gpt-5-nano";
+const OPENAI_MODEL = "gpt-5-mini";
 const RESPONSES_CONFIG = {
   reasoning: { effort: "minimal" }
 };
@@ -1434,6 +1434,12 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     ...RESPONSES_CONFIG
   };
 
+  // Debug logging for production issues
+  console.log('OpenAI Request - Model:', OPENAI_MODEL);
+  console.log('OpenAI Request - Tools count:', tools.length);
+  console.log('OpenAI Request - Tool choice:', requestPayload.tool_choice);
+  console.log('OpenAI Request - User message:', userMessage);
+
   // Making request to OpenAI
 
   let completion;
@@ -1469,16 +1475,21 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
 
   const choice = completion.response || completion.choices?.[0]?.message || completion;
 
+  // Debug logging for OpenAI response
+  console.log('OpenAI Response - Choice structure:', Object.keys(choice));
+  console.log('OpenAI Response - Has output:', !!choice.output);
+  console.log('OpenAI Response - Has tool_calls:', !!choice.tool_calls);
+
   // Extract tool calls from the new Responses API format
   let toolCalls = [];
   if (choice.output) {
     // New Responses API format - tool calls are in the output array
     toolCalls = choice.output.filter(item => item.type === 'function_call');
-    // Tool calls extracted from new API format
+    console.log('Tool calls from output array:', toolCalls.length);
   } else {
     // Fallback to old format
     toolCalls = choice.tool_calls || choice.tools || [];
-    // Using fallback tool calls format
+    console.log('Tool calls from fallback format:', toolCalls.length);
   }
 
   // Minimal logging
