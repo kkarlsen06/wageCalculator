@@ -7036,18 +7036,6 @@ export const app = {
         // Apply legal break deduction system
         const breakResult = this.calculateLegalBreakDeduction(shift, wageRate, bonuses, startMinutes, endMinutes);
 
-        // Debug logging for break deduction
-        if (durationHours > 5.5) {
-            console.log('Break deduction debug:', {
-                shiftDuration: durationHours,
-                method: this.pauseDeductionMethod,
-                enabled: this.pauseDeductionEnabled,
-                shouldDeduct: breakResult.shouldDeduct,
-                deductionHours: breakResult.deductionHours,
-                auditTrail: breakResult.auditTrail
-            });
-        }
-
         let paidHours = durationHours;
         let adjustedEndMinutes = endMinutes;
 

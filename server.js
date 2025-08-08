@@ -34,8 +34,7 @@ const supabase = createClient(
 // ---------- OpenAI Responses API Configuration ----------
 const OPENAI_MODEL = "gpt-5-nano";
 const RESPONSES_CONFIG = {
-  reasoning: { effort: "minimal" },
-  verbosity: "low"
+  reasoning: { effort: "minimal" }
 };
 
 // Budget monitoring
