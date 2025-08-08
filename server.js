@@ -1561,10 +1561,8 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       // Ensure tool message content is string
       const toolContent = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
       toolMessages.push({
-        role: 'tool',
-        tool_call_id: call.id,
-        name: toolName,
-        content: toolContent
+        role: 'user',
+        content: `Tool result from ${toolName}: ${toolContent}`
       });
     }
 
@@ -1586,6 +1584,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
 
     let assistantMessage = '';
     let streamCompletion = null;
+    let streamResponseId = null;
     let secondCompletion = null;
     try {
       if (stream) {
@@ -1600,9 +1599,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
           ...RESPONSES_CONFIG
         };
 
-        console.log('=== STREAMING REQUEST PAYLOAD ===');
-        console.log(JSON.stringify(streamPayload, null, 2));
-        console.log('==================================');
+        // Making streaming request
 
         try {
           streamCompletion = await openai.responses.create(streamPayload);
@@ -1626,9 +1623,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
               store: true,
               ...RESPONSES_CONFIG
             };
-            console.log('=== RETRY STREAMING PAYLOAD ===');
-            console.log(JSON.stringify(retryStreamPayload, null, 2));
-            console.log('===============================');
+            // Retrying with store: true
             streamCompletion = await openai.responses.create(retryStreamPayload);
           } else {
             throw error;
@@ -1640,20 +1635,14 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
           type: 'text_stream_start'
         })}\n\n`);
 
-        let streamResponseId = null;
+        // streamResponseId already declared above
         try {
           for await (const chunk of streamCompletion) {
-            // Debug log to check chunk structure (always log for debugging)
-            console.log('=== STREAMING CHUNK ===');
-            console.log(JSON.stringify(chunk, null, 2));
-            console.log('======================');
+            // Process streaming chunk
 
             // Capture response ID from first chunk
             if (!streamResponseId) {
               streamResponseId = chunk.response_id || chunk.id || chunk.response?.id || null;
-              if (streamResponseId) {
-                console.log('Captured stream response ID:', streamResponseId);
-              }
             }
 
             // Handle new chunk types from Responses API
