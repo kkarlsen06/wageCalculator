@@ -1620,54 +1620,62 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         })}\n\n`);
 
         let streamResponseId = null;
-        for await (const chunk of streamCompletion) {
-          // Debug log to check chunk structure (always log for debugging)
-          console.log('=== STREAMING CHUNK ===');
-          console.log(JSON.stringify(chunk, null, 2));
-          console.log('======================');
+        try {
+          for await (const chunk of streamCompletion) {
+            // Debug log to check chunk structure (always log for debugging)
+            console.log('=== STREAMING CHUNK ===');
+            console.log(JSON.stringify(chunk, null, 2));
+            console.log('======================');
 
-          // Capture response ID from first chunk
-          if (!streamResponseId) {
-            streamResponseId = chunk.response_id || chunk.id || chunk.response?.id || null;
-            if (streamResponseId) {
-              console.log('Captured stream response ID:', streamResponseId);
+            // Capture response ID from first chunk
+            if (!streamResponseId) {
+              streamResponseId = chunk.response_id || chunk.id || chunk.response?.id || null;
+              if (streamResponseId) {
+                console.log('Captured stream response ID:', streamResponseId);
+              }
+            }
+
+            // Handle new chunk types from Responses API
+            if (chunk.type === 'text_delta') {
+              const content = chunk.delta?.text || chunk.text;
+              if (content) {
+                assistantMessage += content;
+                res.write(`data: ${JSON.stringify({
+                  type: 'text_chunk',
+                  content: content
+                })}\n\n`);
+              }
+            } else if (chunk.type === 'tool_call_preamble') {
+              // Send preamble text for UI display
+              res.write(`data: ${JSON.stringify({
+                type: 'tool_preamble',
+                content: chunk.text || '(planning...)'
+              })}\n\n`);
+            } else if (chunk.type === 'tool_call_preamble_delta') {
+              // Send preamble delta for streaming preamble
+              res.write(`data: ${JSON.stringify({
+                type: 'tool_preamble_delta',
+                content: chunk.delta?.text || ''
+              })}\n\n`);
+            } else if (chunk.type === 'tool_call_complete' && chunk.usage?.tool_tokens) {
+              // Update budget monitoring with actual usage
+              toolBudgetSpent += chunk.usage.tool_tokens;
+              if (toolBudgetSpent > TOOL_BUDGET_LIMIT) {
+                res.write(`data: ${JSON.stringify({
+                  type: 'budget_warning',
+                  message: `Tool budget exceeded: ${toolBudgetSpent}/${TOOL_BUDGET_LIMIT} tokens`,
+                  spent: toolBudgetSpent,
+                  limit: TOOL_BUDGET_LIMIT
+                })}\n\n`);
+              }
             }
           }
-
-          // Handle new chunk types from Responses API
-          if (chunk.type === 'text_delta') {
-            const content = chunk.delta?.text || chunk.text;
-            if (content) {
-              assistantMessage += content;
-              res.write(`data: ${JSON.stringify({
-                type: 'text_chunk',
-                content: content
-              })}\n\n`);
-            }
-          } else if (chunk.type === 'tool_call_preamble') {
-            // Send preamble text for UI display
-            res.write(`data: ${JSON.stringify({
-              type: 'tool_preamble',
-              content: chunk.text || '(planning...)'
-            })}\n\n`);
-          } else if (chunk.type === 'tool_call_preamble_delta') {
-            // Send preamble delta for streaming preamble
-            res.write(`data: ${JSON.stringify({
-              type: 'tool_preamble_delta',
-              content: chunk.delta?.text || ''
-            })}\n\n`);
-          } else if (chunk.type === 'tool_call_complete' && chunk.usage?.tool_tokens) {
-            // Update budget monitoring with actual usage
-            toolBudgetSpent += chunk.usage.tool_tokens;
-            if (toolBudgetSpent > TOOL_BUDGET_LIMIT) {
-              res.write(`data: ${JSON.stringify({
-                type: 'budget_warning',
-                message: `Tool budget exceeded: ${toolBudgetSpent}/${TOOL_BUDGET_LIMIT} tokens`,
-                spent: toolBudgetSpent,
-                limit: TOOL_BUDGET_LIMIT
-              })}\n\n`);
-            }
-          }
+        } catch (streamError) {
+          console.error('Streaming error:', streamError);
+          res.write(`data: ${JSON.stringify({
+            type: 'stream_error',
+            message: 'Streaming feilet, men operasjonen kan ha blitt utført'
+          })}\n\n`);
         }
 
         // Send end of text streaming
@@ -2482,7 +2490,10 @@ app.delete('/shifts/:id', authenticateUser, async (req, res) => {
 // ---------- handleTool function ----------
 async function handleTool(call, user_id) {
   const fnName = call.function.name;
-  const args = JSON.parse(call.function.arguments);
+  // Handle both string and object arguments
+  const args = typeof call.function.arguments === 'string'
+    ? JSON.parse(call.function.arguments)
+    : call.function.arguments;
   let toolResult = '';
 
   if (fnName === 'addShift') {
@@ -3130,8 +3141,8 @@ async function handleTool(call, user_id) {
       let criteriaDescription = '';
 
       if (args.criteria_type === 'week') {
-        if (!args.week_number || !args.year) {
-          // If no week_number/year specified, get current week
+        if (!args.week_number || !args.year || args.week_number <= 0 || args.year <= 0) {
+          // If no week_number/year specified or invalid values, get current week
           const { start, end } = getCurrentWeekDateRange();
           selectQuery = selectQuery.gte('shift_date', start).lte('shift_date', end);
           criteriaDescription = 'denne uka';
