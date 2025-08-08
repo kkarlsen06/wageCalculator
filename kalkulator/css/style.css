@@ -698,6 +698,112 @@ button {
   top: 6px;
 }
 
+/* ───────────────────────────────────────────────────────────────────────────
+   FOUC/FOAC PREVENTION - Initial Hidden States
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Prevent flash of unstyled/animated content by ensuring elements start hidden */
+#app {
+  /* App container starts hidden and will be shown by JavaScript */
+  display: none !important;
+}
+
+/* When app is shown, ensure animatable elements start with opacity 0 */
+#app.app-ready .app-container > .tab-bar-container,
+#app.app-ready .app-container > .content,
+#app.app-ready .app-container > .month-navigation-container {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out; /* Enable smooth coordinated fade */
+}
+
+/* Header should be immediately visible for profile info */
+#app.app-ready .header {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Animation-ready state - elements become visible and animatable */
+#app.app-ready .app-container > .animate-ready {
+  visibility: visible;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+
+/* Completed animation state */
+#app.app-ready .app-container > .animate-complete {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Fallback for legacy animation approach */
+#app .app-container > *[style*="animation"] {
+  visibility: visible !important;
+}
+
+/* Ensure progress bars start in loading state to prevent width flash */
+#app.app-ready .progress-fill.loading {
+  width: 0% !important;
+  transition: none !important;
+}
+
+/* Allow progress bars to animate after app is ready */
+#app.app-ready.animations-complete .progress-fill {
+  transition: width 0.6s ease-out !important;
+}
+
+/* Prevent flash of default values in dynamic content */
+#app.app-ready #totalAmount,
+#app.app-ready #totalHours,
+#app.app-ready .total-secondary-info,
+#app.app-ready .next-shift-content,
+/* Skeleton loading styles */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+}
+.skeleton-line.w-30 { width: 30%; }
+.skeleton-line.w-40 { width: 40%; }
+.skeleton-line.w-50 { width: 50%; }
+.skeleton-line.w-60 { width: 60%; }
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; opacity: 0.6; }
+  50% { opacity: 0.85; }
+  100% { background-position: -200% 0; opacity: 0.6; }
+}
+
+/* Card-specific skeleton spacing */
+.skeleton.skeleton-shift,
+.skeleton.skeleton-payroll {
+  padding: 8px 0;
+}
+#app.app-ready .next-payroll-content,
+#app.app-ready .chart-progress-label {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+/* Show dynamic content after animations complete */
+#app.app-ready.animations-complete #totalAmount,
+#app.app-ready.animations-complete #totalHours,
+#app.app-ready.animations-complete .total-secondary-info,
+#app.app-ready.animations-complete .next-shift-content,
+#app.app-ready.animations-complete .next-payroll-content,
+#app.app-ready.animations-complete .chart-progress-label {
+  opacity: 1;
+}
+
 @keyframes gradientSlide {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -1560,6 +1666,9 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     letter-spacing: -0.005em;
     line-height: 1.3;
     margin-top: 6px; /* Reasonable margin */
+    display: flex;
+    justify-content: center; /* Center the content under main amount */
+    text-align: center;
   }
 
   /* Ensure both amount and text have same size on mobile */
@@ -1697,6 +1806,9 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     font-size: 14px !important; /* Readable secondary text */
     line-height: 1.3;
     margin-top: 5px;
+    display: flex;
+    justify-content: center; /* Center the content under main amount */
+    text-align: center;
   }
 
   /* Ensure both amount and text have same size on mobile */
@@ -1823,6 +1935,9 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     font-size: 13px !important;
     line-height: 1.2;
     margin-top: 4px;
+    display: flex;
+    justify-content: center; /* Center the content under main amount */
+    text-align: center;
   }
 
   /* Ensure both amount and text have same size on mobile landscape */
@@ -4053,10 +4168,21 @@ input:checked + .slider:before {
   text-align: center;
 }
 
+
+/* Override app-ready layout to ensure horizontal centering of tillegg line */
+#app.app-ready .total-secondary-info {
+  flex-direction: row; /* Override earlier column layout */
+  align-items: center; /* Horizontal centering with flex row */
+  justify-content: center;
+  text-align: center;
+}
+
 .secondary-info-content {
-  display: flex;
+  display: inline-flex; /* shrink to content width */
   align-items: baseline; /* Align text elements by their baselines (bottom of text) */
+  justify-content: center; /* Ensure the bonus + text are centered as a group */
   gap: 8px; /* Space between amount and descriptive text */
+  margin: 0 auto; /* center the whole group inside its parent */
 }
 
 .total-secondary-info .before-tax-text {
@@ -5365,9 +5491,11 @@ input:checked + .slider:before {
 @keyframes fadeInDown {
   from {
     opacity: 0;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -13078,4 +13206,168 @@ body.chatbox-view .chatbox-container {
   justify-content: center !important;
   z-index: 1000 !important;
   border-radius: inherit !important;
+}
+
+/* Employee Filter Bar */
+.employee-filter-bar {
+  padding: 12px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.filter-scroll-container {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  padding-bottom: 4px;
+}
+
+.filter-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  white-space: nowrap;
+  min-height: 36px;
+  touch-action: manipulation;
+}
+
+.filter-chip:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.filter-chip:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.filter-chip.active {
+  background: rgba(0, 245, 255, 0.12);
+  color: var(--text-primary);
+  border-color: rgba(0, 245, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 245, 255, 0.15);
+}
+
+.filter-chip-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Employee Chip on Shift Cards */
+.employee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: white;
+  background: var(--text-tertiary);
+  margin-left: 8px;
+  max-width: 80px;
+  overflow: hidden;
+}
+
+.employee-chip-color {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.employee-chip-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .employee-filter-bar {
+    padding: 8px 16px 12px;
+  }
+
+  .filter-chip {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-height: 32px;
+  }
+
+  .employee-chip {
+    font-size: 10px;
+    padding: 1px 4px;
+    max-width: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-chip {
+    padding: 5px 8px;
+    font-size: 12px;
+    min-height: 30px;
+  }
+
+  .employee-chip {
+    font-size: 9px;
+    max-width: 50px;
+  }
+}
+
+/* Calendar Employee Chips */
+.calendar-employee-chips {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.calendar-employee-chip {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: var(--font-weight-bold);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .calendar-employee-chip {
+    width: 14px;
+    height: 14px;
+    font-size: 7px;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-employee-chip {
+    width: 12px;
+    height: 12px;
+    font-size: 6px;
+  }
 }

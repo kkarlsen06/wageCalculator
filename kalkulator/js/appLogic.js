@@ -300,6 +300,9 @@ export const app = {
         // Initialize employee state from URL params and localStorage
         this.initializeEmployeeState();
 
+        // Load employees for shift forms
+        this.loadEmployeesForShiftForms();
+
         // Show UI elements
         this.populateTimeSelects();
         
@@ -620,7 +623,176 @@ export const app = {
             }
         });
     },
-    
+
+    /**
+     * Load employees for shift forms
+     */
+    async loadEmployeesForShiftForms() {
+        try {
+            if (this.employees.length === 0) {
+                await this.loadEmployees();
+            }
+            this.populateEmployeeSelectors();
+            this.populateEmployeeFilterBar();
+        } catch (error) {
+            console.error('Error loading employees for shift forms:', error);
+        }
+    },
+
+    /**
+     * Populate employee selectors in shift forms
+     */
+    populateEmployeeSelectors() {
+        const selectors = [
+            'employeeSelect',
+            'recurringEmployeeSelect',
+            'editEmployeeSelect'
+        ];
+
+        selectors.forEach(selectorId => {
+            const selector = document.getElementById(selectorId);
+            if (!selector) return;
+
+            // Clear existing options except the first one (Unassigned)
+            while (selector.children.length > 1) {
+                selector.removeChild(selector.lastChild);
+            }
+
+            // Add employee options
+            this.employees.forEach(employee => {
+                if (employee.archived_at) return; // Skip archived employees
+
+                const option = document.createElement('option');
+                option.value = employee.id;
+                option.textContent = employee.name;
+                selector.appendChild(option);
+            });
+        });
+    },
+
+    /**
+     * Populate and show employee filter bar
+     */
+    populateEmployeeFilterBar() {
+        const filterBar = document.getElementById('employeeFilterBar');
+        const container = filterBar?.querySelector('.filter-scroll-container');
+
+        if (!filterBar || !container) return;
+
+        // Clear existing filters except "All"
+        const allButton = container.querySelector('[data-employee-id=""]');
+        container.innerHTML = '';
+
+        // Re-add "All" button
+        if (allButton) {
+            container.appendChild(allButton);
+        } else {
+            const allChip = this.createFilterChip('', 'Alle', null, true);
+            container.appendChild(allChip);
+        }
+
+        // Add employee filters
+        this.employees.forEach(employee => {
+            if (employee.archived_at) return; // Skip archived employees
+
+            const chip = this.createFilterChip(
+                employee.id,
+                employee.name,
+                employee.display_color,
+                false
+            );
+            container.appendChild(chip);
+        });
+
+        // Show filter bar if there are employees
+        if (this.employees.length > 0) {
+            filterBar.style.display = 'block';
+        } else {
+            filterBar.style.display = 'none';
+        }
+    },
+
+    /**
+     * Create a filter chip element
+     */
+    createFilterChip(employeeId, name, color, isActive) {
+        const chip = document.createElement('button');
+        chip.className = `filter-chip ${isActive ? 'active' : ''}`;
+        chip.setAttribute('data-employee-id', employeeId);
+        chip.setAttribute('aria-label', `Filter by ${name}`);
+
+        const chipContent = document.createElement('span');
+        chipContent.textContent = name;
+        chip.appendChild(chipContent);
+
+        if (color && employeeId) {
+            const colorIndicator = document.createElement('span');
+            colorIndicator.className = 'filter-chip-color';
+            colorIndicator.style.backgroundColor = color;
+            chip.insertBefore(colorIndicator, chipContent);
+        }
+
+        chip.addEventListener('click', () => {
+            this.handleEmployeeFilter(employeeId);
+        });
+
+        return chip;
+    },
+
+    /**
+     * Handle employee filter selection
+     */
+    handleEmployeeFilter(employeeId) {
+        // Update selected employee
+        this.selectedEmployeeId = employeeId;
+
+        // Update active state of filter chips
+        const filterChips = document.querySelectorAll('.filter-chip');
+        filterChips.forEach(chip => {
+            const chipEmployeeId = chip.getAttribute('data-employee-id');
+            chip.classList.toggle('active', chipEmployeeId === employeeId);
+        });
+
+        // Apply filter to shifts
+        this.applyEmployeeFilter();
+
+        // Save filter state to localStorage
+        if (employeeId) {
+            localStorage.setItem('selectedEmployeeId', employeeId);
+        } else {
+            localStorage.removeItem('selectedEmployeeId');
+        }
+    },
+
+    /**
+     * Apply employee filter to shift display
+     */
+    applyEmployeeFilter() {
+        if (!this.selectedEmployeeId) {
+            // Show all shifts
+            this.shifts = [...this.userShifts];
+        } else {
+            // Filter shifts by selected employee
+            this.shifts = this.userShifts.filter(shift =>
+                shift.employee_id === this.selectedEmployeeId
+            );
+        }
+
+        // Update the display
+        this.updateDisplay();
+    },
+
+    /**
+     * Initialize employee state from URL params and localStorage
+     */
+    initializeEmployeeState() {
+        // Check for employee filter in localStorage
+        const savedEmployeeId = localStorage.getItem('selectedEmployeeId');
+        if (savedEmployeeId) {
+            this.selectedEmployeeId = savedEmployeeId;
+        }
+    },
+
     openAddShiftModal(targetMonth = null, targetYear = null) {
         // Close any existing expanded views, dropdowns, and modals first
         this.closeShiftDetails();
@@ -672,6 +844,9 @@ export const app = {
         document.getElementById('shiftForm').reset();
         // Default to simple tab
         this.switchAddShiftTab('simple');
+
+        // Populate employee selectors
+        this.populateEmployeeSelectors();
     },
     
     // Update the selected dates info display
@@ -745,6 +920,7 @@ export const app = {
             const startMinute = document.getElementById('recurringStartMinute').value || '00';
             const endHour = document.getElementById('recurringEndHour').value;
             const endMinute = document.getElementById('recurringEndMinute').value || '00';
+            const employeeId = document.getElementById('recurringEmployeeSelect').value || null;
             
             if (!startDateStr || !freq || !duration || !startHour || !endHour) {
                 // Show validation alert message
@@ -826,7 +1002,8 @@ export const app = {
                     start_time: `${startHour}:${startMinute}`,
                     end_time: `${endHour}:${endMinute}`,
                     shift_type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
-                    series_id: seriesId
+                    series_id: seriesId,
+                    employee_id: employeeId
                 };
                 const { data: saved, error } = await window.supa.from('user_shifts').insert(insertData).select().single();
                 if (error) { console.error('Gjentakende feil:', error); continue; }
@@ -837,7 +1014,9 @@ export const app = {
                     startTime: `${startHour}:${startMinute}`,
                     endTime: `${endHour}:${endMinute}`,
                     type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
-                    seriesId
+                    seriesId,
+                    employee_id: employeeId,
+                    employee: employeeId ? this.employees.find(emp => emp.id === employeeId) : null
                 });
             }
             
@@ -888,6 +1067,7 @@ export const app = {
             const startMinute = document.getElementById('startMinute').value || '00';
             const endHour = document.getElementById('endHour').value;
             const endMinute = document.getElementById('endMinute').value || '00';
+            const employeeId = document.getElementById('employeeSelect').value || null;
             
             if (!startHour || !endHour) {
                 // Show validation alert message
@@ -948,7 +1128,8 @@ export const app = {
                     shift_date: finalDateStr,
                     start_time: newShift.startTime,
                     end_time: newShift.endTime,
-                    shift_type: newShift.type
+                    shift_type: newShift.type,
+                    employee_id: employeeId
                 };
                 
                 const { data: saved, error } = await window.supa.from("user_shifts")
@@ -963,7 +1144,9 @@ export const app = {
                 }
                 
                 newShift.id = saved.id;
-                
+                newShift.employee_id = employeeId;
+                newShift.employee = employeeId ? this.employees.find(emp => emp.id === employeeId) : null;
+
                 // Add to userShifts array
                 this.userShifts.push(newShift);
                 createdShifts.push(newShift);
@@ -1461,10 +1644,17 @@ export const app = {
         }
 
         try {
-            // Fetch shifts
+            // Fetch shifts with employee data
             const { data: shifts, error: shiftsError } = await window.supa
                 .from('user_shifts')
-                .select('*')
+                .select(`
+                    *,
+                    employees:employee_id (
+                        id,
+                        name,
+                        display_color
+                    )
+                `)
                 .eq('user_id', user.id);
 
             if (shiftsError) {
@@ -1478,7 +1668,9 @@ export const app = {
                         startTime: s.start_time,
                         endTime: s.end_time,
                         type: s.shift_type,
-                        seriesId: s.series_id || null
+                        seriesId: s.series_id || null,
+                        employee_id: s.employee_id || null,
+                        employee: s.employees || null
                     };
                     return mappedShift;
                 });
@@ -4304,6 +4496,14 @@ export const app = {
                                     shift.date.getFullYear() === today.getFullYear();
                 const currentDateClass = isCurrentDate ? ' current-date' : '';
 
+                // Create employee chip if employee is assigned
+                const employeeChip = shift.employee ? `
+                    <span class="employee-chip" style="background-color: ${shift.employee.display_color || '#6b7280'}">
+                        <span class="employee-chip-color" style="background-color: ${shift.employee.display_color || '#6b7280'}"></span>
+                        <span class="employee-chip-name">${shift.employee.name}</span>
+                    </span>
+                ` : '';
+
                 shiftsHtml.push(`
                     <div class="shift-item ${typeClass}${currentDateClass}" data-shift-id="${shift.id}" style="cursor: pointer;">
                         <div class="shift-info">
@@ -4321,6 +4521,7 @@ export const app = {
                                     <span>${shift.startTime} - ${shift.endTime}</span>
                                     <span class="shift-time-arrow">→</span>
                                     <span>${this.formatHours(calc.totalHours)}</span>
+                                    ${employeeChip}
                                 </div>
                             </div>
                         </div>
@@ -4373,6 +4574,12 @@ export const app = {
 
         // Always show the card, but handle different months differently
         nextShiftCard.style.display = 'block';
+        // Ensure skeleton is visible until we populate content
+        const contentEl = document.getElementById('nextShiftContent');
+        if (contentEl && !contentEl.dataset.populated) {
+            const skel = contentEl.querySelector('.skeleton');
+            if (skel) skel.style.display = 'block';
+        }
 
         // If we're not viewing the current month and year, show the best shift from selected month
         if (this.currentMonth !== currentMonth || this.currentYear !== currentYear) {
@@ -4596,10 +4803,14 @@ export const app = {
             // Show next shift details
             nextShiftContent.style.display = 'flex';
             nextShiftEmpty.style.display = 'none';
-            
+            // Hide skeleton and mark as populated
+            const skel = nextShiftContent.querySelector('.skeleton');
+            if (skel) skel.style.display = 'none';
+            nextShiftContent.dataset.populated = '1';
+
             const nextShift = upcomingShifts[0];
             const calculation = this.calculateShift(nextShift);
-            
+
             // Format date
             const shiftDate = new Date(nextShift.date);
             const weekday = this.WEEKDAYS[shiftDate.getDay()];
@@ -5071,6 +5282,14 @@ export const app = {
 
         // Always show the card
         nextPayrollCard.style.display = 'block';
+        // Reset placeholder visibility in case of re-renders
+        const skel2 = nextPayrollContent.querySelector('.skeleton');
+        if (skel2 && !nextPayrollContent.dataset.populated) skel2.style.display = 'block';
+        // Ensure skeleton is visible until populated
+        if (nextPayrollContent && !nextPayrollContent.dataset.populated) {
+            const skel = nextPayrollContent.querySelector('.skeleton');
+            if (skel) skel.style.display = 'block';
+        }
 
         // Use the selected month from month picker instead of current month
         const selectedMonth = this.currentMonth; // 1-based
@@ -5157,6 +5376,11 @@ export const app = {
         // Show payroll details
         nextPayrollContent.style.display = 'flex';
         nextPayrollEmpty.style.display = 'none';
+
+        // Hide skeleton and mark populated before injecting content
+        const skelP = nextPayrollContent.querySelector('.skeleton');
+        if (skelP) skelP.style.display = 'none';
+        nextPayrollContent.dataset.populated = '1';
 
         nextPayrollContent.innerHTML = `
             <div class="payroll-item${activeClass}" style="cursor: pointer; position: relative;">
@@ -5404,7 +5628,33 @@ export const app = {
                         hoursDisplay.appendChild(timeRange);
                         shiftData.appendChild(hoursDisplay);
                     }
-                    
+
+                    // Add employee chips for calendar view
+                    const employeeChips = document.createElement('div');
+                    employeeChips.className = 'calendar-employee-chips';
+
+                    // Get unique employees for this day
+                    const uniqueEmployees = new Map();
+                    shiftsForDay.forEach(shift => {
+                        if (shift.employee && !uniqueEmployees.has(shift.employee.id)) {
+                            uniqueEmployees.set(shift.employee.id, shift.employee);
+                        }
+                    });
+
+                    // Create chips for each unique employee
+                    uniqueEmployees.forEach(employee => {
+                        const chip = document.createElement('div');
+                        chip.className = 'calendar-employee-chip';
+                        chip.style.backgroundColor = employee.display_color || '#6b7280';
+                        chip.textContent = employee.name.substring(0, 2).toUpperCase();
+                        chip.title = employee.name;
+                        employeeChips.appendChild(chip);
+                    });
+
+                    if (uniqueEmployees.size > 0) {
+                        content.appendChild(employeeChips);
+                    }
+
                     content.appendChild(shiftData);
                     
                     cell.classList.add('has-shifts');
@@ -7036,18 +7286,6 @@ export const app = {
         // Apply legal break deduction system
         const breakResult = this.calculateLegalBreakDeduction(shift, wageRate, bonuses, startMinutes, endMinutes);
 
-        // Debug logging for break deduction
-        if (durationHours > 5.5) {
-            console.log('Break deduction debug:', {
-                shiftDuration: durationHours,
-                method: this.pauseDeductionMethod,
-                enabled: this.pauseDeductionEnabled,
-                shouldDeduct: breakResult.shouldDeduct,
-                deductionHours: breakResult.deductionHours,
-                auditTrail: breakResult.auditTrail
-            });
-        }
-
         let paidHours = durationHours;
         let adjustedEndMinutes = endMinutes;
 
@@ -8353,6 +8591,13 @@ export const app = {
         document.getElementById('editStartMinute').value = startMinute || '00';
         document.getElementById('editEndHour').value = endHour;
         document.getElementById('editEndMinute').value = endMinute || '00';
+
+        // Populate employee selectors and set current employee
+        this.populateEmployeeSelectors();
+        const editEmployeeSelect = document.getElementById('editEmployeeSelect');
+        if (editEmployeeSelect && shift.employee_id) {
+            editEmployeeSelect.value = shift.employee_id;
+        }
         
         // Highlight the selected date in the grid
         setTimeout(() => {
@@ -8594,6 +8839,7 @@ export const app = {
             const startMinute = document.getElementById('editStartMinute').value || '00';
             const endHour = document.getElementById('editEndHour').value;
             const endMinute = document.getElementById('editEndMinute').value || '00';
+            const employeeId = document.getElementById('editEmployeeSelect').value || null;
             
             // Automatically determine shift type from selected date
             const dayOfWeek = this.editSelectedDate.getDay();
@@ -8623,7 +8869,8 @@ export const app = {
                 start_time: `${startHour}:${startMinute}`,
                 end_time: `${endHour}:${endMinute}`,
                 shift_type: type,
-                series_id: null // Remove series ID when editing a shift
+                series_id: null, // Remove series ID when editing a shift
+                employee_id: employeeId
             };
             
             // Update in database
@@ -10221,8 +10468,17 @@ Hva kan jeg hjelpe deg med i dag?`;
         // Validate selected employee still exists
         if (this.selectedEmployeeId && !this.employees.find(emp => emp.id === this.selectedEmployeeId)) {
             console.warn('Selected employee no longer exists, resetting to "All"');
-            this.setSelectedEmployee(null);
+            this.selectedEmployeeId = null;
         }
+
+        // Update employee filter bar
+        this.populateEmployeeFilterBar();
+
+        // Apply current filter
+        this.applyEmployeeFilter();
+
+        // Update employee selectors in forms
+        this.populateEmployeeSelectors();
 
         // Update any open modals
         this.updateEmployeeModals?.();

@@ -124,7 +124,11 @@
 
                       <div class="next-shift-card" id="nextShiftCard">
                           <div class="next-shift-content" id="nextShiftContent">
-                              <!-- Will be populated with shift-item structure -->
+                              <!-- Skeleton placeholder for next shift -->
+                              <div class="skeleton skeleton-shift">
+                                <div class="skeleton-line w-60"></div>
+                                <div class="skeleton-line w-40"></div>
+                              </div>
                           </div>
                           <div class="next-shift-empty" id="nextShiftEmpty" style="display: none;">
                               <div class="empty-message">Ingen kommende vakter</div>
@@ -133,7 +137,11 @@
 
                       <div class="next-payroll-card" id="nextPayrollCard">
                           <div class="next-payroll-content" id="nextPayrollContent">
-                              <!-- Will be populated with payroll-item structure -->
+                              <!-- Skeleton placeholder for payroll -->
+                              <div class="skeleton skeleton-payroll">
+                                <div class="skeleton-line w-50"></div>
+                                <div class="skeleton-line w-30"></div>
+                              </div>
                           </div>
                           <div class="next-payroll-empty" id="nextPayrollEmpty" style="display: none;">
                               <div class="empty-message">Ingen lønnsdata tilgjengelig</div>
@@ -285,6 +293,16 @@
                           </button>
                       </div>
                   </div>
+
+                  <!-- Employee Filter Bar -->
+                  <div class="employee-filter-bar" id="employeeFilterBar" style="display: none;">
+                      <div class="filter-scroll-container">
+                          <button class="filter-chip active" data-employee-id="" aria-label="Vis alle vakter">
+                              <span>Alle</span>
+                          </button>
+                      </div>
+                  </div>
+
                   <div class="shift-list" id="shiftList">
                       <div class="empty-state">
                           <div class="empty-icon">
@@ -818,6 +836,13 @@
                       </div>
 
                       <div class="form-group">
+                          <label for="editEmployeeSelect">Ansatt</label>
+                          <select class="form-control" id="editEmployeeSelect" aria-label="Velg ansatt for vakten">
+                              <option value="">Ikke tildelt</option>
+                          </select>
+                      </div>
+
+                      <div class="form-group">
                           <label>Arbeidstid</label>
                           <div class="form-row">
                               <select class="form-control" id="editStartHour">
@@ -878,6 +903,13 @@
                           </div>
 
                           <div class="form-group">
+                              <label for="employeeSelect">Ansatt</label>
+                              <select class="form-control" id="employeeSelect" aria-label="Velg ansatt for vakten">
+                                  <option value="">Ikke tildelt</option>
+                              </select>
+                          </div>
+
+                          <div class="form-group">
                               <label>Arbeidstid</label>
                               <div class="form-row">
                                   <select class="form-control" id="startHour">
@@ -910,6 +942,12 @@
                           <div class="form-group" style="margin-bottom: 24px;">
                               <label>Første vakt</label>
                               <input type="date" class="form-control" id="recurringStartDate" />
+                          </div>
+                          <div class="form-group" style="margin-bottom: 24px;">
+                              <label for="recurringEmployeeSelect">Ansatt</label>
+                              <select class="form-control" id="recurringEmployeeSelect" aria-label="Velg ansatt for vaktserien">
+                                  <option value="">Ikke tildelt</option>
+                              </select>
                           </div>
                           <div class="form-group" style="margin-bottom: 24px;">
                               <label>Arbeidstid</label>
@@ -1049,9 +1087,6 @@
     <!-- Cropperjs for image cropping -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    <!-- Helper utilities -->
-    <script src="../js/loading-helpers.js"></script>
-    <script src="../js/error-handling.js"></script>
     <!-- Load configuration first -->
     <script src="js/config.js"></script>
     <!-- Feature flags system -->
@@ -1068,6 +1103,6 @@
             });
         }
     </script>
-    <script type="module" src="js/app.js?v=5"></script>
+    <script type="module" src="js/app.js?v=6"></script>
 </body>
 </html>

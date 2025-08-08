@@ -671,23 +671,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     welcomeScreen.remove();
   }
 
-  // Animate main app elements with improved sequencing
+  // Animate main app elements with coordinated, smooth reveal (no long staggers)
   function animateAppEntries() {
     const container = document.querySelector('.app-container');
-    if (!container) return;
-    const children = Array.from(container.children);
+    const appEl = document.getElementById('app');
+    if (!container || !appEl) return;
 
-    // Use requestAnimationFrame for smoother animations
+    // Add the app-ready class to enable initial hidden states
+    appEl.classList.add('app-ready');
+
+    // Elements to reveal together (skip header which is already visible)
+    const toReveal = [
+      container.querySelector('.tab-bar-container'),
+      container.querySelector('.content')
+    ].filter(Boolean);
+
+    // Use double requestAnimationFrame for paint-safe class toggles
     requestAnimationFrame(() => {
-      children.forEach((el, idx) => {
-        // Skip animating the header since profile info should be immediately visible
-        if (el.classList.contains('header')) {
-          return;
-        }
+      requestAnimationFrame(() => {
+        // Prepare for animation
+        toReveal.forEach(el => el.classList.add('animate-ready'));
 
-        el.style.opacity = '0';
-        // Reduced stagger time from 0.1s to 0.08s and longer duration for smoother animation
-        el.style.animation = `fadeInDown 0.8s forwards ${idx * 0.08}s`;
+        // Reveal all at once with a short delay to ensure styles applied
+        setTimeout(() => {
+          toReveal.forEach(el => el.classList.add('animate-complete'));
+
+          // Finalize after animation
+          setTimeout(() => {
+            toReveal.forEach(el => el.classList.remove('animate-ready'));
+            appEl.classList.add('animations-complete');
+          }, 300); // shorter duration for snappier UX
+        }, 50);
       });
     });
   }
@@ -724,7 +738,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   // After ensuring session, show welcome, init app, and display
-  const { app } = await import('./appLogic.js?v=5');
+  let appModule;
+  try {
+    appModule = await import('./appLogic.js?v=5');
+  } catch (e) {
+    console.error('Failed to load appLogic module:', e);
+  }
+  const app = appModule?.app;
   window.app = app;
 
   await showWelcomeScreen();
@@ -732,15 +752,71 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load and display profile information immediately after greeting
   await loadAndDisplayProfileInfo();
 
-  await app.init();
+  // Initialize app with robust error handling so UI still appears
+  let initFailed = false;
+  if (app && typeof app.init === 'function') {
+    try {
+      await app.init();
+    } catch (e) {
+      initFailed = true;
+      console.error('App initialization failed:', e);
+      try {
+        // Attempt minimal fallback so user still sees UI
+        app.loadFromLocalStorage?.();
+      } catch (fallbackErr) {
+        console.error('Fallback to local storage failed:', fallbackErr);
+      }
+    }
+  } else {
+    initFailed = true;
+    console.error('App module not available or missing init()');
+  }
 
-  // Display the app container and animate entries
+  // Display the app container and animate entries with FOUC prevention
   const appEl = document.getElementById('app');
   if (appEl) {
-    appEl.style.display = 'block';
-    animateAppEntries();
+    // Use requestAnimationFrame to ensure smooth transition
+    requestAnimationFrame(() => {
+      // Remove the display: none and show the app (override CSS !important)
+      appEl.style.setProperty('display', 'block', 'important');
 
+      // Start animations immediately to prevent any flash
+      animateAppEntries();
 
+      // Failsafe: ensure elements become visible even if animations are interrupted
+      setTimeout(() => {
+        try {
+          const container = document.querySelector('.app-container');
+          if (!container) return;
+
+          // Mark app as ready and animations complete as a fallback
+          appEl.classList.add('app-ready', 'animations-complete');
+
+          const reveal = (el) => {
+            if (!el) return;
+            el.classList.add('animate-ready', 'animate-complete');
+            el.style.visibility = 'visible';
+            el.style.opacity = '1';
+            el.style.transform = 'none';
+          };
+
+          reveal(container.querySelector('.tab-bar-container'));
+          reveal(container.querySelector('.content'));
+          reveal(container.querySelector('.month-navigation-container'));
+        } catch (e) {
+          console.warn('Ensure-visible fallback encountered an error:', e);
+        }
+      }, 900);
+
+      if (initFailed) {
+        // Surface a non-blocking inline notice if init failed
+        const warn = document.createElement('div');
+        warn.className = 'nonblocking-warning';
+        warn.style.cssText = 'margin:12px 16px;padding:10px;border-radius:8px;background:#332e00;color:#ffd666;font-size:14px;';
+        warn.textContent = 'Noe gikk galt under innlasting. Viser tilgjengelig data – prøv å oppdatere siden.';
+        appEl.prepend(warn);
+      }
+    });
   }
 
   // Etter init og visning av app

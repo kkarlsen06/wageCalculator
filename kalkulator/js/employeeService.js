@@ -56,12 +56,17 @@ export class EmployeeService {
             }
 
             const response = await fetch(url, { headers });
-            
+
             if (!response.ok) {
+                // Treat 404 as "no employees API available" and return empty list
+                if (response.status === 404) {
+                    console.info('Employees API not available (404). Continuing without employees.');
+                    return [];
+                }
                 throw new Error(`Failed to fetch employees: ${response.status} ${response.statusText}`);
             }
 
-            const result = await response.json();
+            const result = await response.json().catch(() => ({ employees: [] }));
             const employees = result.employees || [];
 
             // Cache the result
