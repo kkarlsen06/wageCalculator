@@ -1504,6 +1504,8 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   if (toolCalls.length > 0) {
     // Handle multiple tool calls
     const toolMessages = [];
+    // Create consistent ID mapping for tool calls
+    const toolCallIdMap = new Map();
 
     if (stream) {
       res.write(`data: ${JSON.stringify({
@@ -1517,6 +1519,10 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       // Handle both old and new tool call formats
       const toolName = call.function?.name || call.name;
       const toolArgs = call.function?.arguments || call.arguments;
+
+      // Generate consistent ID for this tool call
+      const toolCallId = call.call_id || call.id || `call_${Math.random().toString(36).substring(2, 11)}`;
+      toolCallIdMap.set(call, toolCallId);
 
       // Minimal debug logging removed
 
@@ -1561,22 +1567,34 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       // Ensure tool message content is string
       const toolContent = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
 
-      // Try using the original tool format but with proper ID mapping
+      // Use the consistent ID from the map
       toolMessages.push({
         role: 'tool',
-        tool_call_id: call.call_id || call.id,
+        tool_call_id: toolCallId,
         name: toolName,
         content: toolContent
       });
     }
 
     // Add tool results to conversation and get GPT's response
+    // Convert Responses API tool calls to Chat Completions API format using consistent IDs
+    const chatCompletionsToolCalls = toolCalls.map(call => ({
+      id: toolCallIdMap.get(call),
+      type: 'function',
+      function: {
+        name: call.function?.name || call.name,
+        arguments: typeof (call.function?.arguments || call.arguments) === 'string'
+          ? (call.function?.arguments || call.arguments)
+          : JSON.stringify(call.function?.arguments || call.arguments)
+      }
+    }));
+
     const messagesWithToolResult = [
       ...fullMessages,
       {
         role: 'assistant',
-        content: choice.output_text ?? choice.content ?? ""
-        // Note: tool_calls not included for Responses API compatibility
+        content: choice.output_text ?? choice.content ?? "",
+        tool_calls: chatCompletionsToolCalls
       },
       ...toolMessages
     ];
