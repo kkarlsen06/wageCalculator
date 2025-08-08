@@ -1596,7 +1596,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         const streamPayload = {
           model: OPENAI_MODEL,
           messages: messagesWithToolResult,
-          tools,
+          tools: chatCompletionsTools,
           tool_choice: 'none',
           stream: true
         };
@@ -1678,7 +1678,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
           secondCompletion = await openai.chat.completions.create({
             model: OPENAI_MODEL,
             messages: messagesWithToolResult,
-            tools,
+            tools: chatCompletionsTools,
             tool_choice: 'none'
           });
         } catch (error) {
