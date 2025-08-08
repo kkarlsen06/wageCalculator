@@ -43,6 +43,12 @@ const TOOL_BUDGET_LIMIT = 1000; // Adjust as needed
 
 // ---------- auth middleware ----------
 async function authenticateUser(req, res, next) {
+  // Development bypass
+  if (process.env.DEV_BYPASS === 'true') {
+    req.user_id = process.env.DEV_USER_ID || 'dev-user-123';
+    return next();
+  }
+
   const auth = req.headers.authorization || '';
   if (!auth.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing or invalid Authorization header' });
@@ -1460,8 +1466,22 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
 
   const choice = completion.response || completion.choices?.[0]?.message || completion;
 
-  // Defensive normalize tool calls
-  const toolCalls = choice.tool_calls || choice.tools || [];
+  // Extract tool calls from the new Responses API format
+  let toolCalls = [];
+  if (choice.output) {
+    // New Responses API format - tool calls are in the output array
+    toolCalls = choice.output.filter(item => item.type === 'function_call');
+    console.log('=== EXTRACTED TOOL CALLS FROM OUTPUT ===');
+    console.log('choice.output:', JSON.stringify(choice.output, null, 2));
+    console.log('Filtered toolCalls:', JSON.stringify(toolCalls, null, 2));
+    console.log('==========================================');
+  } else {
+    // Fallback to old format
+    toolCalls = choice.tool_calls || choice.tools || [];
+    console.log('=== USING FALLBACK TOOL CALLS ===');
+    console.log('toolCalls:', JSON.stringify(toolCalls, null, 2));
+    console.log('==================================');
+  }
 
   // Log what GPT decided to do
   console.log('=== GPT RESPONSE ===');
@@ -1507,8 +1527,21 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       const toolName = call.function?.name || call.name;
       const toolArgs = call.function?.arguments || call.arguments;
 
+      console.log('=== TOOL CALL DEBUG ===');
+      console.log('Call object:', JSON.stringify(call, null, 2));
+      console.log('Tool name:', toolName);
+      console.log('Tool args (raw):', toolArgs);
+      console.log('Tool args type:', typeof toolArgs);
+      console.log('======================');
+
       // Parse tool arguments (Responses often returns as string)
-      const args = typeof toolArgs === 'string' ? JSON.parse(toolArgs) : toolArgs;
+      let args;
+      try {
+        args = typeof toolArgs === 'string' ? JSON.parse(toolArgs) : toolArgs;
+      } catch (error) {
+        console.error('Error parsing tool arguments:', error);
+        continue; // Skip this tool call
+      }
 
       if (stream) {
         res.write(`data: ${JSON.stringify({
@@ -1554,11 +1587,15 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
       ...fullMessages,
       {
         role: 'assistant',
-        content: choice.output_text ?? choice.content ?? "",
-        tool_calls: toolCalls
+        content: choice.output_text ?? choice.content ?? ""
+        // Note: tool_calls not included for Responses API compatibility
       },
       ...toolMessages
     ];
+
+    console.log('=== MESSAGES WITH TOOL RESULT DEBUG ===');
+    console.log('messagesWithToolResult:', JSON.stringify(messagesWithToolResult, null, 2));
+    console.log('========================================');
 
     // Second call: Let GPT formulate a user-friendly response with error handling
     // Skip the "generating_response" status message - go directly to streaming
@@ -1791,7 +1828,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   } catch (error) {
     console.error('Chat endpoint error:', error);
 
-    if (stream) {
+    if (req.body.stream) {
       // For streaming responses, send error and close
       res.write(`data: ${JSON.stringify({
         type: 'error',
@@ -2491,9 +2528,33 @@ app.delete('/shifts/:id', authenticateUser, async (req, res) => {
 async function handleTool(call, user_id) {
   const fnName = call.function.name;
   // Handle both string and object arguments
-  const args = typeof call.function.arguments === 'string'
-    ? JSON.parse(call.function.arguments)
-    : call.function.arguments;
+  let args;
+  try {
+    args = typeof call.function.arguments === 'string'
+      ? JSON.parse(call.function.arguments)
+      : call.function.arguments;
+  } catch (error) {
+    console.error('Error parsing tool arguments:', error);
+    return JSON.stringify({
+      status: 'error',
+      inserted: [],
+      updated: [],
+      deleted: [],
+      shift_summary: 'Feil i argumenter'
+    });
+  }
+
+  if (!args) {
+    console.error('Tool arguments are undefined for function:', fnName);
+    return JSON.stringify({
+      status: 'error',
+      inserted: [],
+      updated: [],
+      deleted: [],
+      shift_summary: 'Manglende argumenter'
+    });
+  }
+
   let toolResult = '';
 
   if (fnName === 'addShift') {
