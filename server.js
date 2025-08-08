@@ -98,19 +98,19 @@ const addSeriesSchema = {
 
 const editShiftSchema = {
   name: 'editShift',
-  description: 'Edit an existing work shift. Can identify shift by ID, specific date/time, or natural language (e.g., "tomorrow", "Monday", "next week"). Can update date, start time, end time, or shift type.',
+  description: 'Edit an existing work shift. Use date_reference for natural language like "Friday", "tomorrow", "Monday". Only provide ONE way to identify the shift.',
   parameters: {
     type: 'object',
     properties: {
-      shift_id: { type: 'integer', description: 'ID of shift to edit (optional if other identifiers provided)' },
-      shift_date: { type: 'string', description: 'Specific date of shift to edit YYYY-MM-DD (optional)' },
-      start_time: { type: 'string', description: 'Start time of shift to edit HH:mm (optional, used with shift_date)' },
-      date_reference: { type: 'string', description: 'Natural language date reference like "tomorrow", "Monday", "next Tuesday", "today" (optional)' },
-      time_reference: { type: 'string', description: 'Time reference like "morning shift", "evening shift", or specific time "09:00" (optional)' },
-      new_start_time: { type: 'string', description: 'New start time HH:mm (optional)' },
-      new_end_time: { type: 'string', description: 'New end time HH:mm (optional)' },
-      end_time: { type: 'string', description: 'New end time HH:mm (optional, legacy)' },
-      employee_id: { type: 'string', description: 'Optional employee ID to assign shift to' }
+      // IDENTIFICATION (use only ONE of these)
+      date_reference: { type: 'string', description: 'Natural language date reference like "Friday", "tomorrow", "Monday", "next Tuesday" (PREFERRED)' },
+      shift_date: { type: 'string', description: 'Specific date YYYY-MM-DD (alternative to date_reference)' },
+      shift_id: { type: 'string', description: 'Specific shift ID (alternative to date_reference)' },
+
+      // CHANGES (provide what you want to change)
+      new_start_time: { type: 'string', description: 'New start time HH:mm' },
+      new_end_time: { type: 'string', description: 'New end time HH:mm' },
+      new_shift_date: { type: 'string', description: 'New date YYYY-MM-DD' }
     },
     required: []
   }
@@ -1383,7 +1383,11 @@ TOOL USAGE:
   * criteria_type="next" for neste uke
   * criteria_type="date_range" med from_date og to_date for måneder/perioder (f.eks. "denne måneden", "august", "siste 30 dager")
   * criteria_type="all" for alle vakter
-- editShift: bruk date_reference="Friday" for fredagsvakter, eller shift_date + start_time
+- editShift:
+  * Bruk date_reference for ukedager: "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+  * Eller bruk "tomorrow", "today", "next Monday" osv.
+  * Eksempel: {"date_reference": "Friday", "new_start_time": "15:00"}
+  * IKKE bruk shift_id=0 eller employee_id
 - Vis datoer som dd.mm.yyyy til brukeren
 
 MÅNEDLIGE SPØRRINGER: For "denne måneden", "august", "hvor mange vakter har jeg denne måneden" osv., bruk getShifts med criteria_type="date_range" og sett from_date til første dag i måneden og to_date til siste dag.
@@ -1455,15 +1459,16 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     console.error('========================');
 
-    // Handle stale response_id - retry with full history
-    if (error.status >= 400 && error.status < 500 && req.body.previous_response_id) {
-      console.log('Retrying with full history due to stale response_id');
+    // Handle stale response_id or missing tool output - retry with full history
+    if (error.status >= 400 && error.status < 500) {
+      console.log('Retrying with full history due to API error:', error.message);
       const retryPayload = {
         model: OPENAI_MODEL,
         input: fullMessages,
         tools,
         tool_choice: isMultiStep ? 'required' : 'auto',
         store: true,
+        // Remove previous_response_id to start fresh
         ...RESPONSES_CONFIG
       };
       console.log('=== RETRY PAYLOAD ===');
@@ -2756,41 +2761,24 @@ async function handleTool(call, user_id) {
         });
       }
 
-      if (existingShift && !toolResult.startsWith('ERROR:')) {
-        // Validate employee_id if provided
-        if (args.employee_id !== undefined) {
-          const validation = await validateEmployeeOwnership(user_id, args.employee_id);
-          if (!validation.valid) {
-            toolResult = JSON.stringify({
-              status: 'error',
-              inserted: [],
-              updated: [],
-              deleted: [],
-              shift_summary: validation.error
-            });
-            return toolResult;
-          }
-        }
-
+      if (existingShift && !toolResult.includes('"status":"error"')) {
         // Build update object with only provided fields
         const updateData = {};
 
-        // Handle new field names with fallback to legacy names
-        const newStartTime = args.new_start_time || args.start_time;
-        const newEndTime = args.new_end_time || args.end_time;
+        // Handle new field names
+        const newStartTime = args.new_start_time;
+        const newEndTime = args.new_end_time;
+        const newShiftDate = args.new_shift_date;
 
-        // Only update shift_date if it's different from current (and not used for finding)
-        if (args.shift_date && args.shift_date !== existingShift.shift_date) {
-          updateData.shift_date = args.shift_date;
+        // Update fields that are different from current
+        if (newShiftDate && newShiftDate !== existingShift.shift_date) {
+          updateData.shift_date = newShiftDate;
         }
         if (newStartTime && newStartTime !== existingShift.start_time) {
           updateData.start_time = newStartTime;
         }
         if (newEndTime && newEndTime !== existingShift.end_time) {
           updateData.end_time = newEndTime;
-        }
-        if (args.employee_id !== undefined) {
-          updateData.employee_id = args.employee_id;
         }
 
         // Check for collision with other shifts (excluding current shift)
