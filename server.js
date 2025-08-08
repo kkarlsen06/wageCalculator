@@ -1289,7 +1289,8 @@ app.get('/health/employees', async (req, res) => {
 
 // ---------- /chat ----------
 app.post('/chat', authenticateUser, async (req, res) => {
-  const { messages, stream = false, currentMonth, currentYear } = req.body;
+  try {
+    const { messages, stream = false, currentMonth, currentYear } = req.body;
 
   // Get user message first for system prompt customization
   const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
@@ -1776,6 +1777,26 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         assistant: assistantMessage,
         shifts: shifts || [],
         response_id: completion.id
+      });
+    }
+  }
+  } catch (error) {
+    console.error('Chat endpoint error:', error);
+
+    if (stream) {
+      // For streaming responses, send error and close
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        message: 'Det oppstod en feil. Prøv igjen.',
+        error: error.message
+      })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } else {
+      // For non-streaming responses, send JSON error
+      res.status(500).json({
+        error: 'Det oppstod en feil. Prøv igjen.',
+        details: error.message
       });
     }
   }
