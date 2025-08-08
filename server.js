@@ -71,8 +71,7 @@ const addShiftSchema = {
     properties: {
       shift_date: { type: 'string', description: 'YYYY-MM-DD' },
       start_time: { type: 'string', description: 'HH:mm' },
-      end_time:   { type: 'string', description: 'HH:mm' },
-      employee_id: { type: 'string', description: 'Optional employee ID to assign shift to' }
+      end_time:   { type: 'string', description: 'HH:mm' }
     },
     required: ['shift_date', 'start_time', 'end_time']
   }
@@ -2582,21 +2581,6 @@ async function handleTool(call, user_id) {
   let toolResult = '';
 
   if (fnName === 'addShift') {
-      // Validate employee_id if provided
-      if (args.employee_id) {
-        const validation = await validateEmployeeOwnership(user_id, args.employee_id);
-        if (!validation.valid) {
-          toolResult = JSON.stringify({
-            status: 'error',
-            inserted: [],
-            updated: [],
-            deleted: [],
-            shift_summary: validation.error
-          });
-          return toolResult;
-        }
-      }
-
       // Check for duplicate shift before inserting
       const { data: dupCheck } = await supabase
         .from('user_shifts')
@@ -2623,8 +2607,7 @@ async function handleTool(call, user_id) {
             shift_date:  args.shift_date,
             start_time:  args.start_time,
             end_time:    args.end_time,
-            shift_type:  0,
-            employee_id: args.employee_id || null
+            shift_type:  0
           })
           .select('id, shift_date, start_time, end_time')
           .single();
