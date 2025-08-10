@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 import { OpenAI } from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { calcEmployeeShift } from './payroll/calc.js';
+import { randomUUID } from 'node:crypto';
 
 // ---------- path helpers ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -34,6 +35,116 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+// ---------- simple metrics & audit (in-memory fallback) ----------
+const AGENT_BLOCK_READS = process.env.AGENT_BLOCK_READS === 'true';
+
+// metrics storage: key `${route}|${method}|${reason}` -> count
+const AGENT_WRITE_DENIED_COUNTS = new Map();
+
+function incrementAgentWriteDenied(route, method, reason) {
+  try {
+    const key = `${route}|${method}|${reason}`;
+    const current = AGENT_WRITE_DENIED_COUNTS.get(key) || 0;
+    AGENT_WRITE_DENIED_COUNTS.set(key, current + 1);
+  } catch (_) {
+    // ignore metric failures
+  }
+}
+
+const AUDIT_LOG_MEM = [];
+const AUDIT_LOG_MEM_MAX = 1000;
+
+function pickActorId(req) {
+  try {
+    if (req.user_id) return req.user_id;
+    const payload = getJwtPayloadFromAuthHeader(req);
+    return payload?.sub || payload?.user_id || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function recordAgentDeniedAttempt(req, reason, status) {
+  try {
+    const payload = {
+      id: randomUUID(),
+      actor_id: pickActorId(req),
+      route: req.baseUrl || req.originalUrl || req.path || '',
+      method: (req.method || '').toUpperCase(),
+      status: status || 403,
+      reason: reason || 'agent_write_blocked_middleware',
+      payload: req.body || null,
+      at: new Date().toISOString()
+    };
+
+    // Try to persist to DB if audit_log exists
+    try {
+      await supabase
+        .from('audit_log')
+        .insert({
+          id: payload.id,
+          actor_id: payload.actor_id,
+          route: payload.route,
+          method: payload.method,
+          status: payload.status,
+          reason: payload.reason,
+          payload: payload.payload,
+          at: payload.at
+        });
+    } catch (_) {
+      // ignore; fall back to memory below
+    }
+
+    // Always keep an in-memory ring buffer for visibility even if DB write works
+    AUDIT_LOG_MEM.push(payload);
+    if (AUDIT_LOG_MEM.length > AUDIT_LOG_MEM_MAX) {
+      AUDIT_LOG_MEM.shift();
+    }
+  } catch (_) {
+    // ignore audit failures
+  }
+}
+
+// Expose metrics in Prometheus format
+app.get('/metrics', (req, res) => {
+  try {
+    const lines = [];
+    lines.push('# HELP agent_write_denied_total Number of API attempts denied for AI agent');
+    lines.push('# TYPE agent_write_denied_total counter');
+    for (const [key, count] of AGENT_WRITE_DENIED_COUNTS.entries()) {
+      const [route, method, reason] = key.split('|');
+      const routeLabel = route.replace(/"/g, '\\"');
+      const reasonLabel = reason.replace(/"/g, '\\"');
+      lines.push(`agent_write_denied_total{route="${routeLabel}",method="${method}",reason="${reasonLabel}"} ${count}`);
+    }
+    res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    return res.send(lines.join('\n') + '\n');
+  } catch (e) {
+    return res.status(500).send('');
+  }
+});
+
+// Expose recent audit log events (DB if available, else memory)
+app.get('/audit-log/recent', async (req, res) => {
+  const limitRaw = parseInt(req.query.limit) || 50;
+  const limit = Math.min(1000, Math.max(1, limitRaw));
+  try {
+    const { data, error } = await supabase
+      .from('audit_log')
+      .select('id, actor_id, route, method, status, reason, payload, at')
+      .order('at', { ascending: false })
+      .limit(limit);
+    if (!error && data) {
+      return res.json({ rows: data });
+    }
+  } catch (_) {
+    // ignore and fall back to memory
+  }
+
+  // memory fallback
+  const rows = AUDIT_LOG_MEM.slice(-limit).reverse();
+  return res.json({ rows });
+});
 
 // In-memory fallback for org settings when DB schemas are missing
 const ORG_SETTINGS_MEM = new Map(); // key: manager_id, value: { break_policy }
@@ -1290,7 +1401,13 @@ function isAiAgent(req) {
 function blockAgentWrites(req, res, next) {
   const method = (req.method || '').toUpperCase();
   const isWrite = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
-  if (isWrite && isAiAgent(req)) {
+  const isRead = method === 'GET';
+  if ((isWrite || (AGENT_BLOCK_READS && isRead)) && isAiAgent(req)) {
+    const reason = isWrite ? 'agent_write_blocked_middleware' : 'agent_read_blocked_middleware';
+    const routeLabel = req.baseUrl || req.originalUrl || '';
+    // Audit + metrics for visibility
+    recordAgentDeniedAttempt(req, reason, 403);
+    incrementAgentWriteDenied(routeLabel, method, reason);
     return res.status(403).json({ error: 'Agent writes are not allowed' });
   }
   next();
@@ -1943,6 +2060,33 @@ function isTariffColumnError(err) {
 }
 
 
+// Normalize employee names so each word starts with an uppercase letter
+// Handles spaces, hyphens and apostrophes (e.g., "anne-marie o'neill" -> "Anne-Marie O'Neill")
+function normalizeEmployeeName(rawName) {
+  try {
+    const input = (rawName || '').toString().trim().replace(/\s+/g, ' ');
+    if (!input) return '';
+
+    const cap = (s) => (s && s.length > 0)
+      ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+      : '';
+
+    return input
+      .split(' ') // words by spaces
+      .map(word => word
+        .split('-') // handle hyphenated names
+        .map(part => part
+          .split("'") // handle apostrophes
+          .map(cap)
+          .join("'"))
+        .join('-'))
+      .join(' ');
+  } catch (_) {
+    return (rawName || '').toString().trim();
+  }
+}
+
+
 // ---------- employee CRUD endpoints ----------
 
 /**
@@ -1972,7 +2116,12 @@ app.get('/employees', authenticateUser, async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch employees' });
     }
 
-    res.json({ employees: employees || [] });
+    const normalized = (employees || []).map(emp => ({
+      ...emp,
+      name: normalizeEmployeeName(emp?.name)
+    }));
+
+    res.json({ employees: normalized });
   } catch (e) {
     console.error('GET /employees error:', e);
     res.status(500).json({ error: 'Internal server error' });
@@ -1985,11 +2134,18 @@ app.get('/employees', authenticateUser, async (req, res) => {
  */
 app.post('/employees', authenticateUser, async (req, res) => {
   try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employees', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
     const managerId = req.user_id;
     const { name, email, hourly_wage, tariff_level, birth_date, display_color } = req.body;
 
+    const normalizedName = typeof name === 'string' ? normalizeEmployeeName(name) : '';
+
     // Validation: name is required
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    if (!normalizedName || typeof normalizedName !== 'string' || normalizedName.length === 0) {
       return res.status(400).json({ error: 'Name is required' });
     }
 
@@ -2031,7 +2187,7 @@ app.post('/employees', authenticateUser, async (req, res) => {
       .from('employees')
       .select('id')
       .eq('manager_id', managerId)
-      .eq('name', name.trim())
+      .eq('name', normalizedName)
       .is('archived_at', null)
       .single();
 
@@ -2055,7 +2211,7 @@ app.post('/employees', authenticateUser, async (req, res) => {
 
     const employeeData = {
       manager_id: managerId,
-      name: name.trim(),
+      name: normalizedName,
       email: email && email.trim().length > 0 ? email.trim() : null,
       hourly_wage: wageVal,
       tariff_level: lvlVal,
@@ -2087,9 +2243,16 @@ app.post('/employees', authenticateUser, async (req, res) => {
  */
 app.put('/employees/:id', authenticateUser, async (req, res) => {
   try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employees', 'PUT', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
     const managerId = req.user_id;
     const employeeId = req.params.id;
     const { name, email, hourly_wage, tariff_level, birth_date, display_color } = req.body;
+
+    const normalizedName = (name !== undefined) ? normalizeEmployeeName(name) : undefined;
 
     // Verify the employee belongs to the current manager
     const { data: existingEmployee, error: fetchError } = await supabase
@@ -2103,7 +2266,7 @@ app.put('/employees/:id', authenticateUser, async (req, res) => {
     }
 
     // Validation: name is required if provided
-    if (name !== undefined && (!name || typeof name !== 'string' || name.trim().length === 0)) {
+    if (name !== undefined && (!normalizedName || normalizedName.length === 0)) {
       return res.status(400).json({ error: 'Name cannot be empty' });
     }
 
@@ -2141,12 +2304,12 @@ app.put('/employees/:id', authenticateUser, async (req, res) => {
     }
 
     // Check for unique (manager_id, name) constraint if name is being updated
-    if (name !== undefined && name.trim() !== existingEmployee.name) {
+    if (normalizedName !== undefined && normalizedName !== existingEmployee.name) {
       const { data: duplicateEmployee, error: checkError } = await supabase
         .from('employees')
         .select('id')
         .eq('manager_id', managerId)
-        .eq('name', name.trim())
+        .eq('name', normalizedName)
         .neq('id', employeeId)
         .is('archived_at', null)
         .single();
@@ -2163,7 +2326,7 @@ app.put('/employees/:id', authenticateUser, async (req, res) => {
 
     // Prepare update data (only include fields that are provided)
     const updateData = {};
-    if (name !== undefined) updateData.name = name.trim();
+    if (normalizedName !== undefined) updateData.name = normalizedName;
     if (email !== undefined) updateData.email = email && email.trim().length > 0 ? email.trim() : null;
     if (hourly_wage !== undefined) updateData.hourly_wage = hourly_wage !== null ? parseFloat(hourly_wage) : null;
     if (tariff_level !== undefined) updateData.tariff_level = tariff_level !== null ? parseInt(tariff_level) : 0;
@@ -2195,6 +2358,11 @@ app.put('/employees/:id', authenticateUser, async (req, res) => {
  */
 app.delete('/employees/:id', authenticateUser, async (req, res) => {
   try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employees', 'DELETE', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
     const managerId = req.user_id;
     const employeeId = req.params.id;
 
@@ -2626,7 +2794,11 @@ console.log('[BOOT] /employee-shifts routes registered');
  */
 app.post('/employee-shifts', authenticateUser, async (req, res) => {
   try {
-    if (isAiAgent(req)) return res.status(403).json({ error: 'Agent writes are not allowed' });
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employee-shifts', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
 
     const managerId = req.user_id;
     const { employee_id, shift_date, start_time, end_time, break_minutes = 0, notes } = req.body || {};
@@ -2693,7 +2865,11 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
  */
 app.put('/employee-shifts/:id', authenticateUser, async (req, res) => {
   try {
-    if (isAiAgent(req)) return res.status(403).json({ error: 'Agent writes are not allowed' });
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employee-shifts', 'PUT', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
 
     const managerId = req.user_id;
     const id = req.params.id;
@@ -2775,7 +2951,11 @@ app.put('/employee-shifts/:id', authenticateUser, async (req, res) => {
  */
 app.delete('/employee-shifts/:id', authenticateUser, async (req, res) => {
   try {
-    if (isAiAgent(req)) return res.status(403).json({ error: 'Agent writes are not allowed' });
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employee-shifts', 'DELETE', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
 
     const managerId = req.user_id;
     const id = req.params.id;
@@ -3732,7 +3912,7 @@ async function handleTool(call, user_id) {
 
             if (!empError && employees) {
               employeeMap = employees.reduce((acc, emp) => {
-                acc[emp.id] = { id: emp.id, name: emp.name, display_color: emp.display_color };
+                acc[emp.id] = { id: emp.id, name: normalizeEmployeeName(emp.name), display_color: emp.display_color };
                 return acc;
               }, {});
             }

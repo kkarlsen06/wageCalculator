@@ -40,6 +40,43 @@ export class EmployeeModal {
     }
 
     /**
+     * Get initial form defaults used by resetForm
+     */
+    getInitialFormDefaults() {
+        return {
+            name: '',
+            email: '',
+            hourly_wage: '',
+            tariff_level: 0,
+            birth_date: '',
+            display_color: '#6366f1',
+            avatar: null
+        };
+    }
+
+    /**
+     * Normalize employee name so each word is capitalized.
+     * Handles spaces, hyphens and apostrophes (e.g., "anne-marie o'neill" -> "Anne-Marie O'Neill").
+     */
+    normalizeEmployeeName(rawName) {
+        const input = (rawName ?? '').toString().trim().replace(/\s+/g, ' ');
+        if (!input) return '';
+        const cap = (s) => (s && s.length > 0)
+            ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+            : '';
+        return input
+            .split(' ')
+            .map(word => word
+                .split('-')
+                .map(part => part
+                    .split("'")
+                    .map(cap)
+                    .join("'"))
+                .join('-'))
+            .join(' ');
+    }
+
+    /**
      * Dynamically load employeeService, with test-friendly fallback
      */
     async loadEmployeeService() {
@@ -711,6 +748,18 @@ export class EmployeeModal {
      */
     handleFieldBlur(e) {
         const { name, value } = e.target;
+        if (name === 'name') {
+            const normalized = this.normalizeEmployeeName(value);
+            // Persist normalized value to form state and input
+            if (normalized !== this.formData.name) {
+                this.formData.name = normalized;
+                const input = this.modal?.querySelector('[name="name"]');
+                if (input) input.value = normalized;
+                this.updateAvatarPreview();
+            }
+            this.validateField(name, normalized);
+            return;
+        }
         this.validateField(name, value);
     }
 
@@ -881,7 +930,11 @@ export class EmployeeModal {
         // Check for changes in form data
         const hasDataChanges = Object.keys(this.formData).some(key => {
             if (key === 'avatar') return false; // Handle avatar separately
-            return normalize(this.formData[key]) !== normalize(this.originalData[key] || '');
+            const defaultOriginal = this.getInitialFormDefaults()[key];
+            const originalValue = (this.originalData[key] !== undefined)
+                ? this.originalData[key]
+                : defaultOriginal;
+            return normalize(this.formData[key]) !== normalize(originalValue);
         });
 
         return hasDataChanges || this.avatarChanged;
@@ -1156,9 +1209,10 @@ export class EmployeeModal {
             throw new Error('Valideringsfeil: Kontroller feltene');
         }
         // Create optimistic employee object
+        const normalizedName = this.normalizeEmployeeName(this.formData.name);
         const optimisticEmployee = {
             id: `temp_${Date.now()}`, // Temporary ID
-            name: this.formData.name.trim(),
+            name: normalizedName,
             email: this.formData.email.trim() || null,
             hourly_wage: this.formData.hourly_wage ? parseFloat(this.formData.hourly_wage) : null,
             birth_date: this.formData.birth_date || null,
@@ -1179,7 +1233,7 @@ export class EmployeeModal {
 
             // Prepare employee data
             const employeeData = {
-                name: this.formData.name.trim(),
+                name: normalizedName,
                 email: this.formData.email.trim() || null,
                 hourly_wage: this.formData.hourly_wage ? parseFloat(this.formData.hourly_wage) : null,
                 tariff_level: this.formData.tariff_level !== undefined ? parseInt(this.formData.tariff_level) : 0,
@@ -1233,8 +1287,9 @@ export class EmployeeModal {
         // Prepare update data (only changed fields)
         const updateData = {};
 
-        if (this.formData.name.trim() !== (this.originalData.name || '')) {
-            updateData.name = this.formData.name.trim();
+        const normalizedNameUpdate = this.normalizeEmployeeName(this.formData.name);
+        if (normalizedNameUpdate !== (this.originalData.name || '')) {
+            updateData.name = normalizedNameUpdate;
         }
 
         if (this.formData.email.trim() !== (this.originalData.email || '')) {
