@@ -17,7 +17,8 @@
     "test:employee-modal": "node dev-tests/test-employee-modal.js",
     "test:employee-crud-flows": "node dev-tests/test-employee-crud-flows.js",
     "demo:employees": "node dev-tests/demo-employees.js",
-    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel"
+    "test:agent-guard": "node dev-tests/test-agent-write-guard.js",
+    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel && npm run test:agent-guard"
   },
   "repository": {
     "type": "git",

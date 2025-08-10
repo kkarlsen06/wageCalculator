@@ -227,6 +227,18 @@ const tools = [
   { type: 'function', function: getWageDataByDateRangeSchema }
 ];
 
+// Read-only tool allowlist for AI agent (no mutation tools)
+const toolsReadOnly = [
+  { type: 'function', function: getShiftsSchema },
+  { type: 'function', function: getWageDataByWeekSchema },
+  { type: 'function', function: getWageDataByMonthSchema },
+  { type: 'function', function: getWageDataByDateRangeSchema }
+];
+
+function getToolsForRequest(req) {
+  return isAiAgent(req) ? toolsReadOnly : tools;
+}
+
 // ---------- helpers ----------
 
 // Wage calculation constants and helpers
@@ -242,6 +254,13 @@ const PRESET_WAGE_RATES = {
   5: 210.81,
   6: 256.14
 };
+
+// Map tariff level to preset wage rate; 0 => null (use custom wage)
+function getTariffRate(level) {
+  if (level === 0 || level === '0' || level === null || level === undefined) return null;
+  return PRESET_WAGE_RATES[level] ?? null;
+}
+
 const PRESET_BONUSES = {
   weekday: [
     { from: '18:00', to: '06:00', rate: 15.5 }
@@ -1065,6 +1084,94 @@ async function validateEmployeeOwnership(managerId, employeeId) {
   }
 }
 
+
+// Decode JWT payload from Authorization header (to read custom claims like ai_agent)
+function getJwtPayloadFromAuthHeader(req) {
+  try {
+    const auth = req.headers.authorization || '';
+    if (!auth.startsWith('Bearer ')) return null;
+    const token = auth.slice(7);
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const payloadJson = Buffer.from(parts[1], 'base64url').toString('utf8');
+
+    return JSON.parse(payloadJson);
+  } catch (_) {
+    return null;
+  }
+}
+
+function isAiAgent(req) {
+  const payload = getJwtPayloadFromAuthHeader(req);
+  const claim = payload?.ai_agent;
+  return claim === true || claim === 'true';
+}
+
+// ---------- middleware: block agent writes ----------
+function blockAgentWrites(req, res, next) {
+  const method = (req.method || '').toUpperCase();
+  const isWrite = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+  if (isWrite && isAiAgent(req)) {
+    return res.status(403).json({ error: 'Agent writes are not allowed' });
+  }
+  next();
+}
+
+// Apply guard early to ensure it runs before route handlers
+app.use('/employees', blockAgentWrites);
+app.use('/employee-shifts', blockAgentWrites);
+
+// Helpers for employee-shifts time fields (store as UTC timestamptz)
+function hhmmToUtcIso(shift_date, hhmm) {
+  // shift_date: YYYY-MM-DD, hhmm: HH:mm
+  return `${shift_date}T${hhmm}:00Z`;
+}
+
+function formatTimeHHmm(isoOrTzString) {
+  try {
+    const d = new Date(isoOrTzString);
+    // Return HH:mm in UTC to be consistent with storage
+    return d.toISOString().slice(11, 16);
+  } catch (_) {
+    return null;
+  }
+}
+
+async function computeEmployeeSnapshot(managerId, employeeId) {
+  // Resolve employee and ownership, then compute snapshots
+  const { data: emp, error } = await supabase
+    .from('employees')
+    .select('id, manager_id, name, hourly_wage, tariff_level, archived_at')
+    .eq('id', employeeId)
+    .single();
+
+  if (error || !emp || emp.manager_id !== managerId || emp.archived_at !== null) {
+    return {
+      ok: false,
+      statusCode: 403,
+      error: 'Employee not found, archived, or does not belong to you'
+    };
+  }
+
+  const rate = getTariffRate(emp.tariff_level);
+  const hourly = (emp.tariff_level === 0 || emp.tariff_level === '0' || rate == null)
+    ? (emp.hourly_wage != null ? Number(emp.hourly_wage) : null)
+    : Number(rate);
+
+  if (hourly == null || Number.isNaN(hourly)) {
+    return { ok: false, statusCode: 400, error: 'Employee hourly wage is not configured' };
+  }
+
+  return {
+    ok: true,
+    snapshot: {
+      employee_name_snapshot: emp.name,
+      tariff_level_snapshot: emp.tariff_level ?? 0,
+      hourly_wage_snapshot: hourly
+    }
+  };
+}
+
 // Find shifts by natural language reference
 async function findShiftsByReference(user_id, dateReference, timeReference) {
   let targetDate = null;
@@ -1278,6 +1385,9 @@ app.post('/chat', authenticateUser, async (req, res) => {
 
   // Get user information for personalization
   const { data: { user }, error: userError } = await supabase.auth.getUser(req.headers.authorization?.slice(7));
+
+  // Choose tool allowlist based on whether this is an AI agent request
+  const chatTools = getToolsForRequest(req);
   let userName = 'bruker';
   if (!userError && user) {
     userName = user.user_metadata?.first_name ||
@@ -1391,7 +1501,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: fullMessages,
-    tools,
+    tools: chatTools, // tool allowlist based on ai_agent claim
     tool_choice: isMultiStep ? 'required' : 'auto'
   });
 
@@ -1481,7 +1591,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         const streamCompletion = await openai.chat.completions.create({
           model: 'gpt-4.1',
           messages: messagesWithToolResult,
-          tools,
+          tools: chatTools,
           tool_choice: 'none',
           stream: true
         });
@@ -1525,7 +1635,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         const secondCompletion = await openai.chat.completions.create({
           model: 'gpt-4o',
           messages: messagesWithToolResult,
-          tools,
+          tools: chatTools,
           tool_choice: 'none'
         });
         assistantMessage = secondCompletion.choices[0].message.content;
@@ -1867,6 +1977,9 @@ app.delete('/employees/:id', authenticateUser, async (req, res) => {
 app.post('/employees/:id/avatar-upload-url', authenticateUser, async (req, res) => {
   try {
     const managerId  = req.user_id;
+
+
+
     const employeeId = req.params.id;
 
     // Verify the employee belongs to the current manager
@@ -1944,42 +2057,27 @@ app.get('/employees/:id/avatar-read-url', authenticateUser, async (req, res) => 
 
 /**
  * GET /shifts - List shifts for the authenticated manager
+ * Note: employee_id filtering deprecated. Use /employee-shifts for employee-scoped queries.
  * Query params:
- *   ?employee_id=uuid - Filter by specific employee
  *   ?from=YYYY-MM-DD - Start date filter
  *   ?to=YYYY-MM-DD - End date filter
  */
 app.get('/shifts', authenticateUser, async (req, res) => {
   try {
     const managerId = req.user_id;
-    const { employee_id, from, to } = req.query;
-
-    // Validate employee_id if provided
-    if (employee_id) {
-      const validation = await validateEmployeeOwnership(managerId, employee_id);
-      if (!validation.valid) {
-        return res.status(validation.statusCode || 400).json({ error: validation.error });
-      }
-    }
+    const { from, to } = req.query;
 
     // Build query
     let query = supabase
       .from('user_shifts')
-      .select('id, shift_date, start_time, end_time, shift_type, employee_id, created_at')
+      .select('id, shift_date, start_time, end_time, shift_type, created_at')
       .eq('user_id', managerId)
       .order('shift_date', { ascending: true })
       .order('start_time', { ascending: true });
 
     // Apply filters
-    if (employee_id) {
-      query = query.eq('employee_id', employee_id);
-    }
-    if (from) {
-      query = query.gte('shift_date', from);
-    }
-    if (to) {
-      query = query.lte('shift_date', to);
-    }
+    if (from) query = query.gte('shift_date', from);
+    if (to) query = query.lte('shift_date', to);
 
     const { data: shifts, error: shiftsError } = await query;
 
@@ -1988,33 +2086,7 @@ app.get('/shifts', authenticateUser, async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch shifts' });
     }
 
-    // Get employee context for shifts that have employee_id
-    const employeeIds = [...new Set(shifts.filter(s => s.employee_id).map(s => s.employee_id))];
-    let employeeMap = {};
-
-    if (employeeIds.length > 0) {
-      const { data: employees, error: empError } = await supabase
-        .from('employees')
-        .select('id, name, display_color')
-        .eq('manager_id', managerId)
-        .in('id', employeeIds)
-        .is('archived_at', null);
-
-      if (!empError && employees) {
-        employeeMap = employees.reduce((acc, emp) => {
-          acc[emp.id] = { id: emp.id, name: emp.name, display_color: emp.display_color };
-          return acc;
-        }, {});
-      }
-    }
-
-    // Add employee context to shifts
-    const shiftsWithContext = shifts.map(shift => ({
-      ...shift,
-      employee: shift.employee_id ? employeeMap[shift.employee_id] || null : null
-    }));
-
-    return res.json({ shifts: shiftsWithContext });
+    return res.json({ shifts });
   } catch (error) {
     console.error('GET /shifts error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -2023,12 +2095,12 @@ app.get('/shifts', authenticateUser, async (req, res) => {
 
 /**
  * POST /shifts - Create a new shift
- * Body: { shift_date, start_time, end_time, employee_id? }
+ * Body: { shift_date, start_time, end_time }
  */
 app.post('/shifts', authenticateUser, async (req, res) => {
   try {
     const managerId = req.user_id;
-    const { shift_date, start_time, end_time, employee_id } = req.body;
+    const { shift_date, start_time, end_time } = req.body;
 
     // Validation
     if (!shift_date || !start_time || !end_time) {
@@ -2047,15 +2119,8 @@ app.post('/shifts', authenticateUser, async (req, res) => {
       return res.status(400).json({ error: 'Invalid time format. Use HH:mm' });
     }
 
-    // Validate employee_id if provided
+    // Employee assignment moved to employee_shifts; ignore any employee_id in request
     let employeeContext = null;
-    if (employee_id) {
-      const validation = await validateEmployeeOwnership(managerId, employee_id);
-      if (!validation.valid) {
-        return res.status(validation.statusCode || 400).json({ error: validation.error });
-      }
-      employeeContext = validation.employee;
-    }
 
     // Check for duplicate shift
     const { data: existingShift } = await supabase
@@ -2084,10 +2149,9 @@ app.post('/shifts', authenticateUser, async (req, res) => {
         shift_date,
         start_time,
         end_time,
-        shift_type,
-        employee_id: employee_id || null
+        shift_type
       })
-      .select('id, shift_date, start_time, end_time, shift_type, employee_id, created_at')
+      .select('id, shift_date, start_time, end_time, shift_type, created_at')
       .single();
 
     if (insertError) {
@@ -2110,13 +2174,13 @@ app.post('/shifts', authenticateUser, async (req, res) => {
 
 /**
  * PUT /shifts/:id - Update an existing shift
- * Body: { shift_date?, start_time?, end_time?, employee_id? }
+ * Body: { shift_date?, start_time?, end_time? }
  */
 app.put('/shifts/:id', authenticateUser, async (req, res) => {
   try {
     const managerId = req.user_id;
     const shiftId = req.params.id;
-    const { shift_date, start_time, end_time, employee_id } = req.body;
+    const { shift_date, start_time, end_time } = req.body;
 
     // Verify the shift belongs to the current manager
     const { data: existingShift, error: fetchError } = await supabase
@@ -2130,20 +2194,8 @@ app.put('/shifts/:id', authenticateUser, async (req, res) => {
       return res.status(404).json({ error: 'Shift not found' });
     }
 
-    // Validate employee_id if provided
+    // Employee assignment moved to employee_shifts; ignore any employee_id in request
     let employeeContext = null;
-    if (employee_id !== undefined) {
-      if (employee_id === null) {
-        // Explicitly setting to null is valid (removing employee assignment)
-        employeeContext = null;
-      } else {
-        const validation = await validateEmployeeOwnership(managerId, employee_id);
-        if (!validation.valid) {
-          return res.status(validation.statusCode || 400).json({ error: validation.error });
-        }
-        employeeContext = validation.employee;
-      }
-    }
 
     // Validate date format if provided
     if (shift_date && !/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
@@ -2163,7 +2215,6 @@ app.put('/shifts/:id', authenticateUser, async (req, res) => {
     if (shift_date !== undefined) updateData.shift_date = shift_date;
     if (start_time !== undefined) updateData.start_time = start_time;
     if (end_time !== undefined) updateData.end_time = end_time;
-    if (employee_id !== undefined) updateData.employee_id = employee_id;
 
     // Update shift_type if date is changing
     if (shift_date) {
@@ -2204,6 +2255,265 @@ app.put('/shifts/:id', authenticateUser, async (req, res) => {
 
     if (updateError) {
       console.error('Error updating shift:', updateError);
+
+// ---------- employee-shifts CRUD endpoints ----------
+
+/**
+ * GET /employee-shifts
+ * Query: employee_id?, from?, to?, page?, limit?
+ */
+app.get('/employee-shifts', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const { employee_id, from, to } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
+
+    // If employee_id provided, ensure ownership
+    if (employee_id) {
+      const { data: emp, error } = await supabase
+        .from('employees')
+        .select('id, manager_id, archived_at')
+        .eq('id', employee_id)
+        .single();
+      if (error || !emp || emp.manager_id !== managerId || emp.archived_at !== null) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    }
+
+    let query = supabase
+      .from('employee_shifts')
+      .select('id, manager_id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at', { count: 'exact' })
+      .eq('manager_id', managerId)
+      .order('shift_date', { ascending: true })
+      .order('start_time', { ascending: true })
+      .range(offset, offset + limit - 1);
+
+    if (employee_id) query = query.eq('employee_id', employee_id);
+    if (from) query = query.gte('shift_date', from);
+    if (to) query = query.lte('shift_date', to);
+
+    const { data: rows, error, count } = await query;
+    if (error) {
+      console.error('GET /employee-shifts error:', error);
+      return res.status(500).json({ error: 'Failed to fetch employee shifts' });
+    }
+
+    const shifts = (rows || []).map(r => ({
+      id: r.id,
+      employee_id: r.employee_id,
+      employee_name_snapshot: r.employee_name_snapshot,
+      tariff_level_snapshot: r.tariff_level_snapshot,
+      hourly_wage_snapshot: Number(r.hourly_wage_snapshot),
+      shift_date: r.shift_date,
+      start_time: formatTimeHHmm(r.start_time),
+      end_time: formatTimeHHmm(r.end_time),
+      break_minutes: r.break_minutes,
+      notes: r.notes,
+      created_at: r.created_at,
+      updated_at: r.updated_at
+    }));
+
+    return res.json({
+      shifts,
+      page,
+      limit,
+      total: count ?? shifts.length
+    });
+  } catch (e) {
+    console.error('GET /employee-shifts exception:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /employee-shifts
+ * Body: { employee_id, shift_date, start_time, end_time, break_minutes?, notes? }
+ */
+app.post('/employee-shifts', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) return res.status(403).json({ error: 'Agent writes are not allowed' });
+
+    const managerId = req.user_id;
+    const { employee_id, shift_date, start_time, end_time, break_minutes = 0, notes } = req.body || {};
+
+    // Required fields
+    if (!employee_id || !shift_date || !start_time || !end_time) {
+      return res.status(400).json({ error: 'Missing required fields: employee_id, shift_date, start_time, end_time' });
+    }
+
+    // Validate formats
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
+      return res.status(400).json({ error: 'Invalid shift_date format. Use YYYY-MM-DD' });
+    }
+    if (!/^\d{2}:\d{2}$/.test(start_time) || !/^\d{2}:\d{2}$/.test(end_time)) {
+      return res.status(400).json({ error: 'Invalid time format. Use HH:mm' });
+    }
+    const breakMins = parseInt(break_minutes);
+    if (Number.isNaN(breakMins) || breakMins < 0) {
+      return res.status(400).json({ error: 'break_minutes must be a non-negative integer' });
+    }
+
+    // Compute snapshots from server-side employee row
+    const snap = await computeEmployeeSnapshot(managerId, employee_id);
+    if (!snap.ok) return res.status(snap.statusCode || 400).json({ error: snap.error });
+
+    const { data: inserted, error } = await supabase
+      .from('employee_shifts')
+      .insert({
+        manager_id: managerId,
+        employee_id,
+        employee_name_snapshot: snap.snapshot.employee_name_snapshot,
+        tariff_level_snapshot: snap.snapshot.tariff_level_snapshot,
+        hourly_wage_snapshot: snap.snapshot.hourly_wage_snapshot,
+        shift_date,
+        start_time: hhmmToUtcIso(shift_date, start_time),
+        end_time: hhmmToUtcIso(shift_date, end_time),
+        break_minutes: breakMins,
+        notes: notes ?? null
+      })
+      .select('id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at')
+      .single();
+
+    if (error) {
+      console.error('POST /employee-shifts insert error:', error);
+      return res.status(500).json({ error: 'Failed to create employee shift' });
+    }
+
+    const resp = {
+      ...inserted,
+      hourly_wage_snapshot: Number(inserted.hourly_wage_snapshot),
+      start_time: formatTimeHHmm(inserted.start_time),
+      end_time: formatTimeHHmm(inserted.end_time)
+    };
+    return res.status(201).json({ shift: resp });
+  } catch (e) {
+    console.error('POST /employee-shifts exception:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /employee-shifts/:id
+ * Body: { employee_id?, shift_date?, start_time?, end_time?, break_minutes?, notes? }
+ */
+app.put('/employee-shifts/:id', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) return res.status(403).json({ error: 'Agent writes are not allowed' });
+
+    const managerId = req.user_id;
+    const id = req.params.id;
+    const { employee_id, shift_date, start_time, end_time, break_minutes, notes } = req.body || {};
+
+    // Fetch existing row and assert ownership
+    const { data: existing, error: fetchErr } = await supabase
+      .from('employee_shifts')
+      .select('*')
+      .eq('id', id)
+      .eq('manager_id', managerId)
+      .single();
+    if (fetchErr || !existing) return res.status(404).json({ error: 'Shift not found' });
+
+    // Validate formats if provided
+    if (shift_date && !/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
+      return res.status(400).json({ error: 'Invalid shift_date format. Use YYYY-MM-DD' });
+    }
+    if ((start_time && !/^\d{2}:\d{2}$/.test(start_time)) || (end_time && !/^\d{2}:\d{2}$/.test(end_time))) {
+      return res.status(400).json({ error: 'Invalid time format. Use HH:mm' });
+    }
+    if (break_minutes !== undefined) {
+      const bm = parseInt(break_minutes);
+      if (Number.isNaN(bm) || bm < 0) return res.status(400).json({ error: 'break_minutes must be a non-negative integer' });
+    }
+
+    // Determine final employee and recompute snapshot
+    const finalEmployeeId = employee_id !== undefined ? employee_id : existing.employee_id;
+    const snap = await computeEmployeeSnapshot(managerId, finalEmployeeId);
+    if (!snap.ok) return res.status(snap.statusCode || 400).json({ error: snap.error });
+
+    // Determine final date/times
+    const finalDate = shift_date || existing.shift_date;
+    const existingStartHHmm = formatTimeHHmm(existing.start_time);
+    const existingEndHHmm = formatTimeHHmm(existing.end_time);
+    const finalStartHHmm = start_time || existingStartHHmm;
+    const finalEndHHmm = end_time || existingEndHHmm;
+
+    const updateData = {
+      employee_id: finalEmployeeId,
+      employee_name_snapshot: snap.snapshot.employee_name_snapshot,
+      tariff_level_snapshot: snap.snapshot.tariff_level_snapshot,
+      hourly_wage_snapshot: snap.snapshot.hourly_wage_snapshot
+    };
+    if (shift_date) updateData.shift_date = finalDate;
+    if (shift_date || start_time) updateData.start_time = hhmmToUtcIso(finalDate, finalStartHHmm);
+    if (shift_date || end_time) updateData.end_time = hhmmToUtcIso(finalDate, finalEndHHmm);
+    if (break_minutes !== undefined) updateData.break_minutes = parseInt(break_minutes);
+    if (notes !== undefined) updateData.notes = notes ?? null;
+
+    const { data: updated, error: updErr } = await supabase
+      .from('employee_shifts')
+      .update(updateData)
+      .eq('id', id)
+      .eq('manager_id', managerId)
+      .select('id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at')
+      .single();
+
+    if (updErr) {
+      console.error('PUT /employee-shifts update error:', updErr);
+      return res.status(500).json({ error: 'Failed to update employee shift' });
+    }
+
+    const resp = {
+      ...updated,
+      hourly_wage_snapshot: Number(updated.hourly_wage_snapshot),
+      start_time: formatTimeHHmm(updated.start_time),
+      end_time: formatTimeHHmm(updated.end_time)
+    };
+    return res.json({ shift: resp });
+  } catch (e) {
+    console.error('PUT /employee-shifts exception:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /employee-shifts/:id
+ */
+app.delete('/employee-shifts/:id', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) return res.status(403).json({ error: 'Agent writes are not allowed' });
+
+    const managerId = req.user_id;
+    const id = req.params.id;
+
+    // Ensure row belongs to manager
+    const { data: existing, error: fetchErr } = await supabase
+      .from('employee_shifts')
+      .select('id')
+      .eq('id', id)
+      .eq('manager_id', managerId)
+      .single();
+    if (fetchErr || !existing) return res.status(404).json({ error: 'Shift not found' });
+
+    const { error } = await supabase
+      .from('employee_shifts')
+      .delete()
+      .eq('id', id)
+      .eq('manager_id', managerId);
+
+    if (error) {
+      console.error('DELETE /employee-shifts error:', error);
+      return res.status(500).json({ error: 'Failed to delete employee shift' });
+    }
+
+    return res.status(204).send();
+  } catch (e) {
+    console.error('DELETE /employee-shifts exception:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
       return res.status(500).json({ error: 'Failed to update shift' });
     }
 
