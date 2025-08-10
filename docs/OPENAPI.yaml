@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: WageCalculator API
+  version: 1.0.0
+servers:
+  - url: https://wagecalculator-gbpd.onrender.com
+  - url: http://localhost:5173
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Employee:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string, nullable: true }
+        hourly_wage: { type: number, format: float, nullable: true }
+        tariff_level: { type: integer, nullable: true }
+        birth_date: { type: string, format: date, nullable: true }
+        display_color: { type: string, nullable: true }
+        profile_picture_url: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        archived_at: { type: string, format: date-time, nullable: true }
+    EmployeeShift:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        employee_id: { type: string, format: uuid }
+        employee_name_snapshot: { type: string }
+        tariff_level_snapshot: { type: integer }
+        hourly_wage_snapshot: { type: number, format: float }
+        shift_date: { type: string, format: date }
+        start_time: { type: string, description: HH:mm }
+        end_time: { type: string, description: HH:mm }
+        break_minutes: { type: integer }
+        notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        break_policy_used: { type: string }
+        duration_hours: { type: number, format: float }
+        paid_hours: { type: number, format: float }
+        gross: { type: number, format: float }
+    OrgSettings:
+      type: object
+      properties:
+        break_policy:
+          type: string
+          enum: [fixed_0_5_over_5_5h, none, proportional_across_periods, from_base_rate]
+security:
+  - bearerAuth: []
+paths:
+  /employees:
+    get:
+      summary: List employees
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  employees:
+                    type: array
+                    items: { $ref: '#/components/schemas/Employee' }
+    post:
+      summary: Create employee
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  employee: { $ref: '#/components/schemas/Employee' }
+        '403': { description: Agent writes are not allowed }
+  /employees/{id}:
+    put:
+      summary: Update employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  employee: { $ref: '#/components/schemas/Employee' }
+        '403': { description: Agent writes are not allowed }
+    delete:
+      summary: Archive employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+        '403': { description: Agent writes are not allowed }
+  /employee-shifts:
+    get:
+      summary: List employee shifts
+      parameters:
+        - in: query
+          name: employee_id
+          schema: { type: string }
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shifts:
+                    type: array
+                    items: { $ref: '#/components/schemas/EmployeeShift' }
+    post:
+      summary: Create employee shift
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shift: { $ref: '#/components/schemas/EmployeeShift' }
+        '403': { description: Agent writes are not allowed }
+  /employee-shifts/{id}:
+    put:
+      summary: Update employee shift
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shift: { $ref: '#/components/schemas/EmployeeShift' }
+        '403': { description: Agent writes are not allowed }
+    delete:
+      summary: Delete employee shift
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+        '403': { description: Agent writes are not allowed }
+  /org-settings:
+    get:
+      summary: Get organization settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrgSettings' }
+    put:
+      summary: Update organization settings
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrgSettings' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrgSettings' }
+        '403': { description: Agent writes are not allowed }
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      responses:
+        '200': { description: Prometheus text format }
+  /audit-log/recent:
+    get:
+      summary: Recent audit log entries
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, maximum: 1000 }
+      responses:
+        '200': { description: OK }
+
+

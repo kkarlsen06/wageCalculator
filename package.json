@@ -19,7 +19,8 @@
     "test:employee-crud-flows": "node dev-tests/test-employee-crud-flows.js",
     "demo:employees": "node dev-tests/demo-employees.js",
     "test:agent-guard": "node dev-tests/test-agent-write-guard.js",
-    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel && npm run test:agent-guard && npm run test:payroll"
+    "test:e2e:wages-policies": "node dev-tests/test-e2e-wages-and-policies.js",
+    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel && npm run test:agent-guard && npm run test:payroll && npm run test:e2e:wages-policies"
   },
   "repository": {
     "type": "git",
