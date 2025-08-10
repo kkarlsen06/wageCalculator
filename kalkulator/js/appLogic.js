@@ -4771,8 +4771,8 @@ export const app = {
         const nextShiftCard = document.getElementById('nextShiftCard');
         if (!nextShiftCard) return;
 
-        // Hide in Employees tab when "All" employees is selected
-        if (this.currentView === 'employees' && (this.selectedEmployeeId === null || this.selectedEmployeeId === '' || this.selectedEmployeeId === 'all')) {
+        // Always hide in Employees tab
+        if (this.currentView === 'employees') {
             nextShiftCard.style.display = 'none';
             return;
         }
@@ -5489,8 +5489,8 @@ export const app = {
 
         if (!nextPayrollContent || !nextPayrollEmpty) return;
 
-        // Hide in Employees tab when "All" employees is selected
-        if (this.currentView === 'employees' && (this.selectedEmployeeId === null || this.selectedEmployeeId === '' || this.selectedEmployeeId === 'all')) {
+        // Always hide in Employees tab
+        if (this.currentView === 'employees') {
             nextPayrollCard.style.display = 'none';
             return;
         }

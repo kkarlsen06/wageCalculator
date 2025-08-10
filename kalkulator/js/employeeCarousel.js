@@ -128,9 +128,6 @@ export class EmployeeCarousel {
             this.showLoadingState();
             this.announceLoading();
 
-            // Render "All" tile
-            const allTile = this.createAllTile();
-
             // Render employee tiles
             const employeeTiles = await this.createEmployeeTiles();
 
@@ -138,7 +135,7 @@ export class EmployeeCarousel {
             const addTile = this.createAddTile();
 
             // Combine all tiles
-            const html = allTile + employeeTiles + addTile;
+            const html = employeeTiles + addTile;
 
             // Cache and render
             this.renderCache.set(renderKey, html);
@@ -168,7 +165,7 @@ export class EmployeeCarousel {
      */
     generateRenderKey() {
         const employeeIds = this.app.employees.map(emp => emp.id).sort().join(',');
-        const selectedId = this.app.selectedEmployeeId || 'all';
+        const selectedId = this.app.selectedEmployeeId || 'none';
         return `${employeeIds}_${selectedId}_${this.app.employees.length}`;
     }
 
@@ -331,9 +328,7 @@ export class EmployeeCarousel {
         const tiles = this.track.querySelectorAll('.employee-tile');
         tiles.forEach(tile => {
             const employeeId = tile.dataset.employeeId;
-            const isActive = employeeId === 'all' ? 
-                this.app.isAllEmployeesSelected() : 
-                this.app.isEmployeeSelected(employeeId);
+            const isActive = this.app.isEmployeeSelected(employeeId);
             
             tile.classList.toggle('active', isActive);
             tile.setAttribute('aria-selected', isActive);
@@ -488,7 +483,7 @@ export class EmployeeCarousel {
                 return;
             case 'ContextMenu':
             case 'F10':
-                if (e.shiftKey && focusedTile.dataset.employeeId !== 'all') {
+                if (e.shiftKey) {
                     e.preventDefault();
                     this.showActionsMenu(focusedTile);
                 }
@@ -521,9 +516,6 @@ export class EmployeeCarousel {
 
         if (action === 'add') {
             this.handleAddEmployee();
-        } else if (employeeId === 'all') {
-            this.app.setSelectedEmployee(null);
-            this.announceSelection('Alle ansatte valgt');
         } else if (employeeId) {
             const employee = this.app.employees.find(emp => emp.id === employeeId);
             if (employee) {
@@ -562,7 +554,7 @@ export class EmployeeCarousel {
      */
     async showActionsMenu(tile) {
         const employeeId = tile.dataset.employeeId;
-        if (!employeeId || employeeId === 'all') return;
+        if (!employeeId) return;
 
         try {
             // Import actions menu dynamically
@@ -757,10 +749,9 @@ export class EmployeeCarousel {
     async renderVirtualizedUpdate() {
         try {
             const employeeTiles = await this.createVirtualizedEmployeeTiles();
-            const allTile = this.createAllTile();
             const addTile = this.createAddTile();
 
-            this.track.innerHTML = allTile + employeeTiles + addTile;
+            this.track.innerHTML = employeeTiles + addTile;
             this.updateActiveStates();
             this.updateFocusManagement();
 

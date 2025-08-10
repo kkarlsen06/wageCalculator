@@ -150,6 +150,8 @@ export class EmployeeModal {
         const rates = this.app?.PRESET_WAGE_RATES || {};
         const fmt = (n) => typeof n === 'number' ? n.toFixed(2).replace('.', ',') : '';
 
+        const showAvatarSection = this.mode === 'edit';
+
         return `
             <div class="modal-content employee-modal-content">
                 <div class="modal-header">
@@ -164,33 +166,26 @@ export class EmployeeModal {
 
                 <form class="employee-form" id="employeeForm" novalidate>
                     <div class="form-sections">
-                        <!-- Avatar Section -->
+                        ${showAvatarSection ? `
+                        <!-- Avatar Section (edit only) -->
                         <div class="form-section avatar-section">
-                            <div class="avatar-upload-container">
-                                <div class="avatar-preview" id="avatarPreview">
-                                    <div class="avatar-placeholder">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="12" cy="7" r="4"></circle>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="avatar-upload-controls">
-                                    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-                                    <button type="button" class="btn btn-secondary avatar-upload-btn">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                            <polyline points="21,15 16,10 5,21"></polyline>
-                                        </svg>
-                                        Velg bilde
-                                    </button>
-                                    <button type="button" class="btn btn-ghost avatar-remove-btn" style="display: none;">
-                                        Fjern bilde
-                                    </button>
-                                </div>
+                          <div class="avatar-upload-container">
+                            <div class="avatar-preview" id="avatarPreview">
+                              <div class="avatar-placeholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                  <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                              </div>
                             </div>
+                            <div class="avatar-upload-controls">
+                              <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                              <button type="button" class="btn btn-secondary avatar-upload-btn">Velg bilde</button>
+                              <button type="button" class="btn btn-ghost avatar-remove-btn" style="display: none;">Fjern bilde</button>
+                            </div>
+                          </div>
                         </div>
+                        ` : ''}
 
                         <!-- Basic Information -->
                         <div class="form-section">
@@ -397,7 +392,7 @@ export class EmployeeModal {
             closeBtn.addEventListener('click', this.handleCancel);
         }
 
-        // Avatar upload
+        // Avatar upload (only present in edit mode)
         const avatarUploadBtn = this.modal.querySelector('.avatar-upload-btn');
         const avatarInput = this.modal.querySelector('#avatarInput');
         if (avatarUploadBtn && avatarInput) {
@@ -405,7 +400,7 @@ export class EmployeeModal {
             avatarInput.addEventListener('change', this.handleAvatarChange);
         }
 
-        // Avatar remove
+        // Avatar remove (only present in edit mode)
         const avatarRemoveBtn = this.modal.querySelector('.avatar-remove-btn');
         if (avatarRemoveBtn) {
             avatarRemoveBtn.addEventListener('click', this.handleAvatarRemove.bind(this));
@@ -457,8 +452,10 @@ export class EmployeeModal {
         // Update effective rate preview
         this.updateEffectiveRatePreview();
 
-        // Update avatar preview
-        this.updateAvatarPreview();
+        // Update avatar preview (edit mode only)
+        if (this.mode === 'edit') {
+            this.updateAvatarPreview();
+        }
 
         // Accessibility: ensure submit button is type=submit and cancel is type=button
         const submitBtn = this.modal.querySelector('.submit-btn');
