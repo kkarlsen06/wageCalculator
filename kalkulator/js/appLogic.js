@@ -9798,8 +9798,11 @@ Hva kan jeg hjelpe deg med i dag?`;
             employeesContainer.innerHTML = `
                 <div class="employees-header">
                     <h2>Ansatte</h2>
-                    <div class="employees-summary" id="employeesSummary">
-                        <!-- Will be populated with employee count -->
+                    <div style="display:flex;align-items:center;gap:12px;">
+                      <div class="employees-summary" id="employeesSummary"></div>
+                      <button class="btn btn-primary" onclick="app.showCreateEmployeeModal()" aria-label="Legg til ansatt">
+                        + Legg til ansatt
+                      </button>
                     </div>
                 </div>
                 <div class="employee-carousel-container" id="employeeCarouselContainer">

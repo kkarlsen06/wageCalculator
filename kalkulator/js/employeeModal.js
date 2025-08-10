@@ -187,9 +187,7 @@ export class EmployeeModal {
                         </div>
                         ` : ''}
 
-                        <!-- Basic Information -->
                         <div class="form-section">
-                            <h3>Grunnleggende informasjon</h3>
 
                             <div class="form-group">
                                 <label for="employeeName" class="form-label required">
@@ -271,12 +269,18 @@ export class EmployeeModal {
                                     class="form-input"
                                     aria-describedby="birthDateError">
                                 <div class="form-error" id="birthDateError"></div>
+                                <div class="birthdate-quick-selects" id="birthdateQuickSelects" aria-hidden="false" style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                    <label class="sr-only" for="birthYearSelect">År</label>
+                                    <select id="birthYearSelect" class="form-input" style="min-width:90px"></select>
+                                    <label class="sr-only" for="birthMonthSelect">Måned</label>
+                                    <select id="birthMonthSelect" class="form-input" style="min-width:90px"></select>
+                                    <label class="sr-only" for="birthDaySelect">Dag</label>
+                                    <select id="birthDaySelect" class="form-input" style="min-width:80px"></select>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Appearance -->
                         <div class="form-section">
-                            <h3>Utseende</h3>
 
                             <div class="form-group">
                                 <label for="employeeColor" class="form-label">
@@ -416,6 +420,9 @@ export class EmployeeModal {
         // Color presets
         this.setupColorPresets();
 
+        // Birth date quick selectors
+        this.setupBirthDateSelectors();
+
         // Global event listeners
         document.addEventListener('keydown', this.handleKeyDown);
         this.modal.addEventListener('click', this.handleClickOutside);
@@ -542,10 +549,10 @@ export class EmployeeModal {
         if (!colorPresets) return;
 
         const presetColors = [
-            '#6366f1', '#8b5cf6', '#ec4899', '#ef4444',
-            '#f97316', '#f59e0b', '#eab308', '#84cc16',
-            '#22c55e', '#10b981', '#06b6d4', '#0ea5e9',
-            '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'
+            '#6366f1', '#8b5cf6', '#a855f7', '#ec4899',
+            '#ef4444', '#f97316', '#f59e0b', '#eab308',
+            '#84cc16', '#22c55e', '#10b981', '#06b6d4',
+            '#0ea5e9', '#3b82f6'
         ];
 
         colorPresets.innerHTML = presetColors.map(color => `
@@ -573,6 +580,86 @@ export class EmployeeModal {
         });
 
         this.updateColorPresetSelection();
+    }
+
+    /**
+     * Setup birth date quick selects (year, month, day)
+     */
+    setupBirthDateSelectors() {
+        if (!this.modal) return;
+        const yearSel = this.modal.querySelector('#birthYearSelect');
+        const monthSel = this.modal.querySelector('#birthMonthSelect');
+        const daySel = this.modal.querySelector('#birthDaySelect');
+        const dateInput = this.modal.querySelector('#employeeBirthDate');
+        if (!yearSel || !monthSel || !daySel || !dateInput) return;
+
+        const today = new Date();
+        const minYear = today.getFullYear() - 75;
+        const maxYear = today.getFullYear() - 13;
+
+        // Populate years
+        yearSel.innerHTML = '';
+        for (let y = maxYear; y >= minYear; y--) {
+            const opt = document.createElement('option');
+            opt.value = String(y);
+            opt.textContent = String(y);
+            yearSel.appendChild(opt);
+        }
+
+        // Populate months (1-12)
+        monthSel.innerHTML = '';
+        for (let m = 1; m <= 12; m++) {
+            const opt = document.createElement('option');
+            opt.value = String(m).padStart(2, '0');
+            opt.textContent = String(m).padStart(2, '0');
+            monthSel.appendChild(opt);
+        }
+
+        const updateDays = () => {
+            const y = parseInt(yearSel.value, 10);
+            const m = parseInt(monthSel.value, 10);
+            const daysInMonth = new Date(y, m, 0).getDate();
+            daySel.innerHTML = '';
+            for (let d = 1; d <= daysInMonth; d++) {
+                const opt = document.createElement('option');
+                opt.value = String(d).padStart(2, '0');
+                opt.textContent = String(d).padStart(2, '0');
+                daySel.appendChild(opt);
+            }
+        };
+
+        const syncDate = () => {
+            const y = yearSel.value;
+            const m = monthSel.value;
+            const d = daySel.value;
+            if (y && m && d) {
+                const iso = `${y}-${m}-${d}`;
+                dateInput.value = iso;
+                this.formData.birth_date = iso;
+                // validate field live
+                this.validateField('birth_date', iso);
+            }
+        };
+
+        // Initialize from existing value if present
+        const current = (this.formData.birth_date || '').trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(current)) {
+            const [yy, mm, dd] = current.split('-');
+            yearSel.value = yy;
+            monthSel.value = mm;
+            updateDays();
+            daySel.value = dd;
+        } else {
+            // Defaults
+            yearSel.selectedIndex = 0;
+            monthSel.value = '01';
+            updateDays();
+            daySel.value = '01';
+        }
+
+        yearSel.addEventListener('change', () => { updateDays(); syncDate(); });
+        monthSel.addEventListener('change', () => { updateDays(); syncDate(); });
+        daySel.addEventListener('change', () => { syncDate(); });
     }
 
     /**
