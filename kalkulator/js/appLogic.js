@@ -724,8 +724,8 @@ export const app = {
             container.appendChild(chip);
         });
 
-        // Show filter bar if there are employees
-        if (this.employees.length > 0) {
+        // Show filter bar only in employees view and if there are employees
+        if (this.currentView === 'employees' && this.employees.length > 0) {
             filterBar.style.display = 'block';
         } else {
             filterBar.style.display = 'none';
@@ -765,24 +765,80 @@ export const app = {
      * Handle employee filter selection
      */
     handleEmployeeFilter(employeeId) {
+        // Normalize empty string to null for "All"
+        const normalized = employeeId || null;
+
         // Update selected employee
-        this.selectedEmployeeId = employeeId;
+        this.selectedEmployeeId = normalized;
 
         // Update active state of filter chips
         const filterChips = document.querySelectorAll('.filter-chip');
         filterChips.forEach(chip => {
             const chipEmployeeId = chip.getAttribute('data-employee-id');
-            chip.classList.toggle('active', chipEmployeeId === employeeId);
+            chip.classList.toggle('active', chipEmployeeId === (normalized || ''));
         });
 
-        // Apply filter to shifts
-        this.applyEmployeeFilter();
+        // Apply or fetch based on current view
+        if (this.currentView === 'employees') {
+            this.fetchAndDisplayEmployeeShifts?.();
+        } else {
+            this.applyEmployeeFilter();
+        }
 
         // Save filter state to localStorage
-        if (employeeId) {
-            localStorage.setItem('selectedEmployeeId', employeeId);
+        if (normalized) {
+            localStorage.setItem('selectedEmployeeId', normalized);
         } else {
             localStorage.removeItem('selectedEmployeeId');
+        }
+
+        // Update add-shift modal UI if open
+        this.updateEmployeeAssignmentUIInModal?.();
+    },
+
+    // Update assignment UI inside add shift modal: show pill if selectedEmployeeId, otherwise show selectors
+    updateEmployeeAssignmentUIInModal() {
+        const pillId = 'selectedEmployeePill';
+        const existingPill = document.getElementById(pillId);
+        const employeeSelectGroup = document.getElementById('employeeSelect')?.closest('.form-group');
+        const recurringSelectGroup = document.getElementById('recurringEmployeeSelect')?.closest('.form-group');
+
+        const selectedEmployee = this.getSelectedEmployee?.() || null;
+        const inEmployeeContext = !!selectedEmployee; // selectedEmployeeId !== null
+
+        // Show/hide selects
+        if (employeeSelectGroup) employeeSelectGroup.style.display = inEmployeeContext ? 'none' : '';
+        if (recurringSelectGroup) recurringSelectGroup.style.display = inEmployeeContext ? 'none' : '';
+
+        // Create/update the pill when in employee context
+        const modal = document.getElementById('addShiftModal');
+        if (!modal) return;
+        let pill = existingPill;
+        if (!pill) {
+            pill = document.createElement('div');
+            pill.id = pillId;
+            pill.style.display = 'none';
+            pill.style.marginBottom = '16px';
+            pill.innerHTML = `
+                <div class="form-group">
+                  <label>Ansatt</label>
+                  <div class="selected-employee-pill" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface)">
+                    <span class="color-dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#888"></span>
+                    <span class="name"></span>
+                  </div>
+                </div>`;
+            const form = modal.querySelector('#shiftForm');
+            form?.insertBefore(pill, form.firstChild?.nextSibling?.nextSibling || form.firstChild);
+        }
+
+        if (inEmployeeContext && selectedEmployee) {
+            pill.style.display = '';
+            const nameEl = pill.querySelector('.name');
+            const dotEl = pill.querySelector('.color-dot');
+            if (nameEl) nameEl.textContent = selectedEmployee.name;
+            if (dotEl) dotEl.style.background = selectedEmployee.display_color || '#888';
+        } else {
+            pill.style.display = 'none';
         }
     },
 
@@ -790,17 +846,12 @@ export const app = {
      * Apply employee filter to shift display
      */
     applyEmployeeFilter() {
-        if (!this.selectedEmployeeId) {
-            // Show all shifts
+        // Only apply employee filtering in the Employees view
+        if (this.currentView !== 'employees' || !this.selectedEmployeeId) {
             this.shifts = [...this.userShifts];
         } else {
-            // Filter shifts by selected employee
-            this.shifts = this.userShifts.filter(shift =>
-                shift.employee_id === this.selectedEmployeeId
-            );
+            this.shifts = this.userShifts.filter(shift => shift.employee_id === this.selectedEmployeeId);
         }
-
-        // Update the display
         this.updateDisplay();
     },
 
@@ -869,6 +920,9 @@ export const app = {
 
         // Populate employee selectors
         this.populateEmployeeSelectors();
+
+        // Update assignment UI (pill vs selector) based on context
+        this.updateEmployeeAssignmentUIInModal();
     },
 
     // Update the selected dates info display
@@ -914,6 +968,9 @@ export const app = {
         // Show/hide employee selectors based on current view
         this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
 
+        // Reflect employee context in the modal (pill vs selectors)
+        this.updateEmployeeAssignmentUIInModal?.();
+
     },
 
     closeAddShiftModal() {
@@ -946,7 +1003,7 @@ export const app = {
             const startMinute = document.getElementById('recurringStartMinute').value || '00';
             const endHour = document.getElementById('recurringEndHour').value;
             const endMinute = document.getElementById('recurringEndMinute').value || '00';
-            const employeeId = document.getElementById('recurringEmployeeSelect').value || null;
+            const employeeId = this.selectedEmployeeId || (document.getElementById('recurringEmployeeSelect')?.value || null);
 
             if (!startDateStr || !freq || !duration || !startHour || !endHour) {
                 // Show validation alert message
@@ -1022,28 +1079,43 @@ export const app = {
 
             for (const d of dates) {
                 const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
-                const insertData = {
-                    user_id: user.id,
-                    shift_date: dateStr,
-                    start_time: `${startHour}:${startMinute}`,
-                    end_time: `${endHour}:${endMinute}`,
-                    shift_type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
-                    series_id: seriesId,
-                    employee_id: employeeId
-                };
-                const { data: saved, error } = await window.supa.from('user_shifts').insert(insertData).select().single();
-                if (error) { console.error('Gjentakende feil:', error); continue; }
 
-                this.userShifts.push({
-                    id: saved.id,
-                    date: new Date(d),
-                    startTime: `${startHour}:${startMinute}`,
-                    endTime: `${endHour}:${endMinute}`,
-                    type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
-                    seriesId,
-                    employee_id: employeeId,
-                    employee: employeeId ? this.employees.find(emp => emp.id === employeeId) : null
-                });
+                if (employeeId) {
+                    // Create employee shift via server API (with snapshots)
+                    const { data: { session } } = await window.supa.auth.getSession();
+                    const headers = { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' };
+                    const resp = await fetch(`${window.CONFIG.apiBase}/employee-shifts`, {
+                        method: 'POST', headers,
+                        body: JSON.stringify({
+                            employee_id: employeeId,
+                            shift_date: dateStr,
+                            start_time: `${startHour}:${startMinute}`,
+                            end_time: `${endHour}:${endMinute}`
+                        })
+                    });
+                    if (!resp.ok) { const e = await resp.json().catch(() => ({})); console.error('Gjentakende API-feil:', e); continue; }
+                } else {
+                    // Regular user shift with series, saved directly to user_shifts
+                    const insertData = {
+                        user_id: user.id,
+                        shift_date: dateStr,
+                        start_time: `${startHour}:${startMinute}`,
+                        end_time: `${endHour}:${endMinute}`,
+                        shift_type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
+                        series_id: seriesId
+                    };
+                    const { data: saved, error } = await window.supa.from('user_shifts').insert(insertData).select().single();
+                    if (error) { console.error('Gjentakende feil:', error); continue; }
+
+                    this.userShifts.push({
+                        id: saved.id,
+                        date: new Date(d),
+                        startTime: `${startHour}:${startMinute}`,
+                        endTime: `${endHour}:${endMinute}`,
+                        type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
+                        seriesId
+                    });
+                }
             }
 
             this.shifts = [...this.userShifts];
@@ -1093,7 +1165,7 @@ export const app = {
             const startMinute = document.getElementById('startMinute').value || '00';
             const endHour = document.getElementById('endHour').value;
             const endMinute = document.getElementById('endMinute').value || '00';
-            const employeeId = document.getElementById('employeeSelect').value || null;
+            const employeeId = this.selectedEmployeeId || (document.getElementById('employeeSelect')?.value || null);
 
             if (!startHour || !endHour) {
                 // Show validation alert message
@@ -1149,36 +1221,60 @@ export const app = {
                 // Create date string for database
                 const finalDateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
 
-                const insertData = {
-                    user_id: user.id,
-                    shift_date: finalDateStr,
-                    start_time: newShift.startTime,
-                    end_time: newShift.endTime,
-                    shift_type: newShift.type,
-                    employee_id: employeeId
-                };
+                if (employeeId) {
+                    // Employee context: route via server API to create employee_shifts with snapshots
+                    const { data: { session } } = await window.supa.auth.getSession();
+                    const headers = { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' };
+                    const resp = await fetch(`${window.CONFIG.apiBase}/employee-shifts`, {
+                        method: 'POST', headers,
+                        body: JSON.stringify({
+                            employee_id: employeeId,
+                            shift_date: finalDateStr,
+                            start_time: newShift.startTime,
+                            end_time: newShift.endTime
+                        })
+                    });
+                    if (!resp.ok) {
+                        const e = await resp.json().catch(() => ({}));
+                        console.error('addShift: Employee-shift API error:', e);
+                        alert(`Kunne ikke lagre vakt for ${finalDateStr}: ${e.error || resp.statusText}`);
+                        continue;
+                    }
+                } else {
+                    // Regular user shift
+                    const insertData = {
+                        user_id: user.id,
+                        shift_date: finalDateStr,
+                        start_time: newShift.startTime,
+                        end_time: newShift.endTime,
+                        shift_type: newShift.type
+                    };
 
-                const { data: saved, error } = await window.supa.from("user_shifts")
-                    .insert(insertData)
-                    .select()
-                    .single();
+                    const { data: saved, error } = await window.supa.from("user_shifts")
+                        .insert(insertData)
+                        .select()
+                        .single();
 
-                if (error) {
-                    console.error('addShift: Database error when saving shift:', error);
-                    alert(`Kunne ikke lagre vakt for ${finalDateStr}: ${error.message}`);
-                    continue; // Skip this date and continue with others
+                    if (error) {
+                        console.error('addShift: Database error when saving shift:', error);
+                        alert(`Kunne ikke lagre vakt for ${finalDateStr}: ${error.message}`);
+                        continue; // Skip this date and continue with others
+                    }
+
+                    newShift.id = saved.id;
+                    // Add to userShifts array only for regular shifts
+                    this.userShifts.push(newShift);
+                    createdShifts.push(newShift);
                 }
 
-                newShift.id = saved.id;
+                // For UI: keep local representation
                 newShift.employee_id = employeeId;
                 newShift.employee = employeeId ? this.employees.find(emp => emp.id === employeeId) : null;
-
-                // Add to userShifts array
-                this.userShifts.push(newShift);
-                createdShifts.push(newShift);
             }
 
             // Update this.shifts
+            // If we created employee shifts via API, optionally refresh any employee shift views here later
+
             this.shifts = [...this.userShifts];
 
             this.refreshUI(this.shifts);
@@ -1673,33 +1769,23 @@ export const app = {
             // Fetch shifts with employee data
             const { data: shifts, error: shiftsError } = await window.supa
                 .from('user_shifts')
-                .select(`
-                    *,
-                    employees:employee_id (
-                        id,
-                        name,
-                        display_color
-                    )
-                `)
+                .select('*')
                 .eq('user_id', user.id);
 
             if (shiftsError) {
                 console.error('Error fetching shifts from Supabase:', shiftsError);
             } else {
                 // Map shifts to app format
-                this.userShifts = (shifts || []).map(s => {
-                    const mappedShift = {
-                        id: s.id,
-                        date: new Date(s.shift_date + 'T00:00:00.000Z'),
-                        startTime: s.start_time,
-                        endTime: s.end_time,
-                        type: s.shift_type,
-                        seriesId: s.series_id || null,
-                        employee_id: s.employee_id || null,
-                        employee: s.employees || null
-                    };
-                    return mappedShift;
-                });
+                this.userShifts = (shifts || []).map(s => ({
+                    id: s.id,
+                    date: new Date(s.shift_date + 'T00:00:00.000Z'),
+                    startTime: s.start_time,
+                    endTime: s.end_time,
+                    type: s.shift_type,
+                    seriesId: s.series_id || null,
+                    employee_id: null,
+                    employee: null
+                }));
 
                 // Set current shifts
                 this.shifts = [...this.userShifts];
@@ -9224,6 +9310,45 @@ export const app = {
         }
     },
 
+    // Fetch and display employee shifts for the current selection in Employees tab
+    async fetchAndDisplayEmployeeShifts() {
+        try {
+            const { data: { session } } = await window.supa.auth.getSession();
+            if (!session) { console.warn('No session for employee-shifts fetch'); return; }
+
+            const headers = { 'Authorization': `Bearer ${session.access_token}` };
+            const params = new URLSearchParams();
+            if (this.selectedEmployeeId) params.set('employee_id', this.selectedEmployeeId);
+            // Optional: restrict to current month window
+            const from = `${this.currentYear}-${String(this.currentMonth).padStart(2,'0')}-01`;
+            const toDate = new Date(this.currentYear, this.currentMonth, 0); // last day of month
+            const to = `${toDate.getFullYear()}-${String(toDate.getMonth()+1).padStart(2,'0')}-${String(toDate.getDate()).padStart(2,'0')}`;
+            params.set('from', from);
+            params.set('to', to);
+            params.set('limit', '200');
+
+            const resp = await fetch(`${window.CONFIG.apiBase}/employee-shifts?${params.toString()}`, { headers });
+            if (!resp.ok) { const e = await resp.json().catch(()=>({})); console.error('Failed to fetch employee shifts:', e); return; }
+            const { shifts } = await resp.json();
+
+            // Map server employee shifts to UI shape
+            this.shifts = (shifts || []).map(s => ({
+                id: s.id,
+                date: new Date(s.shift_date + 'T00:00:00.000Z'),
+                startTime: s.start_time,
+                endTime: s.end_time,
+                type: (() => { const d = new Date(s.shift_date+'T00:00:00Z').getDay(); return d===0?2:(d===6?1:0); })(),
+                seriesId: null,
+                employee_id: s.employee_id,
+                employee: this.employees.find(e => e.id === s.employee_id) || null
+            }));
+
+            this.updateDisplay();
+        } catch (e) {
+            console.error('fetchAndDisplayEmployeeShifts error:', e);
+        }
+    },
+
     showStatsView() {
         const body = document.body;
 
@@ -9367,6 +9492,11 @@ Hva kan jeg hjelpe deg med i dag?`;
 
         // Store current view for cleanup purposes
         this.currentView = 'employees';
+
+        // Clear previous (user_shifts) list while loading employee shifts
+        this.shifts = [];
+        this.updateDisplay();
+        this.fetchAndDisplayEmployeeShifts?.();
 
         // Preload avatars for better performance
         if (this.employeeCarousel) {
@@ -10409,6 +10539,7 @@ Hva kan jeg hjelpe deg med i dag?`;
         console.log('Employee selection changed to:', this.selectedEmployeeId);
 
         // Update any UI components that depend on employee selection
+        this.applyEmployeeFilter?.();
         this.updateEmployeeCarousel?.();
         this.updateShiftList?.();
         this.updateStats?.();

@@ -1702,6 +1702,14 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     }
   }
 });
+// Helper: detect missing column errors for graceful fallback
+function isTariffColumnError(err) {
+  try {
+    const s = [err?.message, err?.details, err?.hint, err?.code].filter(Boolean).join(' | ');
+    return s.includes('tariff_level') || s.includes('42703');
+  } catch { return false; }
+}
+
 
 // ---------- employee CRUD endpoints ----------
 
@@ -1716,7 +1724,7 @@ app.get('/employees', authenticateUser, async (req, res) => {
 
     let query = supabase
       .from('employees')
-      .select('id, name, email, hourly_wage, birth_date, display_color, profile_picture_url, created_at, archived_at')
+      .select('id, name, email, hourly_wage, tariff_level, birth_date, display_color, profile_picture_url, created_at, archived_at')
       .eq('manager_id', managerId)
       .order('name');
 
@@ -1741,12 +1749,12 @@ app.get('/employees', authenticateUser, async (req, res) => {
 
 /**
  * POST /employees - Create a new employee
- * Body: { name, email?, hourly_wage?, birth_date?, display_color? }
+ * Body: { name, email?, hourly_wage?, tariff_level?, birth_date?, display_color? }
  */
 app.post('/employees', authenticateUser, async (req, res) => {
   try {
     const managerId = req.user_id;
-    const { name, email, hourly_wage, birth_date, display_color } = req.body;
+    const { name, email, hourly_wage, tariff_level, birth_date, display_color } = req.body;
 
     // Validation: name is required
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -1758,6 +1766,15 @@ app.post('/employees', authenticateUser, async (req, res) => {
       const wage = parseFloat(hourly_wage);
       if (isNaN(wage) || wage < 0) {
         return res.status(400).json({ error: 'Hourly wage must be a number >= 0' });
+      }
+    }
+
+    // Validation: tariff_level if provided
+    if (tariff_level !== undefined && tariff_level !== null) {
+      const allowed = [0, -2, -1, 1, 2, 3, 4, 5, 6];
+      const lvl = parseInt(tariff_level);
+      if (!allowed.includes(lvl)) {
+        return res.status(400).json({ error: 'Invalid tariff_level' });
       }
     }
 
@@ -1801,6 +1818,7 @@ app.post('/employees', authenticateUser, async (req, res) => {
       name: name.trim(),
       email: email && email.trim().length > 0 ? email.trim() : null,
       hourly_wage: hourly_wage !== undefined && hourly_wage !== null ? parseFloat(hourly_wage) : null,
+      tariff_level: tariff_level !== undefined && tariff_level !== null ? parseInt(tariff_level) : 0,
       birth_date: birth_date && birth_date.trim().length > 0 ? birth_date.trim() : null,
       display_color: display_color && display_color.trim().length > 0 ? display_color.trim() : null
     };
@@ -1808,7 +1826,7 @@ app.post('/employees', authenticateUser, async (req, res) => {
     const { data: newEmployee, error: insertError } = await supabase
       .from('employees')
       .insert(employeeData)
-      .select('id, name, email, hourly_wage, birth_date, display_color, profile_picture_url, created_at, archived_at')
+      .select('id, name, email, hourly_wage, tariff_level, birth_date, display_color, profile_picture_url, created_at, archived_at')
       .single();
 
     if (insertError) {
@@ -1825,18 +1843,18 @@ app.post('/employees', authenticateUser, async (req, res) => {
 
 /**
  * PUT /employees/:id - Update an existing employee
- * Body: { name?, email?, hourly_wage?, birth_date?, display_color? }
+ * Body: { name?, email?, hourly_wage?, tariff_level?, birth_date?, display_color? }
  */
 app.put('/employees/:id', authenticateUser, async (req, res) => {
   try {
     const managerId = req.user_id;
     const employeeId = req.params.id;
-    const { name, email, hourly_wage, birth_date, display_color } = req.body;
+    const { name, email, hourly_wage, tariff_level, birth_date, display_color } = req.body;
 
     // Verify the employee belongs to the current manager
     const { data: existingEmployee, error: fetchError } = await supabase
       .from('employees')
-      .select('id, name, manager_id')
+      .select('id, name, manager_id, tariff_level')
       .eq('id', employeeId)
       .single();
 
@@ -1854,6 +1872,15 @@ app.put('/employees/:id', authenticateUser, async (req, res) => {
       const wage = parseFloat(hourly_wage);
       if (isNaN(wage) || wage < 0) {
         return res.status(400).json({ error: 'Hourly wage must be a number >= 0' });
+      }
+    }
+
+    // Validation: tariff_level if provided
+    if (tariff_level !== undefined && tariff_level !== null) {
+      const allowed = [0, -2, -1, 1, 2, 3, 4, 5, 6];
+      const lvl = parseInt(tariff_level);
+      if (!allowed.includes(lvl)) {
+        return res.status(400).json({ error: 'Invalid tariff_level' });
       }
     }
 
@@ -1899,6 +1926,7 @@ app.put('/employees/:id', authenticateUser, async (req, res) => {
     if (name !== undefined) updateData.name = name.trim();
     if (email !== undefined) updateData.email = email && email.trim().length > 0 ? email.trim() : null;
     if (hourly_wage !== undefined) updateData.hourly_wage = hourly_wage !== null ? parseFloat(hourly_wage) : null;
+    if (tariff_level !== undefined) updateData.tariff_level = tariff_level !== null ? parseInt(tariff_level) : 0;
     if (birth_date !== undefined) updateData.birth_date = birth_date && birth_date.trim().length > 0 ? birth_date.trim() : null;
     if (display_color !== undefined) updateData.display_color = display_color && display_color.trim().length > 0 ? display_color.trim() : null;
 
@@ -1907,7 +1935,7 @@ app.put('/employees/:id', authenticateUser, async (req, res) => {
       .update(updateData)
       .eq('id', employeeId)
       .eq('manager_id', managerId)
-      .select('id, name, email, hourly_wage, birth_date, display_color, profile_picture_url, created_at, archived_at')
+      .select('id, name, email, hourly_wage, tariff_level, birth_date, display_color, profile_picture_url, created_at, archived_at')
       .single();
 
     if (updateError) {
@@ -1952,7 +1980,7 @@ app.delete('/employees/:id', authenticateUser, async (req, res) => {
       .update({ archived_at: new Date().toISOString() })
       .eq('id', employeeId)
       .eq('manager_id', managerId)
-      .select('id, name, email, hourly_wage, birth_date, display_color, profile_picture_url, created_at, archived_at')
+      .select('id, name, email, hourly_wage, tariff_level, birth_date, display_color, profile_picture_url, created_at, archived_at')
       .single();
 
     if (archiveError) {

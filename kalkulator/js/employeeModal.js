@@ -13,22 +13,23 @@ export class EmployeeModal {
         this.originalData = null;
         this.isSubmitting = false;
         this.validationErrors = {};
-        
+
         // Form state
         this.formData = {
             name: '',
             email: '',
             hourly_wage: '',
+            tariff_level: 0,
             birth_date: '',
             display_color: '#6366f1',
             avatar: null
         };
-        
+
         // Avatar state
         this.avatarPreview = null;
         this.avatarFile = null;
         this.avatarChanged = false;
-        
+
         // Bind methods
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleCancel = this.handleCancel.bind(this);
@@ -68,7 +69,7 @@ export class EmployeeModal {
             this.createModal();
             this.attachEventListeners();
             this.isVisible = true;
-            
+
             // Focus first input
             setTimeout(() => {
                 const firstInput = this.modal.querySelector('input[name="name"]');
@@ -76,7 +77,7 @@ export class EmployeeModal {
                     firstInput.focus();
                 }
             }, 100);
-            
+
         } catch (error) {
             console.error('Error showing employee modal:', error);
         }
@@ -87,9 +88,9 @@ export class EmployeeModal {
      */
     hide() {
         if (!this.isVisible) return;
-        
+
         this.removeEventListeners();
-        
+
         if (this.modal) {
             this.modal.classList.remove('active');
             setTimeout(() => {
@@ -99,7 +100,7 @@ export class EmployeeModal {
                 this.modal = null;
             }, 300);
         }
-        
+
         this.isVisible = false;
         this.resetForm();
     }
@@ -118,9 +119,9 @@ export class EmployeeModal {
         this.modal.id = 'employeeModal';
         this.modal.className = 'modal';
         this.modal.innerHTML = this.getModalHTML();
-        
+
         document.body.appendChild(this.modal);
-        
+
         // Trigger animation
         setTimeout(() => {
             this.modal.classList.add('active');
@@ -133,7 +134,9 @@ export class EmployeeModal {
     getModalHTML() {
         const title = this.mode === 'create' ? 'Legg til ansatt' : 'Rediger ansatt';
         const submitText = this.mode === 'create' ? 'Legg til' : 'Lagre endringer';
-        
+        const rates = this.app?.PRESET_WAGE_RATES || {};
+        const fmt = (n) => typeof n === 'number' ? n.toFixed(2).replace('.', ',') : '';
+
         return `
             <div class="modal-content employee-modal-content">
                 <div class="modal-header">
@@ -145,7 +148,7 @@ export class EmployeeModal {
                         </svg>
                     </button>
                 </div>
-                
+
                 <form class="employee-form" id="employeeForm">
                     <div class="form-sections">
                         <!-- Avatar Section -->
@@ -179,17 +182,17 @@ export class EmployeeModal {
                         <!-- Basic Information -->
                         <div class="form-section">
                             <h3>Grunnleggende informasjon</h3>
-                            
+
                             <div class="form-group">
                                 <label for="employeeName" class="form-label required">
                                     Navn
                                 </label>
-                                <input 
-                                    type="text" 
-                                    id="employeeName" 
-                                    name="name" 
-                                    class="form-input" 
-                                    required 
+                                <input
+                                    type="text"
+                                    id="employeeName"
+                                    name="name"
+                                    class="form-input"
+                                    required
                                     autocomplete="name"
                                     placeholder="Skriv inn navn"
                                     aria-describedby="nameError">
@@ -200,11 +203,11 @@ export class EmployeeModal {
                                 <label for="employeeEmail" class="form-label">
                                     E-post
                                 </label>
-                                <input 
-                                    type="email" 
-                                    id="employeeEmail" 
-                                    name="email" 
-                                    class="form-input" 
+                                <input
+                                    type="email"
+                                    id="employeeEmail"
+                                    name="email"
+                                    class="form-input"
                                     autocomplete="email"
                                     placeholder="ansatt@bedrift.no"
                                     aria-describedby="emailError">
@@ -212,15 +215,34 @@ export class EmployeeModal {
                             </div>
 
                             <div class="form-group">
+                                <label for="employeeTariff" class="form-label">
+                                    Lønnstrinn
+                                </label>
+                                <select id="employeeTariff" name="tariff_level" class="form-input" aria-describedby="tariffError">
+                                    <option value="0">Egendefinert (bruk timelønn)</option>
+                                    <option value="-2">Unge arbeidstakere under 18 år (${fmt(rates['-2'])} kr/t)</option>
+                                    <option value="-1">Unge arbeidstakere under 16 år (${fmt(rates['-1'])} kr/t)</option>
+                                    <option value="1">Trinn 1 (${fmt(rates[1])} kr/t)</option>
+                                    <option value="2">Trinn 2 (${fmt(rates[2])} kr/t)</option>
+                                    <option value="3">Trinn 3 (${fmt(rates[3])} kr/t)</option>
+                                    <option value="4">Trinn 4 (${fmt(rates[4])} kr/t)</option>
+                                    <option value="5">Trinn 5 (${fmt(rates[5])} kr/t)</option>
+                                    <option value="6">Trinn 6 (${fmt(rates[6])} kr/t)</option>
+                                </select>
+                                <div class="form-error" id="tariffError"></div>
+                                <div class="help-text" id="effectiveRateHelp">Effektiv sats: <span id="effectiveRatePreview">-</span></div>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="employeeWage" class="form-label">
                                     Timelønn (kr)
                                 </label>
-                                <input 
-                                    type="number" 
-                                    id="employeeWage" 
-                                    name="hourly_wage" 
-                                    class="form-input" 
-                                    min="0" 
+                                <input
+                                    type="number"
+                                    id="employeeWage"
+                                    name="hourly_wage"
+                                    class="form-input"
+                                    min="0"
                                     step="0.01"
                                     placeholder="250.00"
                                     aria-describedby="wageError">
@@ -231,10 +253,10 @@ export class EmployeeModal {
                                 <label for="employeeBirthDate" class="form-label">
                                     Fødselsdato
                                 </label>
-                                <input 
-                                    type="date" 
-                                    id="employeeBirthDate" 
-                                    name="birth_date" 
+                                <input
+                                    type="date"
+                                    id="employeeBirthDate"
+                                    name="birth_date"
                                     class="form-input"
                                     aria-describedby="birthDateError">
                                 <div class="form-error" id="birthDateError"></div>
@@ -244,16 +266,16 @@ export class EmployeeModal {
                         <!-- Appearance -->
                         <div class="form-section">
                             <h3>Utseende</h3>
-                            
+
                             <div class="form-group">
                                 <label for="employeeColor" class="form-label">
                                     Visningsfarge
                                 </label>
                                 <div class="color-picker-container">
-                                    <input 
-                                        type="color" 
-                                        id="employeeColor" 
-                                        name="display_color" 
+                                    <input
+                                        type="color"
+                                        id="employeeColor"
+                                        name="display_color"
                                         class="color-input"
                                         value="#6366f1">
                                     <div class="color-presets" id="colorPresets">
@@ -294,11 +316,12 @@ export class EmployeeModal {
             name: '',
             email: '',
             hourly_wage: '',
+            tariff_level: 0,
             birth_date: '',
             display_color: '#6366f1',
             avatar: null
         };
-        
+
         this.validationErrors = {};
         this.avatarPreview = null;
         this.avatarFile = null;
@@ -315,11 +338,12 @@ export class EmployeeModal {
             name: employee.name || '',
             email: employee.email || '',
             hourly_wage: employee.hourly_wage || '',
+            tariff_level: (employee.tariff_level !== undefined && employee.tariff_level !== null) ? employee.tariff_level : 0,
             birth_date: employee.birth_date || '',
             display_color: employee.display_color || '#6366f1',
             avatar: null
         };
-        
+
         // Load avatar if exists
         if (employee.id) {
             try {
@@ -414,9 +438,37 @@ export class EmployeeModal {
             }
         });
 
+        // Update effective rate preview
+        this.updateEffectiveRatePreview();
+
         // Update avatar preview
         this.updateAvatarPreview();
     }
+    /**
+     * Update effective rate preview
+     */
+    updateEffectiveRatePreview() {
+        if (!this.modal) return;
+        const level = parseInt(this.formData.tariff_level || 0);
+        const rates = this.app?.PRESET_WAGE_RATES || {};
+        let rate = null;
+        if (level === 0) {
+            const hw = this.formData.hourly_wage;
+            rate = hw !== '' && hw !== null && hw !== undefined ? parseFloat(hw) : null;
+        } else {
+            rate = rates[level] ?? null;
+        }
+        const el = this.modal.querySelector('#effectiveRatePreview');
+        if (el) {
+            el.textContent = (rate != null && !Number.isNaN(rate)) ? `${rate.toFixed(2).replace('.', ',')} kr/t` : '-';
+        }
+        // Disable hourly_wage input when using tariff level (not custom)
+        const wageInput = this.modal.querySelector('#employeeWage');
+        if (wageInput) {
+            wageInput.disabled = level !== 0;
+        }
+    }
+
 
     /**
      * Update avatar preview
@@ -483,6 +535,7 @@ export class EmployeeModal {
         colorPresets.addEventListener('click', (e) => {
             const preset = e.target.closest('.color-preset');
             if (preset) {
+
                 const color = preset.dataset.color;
                 this.formData.display_color = color;
 
@@ -531,6 +584,11 @@ export class EmployeeModal {
             // Update color preset selection if color changed
             if (name === 'display_color') {
                 this.updateColorPresetSelection();
+            }
+
+            // Update effective rate preview when tariff_level or hourly_wage changes
+            if (name === 'tariff_level' || name === 'hourly_wage') {
+                this.updateEffectiveRatePreview();
             }
         }
     }
@@ -751,6 +809,9 @@ export class EmployeeModal {
         if (!this.validateField('display_color', this.formData.display_color)) {
             isValid = false;
         }
+        if (!this.validateField('tariff_level', this.formData.tariff_level)) {
+            isValid = false;
+        }
 
         // Update UI with validation errors
         this.updateValidationUI();
@@ -842,6 +903,21 @@ export class EmployeeModal {
                     errorMessage = 'Ugyldig fargeformat (må være hex-format som #FF0000)';
                     isValid = false;
                 }
+                break;
+
+            case 'tariff_level':
+                if (value === undefined || value === null || value === '') {
+                    errorMessage = 'Velg lønnstrinn eller Egendefinert';
+                    isValid = false;
+                } else {
+                    const intVal = parseInt(value);
+                    const allowed = [0, -2, -1, 1, 2, 3, 4, 5, 6];
+                    if (!allowed.includes(intVal)) {
+                        errorMessage = 'Ugyldig lønnstrinn';
+                        isValid = false;
+                    }
+                }
+                break;
                 break;
         }
 
@@ -978,6 +1054,7 @@ export class EmployeeModal {
                 name: this.formData.name.trim(),
                 email: this.formData.email.trim() || null,
                 hourly_wage: this.formData.hourly_wage ? parseFloat(this.formData.hourly_wage) : null,
+                tariff_level: this.formData.tariff_level !== undefined ? parseInt(this.formData.tariff_level) : 0,
                 birth_date: this.formData.birth_date || null,
                 display_color: this.formData.display_color
             };
@@ -1037,6 +1114,11 @@ export class EmployeeModal {
         const newWage = this.formData.hourly_wage ? parseFloat(this.formData.hourly_wage) : null;
         if (newWage !== this.originalData.hourly_wage) {
             updateData.hourly_wage = newWage;
+        }
+
+        const newLevel = this.formData.tariff_level !== undefined ? parseInt(this.formData.tariff_level) : 0;
+        if (newLevel !== (this.originalData.tariff_level ?? 0)) {
+            updateData.tariff_level = newLevel;
         }
 
         if (this.formData.birth_date !== (this.originalData.birth_date || '')) {
