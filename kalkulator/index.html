@@ -354,11 +354,12 @@
       <!-- Settings Modal -->
       <div id="settingsModal" class="modal">
           <div class="modal-content">
-              <div class="tab-nav">
-                  <button class="tab-btn active" onclick="app.switchSettingsTabSync('wage')">Lønn</button>
-                  <button class="tab-btn" onclick="app.switchSettingsTabSync('interface')">UI</button>
-                  <button class="tab-btn" onclick="app.switchSettingsTabSync('data')">Data</button>
-              </div>
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-tab="wage" onclick="app.switchSettingsTabSync('wage')">Lønn</button>
+                    <button class="tab-btn" data-tab="interface" onclick="app.switchSettingsTabSync('interface')">UI</button>
+                    <button class="tab-btn" data-tab="org" onclick="app.switchSettingsTabSync('org')">Bedrift</button>
+                    <button class="tab-btn" data-tab="data" onclick="app.switchSettingsTabSync('data')">Data</button>
+                </div>
 
               <div class="tab-content-wrapper">
                   <div id="wageTab" class="tab-content active">
@@ -542,6 +543,38 @@
                       <small class="form-hint">Velg hvilken dag i måneden du får utbetalt lønn (1-31)</small>
                   </div>
               </div>
+
+                  <div id="orgTab" class="tab-content">
+                      <div class="form-group form-group-with-hint">
+                          <label>Organisasjonsinnstillinger</label>
+                          <small class="form-hint">Gjelder alle ansatte ved lønnsberegning</small>
+                      </div>
+                      <div class="form-group form-group-with-hint">
+                          <div class="toggle-container">
+                              <label for="orgIsWageCaregiverToggle" class="toggle-label">Er lønnsansvarlig</label>
+                              <div class="toggle-switch">
+                                  <input type="checkbox" id="orgIsWageCaregiverToggle" class="toggle-input" onchange="app.onOrgWageCaregiverToggle()">
+                                  <span class="toggle-slider"></span>
+                              </div>
+                          </div>
+                          <small class="form-hint">Aktiverer funksjoner for teamledere som beregner lønn for ansatte</small>
+                      </div>
+
+                      <div class="form-group" id="orgBreakPolicySection">
+                          <label for="breakPolicySelect">Pausetrekk-policy</label>
+                          <select id="breakPolicySelect" class="form-control">
+                              <option value="proportional_across_periods">Proporsjonal (anbefalt)</option>
+                              <option value="from_base_rate">Kun grunnlønn</option>
+                              <option value="fixed_0_5_over_5_5h">Slutt av vakt (legacy)</option>
+                              <option value="none">Ingen trekk (betalt pause)</option>
+                          </select>
+                          <small class="form-hint">Endringen påvirker rapporter/oversikter for ansattes vakter.</small>
+                      </div>
+
+                      <div class="form-group" id="orgSaveRow">
+                          <button class="btn btn-primary" onclick="app.saveOrgSettings()">Lagre</button>
+                      </div>
+                  </div>
 
               <div id="interfaceTab" class="tab-content">
                   <div class="form-group form-group-with-hint">

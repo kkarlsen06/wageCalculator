@@ -229,8 +229,11 @@ export class EmployeeModal {
                                     <option value="5">Trinn 5 (${fmt(rates[5])} kr/t)</option>
                                     <option value="6">Trinn 6 (${fmt(rates[6])} kr/t)</option>
                                 </select>
-                                <div class="form-error" id="tariffError"></div>
-                                <div class="help-text" id="effectiveRateHelp">Effektiv sats: <span id="effectiveRatePreview">-</span></div>
+                <div class="form-error" id="tariffError"></div>
+                <div class="help-text" id="effectiveRateHelp">Effektiv sats: <span id="effectiveRatePreview">-</span></div>
+                <div class="help-text" style="margin-top:6px;">
+                    <small>Tariffnivå lagres, og satsen snappes på hver vakt.</small>
+                </div>
                             </div>
 
                             <div class="form-group">

@@ -13,12 +13,13 @@
     "test:health": "node dev-tests/test-health-employees.js",
     "test:employees": "node dev-tests/test-employees-crud.js",
     "test:employees-complete": "node dev-tests/test-employees-complete.js",
+    "test:payroll": "node dev-tests/test-payroll-calc.js",
     "test:employee-carousel": "node dev-tests/run-employee-tests.js",
     "test:employee-modal": "node dev-tests/test-employee-modal.js",
     "test:employee-crud-flows": "node dev-tests/test-employee-crud-flows.js",
     "demo:employees": "node dev-tests/demo-employees.js",
     "test:agent-guard": "node dev-tests/test-agent-write-guard.js",
-    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel && npm run test:agent-guard"
+    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel && npm run test:agent-guard && npm run test:payroll"
   },
   "repository": {
     "type": "git",

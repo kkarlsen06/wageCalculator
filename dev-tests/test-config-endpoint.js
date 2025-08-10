@@ -26,6 +26,13 @@ async function testConfigEndpoint() {
         }
         
         console.log('✅ Config endpoint working correctly');
+        // Also sanity check org-settings if server is running with auth bypass in tests
+        try {
+            const res2 = await fetch(`${API_BASE}/org-settings`, { headers: { Authorization: 'Bearer test' }});
+            console.log('📡 /org-settings status:', res2.status);
+        } catch (e) {
+            // ignore in environments without auth token
+        }
         console.log(`✅ Employees feature flag: ${config.features.employees}`);
         
         return true;

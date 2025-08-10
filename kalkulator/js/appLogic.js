@@ -229,6 +229,8 @@ export const app = {
         5: 210.81,
         6: 256.14
     },
+    // Organization settings cache
+    orgSettings: { break_policy: 'fixed_0_5_over_5_5h' },
     PRESET_BONUSES: {
         weekday: [
             { from: "18:00", to: "21:00", rate: 22 },
@@ -285,7 +287,32 @@ export const app = {
     employeesLoading: false, // Loading state for employee operations
     employeesError: null, // Error state for employee operations
     employeeAvatarCache: new Map(), // Cache for employee avatar URLs
+    async getAuthHeaders() {
+        try {
+            const { data: { session } } = await window.supa.auth.getSession();
+            const token = session?.access_token;
+            return {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            };
+        } catch (_) {
+            return { 'Content-Type': 'application/json' };
+        }
+    },
     async init() {
+        // Load organization settings for manager
+        try {
+            const headers = await this.getAuthHeaders?.();
+            const res = await fetch(`${window.CONFIG.apiBase}/org-settings`, { headers });
+            if (res.ok) {
+                const json = await res.json();
+                if (json && json.break_policy) {
+                    this.orgSettings = { break_policy: json.break_policy };
+                }
+            }
+        } catch (_) {
+            // ignore
+        }
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
 
@@ -461,6 +488,58 @@ export const app = {
         window.addEventListener('beforeunload', () => {
             this.cleanup();
         });
+    },
+
+    
+
+    async saveOrgSettings() {
+        try {
+            const sel = document.getElementById('breakPolicySelect');
+            if (!sel) return;
+            const break_policy = sel.value;
+            const headers = await this.getAuthHeaders();
+            const res = await fetch(`${window.CONFIG.apiBase}/org-settings`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({ break_policy })
+            });
+            if (res.ok) {
+                const json = await res.json();
+                this.orgSettings = { break_policy: json.break_policy };
+                if (window.showToast) window.showToast('Lagret', 'success');
+                this.updateOrgSettingsUI();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Kunne ikke lagre');
+            }
+        } catch (e) {
+            console.error('saveOrgSettings error', e);
+            if (window.showToast) window.showToast('Kunne ikke lagre', 'error');
+        }
+    },
+
+    onOrgWageCaregiverToggle() {
+        const toggle = document.getElementById('orgIsWageCaregiverToggle');
+        this.isWageCaregiver = !!(toggle && toggle.checked);
+        this.updateOrgSettingsUI();
+        // Reflect change immediately in the tab bar (show/hide Ansatte tab)
+        this.updateTabBarVisibility();
+        // Keep profile modal toggle in sync if open
+        const profileToggle = document.getElementById('isWageCaregiverToggle');
+        if (profileToggle) profileToggle.checked = this.isWageCaregiver;
+        // Persist flag in user_settings where we store profile-like preferences
+        this.saveSettingsToSupabase();
+    },
+
+    updateOrgSettingsUI() {
+        const disabled = !this.isWageCaregiver;
+        const section = document.getElementById('orgBreakPolicySection');
+        const saveRow = document.getElementById('orgSaveRow');
+        const select = document.getElementById('breakPolicySelect');
+        [section, saveRow].forEach(el => { if (el) el.style.opacity = disabled ? '0.5' : '1'; });
+        if (select) select.disabled = disabled;
+        const btn = saveRow ? saveRow.querySelector('button') : null;
+        if (btn) btn.disabled = disabled;
     },
 
 
@@ -1913,7 +1992,12 @@ export const app = {
 
         const pauseDeductionMethodSelect = document.getElementById('pauseDeductionMethodSelect');
         if (pauseDeductionMethodSelect) {
-            pauseDeductionMethodSelect.value = this.pauseDeductionMethod;
+            // Map org break policy to closest UI method for display
+            const policy = this.orgSettings?.break_policy;
+            const mapped = policy === 'fixed_0_5_over_5_5h' ? 'end_of_shift'
+                         : policy === 'none' ? 'none'
+                         : this.pauseDeductionMethod;
+            pauseDeductionMethodSelect.value = mapped;
         }
 
         const pauseThresholdInput = document.getElementById('pauseThresholdInput');
@@ -2305,50 +2389,74 @@ export const app = {
     },
 
     async switchSettingsTab(tab) {
-        // Get current active tab before switching (within settings modal only)
+        // Within settings modal only
         const settingsModal = document.getElementById('settingsModal');
-        const currentActiveTab = settingsModal?.querySelector('.tab-btn.active');
-        const currentTab = currentActiveTab ?
-            (currentActiveTab.textContent === 'Lønn' ? 'wage' :
-             currentActiveTab.textContent === 'UI' ? 'interface' :
-             currentActiveTab.textContent === 'Data' ? 'data' :
-             'wage') : null;
+        if (!settingsModal) return;
+
+        // Determine current active tab for autosave behavior
+        const currentActiveBtn = settingsModal.querySelector('.tab-nav .tab-btn.active');
+        const currentTab = currentActiveBtn?.dataset?.tab
+          || (currentActiveBtn?.textContent?.trim() === 'Lønn' ? 'wage'
+              : currentActiveBtn?.textContent?.trim() === 'UI' ? 'interface'
+              : currentActiveBtn?.textContent?.trim() === 'Bedrift' ? 'org'
+              : currentActiveBtn?.textContent?.trim() === 'Data' ? 'data'
+              : null);
 
         // If switching away from wage tab and in custom mode, auto-save bonuses
         if (currentTab === 'wage' && !this.usePreset && tab !== 'wage') {
             await this.saveCustomBonusesSilent();
         }
 
-        const tabs = ['wage', 'interface', 'data'];
-        const btns = settingsModal?.querySelectorAll('.tab-nav .tab-btn') || [];
-        tabs.forEach((t, i) => {
-            const btn = btns[i];
-            if (btn) {
-                btn.classList.toggle('active', t === tab);
-            }
-            const content = document.getElementById(`${t}Tab`);
-            if (content) {
-                content.classList.toggle('active', t === tab);
-            }
+        // Toggle buttons by data-tab
+        const btns = settingsModal.querySelectorAll('.tab-nav .tab-btn');
+        btns.forEach(btn => {
+            const btnTab = btn.dataset?.tab
+              || (btn.textContent?.trim() === 'Lønn' ? 'wage'
+                  : btn.textContent?.trim() === 'UI' ? 'interface'
+                  : btn.textContent?.trim() === 'Bedrift' ? 'org'
+                  : btn.textContent?.trim() === 'Data' ? 'data'
+                  : '');
+            btn.classList.toggle('active', btnTab === tab);
         });
 
-        // When switching to wage tab and custom mode is active, populate bonus slots
+        // Toggle tab contents
+        const contentIds = ['wageTab','interfaceTab','orgTab','dataTab'];
+        contentIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('active', id === `${tab}Tab`);
+        });
+
+        // Post-switch behaviors
         if (tab === 'wage' && !this.usePreset) {
-            setTimeout(() => {
-                this.populateCustomBonusSlots();
-            }, 100);
+            setTimeout(() => this.populateCustomBonusSlots(), 100);
         }
-
-
-
-        // When switching to data tab, setup export period options
         if (tab === 'data') {
-            setTimeout(() => {
-                this.setupExportPeriodOptions();
-            }, 100);
+            setTimeout(() => this.setupExportPeriodOptions(), 100);
         }
+        if (tab === 'org') {
+            const sel = document.getElementById('breakPolicySelect');
+            if (sel && this.orgSettings?.break_policy) sel.value = this.orgSettings.break_policy;
 
+            // Initialize wage caregiver toggle and UI state
+            const orgToggle = document.getElementById('orgIsWageCaregiverToggle');
+            if (orgToggle) {
+                orgToggle.checked = !!this.isWageCaregiver;
+                orgToggle.disabled = false;
+                orgToggle.onchange = () => this.onOrgWageCaregiverToggle();
 
+                const slider = document.querySelector('#orgIsWageCaregiverToggle + .toggle-slider');
+                if (slider) {
+                    slider.style.cursor = 'pointer';
+                    slider.onclick = (e) => {
+                        e.preventDefault();
+                        orgToggle.checked = !orgToggle.checked;
+                        this.onOrgWageCaregiverToggle();
+                    };
+                }
+            }
+
+            this.updateOrgSettingsUI();
+        }
     },
 
 
@@ -9139,16 +9247,24 @@ export const app = {
 
     // Tab bar functionality
     setupTabBarEventListeners() {
-        const tabButtons = document.querySelectorAll('.tab-btn');
+        // Only bind to top-level tab bar buttons that actually switch views
+        const tabButtons = document.querySelectorAll('.tab-bar .tab-btn[data-view]');
         tabButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const view = button.getAttribute('data-view');
+                if (!view) return; // Safety: ignore buttons without a view
                 this.switchToView(view);
             });
         });
     },
 
     switchToView(view) {
+        // Guard against accidental calls from non-view buttons
+        const validViews = new Set(['dashboard', 'stats', 'chatgpt', 'employees']);
+        if (!validViews.has(view)) {
+            console.warn('switchToView: ignoring invalid view', view);
+            return;
+        }
         // Update active tab button
         const tabButtons = document.querySelectorAll('.tab-btn');
         tabButtons.forEach(btn => {

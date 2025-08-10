@@ -10,6 +10,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { OpenAI } from 'openai';
 import { createClient } from '@supabase/supabase-js';
+import { calcEmployeeShift } from './payroll/calc.js';
 
 // ---------- path helpers ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -33,6 +34,9 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+
+// In-memory fallback for org settings when DB schemas are missing
+const ORG_SETTINGS_MEM = new Map(); // key: manager_id, value: { break_policy }
 
 // ---------- auth middleware ----------
 async function authenticateUser(req, res, next) {
@@ -280,6 +284,177 @@ function timeToMinutes(timeStr) {
   const [hours, minutes] = timeStr.split(':').map(Number);
   return hours * 60 + minutes;
 }
+
+// ---------- Organization settings helpers ----------
+const BREAK_POLICY_ALLOWED = new Set([
+  'fixed_0_5_over_5_5h',
+  'none',
+  'proportional_across_periods',
+  'from_base_rate'
+]);
+
+function isRelationMissing(error) {
+  const code = error?.code || error?.details || '';
+  const msg = (error?.message || '').toLowerCase();
+  return code === '42P01' || (msg.includes('relation') && msg.includes('does not exist'));
+}
+
+function isColumnMissing(error) {
+  const code = error?.code || error?.details || '';
+  const msg = (error?.message || '').toLowerCase();
+  return code === '42703' || (msg.includes('column') && msg.includes('does not exist'));
+}
+
+async function getOrgSettings(managerId) {
+  // Prefer dedicated table organization_settings if exists
+  try {
+    const { data, error } = await supabase
+      .from('organization_settings')
+      .select('break_policy')
+      .eq('manager_id', managerId)
+      .single();
+    if (!error && data) {
+      const policy = BREAK_POLICY_ALLOWED.has(data.break_policy) ? data.break_policy : 'proportional_across_periods';
+      return { break_policy: policy };
+    }
+    if (error && !isRelationMissing(error)) {
+      // Table exists but other error (or no row)
+      if (error.code === 'PGRST116') {
+        // No row; fall through to next storage or memory default
+      } else {
+        console.warn('[org-settings] organization_settings error:', error);
+      }
+    }
+  } catch (e) {
+    // ignore, try user_settings
+  }
+
+  // Fallback: read from user_settings if column exists
+  try {
+    const { data: settings, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', managerId)
+      .single();
+    if (!error && settings) {
+      const policy = settings.break_policy && BREAK_POLICY_ALLOWED.has(settings.break_policy)
+        ? settings.break_policy
+        : 'proportional_across_periods';
+      return { break_policy: policy };
+    }
+    if (error) {
+      if (!isRelationMissing(error) && !isColumnMissing(error) && error.code !== 'PGRST116') {
+        console.warn('[org-settings] user_settings error:', error);
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Memory fallback
+  const mem = ORG_SETTINGS_MEM.get(managerId) || { break_policy: 'fixed_0_5_over_5_5h' };
+  return mem;
+}
+
+async function setOrgSettings(managerId, break_policy) {
+  const finalPolicy = BREAK_POLICY_ALLOWED.has(break_policy) ? break_policy : 'proportional_across_periods';
+
+  // Try dedicated table first
+  try {
+    // Upsert organization_settings
+    const { data, error } = await supabase
+      .from('organization_settings')
+      .upsert({ manager_id: managerId, break_policy: finalPolicy, updated_at: new Date().toISOString() }, { onConflict: 'manager_id' })
+      .select('break_policy')
+      .single();
+    if (!error && data) return { break_policy: data.break_policy };
+    if (error && !isRelationMissing(error)) {
+      console.warn('[org-settings] upsert organization_settings error:', error);
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Fallback: user_settings if column present
+  try {
+    // Ensure a row exists
+    const { data: existing, error: fetchErr } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', managerId)
+      .single();
+    if (fetchErr && fetchErr.code !== 'PGRST116' && !isRelationMissing(fetchErr)) {
+      console.warn('[org-settings] fetch user_settings error:', fetchErr);
+    }
+    if (!existing) {
+      // Insert new row with possible break_policy if column exists
+      const insertObj = { user_id: managerId, updated_at: new Date().toISOString(), break_policy: finalPolicy };
+      const { data: inserted, error: insertErr } = await supabase
+        .from('user_settings')
+        .insert(insertObj)
+        .select('*')
+        .single();
+      if (!insertErr && inserted && 'break_policy' in inserted) {
+        return { break_policy: inserted.break_policy };
+      }
+      if (insertErr) {
+        if (!isColumnMissing(insertErr) && !isRelationMissing(insertErr)) {
+          console.warn('[org-settings] insert user_settings error:', insertErr);
+        }
+      }
+    } else {
+      // Update existing
+      const { data: updated, error: updateErr } = await supabase
+        .from('user_settings')
+        .update({ break_policy: finalPolicy, updated_at: new Date().toISOString() })
+        .eq('user_id', managerId)
+        .select('*')
+        .single();
+      if (!updateErr && updated && 'break_policy' in updated) {
+        return { break_policy: updated.break_policy };
+      }
+      if (updateErr) {
+        if (!isColumnMissing(updateErr) && !isRelationMissing(updateErr)) {
+          console.warn('[org-settings] update user_settings error:', updateErr);
+        }
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Memory fallback as last resort
+  ORG_SETTINGS_MEM.set(managerId, { break_policy: finalPolicy });
+  return { break_policy: finalPolicy };
+}
+
+// ---------- /org-settings ----------
+app.get('/org-settings', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const settings = await getOrgSettings(managerId);
+    return res.json({ break_policy: settings.break_policy });
+  } catch (e) {
+    console.error('GET /org-settings error:', e);
+    return res.status(500).json({ error: 'Failed to fetch organization settings' });
+  }
+});
+
+app.put('/org-settings', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) return res.status(403).json({ error: 'Agent writes are not allowed' });
+    const managerId = req.user_id;
+    const { break_policy } = req.body || {};
+    if (!BREAK_POLICY_ALLOWED.has(break_policy)) {
+      return res.status(400).json({ error: 'Invalid break_policy' });
+    }
+    const updated = await setOrgSettings(managerId, break_policy);
+    return res.json({ break_policy: updated.break_policy });
+  } catch (e) {
+    console.error('PUT /org-settings error:', e);
+    return res.status(500).json({ error: 'Failed to update organization settings' });
+  }
+});
 
 function minutesToTime(minutes) {
   // Convert minutes back to time string, handling values >= 24 hours
@@ -2396,20 +2571,38 @@ app.get('/employee-shifts', authenticateUser, async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch employee shifts' });
     }
 
-    const shifts = (rows || []).map(r => ({
-      id: r.id,
-      employee_id: r.employee_id,
-      employee_name_snapshot: r.employee_name_snapshot,
-      tariff_level_snapshot: r.tariff_level_snapshot,
-      hourly_wage_snapshot: Number(r.hourly_wage_snapshot),
-      shift_date: r.shift_date,
-      start_time: formatTimeHHmm(r.start_time),
-      end_time: formatTimeHHmm(r.end_time),
-      break_minutes: r.break_minutes,
-      notes: r.notes,
-      created_at: r.created_at,
-      updated_at: r.updated_at
-    }));
+    // Load organization settings
+    const orgSettings = await getOrgSettings(managerId);
+
+    const shifts = (rows || []).map(r => {
+      const startHHmm = formatTimeHHmm(r.start_time);
+      const endHHmm = formatTimeHHmm(r.end_time);
+      const calc = calcEmployeeShift({
+        start_time: startHHmm,
+        end_time: endHHmm,
+        break_minutes: r.break_minutes || 0,
+        hourly_wage_snapshot: Number(r.hourly_wage_snapshot)
+      }, orgSettings);
+
+      return {
+        id: r.id,
+        employee_id: r.employee_id,
+        employee_name_snapshot: r.employee_name_snapshot,
+        tariff_level_snapshot: r.tariff_level_snapshot,
+        hourly_wage_snapshot: Number(r.hourly_wage_snapshot),
+        shift_date: r.shift_date,
+        start_time: startHHmm,
+        end_time: endHHmm,
+        break_minutes: r.break_minutes,
+        notes: r.notes,
+        created_at: r.created_at,
+        updated_at: r.updated_at,
+        break_policy_used: calc.breakPolicyUsed,
+        duration_hours: calc.durationHours,
+        paid_hours: calc.paidHours,
+        gross: calc.gross
+      };
+    });
 
     return res.json({
       shifts,
@@ -2716,20 +2909,38 @@ app.get('/employee-shifts', authenticateUser, async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch employee shifts' });
     }
 
-    const shifts = (rows || []).map(r => ({
-      id: r.id,
-      employee_id: r.employee_id,
-      employee_name_snapshot: r.employee_name_snapshot,
-      tariff_level_snapshot: r.tariff_level_snapshot,
-      hourly_wage_snapshot: Number(r.hourly_wage_snapshot),
-      shift_date: r.shift_date,
-      start_time: formatTimeHHmm(r.start_time),
-      end_time: formatTimeHHmm(r.end_time),
-      break_minutes: r.break_minutes,
-      notes: r.notes,
-      created_at: r.created_at,
-      updated_at: r.updated_at
-    }));
+    // Load organization settings
+    const orgSettings = await getOrgSettings(managerId);
+
+    const shifts = (rows || []).map(r => {
+      const startHHmm = formatTimeHHmm(r.start_time);
+      const endHHmm = formatTimeHHmm(r.end_time);
+      const calc = calcEmployeeShift({
+        start_time: startHHmm,
+        end_time: endHHmm,
+        break_minutes: r.break_minutes || 0,
+        hourly_wage_snapshot: Number(r.hourly_wage_snapshot)
+      }, orgSettings);
+
+      return {
+        id: r.id,
+        employee_id: r.employee_id,
+        employee_name_snapshot: r.employee_name_snapshot,
+        tariff_level_snapshot: r.tariff_level_snapshot,
+        hourly_wage_snapshot: Number(r.hourly_wage_snapshot),
+        shift_date: r.shift_date,
+        start_time: startHHmm,
+        end_time: endHHmm,
+        break_minutes: r.break_minutes,
+        notes: r.notes,
+        created_at: r.created_at,
+        updated_at: r.updated_at,
+        break_policy_used: calc.breakPolicyUsed,
+        duration_hours: calc.durationHours,
+        paid_hours: calc.paidHours,
+        gross: calc.gross
+      };
+    });
 
     return res.json({
       shifts,
@@ -3916,7 +4127,16 @@ app.use(express.static(FRONTEND_DIR)); // serve index.html, css, js, etc.
 export default app;
 
 // Start server (kun når filen kjøres direkte)
-if (import.meta.url === `file://${process.argv[1]}`) {
+const isRunDirectly = (() => {
+  try {
+    const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : '';
+    return fileURLToPath(import.meta.url) === invokedPath;
+  } catch {
+    return false;
+  }
+})();
+
+if (isRunDirectly) {
   const PORT = process.env.PORT || 5173;
   app.listen(PORT, () =>
     console.log(`✔ Server running → http://localhost:${PORT}`)
