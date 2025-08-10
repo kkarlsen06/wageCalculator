@@ -1,10 +1,10 @@
 # Employee Management System
 
-This document describes the complete employee management system implementation, including CRUD operations, avatar management, feature flags, and health monitoring.
+This document describes the complete employee management system implementation, including CRUD operations, feature flags, and health monitoring. Avatars are disabled; only initials are used.
 
 ## Overview
 
-The employee management system provides complete CRUD operations for managing employees, avatar handling via signed URLs, and controlled rollout via feature flags. The system follows the PLACEHOLDER_EMPLOYEES_V1 ruleset where employees are manager-owned placeholders, not real user accounts.
+The employee management system provides complete CRUD operations for managing employees and controlled rollout via feature flags. The system follows the PLACEHOLDER_EMPLOYEES_V1 ruleset where employees are manager-owned placeholders, not real user accounts.
 
 ## API Endpoints
 
@@ -26,8 +26,7 @@ List all employees for the authenticated manager.
       "email": "email@example.com",
       "hourly_wage": 250.50,
       "birth_date": "1990-05-15",
-      "display_color": "#3498db",
-      "profile_picture_url": "path/to/avatar.png",
+  "display_color": "#3498db",
       "created_at": "2025-01-08T10:00:00Z",
       "archived_at": null
     }
@@ -66,7 +65,6 @@ Create a new employee.
     "hourly_wage": 250.50,
     "birth_date": "1990-05-15",
     "display_color": "#3498db",
-    "profile_picture_url": null,
     "created_at": "2025-01-08T10:00:00Z",
     "archived_at": null
   }
@@ -101,40 +99,7 @@ Soft delete (archive) an employee.
 }
 ```
 
-### Avatar Management
-
-#### POST /employees/:id/avatar-upload-url
-Generate a signed upload URL for employee avatar.
-
-**Request Body:**
-```json
-{
-  "ext": "png"  // Optional: "png", "jpg", "jpeg", "webp" (default: "png")
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "path": "manager_id/employee_id/avatar.png",
-  "signedUrl": "https://...",
-  "token": "upload-token"
-}
-```
-
-#### GET /employees/:id/avatar-read-url
-Generate a signed read URL for employee avatar.
-
-**Query Parameters:**
-- `expiresIn=3600` - URL expiration in seconds (default: 3600)
-
-**Response:** `200 OK`
-```json
-{
-  "url": "https://signed-read-url",
-  "path": "manager_id/employee_id/avatar.png"
-}
-```
+<!-- Avatars removed: no avatar endpoints -->
 
 ### Error Responses
 

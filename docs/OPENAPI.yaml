@@ -22,7 +22,7 @@ components:
         tariff_level: { type: integer, nullable: true }
         birth_date: { type: string, format: date, nullable: true }
         display_color: { type: string, nullable: true }
-        profile_picture_url: { type: string, nullable: true }
+        # profile_picture_url removed (avatars disabled)
         created_at: { type: string, format: date-time }
         archived_at: { type: string, format: date-time, nullable: true }
     EmployeeShift:

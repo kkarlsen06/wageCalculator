@@ -1,6 +1,6 @@
 /**
  * Employee Settings Modal Component
- * Modal for creating and editing employees with avatar upload
+ * Modal for creating and editing employees
  * Following PLACEHOLDER_EMPLOYEES_V1 ruleset
  */
 
@@ -21,21 +21,14 @@ export class EmployeeModal {
             hourly_wage: '',
             tariff_level: 0,
             birth_date: '',
-            display_color: '#6366f1',
-            avatar: null
+            display_color: '#6366f1'
         };
-
-        // Avatar state
-        this.avatarPreview = null;
-        this.avatarFile = null;
-        this.avatarChanged = false;
 
         // Bind methods
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleCancel = this.handleCancel.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleClickOutside = this.handleClickOutside.bind(this);
-        this.handleAvatarChange = this.handleAvatarChange.bind(this);
         this.handleFieldChange = this.handleFieldChange.bind(this);
     }
 
@@ -49,8 +42,7 @@ export class EmployeeModal {
             hourly_wage: '',
             tariff_level: 0,
             birth_date: '',
-            display_color: '#6366f1',
-            avatar: null
+            display_color: '#6366f1'
         };
     }
 
@@ -183,16 +175,20 @@ export class EmployeeModal {
      */
     getModalHTML() {
         const title = this.mode === 'create' ? 'Legg til ansatt' : 'Rediger ansatt';
-        const submitText = this.mode === 'create' ? 'Legg til' : 'Lagre endringer';
+        const submitText = this.mode === 'create' ? 'Legg til ansatt' : 'Lagre endringer';
         const rates = this.app?.PRESET_WAGE_RATES || {};
         const fmt = (n) => typeof n === 'number' ? n.toFixed(2).replace('.', ',') : '';
 
-        const showAvatarSection = this.mode === 'edit';
+        // Avatars disabled: we only show initials for employees
+        const showAvatarSection = false;
 
         return `
             <div class="modal-content employee-modal-content">
                 <div class="modal-header">
-                    <h2>${title}</h2>
+                    <div class="modal-header-content">
+                        <h2>${title}</h2>
+                        <p class="modal-subtitle">Fyll inn informasjonen under for å ${this.mode === 'create' ? 'legge til en ny ansatt' : 'oppdatere ansattinformasjonen'}</p>
+                    </div>
                     <button type="button" class="modal-close-btn" aria-label="Lukk">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -203,160 +199,317 @@ export class EmployeeModal {
 
                 <form class="employee-form" id="employeeForm" novalidate>
                     <div class="form-sections">
-                        ${showAvatarSection ? `
-                        <!-- Avatar Section (edit only) -->
-                        <div class="form-section avatar-section">
-                          <div class="avatar-upload-container">
-                            <div class="avatar-preview" id="avatarPreview">
-                              <div class="avatar-placeholder">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                  <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                              </div>
+                        <!-- Step indicators -->
+                        <div class="form-progress">
+                            <div class="progress-step active" data-step="1">
+                                <div class="step-number">1</div>
+                                <div class="step-label">Informasjon</div>
                             </div>
-                            <div class="avatar-upload-controls">
-                              <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-                              <button type="button" class="btn btn-secondary avatar-upload-btn">Velg bilde</button>
-                              <button type="button" class="btn btn-ghost avatar-remove-btn" style="display: none;">Fjern bilde</button>
+                            <div class="progress-line"></div>
+                            <div class="progress-step" data-step="2">
+                                <div class="step-number">2</div>
+                                <div class="step-label">Lønn</div>
                             </div>
-                          </div>
+                            <div class="progress-line"></div>
+                            <div class="progress-step" data-step="3">
+                                <div class="step-number">3</div>
+                                <div class="step-label">Tilpasning</div>
+                            </div>
                         </div>
-                        ` : ''}
 
-                        <div class="form-section">
-
-                            <div class="form-group">
-                                <label for="employeeName" class="form-label required">
-                                    Navn
-                                </label>
-                                <input
-                                    type="text"
-                                    id="employeeName"
-                                    name="name"
-                                    class="form-input"
-                                    required
-                                    autocomplete="name"
-                                    placeholder="Skriv inn navn"
-                                    aria-describedby="nameError">
-                                <div class="form-error" id="nameError"></div>
+                        <!-- Basic Information Section -->
+                        <div class="form-section active" data-section="1">
+                            <div class="section-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
                             </div>
+                            
+                            <div class="form-fields">
+                                <div class="form-group">
+                                    <label for="employeeName" class="form-label">
+                                        <span class="label-text">Fullt navn</span>
+                                        <span class="required-badge">Påkrevd</span>
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                        <input
+                                            type="text"
+                                            id="employeeName"
+                                            name="name"
+                                            class="form-input with-icon"
+                                            required
+                                            autocomplete="name"
+                                            placeholder="F.eks. Ola Nordmann"
+                                            aria-describedby="nameError">
+                                    </div>
+                                    <div class="form-error" id="nameError" role="alert"></div>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="employeeEmail" class="form-label">
-                                    E-post
-                                </label>
-                                <input
-                                    type="email"
-                                    id="employeeEmail"
-                                    name="email"
-                                    class="form-input"
-                                    autocomplete="email"
-                                    placeholder="ansatt@bedrift.no"
-                                    aria-describedby="emailError">
-                                <div class="form-error" id="emailError"></div>
-                            </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="employeeEmail" class="form-label">
+                                            <span class="label-text">E-postadresse</span>
+                                            <span class="optional-badge">Valgfritt</span>
+                                        </label>
+                                        <div class="input-wrapper">
+                                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                                <path d="m22 7-10 5L2 7"></path>
+                                            </svg>
+                                            <input
+                                                type="email"
+                                                id="employeeEmail"
+                                                name="email"
+                                                class="form-input with-icon"
+                                                autocomplete="email"
+                                                placeholder="ola@bedrift.no"
+                                                aria-describedby="emailError">
+                                        </div>
+                                        <div class="form-error" id="emailError" role="alert"></div>
+                                    </div>
 
-                            <div class="form-group">
-                                <label for="employeeTariff" class="form-label">
-                                    Lønnstrinn
-                                </label>
-                                <select id="employeeTariff" name="tariff_level" class="form-input" aria-describedby="tariffError">
-                                    <option value="0">Egendefinert (bruk timelønn)</option>
-                                    <option value="-2">Unge arbeidstakere under 18 år (${fmt(rates['-2'])} kr/t)</option>
-                                    <option value="-1">Unge arbeidstakere under 16 år (${fmt(rates['-1'])} kr/t)</option>
-                                    <option value="1">Trinn 1 (${fmt(rates[1])} kr/t)</option>
-                                    <option value="2">Trinn 2 (${fmt(rates[2])} kr/t)</option>
-                                    <option value="3">Trinn 3 (${fmt(rates[3])} kr/t)</option>
-                                    <option value="4">Trinn 4 (${fmt(rates[4])} kr/t)</option>
-                                    <option value="5">Trinn 5 (${fmt(rates[5])} kr/t)</option>
-                                    <option value="6">Trinn 6 (${fmt(rates[6])} kr/t)</option>
-                                </select>
-                <div class="form-error" id="tariffError"></div>
-                <div class="help-text" id="effectiveRateHelp">Effektiv sats: <span id="effectiveRatePreview">-</span></div>
-                <div class="help-text" style="margin-top:6px;">
-                    <small>Tariffnivå lagres, og satsen snappes på hver vakt.</small>
-                </div>
-                <div class="help-text" style="margin-top:4px;">
-                    <small>Merk: Egendefinert timelønn erstatter kun grunnlønn. Kveld/helg-tillegg beregnes fortsatt som vanlig etter tariff.</small>
-                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="employeeWage" class="form-label">
-                                    Timelønn (kr)
-                                </label>
-                                <input
-                                    type="number"
-                                    id="employeeWage"
-                                    name="hourly_wage"
-                                    class="form-input"
-                                    min="0"
-                                    step="0.01"
-                                    placeholder="250.00"
-                                    aria-describedby="wageError">
-                                <div class="form-error" id="wageError"></div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="employeeBirthDate" class="form-label">
-                                    Fødselsdato
-                                </label>
-                                <input
-                                    type="date"
-                                    id="employeeBirthDate"
-                                    name="birth_date"
-                                    class="form-input"
-                                    aria-describedby="birthDateError">
-                                <div class="form-error" id="birthDateError"></div>
-                                <div class="birthdate-quick-selects" id="birthdateQuickSelects" aria-hidden="false" style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                                    <label class="sr-only" for="birthYearSelect">År</label>
-                                    <select id="birthYearSelect" class="form-input" style="min-width:90px"></select>
-                                    <label class="sr-only" for="birthMonthSelect">Måned</label>
-                                    <select id="birthMonthSelect" class="form-input" style="min-width:90px"></select>
-                                    <label class="sr-only" for="birthDaySelect">Dag</label>
-                                    <select id="birthDaySelect" class="form-input" style="min-width:80px"></select>
+                                    <div class="form-group">
+                                        <label for="employeeBirthDate" class="form-label">
+                                            <span class="label-text">Fødselsdato</span>
+                                            <span class="optional-badge">Valgfritt</span>
+                                        </label>
+                                        <div class="date-selector-group">
+                                            <select id="birthDaySelect" class="form-input date-select" aria-label="Dag">
+                                                <option value="">Dag</option>
+                                            </select>
+                                            <select id="birthMonthSelect" class="form-input date-select" aria-label="Måned">
+                                                <option value="">Måned</option>
+                                                <option value="01">Januar</option>
+                                                <option value="02">Februar</option>
+                                                <option value="03">Mars</option>
+                                                <option value="04">April</option>
+                                                <option value="05">Mai</option>
+                                                <option value="06">Juni</option>
+                                                <option value="07">Juli</option>
+                                                <option value="08">August</option>
+                                                <option value="09">September</option>
+                                                <option value="10">Oktober</option>
+                                                <option value="11">November</option>
+                                                <option value="12">Desember</option>
+                                            </select>
+                                            <select id="birthYearSelect" class="form-input date-select" aria-label="År">
+                                                <option value="">År</option>
+                                            </select>
+                                        </div>
+                                        <input
+                                            type="hidden"
+                                            id="employeeBirthDate"
+                                            name="birth_date"
+                                            aria-describedby="birthDateError">
+                                        <div class="form-error" id="birthDateError" role="alert"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="form-section">
+                        <!-- Wage Information Section -->
+                        <div class="form-section" data-section="2" style="display: none;">
+                            <div class="section-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
 
-                            <div class="form-group">
-                                <label for="employeeColor" class="form-label">
-                                    Visningsfarge
-                                </label>
-                                <div class="color-picker-container">
+                            <div class="form-fields">
+                                <div class="form-group">
+                                    <label for="employeeTariff" class="form-label">
+                                        <span class="label-text">Velg lønnstrinn</span>
+                                        <span class="required-badge">Påkrevd</span>
+                                    </label>
+                                    <div class="tariff-grid">
+                                        <label class="tariff-option">
+                                            <input type="radio" name="tariff_radio" value="0" ${this.formData.tariff_level == 0 ? 'checked' : ''}>
+                                            <div class="tariff-card">
+                                                <span class="tariff-name">Egendefinert</span>
+                                                <span class="tariff-rate">Angi selv</span>
+                                            </div>
+                                        </label>
+                                        <label class="tariff-option">
+                                            <input type="radio" name="tariff_radio" value="-2" ${this.formData.tariff_level == -2 ? 'checked' : ''}>
+                                            <div class="tariff-card">
+                                                <span class="tariff-name">Under 18 år</span>
+                                                <span class="tariff-rate">${fmt(rates['-2'])} kr/t</span>
+                                            </div>
+                                        </label>
+                                        <label class="tariff-option">
+                                            <input type="radio" name="tariff_radio" value="-1" ${this.formData.tariff_level == -1 ? 'checked' : ''}>
+                                            <div class="tariff-card">
+                                                <span class="tariff-name">Under 16 år</span>
+                                                <span class="tariff-rate">${fmt(rates['-1'])} kr/t</span>
+                                            </div>
+                                        </label>
+                                        <label class="tariff-option">
+                                            <input type="radio" name="tariff_radio" value="1" ${this.formData.tariff_level == 1 ? 'checked' : ''}>
+                                            <div class="tariff-card">
+                                                <span class="tariff-name">Trinn 1</span>
+                                                <span class="tariff-rate">${fmt(rates[1])} kr/t</span>
+                                            </div>
+                                        </label>
+                                        <label class="tariff-option">
+                                            <input type="radio" name="tariff_radio" value="2" ${this.formData.tariff_level == 2 ? 'checked' : ''}>
+                                            <div class="tariff-card">
+                                                <span class="tariff-name">Trinn 2</span>
+                                                <span class="tariff-rate">${fmt(rates[2])} kr/t</span>
+                                            </div>
+                                        </label>
+                                        <label class="tariff-option">
+                                            <input type="radio" name="tariff_radio" value="3" ${this.formData.tariff_level == 3 ? 'checked' : ''}>
+                                            <div class="tariff-card">
+                                                <span class="tariff-name">Trinn 3</span>
+                                                <span class="tariff-rate">${fmt(rates[3])} kr/t</span>
+                                            </div>
+                                        </label>
+                                        <label class="tariff-option">
+                                            <input type="radio" name="tariff_radio" value="4" ${this.formData.tariff_level == 4 ? 'checked' : ''}>
+                                            <div class="tariff-card">
+                                                <span class="tariff-name">Trinn 4</span>
+                                                <span class="tariff-rate">${fmt(rates[4])} kr/t</span>
+                                            </div>
+                                        </label>
+                                        <label class="tariff-option">
+                                            <input type="radio" name="tariff_radio" value="5" ${this.formData.tariff_level == 5 ? 'checked' : ''}>
+                                            <div class="tariff-card">
+                                                <span class="tariff-name">Trinn 5</span>
+                                                <span class="tariff-rate">${fmt(rates[5])} kr/t</span>
+                                            </div>
+                                        </label>
+                                        <label class="tariff-option">
+                                            <input type="radio" name="tariff_radio" value="6" ${this.formData.tariff_level == 6 ? 'checked' : ''}>
+                                            <div class="tariff-card">
+                                                <span class="tariff-name">Trinn 6</span>
+                                                <span class="tariff-rate">${fmt(rates[6])} kr/t</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <!-- Hidden select for form submission -->
+                                    <select id="employeeTariff" name="tariff_level" class="form-input" style="display: none;" aria-describedby="tariffError">
+                                        <option value="0">Egendefinert</option>
+                                        <option value="-2">Under 18 år</option>
+                                        <option value="-1">Under 16 år</option>
+                                        <option value="1">Trinn 1</option>
+                                        <option value="2">Trinn 2</option>
+                                        <option value="3">Trinn 3</option>
+                                        <option value="4">Trinn 4</option>
+                                        <option value="5">Trinn 5</option>
+                                        <option value="6">Trinn 6</option>
+                                    </select>
+                                    <div class="form-error" id="tariffError" role="alert"></div>
+                                </div>
+
+                                <div class="form-group custom-wage-group" id="customWageSection" style="display: none;">
+                                    <label for="employeeWage" class="form-label">
+                                        <span class="label-text">Angi timelønn</span>
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <span class="input-prefix">kr</span>
+                                        <input
+                                            type="number"
+                                            id="employeeWage"
+                                            name="hourly_wage"
+                                            class="form-input with-prefix"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="250.00"
+                                            aria-describedby="wageError">
+                                        <span class="input-suffix">/time</span>
+                                    </div>
+                                    <div class="form-error" id="wageError" role="alert"></div>
+                                </div>
+
+                                <div class="wage-info-card">
+                                    <div class="wage-info-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="wage-info-content">
+                                        <p>Kveld- og helgetillegg beregnes automatisk basert på tariff, selv med egendefinert timelønn.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Appearance Section -->
+                        <div class="form-section" data-section="3" style="display: none;">
+                            <div class="section-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="2" x2="12" y2="4"></line>
+                                    <line x1="12" y1="20" x2="12" y2="22"></line>
+                                    <line x1="2" y1="12" x2="4" y2="12"></line>
+                                    <line x1="20" y1="12" x2="22" y2="12"></line>
+                                </svg>
+                            </div>
+
+                            <div class="form-fields">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <span class="label-text">Velg en farge for den ansatte</span>
+                                    </label>
                                     <input
                                         type="color"
                                         id="employeeColor"
                                         name="display_color"
-                                        class="color-input"
-                                        value="#6366f1">
-                                    <div class="color-presets" id="colorPresets">
+                                        class="color-input-hidden"
+                                        value="#6366f1"
+                                        aria-describedby="colorHint">
+                                    <div class="color-grid" id="colorPresets">
                                         <!-- Color presets will be populated here -->
                                     </div>
+                                    <p class="form-hint centered" id="colorHint">Denne fargen brukes til å identifisere den ansatte i kalenderen</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary cancel-btn">
-                            Avbryt
-                        </button>
-                        <button type="submit" class="btn btn-primary submit-btn">
-                            <span class="btn-text">${submitText}</span>
-                            <span class="btn-loading" style="display: none;">
-                                <svg class="loading-spinner" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
-                                        <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
-                                        <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
-                                    </circle>
+                        <div class="footer-left">
+                            <button type="button" class="btn btn-ghost nav-btn prev-btn" style="display: none;">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
                                 </svg>
-                                Lagrer...
-                            </span>
-                        </button>
+                                Forrige
+                            </button>
+                        </div>
+                        <div class="footer-right">
+                            <button type="button" class="btn btn-secondary cancel-btn">
+                                Avbryt
+                            </button>
+                            <button type="button" class="btn btn-primary nav-btn next-btn">
+                                Neste
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                            <button type="submit" class="btn btn-primary submit-btn" style="display: none;">
+                                <span class="btn-text">
+                                    ${submitText}
+                                </span>
+                                <span class="btn-loading" style="display: none;">
+                                    <svg class="loading-spinner" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
+                                            <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                                            <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                                        </circle>
+                                    </svg>
+                                    Lagrer...
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -373,14 +526,10 @@ export class EmployeeModal {
             hourly_wage: '',
             tariff_level: 0,
             birth_date: '',
-            display_color: '#6366f1',
-            avatar: null
+            display_color: '#6366f1'
         };
 
         this.validationErrors = {};
-        this.avatarPreview = null;
-        this.avatarFile = null;
-        this.avatarChanged = false;
         this.isSubmitting = false;
     }
 
@@ -395,21 +544,8 @@ export class EmployeeModal {
             hourly_wage: employee.hourly_wage || '',
             tariff_level: (employee.tariff_level !== undefined && employee.tariff_level !== null) ? employee.tariff_level : 0,
             birth_date: employee.birth_date || '',
-            display_color: employee.display_color || '#6366f1',
-            avatar: null
+            display_color: employee.display_color || '#6366f1'
         };
-
-        // Load avatar if exists
-        if (employee.id) {
-            try {
-                const avatarUrl = await this.app.getEmployeeAvatarUrl(employee.id);
-                if (avatarUrl) {
-                    this.avatarPreview = avatarUrl;
-                }
-            } catch (error) {
-                console.warn('Failed to load employee avatar:', error);
-            }
-        }
     }
 
     /**
@@ -418,10 +554,24 @@ export class EmployeeModal {
     attachEventListeners() {
         if (!this.modal) return;
 
+        // Initialize current step
+        this.currentStep = 1;
+        this.totalSteps = 3;
+
         // Form submission
         const form = this.modal.querySelector('#employeeForm');
         if (form) {
             form.addEventListener('submit', this.handleSubmit);
+        }
+
+        // Navigation buttons
+        const nextBtn = this.modal.querySelector('.next-btn');
+        const prevBtn = this.modal.querySelector('.prev-btn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.navigateStep('next'));
+        }
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.navigateStep('prev'));
         }
 
         // Cancel button
@@ -436,22 +586,23 @@ export class EmployeeModal {
             closeBtn.addEventListener('click', this.handleCancel);
         }
 
-        // Avatar upload (only present in edit mode)
-        const avatarUploadBtn = this.modal.querySelector('.avatar-upload-btn');
-        const avatarInput = this.modal.querySelector('#avatarInput');
-        if (avatarUploadBtn && avatarInput) {
-            avatarUploadBtn.addEventListener('click', () => avatarInput.click());
-            avatarInput.addEventListener('change', this.handleAvatarChange);
-        }
-
-        // Avatar remove (only present in edit mode)
-        const avatarRemoveBtn = this.modal.querySelector('.avatar-remove-btn');
-        if (avatarRemoveBtn) {
-            avatarRemoveBtn.addEventListener('click', this.handleAvatarRemove.bind(this));
-        }
+        // Tariff radio buttons
+        const tariffRadios = this.modal.querySelectorAll('input[name="tariff_radio"]');
+        tariffRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const value = e.target.value;
+                const selectElement = this.modal.querySelector('#employeeTariff');
+                if (selectElement) {
+                    selectElement.value = value;
+                    this.formData.tariff_level = value;
+                    this.updateCustomWageVisibility();
+                    this.updateEffectiveRatePreview();
+                }
+            });
+        });
 
         // Form field changes
-        const inputs = this.modal.querySelectorAll('input, select, textarea');
+        const inputs = this.modal.querySelectorAll('input[type="text"], input[type="email"], input[type="date"], input[type="number"], select, textarea');
         inputs.forEach(input => {
             input.addEventListener('input', this.handleFieldChange);
             input.addEventListener('blur', this.handleFieldBlur.bind(this));
@@ -459,8 +610,8 @@ export class EmployeeModal {
 
         // Color presets
         this.setupColorPresets();
-
-        // Birth date quick selectors
+        
+        // Birth date selectors
         this.setupBirthDateSelectors();
 
         // Global event listeners
@@ -469,6 +620,122 @@ export class EmployeeModal {
 
         // Populate form fields
         this.updateFormFields();
+        // Ensure correct initial visibility
+        this.updateCustomWageVisibility();
+    }
+
+    /**
+     * Navigate between form steps
+     */
+    navigateStep(direction) {
+        if (!this.modal) return;
+
+        // Validate current step before moving forward
+        if (direction === 'next' && !this.validateCurrentStep()) {
+            return;
+        }
+
+        // Update step
+        if (direction === 'next' && this.currentStep < this.totalSteps) {
+            this.currentStep++;
+        } else if (direction === 'prev' && this.currentStep > 1) {
+            this.currentStep--;
+        }
+
+        // Update UI
+        this.updateStepUI();
+    }
+
+    /**
+     * Validate current step fields
+     */
+    validateCurrentStep() {
+        let isValid = true;
+
+        if (this.currentStep === 1) {
+            // Validate name (required)
+            const nameInput = this.modal.querySelector('[name="name"]');
+            if (nameInput && !this.validateField('name', nameInput.value)) {
+                isValid = false;
+            }
+            // Validate email if provided
+            const emailInput = this.modal.querySelector('[name="email"]');
+            if (emailInput && emailInput.value && !this.validateField('email', emailInput.value)) {
+                isValid = false;
+            }
+            // Validate birth date if provided
+            const birthDateInput = this.modal.querySelector('[name="birth_date"]');
+            if (birthDateInput && birthDateInput.value && !this.validateField('birth_date', birthDateInput.value)) {
+                isValid = false;
+            }
+        } else if (this.currentStep === 2) {
+            // Validate tariff selection
+            const tariffRadios = this.modal.querySelectorAll('input[name="tariff_radio"]:checked');
+            if (tariffRadios.length === 0) {
+                this.validationErrors.tariff_level = 'Velg et lønnstrinn';
+                this.updateFieldValidationUI('tariff_level');
+                isValid = false;
+            }
+            // If custom wage, validate hourly wage
+            if (this.formData.tariff_level == 0 && this.formData.hourly_wage) {
+                if (!this.validateField('hourly_wage', this.formData.hourly_wage)) {
+                    isValid = false;
+                }
+            }
+        }
+
+        // Update validation UI
+        this.updateValidationUI();
+
+        return isValid;
+    }
+
+    /**
+     * Update UI for current step
+     */
+    updateStepUI() {
+        if (!this.modal) return;
+
+        // Update step indicators
+        const steps = this.modal.querySelectorAll('.progress-step');
+        steps.forEach((step, index) => {
+            const stepNum = index + 1;
+            step.classList.toggle('active', stepNum === this.currentStep);
+            step.classList.toggle('completed', stepNum < this.currentStep);
+        });
+
+        // Update sections visibility
+        const sections = this.modal.querySelectorAll('.form-section[data-section]');
+        sections.forEach(section => {
+            const sectionNum = parseInt(section.dataset.section);
+            section.style.display = sectionNum === this.currentStep ? 'block' : 'none';
+        });
+
+        // Update navigation buttons
+        const prevBtn = this.modal.querySelector('.prev-btn');
+        const nextBtn = this.modal.querySelector('.next-btn');
+        const submitBtn = this.modal.querySelector('.submit-btn');
+
+        if (prevBtn) {
+            prevBtn.style.display = this.currentStep > 1 ? 'flex' : 'none';
+        }
+
+        if (nextBtn) {
+            nextBtn.style.display = this.currentStep < this.totalSteps ? 'flex' : 'none';
+        }
+
+        if (submitBtn) {
+            submitBtn.style.display = this.currentStep === this.totalSteps ? 'flex' : 'none';
+        }
+
+        // Focus first input in current section
+        const currentSection = this.modal.querySelector(`.form-section[data-section="${this.currentStep}"]`);
+        if (currentSection) {
+            const firstInput = currentSection.querySelector('input:not([type="hidden"]):not([type="radio"]), select');
+            if (firstInput) {
+                setTimeout(() => firstInput.focus(), 100);
+            }
+        }
     }
 
     /**
@@ -499,10 +766,7 @@ export class EmployeeModal {
         // Update effective rate preview
         this.updateEffectiveRatePreview();
 
-        // Update avatar preview (edit mode only)
-        if (this.mode === 'edit') {
-            this.updateAvatarPreview();
-        }
+        // Avatars disabled: no avatar preview
 
         // Accessibility: ensure submit button is type=submit and cancel is type=button
         const submitBtn = this.modal.querySelector('.submit-btn');
@@ -540,73 +804,60 @@ export class EmployeeModal {
     }
 
 
+    // Avatars disabled: remove preview logic
+
     /**
-     * Update avatar preview
+     * Show/hide custom wage field depending on tariff selection
      */
-    updateAvatarPreview() {
-        const avatarPreview = this.modal?.querySelector('#avatarPreview');
-        const avatarRemoveBtn = this.modal?.querySelector('.avatar-remove-btn');
-
-        if (!avatarPreview) return;
-
-        if (this.avatarPreview) {
-            avatarPreview.innerHTML = `<img src="${this.avatarPreview}" alt="Avatar preview" class="avatar-image">`;
-            if (avatarRemoveBtn) {
-                avatarRemoveBtn.style.display = 'inline-flex';
-            }
-        } else {
-            // Show initials or placeholder
-            const name = this.formData.name;
-            if (name) {
-                const initials = this.app.getEmployeeInitials({ name });
-                avatarPreview.innerHTML = `
-                    <div class="avatar-initials" style="background-color: ${this.formData.display_color}">
-                        ${initials}
-                    </div>
-                `;
-            } else {
-                avatarPreview.innerHTML = `
-                    <div class="avatar-placeholder">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                    </div>
-                `;
-            }
-
-            if (avatarRemoveBtn) {
-                avatarRemoveBtn.style.display = 'none';
-            }
-        }
+    updateCustomWageVisibility() {
+        if (!this.modal) return;
+        const section = this.modal.querySelector('#customWageSection');
+        if (!section) return;
+        const level = parseInt(this.formData.tariff_level || 0);
+        const show = level === 0; // 0 = Egendefinert
+        section.style.display = show ? 'block' : 'none';
     }
+
+
 
     /**
      * Setup color presets
      */
     setupColorPresets() {
-        const colorPresets = this.modal?.querySelector('#colorPresets');
-        if (!colorPresets) return;
+        const colorGrid = this.modal?.querySelector('#colorPresets');
+        if (!colorGrid) return;
 
         const presetColors = [
-            '#6366f1', '#8b5cf6', '#a855f7', '#ec4899',
-            '#ef4444', '#f97316', '#f59e0b', '#eab308',
-            '#84cc16', '#22c55e', '#10b981', '#06b6d4',
-            '#0ea5e9', '#3b82f6'
+            { color: '#6366f1', name: 'Indigo' },
+            { color: '#8b5cf6', name: 'Lilla' },
+            { color: '#ec4899', name: 'Rosa' },
+            { color: '#ef4444', name: 'Rød' },
+            { color: '#f97316', name: 'Oransje' },
+            { color: '#f59e0b', name: 'Gul' },
+            { color: '#84cc16', name: 'Lime' },
+            { color: '#22c55e', name: 'Grønn' },
+            { color: '#10b981', name: 'Smaragd' },
+            { color: '#06b6d4', name: 'Cyan' },
+            { color: '#0ea5e9', name: 'Himmelblå' },
+            { color: '#3b82f6', name: 'Blå' }
         ];
 
-        colorPresets.innerHTML = presetColors.map(color => `
-            <button type="button" class="color-preset" data-color="${color}" style="background-color: ${color}">
-                <span class="sr-only">${color}</span>
+        colorGrid.innerHTML = presetColors.map(({ color, name }) => `
+            <button type="button" class="color-option" data-color="${color}" aria-label="${name}">
+                <span class="color-swatch" style="background-color: ${color}"></span>
+                <span class="color-check">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </span>
             </button>
         `).join('');
 
         // Add click handlers for presets
-        colorPresets.addEventListener('click', (e) => {
-            const preset = e.target.closest('.color-preset');
-            if (preset) {
-
-                const color = preset.dataset.color;
+        colorGrid.addEventListener('click', (e) => {
+            const option = e.target.closest('.color-option');
+            if (option) {
+                const color = option.dataset.color;
                 this.formData.display_color = color;
 
                 const colorInput = this.modal.querySelector('[name="display_color"]');
@@ -614,7 +865,6 @@ export class EmployeeModal {
                     colorInput.value = color;
                 }
 
-                this.updateAvatarPreview();
                 this.updateColorPresetSelection();
             }
         });
@@ -623,7 +873,7 @@ export class EmployeeModal {
     }
 
     /**
-     * Setup birth date quick selects (year, month, day)
+     * Setup birth date selectors
      */
     setupBirthDateSelectors() {
         if (!this.modal) return;
@@ -637,34 +887,39 @@ export class EmployeeModal {
         const minYear = today.getFullYear() - 75;
         const maxYear = today.getFullYear() - 13;
 
-        // Populate years
-        yearSel.innerHTML = '';
-        for (let y = maxYear; y >= minYear; y--) {
-            const opt = document.createElement('option');
-            opt.value = String(y);
-            opt.textContent = String(y);
-            yearSel.appendChild(opt);
-        }
-
-        // Populate months (1-12)
-        monthSel.innerHTML = '';
-        for (let m = 1; m <= 12; m++) {
-            const opt = document.createElement('option');
-            opt.value = String(m).padStart(2, '0');
-            opt.textContent = String(m).padStart(2, '0');
-            monthSel.appendChild(opt);
+        // Populate years (only if not already populated)
+        if (yearSel.options.length <= 1) {
+            yearSel.innerHTML = '<option value="">År</option>';
+            for (let y = maxYear; y >= minYear; y--) {
+                const opt = document.createElement('option');
+                opt.value = String(y);
+                opt.textContent = String(y);
+                yearSel.appendChild(opt);
+            }
         }
 
         const updateDays = () => {
+            const currentDay = daySel.value;
             const y = parseInt(yearSel.value, 10);
             const m = parseInt(monthSel.value, 10);
+            
+            if (!y || !m) {
+                daySel.innerHTML = '<option value="">Dag</option>';
+                return;
+            }
+            
             const daysInMonth = new Date(y, m, 0).getDate();
-            daySel.innerHTML = '';
+            daySel.innerHTML = '<option value="">Dag</option>';
             for (let d = 1; d <= daysInMonth; d++) {
                 const opt = document.createElement('option');
                 opt.value = String(d).padStart(2, '0');
-                opt.textContent = String(d).padStart(2, '0');
+                opt.textContent = String(d);
                 daySel.appendChild(opt);
+            }
+            
+            // Restore previous selection if valid
+            if (currentDay && parseInt(currentDay) <= daysInMonth) {
+                daySel.value = currentDay;
             }
         };
 
@@ -676,8 +931,10 @@ export class EmployeeModal {
                 const iso = `${y}-${m}-${d}`;
                 dateInput.value = iso;
                 this.formData.birth_date = iso;
-                // validate field live
-                this.validateField('birth_date', iso);
+                this.clearFieldError('birth_date');
+            } else {
+                dateInput.value = '';
+                this.formData.birth_date = '';
             }
         };
 
@@ -689,12 +946,6 @@ export class EmployeeModal {
             monthSel.value = mm;
             updateDays();
             daySel.value = dd;
-        } else {
-            // Defaults
-            yearSel.selectedIndex = 0;
-            monthSel.value = '01';
-            updateDays();
-            daySel.value = '01';
         }
 
         yearSel.addEventListener('change', () => { updateDays(); syncDate(); });
@@ -706,11 +957,11 @@ export class EmployeeModal {
      * Update color preset selection
      */
     updateColorPresetSelection() {
-        const presets = this.modal?.querySelectorAll('.color-preset');
-        if (!presets) return;
+        const options = this.modal?.querySelectorAll('.color-option');
+        if (!options) return;
 
-        presets.forEach(preset => {
-            preset.classList.toggle('active', preset.dataset.color === this.formData.display_color);
+        options.forEach(option => {
+            option.classList.toggle('selected', option.dataset.color === this.formData.display_color);
         });
     }
 
@@ -726,11 +977,6 @@ export class EmployeeModal {
             // Clear validation error for this field
             this.clearFieldError(name);
 
-            // Update avatar preview if name or color changed
-            if (name === 'name' || name === 'display_color') {
-                this.updateAvatarPreview();
-            }
-
             // Update color preset selection if color changed
             if (name === 'display_color') {
                 this.updateColorPresetSelection();
@@ -739,6 +985,9 @@ export class EmployeeModal {
             // Update effective rate preview when tariff_level or hourly_wage changes
             if (name === 'tariff_level' || name === 'hourly_wage') {
                 this.updateEffectiveRatePreview();
+            }
+            if (name === 'tariff_level') {
+                this.updateCustomWageVisibility();
             }
         }
     }
@@ -755,7 +1004,6 @@ export class EmployeeModal {
                 this.formData.name = normalized;
                 const input = this.modal?.querySelector('[name="name"]');
                 if (input) input.value = normalized;
-                this.updateAvatarPreview();
             }
             this.validateField(name, normalized);
             return;
@@ -766,49 +1014,12 @@ export class EmployeeModal {
     /**
      * Handle avatar file selection
      */
-    async handleAvatarChange(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        try {
-            // Validate file
-            const validation = this.validateAvatarFile(file);
-            if (!validation.valid) {
-                this.showError(validation.error);
-                return;
-            }
-
-            // Create preview
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                this.avatarPreview = event.target.result;
-                this.avatarFile = file;
-                this.avatarChanged = true;
-                this.updateAvatarPreview();
-            };
-            reader.readAsDataURL(file);
-
-        } catch (error) {
-            console.error('Error handling avatar change:', error);
-            this.showError('Feil ved lasting av bilde');
-        }
-    }
+    // Avatars disabled: remove avatar file change handler
 
     /**
      * Handle avatar removal
      */
-    handleAvatarRemove() {
-        this.avatarPreview = null;
-        this.avatarFile = null;
-        this.avatarChanged = true;
-        this.updateAvatarPreview();
-
-        // Clear file input
-        const avatarInput = this.modal?.querySelector('#avatarInput');
-        if (avatarInput) {
-            avatarInput.value = '';
-        }
-    }
+    // Avatars disabled: remove avatar remove handler
 
     /**
      * Handle form submission
@@ -920,7 +1131,7 @@ export class EmployeeModal {
         if (this.mode === 'create') {
             return Object.values(this.formData).some(value =>
                 value !== '' && value !== null && value !== '#6366f1'
-            ) || this.avatarFile;
+            );
         }
 
         if (!this.originalData) return false;
@@ -929,7 +1140,6 @@ export class EmployeeModal {
 
         // Check for changes in form data
         const hasDataChanges = Object.keys(this.formData).some(key => {
-            if (key === 'avatar') return false; // Handle avatar separately
             const defaultOriginal = this.getInitialFormDefaults()[key];
             const originalValue = (this.originalData[key] !== undefined)
                 ? this.originalData[key]
@@ -937,7 +1147,7 @@ export class EmployeeModal {
             return normalize(this.formData[key]) !== normalize(originalValue);
         });
 
-        return hasDataChanges || this.avatarChanged;
+        return hasDataChanges;
     }
 
     /**
@@ -1245,15 +1455,7 @@ export class EmployeeModal {
             const newEmployee = await employeeService.createEmployee(employeeData);
             try { window.employee_create_success_total = (window.employee_create_success_total || 0) + 1; } catch {}
 
-            // Upload avatar if provided
-            if (this.avatarFile) {
-                try {
-                    await this.uploadAvatar(newEmployee.id);
-                } catch (avatarError) {
-                    console.warn('Avatar upload failed:', avatarError);
-                    // Don't fail the entire operation for avatar upload
-                }
-            }
+            // Avatars disabled: no upload
 
             // Replace optimistic employee with real employee
             const employeeIndex = this.app.employees.findIndex(emp => emp.id === optimisticEmployee.id);
@@ -1286,6 +1488,7 @@ export class EmployeeModal {
 
         // Prepare update data (only changed fields)
         const updateData = {};
+        let wageChanged = false;
 
         const normalizedNameUpdate = this.normalizeEmployeeName(this.formData.name);
         if (normalizedNameUpdate !== (this.originalData.name || '')) {
@@ -1299,11 +1502,13 @@ export class EmployeeModal {
         const newWage = this.formData.hourly_wage ? parseFloat(this.formData.hourly_wage) : null;
         if (newWage !== this.originalData.hourly_wage) {
             updateData.hourly_wage = newWage;
+            wageChanged = true;
         }
 
         const newLevel = this.formData.tariff_level !== undefined ? parseInt(this.formData.tariff_level) : 0;
         if (newLevel !== (this.originalData.tariff_level ?? 0)) {
             updateData.tariff_level = newLevel;
+            wageChanged = true;
         }
 
         if (this.formData.birth_date !== (this.originalData.birth_date || '')) {
@@ -1312,6 +1517,16 @@ export class EmployeeModal {
 
         if (this.formData.display_color !== (this.originalData.display_color || '')) {
             updateData.display_color = this.formData.display_color;
+        }
+        
+        // If wage changed, ask about retroactive update
+        let updateExistingShifts = false;
+        if (wageChanged && this.app.shifts && this.app.shifts.length > 0) {
+            // Check if employee has any shifts
+            const hasShifts = this.app.shifts.some(shift => shift.employee_id === this.currentEmployee.id);
+            if (hasShifts) {
+                updateExistingShifts = await this.showWageChangeConfirmation();
+            }
         }
 
         // Store original state for rollback
@@ -1345,29 +1560,35 @@ export class EmployeeModal {
                 updatedEmployee = await employeeService.updateEmployee(this.currentEmployee.id, updateData);
             }
 
-            // Handle avatar changes
-            if (this.avatarChanged) {
-                if (this.avatarFile) {
-                    try {
-                        await this.uploadAvatar(this.currentEmployee.id);
-                    } catch (avatarError) {
-                        console.warn('Avatar upload failed:', avatarError);
-                        // Don't fail the entire operation for avatar upload
-                    }
-                } else {
-                    // Remove avatar from cache
-                    this.app.employeeAvatarCache.delete(this.currentEmployee.id);
-                }
-            }
+            // Avatars disabled: no avatar change handling
 
             // Replace optimistic update with real data
             if (Object.keys(updateData).length > 0) {
                 this.app.employees[employeeIndex] = updatedEmployee;
                 this.app.onEmployeesLoaded();
+                
+                // Update the current employee carousel if visible
+                if (this.app.employeeCarousel && this.app.currentEmployee?.id === updatedEmployee.id) {
+                    this.app.currentEmployee = updatedEmployee;
+                    this.app.employeeCarousel.updateEmployeeDisplay(updatedEmployee);
+                }
+                
+                // Refresh shift display if needed
+                if (this.app.updateShiftDisplay) {
+                    this.app.updateShiftDisplay();
+                }
+            }
+
+            // Handle retroactive wage update if requested
+            if (updateExistingShifts && wageChanged) {
+                await this.updateExistingShiftsWage(updatedEmployee);
             }
 
             // Show success message
-            this.showSuccess(`${updatedEmployee.name} ble oppdatert`);
+            const wageMessage = updateExistingShifts && wageChanged 
+                ? ` og eksisterende vakter ble oppdatert` 
+                : '';
+            this.showSuccess(`${updatedEmployee.name} ble oppdatert${wageMessage}`);
 
         } catch (error) {
             console.error('Error updating employee:', error);
@@ -1383,29 +1604,134 @@ export class EmployeeModal {
      * Upload avatar for employee
      * @param {string} employeeId - Employee ID
      */
-    async uploadAvatar(employeeId) {
-        if (!this.avatarFile) return;
+    // Avatars disabled: upload function removed
 
+    /**
+     * Update existing shifts with new wage
+     */
+    async updateExistingShiftsWage(employee) {
         try {
-            // Import employee service (supports test injection)
-            const { employeeService } = await this.loadEmployeeService();
-
-            // Upload avatar
-            const avatarUrl = await employeeService.uploadAvatar(employeeId, this.avatarFile);
-
-            // Update cache
-            this.app.employeeAvatarCache.set(employeeId, {
-                url: avatarUrl,
-                timestamp: Date.now()
-            });
-
-            console.log('Avatar uploaded successfully:', avatarUrl);
-
+            // Get all shifts for this employee
+            const employeeShifts = this.app.shifts.filter(shift => 
+                shift.employee_id === employee.id
+            );
+            
+            // Update client-side objects first so UI reflects immediately
+            for (const shift of employeeShifts) {
+                // Ensure snapshot exists and set new wage
+                shift.hourly_wage_snapshot = Number(employee.hourly_wage || 0);
+                
+                // Recalculate totals using snapshot-aware calc
+                if (this.app.calculateShift) {
+                    const recalculated = this.app.calculateShift(shift);
+                    shift.calculated_wage = recalculated.total;
+                }
+            }
+            
+            if (employeeShifts.length === 0) return;
+            
+            // Persist to server for authoritative employee_shifts
+            try {
+                const { data: { session } } = await window.supa.auth.getSession();
+                if (session) {
+                    const headers = { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' };
+                    // Only update shifts in the same month window being viewed
+                    const currentMonth = this.app.currentMonth;
+                    const currentYear = this.app.currentYear;
+                    for (const shift of employeeShifts) {
+                        // Only update if this shift carries a snapshot field (employees context)
+                        if (typeof shift.hourly_wage_snapshot === 'number' || shift.employee_id) {
+                            await fetch(`${window.CONFIG.apiBase}/employee-shifts/${shift.id}`, {
+                                method: 'PUT',
+                                headers,
+                                body: JSON.stringify({
+                                    // Sending no times triggers server to recompute snapshots from employee
+                                    notes: shift.notes ?? undefined
+                                })
+                            }).catch(()=>{});
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Retroactive server update failed or skipped:', e);
+            }
+            
+            // Update the display
+            if (this.app.updateShiftDisplay) {
+                this.app.updateShiftDisplay();
+            }
+            // Refresh employee shifts from server to ensure numbers are recomputed
+            if (this.app.fetchAndDisplayEmployeeShifts) {
+                await this.app.fetchAndDisplayEmployeeShifts();
+            }
+            
+            console.log(`Updated ${employeeShifts.length} existing shifts with new wage data`);
         } catch (error) {
-            console.error('Error uploading avatar:', error);
-            // Don't throw here - avatar upload failure shouldn't fail the entire operation
-            this.showError('Ansatt ble lagret, men avatar kunne ikke lastes opp: ' + error.message);
+            console.error('Error updating existing shifts:', error);
         }
+    }
+
+    /**
+     * Show wage change confirmation dialog
+     */
+    async showWageChangeConfirmation() {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = 'modal active confirmation-modal';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 480px;">
+                    <div class="modal-header">
+                        <h2>Oppdater lønn</h2>
+                    </div>
+                    <div class="modal-body" style="padding: 24px;">
+                        <div class="confirmation-icon" style="margin-bottom: 20px;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 8v4"></path>
+                                <path d="M12 16h.01"></path>
+                            </svg>
+                        </div>
+                        <p style="font-size: 16px; color: var(--text-primary); margin-bottom: 12px;">
+                            Du har endret lønnen for denne ansatte.
+                        </p>
+                        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+                            Vil du oppdatere lønnen kun for fremtidige vakter, eller også for eksisterende vakter som ikke er godkjent ennå?
+                        </p>
+                    </div>
+                    <div class="modal-footer" style="padding: 20px 24px; gap: 12px; display: flex; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" id="futureOnlyBtn">
+                            Kun fremtidige vakter
+                        </button>
+                        <button type="button" class="btn btn-primary" id="retroactiveBtn">
+                            Oppdater eksisterende vakter
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            const futureOnlyBtn = modal.querySelector('#futureOnlyBtn');
+            const retroactiveBtn = modal.querySelector('#retroactiveBtn');
+            
+            const closeModal = (retroactive) => {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.remove();
+                    resolve(retroactive);
+                }, 300);
+            };
+            
+            futureOnlyBtn.addEventListener('click', () => closeModal(false));
+            retroactiveBtn.addEventListener('click', () => closeModal(true));
+            
+            // Close on outside click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(false);
+                }
+            });
+        });
     }
 
     /**

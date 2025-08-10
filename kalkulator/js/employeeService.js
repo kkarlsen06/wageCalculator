@@ -8,7 +8,7 @@ export class EmployeeService {
     constructor(apiBase = window.CONFIG?.apiBase || 'http://localhost:5173') {
         this.apiBase = apiBase;
         this.cache = new Map();
-        this.avatarCache = new Map();
+        // Avatars disabled
         this.loadingStates = new Map();
     }
 
@@ -194,64 +194,14 @@ export class EmployeeService {
      * @param {string} employeeId - Employee ID
      * @returns {Promise<Object>} Upload URL and fields
      */
-    async getAvatarUploadUrl(employeeId) {
-        try {
-            const headers = await this.getAuthHeaders();
-            const response = await fetch(`${this.apiBase}/employees/${employeeId}/avatar-upload-url`, {
-                method: 'POST',
-                headers
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to get upload URL: ${response.status}`);
-            }
-
-            return await response.json();
-
-        } catch (error) {
-            console.error('Error getting avatar upload URL:', error);
-            throw error;
-        }
-    }
+    // Avatars disabled: remove getAvatarUploadUrl
 
     /**
      * Get signed read URL for employee avatar
      * @param {string} employeeId - Employee ID
      * @returns {Promise<string>} Avatar URL
      */
-    async getAvatarReadUrl(employeeId) {
-        // Check cache first
-        const cached = this.avatarCache.get(employeeId);
-        if (cached && Date.now() - cached.timestamp < 30 * 60 * 1000) { // 30 minutes
-            return cached.url;
-        }
-
-        try {
-            const headers = await this.getAuthHeaders();
-            const response = await fetch(`${this.apiBase}/employees/${employeeId}/avatar-read-url`, {
-                headers
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to get avatar URL: ${response.status}`);
-            }
-
-            const result = await response.json();
-            const avatarUrl = result.avatar_url;
-
-            // Cache the URL
-            this.avatarCache.set(employeeId, {
-                url: avatarUrl,
-                timestamp: Date.now()
-            });
-
-            return avatarUrl;
-
-        } catch (error) {
-            console.error('Error getting avatar read URL:', error);
-            return null; // Return null for missing avatars
-        }
-    }
+    // Avatars disabled: remove getAvatarReadUrl
 
     /**
      * Upload employee avatar
@@ -259,38 +209,7 @@ export class EmployeeService {
      * @param {File|Blob} file - Image file to upload
      * @returns {Promise<string>} Avatar URL
      */
-    async uploadAvatar(employeeId, file) {
-        try {
-            // Get upload URL
-            const uploadData = await this.getAvatarUploadUrl(employeeId);
-            
-            // Upload file to storage
-            const formData = new FormData();
-            Object.entries(uploadData.fields || {}).forEach(([key, value]) => {
-                formData.append(key, value);
-            });
-            formData.append('file', file);
-
-            const uploadResponse = await fetch(uploadData.url, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!uploadResponse.ok) {
-                throw new Error(`Upload failed: ${uploadResponse.status}`);
-            }
-
-            // Invalidate avatar cache
-            this.avatarCache.delete(employeeId);
-            
-            // Get new avatar URL
-            return await this.getAvatarReadUrl(employeeId);
-
-        } catch (error) {
-            console.error('Error uploading avatar:', error);
-            throw error;
-        }
-    }
+    // Avatars disabled: remove uploadAvatar
 
     /**
      * Set loading state for an operation
@@ -327,7 +246,7 @@ export class EmployeeService {
      */
     clearAllCaches() {
         this.cache.clear();
-        this.avatarCache.clear();
+        // Avatars disabled
     }
 }
 

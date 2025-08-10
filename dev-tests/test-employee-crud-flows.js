@@ -10,15 +10,13 @@ const mockApp = {
     employees: [],
     selectedEmployeeId: null,
     employeeCache: new Map(),
-    employeeAvatarCache: new Map(),
+    // Avatars disabled
     
     onEmployeesLoaded: function() {
         console.log('Mock: Employees loaded, count:', this.employees.length);
     },
     
-    getEmployeeAvatarUrl: async function(employeeId) {
-        return this.employeeAvatarCache.get(employeeId)?.url || null;
-    },
+    // Avatars disabled
     
     getEmployeeInitials: function(employee) {
         const names = employee.name.split(' ');
@@ -84,15 +82,7 @@ class MockEmployeeService {
         return { success: true };
     }
     
-    async uploadAvatar(employeeId, file) {
-        await this.simulateDelay();
-        
-        if (this.shouldFail) {
-            throw new Error('Mock avatar upload failure');
-        }
-        
-        return `https://example.com/avatars/${employeeId}.jpg`;
-    }
+    // Avatars disabled
     
     async simulateDelay() {
         return new Promise(resolve => setTimeout(resolve, this.delay));
@@ -158,7 +148,7 @@ class CRUDTestUtils {
         mockApp.employees = [];
         mockApp.selectedEmployeeId = null;
         mockApp.employeeCache.clear();
-        mockApp.employeeAvatarCache.clear();
+        // Avatars disabled
     }
     
     static createTestEmployee(overrides = {}) {

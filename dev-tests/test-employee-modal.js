@@ -29,16 +29,14 @@ const mockApp = {
     ],
     selectedEmployeeId: null,
     employeeCache: new Map(),
-    employeeAvatarCache: new Map(),
+    // Avatars disabled
     
     // Mock methods
     onEmployeesLoaded: function() {
         console.log('Mock: Employees loaded');
     },
     
-    getEmployeeAvatarUrl: async function(employeeId) {
-        return null; // Mock no avatar
-    },
+    // Avatars disabled
     
     getEmployeeInitials: function(employee) {
         const names = employee.name.split(' ');
@@ -65,9 +63,7 @@ const mockEmployeeService = {
         return { ...employee, ...data };
     },
     
-    uploadAvatar: async function(employeeId, file) {
-        return `https://example.com/avatars/${employeeId}.jpg`;
-    }
+    // Avatars disabled
 };
 
 // Test utilities
@@ -258,38 +254,7 @@ modalTests.addTest('Should validate display color', () => {
     if (!modal.validateField('display_color', '#3498db')) throw new Error('Valid hex color should be valid');
 });
 
-// Avatar validation tests
-modalTests.addTest('Should validate avatar file type', () => {
-    const modal = new EmployeeModal(mockApp);
-    
-    // Test invalid file types
-    const txtFile = ModalTestUtils.createMockFile('test.txt', 'text/plain');
-    const txtValidation = modal.validateAvatarFile(txtFile);
-    if (txtValidation.valid) throw new Error('Text file should be invalid');
-    
-    // Test valid file types
-    const jpgFile = ModalTestUtils.createMockFile('test.jpg', 'image/jpeg');
-    const jpgValidation = modal.validateAvatarFile(jpgFile);
-    if (!jpgValidation.valid) throw new Error('JPEG file should be valid');
-    
-    const pngFile = ModalTestUtils.createMockFile('test.png', 'image/png');
-    const pngValidation = modal.validateAvatarFile(pngFile);
-    if (!pngValidation.valid) throw new Error('PNG file should be valid');
-});
-
-modalTests.addTest('Should validate avatar file size', () => {
-    const modal = new EmployeeModal(mockApp);
-    
-    // Test oversized file
-    const largeFile = ModalTestUtils.createMockFile('large.jpg', 'image/jpeg', 15 * 1024 * 1024); // 15MB
-    const largeValidation = modal.validateAvatarFile(largeFile);
-    if (largeValidation.valid) throw new Error('Large file should be invalid');
-    
-    // Test normal sized file
-    const normalFile = ModalTestUtils.createMockFile('normal.jpg', 'image/jpeg', 2 * 1024 * 1024); // 2MB
-    const normalValidation = modal.validateAvatarFile(normalFile);
-    if (!normalValidation.valid) throw new Error('Normal file should be valid');
-});
+// Avatars disabled: remove avatar-related tests
 
 // Form state tests
 modalTests.addTest('Should populate form with employee data', async () => {

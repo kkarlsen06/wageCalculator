@@ -298,14 +298,8 @@ async function testCrossTenantSecurity() {
         // Test accessing non-existent employee (should return 403)
         const fakeEmployeeId = '00000000-0000-0000-0000-000000000000';
         
-        const { response: getResponse } = await makeRequest('GET', `/employees/${fakeEmployeeId}/avatar-read-url`);
-        console.log('📊 Fake employee access - Status:', getResponse.status);
-        
-        if (getResponse.status === 403) {
-            console.log('✅ Cross-tenant access properly blocked');
-        } else {
-            console.log('❌ Cross-tenant access not properly blocked');
-        }
+        // Avatars disabled: skip avatar read URL cross-tenant check
+        console.log('ℹ️ Avatars disabled; skipping avatar read URL access test');
         
         return true;
     } catch (error) {

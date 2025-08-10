@@ -99,27 +99,7 @@ async function demo() {
                 console.log(`  • New color: ${updateData_result.employee.display_color}`);
             }
 
-            console.log('\n📋 Step 4: Generate avatar URLs');
-            console.log('-' .repeat(30));
-            
-            // Upload URL
-            const { response: uploadResponse, data: uploadData } = await makeRequest('POST', `/employees/${firstEmployee.id}/avatar-upload-url`, { ext: 'png' });
-            if (uploadResponse.status === 200) {
-                console.log(`✅ Upload URL generated for ${firstEmployee.name}`);
-                console.log(`  • Path: ${uploadData.path}`);
-                console.log(`  • URL: ${uploadData.signedUrl?.substring(0, 50)}...`);
-            } else {
-                console.log(`❌ Failed to generate upload URL:`, uploadData.error);
-            }
-            
-            // Read URL
-            const { response: readResponse, data: readData } = await makeRequest('GET', `/employees/${firstEmployee.id}/avatar-read-url`);
-            if (readResponse.status === 200) {
-                console.log(`✅ Read URL generated for ${firstEmployee.name}`);
-                console.log(`  • URL: ${readData.url?.substring(0, 50)}...`);
-            } else {
-                console.log(`❌ Failed to generate read URL:`, readData.error);
-            }
+            // Avatars disabled
 
             console.log('\n📋 Step 5: Archive an employee');
             console.log('-' .repeat(30));
@@ -181,7 +161,7 @@ async function demo() {
         console.log('✅ Employee creation with validation');
         console.log('✅ Employee listing and filtering');
         console.log('✅ Employee updates');
-        console.log('✅ Avatar signed URL generation');
+        // Avatars disabled
         console.log('✅ Employee archiving (soft delete)');
         console.log('✅ Archive filtering');
         console.log('✅ Input validation');

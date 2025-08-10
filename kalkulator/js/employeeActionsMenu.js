@@ -123,16 +123,6 @@ export class EmployeeActionsMenu {
                 description: 'Rediger ansattinformasjon'
             },
             {
-                id: 'avatar',
-                icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21,15 16,10 5,21"></polyline>
-                </svg>`,
-                label: 'Endre bilde',
-                description: 'Last opp profilbilde'
-            },
-            {
                 id: 'color',
                 icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="13.5" cy="6.5" r=".5"></circle>
@@ -313,9 +303,7 @@ export class EmployeeActionsMenu {
                 case 'edit':
                     await this.handleEditEmployee(employee);
                     break;
-                case 'avatar':
-                    await this.handleChangeAvatar(employee);
-                    break;
+                // Avatar action removed (initials-only design)
                 case 'color':
                     await this.handleChangeColor(employee);
                     break;
@@ -350,36 +338,7 @@ export class EmployeeActionsMenu {
         }
     }
 
-    /**
-     * Handle change avatar action
-     */
-    async handleChangeAvatar(employee) {
-        try {
-            // Import employee modal
-            const { EmployeeModal } = await import('./employeeModal.js');
-
-            // Create or get existing modal instance
-            if (!this.employeeModal) {
-                this.employeeModal = new EmployeeModal(this.app);
-            }
-
-            // Show edit modal with focus on avatar section
-            await this.employeeModal.showEdit(employee);
-
-            // Focus on avatar upload after modal is shown
-            setTimeout(() => {
-                const avatarUploadBtn = document.querySelector('.avatar-upload-btn');
-                if (avatarUploadBtn) {
-                    avatarUploadBtn.focus();
-                    avatarUploadBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, 200);
-
-        } catch (error) {
-            console.error('Error opening avatar upload:', error);
-            this.showError('Kunne ikke åpne avatar-opplasting');
-        }
-    }
+    // Avatar change handler removed (initials-only design)
 
     /**
      * Handle change color action

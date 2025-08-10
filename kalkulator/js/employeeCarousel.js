@@ -52,10 +52,22 @@ export class EmployeeCarousel {
                 <div class="carousel-instructions sr-only" aria-live="polite" id="carouselInstructions">
                     Bruk piltastene for å navigere mellom ansatte. Trykk Enter eller mellomrom for å velge. Trykk og hold eller bruk Shift+F10 for handlingsmeny.
                 </div>
+                <div class="carousel-edge-blur left" aria-hidden="true" style="display: none;"></div>
+                <button class="carousel-arrow carousel-arrow-left" aria-label="Scroll venstre" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
                 <div class="employee-carousel-track" id="employeeCarouselTrack"
                      aria-describedby="carouselInstructions">
                     <!-- Employee tiles will be rendered here -->
                 </div>
+                <button class="carousel-arrow carousel-arrow-right" aria-label="Scroll høyre" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+                <div class="carousel-edge-blur right" aria-hidden="true" style="display: none;"></div>
                 <div class="carousel-status sr-only" aria-live="polite" id="carouselStatus">
                     <!-- Status updates will be announced here -->
                 </div>
@@ -64,33 +76,49 @@ export class EmployeeCarousel {
 
         this.track = this.container.querySelector('.employee-carousel-track');
         this.statusElement = this.container.querySelector('#carouselStatus');
+        this.leftArrow = this.container.querySelector('.carousel-arrow-left');
+        this.rightArrow = this.container.querySelector('.carousel-arrow-right');
+        this.leftEdgeBlur = this.container.querySelector('.carousel-edge-blur.left');
+        this.rightEdgeBlur = this.container.querySelector('.carousel-edge-blur.right');
     }
 
     /**
      * Attach event listeners for touch, mouse, and keyboard interactions
      */
     attachEventListeners() {
-        // Touch events for mobile
-        this.track.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
-        this.track.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+        // Simplified touch events - let native scrolling work
+        this.track.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });
         this.track.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: true });
         
-        // Mouse events for desktop
-        this.track.addEventListener('mousedown', this.handleMouseDown.bind(this));
-        this.track.addEventListener('mousemove', this.handleMouseMove.bind(this));
-        this.track.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        this.track.addEventListener('mouseleave', this.handleMouseUp.bind(this));
-        // Failsafe click handler to ensure add tile works even if mouse/touch heuristics fail
+        // Add wheel event for horizontal scrolling on desktop
+        this.track.addEventListener('wheel', (e) => {
+            if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                e.preventDefault();
+                this.track.scrollLeft += e.deltaX;
+            } else if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                // Allow horizontal scroll with vertical wheel
+                e.preventDefault();
+                this.track.scrollLeft += e.deltaY;
+            }
+        }, { passive: false });
+        // Click handler for all tile interactions
         this.track.addEventListener('click', (e) => {
-            const addTile = e.target.closest('.employee-tile[data-action="add"]');
-            if (addTile) {
-                try {
-                    console.debug('[employees] add-click');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.handleAddEmployee();
-                } catch (err) {
-                    console.error('Add employee click handler failed:', err);
+            const tile = e.target.closest('.employee-tile');
+            if (tile) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Handle add tile
+                if (tile.dataset.action === 'add') {
+                    try {
+                        console.debug('[employees] add-click');
+                        this.handleAddEmployee();
+                    } catch (err) {
+                        console.error('Add employee click handler failed:', err);
+                    }
+                } else {
+                    // Handle employee selection
+                    this.handleTileClick(tile);
                 }
             }
         });
@@ -101,8 +129,18 @@ export class EmployeeCarousel {
         // Focus events for accessibility
         this.track.addEventListener('focus', this.handleFocus.bind(this), true);
 
-        // Scroll events for virtualization
+        // Scroll events for virtualization and arrow visibility
         this.track.addEventListener('scroll', this.handleScroll.bind(this), { passive: true });
+
+        // Arrow button clicks for desktop navigation
+        if (this.leftArrow && this.rightArrow) {
+            this.leftArrow.addEventListener('click', () => {
+                this.track.scrollBy({ left: -200, behavior: 'smooth' });
+            });
+            this.rightArrow.addEventListener('click', () => {
+                this.track.scrollBy({ left: 200, behavior: 'smooth' });
+            });
+        }
 
         // Window resize for mobile detection
         window.addEventListener('resize', this.handleResize.bind(this), { passive: true });
@@ -148,6 +186,9 @@ export class EmployeeCarousel {
 
             // Scroll to active item if needed
             this.scrollToActiveItem();
+            
+            // Update arrow visibility after render
+            this.updateArrowVisibility();
 
             // Announce completion
             const employeeCount = this.app.employees.length;
@@ -368,32 +409,21 @@ export class EmployeeCarousel {
     }
 
     /**
-     * Handle touch move
+     * Handle touch move - removed as we're using native scrolling
+     * This method is no longer called, but kept for backward compatibility
      */
     handleTouchMove(e) {
-        if (e.touches.length !== 1) return;
-
-        const touch = e.touches[0];
-        const deltaX = this.touchStartX - touch.clientX;
-        const deltaY = this.touchStartY - touch.clientY;
-
-        // Determine if this is a horizontal scroll
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > this.touchThreshold) {
-            e.preventDefault(); // Prevent vertical scroll
-            this.isDragging = true;
-
-            // Smooth scrolling with momentum on mobile
-            if (this.isMobile) {
-                const momentum = deltaX * 0.8; // Reduce sensitivity on mobile
-                this.track.scrollLeft = this.scrollStartX + momentum;
-            } else {
-                this.track.scrollLeft = this.scrollStartX + deltaX;
+        // Let native scrolling handle movement
+        // Just cancel long press if moved
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            const deltaX = this.touchStartX - touch.clientX;
+            const deltaY = this.touchStartY - touch.clientY;
+            
+            if (Math.abs(deltaX) > this.touchThreshold || Math.abs(deltaY) > this.touchThreshold) {
+                this.cancelLongPress();
+                this.isDragging = true;
             }
-        }
-
-        // Cancel long press if moved too much
-        if (Math.abs(deltaX) > this.touchThreshold || Math.abs(deltaY) > this.touchThreshold) {
-            this.cancelLongPress();
         }
     }
 
@@ -402,27 +432,18 @@ export class EmployeeCarousel {
      */
     handleTouchEnd(e) {
         this.cancelLongPress();
-
-        if (!this.isDragging) {
-            // This was a tap, not a drag
-            const target = e.target.closest('.employee-tile');
-            if (target) {
-                this.handleTileClick(target);
-            }
-        }
-
+        
+        // Let click event handle tile selection
+        // This prevents double-firing on touch devices
         this.isDragging = false;
     }
 
     /**
-     * Handle mouse down
+     * Handle mouse down - simplified for long press only
      */
     handleMouseDown(e) {
-        this.touchStartX = e.clientX;
-        this.scrollStartX = this.track.scrollLeft;
-        this.isDragging = false;
-
-        // Start long press timer for right-click alternative
+        // Let native scrolling handle dragging
+        // Just track for long press
         const target = e.target.closest('.employee-tile');
         if (target && target.dataset.employeeId && target.dataset.employeeId !== 'all') {
             this.startLongPress(target, e);
@@ -430,34 +451,19 @@ export class EmployeeCarousel {
     }
 
     /**
-     * Handle mouse move
+     * Handle mouse move - no longer needed with native scrolling
      */
     handleMouseMove(e) {
-        if (e.buttons !== 1) return; // Only handle left mouse button
-
-        const deltaX = this.touchStartX - e.clientX;
-
-        if (Math.abs(deltaX) > 10) {
-            this.isDragging = true;
-            this.track.scrollLeft = this.scrollStartX + deltaX;
-            this.cancelLongPress();
-        }
+        // Method kept for backward compatibility
+        this.cancelLongPress();
     }
 
     /**
-     * Handle mouse up
+     * Handle mouse up - simplified
      */
     handleMouseUp(e) {
         this.cancelLongPress();
-
-        if (!this.isDragging) {
-            const target = e.target.closest('.employee-tile');
-            if (target) {
-                this.handleTileClick(target);
-            }
-        }
-
-        this.isDragging = false;
+        // Click is now handled by the click event listener
     }
 
     /**
@@ -519,8 +525,14 @@ export class EmployeeCarousel {
         } else if (employeeId) {
             const employee = this.app.employees.find(emp => emp.id === employeeId);
             if (employee) {
-                this.app.setSelectedEmployee(employeeId);
-                this.announceSelection(`${employee.name} valgt`);
+                const isAlreadySelected = this.app.isEmployeeSelected(employeeId);
+                if (isAlreadySelected) {
+                    // Clicking an already selected employee opens the Edit Employee modal
+                    this.app.showEditEmployeeModal?.(employee);
+                } else {
+                    this.app.setSelectedEmployee(employeeId);
+                    this.announceSelection(`${employee.name} valgt`);
+                }
             }
         }
     }
@@ -707,6 +719,9 @@ export class EmployeeCarousel {
      * Handle scroll events for virtualization
      */
     handleScroll() {
+        // Update arrow visibility on desktop
+        this.updateArrowVisibility();
+        
         if (!this.isVirtualized) return;
 
         // Throttle scroll events
@@ -716,6 +731,37 @@ export class EmployeeCarousel {
             this.updateVisibleRange();
             this.scrollTimeout = null;
         }, 16); // ~60fps
+    }
+    
+    /**
+     * Update arrow visibility based on scroll position
+     */
+    updateArrowVisibility() {
+        if (!this.leftArrow || !this.rightArrow || !this.track) return;
+        
+        // Only show arrows on desktop
+        const isDesktop = window.innerWidth > 768;
+        if (!isDesktop) {
+            this.leftArrow.style.display = 'none';
+            this.rightArrow.style.display = 'none';
+            if (this.leftEdgeBlur) this.leftEdgeBlur.style.display = 'none';
+            if (this.rightEdgeBlur) this.rightEdgeBlur.style.display = 'none';
+            return;
+        }
+        
+        const scrollLeft = this.track.scrollLeft;
+        const scrollWidth = this.track.scrollWidth;
+        const clientWidth = this.track.clientWidth;
+        
+        // Show/hide left arrow
+        const showLeft = scrollLeft > 5;
+        this.leftArrow.style.display = showLeft ? 'flex' : 'none';
+        if (this.leftEdgeBlur) this.leftEdgeBlur.style.display = showLeft ? 'block' : 'none';
+        
+        // Show/hide right arrow
+        const showRight = scrollLeft < scrollWidth - clientWidth - 5;
+        this.rightArrow.style.display = showRight ? 'flex' : 'none';
+        if (this.rightEdgeBlur) this.rightEdgeBlur.style.display = showRight ? 'block' : 'none';
     }
 
     /**
@@ -797,20 +843,7 @@ export class EmployeeCarousel {
     async preloadAvatars() {
         if (!this.app.employees || this.app.employees.length === 0) return;
 
-        // Preload avatars for visible employees
-        const visibleEmployees = this.isVirtualized ?
-            this.app.employees.slice(this.visibleRange.start, this.visibleRange.end) :
-            this.app.employees.slice(0, 10); // Preload first 10 if not virtualized
-
-        const preloadPromises = visibleEmployees.map(async (employee) => {
-            try {
-                await this.app.getEmployeeAvatarUrl(employee.id);
-            } catch (error) {
-                // Ignore preload errors
-            }
-        });
-
-        await Promise.allSettled(preloadPromises);
+            // Avatars disabled: nothing to preload
     }
 
     /**

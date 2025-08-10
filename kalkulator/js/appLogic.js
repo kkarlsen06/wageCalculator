@@ -286,7 +286,7 @@ export const app = {
     employeeCache: new Map(), // Per-employee data cache for performance
     employeesLoading: false, // Loading state for employee operations
     employeesError: null, // Error state for employee operations
-    employeeAvatarCache: new Map(), // Cache for employee avatar URLs
+    // Avatars disabled: remove avatar URL cache
     async getAuthHeaders() {
         try {
             const { data: { session } } = await window.supa.auth.getSession();
@@ -508,6 +508,10 @@ export const app = {
                 this.orgSettings = { break_policy: json.break_policy };
                 if (window.showToast) window.showToast('Lagret', 'success');
                 this.updateOrgSettingsUI();
+                // Re-render employees data so the breakdown reflects the new org policy
+                if (this.currentView === 'employees') {
+                    await this.fetchAndDisplayEmployeeShifts?.();
+                }
             } else {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.error || 'Kunne ikke lagre');
@@ -534,12 +538,9 @@ export const app = {
     updateOrgSettingsUI() {
         const disabled = !this.isWageCaregiver;
         const section = document.getElementById('orgBreakPolicySection');
-        const saveRow = document.getElementById('orgSaveRow');
         const select = document.getElementById('breakPolicySelect');
-        [section, saveRow].forEach(el => { if (el) el.style.opacity = disabled ? '0.5' : '1'; });
+        [section].forEach(el => { if (el) el.style.opacity = disabled ? '0.5' : '1'; });
         if (select) select.disabled = disabled;
-        const btn = saveRow ? saveRow.querySelector('button') : null;
-        if (btn) btn.disabled = disabled;
     },
 
 
@@ -849,17 +850,27 @@ export const app = {
     updateEmployeeAssignmentUIInModal() {
         const pillId = 'selectedEmployeePill';
         const existingPill = document.getElementById(pillId);
-        const employeeSelectGroup = document.getElementById('employeeSelect')?.closest('.form-group');
-        const recurringSelectGroup = document.getElementById('recurringEmployeeSelect')?.closest('.form-group');
+        const employeeSelect = document.getElementById('employeeSelect');
+        const recurringEmployeeSelect = document.getElementById('recurringEmployeeSelect');
+        const employeeSelectGroup = employeeSelect?.closest('.form-group');
+        const recurringSelectGroup = recurringEmployeeSelect?.closest('.form-group');
 
-        const selectedEmployee = this.getSelectedEmployee?.() || null;
-        const inEmployeeContext = !!selectedEmployee; // selectedEmployeeId !== null
+        // Determine if we are in the Employees view and have a current selection
+        const isEmployeesView = this.currentView === 'employees';
+        const hasSelectedEmployeeId = this.selectedEmployeeId !== null;
+        const shouldHideSelectors = isEmployeesView && hasSelectedEmployeeId;
+
+        // Ensure selects reflect the selected employee when available
+        if (hasSelectedEmployeeId) {
+            if (employeeSelect) employeeSelect.value = this.selectedEmployeeId;
+            if (recurringEmployeeSelect) recurringEmployeeSelect.value = this.selectedEmployeeId;
+        }
 
         // Show/hide selects
-        if (employeeSelectGroup) employeeSelectGroup.style.display = inEmployeeContext ? 'none' : '';
-        if (recurringSelectGroup) recurringSelectGroup.style.display = inEmployeeContext ? 'none' : '';
+        if (employeeSelectGroup) employeeSelectGroup.style.display = shouldHideSelectors ? 'none' : '';
+        if (recurringSelectGroup) recurringSelectGroup.style.display = shouldHideSelectors ? 'none' : '';
 
-        // Create/update the pill when in employee context
+        // Create/update the pill only in employees view
         const modal = document.getElementById('addShiftModal');
         if (!modal) return;
         let pill = existingPill;
@@ -880,12 +891,43 @@ export const app = {
             form?.insertBefore(pill, form.firstChild?.nextSibling?.nextSibling || form.firstChild);
         }
 
-        if (inEmployeeContext && selectedEmployee) {
+        // Populate pill details if we know the employee
+        const selectedEmployee = this.getSelectedEmployee?.() || null;
+        if (shouldHideSelectors && selectedEmployee) {
             pill.style.display = '';
             const nameEl = pill.querySelector('.name');
             const dotEl = pill.querySelector('.color-dot');
             if (nameEl) nameEl.textContent = selectedEmployee.name;
             if (dotEl) dotEl.style.background = selectedEmployee.display_color || '#888';
+
+            // Make the pill clickable to open Edit Employee modal
+            const clickable = pill.querySelector('.selected-employee-pill');
+            if (clickable && !clickable.dataset.boundEdit) {
+                clickable.style.cursor = 'pointer';
+                clickable.setAttribute('role', 'button');
+                clickable.setAttribute('tabindex', '0');
+                clickable.title = 'Rediger ansatt';
+                clickable.addEventListener('click', (e) => {
+                    try {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    } catch (_) {}
+                    const employee = this.getSelectedEmployee?.();
+                    if (employee) {
+                        this.showEditEmployeeModal(employee);
+                    }
+                });
+                clickable.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const employee = this.getSelectedEmployee?.();
+                        if (employee) {
+                            this.showEditEmployeeModal(employee);
+                        }
+                    }
+                });
+                clickable.dataset.boundEdit = '1';
+            }
         } else {
             pill.style.display = 'none';
         }
@@ -2436,6 +2478,13 @@ export const app = {
         if (tab === 'org') {
             const sel = document.getElementById('breakPolicySelect');
             if (sel && this.orgSettings?.break_policy) sel.value = this.orgSettings.break_policy;
+            // Save immediately when the policy changes
+            if (sel && !sel._immediateSaveBound) {
+                sel.addEventListener('change', async () => {
+                    await this.saveOrgSettings();
+                });
+                sel._immediateSaveBound = true;
+            }
 
             // Initialize wage caregiver toggle and UI state
             const orgToggle = document.getElementById('orgIsWageCaregiverToggle');
@@ -3404,6 +3453,8 @@ export const app = {
         this.startNextShiftTimer(); // Start the countdown timer
         // Render employees tab specific content
         if (this.currentView === 'employees') {
+            // Fetch employee shifts when changing months in employees view
+            this.fetchAndDisplayEmployeeShifts?.();
             this.renderEmployeeWorkSummary?.();
         }
     },
@@ -6287,6 +6338,9 @@ export const app = {
         const originalIndex = this.shifts.indexOf(shift);
 
         // Create compact content
+        // Determine wage rate for this shift (uses snapshot if present)
+        const shiftWageRate = this.getWageRateForShift(shift);
+
         contentContainer.innerHTML = `
             <div class="detail-section">
                 <div class="detail-label">Dato</div>
@@ -6296,6 +6350,11 @@ export const app = {
             <div class="detail-section">
                 <div class="detail-label">Tid</div>
                 <div class="detail-value">${shift.startTime} - ${shift.endTime} (${calc.totalHours.toFixed(2)}t)</div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-label">Timelønn for denne vakten</div>
+                <div class="detail-value">${this.formatCurrency(shiftWageRate)}</div>
             </div>
 
             <div class="detail-section">
@@ -7515,7 +7574,9 @@ export const app = {
             };
         }
 
-        const wageRate = this.getCurrentWageRate();
+        // Use per-shift snapshot when available (employees view),
+        // otherwise fall back to the app's current wage rate
+        const wageRate = this.getWageRateForShift(shift);
         const bonuses = this.getCurrentBonuses();
 
         // Apply legal break deduction system
@@ -8394,6 +8455,26 @@ export const app = {
                 return;
             }
 
+            // Ensure break deduction in employees view follows organization policy (Bedrift)
+            const policy = this.orgSettings?.break_policy;
+            const mappedMethod = policy === 'proportional_across_periods' ? 'proportional'
+                                : policy === 'from_base_rate' ? 'base_only'
+                                : policy === 'fixed_0_5_over_5_5h' ? 'end_of_shift'
+                                : policy === 'none' ? 'none'
+                                : this.pauseDeductionMethod;
+            const prevMethod = this.pauseDeductionMethod;
+            const prevEnabled = this.pauseDeductionEnabled;
+            let restored = false;
+            const restoreDeduction = () => {
+                if (restored) return;
+                this.pauseDeductionMethod = prevMethod;
+                this.pauseDeductionEnabled = prevEnabled;
+                restored = true;
+            };
+            this.pauseDeductionMethod = mappedMethod;
+            // Keep enabled so audit trail includes wagePeriods even when method is 'none'
+            this.pauseDeductionEnabled = true;
+
             // Filter shifts to current month/year for selected employee
             const monthShifts = (this.shifts || []).filter(shift =>
                 shift.employee_id === selectedEmployee.id &&
@@ -8443,7 +8524,7 @@ export const app = {
                 if (breakResult?.method === 'end_of_shift' && breakResult.shouldDeduct) {
                     // Recalculate periods with adjusted end time
                     wagePeriods = this.calculateWagePeriods(shift, wageRate, bonuses, startMinutes, breakResult.adjustedEndMinutes);
-                } else if (breakResult?.auditTrail?.wagePeriods) {
+                } else if (breakResult?.auditTrail?.wagePeriods && breakResult.auditTrail.wagePeriods.length > 0) {
                     wagePeriods = breakResult.auditTrail.wagePeriods.map(p => ({ ...p }));
                 } else {
                     wagePeriods = this.calculateWagePeriods(shift, wageRate, bonuses, startMinutes, endMinutes);
@@ -8532,8 +8613,17 @@ export const app = {
                 // Fallback: render directly into employeesContent
                 container.innerHTML = `<div class="employee-work-summary" id="employeeWorkSummary">${html}</div>`;
             }
+            // Restore previous deduction preferences
+            restoreDeduction();
         } catch (error) {
             console.error('Error rendering employee work summary:', error);
+            // Always restore on error
+            try {
+                this.pauseDeductionMethod = this.pauseDeductionMethod ?? this.pauseDeductionMethod; // no-op guard
+            } finally {
+                // Best-effort restoration to previous values
+                // If prev values are not in scope, ignore
+            }
         }
     },
     formatHours(hours) {
@@ -8857,6 +8947,9 @@ export const app = {
             // Populate the edit form with current shift data
             this.populateEditForm(shift);
 
+            // Reflect employee context in edit modal (pill vs selectors) when in employees view
+            this.updateEmployeeAssignmentUIInEditModal?.(shift);
+
             // Hide header
             const header = document.querySelector('.header');
             if (header) {
@@ -8970,6 +9063,81 @@ export const app = {
                 dateCell.classList.add('selected');
             }
         }, 100);
+    },
+
+    // Show selected employee pill in edit modal (employees view) and hide dropdown
+    updateEmployeeAssignmentUIInEditModal(shift) {
+        try {
+            const modal = document.getElementById('editShiftModal');
+            if (!modal) return;
+
+            const form = modal.querySelector('#editShiftForm');
+            if (!form) return;
+
+            // Remove any existing pill
+            const existing = document.getElementById('editSelectedEmployeePill');
+            if (existing) existing.remove();
+
+            // Only show pill in employees view
+            const inEmployees = this.currentView === 'employees';
+            if (!inEmployees) return;
+
+            // Derive which employee to show: selectedEmployeeId takes precedence, else from the shift
+            const employeeId = this.selectedEmployeeId || shift?.employee_id || null;
+            const employee = employeeId ? (this.employees.find(e => e.id === employeeId) || null) : null;
+
+            // Hide the dropdown group in employees view
+            const editSelect = modal.querySelector('#editEmployeeSelect');
+            const group = editSelect?.closest('.form-group') || editSelect?.parentElement;
+            if (group) group.style.display = 'none';
+
+            // If we have an employee, render the pill
+            if (employee) {
+                const pill = document.createElement('div');
+                pill.id = 'editSelectedEmployeePill';
+                pill.className = 'selected-employee-pill';
+                pill.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:9999px;background:var(--bg-secondary);border:1px solid var(--border-color);margin:8px 0;';
+                const colorDot = document.createElement('span');
+                colorDot.style.cssText = `width:10px;height:10px;border-radius:9999px;background:${this.getEmployeeDisplayColor?.(employee) || employee.display_color || '#999'};display:inline-block;`;
+                const label = document.createElement('span');
+                label.textContent = employee.name;
+                label.style.fontWeight = '600';
+                pill.appendChild(colorDot);
+                pill.appendChild(label);
+
+                // Insert pill at top of the form, after the heading (before date selector)
+                form.insertBefore(pill, form.firstChild);
+
+                // Ensure the select reflects the same employee internally (for any fallback logic)
+                if (editSelect) {
+                    editSelect.value = employee.id;
+                }
+
+                // Make the pill clickable to open Edit Employee modal
+                if (!pill.dataset.boundEdit) {
+                    pill.style.cursor = 'pointer';
+                    pill.setAttribute('role', 'button');
+                    pill.setAttribute('tabindex', '0');
+                    pill.title = 'Rediger ansatt';
+                    pill.addEventListener('click', (e) => {
+                        try {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        } catch (_) {}
+                        this.showEditEmployeeModal(employee);
+                    });
+                    pill.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.showEditEmployeeModal(employee);
+                        }
+                    });
+                    pill.dataset.boundEdit = '1';
+                }
+            }
+        } catch (e) {
+            console.warn('updateEmployeeAssignmentUIInEditModal error:', e);
+        }
     },
 
     populateEditTimeSelects() {
@@ -9202,41 +9370,110 @@ export const app = {
             const startMinute = document.getElementById('editStartMinute').value || '00';
             const endHour = document.getElementById('editEndHour').value;
             const endMinute = document.getElementById('editEndMinute').value || '00';
-            const employeeId = document.getElementById('editEmployeeSelect').value || null;
-
-            // Automatically determine shift type from selected date
-            const dayOfWeek = this.editSelectedDate.getDay();
-            const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
 
             if (!startHour || !endHour) {
                 alert('Vennligst fyll ut arbeidstid');
                 return;
             }
 
+            const newDateStr = `${this.editSelectedDate.getFullYear()}-${(this.editSelectedDate.getMonth() + 1).toString().padStart(2, '0')}-${this.editSelectedDate.getDate().toString().padStart(2, '0')}`;
+            const newStart = `${startHour}:${startMinute}`;
+            const newEnd = `${endHour}:${endMinute}`;
 
-            // Get authenticated user
+            // Employees view: resolve row id by old composite keys, then update via server API
+            if (this.currentView === 'employees') {
+                const { data: { session } } = await window.supa.auth.getSession();
+                if (!session) { alert('Du er ikke innlogget'); return; }
+
+                const headers = {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json'
+                };
+
+                const employeeSelectEl = document.getElementById('editEmployeeSelect');
+                const selectedEmployeeId = employeeSelectEl ? (employeeSelectEl.value || null) : null;
+
+                const body = {
+                    shift_date: newDateStr,
+                    start_time: newStart,
+                    end_time: newEnd
+                };
+                if (selectedEmployeeId) {
+                    body.employee_id = selectedEmployeeId;
+                }
+                
+                // Prefer direct id from the editing shift (no server lookup); fallback to lookup if missing
+                let targetId = this.editingShift?.id || null;
+                if (!targetId) {
+                    const oldDate = this.editingShift?.date instanceof Date
+                        ? `${this.editingShift.date.getFullYear()}-${String(this.editingShift.date.getMonth() + 1).padStart(2, '0')}-${String(this.editingShift.date.getDate()).padStart(2, '0')}`
+                        : newDateStr;
+                    const empIdForLookup = this.editingShift?.employee_id || selectedEmployeeId || this.selectedEmployeeId || null;
+                    if (!empIdForLookup) {
+                        alert('Kunne ikke finne ansatt for vakten. Oppdater siden og prøv igjen.');
+                        return;
+                    }
+                    const lookupParams = new URLSearchParams({
+                        from: oldDate,
+                        to: oldDate,
+                        limit: '200',
+                        employee_id: empIdForLookup,
+                        bust: String(Date.now())
+                    });
+                    const lookupResp = await fetch(`${window.CONFIG.apiBase}/employee-shifts?${lookupParams.toString()}`, {
+                        headers,
+                        cache: 'no-store'
+                    });
+                    if (!lookupResp.ok) {
+                        alert('Kunne ikke hente eksisterende vakt for oppdatering.');
+                        return;
+                    }
+                    const { shifts: rows = [] } = await lookupResp.json().catch(() => ({ shifts: [] }));
+                    const oldStart = this.editingShift?.startTime;
+                    const oldEnd = this.editingShift?.endTime;
+                    let target = rows.find(r => r.start_time === oldStart && r.end_time === oldEnd);
+                    if (!target && rows.length === 1) target = rows[0];
+                    if (!target || !target.id) {
+                        alert('Fant ikke vakten å oppdatere. Last inn på nytt og prøv igjen.');
+                        return;
+                    }
+                    targetId = target.id;
+                }
+
+                const resp = await fetch(`${window.CONFIG.apiBase}/employee-shifts/${targetId}`, {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify(body)
+                });
+                if (!resp.ok) {
+                    const e = await resp.json().catch(() => ({}));
+                    console.error('updateShift (employee) failed:', e);
+                    alert(e.error || 'Kunne ikke oppdatere vakt');
+                    return;
+                }
+
+                // Refresh employee shifts to reflect updated snapshots and policies
+                await this.fetchAndDisplayEmployeeShifts?.();
+                this.closeEditShift();
+                alert('Vakt oppdatert!');
+                return;
+            }
+
+            // Default (dashboard) view: update personal shift directly in user_shifts
             const { data: { user }, error: authError } = await window.supa.auth.getUser();
-            if (authError) {
-                console.error('updateShift: Authentication error:', authError);
-                alert('Feil ved autentisering');
-                return;
-            }
-            if (!user) {
-                alert('Du er ikke innlogget');
-                return;
-            }
+            if (authError || !user) { alert('Feil ved autentisering'); return; }
 
-            // Create updated shift data
+            const dayOfWeek = this.editSelectedDate.getDay();
+            const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
+
             const updatedShiftData = {
-                shift_date: `${this.editSelectedDate.getFullYear()}-${(this.editSelectedDate.getMonth() + 1).toString().padStart(2, '0')}-${this.editSelectedDate.getDate().toString().padStart(2, '0')}`,
-                start_time: `${startHour}:${startMinute}`,
-                end_time: `${endHour}:${endMinute}`,
+                shift_date: newDateStr,
+                start_time: newStart,
+                end_time: newEnd,
                 shift_type: type,
-                series_id: null, // Remove series ID when editing a shift
-                employee_id: employeeId
+                series_id: null
             };
 
-            // Update in database
             const { data: updated, error } = await window.supa
                 .from('user_shifts')
                 .update(updatedShiftData)
@@ -9254,10 +9491,10 @@ export const app = {
             // Update local shift objects
             const originalShift = this.editingShift;
             originalShift.date = new Date(this.editSelectedDate);
-            originalShift.startTime = `${startHour}:${startMinute}`;
-            originalShift.endTime = `${endHour}:${endMinute}`;
+            originalShift.startTime = newStart;
+            originalShift.endTime = newEnd;
             originalShift.type = type;
-            originalShift.seriesId = null; // Remove series ID from local object
+            originalShift.seriesId = null;
 
             // Update both userShifts and shifts arrays
             const userShiftIndex = this.userShifts.findIndex(s => s.id === originalShift.id);
@@ -9270,11 +9507,8 @@ export const app = {
             // Update display
             this.refreshUI(this.shifts);
 
-            // Close edit modal
+            // Close edit modal and confirm
             this.closeEditShift();
-
-
-            // Show success message
             alert('Vakt oppdatert!');
 
         } catch (e) {
@@ -9581,8 +9815,10 @@ export const app = {
             params.set('from', from);
             params.set('to', to);
             params.set('limit', '200');
+            // Avoid cached 304s when we need fresh data after updates
+            params.set('bust', String(Date.now()));
 
-            const resp = await fetch(`${window.CONFIG.apiBase}/employee-shifts?${params.toString()}`, { headers });
+            const resp = await fetch(`${window.CONFIG.apiBase}/employee-shifts?${params.toString()}`, { headers, cache: 'no-store' });
             if (!resp.ok) { const e = await resp.json().catch(()=>({})); console.error('Failed to fetch employee shifts:', e); return; }
             const { shifts } = await resp.json();
 
@@ -9600,8 +9836,14 @@ export const app = {
                 hourly_wage_snapshot: Number(s.hourly_wage_snapshot)
             }));
 
-            this.updateDisplay();
-            // Also render the employee work summary since shifts changed
+            // Update UI components WITHOUT calling updateDisplay to avoid infinite loop
+            this.updateHeader();
+            this.updateStats(false);
+            this.updateWeeklyHoursChart();
+            this.updateShiftList();
+            this.updateShiftCalendar();
+            
+            // Render employee work summary
             if (this.currentView === 'employees') {
                 this.renderEmployeeWorkSummary?.();
             }
@@ -10735,7 +10977,6 @@ Hva kan jeg hjelpe deg med i dag?`;
 
             // Initialize employee cache
             this.employeeCache.clear();
-            this.employeeAvatarCache.clear();
 
         } catch (error) {
             console.error('Error initializing employee state:', error);
@@ -10844,7 +11085,7 @@ Hva kan jeg hjelpe deg med i dag?`;
      */
     clearEmployeeCache(employeeId) {
         this.employeeCache.delete(employeeId);
-        this.employeeAvatarCache.delete(employeeId);
+        // Avatars disabled
     },
 
     /**
@@ -10852,7 +11093,6 @@ Hva kan jeg hjelpe deg med i dag?`;
      */
     clearAllEmployeeCaches() {
         this.employeeCache.clear();
-        this.employeeAvatarCache.clear();
     },
 
     /**
@@ -10971,10 +11211,7 @@ Hva kan jeg hjelpe deg med i dag?`;
      * @param {string} employeeId - Employee ID
      * @returns {Promise<string|null>} Avatar URL or null
      */
-    async getEmployeeAvatarUrl(employeeId) {
-        // Avatars disabled: always use initials in UI
-        return null;
-    },
+    // Avatars disabled: always use initials in UI
 
     /**
      * Generate employee initials for display
@@ -10999,6 +11236,190 @@ Hva kan jeg hjelpe deg med i dag?`;
      */
     getEmployeeDisplayColor(employee) {
         return employee?.display_color || '#6366f1'; // Default to accent color
+    },
+
+    // CSV Export Functions
+    /**
+     * Open CSV export modal
+     */
+    async openCsvExportModal(employeeId = null) {
+        const modal = document.getElementById('csvExportModal');
+        if (!modal) return;
+
+        // Ensure employees are loaded first
+        if (this.employees.length === 0 && !this.employeesLoading) {
+            try {
+                await this.loadEmployees();
+            } catch (error) {
+                console.warn('Could not load employees for CSV export:', error);
+            }
+        }
+
+        // Pre-fill employee if specified
+        const employeeSelect = document.getElementById('csvExportEmployeeSelect');
+        if (employeeSelect) {
+            // Clear existing options
+            employeeSelect.innerHTML = '<option value="">Alle ansatte</option>';
+            
+            // Populate employee options using this.employees directly
+            const employees = this.employees || [];
+            employees
+                .filter(emp => !emp.archived_at)
+                .forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.id;
+                    option.textContent = emp.name;
+                    if (employeeId && emp.id === employeeId) {
+                        option.selected = true;
+                    }
+                    employeeSelect.appendChild(option);
+                });
+            
+            if (employees.length === 0) {
+                console.info('No employees available for selection');
+            }
+        }
+
+        // Set default date range (current month)
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        const fromDateInput = document.getElementById('csvExportFromDate');
+        const toDateInput = document.getElementById('csvExportToDate');
+        
+        if (fromDateInput) {
+            fromDateInput.value = firstDay.toISOString().split('T')[0];
+        }
+        if (toDateInput) {
+            toDateInput.value = lastDay.toISOString().split('T')[0];
+        }
+
+        // Use active class for proper flexbox centering
+        modal.classList.add('active');
+    },
+
+    /**
+     * Close CSV export modal
+     */
+    closeCsvExportModal() {
+        const modal = document.getElementById('csvExportModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    },
+
+    /**
+     * Export CSV report
+     */
+    async exportCsvReport() {
+        try {
+            // Get form values
+            const employeeId = document.getElementById('csvExportEmployeeSelect')?.value || '';
+            const fromDate = document.getElementById('csvExportFromDate')?.value || '';
+            const toDate = document.getElementById('csvExportToDate')?.value || '';
+
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (employeeId) params.append('employee_id', employeeId);
+            if (fromDate) params.append('from', fromDate);
+            if (toDate) params.append('to', toDate);
+
+            // Construct the URL using the configured API base
+            const baseUrl = window.CONFIG?.apiBase || window.location.origin;
+            const url = `${baseUrl}/reports/wages?${params.toString()}`;
+
+            // Get auth token using Supabase auth (supa is the global instance)
+            let token = null;
+            try {
+                const { data: { session } } = await window.supa.auth.getSession();
+                token = session?.access_token;
+            } catch (e) {
+                console.error('Failed to get auth session:', e);
+            }
+            
+            if (!token) {
+                alert('Du må være innlogget for å eksportere data');
+                return;
+            }
+
+            // Fetch the CSV
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Export failed: ${response.statusText}`);
+            }
+
+            // Get the CSV content
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            
+            // Create download link
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = downloadUrl;
+            
+            // Generate filename with date
+            const dateStr = new Date().toISOString().split('T')[0];
+            const employeeName = employeeId ? 
+                document.getElementById('csvExportEmployeeSelect')?.options[
+                    document.getElementById('csvExportEmployeeSelect')?.selectedIndex
+                ]?.text.replace(/[^a-zA-Z0-9]/g, '_') : 'alle_ansatte';
+            a.download = `lønnsrapport_${employeeName}_${dateStr}.csv`;
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            window.URL.revokeObjectURL(downloadUrl);
+            document.body.removeChild(a);
+            
+            // Close modal
+            this.closeCsvExportModal();
+            
+            // Show success message
+            this.showNotification('CSV-rapport lastet ned', 'success');
+            
+        } catch (error) {
+            console.error('CSV export error:', error);
+            alert('Kunne ikke eksportere CSV: ' + error.message);
+        }
+    },
+
+    /**
+     * Show notification (utility function)
+     */
+    showNotification(message, type = 'info') {
+        // Simple notification - can be enhanced with a toast library later
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: ${type === 'success' ? '#10b981' : '#3b82f6'};
+            color: white;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
     }
 };
 

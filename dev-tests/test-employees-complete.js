@@ -204,47 +204,7 @@ async function testValidation() {
     }
 }
 
-async function testAvatarEndpoints() {
-    console.log('\n📝 Testing Avatar Signed URL Endpoints...\n');
-    
-    if (!testEmployeeId) {
-        console.log('❌ No test employee ID available for avatar tests');
-        return false;
-    }
-    
-    try {
-        // Test avatar upload URL generation
-        console.log('1️⃣ Testing avatar upload URL generation...');
-        const { response: uploadResponse, data: uploadData } = await makeRequest('POST', `/employees/${testEmployeeId}/avatar-upload-url`, { ext: 'png' });
-        
-        if (uploadResponse.status === 200 && uploadData.signedUrl) {
-            console.log('✅ Avatar upload URL generated successfully');
-        } else if (uploadResponse.status === 403) {
-            console.log('⚠️  Avatar upload URL test skipped - employee archived or access denied');
-        } else {
-            console.log('❌ Failed to generate avatar upload URL:', uploadResponse.status, uploadData);
-            return false;
-        }
-        
-        // Test avatar read URL generation
-        console.log('\n2️⃣ Testing avatar read URL generation...');
-        const { response: readResponse, data: readData } = await makeRequest('GET', `/employees/${testEmployeeId}/avatar-read-url`);
-        
-        if (readResponse.status === 200 && readData.url) {
-            console.log('✅ Avatar read URL generated successfully');
-        } else if (readResponse.status === 403) {
-            console.log('⚠️  Avatar read URL test skipped - employee archived or access denied');
-        } else {
-            console.log('❌ Failed to generate avatar read URL:', readResponse.status, readData);
-            return false;
-        }
-        
-        return true;
-    } catch (error) {
-        console.log('❌ Avatar endpoint test failed with error:', error.message);
-        return false;
-    }
-}
+// Avatars disabled: remove avatar endpoint tests
 
 async function testSecurity() {
     console.log('\n📝 Testing Security & Access Control...\n');
@@ -336,8 +296,7 @@ async function runCompleteTests() {
     console.log('\n' + '=' .repeat(60));
     testResults.push(await testValidation());
     
-    console.log('\n' + '=' .repeat(60));
-    testResults.push(await testAvatarEndpoints());
+    // Avatars disabled
     
     console.log('\n' + '=' .repeat(60));
     testResults.push(await testSecurity());
@@ -355,7 +314,7 @@ async function runCompleteTests() {
         console.log('🎉 All employee management tests passed!');
         console.log('✅ Employee CRUD endpoints are working correctly');
         console.log('✅ Input validation is working correctly');
-        console.log('✅ Avatar signed URL endpoints are working correctly');
+        // Avatars disabled
         console.log('✅ Security and access control are working correctly');
         console.log('✅ Duplicate name validation is working correctly');
     } else {

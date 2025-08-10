@@ -2,7 +2,7 @@
 
 ## Summary
 
-Successfully implemented complete employee CRUD operations with avatar management and comprehensive testing according to PLACEHOLDER_EMPLOYEES_V1 ruleset.
+Successfully implemented complete employee CRUD operations (avatars removed; initials-only) with comprehensive testing according to PLACEHOLDER_EMPLOYEES_V1 ruleset.
 
 ## Implemented Endpoints
 
@@ -12,9 +12,7 @@ Successfully implemented complete employee CRUD operations with avatar managemen
 - ✅ `PUT /employees/:id` - Update existing employee  
 - ✅ `DELETE /employees/:id` - Soft delete (archive) employee
 
-### Avatar Management (Already Existed)
-- ✅ `POST /employees/:id/avatar-upload-url` - Generate signed upload URL
-- ✅ `GET /employees/:id/avatar-read-url` - Generate signed read URL
+<!-- Avatars removed: no avatar endpoints -->
 
 ## Key Features Implemented
 
@@ -57,7 +55,7 @@ CREATE TABLE employees (
     hourly_wage DECIMAL(10,2),
     birth_date DATE,
     display_color TEXT,
-    profile_picture_url TEXT,
+    -- profile_picture_url TEXT, -- removed
     created_at TIMESTAMPTZ DEFAULT NOW(),
     archived_at TIMESTAMPTZ,
     
@@ -88,7 +86,7 @@ CREATE POLICY employees_policy ON employees
 - ✅ Employee updates (partial and full)
 - ✅ Employee archiving (soft delete)
 - ✅ Archive filtering behavior
-- ✅ Avatar signed URL generation
+<!-- Avatars removed -->
 - ✅ Cross-tenant security validation
 - ✅ Authentication requirement
 - ✅ Error response formats
@@ -128,8 +126,7 @@ Updated `docs/employees.md` with:
 ✅ **Rule 5**: Archiving preserves history
 - Soft delete via `archived_at` timestamp
 
-✅ **Rule 6**: Avatar bucket with signed URLs only
-- Existing avatar endpoints use server-signed URLs
+<!-- Avatars removed -->
 
 ## Next Steps
 
@@ -158,5 +155,5 @@ Follows PLACEHOLDER_EMPLOYEES_V1 ruleset:
 - Manager-owned placeholders only
 - RLS + ownership middleware
 - Soft delete preserves history
-- Avatar signed URLs (existing)
+<!-- Avatars removed -->
 ```
