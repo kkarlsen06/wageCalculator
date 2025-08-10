@@ -298,8 +298,7 @@ async function testCrossTenantSecurity() {
         // Test accessing non-existent employee (should return 403)
         const fakeEmployeeId = '00000000-0000-0000-0000-000000000000';
         
-        // Avatars disabled: skip avatar read URL cross-tenant check
-        console.log('ℹ️ Avatars disabled; skipping avatar read URL access test');
+        // Avatar read URL cross-tenant check removed
         
         return true;
     } catch (error) {

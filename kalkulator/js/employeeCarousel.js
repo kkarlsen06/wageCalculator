@@ -287,7 +287,7 @@ export class EmployeeCarousel {
         const displayColor = this.app.getEmployeeDisplayColor(employee);
         const accessibleDescription = this.getEmployeeAccessibleDescription(employee);
 
-        // Avatars disabled: always render initials
+        // Avatars removed: always render initials
         return `
             <div class="employee-tile ${isActive ? 'active' : ''}"
                  data-employee-id="${employee.id}"
@@ -837,14 +837,7 @@ export class EmployeeCarousel {
         }
     }
 
-    /**
-     * Preload avatar images for better performance
-     */
-    async preloadAvatars() {
-        if (!this.app.employees || this.app.employees.length === 0) return;
-
-            // Avatars disabled: nothing to preload
-    }
+    // Avatars removed: no image preloading
 
     /**
      * Clean up performance-related resources

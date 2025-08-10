@@ -766,7 +766,7 @@ export class EmployeeModal {
         // Update effective rate preview
         this.updateEffectiveRatePreview();
 
-        // Avatars disabled: no avatar preview
+        // Avatars removed: no avatar preview
 
         // Accessibility: ensure submit button is type=submit and cancel is type=button
         const submitBtn = this.modal.querySelector('.submit-btn');
@@ -1011,15 +1011,7 @@ export class EmployeeModal {
         this.validateField(name, value);
     }
 
-    /**
-     * Handle avatar file selection
-     */
-    // Avatars disabled: remove avatar file change handler
-
-    /**
-     * Handle avatar removal
-     */
-    // Avatars disabled: remove avatar remove handler
+    // Avatars removed: file selection and removal handlers deleted
 
     /**
      * Handle form submission
@@ -1313,36 +1305,7 @@ export class EmployeeModal {
         return isValid;
     }
 
-    /**
-     * Validate avatar file
-     * @param {File} file - File to validate
-     * @returns {Object} Validation result
-     */
-    validateAvatarFile(file) {
-        if (!file) {
-            return { valid: false, error: 'Ingen fil valgt' };
-        }
-
-        // Check file type
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-            return {
-                valid: false,
-                error: 'Ugyldig filtype. Kun JPG, PNG og WebP er tillatt.'
-            };
-        }
-
-        // Check file size (10MB limit)
-        const maxSize = 10 * 1024 * 1024; // 10MB
-        if (file.size > maxSize) {
-            return {
-                valid: false,
-                error: 'Filen er for stor. Maksimal størrelse er 10MB.'
-            };
-        }
-
-        return { valid: true, error: null };
-    }
+    // Avatars removed: validation for avatar files deleted
 
     /**
      * Clear validation error for a field
@@ -1748,59 +1711,7 @@ export class EmployeeModal {
         }
     }
 
-    // ===== AVATAR PROCESSING =====
-
-    /**
-     * Process avatar file with optional cropping
-     * @param {File} file - Image file to process
-     * @returns {Promise<Blob>} Processed image blob
-     */
-    async processAvatarFile(file) {
-        try {
-            // Check if we have image processing utilities
-            if (window.imageUtils) {
-                // Use existing image processing utilities
-                return await window.imageUtils.compressImage(file, {
-                    maxWidth: 400,
-                    maxHeight: 400,
-                    quality: 0.8,
-                    format: 'jpeg'
-                });
-            } else {
-                // Fallback: return original file
-                return file;
-            }
-        } catch (error) {
-            console.warn('Error processing avatar file:', error);
-            return file; // Return original file as fallback
-        }
-    }
-
-    /**
-     * Show avatar cropping modal (if cropping library is available)
-     * @param {File} file - Image file to crop
-     */
-    async showAvatarCropping(file) {
-        // This would integrate with a cropping library like Cropper.js
-        // For now, we'll use the file directly
-        return file;
-    }
-
-    /**
-     * Generate avatar initials from name
-     * @param {string} name - Employee name
-     * @returns {string} Initials
-     */
-    generateAvatarInitials(name) {
-        if (!name || name.trim().length === 0) return '?';
-
-        const names = name.trim().split(/\s+/);
-        if (names.length === 1) {
-            return names[0].substring(0, 2).toUpperCase();
-        }
-
-        return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-    }
+    // Avatars removed: processing, cropping, and initials helpers deleted
 
     // ===== OPTIMISTIC UPDATE ROLLBACK METHODS =====
 

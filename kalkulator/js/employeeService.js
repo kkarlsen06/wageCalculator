@@ -8,7 +8,7 @@ export class EmployeeService {
     constructor(apiBase = window.CONFIG?.apiBase || 'http://localhost:5173') {
         this.apiBase = apiBase;
         this.cache = new Map();
-        // Avatars disabled
+        // Avatars removed
         this.loadingStates = new Map();
     }
 
@@ -189,27 +189,7 @@ export class EmployeeService {
         }
     }
 
-    /**
-     * Get signed upload URL for employee avatar
-     * @param {string} employeeId - Employee ID
-     * @returns {Promise<Object>} Upload URL and fields
-     */
-    // Avatars disabled: remove getAvatarUploadUrl
-
-    /**
-     * Get signed read URL for employee avatar
-     * @param {string} employeeId - Employee ID
-     * @returns {Promise<string>} Avatar URL
-     */
-    // Avatars disabled: remove getAvatarReadUrl
-
-    /**
-     * Upload employee avatar
-     * @param {string} employeeId - Employee ID
-     * @param {File|Blob} file - Image file to upload
-     * @returns {Promise<string>} Avatar URL
-     */
-    // Avatars disabled: remove uploadAvatar
+    // Avatar upload/read methods removed
 
     /**
      * Set loading state for an operation
@@ -246,7 +226,7 @@ export class EmployeeService {
      */
     clearAllCaches() {
         this.cache.clear();
-        // Avatars disabled
+        // Avatars removed
     }
 }
 

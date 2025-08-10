@@ -488,21 +488,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.chatbox.updateText();
       }
 
-      // Load profile picture
-      try {
-        const { data: settings } = await supa
-          .from('user_settings')
-          .select('profile_picture_url')
-          .eq('user_id', user.id)
-          .single();
-
-        const profilePictureUrl = settings?.profile_picture_url;
-        updateTopBarProfilePicture(profilePictureUrl);
-      } catch (profileErr) {
-        // If there's an error loading profile picture, just show placeholder
-        console.log('No profile picture found or error loading:', profileErr);
-        updateTopBarProfilePicture(null);
-      }
+      // Profile pictures removed
 
     } catch (err) {
       console.error('Error loading profile info:', err);
@@ -516,62 +502,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Helper function to update top bar profile picture
-  function updateTopBarProfilePicture(imageUrl) {
-    const profileIcon = document.querySelector('.profile-icon');
-    if (!profileIcon) return;
-
-    const profileBtn = profileIcon.closest('.user-profile-btn');
-    if (!profileBtn) return;
-
-    if (imageUrl) {
-      // Add cache-busting parameter to ensure fresh image load
-      const cacheBustUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
-
-      // Replace SVG with image
-      const img = document.createElement('img');
-      img.src = cacheBustUrl;
-      img.alt = 'Profilbilde';
-      img.className = 'profile-picture-img';
-      img.style.cssText = `
-        transition: all var(--speed-normal) var(--ease-default);
-        opacity: 0;
-      `;
-
-      // Fade in when loaded
-      img.onload = () => {
-        img.style.opacity = '1';
-        // Force a repaint to ensure the image is displayed
-        img.offsetHeight;
-      };
-
-      // Handle image load error
-      img.onerror = () => {
-        console.log('Profile picture failed to load, showing placeholder');
-        updateTopBarProfilePicture(null);
-      };
-
-      profileIcon.replaceWith(img);
-    } else {
-      // Show placeholder SVG
-      if (profileIcon.tagName === 'IMG') {
-        const svg = document.createElement('svg');
-        svg.className = 'icon-sm profile-icon';
-        svg.setAttribute('viewBox', '0 0 24 24');
-        svg.setAttribute('fill', 'none');
-        svg.setAttribute('stroke', 'currentColor');
-        svg.setAttribute('stroke-width', '2');
-        svg.setAttribute('stroke-linecap', 'round');
-        svg.setAttribute('stroke-linejoin', 'round');
-        svg.setAttribute('aria-hidden', 'true');
-        svg.innerHTML = `
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        `;
-        profileIcon.replaceWith(svg);
-      }
-    }
-  }
+  // Profile pictures removed: no top bar image swapping
 
   // Create and show welcome screen
   async function showWelcomeScreen() {

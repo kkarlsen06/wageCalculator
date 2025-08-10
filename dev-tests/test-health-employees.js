@@ -60,8 +60,7 @@ async function testHealthEndpoint() {
         const expectedChecks = [
             'employees_rls',
             'user_shifts_rls', 
-            'employee_id_fk',
-            'employee_avatars_bucket'
+            'employee_id_fk'
         ];
 
         for (const checkName of expectedChecks) {
@@ -122,14 +121,7 @@ async function testHealthEndpoint() {
             }
         }
 
-        // Test bucket check
-        console.log('\n🔍 Validating bucket check...');
-        const bucketCheck = healthData.checks.employee_avatars_bucket;
-        if (bucketCheck.status === 'ok' && bucketCheck.exists) {
-            console.log('✅ Employee avatars bucket: Exists and accessible');
-        } else if (bucketCheck.status === 'missing') {
-            console.log('⚠️  Employee avatars bucket: Missing (may need to be created)');
-        }
+        // Avatar bucket check removed
 
         // Overall assessment
         console.log('\n📋 Overall Assessment:');
@@ -196,7 +188,7 @@ async function runAllTests() {
         console.log('\n💡 Next steps:');
         console.log('   1. Verify RLS policies are properly configured');
         console.log('   2. Ensure FK constraints have ON DELETE SET NULL');
-        console.log('   3. Create employee-avatars bucket if missing');
+        // Avatar bucket creation step removed
         console.log('   4. Monitor health endpoint in production');
     } else {
         console.log('\n🚨 Integration tests failed - check server logs');

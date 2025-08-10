@@ -254,7 +254,7 @@ modalTests.addTest('Should validate display color', () => {
     if (!modal.validateField('display_color', '#3498db')) throw new Error('Valid hex color should be valid');
 });
 
-// Avatars disabled: remove avatar-related tests
+// Avatar-related tests removed
 
 // Form state tests
 modalTests.addTest('Should populate form with employee data', async () => {

@@ -1681,25 +1681,7 @@ app.get('/health/employees', async (req, res) => {
       };
     }
 
-    // 4. Check employee-avatars bucket exists
-    try {
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-
-      const avatarBucket = buckets?.find(bucket => bucket.name === 'employee-avatars');
-
-      healthChecks.checks.employee_avatars_bucket = {
-        status: bucketsError ? 'error' : (avatarBucket ? 'ok' : 'missing'),
-        exists: !!avatarBucket,
-        bucket_name: 'employee-avatars',
-        error: bucketsError?.message
-      };
-    } catch (error) {
-      healthChecks.checks.employee_avatars_bucket = {
-        status: 'error',
-        exists: false,
-        error: 'Failed to check bucket: ' + error.message
-      };
-    }
+    // Avatar storage bucket checks removed
 
     // Determine overall health status
     const hasErrors = Object.values(healthChecks.checks).some(check => check.status === 'error');
@@ -2403,20 +2385,7 @@ app.delete('/employees/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// ---------- employee avatar signed URL endpoints ----------
-// Bucket: 'employee-avatars' (private). Path: {manager_id}/{employee_id}/avatar.<ext>
-
-/**
- * Create a short-lived, signed upload URL for an employee avatar.
- * Body (optional): { "ext": "png" | "jpg" | "jpeg" | "webp" }
- */
-// Avatars disabled: remove upload URL endpoint
-
-/**
- * Get a signed READ URL for an employee avatar (defaults to png path if none saved).
- * Query params: ?expiresIn=3600 (seconds)
- */
-// Avatars disabled: remove read URL endpoint
+// Avatar endpoints removed
 
 // ---------- shift CRUD endpoints ----------
 

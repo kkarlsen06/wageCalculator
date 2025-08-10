@@ -481,8 +481,7 @@ export const app = {
         // Check if we should show the recurring feature introduction
         this.checkAndShowRecurringIntro();
 
-        // Initialize profile picture functionality (profile data already loaded earlier)
-        this.initProfilePictureListeners();
+        // Profile pictures removed: no listeners to initialize
 
         // Add cleanup listener for page unload
         window.addEventListener('beforeunload', () => {
@@ -3304,7 +3303,7 @@ export const app = {
         }
     },
 
-    // Load user nickname and profile picture for header display
+    // Load user nickname for header display (profile pictures removed)
     async loadUserNickname() {
         try {
             const { data: { user } } = await window.supa.auth.getUser();
@@ -3324,21 +3323,7 @@ export const app = {
                 window.chatbox.updatePlaceholder();
             }
 
-            // Also load the profile picture for the top bar
-            try {
-                const { data: settings } = await window.supa
-                    .from('user_settings')
-                    .select('profile_picture_url')
-                    .eq('user_id', user.id)
-                    .single();
-
-                const profilePictureUrl = settings?.profile_picture_url;
-                this.updateTopBarProfilePicture(profilePictureUrl);
-            } catch (profileErr) {
-                // If there's an error loading profile picture, just show placeholder
-                console.log('No profile picture found or error loading:', profileErr);
-                this.updateTopBarProfilePicture(null);
-            }
+            // Top bar profile picture removed
 
         } catch (err) {
             console.error('Error loading user nickname:', err);
@@ -3351,8 +3336,7 @@ export const app = {
             if (window.chatbox && window.chatbox.updatePlaceholder) {
                 window.chatbox.updatePlaceholder();
             }
-            // Show placeholder profile picture
-            this.updateTopBarProfilePicture(null);
+            // No profile picture updates
         }
     },
     saveToLocalStorage() {
@@ -6618,8 +6602,7 @@ export const app = {
             if (nameField) nameField.value = user.user_metadata?.first_name || '';
             if (emailField) emailField.value = user.email || '';
 
-            // Load profile picture
-            await this.loadProfilePicture();
+            // Profile pictures removed
 
         } catch (err) {
             console.error('Error loading profile data:', err);
@@ -6682,200 +6665,9 @@ export const app = {
         }
     },
 
-    // Profile Picture Management Methods
-    async loadProfilePicture() {
-        try {
-            const { data: { user } } = await window.supa.auth.getUser();
-            if (!user) return;
+    // Profile picture management removed
 
-            // Get profile picture URL from user settings
-            const { data: settings } = await window.supa
-                .from('user_settings')
-                .select('profile_picture_url')
-                .eq('user_id', user.id)
-                .single();
-
-            const profilePictureUrl = settings?.profile_picture_url;
-
-            // Update the profile modal preview
-            this.updateProfilePicturePreview(profilePictureUrl);
-
-            // Update the top bar profile picture
-            this.updateTopBarProfilePicture(profilePictureUrl);
-
-        } catch (err) {
-            console.error('Error loading profile picture:', err);
-            // Show placeholder if error
-            this.updateProfilePicturePreview(null);
-            this.updateTopBarProfilePicture(null);
-        }
-    },
-
-    updateProfilePicturePreview(imageUrl) {
-        const currentElement = document.getElementById('profilePictureCurrent');
-        const statusElement = document.getElementById('profilePictureStatus');
-        const sizeElement = document.getElementById('profilePictureSize');
-        const removeBtn = document.getElementById('removeProfilePictureBtn');
-
-        if (!currentElement) return;
-
-        if (imageUrl) {
-            // Add cache-busting parameter to ensure fresh image load
-            const cacheBustUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
-
-            // Show the uploaded image
-            currentElement.innerHTML = `<img src="${cacheBustUrl}" alt="Profilbilde" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <svg class="profile-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>`;
-
-            if (statusElement) statusElement.textContent = 'Profilbilde lastet';
-            if (sizeElement) sizeElement.textContent = '';
-            if (removeBtn) removeBtn.style.display = 'inline-flex';
-        } else {
-            // Show placeholder
-            currentElement.innerHTML = `<svg class="profile-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-            </svg>`;
-
-            if (statusElement) statusElement.textContent = 'Ingen profilbilde';
-            if (sizeElement) sizeElement.textContent = '';
-            if (removeBtn) removeBtn.style.display = 'none';
-        }
-    },
-
-    updateTopBarProfilePicture(imageUrl) {
-        const profileIcon = document.querySelector('.profile-icon');
-        if (!profileIcon) return;
-
-        const profileBtn = profileIcon.closest('.user-profile-btn');
-        if (!profileBtn) return;
-
-        if (imageUrl) {
-            // Add cache-busting parameter to ensure fresh image load
-            const cacheBustUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
-
-            // Replace SVG with image
-            const img = document.createElement('img');
-            img.src = cacheBustUrl;
-            img.alt = 'Profilbilde';
-            img.className = 'profile-picture-img';
-            img.style.cssText = `
-                transition: all var(--speed-normal) var(--ease-default);
-                opacity: 0;
-            `;
-
-            // Handle image load success
-            img.onload = () => {
-                img.style.opacity = '1';
-                // Force a repaint to ensure the image is displayed
-                img.offsetHeight;
-            };
-
-            // Handle image load error
-            img.onerror = () => {
-                console.log('Profile picture failed to load, showing placeholder');
-                this.updateTopBarProfilePicture(null);
-            };
-
-            profileIcon.replaceWith(img);
-        } else {
-            // Show placeholder SVG
-            if (profileIcon.tagName === 'IMG') {
-                const svg = document.createElement('svg');
-                svg.className = 'icon-sm profile-icon';
-                svg.setAttribute('viewBox', '0 0 24 24');
-                svg.setAttribute('fill', 'none');
-                svg.setAttribute('stroke', 'currentColor');
-                svg.setAttribute('stroke-width', '2');
-                svg.setAttribute('stroke-linecap', 'round');
-                svg.setAttribute('stroke-linejoin', 'round');
-                svg.setAttribute('aria-hidden', 'true');
-                svg.innerHTML = `
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                `;
-                profileIcon.replaceWith(svg);
-            }
-        }
-    },
-
-    selectProfilePicture() {
-        const input = document.getElementById('profilePictureInput');
-        if (input) {
-            input.click();
-        }
-    },
-
-    async handleProfilePictureChange(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        try {
-            // Check if cropping is available (Cropper library loaded)
-            if (typeof Cropper === 'undefined') {
-                console.warn('Cropper library not available, falling back to direct upload');
-                await this.fallbackDirectUpload(file);
-                return;
-            }
-
-            // Show cropping modal
-            await this.showCroppingModal(file);
-        } catch (error) {
-            console.error('Error handling profile picture:', error);
-
-            // Fallback to direct upload if cropping fails
-            console.log('Falling back to direct upload due to error');
-            try {
-                await this.fallbackDirectUpload(file);
-            } catch (fallbackError) {
-                console.error('Fallback upload also failed:', fallbackError);
-                this.showUploadError('Kunne ikke laste opp bildet: ' + fallbackError.message);
-            }
-        }
-
-        // Clear the input
-        event.target.value = '';
-    },
-
-    async fallbackDirectUpload(file) {
-        // Show progress
-        this.showProfilePictureProgress(true);
-        this.updateProfilePictureProgress(0, 'Validerer bilde...');
-
-        // Validate and compress the image
-        const compressedBlob = await window.imageUtils.compressImage(file, (progress) => {
-            this.updateProfilePictureProgress(progress * 0.5, 'Komprimerer bilde...');
-        });
-
-        this.updateProfilePictureProgress(50, 'Laster opp...');
-
-        // Upload to Supabase Storage
-        const imageUrl = await this.uploadProfilePictureToStorage(compressedBlob);
-
-        this.updateProfilePictureProgress(90, 'Oppdaterer profil...');
-
-        // Update user settings with the new image URL
-        await this.saveProfilePictureUrl(imageUrl);
-
-        this.updateProfilePictureProgress(100, 'Fullført!');
-
-        // Update UI
-        this.updateProfilePicturePreview(imageUrl);
-        this.updateTopBarProfilePicture(imageUrl);
-
-        // Also refresh the user nickname/profile data to ensure consistency
-        setTimeout(() => {
-            this.loadUserNickname();
-        }, 100);
-
-        // Hide progress after a short delay
-        setTimeout(() => {
-            this.showProfilePictureProgress(false);
-        }, 1000);
-    },
+    // Profile picture upload code removed
 
     showUploadError(message) {
         this.showProfilePictureProgress(false);
@@ -6890,129 +6682,11 @@ export const app = {
         }
     },
 
-    async uploadProfilePictureToStorage(blob) {
-        const { data: { user } } = await window.supa.auth.getUser();
-        if (!user) throw new Error('Ikke innlogget');
+    // Profile picture upload storage removed
 
-        // Clean up old profile pictures first (optional - helps prevent storage bloat)
-        try {
-            const { data: settings } = await window.supa
-                .from('user_settings')
-                .select('profile_picture_url')
-                .eq('user_id', user.id)
-                .single();
+    // Profile picture URL save removed
 
-            if (settings?.profile_picture_url && settings.profile_picture_url.includes('profile-pictures')) {
-                const oldFilename = settings.profile_picture_url.split('/').pop();
-                if (oldFilename) {
-                    await window.supa.storage
-                        .from('profile-pictures')
-                        .remove([`${user.id}/${oldFilename}`]);
-                }
-            }
-        } catch (cleanupError) {
-            // Ignore cleanup errors - not critical
-            console.log('Could not clean up old profile picture:', cleanupError);
-        }
-
-        // Generate unique filename
-        const filename = window.imageUtils.generateProfilePictureFilename(user.id, 'jpg');
-
-        // Upload to Supabase Storage
-        const { data, error } = await window.supa.storage
-            .from('profile-pictures')
-            .upload(filename, blob, {
-                cacheControl: '300', // Reduce cache time to 5 minutes for faster updates
-                upsert: false
-            });
-
-        if (error) {
-            throw new Error('Kunne ikke laste opp bilde: ' + error.message);
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = window.supa.storage
-            .from('profile-pictures')
-            .getPublicUrl(filename);
-
-        return publicUrl;
-    },
-
-    async saveProfilePictureUrl(imageUrl) {
-        const { data: { user } } = await window.supa.auth.getUser();
-        if (!user) throw new Error('Ikke innlogget');
-
-        const { error } = await window.supa
-            .from('user_settings')
-            .upsert({
-                user_id: user.id,
-                profile_picture_url: imageUrl,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id' });
-
-        if (error) {
-            throw new Error('Kunne ikke lagre profilbilde-URL: ' + error.message);
-        }
-    },
-
-    async removeProfilePicture() {
-        try {
-            const { data: { user } } = await window.supa.auth.getUser();
-            if (!user) return;
-
-            // Get current profile picture URL
-            const { data: settings } = await window.supa
-                .from('user_settings')
-                .select('profile_picture_url')
-                .eq('user_id', user.id)
-                .single();
-
-            const currentUrl = settings?.profile_picture_url;
-
-            // Remove from storage if exists
-            if (currentUrl && currentUrl.includes('profile-pictures')) {
-                const filename = currentUrl.split('/').pop();
-                await window.supa.storage
-                    .from('profile-pictures')
-                    .remove([`${user.id}/${filename}`]);
-            }
-
-            // Update user settings to remove URL
-            await window.supa
-                .from('user_settings')
-                .upsert({
-                    user_id: user.id,
-                    profile_picture_url: null,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'user_id' });
-
-            // Update UI
-            this.updateProfilePicturePreview(null);
-            this.updateTopBarProfilePicture(null);
-
-            // Show success message
-            const msgElement = document.getElementById('profile-update-msg');
-            if (msgElement) {
-                msgElement.style.color = 'var(--success)';
-                msgElement.textContent = 'Profilbilde fjernet';
-                setTimeout(() => {
-                    msgElement.textContent = '';
-                }, 3000);
-            }
-
-        } catch (error) {
-            console.error('Error removing profile picture:', error);
-
-            const msgElement = document.getElementById('profile-update-msg');
-            if (msgElement) {
-                msgElement.style.color = 'var(--danger)';
-                msgElement.textContent = 'Kunne ikke fjerne profilbilde';
-                setTimeout(() => {
-                    msgElement.textContent = '';
-                }, 5000);
-            }
-        }
-    },
+    // Profile picture remove flow removed
 
     showProfilePictureProgress(show) {
         const progressElement = document.getElementById('profilePictureProgress');
@@ -7035,409 +6709,34 @@ export const app = {
     },
 
     // Initialize profile picture event listeners
-    initProfilePictureListeners() {
-        const input = document.getElementById('profilePictureInput');
-        if (input) {
-            input.addEventListener('change', (event) => {
-                this.handleProfilePictureChange(event);
-            });
-        }
-    },
+    // Profile picture listeners removed
 
     // Image Cropping Methods
-    async showCroppingModal(file) {
-        try {
-            // Validate file first
-            const validation = window.imageUtils.validateFile(file);
-            if (!validation.valid) {
-                throw new Error(validation.error);
-            }
+    // Image cropping removed
 
-            // Store the file for later use
-            this.currentCropFile = file;
+    // Cropper initialization removed
 
-            // Create blob URL for cropping modal (will be cleaned up in cancelCrop)
-            this.currentCropBlobUrl = URL.createObjectURL(file);
+    // Cropper tests removed
 
-            // Set up the cropping modal
-            const cropModal = document.getElementById('cropModal');
-            const cropImage = document.getElementById('cropImage');
+    // Crop preview update removed
 
-            if (!cropModal || !cropImage) {
-                throw new Error('Cropping modal elements not found');
-            }
+    // Crop preview rendering removed
 
-            // Set up event handlers before setting src
-            cropImage.onload = () => {
-                cropImage.classList.add('loaded');
-                this.initializeCropper(cropImage);
-            };
 
-            // Handle image load error - no infinite loop
-            cropImage.onerror = (event) => {
-                console.error('Failed to load image for cropping:', event);
-                this.handleCropImageError('Kunne ikke laste bildet for beskjæring');
-            };
 
-            // Set the image source using the blob URL
-            cropImage.src = this.currentCropBlobUrl;
+    // Crop zoom controls removed
 
-            // Show the modal
-            cropModal.classList.add('active');
+    // Crop zoom adjustment removed
 
-        } catch (error) {
-            console.error('Error showing cropping modal:', error);
-            // Clean up on error
-            this.cleanupCropResources();
-            // Show user-friendly error message instead of throwing
-            this.showCropError(error.message);
-        }
-    },
+    // Confirm crop removed
 
-    initializeCropper(imageElement) {
-        try {
-            // Destroy existing cropper if any
-            if (this.cropper) {
-                this.cropper.destroy();
-            }
+    // Cancel crop removed
 
-            // Detect if mobile for touch-optimized settings
-            const isMobile = window.innerWidth <= 768;
+    // Cleanup crop resources removed
 
-            // Initialize Cropper.js with mobile-optimized settings
-            this.cropper = new Cropper(imageElement, {
-                aspectRatio: 1, // Square crop by default
-                viewMode: 1,
-                dragMode: 'move',
-                autoCropArea: isMobile ? 0.9 : 0.8, // Larger crop area on mobile
-                restore: false,
-                guides: !isMobile, // Hide guides on mobile for cleaner interface
-                center: true,
-                highlight: false,
-                cropBoxMovable: true,
-                cropBoxResizable: true,
-                toggleDragModeOnDblclick: false,
-                responsive: true,
-                checkOrientation: false,
-                modal: true,
-                background: true,
-                // Mobile-optimized touch settings
-                wheelZoomRatio: isMobile ? 0.05 : 0.1, // Slower zoom on mobile
-                minContainerWidth: isMobile ? 200 : 300,
-                minContainerHeight: isMobile ? 200 : 300,
-                crop: (event) => {
-                    this.updateCropPreview(event.detail);
-                },
-                cropend: (event) => {
-                    // Force preview update when crop ends (mobile sync fix)
-                    if (window.innerWidth <= 768) {
-                        setTimeout(() => {
-                            this.updateCropPreview(event.detail);
-                        }, 50);
-                    }
-                },
-                ready: () => {
-                    // Add mobile touch enhancements after cropper is ready
-                    if (isMobile) {
-                        this.addMobileTouchEnhancements();
-                    }
+    // Crop image error handling removed
 
-                    // Test cropper methods to ensure they work
-                    this.testCropperMethods();
-                },
-                error: (event) => {
-                    console.error('Cropper initialization error:', event);
-                    this.handleCropImageError('Feil ved initialisering av beskjæring');
-                }
-            });
-
-            // Cropper initialized successfully
-
-        } catch (error) {
-            console.error('Error initializing cropper:', error);
-            this.handleCropImageError('Kunne ikke initialisere beskjæring');
-        }
-    },
-
-    testCropperMethods() {
-        if (!this.cropper) return;
-
-        try {
-            // Test essential methods
-            const imageData = this.cropper.getImageData();
-            const cropData = this.cropper.getData();
-            const testCanvas = this.cropper.getCroppedCanvas({
-                width: 100,
-                height: 100
-            });
-
-            console.log('Cropper methods test passed:', {
-                imageData: !!imageData,
-                cropData: !!cropData,
-                canvas: !!testCanvas
-            });
-
-        } catch (error) {
-            console.error('Cropper methods test failed:', error);
-            this.handleCropImageError('Beskjæringsfunksjonalitet ikke tilgjengelig');
-        }
-    },
-
-    updateCropPreview(cropData) {
-        if (!this.cropper) return;
-
-        const previewContainer = document.getElementById('cropPreview');
-        if (!previewContainer) return;
-
-        // Throttle preview updates on mobile for better performance
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile) {
-            if (this.previewUpdateTimeout) {
-                clearTimeout(this.previewUpdateTimeout);
-            }
-
-            this.previewUpdateTimeout = setTimeout(() => {
-                this.performCropPreviewUpdate(isMobile);
-            }, 100); // 100ms throttle on mobile
-        } else {
-            // Update immediately on desktop
-            this.performCropPreviewUpdate(false);
-        }
-    },
-
-    performCropPreviewUpdate(isMobile = false) {
-        if (!this.cropper) return;
-
-        const previewContainer = document.getElementById('cropPreview');
-        if (!previewContainer) return;
-
-        try {
-            // Mobile-optimized preview settings
-            const previewSize = isMobile ? 80 : 120;
-            const quality = isMobile ? 'medium' : 'high';
-
-            // Get the cropped canvas directly from Cropper.js
-            const croppedCanvas = this.cropper.getCroppedCanvas({
-                width: previewSize,
-                height: previewSize,
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: quality,
-                // Mobile optimization: reduce fill color processing
-                fillColor: isMobile ? undefined : '#fff'
-            });
-
-            if (!croppedCanvas) {
-                console.warn('Could not get cropped canvas for preview');
-                return;
-            }
-
-            // Clear previous preview
-            previewContainer.innerHTML = '';
-
-            // Add new preview with mobile-specific styling
-            if (isMobile) {
-                croppedCanvas.style.width = '100%';
-                croppedCanvas.style.height = '100%';
-                croppedCanvas.style.objectFit = 'cover';
-            }
-
-            previewContainer.appendChild(croppedCanvas);
-
-            // Force a repaint on mobile to ensure sync
-            if (isMobile) {
-                previewContainer.style.transform = 'translateZ(0)';
-                requestAnimationFrame(() => {
-                    previewContainer.style.transform = '';
-                });
-            }
-
-        } catch (error) {
-            console.error('Error updating crop preview:', error);
-
-            // Fallback: show a placeholder on mobile if preview fails
-            if (isMobile) {
-                previewContainer.innerHTML = '<div style="width: 100%; height: 100%; background: var(--bg-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 12px;">Forhåndsvisning</div>';
-            }
-        }
-    },
-
-
-
-    setCropZoom(value) {
-        if (this.cropper) {
-            this.cropper.zoomTo(parseFloat(value));
-        }
-    },
-
-    adjustCropZoom(delta) {
-        if (this.cropper) {
-            const currentZoom = this.cropper.getImageData().ratio;
-            const newZoom = Math.max(0.1, Math.min(3, currentZoom + delta));
-            this.cropper.zoomTo(newZoom);
-
-            // Update slider
-            const slider = document.getElementById('cropZoomSlider');
-            if (slider) {
-                slider.value = newZoom;
-            }
-        }
-    },
-
-    async confirmCrop() {
-        if (!this.cropper || !this.currentCropFile) {
-            console.error('No cropper or file available');
-            this.showCropError('Ingen beskjæring tilgjengelig');
-            return;
-        }
-
-        try {
-            // Get cropped canvas directly from Cropper.js
-            const croppedCanvas = this.cropper.getCroppedCanvas({
-                width: 400,
-                height: 400,
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high'
-            });
-
-            if (!croppedCanvas) {
-                throw new Error('Kunne ikke lage beskjært bilde');
-            }
-
-            // Close cropping modal
-            this.cancelCrop();
-
-            // Show progress
-            this.showProfilePictureProgress(true);
-            this.updateProfilePictureProgress(0, 'Beskjærer bilde...');
-
-            // Compress the cropped canvas
-            const compressedBlob = await window.imageUtils.compressImage(croppedCanvas, (progress) => {
-                this.updateProfilePictureProgress(progress * 0.5, 'Komprimerer bilde...');
-            });
-
-            this.updateProfilePictureProgress(50, 'Laster opp...');
-
-            // Upload to Supabase Storage
-            const imageUrl = await this.uploadProfilePictureToStorage(compressedBlob);
-
-            this.updateProfilePictureProgress(90, 'Oppdaterer profil...');
-
-            // Update user settings with the new image URL
-            await this.saveProfilePictureUrl(imageUrl);
-
-            this.updateProfilePictureProgress(100, 'Fullført!');
-
-            // Update UI
-            this.updateProfilePicturePreview(imageUrl);
-            this.updateTopBarProfilePicture(imageUrl);
-
-            // Also refresh the user nickname/profile data to ensure consistency
-            setTimeout(() => {
-                this.loadUserNickname();
-            }, 100);
-
-            // Hide progress after a short delay
-            setTimeout(() => {
-                this.showProfilePictureProgress(false);
-            }, 1000);
-
-        } catch (error) {
-            console.error('Error confirming crop:', error);
-            this.showProfilePictureProgress(false);
-
-            // Show error message
-            const msgElement = document.getElementById('profile-update-msg');
-            if (msgElement) {
-                msgElement.style.color = 'var(--danger)';
-                msgElement.textContent = 'Feil ved opplasting: ' + error.message;
-                setTimeout(() => {
-                    msgElement.textContent = '';
-                }, 5000);
-            }
-        }
-    },
-
-    cancelCrop() {
-        // Clean up resources
-        this.cleanupCropResources();
-
-        // Hide modal
-        const cropModal = document.getElementById('cropModal');
-        if (cropModal) {
-            cropModal.classList.remove('active');
-        }
-
-        // Clear image source and classes
-        const cropImage = document.getElementById('cropImage');
-        if (cropImage) {
-            cropImage.src = '';
-            cropImage.classList.remove('loaded');
-            cropImage.onload = null;
-            cropImage.onerror = null;
-        }
-
-        // Clear preview
-        const previewContainer = document.getElementById('cropPreview');
-        if (previewContainer) {
-            previewContainer.innerHTML = '';
-        }
-
-        // Reset zoom slider
-        const slider = document.getElementById('cropZoomSlider');
-        if (slider) {
-            slider.value = 1;
-        }
-    },
-
-    cleanupCropResources() {
-        // Clean up mobile touch enhancements
-        this.removeMobileTouchEnhancements();
-
-        // Clean up preview update timeout
-        if (this.previewUpdateTimeout) {
-            clearTimeout(this.previewUpdateTimeout);
-            this.previewUpdateTimeout = null;
-        }
-
-        // Destroy cropper
-        if (this.cropper) {
-            this.cropper.destroy();
-            this.cropper = null;
-        }
-
-        // Clean up blob URL to prevent memory leaks
-        if (this.currentCropBlobUrl) {
-            URL.revokeObjectURL(this.currentCropBlobUrl);
-            this.currentCropBlobUrl = null;
-        }
-
-        // Clear stored file
-        this.currentCropFile = null;
-    },
-
-    handleCropImageError(message) {
-        console.error('Crop image error:', message);
-        this.cleanupCropResources();
-        this.showCropError(message);
-    },
-
-    showCropError(message) {
-        // Hide cropping modal
-        const cropModal = document.getElementById('cropModal');
-        if (cropModal) {
-            cropModal.classList.remove('active');
-        }
-
-        // Show error in profile modal
-        const msgElement = document.getElementById('profile-update-msg');
-        if (msgElement) {
-            msgElement.style.color = 'var(--danger)';
-            msgElement.textContent = 'Feil ved bildebeskjæring: ' + message;
-            setTimeout(() => {
-                msgElement.textContent = '';
-            }, 5000);
-        }
-    },
+    // Crop error display removed
 
     addMobileTouchEnhancements() {
         if (!this.cropper) return;

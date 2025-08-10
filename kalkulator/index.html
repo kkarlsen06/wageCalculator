@@ -768,53 +768,7 @@
                           <small class="form-hint">E-postadressen kan ikke endres etter registrering</small>
                       </div>
 
-                      <!-- Profile Picture Upload Section -->
-                      <div class="form-group form-group-with-hint">
-                          <label for="profilePictureInput">Profilbilde</label>
-                          <div class="profile-picture-upload-container">
-                              <!-- Current Profile Picture Preview -->
-                              <div class="profile-picture-preview">
-                                  <div class="profile-picture-current" id="profilePictureCurrent">
-                                      <svg class="profile-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                          <circle cx="12" cy="7" r="4"></circle>
-                                      </svg>
-                                  </div>
-                                  <div class="profile-picture-info">
-                                      <span class="profile-picture-status" id="profilePictureStatus">Ingen profilbilde</span>
-                                      <span class="profile-picture-size" id="profilePictureSize"></span>
-                                  </div>
-                              </div>
-
-                              <!-- File Input and Upload Controls -->
-                              <div class="profile-picture-controls">
-                                  <input type="file" id="profilePictureInput" accept="image/jpeg,image/jpg,image/png,image/webp" style="display: none;">
-                                  <button type="button" class="btn btn-secondary btn-sm" onclick="app.selectProfilePicture()">
-                                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                          <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
-                                          <circle cx="12" cy="13" r="3"></circle>
-                                      </svg>
-                                      Velg bilde
-                                  </button>
-                                  <button type="button" class="btn btn-danger btn-sm" id="removeProfilePictureBtn" onclick="app.removeProfilePicture()" style="display: none;">
-                                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                          <polyline points="3 6 5 6 21 6"></polyline>
-                                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                      </svg>
-                                      Fjern
-                                  </button>
-                              </div>
-
-                              <!-- Upload Progress -->
-                              <div class="profile-picture-progress" id="profilePictureProgress" style="display: none;">
-                                  <div class="progress-bar">
-                                      <div class="progress-fill" id="profilePictureProgressFill"></div>
-                                  </div>
-                                  <span class="progress-text" id="profilePictureProgressText">Laster opp...</span>
-                              </div>
-                          </div>
-                          <small class="form-hint">JPG, PNG eller WebP. Maksimal størrelse: 10MB. Du kan beskjære bildet før opplasting.</small>
-                      </div>
+                      <!-- Profile picture upload removed -->
 
                       <!-- Wage Caregiver Setting -->
                       <div class="form-group form-group-with-hint">
@@ -1044,77 +998,7 @@
           </div>
       </div>
 
-      <!-- Image Cropping Modal -->
-      <div id="cropModal" class="modal">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title">Beskjær profilbilde</h2>
-            <button type="button" class="modal-close" onclick="app.cancelCrop()" aria-label="Lukk">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-
-          <div class="modal-body crop-modal-body">
-            <!-- Cropping Area -->
-            <div class="crop-container">
-              <img id="cropImage" class="crop-image" alt="Bilde for beskjæring" role="img" aria-label="Profilbilde som skal beskjæres">
-            </div>
-
-            <!-- Crop Preview -->
-            <div class="crop-preview-section">
-              <div class="crop-preview-label">Forhåndsvisning</div>
-              <div class="crop-preview-container">
-                <div id="cropPreview" class="crop-preview"></div>
-              </div>
-            </div>
-
-            <!-- Crop Controls -->
-            <div class="crop-controls">
-              <div class="crop-zoom-controls">
-                <label class="crop-control-label">Zoom:</label>
-                <div class="zoom-slider-container">
-                  <button type="button" class="btn btn-sm zoom-btn" onclick="app.adjustCropZoom(-0.1)">
-                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="8" y1="11" x2="14" y2="11"></line>
-                    </svg>
-                  </button>
-                  <input type="range" id="cropZoomSlider" class="zoom-slider" min="0.1" max="3" step="0.1" value="1" oninput="app.setCropZoom(this.value)" aria-label="Zoom nivå for beskjæring" aria-valuemin="0.1" aria-valuemax="3" aria-valuenow="1">
-                  <button type="button" class="btn btn-sm zoom-btn" onclick="app.adjustCropZoom(0.1)">
-                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="8" y1="11" x2="14" y2="11"></line>
-                      <line x1="11" y1="8" x2="11" y2="14"></line>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-fixed-footer">
-            <div class="modal-footer-buttons">
-              <button type="button" class="btn btn-secondary" onclick="app.cancelCrop()">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-                Avbryt
-              </button>
-              <button type="button" class="btn btn-primary" onclick="app.confirmCrop()">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Bruk beskjæring
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- End of Cropping Modal -->
+      <!-- Cropping modal removed -->
 
       <!-- CSV Export Modal -->
       <div id="csvExportModal" class="modal">
@@ -1188,15 +1072,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- jsPDF library for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Cropperjs for image cropping -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <!-- Image cropping library removed -->
     <!-- Load configuration first -->
     <script src="js/config.js"></script>
     <!-- Feature flags system -->
     <script src="js/featureFlags.js"></script>
-    <!-- Image utilities for profile picture compression -->
-    <script src="js/imageUtils.js"></script>
+    <!-- Image utilities removed -->
     <!-- UUID library for generating series IDs -->
     <script>
         // Simple UUID v4 generator function

@@ -204,7 +204,7 @@ async function testValidation() {
     }
 }
 
-// Avatars disabled: remove avatar endpoint tests
+// Avatar endpoint tests removed
 
 async function testSecurity() {
     console.log('\n📝 Testing Security & Access Control...\n');
