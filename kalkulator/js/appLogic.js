@@ -67,7 +67,7 @@ function setupMonthlyGoalInput() {
 if (typeof window !== 'undefined') {
     // Initialize pendingConfetti to avoid errors
     window.pendingConfetti = false;
-    
+
     // Set up the monthly goal input when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
@@ -251,6 +251,9 @@ export const app = {
     usePreset: true,
     customWage: 200,
     customBonuses: {}, // Reset to empty - will be loaded from database
+    // Track current high-level view for modal behavior (dashboard|stats|chatgpt|employees)
+    currentView: 'dashboard',
+
     pauseDeduction: true,
     fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
     directTimeInput: false, // Setting for using direct time input instead of dropdowns
@@ -305,9 +308,9 @@ export const app = {
 
         // Show UI elements
         this.populateTimeSelects();
-        
 
-        
+
+
         // Load backend or fallback
         try {
             await this.loadFromSupabase();
@@ -354,10 +357,10 @@ export const app = {
                 endHour: document.getElementById('endHour')?.value || '',
                 endMinute: document.getElementById('endMinute')?.value || ''
             };
-            
+
             // Repopulate time selects with new format
             this.populateTimeSelects();
-            
+
             // Restore selections if they're still valid
             setTimeout(() => {
                 if (currentSelections.startHour) document.getElementById('startHour').value = currentSelections.startHour;
@@ -373,10 +376,10 @@ export const app = {
                     if (option) endMinuteSelect.value = currentSelections.endMinute;
                 }
             }, 50);
-            
+
             this.saveSettingsToSupabase();
         });
-        
+
         document.getElementById('directTimeInputToggle').addEventListener('change', e => {
             if (e.target.checked && this.fullMinuteRange) {
                 // Disable full minute range when direct time input is enabled
@@ -388,13 +391,13 @@ export const app = {
             this.saveSettingsToSupabase();
         });
 
-        
+
         // Add event listeners for form inputs to save state automatically
         this.setupFormStateListeners();
-        
+
         // Setup event listeners for new settings
         this.setupNewSettingsListeners();
-        
+
         // Restore form state after initialization
         this.restoreFormState();
 
@@ -447,7 +450,7 @@ export const app = {
 
         // Setup monthly goal input after everything is loaded
         setupMonthlyGoalInput();
-        
+
         // Check if we should show the recurring feature introduction
         this.checkAndShowRecurringIntro();
 
@@ -475,26 +478,26 @@ export const app = {
         const endHour = document.getElementById('endHour');
         const startMinute = document.getElementById('startMinute');
         const endMinute = document.getElementById('endMinute');
-        
+
         // Also populate recurring time fields
         const recurringStartHour = document.getElementById('recurringStartHour');
         const recurringEndHour = document.getElementById('recurringEndHour');
         const recurringStartMinute = document.getElementById('recurringStartMinute');
         const recurringEndMinute = document.getElementById('recurringEndMinute');
-        
+
         if (this.directTimeInput) {
             // Replace dropdowns with text inputs for direct time entry
             this.replaceTimeDropdownsWithInputs();
         } else {
             // Use dropdowns
             this.ensureTimeDropdowns();
-            
+
             // Populate simple shift time fields
             startHour.innerHTML = '<option value="">Fra time</option>';
             endHour.innerHTML = '<option value="">Til time</option>';
             startMinute.innerHTML = '<option value="">Fra minutt</option>';
             endMinute.innerHTML = '<option value="">Til minutt</option>';
-            
+
             // Populate recurring shift time fields
             if (recurringStartHour) {
                 recurringStartHour.innerHTML = '<option value="">Fra time</option>';
@@ -502,19 +505,19 @@ export const app = {
                 recurringStartMinute.innerHTML = '<option value="">Fra minutt</option>';
                 recurringEndMinute.innerHTML = '<option value="">Til minutt</option>';
             }
-            
+
             // Allow all hours from 00 to 23
             for (let h = 0; h <= 23; h++) {
                 const hh = String(h).padStart(2,'0');
                 startHour.innerHTML += `<option value="${hh}">${hh}</option>`;
                 endHour.innerHTML += `<option value="${hh}">${hh}</option>`;
-                
+
                 if (recurringStartHour) {
                     recurringStartHour.innerHTML += `<option value="${hh}">${hh}</option>`;
                     recurringEndHour.innerHTML += `<option value="${hh}">${hh}</option>`;
                 }
             }
-            
+
             // Use either 15-minute intervals or full minute range based on setting
             if (this.fullMinuteRange) {
                 // Full minute range 00-59
@@ -523,7 +526,7 @@ export const app = {
                     const sel = m === 0 ? ' selected' : '';
                     startMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
                     endMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
-                    
+
                     if (recurringStartMinute) {
                         recurringStartMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
                         recurringEndMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
@@ -535,7 +538,7 @@ export const app = {
                     const sel = idx===0? ' selected':'';
                     startMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
                     endMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
-                    
+
                     if (recurringStartMinute) {
                         recurringStartMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
                         recurringEndMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
@@ -544,7 +547,7 @@ export const app = {
             }
         }
     },
-    
+
     replaceTimeDropdownsWithInputs() {
         const timeInputs = [
             { id: 'startHour', placeholder: 'Fra time (HH)' },
@@ -557,7 +560,7 @@ export const app = {
             { id: 'recurringEndHour', placeholder: 'Til time (HH)' },
             { id: 'recurringEndMinute', placeholder: 'Til minutt (MM)' }
         ];
-        
+
         timeInputs.forEach(input => {
             const element = document.getElementById(input.id);
             if (element && element.tagName === 'SELECT') {
@@ -570,12 +573,12 @@ export const app = {
                 newInput.maxLength = 2;
                 newInput.pattern = '[0-9]{2}';
                 newInput.value = currentValue;
-                
+
                 // Add input validation
                 newInput.addEventListener('input', (e) => {
                     let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
                     if (value.length > 2) value = value.slice(0, 2);
-                    
+
                     if (input.id.includes('Hour')) {
                         // Validate hours (00-23)
                         const hour = parseInt(value);
@@ -589,28 +592,28 @@ export const app = {
                             value = value.slice(0, 1);
                         }
                     }
-                    
+
                     e.target.value = value;
                 });
-                
+
                 // Auto-pad with zero when leaving field
                 newInput.addEventListener('blur', (e) => {
                     if (e.target.value.length === 1) {
                         e.target.value = '0' + e.target.value;
                     }
                 });
-                
+
                 element.replaceWith(newInput);
             }
         });
     },
-    
+
     ensureTimeDropdowns() {
         const timeSelects = [
             'startHour', 'startMinute', 'endHour', 'endMinute',
             'recurringStartHour', 'recurringStartMinute', 'recurringEndHour', 'recurringEndMinute'
         ];
-        
+
         timeSelects.forEach(id => {
             const element = document.getElementById(id);
             if (element && element.tagName === 'INPUT') {
@@ -618,7 +621,7 @@ export const app = {
                 const newSelect = document.createElement('select');
                 newSelect.id = id;
                 newSelect.className = 'form-control';
-                
+
                 element.replaceWith(newSelect);
             }
         });
@@ -667,6 +670,23 @@ export const app = {
                 option.textContent = employee.name;
                 selector.appendChild(option);
             });
+        });
+
+        // After populating, show selectors only if coming from Ansatte tab
+        this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
+    },
+
+    /**
+     * Show or hide employee select controls inside add/edit shift modals
+     */
+    toggleEmployeeSelectorsVisibility(show) {
+        const ids = ['employeeSelect', 'recurringEmployeeSelect', 'editEmployeeSelect'];
+        ids.forEach(id => {
+            const select = document.getElementById(id);
+            if (!select) return;
+            // Parent form-group contains label + select
+            const group = select.closest('.form-group') || select.parentElement;
+            if (group) group.style.display = show ? '' : 'none';
         });
     },
 
@@ -739,6 +759,8 @@ export const app = {
         return chip;
     },
 
+
+
     /**
      * Handle employee filter selection
      */
@@ -809,7 +831,7 @@ export const app = {
         if (floatingBarBackdrop) {
             floatingBarBackdrop.style.display = 'none';
         }
-        
+
         // Populate form elements if they're empty
         const startHourElement = document.getElementById('startHour');
         if (startHourElement && startHourElement.tagName === 'SELECT' && !startHourElement.options.length) {
@@ -826,20 +848,20 @@ export const app = {
             // If no target parameters, always repopulate to show current month
             this.populateDateGrid(targetMonth, targetYear);
         }
-        
+
         // Show the modal
         const modal = document.getElementById('addShiftModal');
         modal.style.display = 'flex';
         modal.classList.add('active');
-        
+
         // Clear any previously selected dates
         this.selectedDates = [];
         const dateButtons = document.querySelectorAll('#dateGrid .date-cell');
         dateButtons.forEach(btn => btn.classList.remove('selected'));
-        
+
         // Update the selected dates info
         this.updateSelectedDatesInfo();
-        
+
         // Reset form
         document.getElementById('shiftForm').reset();
         // Default to simple tab
@@ -848,16 +870,16 @@ export const app = {
         // Populate employee selectors
         this.populateEmployeeSelectors();
     },
-    
+
     // Update the selected dates info display
     updateSelectedDatesInfo() {
         const infoElement = document.getElementById('selectedDatesInfo');
         const countElement = document.getElementById('selectedDatesCount');
-        
+
         if (!infoElement || !countElement) return;
-        
+
         const count = this.selectedDates ? this.selectedDates.length : 0;
-        
+
         if (count > 0) {
             countElement.textContent = count;
             infoElement.style.display = 'block';
@@ -865,19 +887,19 @@ export const app = {
             infoElement.style.display = 'none';
         }
     },
-    
+
     // Switch between simple and recurring add shift tabs
     switchAddShiftTab(tab) {
         const modal = document.getElementById('addShiftModal');
         const btns = modal.querySelectorAll('.tab-btn');
-        
+
         // Update button active states
         btns.forEach((btn, index) => {
             const isSimpleTab = index === 0; // First button is "Enkel"
             const shouldBeActive = (tab === 'simple' && isSimpleTab) || (tab === 'recurring' && !isSimpleTab);
             btn.classList.toggle('active', shouldBeActive);
         });
-        
+
         // Update content visibility
         const simple = document.getElementById('simpleFields');
         const recurring = document.getElementById('recurringFields');
@@ -888,8 +910,12 @@ export const app = {
             simple.classList.remove('active');
             recurring.classList.add('active');
         }
+
+        // Show/hide employee selectors based on current view
+        this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
+
     },
-    
+
     closeAddShiftModal() {
         const modal = document.getElementById('addShiftModal');
         modal.style.display = 'none';
@@ -921,7 +947,7 @@ export const app = {
             const endHour = document.getElementById('recurringEndHour').value;
             const endMinute = document.getElementById('recurringEndMinute').value || '00';
             const employeeId = document.getElementById('recurringEmployeeSelect').value || null;
-            
+
             if (!startDateStr || !freq || !duration || !startHour || !endHour) {
                 // Show validation alert message
                 if (window.ErrorHelper) {
@@ -946,30 +972,30 @@ export const app = {
                 }
                 return;
             }
-            
+
             const first = new Date(startDateStr);
             // Get weekday from the selected date (0=Sunday, 1=Monday, etc.)
             const weekday = first.getDay();
-            
+
             // Build occurrences
             const dates = [new Date(first)];
             let next = new Date(first);
-            
+
             // Calculate end date correctly by adding months (duration * 12)
             const endDate = new Date(first);
             endDate.setMonth(endDate.getMonth() + Math.floor(duration * 12));
-            
+
             while (true) {
                 next = new Date(next);
                 next.setDate(next.getDate() + freq * 7);
                 if (next > endDate) break;
                 dates.push(new Date(next));
             }
-            
+
             // Show confirmation dialog for recurring shifts
             const totalShifts = dates.length;
             const confirmMessage = `Du er i ferd med å opprette ${totalShifts} gjentakende vakter.\n\nVil du fortsette?`;
-            
+
             if (!confirm(confirmMessage)) {
                 // User cancelled, reset button state and return
                 const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
@@ -979,7 +1005,7 @@ export const app = {
                 }
                 return;
             }
-            
+
             // Add confirmation with button animation after user confirms
             const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
             if (modalAddButton) {
@@ -989,11 +1015,11 @@ export const app = {
                     modalAddButton.style.transform = 'scale(1)';
                 }, 100);
             }
-            
+
             // Insert each shift
             const { data: { user }, error: authError } = await window.supa.auth.getUser();
             if (authError || !user) { alert('Autentiseringsfeil'); return; }
-            
+
             for (const d of dates) {
                 const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
                 const insertData = {
@@ -1007,7 +1033,7 @@ export const app = {
                 };
                 const { data: saved, error } = await window.supa.from('user_shifts').insert(insertData).select().single();
                 if (error) { console.error('Gjentakende feil:', error); continue; }
-                
+
                 this.userShifts.push({
                     id: saved.id,
                     date: new Date(d),
@@ -1019,11 +1045,11 @@ export const app = {
                     employee: employeeId ? this.employees.find(emp => emp.id === employeeId) : null
                 });
             }
-            
+
             this.shifts = [...this.userShifts];
             this.refreshUI(this.shifts);
             this.closeAddShiftModal();
-            
+
             // Show success animation instead of alert
             const addButton = document.querySelector('.add-btn');
             if (addButton) {
@@ -1062,13 +1088,13 @@ export const app = {
                 }
                 return;
             }
-            
+
             const startHour = document.getElementById('startHour').value;
             const startMinute = document.getElementById('startMinute').value || '00';
             const endHour = document.getElementById('endHour').value;
             const endMinute = document.getElementById('endMinute').value || '00';
             const employeeId = document.getElementById('employeeSelect').value || null;
-            
+
             if (!startHour || !endHour) {
                 // Show validation alert message
                 if (window.ErrorHelper) {
@@ -1093,7 +1119,7 @@ export const app = {
                 }
                 return;
             }
-            
+
             const { data: { user }, error: authError } = await window.supa.auth.getUser();
             if (authError) {
                 console.error('addShift: Authentication error:', authError);
@@ -1104,7 +1130,7 @@ export const app = {
                 alert("Du er ikke innlogget");
                 return;
             }
-            
+
             // Process each selected date
             const createdShifts = [];
             for (const selectedDate of this.selectedDates) {
@@ -1116,13 +1142,13 @@ export const app = {
                     endTime: `${endHour}:${endMinute}`,
                     type
                 };
-                
+
                 // Note: Removed date validation since the modal can now display different months
                 // The selected dates from the modal's date grid are already correct
-                
+
                 // Create date string for database
                 const finalDateStr = `${newShift.date.getFullYear()}-${(newShift.date.getMonth() + 1).toString().padStart(2, '0')}-${newShift.date.getDate().toString().padStart(2, '0')}`;
-                
+
                 const insertData = {
                     user_id: user.id,
                     shift_date: finalDateStr,
@@ -1131,18 +1157,18 @@ export const app = {
                     shift_type: newShift.type,
                     employee_id: employeeId
                 };
-                
+
                 const { data: saved, error } = await window.supa.from("user_shifts")
                     .insert(insertData)
                     .select()
                     .single();
-                    
+
                 if (error) {
                     console.error('addShift: Database error when saving shift:', error);
                     alert(`Kunne ikke lagre vakt for ${finalDateStr}: ${error.message}`);
                     continue; // Skip this date and continue with others
                 }
-                
+
                 newShift.id = saved.id;
                 newShift.employee_id = employeeId;
                 newShift.employee = employeeId ? this.employees.find(emp => emp.id === employeeId) : null;
@@ -1151,21 +1177,21 @@ export const app = {
                 this.userShifts.push(newShift);
                 createdShifts.push(newShift);
             }
-            
+
             // Update this.shifts
             this.shifts = [...this.userShifts];
 
             this.refreshUI(this.shifts);
-            
+
             document.getElementById('shiftForm').reset();
             this.selectedDates = [];
             document.querySelectorAll('.date-cell').forEach(cell => {
                 cell.classList.remove('selected');
             });
-            
+
             this.updateSelectedDatesInfo(); // Update the info display
             this.clearFormState();
-            
+
             // Show success animation instead of alert
             if (createdShifts.length > 0) {
                 const mainAddButton = document.querySelector('.add-btn');
@@ -1179,13 +1205,13 @@ export const app = {
                     }, 500);
                 }
             }
-            
+
         } catch (e) {
             console.error('addShift: Critical error:', e);
             alert(`En uventet feil oppstod: ${e.message}`);
         }
     },
-    
+
     // Helper function to calculate ISO week number
     getISOWeekNumber(date) {
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -1436,7 +1462,7 @@ export const app = {
             return a - b;
         });
     },
-    
+
     populateDateGrid(targetMonth = null, targetYear = null) {
         const dateGrid = document.getElementById('dateGrid');
         if (!dateGrid) {
@@ -1451,25 +1477,25 @@ export const app = {
         const offset = firstDay.getDay()===0 ? 6 : firstDay.getDay()-1;
         startDate.setDate(startDate.getDate() - offset);
         dateGrid.innerHTML = '';
-        
+
         // Get shifts for the current month to show blue dots
         const monthShifts = this.shifts.filter(shift =>
             shift.date.getMonth() === monthIdx &&
             shift.date.getFullYear() === year
         );
-        
+
         // Create a lookup for dates with shifts
         const shiftDates = new Set();
         monthShifts.forEach(shift => {
             shiftDates.add(shift.date.getDate());
         });
-        
+
         // Add week number header
         const weekHeader = document.createElement('div');
         weekHeader.textContent = '';
         weekHeader.className = 'week-number header';
         dateGrid.appendChild(weekHeader);
-        
+
         // Add day headers
         ['M','T','O','T','F','L','S'].forEach(day => {
             const hdr = document.createElement('div');
@@ -1477,7 +1503,7 @@ export const app = {
             hdr.style.cssText = 'font-weight:600;font-size:12px;color:var(--text-secondary);text-align:center;padding:8px;';
             dateGrid.appendChild(hdr);
         });
-        
+
         // Add week numbers and date cells
         for (let i=0;i<42;i++){
             // Add week number at the start of each row (every 7 cells)
@@ -1494,12 +1520,12 @@ export const app = {
             cellDate.setDate(startDate.getDate()+i);
             const cell = document.createElement('div');
             cell.className='date-cell';
-            
+
             // Create cell content wrapper
             const cellContent = document.createElement('div');
             cellContent.className = 'date-cell-content';
             cellContent.textContent = cellDate.getDate();
-            
+
             // Add blue dot if this date has shifts
             if (cellDate.getMonth() === monthIdx && shiftDates.has(cellDate.getDate())) {
                 const dot = document.createElement('div');
@@ -1507,17 +1533,17 @@ export const app = {
                 cellContent.appendChild(dot);
                 cell.classList.add('has-shift');
             }
-            
+
             // Add current date class if this is today
             const today = new Date();
-            if (cellDate.getDate() === today.getDate() && 
-                cellDate.getMonth() === today.getMonth() && 
+            if (cellDate.getDate() === today.getDate() &&
+                cellDate.getMonth() === today.getMonth() &&
                 cellDate.getFullYear() === today.getFullYear()) {
                 cell.classList.add('current-date');
             }
-            
+
             cell.appendChild(cellContent);
-            
+
             if (cellDate.getMonth()!==monthIdx) cell.classList.add('disabled');
             else {
                 // Check if this date should be initially selected
@@ -1528,16 +1554,16 @@ export const app = {
                         cell.classList.add('selected');
                     }
                 }
-                
+
                 cell.addEventListener('click',()=>{
                     // Initialize selectedDates array if it doesn't exist
                     if (!this.selectedDates) {
                         this.selectedDates = [];
                     }
-                    
+
                     const dateKey = cellDate.toDateString();
                     const existingIndex = this.selectedDates.findIndex(d => d.toDateString() === dateKey);
-                    
+
                     if (existingIndex >= 0) {
                         // Date is already selected, remove it (deselect)
                         this.selectedDates.splice(existingIndex, 1);
@@ -1547,7 +1573,7 @@ export const app = {
                         this.selectedDates.push(new Date(cellDate));
                         cell.classList.add('selected');
                     }
-                    
+
                     this.updateSelectedDatesInfo(); // Update the info display
                     this.saveFormState(); // Save form state when date selection changes
                 });
@@ -1558,11 +1584,11 @@ export const app = {
 
 
 
-    
 
-    
 
-    
+
+
+
     changeMonth(month) {
         this.currentMonth = month;
 
@@ -1674,7 +1700,7 @@ export const app = {
                     };
                     return mappedShift;
                 });
-                
+
                 // Set current shifts
                 this.shifts = [...this.userShifts];
             }
@@ -1694,9 +1720,9 @@ export const app = {
                 // Load settings from database - handle different possible column names
                 this.usePreset = settings.use_preset !== false; // Default to true
                 this.customWage = settings.custom_wage || 200;
-                
+
                 this.currentWageLevel = settings.wage_level || settings.current_wage_level || 1;
-                
+
                 // Ensure customBonuses has proper structure
                 const loadedBonuses = settings.custom_bonuses || {};
                 this.customBonuses = {
@@ -1708,7 +1734,7 @@ export const app = {
                 this.currentMonth = new Date().getMonth() + 1;
                 // Load selected year, default to current year if not set
                 this.currentYear = settings.current_year || new Date().getFullYear();
-                    
+
                 this.pauseDeduction = settings.pause_deduction || false; // Legacy setting
                 // Load new break deduction settings
                 this.pauseDeductionEnabled = settings.pause_deduction_enabled !== false;
@@ -1909,7 +1935,7 @@ export const app = {
 
         // Toggle preset/custom sections
         this.togglePresetSections();
-        
+
         // Populate custom bonus slots if not using preset
         if (!this.usePreset) {
             // Use setTimeout to ensure DOM elements are ready
@@ -1922,7 +1948,7 @@ export const app = {
     togglePresetSections() {
         const presetSection = document.getElementById('presetWageSection');
         const customSection = document.getElementById('customWageSection');
-        
+
         if (presetSection && customSection) {
             if (this.usePreset) {
                 presetSection.style.display = 'block';
@@ -1935,7 +1961,7 @@ export const app = {
                     this.populateCustomBonusSlots();
                 }, 100);
             }
-            
+
 
         }
     },
@@ -2039,17 +2065,17 @@ export const app = {
 
             if (error) {
                 console.error('Error saving settings to Supabase:', error);
-                
+
                 // Try progressively smaller data sets
                 const minimalData = {
                     user_id: user.id,
                     updated_at: new Date().toISOString()
                 };
-                
+
                 const { error: minError } = await window.supa
                     .from('user_settings')
                     .upsert(minimalData, { onConflict: 'user_id' });
-                    
+
                 if (minError) {
                     console.error('Even minimal save failed:', minError);
                 }
@@ -2099,7 +2125,7 @@ export const app = {
         }
         // Don't call updateDisplay here - it will be called with animation in init()
     },
-    
+
     // Save form state to preserve user input across page restarts
     saveFormState() {
         const formState = {
@@ -2110,18 +2136,18 @@ export const app = {
             endMinute: document.getElementById('endMinute')?.value || '',
             // Remove currentMonth from form state - it should always default to current month on page load
         };
-        
+
         this.formState = formState;
         localStorage.setItem('vaktberegnerFormState', JSON.stringify(formState));
     },
-    
+
     // Restore form state after page restart
     restoreFormState() {
         try {
             const saved = localStorage.getItem('vaktberegnerFormState');
             if (saved) {
                 const formState = JSON.parse(saved);
-                
+
                 // Restore selected dates only if they're in the current displayed month
                 if (formState.selectedDates && formState.selectedDates.length > 0) {
                     this.selectedDates = [];
@@ -2129,7 +2155,7 @@ export const app = {
                         const savedDate = new Date(dateString);
                         const savedMonth = savedDate.getMonth() + 1; // Convert to 1-based month
                         const savedYear = savedDate.getFullYear();
-                        
+
                         // Only restore if the saved date is in the currently displayed month
                         if (savedMonth === this.currentMonth && savedYear === this.currentYear) {
                             this.selectedDates.push(savedDate);
@@ -2148,13 +2174,13 @@ export const app = {
                     // Initialize empty array if no dates saved
                     this.selectedDates = [];
                 }
-                
+
                 // Handle legacy selectedDate format for backward compatibility
                 if (formState.selectedDate && (!formState.selectedDates || formState.selectedDates.length === 0)) {
                     const savedDate = new Date(formState.selectedDate);
                     const savedMonth = savedDate.getMonth() + 1;
                     const savedYear = savedDate.getFullYear();
-                    
+
                     if (savedMonth === this.currentMonth && savedYear === this.currentYear) {
                         this.selectedDates = [savedDate];
                         const dateDay = savedDate.getDate();
@@ -2167,24 +2193,24 @@ export const app = {
                         });
                     }
                 }
-                
+
                 // Restore time selections
                 setTimeout(() => {
                     const startHour = document.getElementById('startHour');
                     const startMinute = document.getElementById('startMinute');
                     const endHour = document.getElementById('endHour');
                     const endMinute = document.getElementById('endMinute');
-                    
+
                     if (startHour && formState.startHour) startHour.value = formState.startHour;
                     if (startMinute && formState.startMinute) startMinute.value = formState.startMinute;
                     if (endHour && formState.endHour) endHour.value = formState.endHour;
                     if (endMinute && formState.endMinute) endMinute.value = formState.endMinute;
                 }, 100);
-                
+
                 // Remove currentMonth restoration - it should always default to current month on page load
-                
+
                 this.formState = formState;
-                
+
                 // Update the selected dates info display
                 this.updateSelectedDatesInfo();
             }
@@ -2192,17 +2218,17 @@ export const app = {
             console.error('Error restoring form state:', e);
         }
     },
-    
+
     // Clear form state (called after successful shift addition)
     clearFormState() {
         this.formState = {};
         localStorage.removeItem('vaktberegnerFormState');
     },
-    
+
     // Setup event listeners for form inputs to automatically save state
     setupFormStateListeners() {
         const timeInputs = ['startHour', 'startMinute', 'endHour', 'endMinute'];
-        
+
         timeInputs.forEach(inputId => {
             const input = document.getElementById(inputId);
             if (input) {
@@ -2212,7 +2238,7 @@ export const app = {
             }
         });
     },
-    
+
     async switchSettingsTab(tab) {
         // Get current active tab before switching (within settings modal only)
         const settingsModal = document.getElementById('settingsModal');
@@ -2222,12 +2248,12 @@ export const app = {
              currentActiveTab.textContent === 'UI' ? 'interface' :
              currentActiveTab.textContent === 'Data' ? 'data' :
              'wage') : null;
-        
+
         // If switching away from wage tab and in custom mode, auto-save bonuses
         if (currentTab === 'wage' && !this.usePreset && tab !== 'wage') {
             await this.saveCustomBonusesSilent();
         }
-        
+
         const tabs = ['wage', 'interface', 'data'];
         const btns = settingsModal?.querySelectorAll('.tab-nav .tab-btn') || [];
         tabs.forEach((t, i) => {
@@ -2240,42 +2266,42 @@ export const app = {
                 content.classList.toggle('active', t === tab);
             }
         });
-        
+
         // When switching to wage tab and custom mode is active, populate bonus slots
         if (tab === 'wage' && !this.usePreset) {
             setTimeout(() => {
                 this.populateCustomBonusSlots();
             }, 100);
         }
-        
 
-        
+
+
         // When switching to data tab, setup export period options
         if (tab === 'data') {
             setTimeout(() => {
                 this.setupExportPeriodOptions();
             }, 100);
         }
-        
+
 
     },
-    
 
-    
+
+
     // Synchronous wrapper for HTML onclick handlers
     switchSettingsTabSync(tab) {
         this.switchSettingsTab(tab).catch(console.error);
     },
-    
+
     async togglePreset() {
         const wasCustomMode = !this.usePreset;
         this.usePreset = document.getElementById('usePresetToggle').checked;
-        
+
         // If switching away from custom mode, save custom bonuses first
         if (wasCustomMode && this.usePreset) {
             await this.saveCustomBonusesSilent();
         }
-        
+
         this.togglePresetSections();
         this.saveSettingsToSupabase();
         this.updateDisplay();
@@ -2457,17 +2483,17 @@ export const app = {
 
     populateCustomBonusSlots() {
         const types = ['weekday', 'saturday', 'sunday'];
-        
+
         types.forEach(type => {
             const container = document.getElementById(`${type}BonusSlots`);
             if (!container) {
                 console.error(`Container ${type}BonusSlots not found`);
                 return;
             }
-            
+
             container.innerHTML = '';
             const bonuses = (this.customBonuses && this.customBonuses[type]) || [];
-            
+
             bonuses.forEach(bonus => {
                 const slot = document.createElement('div');
                 slot.className = 'bonus-slot';
@@ -2477,7 +2503,7 @@ export const app = {
                     <input type="number" class="form-control" placeholder="kr/t" value="${bonus.rate}">
                     <button class="btn btn-icon btn-danger remove-bonus" title="Fjern dette tillegget">×</button>
                 `;
-                
+
                 // Add auto-save event listeners to the inputs (only on change, not blur)
                 const inputs = slot.querySelectorAll('input');
                 inputs.forEach(input => {
@@ -2486,7 +2512,7 @@ export const app = {
                     });
                     // Removed blur event to reduce frequent saving
                 });
-                
+
                 // Add click event listener to the remove button
                 const removeBtn = slot.querySelector('.remove-bonus');
                 if (removeBtn) {
@@ -2495,7 +2521,7 @@ export const app = {
                         this.removeBonusSlot(removeBtn);
                     });
                 }
-                
+
                 container.appendChild(slot);
             });
         });
@@ -2506,7 +2532,7 @@ export const app = {
             console.error(`Container ${type}BonusSlots not found`);
             return;
         }
-        
+
         const slot = document.createElement('div');
         slot.className = 'bonus-slot';
         slot.innerHTML = `
@@ -2523,7 +2549,7 @@ export const app = {
             </div>
             <button class="btn btn-icon btn-danger remove-bonus" title="Fjern dette tillegget">×</button>
         `;
-        
+
         // Add auto-save event listeners to the inputs (only on change, not blur)
         const inputs = slot.querySelectorAll('input');
         inputs.forEach(input => {
@@ -2532,7 +2558,7 @@ export const app = {
             });
             // Removed blur event to reduce frequent saving
         });
-        
+
         // Add click event listener to the remove button
         const removeBtn = slot.querySelector('.remove-bonus');
         if (removeBtn) {
@@ -2541,9 +2567,9 @@ export const app = {
                 this.removeBonusSlot(removeBtn);
             });
         }
-        
+
         container.appendChild(slot);
-        
+
 
     },
     removeBonusSlot(button) {
@@ -2552,10 +2578,10 @@ export const app = {
         if (!this.usePreset) {
             this.saveCustomBonusesSilent().catch(console.error);
         }
-        
+
 
     },
-    
+
     // Auto-save custom bonuses with debouncing to avoid too many saves
     autoSaveCustomBonuses() {
         if (!this.usePreset) {
@@ -2564,7 +2590,7 @@ export const app = {
                 clearTimeout(this.autoSaveTimeout);
                 this.autoSaveTimeout = null; // Reset the variable to prevent memory leaks
             }
-            
+
             // Set new timeout to save after 5 seconds of inactivity (longer delay)
             this.autoSaveTimeout = setTimeout(() => {
                 // Save silently without status messages
@@ -2574,7 +2600,7 @@ export const app = {
             }, 5000);
         }
     },
-    
+
     // Show save status message to user
     showSaveStatus(message) {
         // Find or create status element
@@ -2600,19 +2626,19 @@ export const app = {
             `;
             document.body.appendChild(statusElement);
         }
-        
+
         // Update message and show
         statusElement.textContent = message;
         statusElement.style.opacity = '1';
         statusElement.style.transform = 'translateX(0)';
-        
+
         // Auto-hide after 3 seconds
         setTimeout(() => {
             statusElement.style.opacity = '0';
             statusElement.style.transform = 'translateX(100%)';
         }, 3000);
     },
-    
+
     async openSettings() {
         // Close any existing expanded views, dropdowns, and modals
         this.closeShiftDetails();
@@ -4392,16 +4418,16 @@ export const app = {
     },
 
     updateShiftList() {
-        
+
         this.shifts.forEach((shift, index) => {
         });
-        
+
         const shiftList = document.getElementById('shiftList');
         const monthShifts = this.shifts.filter(shift =>
             shift.date.getMonth() === this.currentMonth - 1 &&
             shift.date.getFullYear() === this.currentYear
         );
-        
+
         if (monthShifts.length === 0) {
             shiftList.innerHTML = `
                 <div class="empty-state">
@@ -4419,7 +4445,7 @@ export const app = {
             `;
             return;
         }
-        
+
         // Sort shifts by date (earliest first)
         const sortedShifts = monthShifts.sort((a, b) => a.date - b.date);
 
@@ -4436,7 +4462,7 @@ export const app = {
         // Create HTML with week separators
         const shiftsHtml = [];
         const weekNumbers = Object.keys(weekGroups).sort((a, b) => a - b); // Sort weeks ascending (earliest first)
-        
+
         weekNumbers.forEach((weekNumber, weekIndex) => {
             const weekShifts = weekGroups[weekNumber];
 
@@ -4468,7 +4494,7 @@ export const app = {
                     <div class="week-separator-line"></div>
                 </div>
             `);
-            
+
             // Add shifts for this week
             weekShifts.forEach(shift => {
                 const calc = this.calculateShift(shift);
@@ -4535,7 +4561,7 @@ export const app = {
                 `);
             });
         });
-        
+
         shiftList.innerHTML = shiftsHtml.join('');
     },
 
@@ -4587,76 +4613,76 @@ export const app = {
             this.stopNextShiftTimer(); // Stop timer when not viewing current month
             return;
         }
-        
+
         // Check if there's a current shift happening right now
         const currentShift = this.shifts.find(shift => {
             const shiftDate = new Date(shift.date);
             if (shiftDate.toDateString() === now.toDateString()) {
                 const [startHour, startMinute] = shift.startTime.split(':').map(Number);
                 const [endHour, endMinute] = shift.endTime.split(':').map(Number);
-                
+
                 const shiftStartTime = new Date(shiftDate);
                 shiftStartTime.setHours(startHour, startMinute, 0, 0);
-                
+
                 const shiftEndTime = new Date(shiftDate);
                 shiftEndTime.setHours(endHour, endMinute, 0, 0);
-                
+
                 // Handle shifts that cross midnight
                 if (shiftEndTime < shiftStartTime) {
                     shiftEndTime.setDate(shiftEndTime.getDate() + 1);
                 }
-                
+
                 return now >= shiftStartTime && now <= shiftEndTime;
             }
             return false;
         });
-        
+
         // If there's a current shift, show current shift info
         if (currentShift) {
             this.displayCurrentShiftCard(currentShift, now);
             return;
         }
-        
+
         // Get all shifts from now onwards
         const upcomingShifts = this.shifts.filter(shift => {
             const shiftDate = new Date(shift.date);
-            
+
             // If shift is on a future date, include it
             if (shiftDate > now) {
                 return true;
             }
-            
+
             // If shift is today, check if it hasn't started yet
             if (shiftDate.toDateString() === now.toDateString()) {
                 const [startHour, startMinute] = shift.startTime.split(':').map(Number);
                 const shiftStartTime = new Date(shiftDate);
                 shiftStartTime.setHours(startHour, startMinute, 0, 0);
-                
+
                 return shiftStartTime > now;
             }
-            
+
             return false;
         });
-        
+
         // Sort by date and time
         upcomingShifts.sort((a, b) => {
             const aDate = new Date(a.date);
             const bDate = new Date(b.date);
-            
+
             if (aDate.getTime() !== bDate.getTime()) {
                 return aDate - bDate;
             }
-            
+
             // Same date, sort by start time
             const [aHour, aMinute] = a.startTime.split(':').map(Number);
             const [bHour, bMinute] = b.startTime.split(':').map(Number);
-            
+
             return (aHour * 60 + aMinute) - (bHour * 60 + bMinute);
         });
-        
+
         const nextShiftContent = document.getElementById('nextShiftContent');
         const nextShiftEmpty = document.getElementById('nextShiftEmpty');
-        
+
         if (upcomingShifts.length === 0) {
             // No upcoming shifts - show most recent shift instead
             const pastShifts = this.shifts.filter(shift => {
@@ -4816,13 +4842,13 @@ export const app = {
             const weekday = this.WEEKDAYS[shiftDate.getDay()];
             const day = shiftDate.getDate();
             const month = this.MONTHS[shiftDate.getMonth()];
-            
+
             // Check if it's today or tomorrow
             // Use the same reference time ("now") to avoid race conditions around midnight
             const today = new Date(now);
             const tomorrow = new Date(now);
             tomorrow.setDate(now.getDate() + 1);
-            
+
             // Create the shift item using the exact same structure as in the shift list
             const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
             const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
@@ -4848,7 +4874,7 @@ export const app = {
                 // Show full date without weekday for shifts outside current week
                 dateDisplay = `${day}. ${month}${seriesBadge}`;
             }
-            
+
             // Add time remaining for today's shifts
             let dateSuffix = '';
             if (shiftDate.toDateString() === today.toDateString()) {
@@ -4875,7 +4901,7 @@ export const app = {
                 }
             }
             // Note: No dateSuffix needed for tomorrow's shifts since dateDisplay already contains "I morgen"
-            
+
             // Check if this shift has overlaps
             const hasOverlaps = this.shiftHasOverlaps(nextShift);
             const warningIndicator = hasOverlaps ? `
@@ -4921,7 +4947,7 @@ export const app = {
                     </div>
                 </div>
             `;
-            
+
             // Click handler is handled by global event delegation in app.js
             // No need for direct event listener here
         }
@@ -4930,16 +4956,16 @@ export const app = {
     displayCurrentShiftCard(currentShift, now) {
         const nextShiftContent = document.getElementById('nextShiftContent');
         const nextShiftEmpty = document.getElementById('nextShiftEmpty');
-        
+
         nextShiftContent.style.display = 'flex';
         nextShiftEmpty.style.display = 'none';
-        
+
         // Calculate earnings so far
         const currentEarnings = this.calculateCurrentShiftEarnings(currentShift, now);
-        
+
         // Calculate full shift duration (like other shift cards)
         const fullShiftCalculation = this.calculateShift(currentShift);
-        
+
         // Format date
         const shiftDate = new Date(currentShift.date);
         const weekday = this.WEEKDAYS[shiftDate.getDay()];
@@ -4964,7 +4990,7 @@ export const app = {
             // Show full date without weekday for shifts outside current week
             dateDisplay = `${day}. ${month}`;
         }
-        
+
         // Calculate time remaining until shift ends
         const [startHour, startMinute] = currentShift.startTime.split(':').map(Number);
         const [endHour, endMinute] = currentShift.endTime.split(':').map(Number);
@@ -4997,7 +5023,7 @@ export const app = {
             // Shift has ended
             timeRemainingText = `<span class="countdown-wrapper">(Ferdig)</span><span class="countdown-dot-separator"> • </span><span class="countdown-no-parens">Ferdig</span>`;
         }
-        
+
         const typeClass = currentShift.type === 0 ? 'weekday' : (currentShift.type === 1 ? 'saturday' : 'sunday');
         const seriesBadge = currentShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
@@ -5041,7 +5067,7 @@ export const app = {
                 </div>
             </div>
         `;
-        
+
                 // Click handler is handled by global event delegation in app.js
         // No need for direct event listener here
     },
@@ -5051,24 +5077,24 @@ export const app = {
         const [startHour, startMinute] = shift.startTime.split(':').map(Number);
         const shiftStartTime = new Date(shiftDate);
         shiftStartTime.setHours(startHour, startMinute, 0, 0);
-        
+
         // Calculate time worked so far in hours
         const timeWorked = now - shiftStartTime;
         const hoursWorked = timeWorked / (1000 * 60 * 60);
-        
+
         // Get wage rate and bonuses
         const wageRate = this.getCurrentWageRate();
         const bonuses = this.getCurrentBonuses();
         const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
         const bonusSegments = bonuses[bonusType] || [];
-        
+
         // Calculate base earnings so far
         const baseEarned = hoursWorked * wageRate;
-        
+
         // Calculate bonus earnings so far - include seconds for real-time updates
         const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
         const bonusEarned = this.calculateBonusWithSeconds(shift.startTime, currentTimeStr, bonusSegments);
-        
+
         return {
             totalHours: hoursWorked,
             baseEarned: baseEarned,
@@ -5080,12 +5106,12 @@ export const app = {
     startNextShiftTimer() {
         // Clear any existing timer
         this.stopNextShiftTimer();
-        
+
         // Only start timer if we're viewing the current month and year
         const now = new Date();
         const currentMonth = now.getMonth() + 1;
         const currentYear = now.getFullYear();
-        
+
         if (this.currentMonth === currentMonth && this.currentYear === currentYear) {
             // Check if there's a current shift or upcoming shifts today that need real-time updates
             const today = new Date();
@@ -5094,24 +5120,24 @@ export const app = {
                 if (shiftDate.toDateString() === today.toDateString()) {
                     const [startHour, startMinute] = shift.startTime.split(':').map(Number);
                     const [endHour, endMinute] = shift.endTime.split(':').map(Number);
-                    
+
                     const shiftStartTime = new Date(shiftDate);
                     shiftStartTime.setHours(startHour, startMinute, 0, 0);
-                    
+
                     const shiftEndTime = new Date(shiftDate);
                     shiftEndTime.setHours(endHour, endMinute, 0, 0);
-                    
+
                     // Handle shifts that cross midnight
                     if (shiftEndTime < shiftStartTime) {
                         shiftEndTime.setDate(shiftEndTime.getDate() + 1);
                     }
-                    
+
                     // Include current shifts (happening now) or upcoming shifts (not started yet)
                     return (now >= shiftStartTime && now <= shiftEndTime) || shiftStartTime > now;
                 }
                 return false;
             });
-            
+
             // Start timer if there are current shifts or upcoming shifts today
             if (todayShifts.length > 0) {
                 this.nextShiftTimer = setInterval(() => {
@@ -5529,7 +5555,7 @@ export const app = {
                 if (cellDate.getMonth() !== monthIdx) {
                     cell.classList.add('other-month');
                 }
-                
+
                 // Add hours-mode class if in hours display mode
                 if (this.calendarDisplayMode === 'hours') {
                     cell.classList.add('hours-mode');
@@ -5565,12 +5591,12 @@ export const app = {
                     }
                 });
 
-                if ((this.calendarDisplayMode === 'money' && base + bonus > 0) || 
+                if ((this.calendarDisplayMode === 'money' && base + bonus > 0) ||
                     (this.calendarDisplayMode === 'hours' && shiftsForDay.length > 0)) {
                     // Create wrapper for shift data
                     const shiftData = document.createElement('div');
                     shiftData.className = 'calendar-shift-data';
-                    
+
                     if (this.calendarDisplayMode === 'money') {
                         const totalDisplay = document.createElement('div');
                         totalDisplay.className = 'calendar-total';
@@ -5581,50 +5607,50 @@ export const app = {
                         // Display time range
                         const hoursDisplay = document.createElement('div');
                         hoursDisplay.className = 'calendar-hours-display';
-                        
+
                         // Find the absolute earliest start time and latest end time across all shifts
                         let earliestStartMinutes = Infinity;
                         let latestEndMinutes = -Infinity;
                         let earliestStartTime = '';
                         let latestEndTime = '';
                         let latestEndCrossedMidnight = false;
-                        
+
                         shiftsForDay.forEach(shift => {
                             const startMinutes = this.timeToMinutes(shift.startTime);
                             let endMinutes = this.timeToMinutes(shift.endTime);
                             let endCrossedMidnight = false;
-                            
+
                             // Adjust endMinutes for shifts that cross midnight
                             if (endMinutes < startMinutes) {
                                 endMinutes += 24 * 60; // Add 24 hours in minutes
                                 endCrossedMidnight = true;
                             }
-                            
+
                             if (startMinutes < earliestStartMinutes) {
                                 earliestStartMinutes = startMinutes;
                                 earliestStartTime = shift.startTime;
                             }
-                            
+
                             if (endMinutes > latestEndMinutes) {
                                 latestEndMinutes = endMinutes;
                                 latestEndTime = shift.endTime;
                                 latestEndCrossedMidnight = endCrossedMidnight;
                             }
                         });
-                        
+
                         // Format the end time display, showing next day indicator if needed
                         let endTimeDisplay = this.formatTimeShort(latestEndTime);
                         if (latestEndCrossedMidnight) {
                             endTimeDisplay += '*';
                         }
-                        
+
                         const timeRange = document.createElement('div');
                         timeRange.className = 'calendar-total calendar-hours-total';
                         if (latestEndCrossedMidnight) {
                             timeRange.title = '* indicates the shift ends the next day';
                         }
                         timeRange.innerHTML = `${this.formatTimeShort(earliestStartTime)} -<br>${endTimeDisplay}`;
-                        
+
                         hoursDisplay.appendChild(timeRange);
                         shiftData.appendChild(hoursDisplay);
                     }
@@ -5656,7 +5682,7 @@ export const app = {
                     }
 
                     content.appendChild(shiftData);
-                    
+
                     cell.classList.add('has-shifts');
                     cell.style.cursor = 'pointer';
 
@@ -5918,11 +5944,11 @@ export const app = {
         this.calendarDisplayMode = mode;
         const btns = document.querySelectorAll('.calendar-toggle-btn');
         btns.forEach(btn => {
-            const isActive = (mode === 'money' && btn.textContent === 'Lønn') || 
+            const isActive = (mode === 'money' && btn.textContent === 'Lønn') ||
                            (mode === 'hours' && btn.textContent === 'Varighet');
             btn.classList.toggle('active', isActive);
         });
-        
+
         // Update calendar cells when in calendar view
         if (this.shiftView === 'calendar') {
             this.updateCalendarCells();
@@ -6039,7 +6065,7 @@ export const app = {
             display: flex;
             flex-direction: column;
             padding: 0 24px 24px 24px;
-            padding-bottom: 80px; 
+            padding-bottom: 80px;
             gap: 16px;
             overflow-y: auto;
         `;
@@ -6057,24 +6083,24 @@ export const app = {
                 <div class="detail-label">Dato</div>
                 <div class="detail-value">${formattedDate}</div>
             </div>
-            
+
             <div class="detail-section">
                 <div class="detail-label">Tid</div>
                 <div class="detail-value">${shift.startTime} - ${shift.endTime} (${calc.totalHours.toFixed(2)}t)</div>
             </div>
-            
+
             <div class="detail-section">
                 <div class="detail-label">Grunnlønn</div>
                 <div class="detail-value accent">${this.formatCurrency(calc.baseWage)}</div>
             </div>
-            
+
             ${calc.bonus > 0 ? `
             <div class="detail-section">
                 <div class="detail-label">Tillegg</div>
                 <div class="detail-value accent">${this.formatCurrency(calc.bonus)}</div>
             </div>
             ` : ''}
-            
+
             <div class="detail-section total">
                 <div class="detail-label">Total</div>
                 <div class="detail-value accent large">${this.formatCurrency(calc.total)}</div>
@@ -6238,10 +6264,10 @@ export const app = {
         });
 
 
-        
+
 
     },
-    
+
     // Close shift details view
     closeShiftDetails() {
         const modal = document.querySelector('.shift-detail-modal');
@@ -6352,7 +6378,7 @@ export const app = {
 
             // Update user metadata
             const { error } = await window.supa.auth.updateUser({
-                data: { 
+                data: {
                     first_name: firstName.trim()
                 }
             });
@@ -7869,7 +7895,7 @@ export const app = {
         const [hours, minutes] = timeStr.split(':').map(Number);
         return hours * 60 + minutes;
     },
-    
+
     minutesToTime(minutes) {
         // Convert minutes back to time string, handling values >= 24 hours
         const adjustedMinutes = minutes % (24 * 60);
@@ -7877,7 +7903,7 @@ export const app = {
         const mins = adjustedMinutes % 60;
         return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
     },
-    
+
     // New function to handle seconds for real-time bonus calculations
     timeToSeconds(timeStr) {
         const parts = timeStr.split(':').map(Number);
@@ -7886,7 +7912,7 @@ export const app = {
         const seconds = parts[2] || 0; // Default to 0 if no seconds provided
         return hours * 3600 + minutes * 60 + seconds;
     },
-    
+
     calculateBonus(startTime, endTime, bonusSegments) {
         let totalBonus = 0;
         const startMinutes = this.timeToMinutes(startTime);
@@ -7907,18 +7933,18 @@ export const app = {
         }
         return totalBonus;
     },
-    
+
     // New function for second-precise bonus calculations
     calculateBonusWithSeconds(startTime, endTime, bonusSegments) {
         let totalBonus = 0;
         const startSeconds = this.timeToSeconds(startTime);
         let endSeconds = this.timeToSeconds(endTime);
-        
+
         // Handle shifts that continue past midnight
         if (endSeconds <= startSeconds) {
             endSeconds += 24 * 3600; // Add 24 hours in seconds
         }
-        
+
         for (const segment of bonusSegments) {
             const segStart = this.timeToSeconds(segment.from);
             let segEnd = this.timeToSeconds(segment.to);
@@ -7930,7 +7956,7 @@ export const app = {
         }
         return totalBonus;
     },
-    
+
     calculateOverlap(startA, endA, startB, endB) {
         const start = Math.max(startA, startB);
         const end = Math.min(endA, endB);
@@ -8180,7 +8206,7 @@ export const app = {
     formatHours(hours) {
         return hours.toFixed(2).replace('.', ',') + 't';
     },
-    
+
     formatTimeShort(timeString) {
         // Format time string (HH:MM) to remove :00 for whole hours
         const [hours, minutes] = timeString.split(':');
@@ -8189,7 +8215,7 @@ export const app = {
         }
         return timeString;
     },
-    
+
     // Settings management methods
     updateWageLevel(level) {
         // Convert to integer (handles both positive and negative values)
@@ -8197,32 +8223,32 @@ export const app = {
         this.updateDisplay();
         this.saveSettingsToSupabase();
     },
-    
+
     updateCustomWage(wage) {
         this.customWage = parseFloat(wage) || 200;
         this.updateDisplay();
         this.saveSettingsToSupabase();
     },
-    
+
     // Capture custom bonuses from UI form elements
     captureCustomBonusesFromUI() {
         const capturedBonuses = {};
         const types = ['weekday', 'saturday', 'sunday'];
-        
+
         types.forEach(type => {
             capturedBonuses[type] = [];
             const container = document.getElementById(`${type}BonusSlots`);
-            
+
             if (container) {
                 const slots = container.querySelectorAll('.bonus-slot');
-                
+
                 slots.forEach((slot, index) => {
                     const inputs = slot.querySelectorAll('input');
                     if (inputs.length >= 3) {
                         const from = inputs[0].value;
                         const to = inputs[1].value;
                         const rate = inputs[2].value;
-                        
+
                         // Capture all slots, even if partially filled (validation happens later)
                         capturedBonuses[type].push({
                             from: from,
@@ -8233,20 +8259,20 @@ export const app = {
                 });
             }
         });
-        
+
         return capturedBonuses;
     },
-    
+
     async saveCustomBonuses() {
-        
+
         // Use the new improved capture system
         const capturedBonuses = this.captureCustomBonusesFromUI();
-        
+
         // Apply stricter validation only for the final save
         const validatedBonuses = {};
         ['weekday', 'saturday', 'sunday'].forEach(type => {
             validatedBonuses[type] = [];
-            
+
             if (capturedBonuses[type]) {
                 capturedBonuses[type].forEach(bonus => {
                     if (bonus.from && bonus.to && bonus.rate && !isNaN(bonus.rate) && bonus.rate > 0) {
@@ -8259,21 +8285,21 @@ export const app = {
                 });
             }
         });
-        
+
         // Update with validated bonuses
         this.customBonuses = validatedBonuses;
-        
+
         // Show save status to user
         this.showSaveStatus('Lagrer tillegg...');
-        
+
         try {
             // Save immediately to ensure we capture the latest data
             this.updateDisplay();
             await this.saveSettingsToSupabase();
             this.saveToLocalStorage(); // Also save to localStorage as backup
-            
+
             this.showSaveStatus('Tillegg lagret ✓');
-            
+
             // Show confirmation
             alert('Tillegg lagret!');
         } catch (error) {
@@ -8282,19 +8308,19 @@ export const app = {
             alert('Feil ved lagring av tillegg!');
         }
     },
-    
+
     // Silent version of saveCustomBonuses for auto-save (no alerts or status messages)
     async saveCustomBonusesSilent() {
         try {
-            
+
             // Use the new improved capture system
             const capturedBonuses = this.captureCustomBonusesFromUI();
-            
+
             // Apply validation for final save
             const validatedBonuses = {};
             ['weekday', 'saturday', 'sunday'].forEach(type => {
                 validatedBonuses[type] = [];
-                
+
                 if (capturedBonuses[type]) {
                     capturedBonuses[type].forEach(bonus => {
                         if (bonus.from && bonus.to && bonus.rate && !isNaN(bonus.rate) && bonus.rate > 0) {
@@ -8307,20 +8333,20 @@ export const app = {
                     });
                 }
             });
-            
+
             // Update with validated bonuses
             this.customBonuses = validatedBonuses;
-            
+
             // Save to both Supabase and localStorage without user feedback
             this.updateDisplay();
             await this.saveSettingsToSupabase();
             this.saveToLocalStorage();
-            
+
         } catch (error) {
             console.error('Error in saveCustomBonusesSilent:', error);
         }
     },
-    
+
     async deleteShift(index) {
         const shift = this.shifts[index];
         if (shift.seriesId) {
@@ -8332,13 +8358,13 @@ export const app = {
             // If user declines to delete series, continue to delete just this individual shift
             // by falling through to the normal deletion logic below
         }
-        
+
         const shiftToDelete = this.shifts[index];
         if (!shiftToDelete || !shiftToDelete.id) return false;
-        
+
         // Show confirmation dialog IMMEDIATELY
         if (!confirm('Er du sikker på at du vil slette denne vakten?')) return false;
-        
+
         try {
             // THEN check authentication
             const { data: { user } } = await window.supa.auth.getUser();
@@ -8346,25 +8372,25 @@ export const app = {
                 alert("Du er ikke innlogget");
                 return false;
             }
-            
+
             const { error } = await window.supa
                 .from('user_shifts')
                 .delete()
                 .eq('id', shiftToDelete.id);
-                
+
             if (error) {
                 console.error('Error deleting shift:', error);
                 alert('Kunne ikke slette vakt fra databasen');
                 return false;
             }
-            
+
             // Remove from local arrays
             this.shifts.splice(index, 1);
             const userIndex = this.userShifts.findIndex(s => s.id === shiftToDelete.id);
             if (userIndex !== -1) {
                 this.userShifts.splice(userIndex, 1);
             }
-            
+
             this.refreshUI(this.shifts);
             return true;
         } catch (e) {
@@ -8373,7 +8399,7 @@ export const app = {
             return false;
         }
     },
-    
+
     async clearAllShifts() {
         if (!confirm('Er du sikker på at du vil slette alle vakter? Dette kan ikke angres.')) {
             return;
@@ -8461,7 +8487,7 @@ export const app = {
             alert('En feil oppstod ved sletting av data');
         }
     },
-    
+
     // Edit shift functionality
     editShift(shiftId) {
         // Find the shift to edit
@@ -8470,20 +8496,24 @@ export const app = {
             console.error('Shift not found:', shiftId);
             return;
         }
-        
-        
+
+
         // Store the shift being edited
         this.editingShift = shift;
-        
+
         // Close shift details modal first and wait for it to complete
         this.closeShiftDetails();
-        
+
+
+        // Ensure employee selectors visibility follows current view
+        this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
+
         // Reduced delay for smoother transition - just wait for backdrop animation
         setTimeout(() => {
             this.openEditModal(shift);
         }, 200); // 200ms for smoother transition
     },
-    
+
     // Separate method to open edit modal for better organization
     openEditModal(shift) {
         const editModal = document.getElementById('editShiftModal');
@@ -8526,7 +8556,7 @@ export const app = {
             editModal.dataset.keydownHandler = 'attached';
         }
     },
-    
+
     closeEditShift() {
         const editModal = document.getElementById('editShiftModal');
         if (editModal) {
@@ -8572,21 +8602,21 @@ export const app = {
             });
         }
     },
-    
+
     populateEditForm(shift) {
         // Populate time selects first
         this.populateEditTimeSelects();
-        
+
         // Populate date grid
         this.populateEditDateGrid();
-        
+
         // Set the selected date
         this.editSelectedDate = new Date(shift.date);
-        
+
         // Set time values
         const [startHour, startMinute] = shift.startTime.split(':');
         const [endHour, endMinute] = shift.endTime.split(':');
-        
+
         document.getElementById('editStartHour').value = startHour;
         document.getElementById('editStartMinute').value = startMinute || '00';
         document.getElementById('editEndHour').value = endHour;
@@ -8598,7 +8628,7 @@ export const app = {
         if (editEmployeeSelect && shift.employee_id) {
             editEmployeeSelect.value = shift.employee_id;
         }
-        
+
         // Highlight the selected date in the grid
         setTimeout(() => {
             const dateDay = shift.date.getDate();
@@ -8608,7 +8638,7 @@ export const app = {
             }
         }, 100);
     },
-    
+
     populateEditTimeSelects() {
         if (this.directTimeInput) {
             // Replace dropdowns with text inputs for direct time entry
@@ -8616,31 +8646,31 @@ export const app = {
         } else {
             // Use dropdowns
             this.ensureEditTimeDropdowns();
-            
-            const hourOptions = Array.from({length: 24}, (_, i) => 
+
+            const hourOptions = Array.from({length: 24}, (_, i) =>
                 `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`
             ).join('');
-            
+
             let minuteOptions;
             if (this.fullMinuteRange) {
                 // Full minute range 00-59
-                minuteOptions = Array.from({length: 60}, (_, i) => 
+                minuteOptions = Array.from({length: 60}, (_, i) =>
                     `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`
                 ).join('');
             } else {
                 // 15-minute intervals (default)
-                minuteOptions = ['00', '15', '30', '45'].map(m => 
+                minuteOptions = ['00', '15', '30', '45'].map(m =>
                     `<option value="${m}">${m}</option>`
                 ).join('');
             }
-            
+
             document.getElementById('editStartHour').innerHTML = '<option value="">Fra time</option>' + hourOptions;
             document.getElementById('editStartMinute').innerHTML = '<option value="">Fra minutt</option>' + minuteOptions;
             document.getElementById('editEndHour').innerHTML = '<option value="">Til time</option>' + hourOptions;
             document.getElementById('editEndMinute').innerHTML = '<option value="">Til minutt</option>' + minuteOptions;
         }
     },
-    
+
     replaceEditTimeDropdownsWithInputs() {
         const timeInputs = [
             { id: 'editStartHour', placeholder: 'Fra time (HH)' },
@@ -8648,7 +8678,7 @@ export const app = {
             { id: 'editEndHour', placeholder: 'Til time (HH)' },
             { id: 'editEndMinute', placeholder: 'Til minutt (MM)' }
         ];
-        
+
         timeInputs.forEach(input => {
             const element = document.getElementById(input.id);
             if (element && element.tagName === 'SELECT') {
@@ -8661,12 +8691,12 @@ export const app = {
                 newInput.maxLength = 2;
                 newInput.pattern = '[0-9]{2}';
                 newInput.value = currentValue;
-                
+
                 // Add input validation
                 newInput.addEventListener('input', (e) => {
                     let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
                     if (value.length > 2) value = value.slice(0, 2);
-                    
+
                     if (input.id.includes('Hour')) {
                         // Validate hours (00-23)
                         const hour = parseInt(value);
@@ -8680,25 +8710,25 @@ export const app = {
                             value = value.slice(0, 1);
                         }
                     }
-                    
+
                     e.target.value = value;
                 });
-                
+
                 // Auto-pad with zero when leaving field
                 newInput.addEventListener('blur', (e) => {
                     if (e.target.value.length === 1) {
                         e.target.value = '0' + e.target.value;
                     }
                 });
-                
+
                 element.replaceWith(newInput);
             }
         });
     },
-    
+
     ensureEditTimeDropdowns() {
         const timeSelects = ['editStartHour', 'editStartMinute', 'editEndHour', 'editEndMinute'];
-        
+
         timeSelects.forEach(id => {
             const element = document.getElementById(id);
             if (element && element.tagName === 'INPUT') {
@@ -8706,18 +8736,18 @@ export const app = {
                 const newSelect = document.createElement('select');
                 newSelect.id = id;
                 newSelect.className = 'form-control';
-                
+
                 element.replaceWith(newSelect);
             }
         });
     },
-    
+
     populateEditDateGrid() {
         const grid = document.getElementById('editDateGrid');
         if (!grid) return;
-        
+
         grid.innerHTML = '';
-        
+
         const year = this.currentYear;
         const month = this.currentMonth - 1; // Convert to 0-based
         const firstDay = new Date(year, month, 1);
@@ -8725,25 +8755,25 @@ export const app = {
         const startDate = new Date(firstDay);
         const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
         startDate.setDate(startDate.getDate() - offset);
-        
+
         // Get shifts for the current month to show blue dots
         const monthShifts = this.shifts.filter(shift =>
             shift.date.getMonth() === month &&
             shift.date.getFullYear() === year
         );
-        
+
         // Create a lookup for dates with shifts
         const shiftDates = new Set();
         monthShifts.forEach(shift => {
             shiftDates.add(shift.date.getDate());
         });
-        
+
         // Add week number header
         const weekHeader = document.createElement('div');
         weekHeader.textContent = '';
         weekHeader.className = 'week-number header';
         grid.appendChild(weekHeader);
-        
+
         // Add day headers
         ['M','T','O','T','F','L','S'].forEach(day => {
             const hdr = document.createElement('div');
@@ -8751,7 +8781,7 @@ export const app = {
             hdr.style.cssText = 'font-weight:600;font-size:12px;color:var(--text-secondary);text-align:center;padding:8px;';
             grid.appendChild(hdr);
         });
-        
+
         // Add calendar cells (42 cells for 6 weeks, like main calendar)
         for (let i = 0; i < 42; i++) {
             // Add week number at the start of each row (every 7 cells)
@@ -8768,12 +8798,12 @@ export const app = {
             cellDate.setDate(startDate.getDate() + i);
             const cell = document.createElement('div');
             cell.className = 'date-cell';
-            
+
             // Create cell content wrapper
             const cellContent = document.createElement('div');
             cellContent.className = 'date-cell-content';
             cellContent.textContent = cellDate.getDate();
-            
+
             // Add blue dot if this date has shifts
             if (cellDate.getMonth() === month && shiftDates.has(cellDate.getDate())) {
                 const dot = document.createElement('div');
@@ -8781,18 +8811,18 @@ export const app = {
                 cellContent.appendChild(dot);
                 cell.classList.add('has-shift');
             }
-            
+
             // Add current date class if this is today
             const today = new Date();
-            if (cellDate.getDate() === today.getDate() && 
-                cellDate.getMonth() === today.getMonth() && 
+            if (cellDate.getDate() === today.getDate() &&
+                cellDate.getMonth() === today.getMonth() &&
                 cellDate.getFullYear() === today.getFullYear()) {
                 cell.classList.add('current-date');
             }
-            
+
             cell.appendChild(cellContent);
             cell.dataset.day = cellDate.getDate();
-            
+
             // Mark out-of-month cells as disabled (like main calendar)
             if (cellDate.getMonth() !== month) {
                 cell.classList.add('disabled');
@@ -8802,55 +8832,55 @@ export const app = {
                 if (dayOfWeek === 0) cell.classList.add('sunday');
                 else if (dayOfWeek === 6) cell.classList.add('saturday');
                 else cell.classList.add('weekday');
-                
+
                 // Add click handler only for current month dates
                 cell.addEventListener('click', () => {
                     // Remove previous selection
                     document.querySelectorAll('#editDateGrid .date-cell').forEach(c => c.classList.remove('selected'));
-                    
+
                     // Add selection to clicked cell
                     cell.classList.add('selected');
-                    
+
                     // Store selected date
                     this.editSelectedDate = new Date(cellDate);
                 });
             }
-            
+
             grid.appendChild(cell);
         }
     },
-    
+
     async updateShift() {
-        
+
         if (!this.editingShift) {
             console.error('No shift being edited');
             alert('Ingen vakt valgt for redigering');
             return;
         }
-        
+
         try {
             // Validate input
             if (!this.editSelectedDate) {
                 alert('Vennligst velg en dato');
                 return;
             }
-            
+
             const startHour = document.getElementById('editStartHour').value;
             const startMinute = document.getElementById('editStartMinute').value || '00';
             const endHour = document.getElementById('editEndHour').value;
             const endMinute = document.getElementById('editEndMinute').value || '00';
             const employeeId = document.getElementById('editEmployeeSelect').value || null;
-            
+
             // Automatically determine shift type from selected date
             const dayOfWeek = this.editSelectedDate.getDay();
             const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
-            
+
             if (!startHour || !endHour) {
                 alert('Vennligst fyll ut arbeidstid');
                 return;
             }
-            
-            
+
+
             // Get authenticated user
             const { data: { user }, error: authError } = await window.supa.auth.getUser();
             if (authError) {
@@ -8862,7 +8892,7 @@ export const app = {
                 alert('Du er ikke innlogget');
                 return;
             }
-            
+
             // Create updated shift data
             const updatedShiftData = {
                 shift_date: `${this.editSelectedDate.getFullYear()}-${(this.editSelectedDate.getMonth() + 1).toString().padStart(2, '0')}-${this.editSelectedDate.getDate().toString().padStart(2, '0')}`,
@@ -8872,7 +8902,7 @@ export const app = {
                 series_id: null, // Remove series ID when editing a shift
                 employee_id: employeeId
             };
-            
+
             // Update in database
             const { data: updated, error } = await window.supa
                 .from('user_shifts')
@@ -8881,13 +8911,13 @@ export const app = {
                 .eq('user_id', user.id)
                 .select()
                 .single();
-                
+
             if (error) {
                 console.error('updateShift: Database error when updating shift:', error);
                 alert(`Kunne ikke oppdatere vakt i databasen: ${error.message}`);
                 return;
             }
-            
+
             // Update local shift objects
             const originalShift = this.editingShift;
             originalShift.date = new Date(this.editSelectedDate);
@@ -8895,38 +8925,38 @@ export const app = {
             originalShift.endTime = `${endHour}:${endMinute}`;
             originalShift.type = type;
             originalShift.seriesId = null; // Remove series ID from local object
-            
+
             // Update both userShifts and shifts arrays
             const userShiftIndex = this.userShifts.findIndex(s => s.id === originalShift.id);
             if (userShiftIndex !== -1) {
                 this.userShifts[userShiftIndex] = { ...originalShift };
             }
-            
+
             this.shifts = [...this.userShifts];
-            
+
             // Update display
             this.refreshUI(this.shifts);
 
             // Close edit modal
             this.closeEditShift();
 
-            
+
             // Show success message
             alert('Vakt oppdatert!');
-            
+
         } catch (e) {
             console.error('updateShift: Critical error:', e);
             alert(`En uventet feil oppstod: ${e.message}`);
         }
     },
-    
+
     // Feature introduction for recurring shifts
     showRecurringIntroduction() {
         // Close any open modals first
         this.closeSettings(false); // Don't save settings when closing as cleanup
         this.closeAddShiftModal();
         this.closeEditShift();
-        
+
         // Create modal HTML
         const modalHtml = `
             <div id="recurringIntroModal" class="modal" style="display: flex;">
@@ -8937,7 +8967,7 @@ export const app = {
                     <div class="modal-body" style="padding: 20px;">
                         <div style="margin-bottom: 16px;">
                             <p style="margin-bottom: 12px; font-size: 15px;">Vi har lagt til en ny måte å legge inn faste vakter på!</p>
-                            
+
                             <div style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                                 <h4 style="margin: 0 0 8px 0; color: var(--accent); font-size: 14px;">Slik fungerer det:</h4>
                                 <ul style="margin: 0; padding-left: 16px; line-height: 1.4; font-size: 14px; text-align: left;">
@@ -8947,15 +8977,15 @@ export const app = {
                                     <li>Systemet legger til alle vaktene automatisk</li>
                                 </ul>
                             </div>
-                            
+
                             <div style="background: var(--accent-light); padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);">
                                 <p style="margin: 0; font-weight: 500; color: var(--text-primary); line-height: 1.4; font-size: 14px;">
-                                    💡 <strong>Tips:</strong> Har du en fast vakt som gjentar seg? 
+                                    💡 <strong>Tips:</strong> Har du en fast vakt som gjentar seg?
                                     Bruk "Gjentakende" funksjonen så slipper du å legge inn den samme vakten gang på gang!
                                 </p>
                             </div>
                         </div>
-                        
+
                         <div class="form-actions" style="margin-top: 16px;">
                             <button class="btn btn-primary" onclick="app.dismissRecurringIntro()" style="width: 100%; max-width: 200px; margin: 0 auto; display: block;">
                                 Forstått, takk!
@@ -8965,10 +8995,10 @@ export const app = {
                 </div>
             </div>
         `;
-        
+
         // Add to DOM
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
+
         // Add escape key listener
         this.recurringIntroKeyHandler = (e) => {
             if (e.key === 'Escape') {
@@ -8977,42 +9007,42 @@ export const app = {
         };
         document.addEventListener('keydown', this.recurringIntroKeyHandler);
     },
-    
+
     async dismissRecurringIntro() {
         // Only mark as seen if this is the first time (automatic show)
         // If user manually opens it, don't mark as seen so they can see it again if needed
         if (!this.hasSeenRecurringIntro) {
             this.hasSeenRecurringIntro = true;
-            
+
             // Save to both localStorage and Supabase
             this.saveToLocalStorage();
             await this.saveSettingsToSupabase();
         }
-        
+
         // Remove modal
         const modal = document.getElementById('recurringIntroModal');
         if (modal) {
             modal.remove();
         }
-        
+
         // Remove event listener
         if (this.recurringIntroKeyHandler) {
             document.removeEventListener('keydown', this.recurringIntroKeyHandler);
             this.recurringIntroKeyHandler = null;
         }
     },
-    
+
     // Check if we should show the recurring introduction
     checkAndShowRecurringIntro() {
         // Show if user hasn't seen it and either:
         // 1. Has at least one existing shift (active user who would benefit), or
         // 2. Has no shifts but has been using the app (might be new user learning)
         const shouldShow = !this.hasSeenRecurringIntro && (
-            this.userShifts.length > 0 || 
+            this.userShifts.length > 0 ||
             // Show to new users after a longer delay to let them explore first
             this.userShifts.length === 0
         );
-        
+
         if (shouldShow) {
             // Longer delay for new users, shorter for users with existing shifts
             const delay = this.userShifts.length > 0 ? 1500 : 5000;
@@ -9595,10 +9625,10 @@ Hva kan jeg hjelpe deg med i dag?`;
                 totalWages += calc.total;
                 totalBonus += calc.bonus;
                 totalBaseWage += calc.baseWage;
-                
+
                 const typeKey = shift.type === 0 ? 'weekday' : shift.type === 1 ? 'saturday' : 'sunday';
                 shiftsByType[typeKey]++;
-                
+
                 return {
                     ...shift,
                     calc: calc
@@ -9654,7 +9684,7 @@ Hva kan jeg hjelpe deg med i dag?`;
 
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
-            
+
             const summaryData = [
                 ['Totalt antall vakter:', shifts.length.toString()],
                 ['Totale timer:', totalHours.toFixed(2) + ' timer'],
@@ -9693,7 +9723,7 @@ Hva kan jeg hjelpe deg med i dag?`;
             const headers = ['Dato', 'Dag', 'Start', 'Slutt', 'Timer', 'Grunnlønn', 'Tillegg', 'Totalt'];
             const colWidths = [25, 20, 15, 15, 15, 25, 25, 25];
             const colPositions = [leftMargin];
-            
+
             for (let i = 1; i < colWidths.length; i++) {
                 colPositions.push(colPositions[i-1] + colWidths[i-1]);
             }
@@ -9713,7 +9743,7 @@ Hva kan jeg hjelpe deg med i dag?`;
             doc.setFont('helvetica', 'normal');
             calculatedShifts.forEach(shift => {
                 checkPageBreak(8);
-                
+
                 const rowData = [
                     shift.date.toLocaleDateString('no-NO'),
                     this.WEEKDAYS[shift.date.getDay()].substring(0, 3),
@@ -9756,7 +9786,7 @@ Hva kan jeg hjelpe deg med i dag?`;
 
             // Generate filename with current date
             const filename = `vaktrapport_${new Date().toISOString().split('T')[0]}.pdf`;
-            
+
             // Save the PDF
             doc.save(filename);
 
@@ -9782,7 +9812,7 @@ Hva kan jeg hjelpe deg med i dag?`;
     async importData() {
         const fileInput = document.getElementById('importFile');
         const file = fileInput.files[0];
-        
+
         if (!file) {
             alert('Velg en fil å importere');
             return;
@@ -9818,27 +9848,27 @@ Hva kan jeg hjelpe deg med i dag?`;
     detectDuplicateShifts(importedShifts) {
         const newShifts = [];
         const duplicates = [];
-        
+
         importedShifts.forEach(importedShift => {
             // Create a unique key for each shift based on its data
             const shiftKey = this.createShiftKey(importedShift);
-            
+
             // Check if this shift already exists in current shifts
             const isDuplicate = this.shifts.some(existingShift => {
                 const existingKey = this.createShiftKey(existingShift);
                 return shiftKey === existingKey;
             });
-            
+
             if (isDuplicate) {
                 duplicates.push(importedShift);
             } else {
                 newShifts.push(importedShift);
             }
         });
-        
+
         return { newShifts, duplicates };
     },
-    
+
     // Create a unique key for a shift based on its data
     createShiftKey(shift) {
         const dateStr = `${shift.date.getFullYear()}-${(shift.date.getMonth() + 1).toString().padStart(2, '0')}-${shift.date.getDate().toString().padStart(2, '0')}`;
@@ -9915,7 +9945,7 @@ Hva kan jeg hjelpe deg med i dag?`;
 
             // Check for duplicates based on shift data (not just IDs)
             const { newShifts, duplicates } = this.detectDuplicateShifts(importedShifts);
-            
+
             if (duplicates.length > 0) {
                 const duplicateCount = duplicates.length;
                 const proceed = confirm(`Fant ${duplicateCount} duplikat vakter som allerede eksisterer. Vil du fortsatt importere de ${newShifts.length} nye vaktene?`);
@@ -9923,11 +9953,11 @@ Hva kan jeg hjelpe deg med i dag?`;
                     return;
                 }
             }
-            
+
             // Save only new shifts to database
             if (newShifts.length > 0) {
                 await this.saveImportedShiftsToSupabase(newShifts);
-                
+
                 // Update local arrays
                 this.shifts = [...this.shifts, ...newShifts];
                 this.userShifts = [...this.userShifts, ...newShifts];
@@ -9951,7 +9981,7 @@ Hva kan jeg hjelpe deg med i dag?`;
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
-            
+
             const values = line.split(',');
             if (values.length >= 6) {
                 const dateParts = values[0].split('.');
@@ -9960,7 +9990,7 @@ Hva kan jeg hjelpe deg med i dag?`;
                     parseInt(dateParts[1]) - 1,
                     parseInt(dateParts[0])
                 );
-                
+
                 const shift = {
                     id: Date.now() + Math.random(),
                     date: date,
@@ -9969,14 +9999,14 @@ Hva kan jeg hjelpe deg med i dag?`;
                     type: values[8] === 'Ukedag' ? 0 : values[8] === 'Lørdag' ? 1 : 2,
                     seriesId: values[9] === 'Ja' ? 'imported-series' : null
                 };
-                
+
                 shifts.push(shift);
             }
         }
-        
+
         // Check for duplicates based on shift data
         const { newShifts, duplicates } = this.detectDuplicateShifts(shifts);
-        
+
         if (duplicates.length > 0) {
             const duplicateCount = duplicates.length;
             const proceed = confirm(`Fant ${duplicateCount} duplikat vakter som allerede eksisterer. Vil du fortsatt importere de ${newShifts.length} nye vaktene?`);
@@ -9984,11 +10014,11 @@ Hva kan jeg hjelpe deg med i dag?`;
                 return;
             }
         }
-        
+
         // Save only new shifts to database
         if (newShifts.length > 0) {
             await this.saveImportedShiftsToSupabase(newShifts);
-            
+
             // Update local arrays
             this.shifts = [...this.shifts, ...newShifts];
             this.userShifts = [...this.userShifts, ...newShifts];
@@ -10066,11 +10096,11 @@ Hva kan jeg hjelpe deg med i dag?`;
     setupExportPeriodOptions() {
         // Update current month label
         this.updateCurrentMonthLabel();
-        
+
         // Setup event listeners for radio buttons
         const periodRadios = document.querySelectorAll('input[name="exportPeriod"]');
         const customSection = document.getElementById('customPeriodSection');
-        
+
         periodRadios.forEach(radio => {
             radio.addEventListener('change', () => {
                 // Handle custom period section
@@ -10094,7 +10124,7 @@ Hva kan jeg hjelpe deg med i dag?`;
                 }
             });
         });
-        
+
         // Initialize visibility based on current selection
         const checkedRadio = document.querySelector('input[name="exportPeriod"]:checked');
         if (checkedRadio) {
@@ -10124,10 +10154,10 @@ Hva kan jeg hjelpe deg med i dag?`;
                 return;
             }
             const period = periodRadio.value;
-            
+
             // Filter shifts based on selected period
             let filteredShifts = [...this.shifts];
-            
+
             if (period === 'current') {
                 // Current month (from month picker)
                 filteredShifts = this.shifts.filter(shift =>
@@ -10138,26 +10168,26 @@ Hva kan jeg hjelpe deg med i dag?`;
                 // Custom period
                 const startDate = document.getElementById('exportStartDate').value;
                 const endDate = document.getElementById('exportEndDate').value;
-                
+
                 if (!startDate || !endDate) {
                     alert('Vennligst fyll ut både start- og sluttdato for egendefinert periode.');
                     return;
                 }
-                
+
                 const start = new Date(startDate);
                 const end = new Date(endDate);
-                
+
                 if (start > end) {
                     alert('Startdato må være før sluttdato.');
                     return;
                 }
-                
+
                 filteredShifts = this.shifts.filter(shift => {
                     const shiftDate = new Date(shift.date);
                     return shiftDate >= start && shiftDate <= end;
                 });
             }
-            
+
             if (filteredShifts.length === 0) {
                 alert('Ingen vakter funnet for den valgte perioden.');
                 return;
@@ -10208,7 +10238,7 @@ Hva kan jeg hjelpe deg med i dag?`;
     async importDataFromDataTab() {
         const fileInput = document.getElementById('importFileData');
         const file = fileInput.files[0];
-        
+
         if (!file) {
             alert('Velg en fil å importere');
             return;
@@ -10231,7 +10261,7 @@ Hva kan jeg hjelpe deg med i dag?`;
 
                 alert('Data importert successfully!');
                 this.updateDisplay();
-                
+
                 // Clear file input
                 fileInput.value = '';
             } catch (error) {
@@ -10249,17 +10279,17 @@ Hva kan jeg hjelpe deg med i dag?`;
             this.openAddShiftModal();
             return;
         }
-        
+
         const targetDate = new Date(date);
         const targetMonth = targetDate.getMonth() + 1;
         const targetYear = targetDate.getFullYear();
-        
+
         // Open the modal with the target month/year (no global state modification)
         this.openAddShiftModal(targetMonth, targetYear);
-        
+
         // Pre-select the specific date
         this.selectedDates = [new Date(targetDate)];
-        
+
         // Select the date in the UI after the modal is populated
         // Use a small delay to ensure the DOM is updated
         setTimeout(() => {
@@ -10271,13 +10301,13 @@ Hva kan jeg hjelpe deg med i dag?`;
                 if (cellContent) {
                     const dayNumber = parseInt(cellContent.textContent);
                     // More robust check: ensure we're in the correct month and not on a disabled cell
-                    if (dayNumber === targetDate.getDate() && 
+                    if (dayNumber === targetDate.getDate() &&
                         !btn.classList.contains('disabled')) {
                         btn.classList.add('selected');
                     }
                 }
             });
-            
+
             // Update the selected dates info
             this.updateSelectedDatesInfo();
         }, 10); // Reduced timeout since we no longer need to restore global state
