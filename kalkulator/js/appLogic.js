@@ -691,44 +691,14 @@ export const app = {
     },
 
     /**
-     * Populate and show employee filter bar
+     * Employee filter bar disabled — carousel is the filter now
      */
     populateEmployeeFilterBar() {
         const filterBar = document.getElementById('employeeFilterBar');
-        const container = filterBar?.querySelector('.filter-scroll-container');
-
-        if (!filterBar || !container) return;
-
-        // Clear existing filters except "All"
-        const allButton = container.querySelector('[data-employee-id=""]');
-        container.innerHTML = '';
-
-        // Re-add "All" button
-        if (allButton) {
-            container.appendChild(allButton);
-        } else {
-            const allChip = this.createFilterChip('', 'Alle', null, true);
-            container.appendChild(allChip);
-        }
-
-        // Add employee filters
-        this.employees.forEach(employee => {
-            if (employee.archived_at) return; // Skip archived employees
-
-            const chip = this.createFilterChip(
-                employee.id,
-                employee.name,
-                employee.display_color,
-                false
-            );
-            container.appendChild(chip);
-        });
-
-        // Show filter bar only in employees view and if there are employees
-        if (this.currentView === 'employees' && this.employees.length > 0) {
-            filterBar.style.display = 'block';
-        } else {
+        if (filterBar) {
             filterBar.style.display = 'none';
+            const container = filterBar.querySelector('.filter-scroll-container');
+            if (container) container.innerHTML = '';
         }
     },
 
@@ -846,8 +816,14 @@ export const app = {
      * Apply employee filter to shift display
      */
     applyEmployeeFilter() {
-        // Only apply employee filtering in the Employees view
-        if (this.currentView !== 'employees' || !this.selectedEmployeeId) {
+        if (this.currentView === 'employees') {
+            // In Employees view, shifts come from the server via /employee-shifts
+            this.fetchAndDisplayEmployeeShifts?.();
+            this.updateEmployeeAssignmentUIInModal?.();
+            return;
+        }
+        // In other views, filter local userShifts
+        if (!this.selectedEmployeeId) {
             this.shifts = [...this.userShifts];
         } else {
             this.shifts = this.userShifts.filter(shift => shift.employee_id === this.selectedEmployeeId);
@@ -1273,11 +1249,14 @@ export const app = {
             }
 
             // Update this.shifts
-            // If we created employee shifts via API, optionally refresh any employee shift views here later
-
-            this.shifts = [...this.userShifts];
-
-            this.refreshUI(this.shifts);
+            // If we created employee shifts via API, refresh the employee view; otherwise update local user shifts
+            if (employeeId) {
+                // Re-fetch to include snapshots and server-calculated fields
+                await this.fetchAndDisplayEmployeeShifts?.();
+            } else {
+                this.shifts = [...this.userShifts];
+                this.refreshUI(this.shifts);
+            }
 
             document.getElementById('shiftForm').reset();
             this.selectedDates = [];
@@ -4680,11 +4659,17 @@ export const app = {
         const nextShiftCard = document.getElementById('nextShiftCard');
         if (!nextShiftCard) return;
 
+        // Hide in Employees tab when "All" employees is selected
+        if (this.currentView === 'employees' && (this.selectedEmployeeId === null || this.selectedEmployeeId === '' || this.selectedEmployeeId === 'all')) {
+            nextShiftCard.style.display = 'none';
+            return;
+        }
+
         const now = new Date();
         const currentMonth = now.getMonth() + 1;
         const currentYear = now.getFullYear();
 
-        // Always show the card, but handle different months differently
+        // Show the card (handled differently per month)
         nextShiftCard.style.display = 'block';
         // Ensure skeleton is visible until we populate content
         const contentEl = document.getElementById('nextShiftContent');
@@ -5392,8 +5377,13 @@ export const app = {
 
         if (!nextPayrollContent || !nextPayrollEmpty) return;
 
-        // Always show the card
-        nextPayrollCard.style.display = 'block';
+        // Hide in Employees tab when "All" employees is selected
+        if (this.currentView === 'employees' && (this.selectedEmployeeId === null || this.selectedEmployeeId === '' || this.selectedEmployeeId === 'all')) {
+            nextPayrollCard.style.display = 'none';
+            return;
+        }
+
+        // Show the card
         // Reset placeholder visibility in case of re-renders
         const skel2 = nextPayrollContent.querySelector('.skeleton');
         if (skel2 && !nextPayrollContent.dataset.populated) skel2.style.display = 'block';
@@ -6023,6 +6013,15 @@ export const app = {
             list.style.display = 'flex';
             cal.style.display = 'none';
             if (toggle) toggle.style.display = 'none';
+        }
+
+        // Ensure employees UI elements remain visible in Employees tab
+        if (this.currentView === 'employees') {
+            this.ensureMonthPickerVisibility?.();
+            const employeesContainer = document.querySelector('.employees-container');
+            if (employeesContainer) employeesContainer.style.display = 'block';
+            const carouselContainer = document.getElementById('employeeCarouselContainer');
+            if (carouselContainer) carouselContainer.style.display = 'block';
         }
     },
 
@@ -9589,13 +9588,8 @@ Hva kan jeg hjelpe deg med i dag?`;
         const activeEmployees = this.employees.filter(emp => !emp.archived_at);
         const selectedEmployee = this.getSelectedEmployee();
 
-        let summaryText = '';
-        if (selectedEmployee) {
-            summaryText = `Viser data for: ${selectedEmployee.name}`;
-        } else {
-            summaryText = `${activeEmployees.length} aktive ansatte`;
-        }
-
+        // Simplify: carousel selection is clear enough – show only total active employees
+        const summaryText = `${activeEmployees.length} aktive ansatte`;
         summaryElement.textContent = summaryText;
     },
 
@@ -10703,31 +10697,8 @@ Hva kan jeg hjelpe deg med i dag?`;
      * @returns {Promise<string|null>} Avatar URL or null
      */
     async getEmployeeAvatarUrl(employeeId) {
-        try {
-            // Check cache first
-            const cached = this.employeeAvatarCache.get(employeeId);
-            if (cached && Date.now() - cached.timestamp < 30 * 60 * 1000) { // 30 minutes
-                return cached.url;
-            }
-
-            // Import employee service dynamically
-            const { employeeService } = await import('./employeeService.js');
-
-            // Get avatar URL
-            const avatarUrl = await employeeService.getAvatarReadUrl(employeeId);
-
-            // Cache the result
-            this.employeeAvatarCache.set(employeeId, {
-                url: avatarUrl,
-                timestamp: Date.now()
-            });
-
-            return avatarUrl;
-
-        } catch (error) {
-            console.error('Error getting employee avatar URL:', error);
-            return null;
-        }
+        // Avatars disabled: always use initials in UI
+        return null;
     },
 
     /**

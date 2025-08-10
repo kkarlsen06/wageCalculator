@@ -1,4 +1,7 @@
 // ===== server.js =====
+console.log('[BOOT] Using server file:', import.meta.url);
+console.log('[BOOT] CWD:', process.cwd());
+
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -20,9 +23,9 @@ const app = express();
 const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 app.use(morgan(logFormat));
 
-app.use(express.static(FRONTEND_DIR)); // serve index.html, css, js, etc.
 app.use(cors());
 app.use(express.json());
+// Note: express.static is registered after API routes to avoid intercepting API paths
 
 // ---------- third-party clients ----------
 const openai   = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -1262,6 +1265,59 @@ app.get('/settings', authenticateUser, async (req, res) => {
 
   res.json({ hourly_rate: data?.hourly_rate ?? 0 });
 });
+// ---- DEBUG: list registered routes (recursive) ----
+app.get('/routes-debug', (req, res) => {
+  try {
+    const seen = new Set();
+    const routes = [];
+
+    function collect(stack, prefix = '') {
+      if (!stack) return;
+      stack.forEach((layer) => {
+        if (layer.route && layer.route.path) {
+          const path = prefix + layer.route.path;
+          const methods = Object.keys(layer.route.methods).filter(k => layer.route.methods[k]);
+          const key = methods.sort().join(',') + ' ' + path;
+          if (!seen.has(key)) {
+            seen.add(key);
+            routes.push({ path, methods });
+          }
+        } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
+          // Nested router
+          const nestedPrefix = layer.regexp && layer.regexp.source ? '' : prefix;
+          collect(layer.handle.stack, nestedPrefix);
+        }
+      });
+    }
+
+    collect(app._router?.stack);
+    res.json({ routes });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+// Minimal health route to confirm server instance
+app.get('/ping', (req, res) => res.json({ ok: true }));
+
+// Additional debug to inspect router internals
+app.get('/routes-debug2', (req, res) => {
+  try {
+    const router = app._router;
+    const stack = router && router.stack ? router.stack : [];
+    const layers = stack.map((layer) => ({
+      name: layer.name,
+      path: layer.route ? layer.route.path : undefined,
+      methods: layer.route ? Object.keys(layer.route.methods).filter(k => layer.route.methods[k]) : undefined,
+      keys: layer.keys
+    }));
+    res.json({ hasRouter: !!router, stackCount: stack.length, layers });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 // ---------- /health/employees ----------
 app.get('/health/employees', async (req, res) => {
@@ -1813,12 +1869,20 @@ app.post('/employees', authenticateUser, async (req, res) => {
     }
 
     // Prepare employee data
+    const lvlVal = (tariff_level !== undefined && tariff_level !== null) ? parseInt(tariff_level) : 0;
+    let wageVal = (hourly_wage !== undefined && hourly_wage !== null) ? parseFloat(hourly_wage) : null;
+    // If DB requires hourly_wage not null and using tariff, compute preset wage as fallback
+    if ((wageVal === null || Number.isNaN(wageVal)) && lvlVal !== 0) {
+      const preset = getTariffRate(lvlVal);
+      if (preset != null) wageVal = Number(preset);
+    }
+
     const employeeData = {
       manager_id: managerId,
       name: name.trim(),
       email: email && email.trim().length > 0 ? email.trim() : null,
-      hourly_wage: hourly_wage !== undefined && hourly_wage !== null ? parseFloat(hourly_wage) : null,
-      tariff_level: tariff_level !== undefined && tariff_level !== null ? parseInt(tariff_level) : 0,
+      hourly_wage: wageVal,
+      tariff_level: lvlVal,
       birth_date: birth_date && birth_date.trim().length > 0 ? birth_date.trim() : null,
       display_color: display_color && display_color.trim().length > 0 ? display_color.trim() : null
     };
@@ -2249,6 +2313,7 @@ app.put('/shifts/:id', authenticateUser, async (req, res) => {
       const shiftDate = new Date(shift_date + 'T00:00:00Z');
       const dayOfWeek = shiftDate.getDay();
       updateData.shift_type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
+
     }
 
     // Check for duplicate if key fields are changing
@@ -2285,6 +2350,9 @@ app.put('/shifts/:id', authenticateUser, async (req, res) => {
       console.error('Error updating shift:', updateError);
 
 // ---------- employee-shifts CRUD endpoints ----------
+
+// ---- DEBUG: announce registration of /employee-shifts routes ----
+console.log('[BOOT] Registering /employee-shifts routes...');
 
 /**
  * GET /employee-shifts
@@ -2351,6 +2419,9 @@ app.get('/employee-shifts', authenticateUser, async (req, res) => {
     });
   } catch (e) {
     console.error('GET /employee-shifts exception:', e);
+// ---- DEBUG: confirm /employee-shifts routes registered ----
+console.log('[BOOT] /employee-shifts routes registered');
+
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -2593,6 +2664,152 @@ app.delete('/shifts/:id', authenticateUser, async (req, res) => {
     return res.status(204).send();
   } catch (error) {
     console.error('DELETE /shifts/:id error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+// ---------- employee-shifts CRUD endpoints ----------
+
+// ---- DEBUG: announce registration of /employee-shifts routes ----
+console.log('[BOOT] Registering /employee-shifts routes...');
+
+/**
+ * GET /employee-shifts
+ * Query: employee_id?, from?, to?, page?, limit?
+ */
+app.get('/employee-shifts', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const { employee_id, from, to } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
+
+    // If employee_id provided, ensure ownership
+    if (employee_id) {
+      const { data: emp, error } = await supabase
+        .from('employees')
+        .select('id, manager_id, archived_at')
+        .eq('id', employee_id)
+        .single();
+      if (error || !emp || emp.manager_id !== managerId || emp.archived_at !== null) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    }
+
+    let query = supabase
+      .from('employee_shifts')
+      .select('id, manager_id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at', { count: 'exact' })
+      .eq('manager_id', managerId)
+      .order('shift_date', { ascending: true })
+      .order('start_time', { ascending: true })
+      .range(offset, offset + limit - 1);
+
+    if (employee_id) query = query.eq('employee_id', employee_id);
+    if (from) query = query.gte('shift_date', from);
+    if (to) query = query.lte('shift_date', to);
+
+    const { data: rows, error, count } = await query;
+    if (error) {
+      console.error('GET /employee-shifts error:', error);
+      return res.status(500).json({ error: 'Failed to fetch employee shifts' });
+    }
+
+    const shifts = (rows || []).map(r => ({
+      id: r.id,
+      employee_id: r.employee_id,
+      employee_name_snapshot: r.employee_name_snapshot,
+      tariff_level_snapshot: r.tariff_level_snapshot,
+      hourly_wage_snapshot: Number(r.hourly_wage_snapshot),
+      shift_date: r.shift_date,
+      start_time: formatTimeHHmm(r.start_time),
+      end_time: formatTimeHHmm(r.end_time),
+      break_minutes: r.break_minutes,
+      notes: r.notes,
+      created_at: r.created_at,
+      updated_at: r.updated_at
+    }));
+
+    return res.json({
+      shifts,
+      page,
+      limit,
+      total: count ?? shifts.length
+    });
+  } catch (e) {
+    console.error('GET /employee-shifts exception:', e);
+// ---- DEBUG: confirm /employee-shifts routes registered ----
+console.log('[BOOT] /employee-shifts routes registered');
+
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+/**
+ * POST /employee-shifts
+ * Body: { employee_id, shift_date, start_time, end_time, break_minutes?, notes? }
+ */
+app.post('/employee-shifts', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) return res.status(403).json({ error: 'Agent writes are not allowed' });
+
+    const managerId = req.user_id;
+    const { employee_id, shift_date, start_time, end_time, break_minutes = 0, notes } = req.body || {};
+
+    // Required fields
+    if (!employee_id || !shift_date || !start_time || !end_time) {
+      return res.status(400).json({ error: 'Missing required fields: employee_id, shift_date, start_time, end_time' });
+    }
+
+    // Validate formats
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
+      return res.status(400).json({ error: 'Invalid shift_date format. Use YYYY-MM-DD' });
+    }
+    if (!/^\d{2}:\d{2}$/.test(start_time) || !/^\d{2}:\d{2}$/.test(end_time)) {
+      return res.status(400).json({ error: 'Invalid time format. Use HH:mm' });
+    }
+    const breakMins = parseInt(break_minutes);
+    if (Number.isNaN(breakMins) || breakMins < 0) {
+      return res.status(400).json({ error: 'break_minutes must be a non-negative integer' });
+    }
+
+    // Compute snapshots from server-side employee row
+    const snap = await computeEmployeeSnapshot(managerId, employee_id);
+    if (!snap.ok) return res.status(snap.statusCode || 400).json({ error: snap.error });
+
+    const { data: inserted, error } = await supabase
+      .from('employee_shifts')
+      .insert({
+        manager_id: managerId,
+        employee_id,
+        employee_name_snapshot: snap.snapshot.employee_name_snapshot,
+        tariff_level_snapshot: snap.snapshot.tariff_level_snapshot,
+        hourly_wage_snapshot: snap.snapshot.hourly_wage_snapshot,
+        shift_date,
+        start_time: hhmmToUtcIso(shift_date, start_time),
+        end_time: hhmmToUtcIso(shift_date, end_time),
+        break_minutes: breakMins,
+        notes: notes ?? null
+      })
+      .select('id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at')
+      .single();
+
+    if (error) {
+      console.error('POST /employee-shifts insert error:', error);
+      return res.status(500).json({ error: 'Failed to create employee shift' });
+    }
+
+    const resp = {
+      ...inserted,
+      hourly_wage_snapshot: Number(inserted.hourly_wage_snapshot),
+      start_time: formatTimeHHmm(inserted.start_time),
+      end_time: formatTimeHHmm(inserted.end_time)
+    };
+    return res.status(201).json({ shift: resp });
+  } catch (e) {
+    console.error('POST /employee-shifts exception:', e);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -3693,6 +3910,9 @@ async function handleTool(call, user_id) {
 }
 
 // ---------- export / run ----------
+// Serve static files after API routes so they don't swallow API endpoints
+app.use(express.static(FRONTEND_DIR)); // serve index.html, css, js, etc.
+
 export default app;
 
 // Start server (kun når filen kjøres direkte)

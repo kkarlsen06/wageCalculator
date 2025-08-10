@@ -235,14 +235,7 @@ export class EmployeeCarousel {
         const displayColor = this.app.getEmployeeDisplayColor(employee);
         const accessibleDescription = this.getEmployeeAccessibleDescription(employee);
 
-        // Try to get avatar URL
-        let avatarUrl = null;
-        try {
-            avatarUrl = await this.app.getEmployeeAvatarUrl(employee.id);
-        } catch (error) {
-            console.warn('Failed to load avatar for employee:', employee.id);
-        }
-
+        // Avatars disabled: always render initials
         return `
             <div class="employee-tile ${isActive ? 'active' : ''}"
                  data-employee-id="${employee.id}"
@@ -252,10 +245,7 @@ export class EmployeeCarousel {
                  aria-label="${accessibleDescription}"
                  aria-describedby="employee-desc-${employee.id}">
                 <div class="employee-avatar" style="--employee-color: ${displayColor}">
-                    ${avatarUrl ?
-                        `<img src="${avatarUrl}" alt="Profilbilde for ${employee.name}" class="avatar-image" />` :
-                        `<div class="avatar-initials" aria-hidden="true">${initials}</div>`
-                    }
+                    <div class="avatar-initials" aria-hidden="true">${initials}</div>
                 </div>
                 <div class="employee-name" id="employee-desc-${employee.id}">${employee.name}</div>
                 <button class="employee-actions-btn"

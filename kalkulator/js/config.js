@@ -5,10 +5,30 @@ const CONFIG = {
         url: "https://iuwjdacxbirhmsglcbxp.supabase.co",
         anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NTIxNDAsImV4cCI6MjA2NDAyODE0MH0.iSjbvGVpM3zOWCGpg5HrQp37PjJCmiHIwVQLgc2LgcE"
     },
-    // API configuration - check for environment variable or use default
-    apiBase: (typeof window !== 'undefined' && window.location.hostname === 'localhost')
-        ? "http://localhost:5173"
-        : "https://wagecalculator-gbpd.onrender.com",
+    // API configuration - smart dev/prod detection with overrides
+    apiBase: (() => {
+        try {
+            if (typeof window !== 'undefined') {
+                // Allow explicit override via query param or localStorage
+                const u = new URL(window.location.href);
+                const qp = u.searchParams.get('apiBase');
+                const ls = window.localStorage ? localStorage.getItem('apiBase') : null;
+                if (qp) return qp;
+                if (ls) return ls;
+
+                // If running from file:// or on local hostnames, use local Express server
+                const isFile = window.location.protocol === 'file:';
+                const host = window.location.hostname;
+                if (isFile || ['localhost', '127.0.0.1', '0.0.0.0'].includes(host)) {
+                    return 'http://localhost:5173';
+                }
+            }
+        } catch (e) {
+            // fall through to prod
+        }
+        // Production default
+        return 'https://wagecalculator-gbpd.onrender.com';
+    })(),
     // Add other configuration options here
     debug: false,
     version: "1.0.0"

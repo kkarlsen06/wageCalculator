@@ -149,7 +149,7 @@ export class EmployeeModal {
                     </button>
                 </div>
 
-                <form class="employee-form" id="employeeForm">
+                <form class="employee-form" id="employeeForm" novalidate>
                     <div class="form-sections">
                         <!-- Avatar Section -->
                         <div class="form-section avatar-section">
