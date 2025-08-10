@@ -80,6 +80,20 @@ export class EmployeeCarousel {
         this.track.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.track.addEventListener('mouseup', this.handleMouseUp.bind(this));
         this.track.addEventListener('mouseleave', this.handleMouseUp.bind(this));
+        // Failsafe click handler to ensure add tile works even if mouse/touch heuristics fail
+        this.track.addEventListener('click', (e) => {
+            const addTile = e.target.closest('.employee-tile[data-action="add"]');
+            if (addTile) {
+                try {
+                    console.debug('[employees] add-click');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.handleAddEmployee();
+                } catch (err) {
+                    console.error('Add employee click handler failed:', err);
+                }
+            }
+        });
         
         // Keyboard navigation
         this.track.addEventListener('keydown', this.handleKeyDown.bind(this));
@@ -581,6 +595,7 @@ export class EmployeeCarousel {
             }
 
             // Show create modal
+            console.debug('[employees] opening create employee modal');
             await this.employeeModal.showCreate();
 
         } catch (error) {

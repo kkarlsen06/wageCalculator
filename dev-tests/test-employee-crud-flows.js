@@ -196,6 +196,13 @@ class CRUDFlowTests {
                 CRUDTestUtils.setupMocks();
                 CRUDTestUtils.resetApp();
                 this.mockService.reset();
+                // Inject shared mock service into global.import
+                global.import = async (module) => {
+                    if (module === './employeeService.js') {
+                        return { employeeService: this.mockService };
+                    }
+                    throw new Error(`Mock import not found: ${module}`);
+                };
                 await test.testFn();
                 this.results.push({ name: test.name, status: 'PASS' });
                 console.log(`✅ ${test.name}`);

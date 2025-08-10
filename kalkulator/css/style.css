@@ -10528,6 +10528,49 @@ input[type="file"].form-control:focus {
   min-height: 200px;
 }
 
+/* Employee work summary table */
+.employee-work-summary {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.employee-work-summary-table-wrapper {
+  overflow-x: auto;
+}
+
+.employee-work-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.employee-work-summary-table th,
+.employee-work-summary-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.employee-work-summary-table thead th {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
+  font-size: 13px;
+}
+
+.employee-work-summary-table tbody td.col-rate,
+.employee-work-summary-table tbody td.col-hours,
+.employee-work-summary-table tbody td.col-pay,
+.employee-work-summary-table tfoot td:nth-child(3),
+.employee-work-summary-table tfoot td:nth-child(4) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.employee-work-summary-table tfoot td {
+  font-weight: var(--font-weight-semibold);
+}
+
 /* Legacy placeholder styles (kept for backwards compatibility) */
 .employees-placeholder {
   background: rgba(18, 18, 18, 0.75);

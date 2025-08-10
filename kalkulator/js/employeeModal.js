@@ -40,6 +40,19 @@ export class EmployeeModal {
     }
 
     /**
+     * Dynamically load employeeService, with test-friendly fallback
+     */
+    async loadEmployeeService() {
+        try {
+            // Allow dev-tests to inject a mock via global.import
+            if (typeof global !== 'undefined' && typeof global.import === 'function') {
+                return await global.import('./employeeService.js');
+            }
+        } catch (_) { /* fall through to native import */ }
+        return await import('./employeeService.js');
+    }
+
+    /**
      * Show modal for creating a new employee
      */
     async showCreate() {
@@ -446,6 +459,16 @@ export class EmployeeModal {
 
         // Update avatar preview
         this.updateAvatarPreview();
+
+        // Accessibility: ensure submit button is type=submit and cancel is type=button
+        const submitBtn = this.modal.querySelector('.submit-btn');
+        if (submitBtn && submitBtn.getAttribute('type') !== 'submit') {
+            submitBtn.setAttribute('type', 'submit');
+        }
+        const cancelBtn = this.modal.querySelector('.cancel-btn');
+        if (cancelBtn && cancelBtn.getAttribute('type') !== 'button') {
+            cancelBtn.setAttribute('type', 'button');
+        }
     }
     /**
      * Update effective rate preview
@@ -746,7 +769,7 @@ export class EmployeeModal {
         // Disable form inputs
         const inputs = this.modal?.querySelectorAll('input, button, select, textarea');
         inputs?.forEach(input => {
-            if (!input.classList.contains('submit-btn')) {
+            if (!input.classList.contains('submit-btn') && !input.classList.contains('cancel-btn')) {
                 input.disabled = submitting;
             }
         });
@@ -764,10 +787,12 @@ export class EmployeeModal {
 
         if (!this.originalData) return false;
 
+        const normalize = (v) => (v === undefined || v === null ? '' : v);
+
         // Check for changes in form data
         const hasDataChanges = Object.keys(this.formData).some(key => {
             if (key === 'avatar') return false; // Handle avatar separately
-            return this.formData[key] !== (this.originalData[key] || '');
+            return normalize(this.formData[key]) !== normalize(this.originalData[key] || '');
         });
 
         return hasDataChanges || this.avatarChanged;
@@ -1030,6 +1055,17 @@ export class EmployeeModal {
      * Create new employee with optimistic updates
      */
     async createEmployee() {
+        // Normalize defaults for missing optional fields before validation (for tests and programmatic calls)
+        if (this.formData.tariff_level === undefined || this.formData.tariff_level === null || this.formData.tariff_level === '') {
+            this.formData.tariff_level = 0;
+        }
+        if (!this.formData.display_color) {
+            this.formData.display_color = '#6366f1';
+        }
+        // Validate before proceeding to optimistic update
+        if (!this.validateForm()) {
+            throw new Error('Valideringsfeil: Kontroller feltene');
+        }
         // Create optimistic employee object
         const optimisticEmployee = {
             id: `temp_${Date.now()}`, // Temporary ID
@@ -1049,8 +1085,8 @@ export class EmployeeModal {
             this.app.employees.push(optimisticEmployee);
             this.app.onEmployeesLoaded();
 
-            // Import employee service
-            const { employeeService } = await import('./employeeService.js');
+            // Import employee service (supports test injection)
+            const { employeeService } = await this.loadEmployeeService();
 
             // Prepare employee data
             const employeeData = {
@@ -1064,6 +1100,7 @@ export class EmployeeModal {
 
             // Create employee on server
             const newEmployee = await employeeService.createEmployee(employeeData);
+            try { window.employee_create_success_total = (window.employee_create_success_total || 0) + 1; } catch {}
 
             // Upload avatar if provided
             if (this.avatarFile) {
@@ -1087,6 +1124,7 @@ export class EmployeeModal {
 
         } catch (error) {
             console.error('Error creating employee:', error);
+            try { window.employee_create_error_total = (window.employee_create_error_total || 0) + 1; } catch {}
 
             // Rollback optimistic update
             this.rollbackOptimisticCreate(optimisticEmployee.id);
@@ -1154,8 +1192,8 @@ export class EmployeeModal {
                 this.app.onEmployeesLoaded();
             }
 
-            // Import employee service
-            const { employeeService } = await import('./employeeService.js');
+            // Import employee service (supports test injection)
+            const { employeeService } = await this.loadEmployeeService();
 
             // Update employee on server if there are changes
             let updatedEmployee = this.currentEmployee;
@@ -1205,8 +1243,8 @@ export class EmployeeModal {
         if (!this.avatarFile) return;
 
         try {
-            // Import employee service
-            const { employeeService } = await import('./employeeService.js');
+            // Import employee service (supports test injection)
+            const { employeeService } = await this.loadEmployeeService();
 
             // Upload avatar
             const avatarUrl = await employeeService.uploadAvatar(employeeId, this.avatarFile);

@@ -50,6 +50,7 @@ async function authenticateUser(req, res, next) {
   if (error || !user) return res.status(401).json({ error: 'Invalid or expired token' });
 
   req.user_id = user.id;
+  req.is_ai_agent = Boolean(user?.app_metadata?.ai_agent || user?.user_metadata?.ai_agent);
   next();
 }
 

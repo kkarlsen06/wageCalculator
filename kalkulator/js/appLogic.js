@@ -3395,6 +3395,10 @@ export const app = {
         this.updateShiftCalendar();
         this.populateDateGrid();
         this.startNextShiftTimer(); // Start the countdown timer
+        // Render employees tab specific content
+        if (this.currentView === 'employees') {
+            this.renderEmployeeWorkSummary?.();
+        }
     },
 
     // Loading state management for UI refresh
@@ -8396,6 +8400,158 @@ export const app = {
         const currencySuffix = this.currencyFormat ? ' NOK' : ' kr';
         return amount.toFixed(2).replace('.', ',') + currencySuffix;
     },
+
+    // Render the employee work summary table in employees view
+    renderEmployeeWorkSummary() {
+        try {
+            const container = document.getElementById('employeeWorkSummary') || document.getElementById('employeesContent');
+            if (!container) return;
+
+            // Only show when a specific employee is selected
+            const selectedEmployee = this.getSelectedEmployee?.();
+            if (!selectedEmployee) {
+                if (container.id === 'employeeWorkSummary') container.innerHTML = '';
+                return;
+            }
+
+            // Filter shifts to current month/year for selected employee
+            const monthShifts = (this.shifts || []).filter(shift =>
+                shift.employee_id === selectedEmployee.id &&
+                shift.date.getMonth() === this.currentMonth - 1 &&
+                shift.date.getFullYear() === this.currentYear
+            );
+
+            // Aggregate wage periods across all shifts
+            const aggregation = new Map();
+            let totalPay = 0;
+
+            for (const shift of monthShifts) {
+                // Calculate detailed wage periods for this shift
+                const startMinutes = this.timeToMinutes(shift.startTime);
+                let endMinutes = this.timeToMinutes(shift.endTime);
+                if (endMinutes <= startMinutes) endMinutes += 24 * 60;
+
+                const wageRate = this.getCurrentWageRate();
+                const bonuses = this.getCurrentBonuses();
+                const breakResult = this.calculateLegalBreakDeduction(shift, wageRate, bonuses, startMinutes, endMinutes);
+
+                // Use wage periods from audit trail if available; otherwise compute directly
+                let wagePeriods = [];
+                if (breakResult?.auditTrail?.wagePeriods) {
+                    wagePeriods = breakResult.auditTrail.wagePeriods;
+                } else {
+                    wagePeriods = this.calculateWagePeriods(shift, wageRate, bonuses, startMinutes, endMinutes);
+                }
+
+                // If deduction method applies, adjust hours per period accordingly
+                let periodsToAccumulate = wagePeriods.map(p => ({ ...p }));
+                if (breakResult?.shouldDeduct && (breakResult.method === 'proportional' || breakResult.method === 'base_only')) {
+                    const adjusted = this.calculateAdjustedWages(breakResult, wageRate);
+                    // Reconstruct adjusted hours per period based on method
+                    // Proportional: reduce each period proportionally
+                    if (breakResult.method === 'proportional') {
+                        const totalHours = wagePeriods.reduce((sum, p) => sum + p.durationHours, 0) || 1;
+                        const deduction = breakResult.deductionHours || 0;
+                        periodsToAccumulate = wagePeriods.map(p => {
+                            const periodDeduction = deduction * (p.durationHours / totalHours);
+                            return { ...p, durationHours: Math.max(0, p.durationHours - periodDeduction) };
+                        });
+                    }
+                    if (breakResult.method === 'base_only') {
+                        let remaining = breakResult.deductionHours || 0;
+                        periodsToAccumulate = wagePeriods.map(p => ({ ...p }));
+                        // Deduct from base-rate periods first
+                        for (const p of periodsToAccumulate) {
+                            if (remaining <= 0) break;
+                            if (p.bonusRate === 0) {
+                                const d = Math.min(p.durationHours, remaining);
+                                p.durationHours -= d;
+                                remaining -= d;
+                            }
+                        }
+                        // If still remaining, deduct from lowest bonus periods
+                        if (remaining > 0) {
+                            const sorted = periodsToAccumulate.slice().sort((a, b) => a.bonusRate - b.bonusRate);
+                            for (const p of sorted) {
+                                if (remaining <= 0) break;
+                                const d = Math.min(p.durationHours, remaining);
+                                p.durationHours -= d;
+                                remaining -= d;
+                            }
+                        }
+                    }
+                }
+
+                for (const p of periodsToAccumulate) {
+                    if (!p || p.durationHours <= 0) continue;
+                    const label = p.bonusRate === 0 ? 'Grunnlønn' : `UB +${p.bonusRate}`;
+                    const key = `${label}|${p.wageRate}|${p.bonusRate}`;
+                    const hours = p.durationHours;
+                    const rate = p.wageRate + p.bonusRate;
+                    const pay = hours * rate;
+                    totalPay += pay;
+
+                    const existing = aggregation.get(key) || { label, rate, hours: 0, pay: 0 };
+                    existing.hours += hours;
+                    existing.pay += pay;
+                    aggregation.set(key, existing);
+                }
+            }
+
+            // Build table HTML
+            const rows = Array.from(aggregation.values())
+                .sort((a, b) => a.label.localeCompare(b.label))
+                .map(item => `
+                <tr>
+                    <td class="col-type">${item.label}</td>
+                    <td class="col-rate">${this.formatCurrencyDetailed(item.rate)}</td>
+                    <td class="col-hours">${item.hours.toFixed(2).replace('.', ',')} t</td>
+                    <td class="col-pay">${this.formatCurrencyDetailed(item.pay)}</td>
+                </tr>
+            `)
+                .join('');
+
+            const totalHours = Array.from(aggregation.values()).reduce((s, r) => s + r.hours, 0);
+
+            const html = `
+                <div class="employee-work-summary-header">
+                    <h3 style="margin:0 0 12px 0;">Arbeidssammendrag – ${selectedEmployee.name}</h3>
+                </div>
+                <div class="employee-work-summary-table-wrapper">
+                    <table class="employee-work-summary-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Sats</th>
+                                <th>Timer</th>
+                                <th>Beløp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows || '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:16px;">Ingen vakter i valgt måned</td></tr>'}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>Totalt</td>
+                                <td></td>
+                                <td>${totalHours.toFixed(2).replace('.', ',')} t</td>
+                                <td>${this.formatCurrencyDetailed(totalPay)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+
+            if (container.id === 'employeeWorkSummary') {
+                container.innerHTML = html;
+            } else {
+                // Fallback: render directly into employeesContent
+                container.innerHTML = `<div class="employee-work-summary" id="employeeWorkSummary">${html}</div>`;
+            }
+        } catch (error) {
+            console.error('Error rendering employee work summary:', error);
+        }
+    },
     formatHours(hours) {
         return hours.toFixed(2).replace('.', ',') + 't';
     },
@@ -9459,6 +9615,10 @@ export const app = {
             }));
 
             this.updateDisplay();
+            // Also render the employee work summary since shifts changed
+            if (this.currentView === 'employees') {
+                this.renderEmployeeWorkSummary?.();
+            }
         } catch (e) {
             console.error('fetchAndDisplayEmployeeShifts error:', e);
         }
@@ -9593,7 +9753,17 @@ Hva kan jeg hjelpe deg med i dag?`;
         // Ensure month navigation remains visible in employees view
         this.ensureMonthPickerVisibility();
 
-        // Dashboard cards are already hidden in switchToView() for smooth transitions
+        // Hide dashboard next* cards explicitly when in employees view
+        try {
+            const totalCard = document.querySelector('.total-card');
+            const nextShiftCard = document.querySelector('.next-shift-card');
+            const nextPayrollCard = document.querySelector('.next-payroll-card');
+            if (totalCard) totalCard.style.display = 'none';
+            if (nextShiftCard) nextShiftCard.style.display = 'none';
+            if (nextPayrollCard) nextPayrollCard.style.display = 'none';
+        } catch (e) {
+            console.warn('Could not hide dashboard cards in employees view', e);
+        }
 
         // Show employees content with carousel
         this.showEmployeesPlaceholder();
@@ -9636,7 +9806,7 @@ Hva kan jeg hjelpe deg med i dag?`;
                     <!-- Employee carousel will be rendered here -->
                 </div>
                 <div class="employees-content" id="employeesContent">
-                    <!-- Additional employee content will go here -->
+                    <div class="employee-work-summary" id="employeeWorkSummary"></div>
                 </div>
             `;
 
@@ -9707,6 +9877,11 @@ Hva kan jeg hjelpe deg med i dag?`;
         // Simplify: carousel selection is clear enough – show only total active employees
         const summaryText = `${activeEmployees.length} aktive ansatte`;
         summaryElement.textContent = summaryText;
+
+        // Also render work summary table whenever summary updates in employees view
+        if (this.currentView === 'employees') {
+            this.renderEmployeeWorkSummary?.();
+        }
     },
 
     updateTabBarVisibility() {
