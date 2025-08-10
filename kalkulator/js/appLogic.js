@@ -3340,6 +3340,13 @@ export const app = {
     getCurrentWageRate() {
         return this.usePreset ? this.PRESET_WAGE_RATES[this.currentWageLevel] : this.customWage;
     },
+    // Prefer per-shift snapped wage when available (employees view);
+    // fall back to current app wage rate otherwise
+    getWageRateForShift(shift) {
+        const snapshot = Number(shift?.hourly_wage_snapshot);
+        if (!Number.isNaN(snapshot) && snapshot > 0) return snapshot;
+        return this.getCurrentWageRate();
+    },
     getCurrentBonuses() {
         if (this.usePreset) {
             return this.PRESET_BONUSES;
@@ -5266,8 +5273,13 @@ export const app = {
         const hoursWorked = timeWorked / (1000 * 60 * 60);
 
         // Get wage rate and bonuses
-        const wageRate = this.getCurrentWageRate();
-        const bonuses = this.getCurrentBonuses();
+        const wageRate = this.getWageRateForShift(shift);
+        const isEmployeeShift = (
+            typeof shift?.hourly_wage_snapshot === 'number' ||
+            !!shift?.employee_id ||
+            !!shift?.employee
+        );
+        const bonuses = isEmployeeShift ? this.PRESET_BONUSES : this.getCurrentBonuses();
         const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
         const bonusSegments = bonuses[bonusType] || [];
 
@@ -7668,95 +7680,63 @@ export const app = {
         };
     },
 
-    // Calculate wage periods for break deduction analysis (client-side, non-overlapping periods)
+    // Calculate wage periods for break deduction analysis with cross-midnight and weekday/weekend handling
     calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMinutes) {
         const periods = [];
-        const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-        const applicableBonuses = bonuses[bonusType] || [];
 
-        // Create time segments with their applicable bonuses
-        const timeSegments = [];
+        const dayToBonusKey = (dow) => (dow === 0 ? 'sunday' : (dow === 6 ? 'saturday' : 'weekday'));
 
-        // Start with the entire shift as base rate
-        timeSegments.push({
-            start: startMinutes,
-            end: endMinutes,
-            bonuses: []
-        });
-
-        // Apply each bonus to overlapping segments
-        for (const bonus of applicableBonuses) {
-            const bonusStart = this.timeToMinutes(bonus.from);
-            let bonusEnd = this.timeToMinutes(bonus.to);
-            if (bonusEnd <= bonusStart) {
-                bonusEnd += 24 * 60;
-            }
-
-            const overlapStart = Math.max(startMinutes, bonusStart);
-            const overlapEnd = Math.min(endMinutes, bonusEnd);
-
-            if (overlapEnd > overlapStart) {
-                // Split existing segments to accommodate this bonus
-                const newSegments = [];
-
-                for (const segment of timeSegments) {
-                    if (segment.end <= overlapStart || segment.start >= overlapEnd) {
-                        // No overlap - keep segment as is
-                        newSegments.push(segment);
-                    } else {
-                        // There's overlap - split the segment
-
-                        // Part before bonus (if any)
-                        if (segment.start < overlapStart) {
-                            newSegments.push({
-                                start: segment.start,
-                                end: overlapStart,
-                                bonuses: [...segment.bonuses]
-                            });
-                        }
-
-                        // Overlapping part with bonus added
-                        const overlapSegmentStart = Math.max(segment.start, overlapStart);
-                        const overlapSegmentEnd = Math.min(segment.end, overlapEnd);
-                        if (overlapSegmentEnd > overlapSegmentStart) {
-                            newSegments.push({
-                                start: overlapSegmentStart,
-                                end: overlapSegmentEnd,
-                                bonuses: [...segment.bonuses, bonus]
-                            });
-                        }
-
-                        // Part after bonus (if any)
-                        if (segment.end > overlapEnd) {
-                            newSegments.push({
-                                start: overlapEnd,
-                                end: segment.end,
-                                bonuses: [...segment.bonuses]
-                            });
-                        }
-                    }
+        // Build periods inside [dayStart, dayEnd] for a given day's bonus key
+        const buildDay = (dayStart, dayEnd, bonusKey) => {
+            if (dayEnd <= dayStart) return;
+            const applicable = bonuses[bonusKey] || [];
+            let segments = [{ start: dayStart, end: dayEnd, bonuses: [] }];
+            for (const b of applicable) {
+                const s = this.timeToMinutes(b.from);
+                let e = this.timeToMinutes(b.to);
+                if (e <= s) e += 24 * 60; // wrap
+                const os = Math.max(dayStart, s);
+                const oe = Math.min(dayEnd, e);
+                if (oe <= os) continue;
+                const next = [];
+                for (const seg of segments) {
+                    if (seg.end <= os || seg.start >= oe) { next.push(seg); continue; }
+                    if (seg.start < os) next.push({ start: seg.start, end: os, bonuses: [...seg.bonuses] });
+                    const overlapStart = Math.max(seg.start, os);
+                    const overlapEnd = Math.min(seg.end, oe);
+                    if (overlapEnd > overlapStart) next.push({ start: overlapStart, end: overlapEnd, bonuses: [...seg.bonuses, b] });
+                    if (seg.end > oe) next.push({ start: oe, end: seg.end, bonuses: [...seg.bonuses] });
                 }
-
-                timeSegments.length = 0;
-                timeSegments.push(...newSegments);
+                segments = next;
             }
-        }
+            for (const seg of segments) {
+                const h = (seg.end - seg.start) / 60;
+                if (h <= 0) continue;
+                const bonusRate = seg.bonuses.reduce((sum, x) => sum + x.rate, 0);
+                periods.push({
+                    startMinutes: seg.start,
+                    endMinutes: seg.end,
+                    durationHours: h,
+                    wageRate: baseWageRate,
+                    bonusRate,
+                    totalRate: baseWageRate + bonusRate,
+                    type: bonusRate > 0 ? 'bonus' : 'base',
+                    bonuses: seg.bonuses
+                });
+            }
+        };
 
-        // Convert time segments to wage periods
-        for (const segment of timeSegments) {
-            const durationHours = (segment.end - segment.start) / 60;
-            const totalBonusRate = segment.bonuses.reduce((sum, bonus) => sum + bonus.rate, 0);
+        // Determine day-of-week from shift.date when available; otherwise use type fallback
+        const startDow = (shift?.date instanceof Date)
+            ? shift.date.getDay()
+            : (shift?.type === 2 ? 0 : (shift?.type === 1 ? 6 : 1));
 
-            periods.push({
-                startMinutes: segment.start,
-                endMinutes: segment.end,
-                durationHours: durationHours,
-                wageRate: baseWageRate,
-                bonusRate: totalBonusRate,
-                totalRate: baseWageRate + totalBonusRate,
-                type: totalBonusRate > 0 ? 'bonus' : 'base',
-                bonuses: segment.bonuses
-            });
+        const firstEnd = Math.min(endMinutes, 24 * 60);
+        buildDay(startMinutes, firstEnd, dayToBonusKey(startDow));
+
+        if (endMinutes > 24 * 60) {
+            const nextDow = (startDow + 1) % 7;
+            buildDay(0, endMinutes - 24 * 60, dayToBonusKey(nextDow));
         }
 
         return periods;
@@ -8421,101 +8401,105 @@ export const app = {
                 shift.date.getFullYear() === this.currentYear
             );
 
-            // Aggregate wage periods across all shifts
-            const aggregation = new Map();
-            let totalPay = 0;
+            // New aggregation model:
+            // - Base (Grunnlønn): all paid hours per wage rate
+            // - UB rows: per UB slot (e.g., "UB 18–24") with UB rate only and slot-duration hours
+            const baseAggregation = new Map(); // key: wageRate -> { hours, rate, pay }
+            const ubAggregation = new Map();   // key: `${from}-${to}|${rate}` -> { label, rate, hours, pay, sortKey }
+
+            const asDisplay = (hhmm) => {
+                if (hhmm === '23:59') return '24';
+                const [h, m] = hhmm.split(':');
+                return m === '00' ? `${parseInt(h, 10)}` : `${h}:${m}`;
+            };
 
             for (const shift of monthShifts) {
-                // Calculate detailed wage periods for this shift
                 const startMinutes = this.timeToMinutes(shift.startTime);
                 let endMinutes = this.timeToMinutes(shift.endTime);
                 if (endMinutes <= startMinutes) endMinutes += 24 * 60;
 
-                const wageRate = this.getCurrentWageRate();
-                const bonuses = this.getCurrentBonuses();
+                const wageRate = this.getWageRateForShift(shift);
+                const bonuses = this.PRESET_BONUSES;
                 const breakResult = this.calculateLegalBreakDeduction(shift, wageRate, bonuses, startMinutes, endMinutes);
 
-                // Use wage periods from audit trail if available; otherwise compute directly
+                // Determine paid hours for base row
+                let paidHoursForShift;
+                if (breakResult?.shouldDeduct && (breakResult.method === 'proportional' || breakResult.method === 'base_only')) {
+                    const adj = this.calculateAdjustedWages(breakResult, wageRate);
+                    paidHoursForShift = adj.totalHours;
+                } else {
+                    const durationHours = (endMinutes - startMinutes) / 60;
+                    paidHoursForShift = breakResult?.shouldDeduct ? Math.max(0, durationHours - (breakResult.deductionHours || 0)) : durationHours;
+                }
+
+                // Accumulate base hours per wage rate
+                const baseEntry = baseAggregation.get(wageRate) || { hours: 0, rate: wageRate, pay: 0 };
+                baseEntry.hours += paidHoursForShift;
+                baseEntry.pay = baseEntry.hours * baseEntry.rate;
+                baseAggregation.set(wageRate, baseEntry);
+
+                // Build wage periods for UB accumulation, respecting deduction method
                 let wagePeriods = [];
-                if (breakResult?.auditTrail?.wagePeriods) {
-                    wagePeriods = breakResult.auditTrail.wagePeriods;
+                if (breakResult?.method === 'end_of_shift' && breakResult.shouldDeduct) {
+                    // Recalculate periods with adjusted end time
+                    wagePeriods = this.calculateWagePeriods(shift, wageRate, bonuses, startMinutes, breakResult.adjustedEndMinutes);
+                } else if (breakResult?.auditTrail?.wagePeriods) {
+                    wagePeriods = breakResult.auditTrail.wagePeriods.map(p => ({ ...p }));
                 } else {
                     wagePeriods = this.calculateWagePeriods(shift, wageRate, bonuses, startMinutes, endMinutes);
                 }
 
-                // If deduction method applies, adjust hours per period accordingly
-                let periodsToAccumulate = wagePeriods.map(p => ({ ...p }));
-                if (breakResult?.shouldDeduct && (breakResult.method === 'proportional' || breakResult.method === 'base_only')) {
-                    const adjusted = this.calculateAdjustedWages(breakResult, wageRate);
-                    // Reconstruct adjusted hours per period based on method
-                    // Proportional: reduce each period proportionally
-                    if (breakResult.method === 'proportional') {
-                        const totalHours = wagePeriods.reduce((sum, p) => sum + p.durationHours, 0) || 1;
-                        const deduction = breakResult.deductionHours || 0;
-                        periodsToAccumulate = wagePeriods.map(p => {
-                            const periodDeduction = deduction * (p.durationHours / totalHours);
-                            return { ...p, durationHours: Math.max(0, p.durationHours - periodDeduction) };
-                        });
-                    }
-                    if (breakResult.method === 'base_only') {
-                        let remaining = breakResult.deductionHours || 0;
-                        periodsToAccumulate = wagePeriods.map(p => ({ ...p }));
-                        // Deduct from base-rate periods first
-                        for (const p of periodsToAccumulate) {
-                            if (remaining <= 0) break;
-                            if (p.bonusRate === 0) {
-                                const d = Math.min(p.durationHours, remaining);
-                                p.durationHours -= d;
-                                remaining -= d;
-                            }
-                        }
-                        // If still remaining, deduct from lowest bonus periods
-                        if (remaining > 0) {
-                            const sorted = periodsToAccumulate.slice().sort((a, b) => a.bonusRate - b.bonusRate);
-                            for (const p of sorted) {
-                                if (remaining <= 0) break;
-                                const d = Math.min(p.durationHours, remaining);
-                                p.durationHours -= d;
-                                remaining -= d;
-                            }
-                        }
-                    }
+                // Adjust period durations for proportional method
+                if (breakResult?.shouldDeduct && breakResult.method === 'proportional') {
+                    const totalH = wagePeriods.reduce((s, p) => s + p.durationHours, 0) || 1;
+                    const deduction = breakResult.deductionHours || 0;
+                    wagePeriods = wagePeriods.map(p => {
+                        const d = deduction * (p.durationHours / totalH);
+                        return { ...p, durationHours: Math.max(0, p.durationHours - d) };
+                    });
                 }
+                // Base-only: UB durations remain unchanged (deduction from base-only handled in base hours above)
 
-                for (const p of periodsToAccumulate) {
+                // Accumulate UB per slot
+                for (const p of wagePeriods) {
                     if (!p || p.durationHours <= 0) continue;
-                    const label = p.bonusRate === 0 ? 'Grunnlønn' : `UB +${p.bonusRate}`;
-                    const key = `${label}|${p.wageRate}|${p.bonusRate}`;
-                    const hours = p.durationHours;
-                    const rate = p.wageRate + p.bonusRate;
-                    const pay = hours * rate;
-                    totalPay += pay;
-
-                    const existing = aggregation.get(key) || { label, rate, hours: 0, pay: 0 };
-                    existing.hours += hours;
-                    existing.pay += pay;
-                    aggregation.set(key, existing);
+                    const duration = p.durationHours;
+                    for (const slot of (p.bonuses || [])) {
+                        const key = `${slot.from}-${slot.to}|${slot.rate}`;
+                        const label = `UB ${asDisplay(slot.from)}-${asDisplay(slot.to)}`;
+                        const entry = ubAggregation.get(key) || { label, rate: slot.rate, hours: 0, pay: 0, sortKey: this.timeToMinutes(slot.from) };
+                        entry.hours += duration;
+                        entry.pay = entry.hours * entry.rate;
+                        ubAggregation.set(key, entry);
+                    }
                 }
             }
 
-            // Build table HTML
-            const rows = Array.from(aggregation.values())
-                .sort((a, b) => a.label.localeCompare(b.label))
-                .map(item => `
+            // Build table rows: base first, then UB rows by time
+            const baseRows = Array.from(baseAggregation.values())
+                .sort((a, b) => a.rate - b.rate)
+                .map(item => ({ label: 'Grunnlønn', rate: item.rate, hours: item.hours, pay: item.pay, group: 'base' }));
+
+            const ubRows = Array.from(ubAggregation.values())
+                .sort((a, b) => a.sortKey - b.sortKey || a.rate - b.rate)
+                .map(item => ({ label: item.label, rate: item.rate, hours: item.hours, pay: item.pay, group: 'ub' }));
+
+            const allRows = [...baseRows, ...ubRows];
+            const rows = allRows.map(item => `
                 <tr>
                     <td class="col-type">${item.label}</td>
                     <td class="col-rate">${this.formatCurrencyDetailed(item.rate)}</td>
                     <td class="col-hours">${item.hours.toFixed(2).replace('.', ',')} t</td>
                     <td class="col-pay">${this.formatCurrencyDetailed(item.pay)}</td>
                 </tr>
-            `)
-                .join('');
+            `).join('');
 
-            const totalHours = Array.from(aggregation.values()).reduce((s, r) => s + r.hours, 0);
+            const totalHours = baseRows.reduce((s, r) => s + r.hours, 0);
+            const totalPay = allRows.reduce((s, r) => s + r.pay, 0);
 
             const html = `
                 <div class="employee-work-summary-header">
-                    <h3 style="margin:0 0 12px 0;">Arbeidssammendrag – ${selectedEmployee.name}</h3>
+                    <h3 style="margin:0 0 12px 0;">${selectedEmployee.name}</h3>
                 </div>
                 <div class="employee-work-summary-table-wrapper">
                     <table class="employee-work-summary-table">
@@ -9611,7 +9595,9 @@ export const app = {
                 type: (() => { const d = new Date(s.shift_date+'T00:00:00Z').getDay(); return d===0?2:(d===6?1:0); })(),
                 seriesId: null,
                 employee_id: s.employee_id,
-                employee: this.employees.find(e => e.id === s.employee_id) || null
+                employee: this.employees.find(e => e.id === s.employee_id) || null,
+                // Include per-shift snapped wage for accurate period calculations
+                hourly_wage_snapshot: Number(s.hourly_wage_snapshot)
             }));
 
             this.updateDisplay();
@@ -9798,12 +9784,7 @@ Hva kan jeg hjelpe deg med i dag?`;
             employeesContainer.innerHTML = `
                 <div class="employees-header">
                     <h2>Ansatte</h2>
-                    <div style="display:flex;align-items:center;gap:12px;">
-                      <div class="employees-summary" id="employeesSummary"></div>
-                      <button class="btn btn-primary" onclick="app.showCreateEmployeeModal()" aria-label="Legg til ansatt">
-                        + Legg til ansatt
-                      </button>
-                    </div>
+                    <div class="employees-summary" id="employeesSummary"></div>
                 </div>
                 <div class="employee-carousel-container" id="employeeCarouselContainer">
                     <!-- Employee carousel will be rendered here -->

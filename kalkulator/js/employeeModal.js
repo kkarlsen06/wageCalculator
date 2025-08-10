@@ -240,6 +240,9 @@ export class EmployeeModal {
                 <div class="help-text" style="margin-top:6px;">
                     <small>Tariffnivå lagres, og satsen snappes på hver vakt.</small>
                 </div>
+                <div class="help-text" style="margin-top:4px;">
+                    <small>Merk: Egendefinert timelønn erstatter kun grunnlønn. Kveld/helg-tillegg beregnes fortsatt som vanlig etter tariff.</small>
+                </div>
                             </div>
 
                             <div class="form-group">
@@ -767,8 +770,10 @@ export class EmployeeModal {
         if (this.isSubmitting) return;
 
         try {
+            console.debug('[employees] submit-click', { mode: this.mode });
             // Validate form
             if (!this.validateForm()) {
+                console.debug('[employees] validation failed', this.validationErrors);
                 return;
             }
 
