@@ -676,9 +676,12 @@ export class EmployeeModal {
                 this.updateFieldValidationUI('tariff_level');
                 isValid = false;
             }
-            // If custom wage, validate hourly wage
-            if (this.formData.tariff_level == 0 && this.formData.hourly_wage) {
-                if (!this.validateField('hourly_wage', this.formData.hourly_wage)) {
+            // If custom wage, require and validate hourly_wage
+            if (this.formData.tariff_level == 0) {
+                const hasValue = this.formData.hourly_wage != null && String(this.formData.hourly_wage).trim().length > 0;
+                if (!hasValue || !this.validateField('hourly_wage', this.formData.hourly_wage)) {
+                    this.validationErrors.hourly_wage = hasValue ? this.validationErrors.hourly_wage : 'Timelønn er påkrevd for Egendefinert';
+                    this.updateFieldValidationUI('hourly_wage');
                     isValid = false;
                 }
             }
