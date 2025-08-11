@@ -942,12 +942,9 @@ export const app = {
             this.updateEmployeeAssignmentUIInModal?.();
             return;
         }
-        // In other views, filter local userShifts
-        if (!this.selectedEmployeeId) {
-            this.shifts = [...this.userShifts];
-        } else {
-            this.shifts = this.userShifts.filter(shift => shift.employee_id === this.selectedEmployeeId);
-        }
+        // In other views, always show user's own shifts (no employee filtering)
+        // Employee filtering should only happen in the employees view
+        this.shifts = [...this.userShifts];
         this.updateDisplay();
     },
 
@@ -9055,6 +9052,14 @@ export const app = {
         // Remove all view classes
         body.classList.remove('stats-view', 'chatbox-view', 'employees-view');
 
+        // Clear employee selection when switching to dashboard
+        this.selectedEmployeeId = null;
+        // Also clear from localStorage to prevent persistence issues
+        localStorage.removeItem('selectedEmployeeId');
+        
+        // Restore user's own shifts (not filtered by employee)
+        this.shifts = [...this.userShifts];
+
         // Show dashboard cards
         const totalCard = document.querySelector('.total-card');
         const nextShiftCard = document.querySelector('.next-shift-card');
@@ -9158,6 +9163,13 @@ export const app = {
         body.classList.remove('chatbox-view', 'employees-view');
         body.classList.add('stats-view');
 
+        // Clear employee selection when switching to stats
+        this.selectedEmployeeId = null;
+        localStorage.removeItem('selectedEmployeeId');
+        
+        // Restore user's own shifts (not filtered by employee)
+        this.shifts = [...this.userShifts];
+
         // Use existing stats view functionality
         this.dashboardView = 'stats';
         this.applyDashboardView();
@@ -9169,6 +9181,13 @@ export const app = {
         // Remove other view classes and add chatbox view
         body.classList.remove('stats-view', 'employees-view');
         body.classList.add('chatbox-view');
+
+        // Clear employee selection when switching to chat
+        this.selectedEmployeeId = null;
+        localStorage.removeItem('selectedEmployeeId');
+        
+        // Restore user's own shifts (not filtered by employee)
+        this.shifts = [...this.userShifts];
 
         // Show the chatbox container
         const chatboxContainer = document.querySelector('.chatbox-container');
@@ -10268,10 +10287,15 @@ Hva kan jeg hjelpe deg med i dag?`;
             const savedEmployeeId = localStorage.getItem('selectedEmployeeId');
 
             // Set selectedEmployeeId (URL takes precedence)
+            // BUT only apply it if we're in the employees view
             if (urlEmployeeId !== null) {
                 this.selectedEmployeeId = urlEmployeeId === 'all' ? null : urlEmployeeId;
-            } else if (savedEmployeeId !== null) {
+            } else if (savedEmployeeId !== null && this.currentView === 'employees') {
+                // Only restore saved employee selection if we're in employees view
                 this.selectedEmployeeId = savedEmployeeId === 'null' ? null : savedEmployeeId;
+            } else {
+                // Clear selection for non-employee views
+                this.selectedEmployeeId = null;
             }
 
             // Initialize employee cache
