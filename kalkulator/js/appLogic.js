@@ -6606,8 +6606,32 @@ export const app = {
             if (nameField) nameField.value = user.user_metadata?.first_name || '';
             if (emailField) emailField.value = user.email || '';
 
-            // Load avatar url from user metadata if available
-            const avatarUrl = user.user_metadata?.avatar_url || '';
+            // Load avatar url: prefer server settings.profile_picture_url, fallback to user metadata
+            let avatarUrl = '';
+            try {
+                const { data: { session } } = await window.supa.auth.getSession();
+                const token = session?.access_token;
+                if (token) {
+                    const resp = await fetch(`${window.CONFIG.apiBase}/settings`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (resp.ok) {
+                        const json = await resp.json();
+                        avatarUrl = json?.profile_picture_url || '';
+                    }
+                }
+            } catch (_) { /* ignore */ }
+            if (!avatarUrl) {
+                try {
+                    const { data: row } = await window.supa
+                        .from('user_settings')
+                        .select('profile_picture_url')
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+                    avatarUrl = row?.profile_picture_url || '';
+                } catch (_) { /* ignore */ }
+            }
+            if (!avatarUrl) avatarUrl = user.user_metadata?.avatar_url || '';
             const imgEl = document.getElementById('profileAvatarImage');
             const placeholder = document.getElementById('profileAvatarPlaceholder');
             const topbarImg = document.getElementById('userAvatarImg');
@@ -6735,8 +6759,14 @@ export const app = {
                 this.cropper.destroy();
                 this.cropper = null;
             }
-            // eslint-disable-next-line no-undef
-            this.cropper = new Cropper(img, {
+            const CropperCtor = window.Cropper || (await (async () => {
+                try {
+                    const mod = await import('https://unpkg.com/cropperjs@1.6.2/dist/cropper.esm.js');
+                    return mod?.default || mod?.Cropper || null;
+                } catch (_) { return null; }
+            })());
+            if (!CropperCtor) throw new Error('Cropper library not available');
+            this.cropper = new CropperCtor(img, {
                 aspectRatio: 1,
                 viewMode: 1,
                 dragMode: 'move',
@@ -6758,6 +6788,10 @@ export const app = {
                         slider.value = current;
                         slider.oninput = () => this.cropper.zoomTo(parseFloat(slider.value));
                     }
+                    const zoomIn = document.getElementById('zoomInBtn');
+                    const zoomOut = document.getElementById('zoomOutBtn');
+                    if (zoomIn) zoomIn.onclick = () => this.cropper.zoom(0.05);
+                    if (zoomOut) zoomOut.onclick = () => this.cropper.zoom(-0.05);
                     img.classList.add('loaded');
 
                     // Mobile pinch-to-zoom enhancements
@@ -6791,22 +6825,52 @@ export const app = {
             const url = await this.saveAvatarBlob(blob);
             this.updateProfilePictureProgress(90, 'Oppdaterer profil...');
 
-            // Save URL in Supabase user metadata
-            const { error } = await window.supa.auth.updateUser({ data: { avatar_url: url } });
-            if (error) throw error;
+            // Save URL both in user_settings (server) and user metadata (fallback)
+            try {
+                const { data: { session } } = await window.supa.auth.getSession();
+                const token = session?.access_token;
+                if (token) {
+                    await fetch(`${window.CONFIG.apiBase}/settings`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ profile_picture_url: url })
+                    });
+                }
+            } catch (_) { /* ignore */ }
+            // Client-side fallback upsert into user_settings
+            try {
+                const { data: { user } } = await window.supa.auth.getUser();
+                if (user?.id) {
+                    const { error: updateError } = await window.supa
+                        .from('user_settings')
+                        .update({ profile_picture_url: url })
+                        .eq('user_id', user.id);
+                    if (updateError) {
+                        await window.supa
+                            .from('user_settings')
+                            .upsert({ user_id: user.id, profile_picture_url: url }, { onConflict: 'user_id' });
+                    }
+                }
+            } catch (_) { /* ignore */ }
+            await window.supa.auth.updateUser({ data: { avatar_url: url } });
 
             // Update UI
             const imgEl = document.getElementById('profileAvatarImage');
             const placeholder = document.getElementById('profileAvatarPlaceholder');
             const topbarImg = document.getElementById('userAvatarImg');
             if (imgEl) {
+                imgEl.onload = () => { imgEl.style.display = 'block'; };
+                imgEl.onerror = () => { imgEl.style.display = 'none'; };
                 imgEl.src = url;
-                imgEl.style.display = 'block';
             }
             if (placeholder) placeholder.style.display = 'none';
             if (topbarImg) {
+                topbarImg.onload = () => { topbarImg.style.display = 'block'; };
+                topbarImg.onerror = () => { topbarImg.style.display = 'none'; };
                 topbarImg.src = url;
-                topbarImg.style.display = 'block';
             }
             const profileIcon = document.querySelector('.profile-icon');
             if (profileIcon) profileIcon.style.display = 'none';
@@ -6882,8 +6946,8 @@ export const app = {
             const userId = user?.id;
             if (!userId) throw new Error('Ingen bruker');
             if (window.supa.storage && window.supa.storage.from) {
-                const storage = window.supa.storage.from('user-avatars');
-                const path = `${userId}/avatar-${Date.now()}.jpg`;
+                const storage = window.supa.storage.from('profile-pictures');
+                const path = `${userId}/profile_${Date.now()}.jpg`;
                 const { error: upErr } = await storage.upload(path, blob, { contentType: 'image/jpeg', upsert: true });
                 if (upErr) throw upErr;
                 const { data: publicData } = storage.getPublicUrl(path);
@@ -6904,8 +6968,31 @@ export const app = {
 
     async removeProfileAvatar() {
         try {
-            const { error } = await window.supa.auth.updateUser({ data: { avatar_url: null } });
-            if (error) throw error;
+            try {
+                const { data: { session } } = await window.supa.auth.getSession();
+                const token = session?.access_token;
+                if (token) {
+                    await fetch(`${window.CONFIG.apiBase}/settings`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ profile_picture_url: null })
+                    });
+                }
+            } catch (_) { /* ignore */ }
+            // Client-side fallback clear
+            try {
+                const { data: { user } } = await window.supa.auth.getUser();
+                if (user?.id) {
+                    await window.supa
+                        .from('user_settings')
+                        .update({ profile_picture_url: null })
+                        .eq('user_id', user.id);
+                }
+            } catch (_) { /* ignore */ }
+            await window.supa.auth.updateUser({ data: { avatar_url: null } });
             const imgEl = document.getElementById('profileAvatarImage');
             const placeholder = document.getElementById('profileAvatarPlaceholder');
             const topbarImg = document.getElementById('userAvatarImg');

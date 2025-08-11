@@ -1711,16 +1711,90 @@ app.get('/config', async (req, res) => {
 
 // ---------- /settings ----------
 app.get('/settings', authenticateUser, async (req, res) => {
-  const { data, error } = await supabase
-    .from('user_settings')
-    .select('hourly_rate')
-    .eq('user_id', req.user_id)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('hourly_rate, profile_picture_url')
+      .eq('user_id', req.user_id)
+      .maybeSingle();
 
-  if (error && error.code !== 'PGRST116')           // ignore “no rows”
-    return res.status(500).json({ error: 'Failed to fetch settings' });
+    if (error && error.code !== 'PGRST116') {
+      // If column missing, degrade gracefully
+      const isMissingColumn = (error?.message || '').includes('profile_picture_url') || (error?.code === '42703');
+      if (!isMissingColumn) {
+        return res.status(500).json({ error: 'Failed to fetch settings' });
+      }
+    }
 
-  res.json({ hourly_rate: data?.hourly_rate ?? 0 });
+    return res.json({
+      hourly_rate: data?.hourly_rate ?? 0,
+      profile_picture_url: data?.profile_picture_url ?? null
+    });
+  } catch (e) {
+    console.error('GET /settings error:', e);
+    return res.status(200).json({ hourly_rate: 0, profile_picture_url: null });
+  }
+});
+
+app.put('/settings', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/settings', 'PUT', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    const { hourly_rate, profile_picture_url } = req.body || {};
+
+    if (hourly_rate !== undefined && hourly_rate !== null && (typeof hourly_rate !== 'number' || Number.isNaN(hourly_rate))) {
+      return res.status(400).json({ error: 'hourly_rate must be a number' });
+    }
+    if (profile_picture_url !== undefined && profile_picture_url !== null && typeof profile_picture_url !== 'string') {
+      return res.status(400).json({ error: 'profile_picture_url must be a string or null' });
+    }
+
+    const payload = { user_id: req.user_id };
+    if (hourly_rate !== undefined) payload.hourly_rate = hourly_rate;
+    if (profile_picture_url !== undefined) payload.profile_picture_url = profile_picture_url;
+
+    let data = null; let error = null;
+    try {
+      const upsert = await supabase
+        .from('user_settings')
+        .upsert(payload, { onConflict: 'user_id' })
+        .select('hourly_rate, profile_picture_url')
+        .single();
+      data = upsert.data; error = upsert.error;
+    } catch (e) {
+      error = e;
+    }
+
+    if (error) {
+      const msg = (error?.message || '').toString();
+      const isMissingColumn = msg.includes('profile_picture_url') || (error?.code === '42703');
+      if (isMissingColumn) {
+        // Retry without profile_picture_url when column missing
+        const retryPayload = { user_id: req.user_id };
+        if (hourly_rate !== undefined) retryPayload.hourly_rate = hourly_rate;
+        const retry = await supabase
+          .from('user_settings')
+          .upsert(retryPayload, { onConflict: 'user_id' })
+          .select('hourly_rate')
+          .single();
+        return res.json({ hourly_rate: retry.data?.hourly_rate ?? 0, profile_picture_url: null });
+      }
+      console.error('PUT /settings error:', error);
+      return res.status(500).json({ error: 'Failed to update settings' });
+    }
+
+    return res.json({
+      hourly_rate: data?.hourly_rate ?? 0,
+      profile_picture_url: data?.profile_picture_url ?? null
+    });
+  } catch (e) {
+    console.error('PUT /settings exception:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 // ---- DEBUG: list registered routes (recursive) ----
 app.get('/routes-debug', (req, res) => {
@@ -2213,25 +2287,25 @@ app.post('/user/avatar', authenticateUser, async (req, res) => {
       return res.status(400).json({ error: 'image_base64 required' });
     }
 
-    // Ensure bucket exists (idempotent)
+    // Ensure bucket exists (idempotent) - align with existing bucket name convention
     try {
-      await supabase.storage.createBucket('user-avatars', { public: true });
+      await supabase.storage.createBucket('profile-pictures', { public: true });
     } catch (_) {
       // ignore if exists
     }
 
     const buffer = Buffer.from(image_base64, 'base64');
     const userId = req.user_id;
-    const filePath = `${userId}/avatar-${Date.now()}.jpg`;
+    const filePath = `${userId}/profile_${Date.now()}.jpg`;
     const { error: uploadError } = await supabase.storage
-      .from('user-avatars')
+      .from('profile-pictures')
       .upload(filePath, buffer, { contentType: 'image/jpeg', upsert: true });
     if (uploadError) {
       console.error('Avatar upload error:', uploadError);
       return res.status(500).json({ error: 'Failed to upload avatar' });
     }
 
-    const { data: publicData } = supabase.storage.from('user-avatars').getPublicUrl(filePath);
+    const { data: publicData } = supabase.storage.from('profile-pictures').getPublicUrl(filePath);
     const url = publicData?.publicUrl;
     if (!url) {
       return res.status(500).json({ error: 'Failed to get public URL' });

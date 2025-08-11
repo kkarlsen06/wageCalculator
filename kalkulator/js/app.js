@@ -491,15 +491,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.chatbox.updateText();
       }
 
-      // Load avatar from user metadata
-      const avatarUrl = user.user_metadata?.avatar_url || '';
+      // Load avatar: prefer /settings.profile_picture_url, fallback to user metadata
+      let avatarUrl = '';
+      try {
+        const { data: { session } } = await supa.auth.getSession();
+        const token = session?.access_token;
+        if (token) {
+          const resp = await fetch(`${window.CONFIG.apiBase}/settings`, { headers: { Authorization: `Bearer ${token}` } });
+          if (resp.ok) {
+            const json = await resp.json();
+            avatarUrl = json?.profile_picture_url || '';
+          }
+        }
+      } catch (_) { /* ignore */ }
+      // Fallback: read directly from user_settings via Supabase if backend not used
+      if (!avatarUrl) {
+        try {
+          const { data: row } = await supa
+            .from('user_settings')
+            .select('profile_picture_url')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          avatarUrl = row?.profile_picture_url || '';
+        } catch (_) { /* ignore */ }
+      }
+      if (!avatarUrl) avatarUrl = user.user_metadata?.avatar_url || '';
       const topbarImg = document.getElementById('userAvatarImg');
       const profileIcon = document.querySelector('.profile-icon');
       if (topbarImg) {
         if (avatarUrl) {
+          // Attach robust handlers before setting src
+          topbarImg.onload = () => {
+            topbarImg.style.display = 'block';
+            if (profileIcon) profileIcon.style.display = 'none';
+          };
+          topbarImg.onerror = () => {
+            topbarImg.style.display = 'none';
+            if (profileIcon) profileIcon.style.display = '';
+            console.warn('Avatar image failed to load, showing placeholder');
+          };
           topbarImg.src = avatarUrl;
-          topbarImg.style.display = 'block';
-          if (profileIcon) profileIcon.style.display = 'none';
         } else {
           topbarImg.style.display = 'none';
           if (profileIcon) profileIcon.style.display = '';

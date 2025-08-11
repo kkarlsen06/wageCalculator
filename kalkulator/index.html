@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=9">
-  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
   <meta name="theme-color" content="#000000">
@@ -810,17 +810,22 @@
 
       <!-- Crop Modal for avatar -->
       <div id="cropModal" class="modal" style="display: none;">
-          <div class="modal-content" style="max-width: 540px; width: 92vw;">
+          <div class="modal-content" style="max-width: 420px; width: 92vw;">
               <div class="modal-header">
                   <h2 class="modal-title">Juster profilbilde</h2>
               </div>
               <div class="modal-body">
-                  <div style="width:100%; max-height: 60vh;">
-                      <img id="cropImage" class="crop-image" alt="Beskjær bilde" style="max-width:100%; display:block; margin:0 auto;" />
+                  <div style="width:100%; max-height: 48vh; display:flex; align-items:center; justify-content:center;">
+                      <div style="width: 280px; height: 280px; border-radius: 50%; overflow: hidden; background: var(--bg-secondary); display:flex; align-items:center; justify-content:center;">
+                          <img id="cropImage" class="crop-image" alt="Beskjær bilde" style="max-width:100%; display:block;" />
+                      </div>
                   </div>
-                  <div style="display:flex; align-items:center; gap:8px; margin-top: 12px;">
-                      <input id="cropZoomSlider" class="zoom-slider" type="range" min="0.2" max="3" step="0.01" value="1" style="flex:1;" />
+                  <div style="display:flex; align-items:center; gap:8px; margin-top: 8px;">
+                      <button type="button" id="zoomOutBtn" class="btn btn-secondary zoom-btn" aria-label="Zoom ut" style="min-width:40px; width:40px; height:40px; border-radius:50%;">−</button>
+                      <input id="cropZoomSlider" class="zoom-slider" type="range" min="0.5" max="3" step="0.01" value="1" style="flex:1;" />
+                      <button type="button" id="zoomInBtn" class="btn btn-secondary zoom-btn" aria-label="Zoom inn" style="min-width:40px; width:40px; height:40px; border-radius:50%;">+</button>
                   </div>
+                  <small class="form-hint" style="display:block; margin-top:6px; text-align:center;">Dra for å flytte. Klyp eller bruk zoom-knappene.</small>
               </div>
               <div class="modal-fixed-footer">
                   <div class="modal-bottom-actions" style="display:flex; gap:8px;">
@@ -1121,7 +1126,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- jsPDF library for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
+    <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
     <!-- Load configuration first -->
     <script src="js/config.js"></script>
     <!-- Feature flags system -->

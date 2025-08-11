@@ -199,6 +199,46 @@ paths:
       responses:
         '200': { description: Prometheus text format }
   /audit-log/recent:
+  /settings:
+    get:
+      summary: Get current user's settings
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hourly_rate: { type: number }
+                  profile_picture_url: { type: string, nullable: true }
+        '401': { description: Unauthorized }
+    put:
+      summary: Update current user's settings
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hourly_rate: { type: number }
+                profile_picture_url: { type: string, nullable: true }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hourly_rate: { type: number }
+                  profile_picture_url: { type: string, nullable: true }
+        '401': { description: Unauthorized }
+        '403': { description: Agent writes are not allowed }
     get:
       summary: Recent audit log entries
       parameters:
