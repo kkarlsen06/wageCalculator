@@ -1415,7 +1415,7 @@ function blockAgentWrites(req, res, next) {
 // Apply guard early to ensure it runs before route handlers
 app.use('/employees', blockAgentWrites);
 app.use('/employee-shifts', blockAgentWrites);
-
+app.use('/shifts', blockAgentWrites);
 // Helpers for employee-shifts time fields (store as UTC timestamptz)
 function hhmmToUtcIso(shift_date, hhmm) {
   // shift_date: YYYY-MM-DD, hhmm: HH:mm
