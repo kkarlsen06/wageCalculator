@@ -26,8 +26,14 @@ const CONFIG = {
                         return '';
                     }
                 };
-                if (qp && allowlist.has(normalize(qp))) return qp;
-                if (ls && allowlist.has(normalize(ls))) return ls;
+                if (qp) {
+                    const nqp = normalize(qp);
+                    if (allowlist.has(nqp)) return nqp;
+                }
+                if (ls) {
+                    const nls = normalize(ls);
+                    if (allowlist.has(nls)) return nls;
+                }
 
                 // If running from file:// or on local hostnames, use local Express server
                 const isFile = window.location.protocol === 'file:';
