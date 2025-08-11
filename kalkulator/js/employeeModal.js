@@ -1331,7 +1331,6 @@ export class EmployeeModal {
                 }
                 break;
         }
-        }
 
         if (!isValid) {
             this.validationErrors[fieldName] = errorMessage;
