@@ -3210,7 +3210,7 @@ app.delete('/shifts/:id', authenticateUser, async (req, res) => {
 // (duplicate handleTool removed)
 
 // ---------- handleTool function (legacy duplicate; renamed to avoid redeclare) ----------
-async function handleTool_legacy_removed(call, user_id) {
+async function handleTool(call, user_id) {
   const fnName = call.function.name;
   const args = JSON.parse(call.function.arguments);
   let toolResult = '';
