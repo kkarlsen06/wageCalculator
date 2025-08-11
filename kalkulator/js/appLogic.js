@@ -9052,6 +9052,9 @@ export const app = {
         // Remove all view classes
         body.classList.remove('stats-view', 'chatbox-view', 'employees-view');
 
+        // Update current view state
+        this.currentView = 'dashboard';
+
         // Clear employee selection when switching to dashboard
         this.selectedEmployeeId = null;
         // Also clear from localStorage to prevent persistence issues
@@ -9101,6 +9104,9 @@ export const app = {
             // Now safe to remove the container
             dashboardStatsContainer.remove();
         }
+
+        // Update the display with user's own data
+        this.updateDisplay();
     },
 
     // Fetch and display employee shifts for the current selection in Employees tab
@@ -9163,6 +9169,9 @@ export const app = {
         body.classList.remove('chatbox-view', 'employees-view');
         body.classList.add('stats-view');
 
+        // Update current view state
+        this.currentView = 'stats';
+
         // Clear employee selection when switching to stats
         this.selectedEmployeeId = null;
         localStorage.removeItem('selectedEmployeeId');
@@ -9173,6 +9182,9 @@ export const app = {
         // Use existing stats view functionality
         this.dashboardView = 'stats';
         this.applyDashboardView();
+        
+        // Update the display with user's own data
+        this.updateDisplay();
     },
 
     showChatGPTView() {
@@ -9181,6 +9193,9 @@ export const app = {
         // Remove other view classes and add chatbox view
         body.classList.remove('stats-view', 'employees-view');
         body.classList.add('chatbox-view');
+
+        // Update current view state
+        this.currentView = 'chatgpt';
 
         // Clear employee selection when switching to chat
         this.selectedEmployeeId = null;
@@ -9202,6 +9217,9 @@ export const app = {
         this.expandChatboxForTabView();
 
         // Dashboard cards are already hidden in switchToView() for smooth transitions
+        
+        // Update the display with user's own data
+        this.updateDisplay();
     },
 
     expandChatboxForTabView() {
