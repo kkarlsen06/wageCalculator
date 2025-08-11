@@ -4301,9 +4301,42 @@ async function handleTool(call, user_id) {
 }
 
 // ---------- export / run ----------
-// Serve static files (opt-in), avoid exposing server code
+// Serve static files (opt-in)
+// In dev (or when ENABLE_STATIC=true), expose only the needed static folders
+// rather than the entire repo root.
 if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_STATIC === 'true') {
-  app.use(express.static(path.join(__dirname, 'public'))); // set STATIC_DIR via env if needed
+  const staticRoot = process.env.STATIC_DIR
+    ? path.resolve(__dirname, process.env.STATIC_DIR)
+    : __dirname;
+
+  // Root landing page assets
+  app.use('/css', express.static(path.join(staticRoot, 'css')));
+  app.use('/js', express.static(path.join(staticRoot, 'js')));
+  app.use('/assets', express.static(path.join(staticRoot, 'assets')));
+
+  // Kalkulator app and its assets
+  app.use('/kalkulator', express.static(path.join(staticRoot, 'kalkulator')));
+
+  // Common root files
+  app.get('/favicon.ico', (req, res) =>
+    res.sendFile(path.join(staticRoot, 'assets', 'favicon.ico'))
+  );
+  app.get('/robots.txt', (req, res) =>
+    res.sendFile(path.join(staticRoot, 'robots.txt'))
+  );
+  app.get('/sitemap.xml', (req, res) =>
+    res.sendFile(path.join(staticRoot, 'sitemap.xml'))
+  );
+
+  // Root index
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(staticRoot, 'index.html'));
+  });
+
+  // Kalkulator entry (explicit in case directory index is disabled)
+  app.get('/kalkulator', (req, res) => {
+    res.sendFile(path.join(staticRoot, 'kalkulator', 'index.html'));
+  });
 }
 
 export default app;
