@@ -208,4 +208,33 @@ paths:
       responses:
         '200': { description: OK }
 
+  /user/avatar:
+    post:
+      summary: Upload user avatar
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                image_base64:
+                  type: string
+                  description: Base64-encoded JPEG image data (no data URL prefix)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        '400': { description: Bad request }
+        '403': { description: Agent writes are not allowed }
+        '500': { description: Internal server error }
+
 

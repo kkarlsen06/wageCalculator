@@ -2197,6 +2197,52 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     }
   }
 });
+
+// ---------- user avatar upload ----------
+// Stores user avatars in Supabase Storage (bucket: user-avatars) using service role
+app.post('/user/avatar', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/user/avatar', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    const { image_base64 } = req.body || {};
+    if (!image_base64 || typeof image_base64 !== 'string') {
+      return res.status(400).json({ error: 'image_base64 required' });
+    }
+
+    // Ensure bucket exists (idempotent)
+    try {
+      await supabase.storage.createBucket('user-avatars', { public: true });
+    } catch (_) {
+      // ignore if exists
+    }
+
+    const buffer = Buffer.from(image_base64, 'base64');
+    const userId = req.user_id;
+    const filePath = `${userId}/avatar-${Date.now()}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from('user-avatars')
+      .upload(filePath, buffer, { contentType: 'image/jpeg', upsert: true });
+    if (uploadError) {
+      console.error('Avatar upload error:', uploadError);
+      return res.status(500).json({ error: 'Failed to upload avatar' });
+    }
+
+    const { data: publicData } = supabase.storage.from('user-avatars').getPublicUrl(filePath);
+    const url = publicData?.publicUrl;
+    if (!url) {
+      return res.status(500).json({ error: 'Failed to get public URL' });
+    }
+
+    return res.json({ url });
+  } catch (e) {
+    console.error('POST /user/avatar error:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 // Helper: detect missing column errors for graceful fallback
 function isTariffColumnError(err) {
   try {

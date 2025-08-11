@@ -377,6 +377,9 @@ body.auth-mode {
   --border-radius-large: 20px;
 }
 
+/* Removed global animation kill-switch. Initial-load suppression is managed via
+   #app.app-ready and .animations-complete states below. */
+
 /* Typography Styles - Optimized for Inter */
 
 /* Heading Styles */
@@ -1366,7 +1369,16 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   flex-shrink: 0;
 }
 
-.user-profile-btn:hover .profile-icon {
+.topbar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-profile-btn:hover .profile-icon,
+.user-profile-btn:hover .topbar-avatar {
   stroke: rgba(99, 102, 241, 0.8);
   background: rgba(99, 102, 241, 0.1);
   border-color: rgba(99, 102, 241, 0.3);
@@ -11861,6 +11873,15 @@ body.chatbox-view .chatbox-container {
 .avatar-section {
   align-items: center;
   text-align: center;
+}
+
+.avatar-preview img {
+  display: block;
+}
+
+.avatar-upload-btn,
+.avatar-remove-btn {
+  min-width: 120px;
 }
 
 .avatar-upload-container {

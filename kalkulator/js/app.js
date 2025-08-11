@@ -1,6 +1,9 @@
 // API Base URL configuration
 const API_BASE = window.CONFIG?.apiBase || '';
 
+// Remove global animation kill-switch. Initial app load animations are handled by
+// app-ready/animations-complete logic below.
+
 function setAppHeight() {
   // Skip dynamic height calculations in chatbox-view mode to prevent viewport instability
   if (document.body.classList.contains('chatbox-view')) {
@@ -488,7 +491,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.chatbox.updateText();
       }
 
-      // Profile pictures removed
+      // Load avatar from user metadata
+      const avatarUrl = user.user_metadata?.avatar_url || '';
+      const topbarImg = document.getElementById('userAvatarImg');
+      const profileIcon = document.querySelector('.profile-icon');
+      if (topbarImg) {
+        if (avatarUrl) {
+          topbarImg.src = avatarUrl;
+          topbarImg.style.display = 'block';
+          if (profileIcon) profileIcon.style.display = 'none';
+        } else {
+          topbarImg.style.display = 'none';
+          if (profileIcon) profileIcon.style.display = '';
+        }
+      }
 
     } catch (err) {
       console.error('Error loading profile info:', err);
@@ -497,12 +513,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (nicknameElement) {
         nicknameElement.textContent = 'Bruker';
       }
-      // Show placeholder profile picture
-      updateTopBarProfilePicture(null);
+      // Show placeholder profile icon
+      const topbarImg = document.getElementById('userAvatarImg');
+      const profileIcon = document.querySelector('.profile-icon');
+      if (topbarImg) topbarImg.style.display = 'none';
+      if (profileIcon) profileIcon.style.display = '';
     }
   }
 
-  // Profile pictures removed: no top bar image swapping
+    // Profile pictures handled via avatar image element
 
   // Create and show welcome screen
   async function showWelcomeScreen() {
@@ -679,7 +698,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const app = appModule?.app;
   window.app = app;
 
-  await showWelcomeScreen();
+  // Skip welcome screen animations entirely
+  // await showWelcomeScreen();
 
   // Load and display profile information immediately after greeting
   await loadAndDisplayProfileInfo();
@@ -704,51 +724,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('App module not available or missing init()');
   }
 
-  // Display the app container and animate entries with FOUC prevention
+  // Display the app container immediately with no animations
   const appEl = document.getElementById('app');
   if (appEl) {
-    // Use requestAnimationFrame to ensure smooth transition
-    requestAnimationFrame(() => {
-      // Remove the display: none and show the app (override CSS !important)
-      appEl.style.setProperty('display', 'block', 'important');
+    // Show the app immediately
+    appEl.style.setProperty('display', 'block', 'important');
+    // Mark as ready without running entry animations
+    appEl.classList.add('app-ready', 'animations-complete');
 
-      // Start animations immediately to prevent any flash
-      animateAppEntries();
-
-      // Failsafe: ensure elements become visible even if animations are interrupted
-      setTimeout(() => {
-        try {
-          const container = document.querySelector('.app-container');
-          if (!container) return;
-
-          // Mark app as ready and animations complete as a fallback
-          appEl.classList.add('app-ready', 'animations-complete');
-
-          const reveal = (el) => {
-            if (!el) return;
-            el.classList.add('animate-ready', 'animate-complete');
-            el.style.visibility = 'visible';
-            el.style.opacity = '1';
-            el.style.transform = 'none';
-          };
-
-          reveal(container.querySelector('.tab-bar-container'));
-          reveal(container.querySelector('.content'));
-          reveal(container.querySelector('.month-navigation-container'));
-        } catch (e) {
-          console.warn('Ensure-visible fallback encountered an error:', e);
-        }
-      }, 900);
-
-      if (initFailed) {
-        // Surface a non-blocking inline notice if init failed
-        const warn = document.createElement('div');
-        warn.className = 'nonblocking-warning';
-        warn.style.cssText = 'margin:12px 16px;padding:10px;border-radius:8px;background:#332e00;color:#ffd666;font-size:14px;';
-        warn.textContent = 'Noe gikk galt under innlasting. Viser tilgjengelig data – prøv å oppdatere siden.';
-        appEl.prepend(warn);
+    // Ensure key sections are visible without any animated states
+    try {
+      const container = document.querySelector('.app-container');
+      if (container) {
+        const reveal = (el) => {
+          if (!el) return;
+          el.style.visibility = 'visible';
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+        };
+        reveal(container.querySelector('.tab-bar-container'));
+        reveal(container.querySelector('.content'));
+        reveal(container.querySelector('.month-navigation-container'));
       }
-    });
+    } catch (e) {
+      console.warn('Ensure-visible encountered an error:', e);
+    }
+
+    if (initFailed) {
+      // Surface a non-blocking inline notice if init failed
+      const warn = document.createElement('div');
+      warn.className = 'nonblocking-warning';
+      warn.style.cssText = 'margin:12px 16px;padding:10px;border-radius:8px;background:#332e00;color:#ffd666;font-size:14px;';
+      warn.textContent = 'Noe gikk galt under innlasting. Viser tilgjengelig data – prøv å oppdatere siden.';
+      appEl.prepend(warn);
+    }
   }
 
   // Etter init og visning av app

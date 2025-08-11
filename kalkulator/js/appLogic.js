@@ -3201,6 +3201,9 @@ export const app = {
             // Load profile data
             this.loadProfileData();
 
+            // Initialize avatar controls (choose/remove handlers)
+            this.initProfileAvatarControls();
+
             // Show the modal
             modal.style.display = 'flex';
             modal.classList.add('active');
@@ -6299,9 +6302,8 @@ export const app = {
         // Create content container
         const contentContainer = document.createElement('div');
         contentContainer.className = 'shift-detail-content';
-        contentContainer.style.cssText = `
-            opacity: 0;
-            animation: slideInFromBottom 0.6s var(--ease-default) 0.3s forwards;
+        // Use animated reveal by default; no global kill-switch is used
+        const baseContentStyles = `
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -6310,6 +6312,11 @@ export const app = {
             gap: 16px;
             overflow-y: auto;
         `;
+        const animatedStyles = `
+            opacity: 0;
+            animation: slideInFromBottom 0.6s var(--ease-default) 0.3s forwards;
+        `;
+        contentContainer.style.cssText = `${animatedStyles} ${baseContentStyles}`;
 
         // Calculate shift details
         const calc = this.calculateShift(shift);
@@ -6599,7 +6606,26 @@ export const app = {
             if (nameField) nameField.value = user.user_metadata?.first_name || '';
             if (emailField) emailField.value = user.email || '';
 
-            // Profile pictures removed
+            // Load avatar url from user metadata if available
+            const avatarUrl = user.user_metadata?.avatar_url || '';
+            const imgEl = document.getElementById('profileAvatarImage');
+            const placeholder = document.getElementById('profileAvatarPlaceholder');
+            const topbarImg = document.getElementById('userAvatarImg');
+            const profileIcon = document.querySelector('.profile-icon');
+            if (avatarUrl && imgEl) {
+                imgEl.src = avatarUrl;
+                imgEl.onload = () => { imgEl.style.display = 'block'; placeholder && (placeholder.style.display = 'none'); };
+                if (topbarImg) {
+                    topbarImg.src = avatarUrl;
+                    topbarImg.style.display = 'block';
+                }
+                if (profileIcon) profileIcon.style.display = 'none';
+            } else {
+                if (imgEl) imgEl.style.display = 'none';
+                if (placeholder) placeholder.style.display = '';
+                if (topbarImg) topbarImg.style.display = 'none';
+                if (profileIcon) profileIcon.style.display = '';
+            }
 
         } catch (err) {
             console.error('Error loading profile data:', err);
@@ -6662,7 +6688,238 @@ export const app = {
         }
     },
 
-    // Profile picture management removed
+    // ===== Profile picture management =====
+    initProfileAvatarControls() {
+        const chooseBtn = document.getElementById('profileAvatarChooseBtn');
+        const removeBtn = document.getElementById('profileAvatarRemoveBtn');
+        const inputEl = document.getElementById('profileAvatarInput');
+        if (chooseBtn && inputEl) {
+            chooseBtn.onclick = () => inputEl.click();
+        }
+        if (inputEl) {
+            inputEl.onchange = async (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                await this.openCropperWithFile(file);
+                // reset input so same file can be selected again later
+                inputEl.value = '';
+            };
+        }
+        if (removeBtn) {
+            removeBtn.onclick = () => this.removeProfileAvatar();
+        }
+    },
+
+    async openCropperWithFile(file) {
+        try {
+            const modal = document.getElementById('cropModal');
+            const img = document.getElementById('cropImage');
+            if (!modal || !img) return;
+
+            // Revoke previous URL
+            if (this._cropObjectUrl) {
+                URL.revokeObjectURL(this._cropObjectUrl);
+                this._cropObjectUrl = null;
+            }
+            const objectUrl = URL.createObjectURL(file);
+            this._cropObjectUrl = objectUrl;
+            img.src = objectUrl;
+
+            // Show modal
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+
+            // Init cropper
+            await new Promise(resolve => setTimeout(resolve, 10));
+            if (this.cropper) {
+                this.cropper.destroy();
+                this.cropper = null;
+            }
+            // eslint-disable-next-line no-undef
+            this.cropper = new Cropper(img, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                guides: true,
+                background: false,
+                autoCropArea: 1,
+                responsive: true,
+                checkOrientation: false,
+                movable: true,
+                zoomable: true,
+                scalable: false,
+                rotatable: false,
+                minCropBoxWidth: 64,
+                minCropBoxHeight: 64,
+                ready: () => {
+                    const slider = document.getElementById('cropZoomSlider');
+                    if (slider) {
+                        const current = this.cropper.getImageData().ratio || 1;
+                        slider.value = current;
+                        slider.oninput = () => this.cropper.zoomTo(parseFloat(slider.value));
+                    }
+                    img.classList.add('loaded');
+
+                    // Mobile pinch-to-zoom enhancements
+                    this.addMobileTouchEnhancements();
+                }
+            });
+
+            // Wire buttons
+            const confirmBtn = document.getElementById('confirmCropBtn');
+            const cancelBtn = document.getElementById('cancelCropBtn');
+            if (confirmBtn) confirmBtn.onclick = () => this.confirmAvatarCrop();
+            if (cancelBtn) cancelBtn.onclick = () => this.cancelAvatarCrop();
+        } catch (e) {
+            console.error('openCropperWithFile error', e);
+            this.showUploadError('Kunne ikke åpne beskjæring');
+        }
+    },
+
+    async confirmAvatarCrop() {
+        try {
+            if (!this.cropper) return;
+            this.showProfilePictureProgress(true);
+            this.updateProfilePictureProgress(10, 'Behandler...');
+
+            const canvas = this.cropper.getCroppedCanvas({ width: 512, height: 512, imageSmoothingQuality: 'high' });
+            if (!canvas) throw new Error('Canvas not available');
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            if (!blob) throw new Error('Kunne ikke lage bilde');
+            this.updateProfilePictureProgress(30, 'Lagrer...');
+
+            const url = await this.saveAvatarBlob(blob);
+            this.updateProfilePictureProgress(90, 'Oppdaterer profil...');
+
+            // Save URL in Supabase user metadata
+            const { error } = await window.supa.auth.updateUser({ data: { avatar_url: url } });
+            if (error) throw error;
+
+            // Update UI
+            const imgEl = document.getElementById('profileAvatarImage');
+            const placeholder = document.getElementById('profileAvatarPlaceholder');
+            const topbarImg = document.getElementById('userAvatarImg');
+            if (imgEl) {
+                imgEl.src = url;
+                imgEl.style.display = 'block';
+            }
+            if (placeholder) placeholder.style.display = 'none';
+            if (topbarImg) {
+                topbarImg.src = url;
+                topbarImg.style.display = 'block';
+            }
+            const profileIcon = document.querySelector('.profile-icon');
+            if (profileIcon) profileIcon.style.display = 'none';
+
+            this.updateProfilePictureProgress(100, 'Ferdig');
+
+            // Close cropper
+            this.cancelAvatarCrop(true);
+        } catch (e) {
+            console.error('confirmAvatarCrop error', e);
+            this.showUploadError('Kunne ikke lagre profilbilde');
+        } finally {
+            this.showProfilePictureProgress(false);
+        }
+    },
+
+    cancelAvatarCrop(keepModalHidden = false) {
+        const modal = document.getElementById('cropModal');
+        if (this.cropper) {
+            try { this.cropper.destroy(); } catch (_) {}
+            this.cropper = null;
+        }
+        if (!keepModalHidden && modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        } else if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        }
+        if (this._cropObjectUrl) {
+            URL.revokeObjectURL(this._cropObjectUrl);
+            this._cropObjectUrl = null;
+        }
+    },
+
+    async saveAvatarBlob(blob) {
+        // Preferred: upload to backend which writes to Supabase Storage. Fallback: client Supabase Storage, then data URL.
+        try {
+            // Try backend upload with auth
+            const base64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const res = reader.result;
+                    const b64 = res.split(',')[1] || '';
+                    resolve(b64);
+                };
+                reader.onerror = () => reject(new Error('Kunne ikke lese bilde'));
+                reader.readAsDataURL(blob);
+            });
+
+            const { data: { session } } = await window.supa.auth.getSession();
+            const token = session?.access_token;
+            if (token) {
+                const resp = await fetch(`${window.CONFIG.apiBase}/user/avatar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ image_base64: base64 })
+                });
+                const json = await resp.json();
+                if (resp.ok && json?.url) {
+                    return json.url;
+                }
+            }
+        } catch (e) {
+            console.warn('Backend upload failed; trying client storage.', e);
+        }
+
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            const userId = user?.id;
+            if (!userId) throw new Error('Ingen bruker');
+            if (window.supa.storage && window.supa.storage.from) {
+                const storage = window.supa.storage.from('user-avatars');
+                const path = `${userId}/avatar-${Date.now()}.jpg`;
+                const { error: upErr } = await storage.upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+                if (upErr) throw upErr;
+                const { data: publicData } = storage.getPublicUrl(path);
+                if (publicData?.publicUrl) return publicData.publicUrl;
+            }
+        } catch (e) {
+            console.warn('Supabase Storage upload failed or not available; using data URL.', e);
+        }
+
+        // Fallback to data URL so the app still works offline
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Kunne ikke lese bilde'));
+            reader.readAsDataURL(blob);
+        });
+    },
+
+    async removeProfileAvatar() {
+        try {
+            const { error } = await window.supa.auth.updateUser({ data: { avatar_url: null } });
+            if (error) throw error;
+            const imgEl = document.getElementById('profileAvatarImage');
+            const placeholder = document.getElementById('profileAvatarPlaceholder');
+            const topbarImg = document.getElementById('userAvatarImg');
+            if (imgEl) imgEl.style.display = 'none';
+            if (placeholder) placeholder.style.display = '';
+            if (topbarImg) topbarImg.style.display = 'none';
+            const profileIcon = document.querySelector('.profile-icon');
+            if (profileIcon) profileIcon.style.display = '';
+        } catch (e) {
+            console.error('removeProfileAvatar error', e);
+            this.showUploadError('Kunne ikke fjerne profilbilde');
+        }
+    },
+
 
     // Profile picture upload code removed
 
@@ -6738,7 +6995,7 @@ export const app = {
     addMobileTouchEnhancements() {
         if (!this.cropper) return;
 
-        const cropperContainer = this.cropper.getContainerElement();
+        const cropperContainer = document.querySelector('#cropModal .cropper-container');
         if (!cropperContainer) return;
 
         let lastTouchDistance = 0;
@@ -6769,14 +7026,17 @@ export const app = {
 
                 if (lastTouchDistance > 0) {
                     const ratio = currentDistance / lastTouchDistance;
-                    const currentZoom = this.cropper.getImageData().ratio;
-                    const newZoom = Math.max(0.1, Math.min(3, currentZoom * ratio));
+                    const canvasData = this.cropper.getCanvasData();
+                    const imageData = this.cropper.getImageData();
+                    const naturalWidth = imageData?.naturalWidth || 1;
+                    const currentZoom = naturalWidth ? (canvasData.width / naturalWidth) : 1;
+                    const newZoom = Math.max(0.2, Math.min(3, currentZoom * ratio));
                     this.cropper.zoomTo(newZoom);
 
                     // Update zoom slider
                     const slider = document.getElementById('cropZoomSlider');
                     if (slider) {
-                        slider.value = newZoom;
+                        slider.value = String(newZoom);
                     }
                 }
 
