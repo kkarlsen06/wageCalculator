@@ -1404,7 +1404,7 @@ function blockAgentWrites(req, res, next) {
   const isRead = method === 'GET';
   if ((isWrite || (AGENT_BLOCK_READS && isRead)) && isAiAgent(req)) {
     const reason = isWrite ? 'agent_write_blocked_middleware' : 'agent_read_blocked_middleware';
-    const routeLabel = req.baseUrl || req.originalUrl || '';
+    const routeLabel = req.baseUrl || req.path || '';
     // Audit + metrics for visibility
     recordAgentDeniedAttempt(req, reason, 403);
     incrementAgentWriteDenied(routeLabel, method, reason);
@@ -1412,7 +1412,6 @@ function blockAgentWrites(req, res, next) {
   }
   next();
 }
-
 // Apply guard early to ensure it runs before route handlers
 app.use('/employees', blockAgentWrites);
 app.use('/employee-shifts', blockAgentWrites);
