@@ -26,9 +26,8 @@ const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 app.use(morgan(logFormat));
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
 // Note: express.static is registered after API routes to avoid intercepting API paths
-
 // ---------- third-party clients ----------
 const openai   = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const supabase = createClient(
