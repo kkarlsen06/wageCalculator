@@ -1,10 +1,9 @@
 // Tests that an ai_agent cannot perform writes to /employees and /employee-shifts
 import 'dotenv/config';
 
-const API_BASE = process.env.NODE_ENV === 'production'
+const API_BASE = process.env.API_BASE || process.env.BASE_URL || (process.env.NODE_ENV === 'production'
   ? 'https://wagecalculator-gbpd.onrender.com'
-  : 'http://localhost:5173';
-
+  : 'http://localhost:5173');
 // Construct a fake JWT that decodes to a payload with { ai_agent: true }
 function buildAgentToken() {
   const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
