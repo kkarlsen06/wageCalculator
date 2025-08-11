@@ -13,9 +13,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.CONFIG.supabase.anonKey
   );
 
-  // Clear any stale tokens before checking session
-  await supa.auth.signOut();
-
   // Make supa available globally
   window.supa = supa;
 
