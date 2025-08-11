@@ -4301,8 +4301,10 @@ async function handleTool(call, user_id) {
 }
 
 // ---------- export / run ----------
-// Serve static files after API routes so they don't swallow API endpoints
-app.use(express.static(FRONTEND_DIR)); // serve index.html, css, js, etc.
+// Serve static files (opt-in), avoid exposing server code
+if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_STATIC === 'true') {
+  app.use(express.static(path.join(__dirname, 'public'))); // set STATIC_DIR via env if needed
+}
 
 export default app;
 
