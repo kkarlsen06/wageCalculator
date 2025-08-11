@@ -13,8 +13,21 @@ const CONFIG = {
                 const u = new URL(window.location.href);
                 const qp = u.searchParams.get('apiBase');
                 const ls = window.localStorage ? localStorage.getItem('apiBase') : null;
-                if (qp) return qp;
-                if (ls) return ls;
+                // Only allow known-safe origins
+                const allowlist = new Set([
+                    'https://wagecalculator-gbpd.onrender.com',
+                    'http://localhost:5173'
+                ]);
+                const normalize = (val) => {
+                    try {
+                        const url = new URL(val);
+                        return `${url.protocol}//${url.host}`;
+                    } catch {
+                        return '';
+                    }
+                };
+                if (qp && allowlist.has(normalize(qp))) return qp;
+                if (ls && allowlist.has(normalize(ls))) return ls;
 
                 // If running from file:// or on local hostnames, use local Express server
                 const isFile = window.location.protocol === 'file:';
