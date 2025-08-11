@@ -427,6 +427,20 @@ export class EmployeeModal {
                                     <div class="form-error" id="wageError" role="alert"></div>
                                 </div>
 
+                                <!-- Effective wage preview (accessible, always present) -->
+                                <div class="form-group effective-rate-group">
+                                    <label class="form-label" id="effectiveRateLabel">
+                                        <span class="label-text">Gjeldende timelønn</span>
+                                    </label>
+                                    <div id="effectiveRatePreview"
+                                         class="effective-rate-value"
+                                         role="status"
+                                         aria-live="polite"
+                                         aria-atomic="true"
+                                         aria-labelledby="effectiveRateLabel">-</div>
+                                    <p class="form-hint">Beregnes automatisk fra valgt lønnstrinn eller egendefinert timelønn</p>
+                                </div>
+
                                 <div class="wage-info-card">
                                     <div class="wage-info-icon">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1124,9 +1138,32 @@ export class EmployeeModal {
      */
     hasUnsavedChanges() {
         if (this.mode === 'create') {
-            return Object.values(this.formData).some(value =>
-                value !== '' && value !== null && value !== '#6366f1'
-            );
+            const defaults = this.getInitialFormDefaults();
+            const normalizeForCompare = (value, defaultValue) => {
+                const isNullish = value === undefined || value === null;
+                if (isNullish) value = '';
+
+                if (typeof defaultValue === 'number') {
+                    if (typeof value === 'number') return value;
+                    if (typeof value === 'string') {
+                        const trimmed = value.trim();
+                        if (trimmed === '') return defaultValue;
+                        const parsed = Number(trimmed);
+                        return Number.isNaN(parsed) ? defaultValue : parsed;
+                    }
+                    return defaultValue;
+                }
+
+                // Non-number defaults: compare as strings
+                return String(value);
+            };
+
+            // Compare each known defaulted field strictly after normalization
+            return Object.keys(defaults).some(key => {
+                const current = normalizeForCompare(this.formData[key], defaults[key]);
+                const initial = normalizeForCompare(defaults[key], defaults[key]);
+                return current !== initial;
+            });
         }
 
         if (!this.originalData) return false;
@@ -1583,10 +1620,24 @@ export class EmployeeModal {
             );
             
             // Update client-side objects first so UI reflects immediately
+            const presetRates = this.app?.PRESET_WAGE_RATES || {};
+            const changedShifts = [];
             for (const shift of employeeShifts) {
-                // Ensure snapshot exists and set new wage
-                shift.hourly_wage_snapshot = Number(employee.hourly_wage || 0);
-                
+                // Determine effective hourly rate: tariff-based or custom wage
+                const level = employee.tariff_level != null ? parseInt(employee.tariff_level, 10) : null;
+                const tariffRate = level ? (presetRates[level] ?? null) : null;
+                const effectiveRate = tariffRate ?? (employee.hourly_wage ?? null);
+
+                const previousSnapshot = shift.hourly_wage_snapshot;
+                // Only set/overwrite snapshot when we have a real rate (avoid forcing 0)
+                if (effectiveRate != null) {
+                    const newSnapshot = Number(effectiveRate);
+                    if (previousSnapshot !== newSnapshot) {
+                        shift.hourly_wage_snapshot = newSnapshot;
+                        changedShifts.push(shift);
+                    }
+                }
+
                 // Recalculate totals using snapshot-aware calc
                 if (this.app.calculateShift) {
                     const recalculated = this.app.calculateShift(shift);
@@ -1598,26 +1649,31 @@ export class EmployeeModal {
             
             // Persist to server for authoritative employee_shifts
             try {
-                const { data: { session } } = await window.supa.auth.getSession();
-                if (session) {
-                    const headers = { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' };
-                    // Only update shifts in the same month window being viewed
-                    const currentMonth = this.app.currentMonth;
-                    const currentYear = this.app.currentYear;
-                    for (const shift of employeeShifts) {
-                        // Only update if this shift carries a snapshot field (employees context)
-                        if (typeof shift.hourly_wage_snapshot === 'number' || shift.employee_id) {
-                            await fetch(`${window.CONFIG.apiBase}/employee-shifts/${shift.id}`, {
-                                method: 'PUT',
-                                headers,
-                                body: JSON.stringify({
-                                    // Sending no times triggers server to recompute snapshots from employee
-                                    notes: shift.notes ?? undefined
-                                })
-                            }).catch(()=>{});
+                    const { data: { session } } = await window.supa.auth.getSession();
+                    if (session) {
+                        const headers = { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' };
+                        // Limit updates to shifts visible in the current month/year to avoid touching historical data
+                        const { currentMonth, currentYear } = this.app || {};
+                        const changedIds = new Set((changedShifts || []).map(s => s.id));
+                        for (const shift of employeeShifts) {
+                            // Determine if shift is in the current view window
+                            const shiftDateObj = (shift.date instanceof Date) ? shift.date : (shift.shift_date ? new Date(shift.shift_date) : null);
+                            const inCurrentView = !!(shiftDateObj && !Number.isNaN(shiftDateObj.getTime()) &&
+                                shiftDateObj.getMonth() === (currentMonth - 1) && shiftDateObj.getFullYear() === currentYear);
+
+                            // Only update server for in-view shifts that actually changed snapshot
+                            if (inCurrentView && changedIds.has(shift.id)) {
+                                await fetch(`${window.CONFIG.apiBase}/employee-shifts/${shift.id}`, {
+                                    method: 'PUT',
+                                    headers,
+                                    body: JSON.stringify({
+                                        // Sending no times triggers server to recompute snapshots from employee
+                                        notes: shift.notes ?? undefined
+                                    })
+                                }).catch(()=>{});
+                            }
                         }
                     }
-                }
             } catch (e) {
                 console.warn('Retroactive server update failed or skipped:', e);
             }

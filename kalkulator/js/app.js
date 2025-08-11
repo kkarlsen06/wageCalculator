@@ -454,17 +454,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   let retryCount = 0;
   const maxRetries = 3; // Reduced from 5 to 3
 
-  // Immediate redirect check - if we can quickly determine no session exists
+  // Quick session check (non-blocking) - prefer retry loop to avoid false negatives
   try {
     const { data: { session: quickSession } } = await supa.auth.getSession();
-    if (!quickSession) {
-      console.log('Quick session check: No session found, redirecting to login immediately');
-      window.location.href = 'login.html';
-      return;
+    if (quickSession) {
+      session = quickSession;
+      console.log('Quick session check: Session found');
+    } else {
+      console.log('Quick session check: No session yet; will retry before redirecting');
     }
   } catch (quickCheckError) {
     console.log('Quick session check failed, proceeding with retry logic:', quickCheckError);
-    // Continue with the retry logic below
   }
 
   // Load and display profile information immediately after greeting

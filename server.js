@@ -64,8 +64,139 @@ function pickActorId(req) {
   }
 }
 
+// Keys that may contain secrets/PII and must be redacted (case-insensitive)
+const SENSITIVE_AUDIT_KEYS = [
+  'password',
+  'pass',
+  'passwd',
+  'token',
+  'secret',
+  'api_key',
+  'apikey',
+  'authorization',
+  'auth',
+  'access_token'
+];
+
+// Max characters when serializing audit payload; can be overridden via env
+const AUDIT_PAYLOAD_MAX_CHARS = Math.max(
+  200,
+  parseInt(process.env.AUDIT_PAYLOAD_MAX_CHARS || '2000', 10) || 2000
+);
+
+// Deeply redact sensitive keys in nested objects/arrays. Returns a safe copy.
+function deepRedact(input, keysToRedact = SENSITIVE_AUDIT_KEYS) {
+  try {
+    const sensitive = new Set(keysToRedact.map(k => String(k).toLowerCase()));
+    const seen = new WeakSet();
+
+    function redact(value) {
+      if (value === null || value === undefined) return value ?? null;
+
+      const valueType = typeof value;
+      if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') return value;
+      if (valueType === 'bigint') return value.toString();
+      if (valueType === 'function') return '[Function]';
+      if (value instanceof Date) return value.toISOString();
+      if (typeof Buffer !== 'undefined' && Buffer.isBuffer?.(value)) return `[Buffer length=${value.length}]`;
+
+      if (Array.isArray(value)) {
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+        return value.map(item => redact(item));
+      }
+
+      if (valueType === 'object') {
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+        const result = {};
+        for (const [key, val] of Object.entries(value)) {
+          const lowered = String(key).toLowerCase();
+          if (sensitive.has(lowered)) {
+            result[key] = '[REDACTED]';
+          } else {
+            result[key] = redact(val);
+          }
+        }
+        return result;
+      }
+
+      try {
+        return JSON.parse(JSON.stringify(value));
+      } catch (_) {
+        return String(value);
+      }
+    }
+
+    return redact(input);
+  } catch (_) {
+    // On failure, avoid throwing from audit path
+    return null;
+  }
+}
+
+// Ensure the serialized payload is capped to maxChars. If too large or not
+// serializable as JSON, return an object with a truncated string preview.
+function capJsonForAudit(value, maxChars = AUDIT_PAYLOAD_MAX_CHARS) {
+  try {
+    const json = JSON.stringify(value);
+    if (json.length <= maxChars) return value;
+    return { truncated: true, preview: json.slice(0, maxChars) };
+  } catch (_) {
+    try {
+      const str = String(value);
+      if (str.length <= maxChars) return str;
+      return { truncated: true, preview: str.slice(0, maxChars) };
+    } catch {
+      return null;
+    }
+  }
+}
+
 async function recordAgentDeniedAttempt(req, reason, status) {
   try {
+    // Build a sanitized payload snapshot
+    const sanitizedHeaders = deepRedact(req?.headers || {}, SENSITIVE_AUDIT_KEYS) || {};
+
+    let sanitizedBody = null;
+    try {
+      if (req && Object.prototype.hasOwnProperty.call(req, 'body')) {
+        if (req.body && typeof req.body === 'object') {
+          sanitizedBody = deepRedact(req.body, SENSITIVE_AUDIT_KEYS);
+        } else if (typeof req.body === 'string') {
+          // Non-JSON body; store as a safe string indicator (no raw content)
+          sanitizedBody = `[non-json body len=${req.body.length}]`;
+        } else if (req.body != null) {
+          sanitizedBody = String(req.body);
+        }
+      }
+    } catch (_) {
+      sanitizedBody = null;
+    }
+
+    let sanitizedQuery = null;
+    try {
+      sanitizedQuery = deepRedact(req?.query || {}, SENSITIVE_AUDIT_KEYS);
+    } catch (_) {
+      sanitizedQuery = null;
+    }
+
+    let sanitizedParams = null;
+    try {
+      sanitizedParams = deepRedact(req?.params || {}, SENSITIVE_AUDIT_KEYS);
+    } catch (_) {
+      sanitizedParams = null;
+    }
+
+    const rawAuditPayload = {
+      body: sanitizedBody ?? null,
+      headers: sanitizedHeaders,
+      query: sanitizedQuery ?? null,
+      params: sanitizedParams ?? null
+    };
+
+    const sanitizedPayload = capJsonForAudit(rawAuditPayload, AUDIT_PAYLOAD_MAX_CHARS);
+
     const payload = {
       id: randomUUID(),
       actor_id: pickActorId(req),
@@ -73,7 +204,7 @@ async function recordAgentDeniedAttempt(req, reason, status) {
       method: (req.method || '').toUpperCase(),
       status: status || 403,
       reason: reason || 'agent_write_blocked_middleware',
-      payload: req.body || null,
+      payload: sanitizedPayload ?? null,
       at: new Date().toISOString()
     };
 
@@ -125,7 +256,8 @@ app.get('/metrics', (req, res) => {
 });
 
 // Expose recent audit log events (DB if available, else memory)
-app.get('/audit-log/recent', async (req, res) => {
+// Requires admin authentication; payloads are redacted
+app.get('/audit-log/recent', authenticateUser, requireAdmin, async (req, res) => {
   const limitRaw = parseInt(req.query.limit) || 50;
   const limit = Math.min(1000, Math.max(1, limitRaw));
   try {
@@ -135,7 +267,8 @@ app.get('/audit-log/recent', async (req, res) => {
       .order('at', { ascending: false })
       .limit(limit);
     if (!error && data) {
-      return res.json({ rows: data });
+      const redacted = data.map(redactAuditRow);
+      return res.json({ rows: redacted });
     }
   } catch (_) {
     // ignore and fall back to memory
@@ -143,7 +276,8 @@ app.get('/audit-log/recent', async (req, res) => {
 
   // memory fallback
   const rows = AUDIT_LOG_MEM.slice(-limit).reverse();
-  return res.json({ rows });
+  const redactedMem = rows.map(redactAuditRow);
+  return res.json({ rows: redactedMem });
 });
 
 // In-memory fallback for org settings when DB schemas are missing
@@ -162,7 +296,34 @@ async function authenticateUser(req, res, next) {
 
   req.user_id = user.id;
   req.is_ai_agent = Boolean(user?.app_metadata?.ai_agent || user?.user_metadata?.ai_agent);
+  req.user = user;
+  req.user_role = user?.app_metadata?.role || user?.user_metadata?.role || null;
   next();
+}
+
+function requireAdmin(req, res, next) {
+  try {
+    const role = req.user_role || req.user?.app_metadata?.role || req.user?.user_metadata?.role || null;
+    if (role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: admin access required' });
+    }
+    return next();
+  } catch (_) {
+    return res.status(403).json({ error: 'Forbidden: admin access required' });
+  }
+}
+
+function redactAuditRow(row) {
+  try {
+    const safe = { ...row };
+    if (Object.prototype.hasOwnProperty.call(safe, 'payload')) {
+      // Remove raw payload to avoid leaking PII/secrets
+      safe.payload = null;
+    }
+    return safe;
+  } catch (_) {
+    return row;
+  }
 }
 
 // ---------- GPT tool schema ----------
@@ -1392,8 +1553,13 @@ function getJwtPayloadFromAuthHeader(req) {
 }
 
 function isAiAgent(req) {
+  // Prefer server-verified flag from authenticateUser
+  if (typeof req?.is_ai_agent !== 'undefined') {
+    return Boolean(req.is_ai_agent);
+  }
+  // Fallback: best-effort read from unsigned JWT payload (non-authoritative)
   const payload = getJwtPayloadFromAuthHeader(req);
-  const claim = payload?.ai_agent;
+  const claim = payload?.ai_agent || payload?.app_metadata?.ai_agent || payload?.user_metadata?.ai_agent;
   return claim === true || claim === 'true';
 }
 
@@ -2935,134 +3101,6 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
    }
  });
 
-/**
- * PUT /employee-shifts/:id
- * Body: { employee_id?, shift_date?, start_time?, end_time?, break_minutes?, notes? }
- */
-app.put('/employee-shifts/:id', authenticateUser, async (req, res) => {
-  try {
-    if (isAiAgent(req)) {
-      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
-      incrementAgentWriteDenied('/employee-shifts', 'PUT', 'agent_write_blocked_middleware');
-      return res.status(403).json({ error: 'Agent writes are not allowed' });
-    }
-
-    const managerId = req.user_id;
-    const id = req.params.id;
-    const { employee_id, shift_date, start_time, end_time, break_minutes, notes } = req.body || {};
-
-    // Fetch existing row and assert ownership
-    const { data: existing, error: fetchErr } = await supabase
-      .from('employee_shifts')
-      .select('*')
-      .eq('id', id)
-      .eq('manager_id', managerId)
-      .single();
-    if (fetchErr || !existing) return res.status(404).json({ error: 'Shift not found' });
-
-    // Validate formats if provided
-    if (shift_date && !/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
-      return res.status(400).json({ error: 'Invalid shift_date format. Use YYYY-MM-DD' });
-    }
-    if ((start_time && !/^\d{2}:\d{2}$/.test(start_time)) || (end_time && !/^\d{2}:\d{2}$/.test(end_time))) {
-      return res.status(400).json({ error: 'Invalid time format. Use HH:mm' });
-    }
-    if (break_minutes !== undefined) {
-      const bm = parseInt(break_minutes);
-      if (Number.isNaN(bm) || bm < 0) return res.status(400).json({ error: 'break_minutes must be a non-negative integer' });
-    }
-
-    // Determine final employee and recompute snapshot
-    const finalEmployeeId = employee_id !== undefined ? employee_id : existing.employee_id;
-    const snap = await computeEmployeeSnapshot(managerId, finalEmployeeId);
-    if (!snap.ok) return res.status(snap.statusCode || 400).json({ error: snap.error });
-
-    // Determine final date/times
-    const finalDate = shift_date || existing.shift_date;
-    const existingStartHHmm = formatTimeHHmm(existing.start_time);
-    const existingEndHHmm = formatTimeHHmm(existing.end_time);
-    const finalStartHHmm = start_time || existingStartHHmm;
-    const finalEndHHmm = end_time || existingEndHHmm;
-
-    const updateData = {
-      employee_id: finalEmployeeId,
-      employee_name_snapshot: snap.snapshot.employee_name_snapshot,
-      tariff_level_snapshot: snap.snapshot.tariff_level_snapshot,
-      hourly_wage_snapshot: snap.snapshot.hourly_wage_snapshot
-    };
-    if (shift_date) updateData.shift_date = finalDate;
-    if (shift_date || start_time) updateData.start_time = hhmmToUtcIso(finalDate, finalStartHHmm);
-    if (shift_date || end_time) updateData.end_time = hhmmToUtcIso(finalDate, finalEndHHmm);
-    if (break_minutes !== undefined) updateData.break_minutes = parseInt(break_minutes);
-    if (notes !== undefined) updateData.notes = notes ?? null;
-
-    const { data: updated, error: updErr } = await supabase
-      .from('employee_shifts')
-      .update(updateData)
-      .eq('id', id)
-      .eq('manager_id', managerId)
-      .select('id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at')
-      .single();
-
-    if (updErr) {
-      console.error('PUT /employee-shifts update error:', updErr);
-      return res.status(500).json({ error: 'Failed to update employee shift' });
-    }
-
-    const resp = {
-      ...updated,
-      hourly_wage_snapshot: Number(updated.hourly_wage_snapshot),
-      start_time: formatTimeHHmm(updated.start_time),
-      end_time: formatTimeHHmm(updated.end_time)
-    };
-    return res.json({ shift: resp });
-  } catch (e) {
-    console.error('PUT /employee-shifts exception:', e);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * DELETE /employee-shifts/:id
- */
-app.delete('/employee-shifts/:id', authenticateUser, async (req, res) => {
-  try {
-    if (isAiAgent(req)) {
-      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
-      incrementAgentWriteDenied('/employee-shifts', 'DELETE', 'agent_write_blocked_middleware');
-      return res.status(403).json({ error: 'Agent writes are not allowed' });
-    }
-
-    const managerId = req.user_id;
-    const id = req.params.id;
-
-    // Ensure row belongs to manager
-    const { data: existing, error: fetchErr } = await supabase
-      .from('employee_shifts')
-      .select('id')
-      .eq('id', id)
-      .eq('manager_id', managerId)
-      .single();
-    if (fetchErr || !existing) return res.status(404).json({ error: 'Shift not found' });
-
-    const { error } = await supabase
-      .from('employee_shifts')
-      .delete()
-      .eq('id', id)
-      .eq('manager_id', managerId);
-
-    if (error) {
-      console.error('DELETE /employee-shifts error:', error);
-      return res.status(500).json({ error: 'Failed to delete employee shift' });
-    }
-
-    return res.status(204).send();
-  } catch (e) {
-    console.error('DELETE /employee-shifts exception:', e);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 // ---------- wage reports endpoints ----------
 
 /**
@@ -3167,47 +3205,6 @@ app.get('/reports/wages', authenticateUser, async (req, res) => {
     }
   }
 });
-
-/**
- * DELETE /shifts/:id - Delete a shift
- */
-app.delete('/shifts/:id', authenticateUser, async (req, res) => {
-  try {
-    const managerId = req.user_id;
-    const shiftId = req.params.id;
-
-    // Verify the shift belongs to the current manager
-    const { data: existingShift, error: fetchError } = await supabase
-      .from('user_shifts')
-      .select('id, shift_date, start_time, end_time')
-      .eq('id', shiftId)
-      .eq('user_id', managerId)
-      .single();
-
-    if (fetchError || !existingShift) {
-      return res.status(404).json({ error: 'Shift not found' });
-    }
-
-    // Delete the shift
-    const { error: deleteError } = await supabase
-      .from('user_shifts')
-      .delete()
-      .eq('id', shiftId)
-      .eq('user_id', managerId);
-
-    if (deleteError) {
-      console.error('Error deleting shift:', deleteError);
-      return res.status(500).json({ error: 'Failed to delete shift' });
-    }
-
-    return res.status(204).send();
-  } catch (error) {
-    console.error('DELETE /shifts/:id error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// (duplicate handleTool removed)
 
 // ---------- handleTool function (legacy duplicate; renamed to avoid redeclare) ----------
 async function handleTool(call, user_id) {
