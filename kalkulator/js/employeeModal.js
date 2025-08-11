@@ -1330,7 +1330,7 @@ export class EmployeeModal {
                     }
                 }
                 break;
-                break;
+        }
         }
 
         if (!isValid) {
