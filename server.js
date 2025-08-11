@@ -3138,8 +3138,10 @@ app.get('/reports/wages', authenticateUser, async (req, res) => {
       }, orgSettings);
 
       // Format CSV row
+      const rawName = (shift.employee_name_snapshot || '').replace(/"/g, '""');
+      const safeName = /^[=+\-@]/.test(rawName) ? "'" + rawName : rawName;
       const csvRow = [
-        `"${(shift.employee_name_snapshot || '').replace(/"/g, '""')}"`, // Escape quotes in name
+        `"${safeName}"`,
         shift.shift_date,
         startHHmm,
         endHHmm,
