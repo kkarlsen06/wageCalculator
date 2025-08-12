@@ -1953,7 +1953,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 /* EXTRA SMALL MOBILE DEVICES - Even more aggressive height reduction */
 /* For very small phones like iPhone SE, older Android phones */
 @media (max-width: 360px) {
-  /* ULTRA-COMPACT STAT CARD STYLING */
+  /* STAT CARD STYLING */
   .total-card {
     padding: 12px 14px; /* Even more reduced padding */
     border-radius: 18px; /* Smaller radius */
@@ -1992,25 +1992,25 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     font-size: 14px !important; /* Match parent size for mobile */
   }
 
-  /* Ultra-compact dashboard spacing */
+  /* Dashboard spacing */
   .dashboard-content {
-    padding-top: 8px; /* Restored ultra-compact padding since tab-bar is now standalone */
+    padding-top: 8px;
     padding-bottom: 8px;
     gap: 10px; /* Minimal gap */
   }
 
-  /* Ultra-compact statistics spacing */
+  /* Statistics spacing */
   .statistics-content {
     padding-top: 8px;
     padding-bottom: 8px;
     gap: 10px;
   }
 
-  /* ULTRA-COMPACT NEXT SHIFT CARD */
+  /* NEXT SHIFT CARD */
   .next-shift-card .shift-item {
-    padding: 10px 12px; /* Minimal padding */
+    padding: 10px 12px;
     border-radius: 18px;
-    min-height: 60px; /* Very compact height */
+    min-height: 60px;
   }
 
   /* Maintain readable next shift text on very small screens */
@@ -2032,48 +2032,48 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     margin-top: 2px;
   }
 
-  /* ULTRA-COMPACT WEEKLY HOURS CHART */
+  /* WEEKLY HOURS CHART */
   .weekly-hours-chart-card {
-    padding: 8px; /* Minimal padding */
+    padding: 8px;
     border-radius: 16px;
-    min-height: 160px; /* Very compact height */
+    min-height: 160px;
   }
 
   .chart-cards-container {
-    gap: 4px; /* Minimal gap */
+    gap: 4px;
   }
 
   .chart-visualization-card {
-    padding: 6px; /* Minimal padding */
+    padding: 6px;
     border-radius: 8px;
   }
 
   .chart-hours-section {
-    width: 75px; /* Very compact width */
+    width: 75px;
     gap: 3px;
   }
 
   .chart-hours-value-card,
   .chart-shifts-count-card {
-    padding: 6px; /* Minimal padding */
+    padding: 6px;
     border-radius: 8px;
   }
 
-  /* Ultra-compact chart text */
+  /* Chart text */
   .hours-value-number,
   .shifts-count-number {
-    font-size: 16px; /* Very small numbers */
+    font-size: 16px;
   }
 
   .hours-value-label,
   .shifts-count-label {
-    font-size: 10px; /* Very small labels */
+    font-size: 10px;
     margin-top: 0;
   }
 
-  /* Ultra-compact chart bars */
+  /* Chart bars */
   .chart-bars {
-    height: 85px; /* Very compact height */
+    height: 85px;
     gap: 1px; /* Minimal gap */
     padding: 6px 3px 3px 3px; /* Minimal padding */
   }
@@ -2138,7 +2138,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   .next-shift-card .shift-item {
     padding: 8px 10px;
     border-radius: 16px;
-    min-height: 50px; /* Very compact for landscape */
+    min-height: 50px;
   }
 
   .next-shift-card .shift-date {
@@ -2163,7 +2163,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   .weekly-hours-chart-card {
     padding: 6px;
     border-radius: 14px;
-    min-height: 140px; /* Very compact for landscape */
+    min-height: 140px;
   }
 
   .chart-cards-container {
@@ -2176,7 +2176,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   }
 
   .chart-hours-section {
-    width: 65px; /* Very compact for landscape */
+    width: 65px;
     gap: 2px;
   }
 
@@ -2188,7 +2188,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 
   .hours-value-number,
   .shifts-count-number {
-    font-size: 14px; /* Very compact for landscape */
+    font-size: 14px;
   }
 
   .hours-value-label,
@@ -2197,7 +2197,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   }
 
   .chart-bars {
-    height: 70px; /* Very compact for landscape */
+    height: 70px;
     gap: 1px;
     padding: 4px 2px 2px 2px;
   }
@@ -3587,7 +3587,7 @@ input:checked + .slider:before {
   margin-top: 2px; /* Slight visual alignment adjustment */
 }
 
-/* Form hint for compact info */
+/* Form hint */
 .form-hint {
   display: block;
   font-size: var(--text-xs);
@@ -3608,7 +3608,7 @@ input:checked + .slider:before {
   margin-bottom: 24px;
 }
 
-/* Compact buttons in settings */
+/* Settings buttons */
 .tab-content .btn {
   padding: 8px 16px;
   font-size: var(--text-sm);
@@ -7246,10 +7246,7 @@ body.chatbox-view .dashboard-content {
   opacity: 0;
 }
 
-/* Hide backdrop in compact/calendar view */
-body.compact-view .shift-section .floating-action-bar-backdrop {
-  opacity: 0;
-}
+
 
 /* Ensure all child elements can size properly */
 .floating-action-bar * {
@@ -7753,7 +7750,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 
 /* Ultra small screens - only for very old/small phones */
 @media (max-width: 320px) {
-  /* Compact space optimization */
+  /* Space optimization */
   .next-shift-card .shift-item {
     padding: 10px 12px;
     min-height: 65px;
@@ -7785,7 +7782,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     font-weight: var(--font-weight-semibold); /* 600 - Maintain visual hierarchy */
   }
 
-  /* Compact time display */
+  /* Time display */
   .next-shift-card .shift-time-with-hours {
     gap: 1px;
     font-size: 12px;
@@ -7804,7 +7801,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     font-size: 10px;
   }
 
-  /* Ultra compact payroll card optimization */
+  /* Payroll card optimization */
   .next-payroll-card .payroll-item {
     padding: 10px 12px;
     min-height: 65px;
@@ -7884,27 +7881,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
     font-size: 20px;
   }
 
-  .compact-view .total-amount {
-    font-size: 2rem; /* 32px on mobile compact view */
-    font-weight: var(--font-weight-extrabold); /* Maintain prominence in compact view */
-    letter-spacing: -0.02em; /* Consistent letter spacing */
-  }
 
-  .compact-view .total-label {
-    font-weight: var(--font-weight-semibold); /* Consistent hierarchy */
-    letter-spacing: 0.025em;
-    text-transform: uppercase;
-  }
-
-  .compact-view .total-secondary-info {
-    font-weight: var(--font-weight-medium); /* Consistent hierarchy */
-    font-size: 14px; /* Increased from default for mobile compact view */
-    letter-spacing: -0.005em;
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Center the entire content */
-    gap: 6px; /* Space between amount and descriptive text */
-  }
 }
 
 /* Large mobile devices and tablets - ensure month navigation remains visible */
@@ -7978,91 +7955,11 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 
 
 
-/* Compact view styles - applied when body has .compact-view class */
-.compact-view .shift-item {
-  padding: 12px;
-  min-height: 60px;
-}
-
-.compact-view .shift-date {
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.compact-view .shift-details {
-  font-size: 12px;
-}
-
-.compact-view .shift-breakdown {
-  font-size: 11px;
-}
-
-.compact-view .total-card {
-  padding: 16px;
-}
-
-.compact-view .total-amount {
-  font-size: 2.5rem; /* 40px - proportionally larger than previous 28px */
-  font-weight: var(--font-weight-extrabold); /* Maintain prominence in compact view */
-  letter-spacing: -0.02em; /* Consistent letter spacing */
-}
-
-.compact-view .total-label {
-  font-size: 11px;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.025em;
-  text-transform: uppercase;
-}
-
-.compact-view .total-secondary-info {
-  font-size: 16px; /* Increased from 11px to be more prominent in compact view */
-  font-weight: var(--font-weight-medium);
-  letter-spacing: -0.005em;
-  display: flex;
-  align-items: center;
-  justify-content: center; /* Center the entire content */
-  gap: 6px; /* Space between amount and descriptive text */
-}
 
 
 
 
 
-
-
-.compact-view .gap-20 {
-  gap: 15px;
-}
-
-.compact-view .dashboard-content {
-  gap: 15px;
-  padding-top: 15px; /* Restored compact view padding since tab-bar is now standalone */
-  padding-bottom: 15px;
-}
-
-/* Remove extra padding for compact view dashboard month navigation */
-.compact-view .dashboard-content .month-navigation-container {
-  padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
-  padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
-  min-height: auto; /* Remove fixed height - let content determine height */
-}
-
-/* Compact view month navigation sizing */
-.compact-view .month-nav-btn {
-  width: 42px; /* Slightly smaller in compact view */
-  height: 42px;
-}
-
-.compact-view .month-nav-btn .icon-sm {
-  width: 17px; /* Proportionally smaller icons */
-  height: 17px;
-}
-
-.compact-view .month-display {
-  font-size: var(--text-lg); /* Reduced by one size from text-xl */
-  min-width: 100px; /* Reduce width in compact view */
-  font-weight: var(--font-weight-medium); /* Reduce weight for compact hierarchy */
-}
 
 /* Export period options styles - 2x2 grid layout */
 .export-period-options {
@@ -8410,7 +8307,7 @@ input[type="file"].form-control:focus {
   margin-top: 16px; /* Section spacing when visible */
 }
 
-/* Monthly goal input group - compact related elements */
+/* Monthly goal input group */
 #monthlyGoalInput {
   margin-bottom: 0; /* No extra spacing - part of switch group */
 }
@@ -8440,7 +8337,7 @@ input[type="file"].form-control:focus {
 
 @media (max-width: 480px) {
   #settingsModal .tab-content {
-    padding: 16px 12px 12px 12px; /* Compact padding on small screens */
+    padding: 16px 12px 12px 12px;
   }
 
   .switch-group {
@@ -10407,7 +10304,7 @@ input[type="file"].form-control:focus {
 /* Extra small mobile devices */
 @media (max-width: 480px) {
   .header {
-    /* Even more compact header for very small screens */
+    /* Header for very small screens */
     padding: 10px 16px; /* Further reduced padding */
     min-height: 50px; /* Even smaller minimum height */
     padding-top: max(10px, calc(10px + env(safe-area-inset-top)));
@@ -10419,7 +10316,7 @@ input[type="file"].form-control:focus {
   }
 
   .tab-bar {
-    min-height: 40px; /* Very compact height for very small screens */
+    min-height: 40px;
     padding: 2px; /* Minimal padding to show very small pill curves */
     border-radius: 16px; /* Proportional pill radius for very small screens */
   }

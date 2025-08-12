@@ -1932,7 +1932,7 @@ export const app = {
             this.monthlyGoal = settings.monthly_goal || 20000;
                             this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
                 this.currencyFormat = settings.currency_format || false;
-                this.compactView = settings.compact_view || false;
+
                 this.defaultShiftsView = settings.default_shifts_view || 'list';
                 this.taxDeductionEnabled = settings.tax_deduction_enabled === true;
                 this.taxPercentage = parseFloat(settings.tax_percentage) || 0.0;
@@ -1985,7 +1985,7 @@ export const app = {
         this.monthlyGoal = 20000; // Default monthly goal
         this.hasSeenRecurringIntro = false; // Track if user has seen recurring feature intro
         this.currencyFormat = false; // Default to "kr" instead of "NOK"
-        this.compactView = false; // Default to normal view
+
         this.defaultShiftsView = 'list'; // Default to list view for shifts
     },
 
@@ -2092,10 +2092,7 @@ export const app = {
             currencyFormatToggle.checked = this.currencyFormat;
         }
 
-        const compactViewToggle = document.getElementById('compactViewToggle');
-        if (compactViewToggle) {
-            compactViewToggle.checked = this.compactView;
-        }
+
 
         const defaultShiftsViewToggle = document.getElementById('defaultShiftsViewToggle');
         if (defaultShiftsViewToggle) {
@@ -2108,12 +2105,7 @@ export const app = {
             isWageCaregiverToggle.checked = this.isWageCaregiver;
         }
 
-        // Apply compact view CSS class to body if setting is enabled
-        if (this.compactView) {
-            document.body.classList.add('compact-view');
-        } else {
-            document.body.classList.remove('compact-view');
-        }
+
 
         // Update tab bar visibility based on wage caregiver setting
         this.updateTabBarVisibility();
@@ -2186,7 +2178,7 @@ export const app = {
                 if ('monthly_goal' in existingSettings) settingsData.monthly_goal = this.monthlyGoal;
                 if ('has_seen_recurring_intro' in existingSettings) settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 if ('currency_format' in existingSettings) settingsData.currency_format = this.currencyFormat;
-                if ('compact_view' in existingSettings) settingsData.compact_view = this.compactView;
+
                 if ('default_shifts_view' in existingSettings) settingsData.default_shifts_view = this.defaultShiftsView;
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
@@ -2237,7 +2229,7 @@ export const app = {
                 settingsData.monthly_goal = this.monthlyGoal;
                 settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 settingsData.currency_format = this.currencyFormat;
-                settingsData.compact_view = this.compactView;
+
                 settingsData.default_shifts_view = this.defaultShiftsView;
                 settingsData.custom_bonuses = this.customBonuses || {};
                 settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
@@ -2294,7 +2286,7 @@ export const app = {
                 this.monthlyGoal = data.monthlyGoal || 20000;
                 this.hasSeenRecurringIntro = data.hasSeenRecurringIntro || false;
                 this.currencyFormat = data.currencyFormat || false;
-                this.compactView = data.compactView || false;
+
                 this.defaultShiftsView = data.defaultShiftsView || 'list';
                 this.taxDeductionEnabled = data.taxDeductionEnabled || false;
                 this.taxPercentage = data.taxPercentage || 0.0;
@@ -3359,7 +3351,7 @@ export const app = {
                 directTimeInput: this.directTimeInput,
                 hasSeenRecurringIntro: this.hasSeenRecurringIntro,
                 currencyFormat: this.currencyFormat,
-                compactView: this.compactView,
+
                 defaultShiftsView: this.defaultShiftsView,
                 taxDeductionEnabled: this.taxDeductionEnabled,
                 taxPercentage: this.taxPercentage,
@@ -9852,7 +9844,7 @@ Hva kan jeg hjelpe deg med i dag?`;
                     directTimeInput: this.directTimeInput,
                     monthlyGoal: this.monthlyGoal,
                     currencyFormat: this.currencyFormat,
-                    compactView: this.compactView
+
                 },
                 exportDate: new Date().toISOString(),
                 version: '1.0'
@@ -10361,22 +10353,7 @@ Hva kan jeg hjelpe deg med i dag?`;
             });
         }
 
-        // Compact view toggle
-        const compactViewToggle = document.getElementById('compactViewToggle');
-        if (compactViewToggle) {
-            compactViewToggle.addEventListener('change', () => {
-                this.compactView = compactViewToggle.checked;
-                this.saveSettingsToSupabase();
-                this.updateDisplay(); // Refresh display with new view
 
-                // Add/remove compact class to body
-                if (this.compactView) {
-                    document.body.classList.add('compact-view');
-                } else {
-                    document.body.classList.remove('compact-view');
-                }
-            });
-        }
 
         // Default shifts view toggle
         const defaultShiftsViewToggle = document.getElementById('defaultShiftsViewToggle');
@@ -10537,7 +10514,7 @@ Hva kan jeg hjelpe deg med i dag?`;
                     directTimeInput: this.directTimeInput,
                     monthlyGoal: this.monthlyGoal,
                     currencyFormat: this.currencyFormat,
-                    compactView: this.compactView
+
                 },
                 exportDate: new Date().toISOString(),
                 exportPeriod: period,
