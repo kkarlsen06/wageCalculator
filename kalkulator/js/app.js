@@ -446,6 +446,14 @@ if (window.innerWidth <= 768) {
 
 // Initialize Supabase client
 document.addEventListener('DOMContentLoaded', async () => {
+  // Enable global skeletons until profile + app data are ready
+  document.body.classList.add('skeleton-active');
+  // Show app container immediately so skeletons are visible
+  const earlyAppEl = document.getElementById('app');
+  if (earlyAppEl) {
+    earlyAppEl.style.setProperty('display', 'block', 'important');
+    // Do NOT add 'app-ready' yet; that would hide content containers and suppress skeletons
+  }
   const supa = window.supabase.createClient(
     window.CONFIG.supabase.url,
     window.CONFIG.supabase.anonKey
@@ -761,9 +769,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Show the app immediately
     appEl.style.setProperty('display', 'block', 'important');
     // Mark as ready without running entry animations
-    appEl.classList.add('app-ready', 'animations-complete');
+    appEl.classList.add('animations-complete');
 
-    // Ensure key sections are visible without any animated states
+    // Ensure key sections are visible without any animated states (but keep month picker hidden during shimmer)
     try {
       const container = document.querySelector('.app-container');
       if (container) {
@@ -775,7 +783,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         reveal(container.querySelector('.tab-bar-container'));
         reveal(container.querySelector('.content'));
-        reveal(container.querySelector('.month-navigation-container'));
+        // Do not reveal month navigation while skeletons are active
       }
     } catch (e) {
       console.warn('Ensure-visible encountered an error:', e);
@@ -790,6 +798,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       appEl.prepend(warn);
     }
   }
+
+  // When both profile info has run and app init has run, turn off skeletons.
+  // We don't need strict synchronization here; we can safely remove the class now
+  // because app.init() and loadAndDisplayProfileInfo() have both completed their awaits above.
+  document.body.classList.remove('skeleton-active');
+  // Also ensure total-card skeleton is removed once active shimmer is done
+  const totalSkel = document.querySelector('.total-card .total-skeleton');
+  if (totalSkel) totalSkel.style.display = 'none';
 
   // Etter init og visning av app
   // Legg til event listeners for alle knapper

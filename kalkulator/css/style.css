@@ -711,8 +711,12 @@ button {
   display: none !important;
 }
 
+/* If skeletons are active, show the app immediately so placeholders are visible */
+body.skeleton-active #app {
+  display: block !important;
+}
+
 /* When app is shown, ensure animatable elements start with opacity 0 */
-#app.app-ready .app-container > .tab-bar-container,
 #app.app-ready .app-container > .content,
 #app.app-ready .app-container > .month-navigation-container {
   opacity: 0;
@@ -791,6 +795,181 @@ button {
 .skeleton.skeleton-payroll {
   padding: 8px 0;
 }
+
+/* Add separation inside next cards so lines don't touch */
+.next-shift-card .skeleton .skeleton-line + .skeleton-line,
+.next-payroll-card .skeleton .skeleton-line + .skeleton-line {
+  margin-top: 8px;
+}
+
+/* ===== Global skeleton toggles for initial app load ===== */
+/* Default: hide the custom skeleton chrome; reveal only when body has .skeleton-active */
+.profile-skeleton,
+.tab-bar-skeleton,
+.total-card .total-skeleton,
+.month-display-skeleton {
+  display: none;
+}
+
+/* Ensure the tab bar container is shown when shimmering */
+body.skeleton-active .tab-bar-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Keep containers positioned for overlay skeletons */
+.user-profile-container,
+.tab-bar-container {
+  position: relative;
+}
+
+/* Profile pill skeleton overlay */
+.profile-skeleton {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-skeleton .skeleton-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+}
+
+/* Tab bar skeleton overlay */
+.tab-bar-skeleton {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.tab-bar-skeleton .skeleton-block {
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+  flex: 1 1 0;
+}
+
+/* Month display skeleton (inline block) */
+.month-display-skeleton {
+  width: 110px;
+  height: 14px;
+  border-radius: 7px;
+  margin: 0 8px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+}
+
+/* Activate skeleton chrome and hide dynamic UI while loading */
+body.skeleton-active .profile-skeleton { display: flex; }
+body.skeleton-active .user-profile-btn { visibility: hidden; }
+
+body.skeleton-active .tab-bar-skeleton { display: flex; }
+body.skeleton-active .tab-bar { visibility: hidden; }
+/* Render the actual tab bar but overlay a single long shimmer inside it */
+.tab-bar-skeleton {
+  pointer-events: none;
+}
+.tab-bar-skeleton .skeleton-block {
+  flex: 1 1 auto;
+}
+
+/* Replace profile pill shimmer with a single line */
+.profile-skeleton .skeleton-avatar { display: none; }
+.profile-skeleton .skeleton-line {
+  width: 96px;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+}
+
+/* Hide floating action bar during initial loading */
+body.skeleton-active .floating-action-bar,
+body.skeleton-active .floating-action-bar-backdrop { display: none !important; }
+.tab-bar-skeleton .skeleton-block + .skeleton-block { display: none; }
+.tab-bar-skeleton::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 28px; /* thinner shimmer line */
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+}
+
+body.skeleton-active .total-card .total-skeleton { display: flex; }
+/* Hide total card real content completely during shimmer so skeleton can center */
+body.skeleton-active .total-card #totalAmount,
+body.skeleton-active .total-card #totalSecondaryInfo,
+body.skeleton-active .total-card .total-label {
+  display: none !important;
+}
+
+/* Align total-card skeleton with real text positions */
+.total-card .total-skeleton {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  justify-items: center;
+  align-items: center;
+  row-gap: 10px;
+  padding: 8px 0; /* avoid stretching the card */
+  position: relative; /* sit naturally inside card flow */
+  margin: 0 auto; /* center horizontally */
+  width: 100%;
+  pointer-events: none;
+}
+/* Line 1: Brutto label replacement (longer to account for injected text) */
+.total-card .total-skeleton .skeleton-line:nth-child(1) {
+  height: 12px;
+  width: 140px;
+  border-radius: 6px;
+}
+/* Line 2: Main amount replacement (big, centered) */
+.total-card .total-skeleton .skeleton-line:nth-child(2) {
+  height: 40px; /* restore visual height */
+  width: min(70%, 420px); /* slightly wider for balance */
+  border-radius: 20px;
+}
+/* Line 3: Secondary info (shorter) */
+.total-card .total-skeleton .skeleton-line:nth-child(3) {
+  height: 12px;
+  width: min(45%, 300px);
+  border-radius: 6px;
+}
+
+body.skeleton-active .dashboard-month-nav .month-display,
+body.skeleton-active .shift-section .month-navigation .month-display { display: none; }
+body.skeleton-active .dashboard-month-nav .month-display-skeleton,
+body.skeleton-active .shift-section .month-navigation .month-display-skeleton { display: inline-block; }
+
+/* While loading, hide the entire month navigation container to avoid layout jumps */
+body.skeleton-active .dashboard-month-nav,
+body.skeleton-active .shift-section .month-navigation-container { display: none !important; }
+
+/* Ensure next shift/payroll skeletons are visible until content populated */
+body.skeleton-active #nextShiftContent .skeleton,
+body.skeleton-active #nextPayrollContent .skeleton { display: block; }
+
 #app.app-ready .next-payroll-content,
 #app.app-ready .chart-progress-label {
   opacity: 0;

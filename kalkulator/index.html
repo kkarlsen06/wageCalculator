@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=9">
+  <link rel="stylesheet" href="css/style.css?v=10">
   <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
@@ -53,6 +53,11 @@
                                             <circle cx="12" cy="7" r="4"></circle>
                                         </svg>
                                     </button>
+                                     <!-- Skeleton placeholder for profile while loading -->
+                                     <div class="profile-skeleton" aria-hidden="true">
+                                         <div class="skeleton-avatar"></div>
+                                         <div class="skeleton-line w-40"></div>
+                                     </div>
                                     <div class="profile-dropdown" id="profileDropdown" style="display: none;">
                                         <div class="dropdown-item" onclick="app.openProfile()">
                                             <span>Profil</span>
@@ -113,6 +118,12 @@
                               <span class="tab-text">Ansatte</span>
                           </button>
                       </div>
+                      <!-- Skeleton placeholder for tab bar while loading -->
+                      <div class="tab-bar-skeleton" aria-hidden="true">
+                          <div class="skeleton-block"></div>
+                          <div class="skeleton-block"></div>
+                          <div class="skeleton-block"></div>
+                      </div>
                   </div>
 
                   <div class="content dashboard-content">
@@ -121,6 +132,12 @@
                           <div class="total-amount" id="totalAmount">0 kr</div>
                           <div class="total-secondary-info" id="totalSecondaryInfo">
                               <!-- Will be populated based on tax deduction setting -->
+                          </div>
+                          <!-- Skeleton placeholder for total card while loading -->
+                          <div class="total-skeleton skeleton" aria-hidden="true">
+                              <div class="skeleton-line"></div>
+                              <div class="skeleton-line"></div>
+                              <div class="skeleton-line"></div>
                           </div>
                       </div>
 
@@ -200,6 +217,8 @@
                                   </svg>
                               </button>
                               <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
+                              <!-- Skeleton placeholder for month display while loading -->
+                              <span class="month-display-skeleton" aria-hidden="true"></span>
                               <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
                                   <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                       <polyline points="9 6 15 12 9 18"></polyline>
@@ -288,6 +307,8 @@
                               </svg>
                           </button>
                           <span class="month-display" id="currentMonth">Mai 2025</span>
+                          <!-- Skeleton placeholder for month display while loading -->
+                          <span class="month-display-skeleton" aria-hidden="true"></span>
                           <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                   <polyline points="9 6 15 12 9 18"></polyline>
