@@ -1854,7 +1854,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 
   /* Reduce dashboard content gaps and padding */
   .dashboard-content {
-    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
+    padding-top: 10px; /* Restored small mobile padding since tab-bar is now standalone */
     padding-bottom: 10px;
     gap: 12px; /* Reduced from 20px */
   }
@@ -1994,7 +1994,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 
   /* Ultra-compact dashboard spacing */
   .dashboard-content {
-    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
+    padding-top: 8px; /* Restored ultra-compact padding since tab-bar is now standalone */
     padding-bottom: 8px;
     gap: 10px; /* Minimal gap */
   }
@@ -2122,7 +2122,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   }
 
   .dashboard-content {
-    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
+    padding-top: 6px; /* Restored landscape padding since tab-bar is now standalone */
     padding-bottom: 6px;
     gap: 8px; /* Very tight spacing */
   }
@@ -6910,7 +6910,7 @@ body.chatbox-view .dashboard-section .app-container {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding-top: 0; /* Reduced from 20px to account for tab-bar-container negative top positioning */
+  padding-top: 20px; /* Restored normal padding since tab-bar is now standalone */
   padding-bottom: 20px;
   gap: 20px;
   position: relative;
@@ -7846,7 +7846,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 /* Ensure proper layout on mobile */
 @media (max-width: 768px) {
   .dashboard-content {
-    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning on mobile */
+    padding-top: 15px; /* Restored mobile padding since tab-bar is now standalone */
     padding-bottom: 15px;
   }
 
@@ -7910,7 +7910,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 /* Large mobile devices and tablets - ensure month navigation remains visible */
 @media (min-width: 481px) and (max-width: 768px) {
   .dashboard-content {
-    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
+    padding-top: 12px; /* Restored tablet padding since tab-bar is now standalone */
     padding-bottom: 12px;
     gap: 16px;
   }
@@ -7950,7 +7950,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 /* Mobile landscape and very short viewports - aggressive space optimization */
 @media (max-height: 600px) and (orientation: landscape) {
   .dashboard-content {
-    padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
+    padding-top: 8px; /* Restored landscape padding since tab-bar is now standalone */
     padding-bottom: 8px;
     gap: 12px;
   }
@@ -8036,7 +8036,7 @@ body.compact-view .shift-section .floating-action-bar-backdrop {
 
 .compact-view .dashboard-content {
   gap: 15px;
-  padding-top: 0; /* Reduced to account for tab-bar-container negative top positioning */
+  padding-top: 15px; /* Restored compact view padding since tab-bar is now standalone */
   padding-bottom: 15px;
 }
 
@@ -10254,64 +10254,42 @@ input[type="file"].form-control:focus {
 /* ===== TAB BAR STYLES ===== */
 
 .tab-bar-container {
-  /* Remove margin and make it seamlessly connect to header */
-  margin-top: 0;
+  /* Standalone pill container with consistent dashboard spacing */
+  margin-top: 20px; /* Match dashboard content gap spacing */
   margin-bottom: 0;
   width: 100%;
-  /* Position to create stacking effect behind header */
   position: relative;
-  top: -20px; /* Extend much further up to completely close gap */
-  /* Lower z-index to appear behind header but above dashboard content */
   z-index: 90;
   /* Ensure tab bar stays visible during view transitions */
   visibility: visible;
   opacity: 1;
+  /* Add horizontal padding to match dashboard content */
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
 }
 
-/* Tab bar styling as extension of header with stacking effect */
+/* Tab bar styling as independent pill-shaped element */
 .tab-bar {
-  /* Match header's exact styling for seamless extension */
+  /* Pill-shaped background with glassmorphism effect */
   background: rgba(18, 18, 18, 0.75);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(42, 42, 47, 0.6);
-  border-top: none; /* Remove top border to connect with header */
-  border-radius: 0 0 24px 24px; /* Only bottom corners rounded to match header extension */
+  border-radius: 20px; /* Pill shape with proportional rounded corners */
   overflow: hidden;
   transition: all 0.3s ease;
-  /* Enhanced shadow for stacking effect */
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.15),
-    0 -2px 10px rgba(0, 0, 0, 0.05); /* Subtle upward shadow for depth */
+  /* Subtle shadow for depth without stacking effect */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 
-  /* Create seamless connection by extending background upward */
-  position: relative;
-
-  /* Flexbox layout for tab buttons */
+  /* Layout and spacing */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28px 20px 8px 20px; /* Further extended top padding to close gap */
+  padding: 4px; /* Minimal padding to show pill container curves */
   gap: 2px;
-  /* Minimum height to ensure proper proportions */
-  min-height: 80px; /* Increased height for extended stacking effect */
+  min-height: 48px; /* Reduced height for authentic pill appearance */
 }
 
-/* Create seamless connection with extended pseudo-element */
-.tab-bar::before {
-  content: '';
-  position: absolute;
-  top: -20px; /* Extend much further up to completely close gap */
-  left: -1px;
-  right: -1px;
-  height: 22px; /* Much taller to cover the extended area */
-  background: rgba(18, 18, 18, 0.75);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  z-index: -1; /* Behind the main tab bar content */
-  border-left: 1px solid rgba(42, 42, 47, 0.6);
-  border-right: 1px solid rgba(42, 42, 47, 0.6);
-}
+
 
 /* Individual tab button styling */
 .tab-btn {
@@ -10319,19 +10297,19 @@ input[type="file"].form-control:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 6px 10px; /* Reduced padding for pill proportions */
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  border-radius: 20px;
+  border-radius: 16px; /* Slightly smaller than container to show pill curves */
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
   font-weight: var(--font-weight-medium);
   position: relative;
   overflow: hidden;
-  min-height: 44px; /* Touch-friendly minimum */
+  min-height: 32px; /* Reduced height for pill design */
 }
 
 /* Tab button hover state */
@@ -10392,27 +10370,22 @@ input[type="file"].form-control:focus {
 /* Mobile responsive adjustments for tab bar */
 @media (max-width: 768px) {
   .tab-bar-container {
-    /* Maintain stacking effect on mobile */
-    margin-top: 0;
-    top: -12px; /* Increased stacking effect for mobile to close gap */
+    /* Consistent mobile spacing */
+    margin-top: 16px; /* Match mobile dashboard gap spacing */
   }
 
   .tab-bar {
-    padding: 20px 16px 6px 16px; /* Increased top padding for mobile gap closure */
+    padding: 3px; /* Minimal padding to show mobile pill curves */
     gap: 1px;
-    min-height: 64px; /* Increased height for mobile stacking */
-    border-radius: 0 0 20px 20px; /* Slightly smaller radius for mobile */
-  }
-
-  .tab-bar::before {
-    top: -12px; /* Increased extension for mobile to close gap */
-    height: 14px; /* Larger extension height for mobile */
+    min-height: 44px; /* Reduced mobile height for pill appearance */
+    border-radius: 18px; /* Proportional pill radius for mobile */
   }
 
   .tab-btn {
-    padding: 8px 10px;
-    gap: 6px;
-    min-height: 38px; /* Reduced from 40px */
+    padding: 4px 8px; /* Reduced for mobile pill proportions */
+    gap: 4px;
+    min-height: 32px; /* Reduced to fit mobile pill height */
+    border-radius: 15px; /* Slightly smaller than mobile container to show pill curves */
   }
 
   .tab-icon-badge {
@@ -10441,26 +10414,22 @@ input[type="file"].form-control:focus {
   }
 
   .tab-bar-container {
-    /* Maintain stacking effect for very small screens */
-    margin-top: 0;
-    top: -10px; /* Increased stacking for very small screens to close gap */
+    /* Consistent extra small mobile spacing */
+    margin-top: 12px; /* Match extra small mobile dashboard gap spacing */
   }
 
   .tab-bar {
-    min-height: 56px; /* Increased for very small screens with stacking */
-    padding: 18px 12px 4px 12px; /* Increased top padding to close gap */
-  }
-
-  .tab-bar::before {
-    top: -10px; /* Increased extension for very small screens */
-    height: 12px; /* Larger extension height to close gap */
+    min-height: 40px; /* Very compact height for very small screens */
+    padding: 2px; /* Minimal padding to show very small pill curves */
+    border-radius: 16px; /* Proportional pill radius for very small screens */
   }
 
   .tab-btn {
-    padding: 6px 8px;
-    gap: 4px;
+    padding: 3px 6px; /* Minimal padding for very small pill */
+    gap: 3px;
     flex-direction: row; /* Changed from column to row for horizontal layout */
-    min-height: 34px; /* Reduced from 36px */
+    min-height: 28px; /* Reduced to fit very small pill height */
+    border-radius: 13px; /* Slightly smaller than extra small container to show pill curves */
   }
 
   .tab-icon-badge {
