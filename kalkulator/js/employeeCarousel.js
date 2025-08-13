@@ -4,11 +4,13 @@
  * Following PLACEHOLDER_EMPLOYEES_V1 ruleset
  */
 
+import { escapeHTML, safeCssColor } from './security.js';
+
 export class EmployeeCarousel {
-    constructor(container, app) {
-        this.container = container;
-        this.app = app;
-        this.isInitialized = false;
+	constructor(container, app) {
+		this.container = container;
+		this.app = app;
+		this.isInitialized = false;
         this.touchStartX = 0;
         this.touchStartY = 0;
         this.isDragging = false;
@@ -287,21 +289,21 @@ export class EmployeeCarousel {
         const displayColor = this.app.getEmployeeDisplayColor(employee);
         const accessibleDescription = this.getEmployeeAccessibleDescription(employee);
 
-        // Avatars removed: always render initials
+
         return `
             <div class="employee-tile ${isActive ? 'active' : ''}"
                  data-employee-id="${employee.id}"
                  role="tab"
                  tabindex="${isActive ? '0' : '-1'}"
                  aria-selected="${isActive}"
-                 aria-label="${accessibleDescription}"
+                 aria-label="${escapeHTML(accessibleDescription)}"
                  aria-describedby="employee-desc-${employee.id}">
-                <div class="employee-avatar" style="--employee-color: ${displayColor}">
+                <div class="employee-avatar" style="--employee-color: ${safeCssColor(displayColor)}">
                     <div class="avatar-initials" aria-hidden="true">${initials}</div>
                 </div>
-                <div class="employee-name" id="employee-desc-${employee.id}">${employee.name}</div>
+                <div class="employee-name" id="employee-desc-${employee.id}">${escapeHTML(employee.name)}</div>
                 <button class="employee-actions-btn"
-                        aria-label="Åpne handlingsmeny for ${employee.name}"
+                        aria-label="Åpne handlingsmeny for ${escapeHTML(employee.name)}"
                         aria-haspopup="menu"
                         data-employee-id="${employee.id}"
                         tabindex="-1">
@@ -357,9 +359,15 @@ export class EmployeeCarousel {
         this.track.innerHTML = `
             <div class="employee-carousel-error">
                 <div class="error-message">Kunne ikke laste ansatte</div>
-                <button class="retry-btn" onclick="app.loadEmployees()">Prøv igjen</button>
+                <button class="retry-btn" type="button">Prøv igjen</button>
             </div>
         `;
+        const retry = this.track.querySelector('.retry-btn');
+        if (retry) {
+            retry.addEventListener('click', () => {
+                try { this.app.loadEmployees(); } catch (e) { console.error('Retry load employees failed:', e); }
+            });
+        }
     }
 
     /**

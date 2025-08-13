@@ -117,6 +117,16 @@ Applikasjonen er fullt responsiv og fungerer på:
 - Ingen sensitive data lagres i klartext
 - HTTPS-tilkobling i produksjon
 
+## Sikkerhetstester
+
+- Kjør unit for XSS-utils:
+
+```bash
+node dev-tests/xss.spec.js
+```
+
+- Se `SECURITY_XSS.md` for detaljer og `dev-tests/xss-e2e.md` for e2e-plan.
+
 ## 🤝 Bidrag
 
 Vi ønsker bidrag velkommen! For å bidra:

@@ -4,6 +4,8 @@
  * Mobile-first design with proper touch handling and accessibility
  */
 
+import { escapeHTML, safeCssColor } from './security.js';
+
 export class EmployeeActionsMenu {
     constructor(app) {
         this.app = app;
@@ -69,17 +71,17 @@ export class EmployeeActionsMenu {
         this.currentMenu = document.createElement('div');
         this.currentMenu.className = 'employee-actions-menu';
         this.currentMenu.setAttribute('role', 'menu');
-        this.currentMenu.setAttribute('aria-label', `Handlinger for ${employee.name}`);
+        this.currentMenu.setAttribute('aria-label', `Handlinger for ${escapeHTML(employee.name)}`);
         
         // Create menu items
         const menuItems = this.createMenuItems(employee);
         this.currentMenu.innerHTML = `
             <div class="menu-header">
                 <div class="menu-employee-info">
-                    <div class="menu-employee-avatar" style="--employee-color: ${this.app.getEmployeeDisplayColor(employee)}">
+                    <div class="menu-employee-avatar" style="--employee-color: ${safeCssColor(this.app.getEmployeeDisplayColor(employee))}">
                         ${this.getEmployeeAvatarContent(employee)}
                     </div>
-                    <div class="menu-employee-name">${employee.name}</div>
+                    <div class="menu-employee-name">${escapeHTML(employee.name)}</div>
                 </div>
                 <button class="menu-close-btn" aria-label="Lukk meny">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -91,7 +93,7 @@ export class EmployeeActionsMenu {
             <div class="menu-items">
                 ${menuItems}
             </div>
-        `;
+            `;
 
         // Position the menu
         this.positionMenu(triggerElement, options);
