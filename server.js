@@ -37,6 +37,17 @@ const supabase = createClient(
 // ---------- simple metrics & audit (in-memory fallback) ----------
 const AGENT_BLOCK_READS = process.env.AGENT_BLOCK_READS === 'true';
 
+// Avatar upload constraints
+const MAX_AVATAR_FILE_SIZE = parseInt(process.env.MAX_AVATAR_FILE_SIZE || '1048576', 10); // 1MB default
+const ALLOWED_AVATAR_MIME_TYPES = ['image/jpeg', 'image/png'];
+
+function detectImageMimeType(buffer) {
+  if (!buffer || buffer.length < 4) return null;
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'image/jpeg';
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return 'image/png';
+  return null;
+}
+
 // metrics storage: key `${route}|${method}|${reason}` -> count
 const AGENT_WRITE_DENIED_COUNTS = new Map();
 
@@ -2295,11 +2306,22 @@ app.post('/user/avatar', authenticateUser, async (req, res) => {
     }
 
     const buffer = Buffer.from(image_base64, 'base64');
+
+    if (buffer.length > MAX_AVATAR_FILE_SIZE) {
+      return res.status(400).json({ error: 'Image too large' });
+    }
+
+    const mimeType = detectImageMimeType(buffer);
+    if (!ALLOWED_AVATAR_MIME_TYPES.includes(mimeType)) {
+      return res.status(400).json({ error: 'Unsupported image type' });
+    }
+
     const userId = req.user_id;
-    const filePath = `${userId}/profile_${Date.now()}.jpg`;
+    const extension = mimeType === 'image/png' ? 'png' : 'jpg';
+    const filePath = `${userId}/profile_${Date.now()}.${extension}`;
     const { error: uploadError } = await supabase.storage
       .from('profile-pictures')
-      .upload(filePath, buffer, { contentType: 'image/jpeg', upsert: true });
+      .upload(filePath, buffer, { contentType: mimeType, upsert: true });
     if (uploadError) {
       console.error('Avatar upload error:', uploadError);
       return res.status(500).json({ error: 'Failed to upload avatar' });

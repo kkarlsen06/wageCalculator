@@ -262,7 +262,7 @@ paths:
               properties:
                 image_base64:
                   type: string
-                  description: Base64-encoded JPEG image data (no data URL prefix)
+                  description: Base64-encoded JPEG or PNG image data (max 1MB, no data URL prefix)
       responses:
         '200':
           description: OK
