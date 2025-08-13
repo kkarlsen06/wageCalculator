@@ -1923,7 +1923,7 @@ export const app = {
                 this.pauseDeductionMethod = settings.pause_deduction_method || 'proportional';
                 this.pauseThresholdHours = parseFloat(settings.pause_threshold_hours) || 5.5;
                 this.pauseDeductionMinutes = parseInt(settings.pause_deduction_minutes) || 30;
-                this.auditBreakCalculations = settings.audit_break_calculations !== false;
+                this.auditBreakCalculations = true; // Always enabled internally (UI removed)
 
 
 
@@ -1978,7 +1978,7 @@ export const app = {
         this.pauseDeductionMethod = 'proportional'; // Legal-compliant default method
         this.pauseThresholdHours = 5.5; // Standard threshold
         this.pauseDeductionMinutes = 30; // Standard 30-minute break
-        this.auditBreakCalculations = true; // Enable audit trail by default
+        this.auditBreakCalculations = true; // Always enabled internally (UI removed)
 
         this.fullMinuteRange = false; // Default to 15-minute intervals
         this.directTimeInput = false; // Default to dropdown time selection
@@ -2048,10 +2048,7 @@ export const app = {
             pauseDeductionMinutesInput.value = this.pauseDeductionMinutes;
         }
 
-        const auditBreakCalculationsToggle = document.getElementById('auditBreakCalculationsToggle');
-        if (auditBreakCalculationsToggle) {
-            auditBreakCalculationsToggle.checked = this.auditBreakCalculations;
-        }
+        // auditBreakCalculations UI element removed - now handled internally
 
         // Update break deduction sections visibility and method explanation
         this.toggleBreakDeductionSections();
@@ -2279,7 +2276,7 @@ export const app = {
                 this.pauseDeductionMethod = data.pauseDeductionMethod || 'proportional';
                 this.pauseThresholdHours = parseFloat(data.pauseThresholdHours) || 5.5;
                 this.pauseDeductionMinutes = parseInt(data.pauseDeductionMinutes) || 30;
-                this.auditBreakCalculations = data.auditBreakCalculations !== false;
+                this.auditBreakCalculations = true; // Always enabled internally (UI removed)
 
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
@@ -5548,6 +5545,28 @@ export const app = {
         const selectedMonth = this.currentMonth; // 1-based
         const selectedYear = this.currentYear;
 
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1; // Convert to 1-based
+        const currentYear = now.getFullYear();
+
+        // Determine if we're viewing the current month/year
+        const isCurrentMonth = selectedMonth === currentMonth && selectedYear === currentYear;
+
+        // Calculate payroll date - use next payroll logic if viewing current month
+        let payrollDate;
+        let actualPayrollMonth = selectedMonth;
+        let actualPayrollYear = selectedYear;
+
+        if (isCurrentMonth) {
+            // For current month, use getNextPayrollDate to handle cases where payroll has passed
+            payrollDate = this.getNextPayrollDate();
+            actualPayrollMonth = payrollDate.getMonth() + 1; // Convert to 1-based
+            actualPayrollYear = payrollDate.getFullYear();
+        } else {
+            // For other months, use the specific month's payroll date
+            payrollDate = this.getPayrollDateForMonth(selectedMonth, selectedYear);
+        }
+
         // Calculate the previous month relative to the selected month
         let previousMonth = selectedMonth - 1;
         let previousYear = selectedYear;
@@ -5557,25 +5576,36 @@ export const app = {
             previousYear = selectedYear - 1;
         }
 
-        // Get shifts for the previous month relative to selected month
-        const previousMonthShifts = this.shifts.filter(shift =>
-            shift.date.getMonth() === (previousMonth - 1) && // Convert to 0-based for comparison
-            shift.date.getFullYear() === previousYear
+        // Determine which month's earnings to show based on the payroll date
+        // If payroll date moved to next month, we need to adjust the earnings month accordingly
+        let earningsMonth = previousMonth;
+        let earningsYear = previousYear;
+
+        if (isCurrentMonth && actualPayrollMonth !== selectedMonth) {
+            // Payroll moved to next month, so earnings should be from current month
+            earningsMonth = selectedMonth;
+            earningsYear = selectedYear;
+        }
+
+        // Get shifts for the appropriate earnings month
+        const earningsMonthShifts = this.shifts.filter(shift =>
+            shift.date.getMonth() === (earningsMonth - 1) && // Convert to 0-based for comparison
+            shift.date.getFullYear() === earningsYear
         );
 
-        if (previousMonthShifts.length === 0) {
-            // No shifts in previous month
+        if (earningsMonthShifts.length === 0) {
+            // No shifts in earnings month
             nextPayrollContent.style.display = 'none';
             nextPayrollEmpty.style.display = 'flex';
             return;
         }
 
-        // Calculate total earnings for previous month with breakdown
+        // Calculate total earnings for the earnings month with breakdown
         let totalEarnings = 0;
         let totalBaseWage = 0;
         let totalBonus = 0;
 
-        previousMonthShifts.forEach(shift => {
+        earningsMonthShifts.forEach(shift => {
             const calc = this.calculateShift(shift);
             totalEarnings += calc.total;
             totalBaseWage += calc.baseWage;
@@ -5587,23 +5617,14 @@ export const app = {
             totalEarnings * (1 - this.taxPercentage / 100) :
             totalEarnings;
 
-        // Calculate payroll date for the selected month
-        const payrollDate = this.getPayrollDateForMonth(selectedMonth, selectedYear);
-        const now = new Date();
-        const currentMonth = now.getMonth() + 1; // Convert to 1-based
-        const currentYear = now.getFullYear();
-
         // Create label text showing which month the earnings are from
-        const previousMonthName = this.MONTHS[previousMonth - 1]; // Convert to 0-based for array access
-        const labelText = `Opptjent i ${previousMonthName}`;
+        const earningsMonthName = this.MONTHS[earningsMonth - 1]; // Convert to 0-based for array access
+        const labelText = `Opptjent i ${earningsMonthName}`;
 
         // Format the payroll date for display
         const payrollDay = payrollDate.getDate();
         const payrollMonth = this.MONTHS[payrollDate.getMonth()];
         const payrollDateText = `${payrollDay}. ${payrollMonth}`;
-
-        // Determine if we're viewing the current month/year
-        const isCurrentMonth = selectedMonth === currentMonth && selectedYear === currentYear;
 
         // Create clock icon text based on whether we're viewing current month or not
         let clockIconText;
@@ -7706,14 +7727,7 @@ export const app = {
             });
         }
 
-        // Audit trail toggle
-        const auditToggle = document.getElementById('auditBreakCalculationsToggle');
-        if (auditToggle) {
-            auditToggle.addEventListener('change', (e) => {
-                this.auditBreakCalculations = e.target.checked;
-                this.saveSettingsToSupabase();
-            });
-        }
+        // Audit trail toggle removed from UI - now handled internally
     },
 
     // Toggle visibility of break deduction sections based on enabled state
