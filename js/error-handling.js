@@ -186,23 +186,45 @@ class ErrorHandler {
      */
     createMessage(message, type, options = {}) {
         const { actionText, actionCallback, persistent } = options;
-        
+
         const messageEl = document.createElement('div');
         messageEl.className = `message message-${type}`;
         messageEl.setAttribute('role', type === 'error' ? 'alert' : 'status');
-        
-        const icon = this.getIcon(type);
-        
-        messageEl.innerHTML = `
-            <div class="message-content">
-                <div class="message-icon">${icon}</div>
-                <div class="message-text">${message}</div>
-                <div class="message-actions">
-                    ${actionText ? `<button class="message-action" aria-label="${actionText}">${actionText}</button>` : ''}
-                    ${!persistent ? '<button class="message-close" aria-label="Lukk melding">×</button>' : ''}
-                </div>
-            </div>
-        `;
+
+        const contentEl = document.createElement('div');
+        contentEl.className = 'message-content';
+
+        const iconEl = document.createElement('div');
+        iconEl.className = 'message-icon';
+        iconEl.textContent = this.getIcon(type);
+
+        const textEl = document.createElement('div');
+        textEl.className = 'message-text';
+        textEl.textContent = message;
+
+        const actionsEl = document.createElement('div');
+        actionsEl.className = 'message-actions';
+
+        if (actionText) {
+            const actionBtn = document.createElement('button');
+            actionBtn.className = 'message-action';
+            actionBtn.setAttribute('aria-label', actionText);
+            actionBtn.textContent = actionText;
+            actionsEl.appendChild(actionBtn);
+        }
+
+        if (!persistent) {
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'message-close';
+            closeBtn.setAttribute('aria-label', 'Lukk melding');
+            closeBtn.textContent = '×';
+            actionsEl.appendChild(closeBtn);
+        }
+
+        contentEl.appendChild(iconEl);
+        contentEl.appendChild(textEl);
+        contentEl.appendChild(actionsEl);
+        messageEl.appendChild(contentEl);
 
         // Add event listeners
         const closeBtn = messageEl.querySelector('.message-close');

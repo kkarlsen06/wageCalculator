@@ -77,8 +77,18 @@ export class ConfirmationDialog {
         this.modal = document.createElement('div');
         this.modal.id = 'confirmationDialog';
         this.modal.className = 'modal confirmation-modal';
-        this.modal.innerHTML = this.getDialogHTML(title, message, confirmText, cancelText, type);
-        
+        this.modal.innerHTML = this.getDialogHTML(type);
+
+        const titleEl = this.modal.querySelector('.confirmation-title');
+        const messageEl = this.modal.querySelector('.confirmation-message');
+        const cancelBtn = this.modal.querySelector('.cancel-btn');
+        const confirmBtn = this.modal.querySelector('.confirm-btn');
+
+        if (titleEl) titleEl.textContent = title;
+        if (messageEl) messageEl.textContent = message;
+        if (cancelBtn) cancelBtn.textContent = cancelText;
+        if (confirmBtn) confirmBtn.textContent = confirmText;
+
         document.body.appendChild(this.modal);
         
         // Trigger animation
@@ -90,29 +100,25 @@ export class ConfirmationDialog {
     /**
      * Get the dialog HTML structure
      */
-    getDialogHTML(title, message, confirmText, cancelText, type) {
+    getDialogHTML(type) {
         const iconSVG = this.getIconSVG(type);
-        
+
         return `
             <div class="modal-content confirmation-content ${type}">
                 <div class="confirmation-header">
                     <div class="confirmation-icon ${type}">
                         ${iconSVG}
                     </div>
-                    <h3 class="confirmation-title">${title}</h3>
+                    <h3 class="confirmation-title"></h3>
                 </div>
-                
+
                 <div class="confirmation-body">
-                    <p class="confirmation-message">${message}</p>
+                    <p class="confirmation-message"></p>
                 </div>
-                
+
                 <div class="confirmation-footer">
-                    <button type="button" class="btn btn-secondary cancel-btn">
-                        ${cancelText}
-                    </button>
-                    <button type="button" class="btn btn-${type} confirm-btn">
-                        ${confirmText}
-                    </button>
+                    <button type="button" class="btn btn-secondary cancel-btn"></button>
+                    <button type="button" class="btn btn-${type} confirm-btn"></button>
                 </div>
             </div>
         `;
