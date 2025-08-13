@@ -71,34 +71,51 @@ export class EmployeeActionsMenu {
         this.currentMenu.setAttribute('role', 'menu');
         this.currentMenu.setAttribute('aria-label', `Handlinger for ${employee.name}`);
         
-        // Create menu items
-        const menuItems = this.createMenuItems(employee);
-        this.currentMenu.innerHTML = `
-            <div class="menu-header">
-                <div class="menu-employee-info">
-                    <div class="menu-employee-avatar" style="--employee-color: ${this.app.getEmployeeDisplayColor(employee)}">
-                        ${this.getEmployeeAvatarContent(employee)}
-                    </div>
-                    <div class="menu-employee-name">${employee.name}</div>
-                </div>
-                <button class="menu-close-btn" aria-label="Lukk meny">
+        // Build header structure without using innerHTML for user data
+        const header = document.createElement('div');
+        header.className = 'menu-header';
+
+        const info = document.createElement('div');
+        info.className = 'menu-employee-info';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'menu-employee-avatar';
+        avatar.style.setProperty('--employee-color', this.app.getEmployeeDisplayColor(employee));
+        avatar.appendChild(this.getEmployeeAvatarContent(employee));
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'menu-employee-name';
+        nameEl.textContent = employee.name;
+
+        info.appendChild(avatar);
+        info.appendChild(nameEl);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'menu-close-btn';
+        closeBtn.setAttribute('aria-label', 'Lukk meny');
+        closeBtn.innerHTML = `
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
-                </button>
-            </div>
-            <div class="menu-items">
-                ${menuItems}
-            </div>
-        `;
+                `;
+
+        header.appendChild(info);
+        header.appendChild(closeBtn);
+
+        const itemsContainer = document.createElement('div');
+        itemsContainer.className = 'menu-items';
+        itemsContainer.innerHTML = this.createMenuItems(employee);
+
+        this.currentMenu.appendChild(header);
+        this.currentMenu.appendChild(itemsContainer);
 
         // Position the menu
         this.positionMenu(triggerElement, options);
-        
+
         // Add to DOM
         document.body.appendChild(this.currentMenu);
-        
+
         // Focus first menu item
         setTimeout(() => {
             const firstItem = this.currentMenu.querySelector('.menu-item');
@@ -168,7 +185,10 @@ export class EmployeeActionsMenu {
     getEmployeeAvatarContent(employee) {
         // This will be enhanced when avatar loading is implemented
         const initials = this.app.getEmployeeInitials(employee);
-        return `<div class="avatar-initials">${initials}</div>`;
+        const div = document.createElement('div');
+        div.className = 'avatar-initials';
+        div.textContent = initials;
+        return div;
     }
 
     /**
