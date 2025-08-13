@@ -1381,7 +1381,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return messageDiv;
       } else {
         // Render Markdown for assistant messages
-        const html = DOMPurify.sanitize(marked.parse(text));
+        const { sanitizeHTML } = await import('./security.js');
+        const html = sanitizeHTML(marked.parse(text));
         messageDiv.innerHTML = html;
       }
     } else {
@@ -1415,7 +1416,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentTokenIndex++;
 
         // Create content with cursor inline to avoid line breaks
-        const html = DOMPurify.sanitize(marked.parse(currentText));
+        const { sanitizeHTML } = await import('./security.js');
+        const html = sanitizeHTML(marked.parse(currentText));
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
 
@@ -1457,7 +1459,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         cursor.remove();
 
         // Final render to ensure proper markdown formatting
-        const finalHtml = DOMPurify.sanitize(marked.parse(text));
+        const { sanitizeHTML } = await import('./security.js');
+        const finalHtml = sanitizeHTML(marked.parse(text));
         element.innerHTML = finalHtml;
 
         // Final scroll
@@ -1528,7 +1531,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!element.isStreaming && displayedLength >= element.fullText.length) {
         // Streaming complete - render final markdown
         element.streamingActive = false;
-        const finalHtml = DOMPurify.sanitize(marked.parse(element.fullText));
+        const { sanitizeHTML } = await import('./security.js');
+        const finalHtml = sanitizeHTML(marked.parse(element.fullText));
         element.innerHTML = finalHtml;
         element.classList.remove('streaming-text');
         chatElements.log.scrollTop = chatElements.log.scrollHeight;
@@ -1545,7 +1549,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Add typing cursor during streaming
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = DOMPurify.sanitize(marked.parse(displayText));
+        const { sanitizeHTML } = await import('./security.js');
+        tempDiv.innerHTML = sanitizeHTML(marked.parse(displayText));
 
         // Add cursor
         const cursor = document.createElement('span');
@@ -1692,7 +1697,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Replace spinner content with response text in the same bubble
       // Use Markdown rendering for assistant messages
       if (data.assistant) {
-        const html = DOMPurify.sanitize(marked.parse(txt));
+        const { sanitizeHTML } = await import('./security.js');
+        const html = sanitizeHTML(marked.parse(txt));
         spinner.innerHTML = html;
       } else {
         spinner.textContent = txt;
@@ -1759,7 +1765,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             ?? '⚠️ Ukjent svar fra serveren.';
 
           if (fallbackData.assistant) {
-            const html = DOMPurify.sanitize(marked.parse(txt));
+            const { sanitizeHTML } = await import('./security.js');
+            const html = sanitizeHTML(marked.parse(txt));
             spinner.innerHTML = html;
           } else {
             spinner.textContent = txt;

@@ -12,6 +12,8 @@ import { OpenAI } from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { calcEmployeeShift } from './payroll/calc.js';
 import { randomUUID } from 'node:crypto';
+import helmet from 'helmet';
+import crypto from 'node:crypto';
 
 // ---------- path helpers ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +22,50 @@ const FRONTEND_DIR = __dirname;
 
 // ---------- app & core middleware ----------
 const app = express();
+app.disable('x-powered-by');
+
+// Security headers with Helmet and CSP nonce
+app.use((req, res, next) => {
+	res.locals.nonce = crypto.randomUUID();
+	next();
+});
+app.use(helmet({
+	contentSecurityPolicy: {
+		useDefaults: true,
+		directives: {
+			"default-src": ["'self'"],
+			"script-src": ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
+			"style-src": ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
+			"font-src": ["'self'", 'https://fonts.gstatic.com', 'data:'],
+			"img-src": ["'self'", 'data:', 'blob:'],
+			"connect-src": ["'self'", process.env.SUPABASE_URL || ''],
+			"object-src": ["'none'"],
+			"base-uri": ["'self'"],
+			"frame-ancestors": ["'self'"]
+		}
+	},
+	referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+	crossOriginEmbedderPolicy: true,
+	crossOriginOpenerPolicy: { policy: 'same-origin' },
+	hidePoweredBy: true
+}));
+
+// Secure cookies defaults helper
+app.use((req, res, next) => {
+	res.cookie = new Proxy(res.cookie.bind(res), {
+		apply(target, thisArg, args) {
+			const [name, value, options = {}] = args;
+			const secureDefaults = {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'lax'
+			};
+			const merged = { ...secureDefaults, ...options };
+			return target(name, value, merged);
+		}
+	});
+	return next();
+});
 
 // Request logging with Morgan
 const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';

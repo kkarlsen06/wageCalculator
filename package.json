@@ -20,7 +20,8 @@
     "demo:employees": "node dev-tests/demo-employees.js",
     "test:agent-guard": "node dev-tests/test-agent-write-guard.js",
     "test:e2e:wages-policies": "node dev-tests/test-e2e-wages-and-policies.js",
-    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel && npm run test:agent-guard && npm run test:payroll && npm run test:e2e:wages-policies"
+    "test:xss": "node dev-tests/xss.spec.js",
+    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel && npm run test:agent-guard && npm run test:payroll && npm run test:e2e:wages-policies && npm run test:xss"
   },
   "repository": {
     "type": "git",
@@ -38,6 +39,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "helmet": "^7.2.0",
     "morgan": "^1.10.0",
     "node-fetch": "^3.3.2",
     "openai": "^5.12.0"

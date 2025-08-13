@@ -780,7 +780,6 @@ export const app = {
             if (container) container.innerHTML = '';
         }
     },
-
     /**
      * Create a filter chip element
      */
@@ -897,7 +896,14 @@ export const app = {
             const nameEl = pill.querySelector('.name');
             const dotEl = pill.querySelector('.color-dot');
             if (nameEl) nameEl.textContent = selectedEmployee.name;
-            if (dotEl) dotEl.style.background = selectedEmployee.display_color || '#888';
+            if (dotEl) {
+                try {
+                    const { safeCssColor } = await import('./security.js');
+                    dotEl.style.background = safeCssColor(selectedEmployee.display_color || '#888');
+                } catch (_) {
+                    dotEl.style.background = selectedEmployee.display_color || '#888';
+                }
+            }
 
             // Make the pill clickable to open Edit Employee modal
             const clickable = pill.querySelector('.selected-employee-pill');
@@ -905,7 +911,7 @@ export const app = {
                 clickable.style.cursor = 'pointer';
                 clickable.setAttribute('role', 'button');
                 clickable.setAttribute('tabindex', '0');
-                clickable.title = 'Rediger ansatt';
+                clickable.setAttribute('title', 'Rediger ansatt');
                 clickable.addEventListener('click', (e) => {
                     try {
                         e.preventDefault();
@@ -1062,7 +1068,7 @@ export const app = {
         this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
 
         // Reflect employee context in the modal (pill vs selectors)
-        this.updateEmployeeAssignmentUIInModal?.();
+        this.updateEmployeeAssignmentUIInModal();
 
     },
 
@@ -1570,7 +1576,6 @@ export const app = {
             backButton.remove();
         }
     },
-
     // Get all shifts for a specific week (including shifts from adjacent months)
     getShiftsForWeek(weekNumber) {
         // Get the date range for this week
@@ -1929,7 +1934,7 @@ export const app = {
 
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
-            this.monthlyGoal = settings.monthly_goal || 20000;
+                this.monthlyGoal = settings.monthly_goal || 20000;
                             this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
                 this.currencyFormat = settings.currency_format || false;
 
@@ -2316,7 +2321,6 @@ export const app = {
         this.formState = formState;
         localStorage.setItem('vaktberegnerFormState', JSON.stringify(formState));
     },
-
     // Restore form state after page restart
     restoreFormState() {
         try {
@@ -3814,7 +3818,6 @@ export const app = {
             }
         }
     },
-
     // Wage card tooltip management functions
     setupWageCardTooltip(card) {
         if (!card || card.hasTooltipListener) return;
@@ -4351,9 +4354,7 @@ export const app = {
 
             document.addEventListener('click', this.chartTooltipGlobalListener);
         }
-
     },
-
     // Render daily chart for drill-down view
     renderDailyChart(chartBars, chartLabels, chartTooltip) {
         const { dailyData, totalWeekHours, totalWeekEarnings } = this.getDailyDataForWeek(this.selectedWeek);
@@ -6211,9 +6212,6 @@ export const app = {
             this.updateCalendarCells();
         }
     },
-
-
-
     // Show detailed shift information in expanded view
     showShiftDetails(shiftId) {
         // Find the shift by ID
@@ -8559,7 +8557,6 @@ export const app = {
             alert('En feil oppstod ved sletting av data');
         }
     },
-
     // Edit shift functionality
     editShift(shiftId) {
         // Find the shift to edit
@@ -9203,7 +9200,7 @@ export const app = {
                         </div>
 
                         <div class="form-actions" style="margin-top: 16px;">
-                            <button class="btn btn-primary" onclick="app.dismissRecurringIntro()" style="width: 100%; max-width: 200px; margin: 0 auto; display: block;">
+                            <button class="btn btn-primary" id="dismissRecurringIntroBtn" style="width: 100%; max-width: 200px; margin: 0 auto; display: block;">
                                 Forstått, takk!
                             </button>
                         </div>
@@ -9214,6 +9211,10 @@ export const app = {
 
         // Add to DOM
         document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Wire button handler
+        const dismissBtn = document.getElementById('dismissRecurringIntroBtn');
+        if (dismissBtn) dismissBtn.addEventListener('click', () => this.dismissRecurringIntro());
 
         // Add escape key listener
         this.recurringIntroKeyHandler = (e) => {
@@ -9644,8 +9645,9 @@ Hva kan jeg hjelpe deg med i dag?`;
                 streamText(greetingMessage, greetingText, 25);
             } else {
                 // Final fallback - direct HTML with proper markdown rendering
-                if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
-                    const html = DOMPurify.sanitize(marked.parse(greetingText));
+                if (typeof marked !== 'undefined') {
+                    const { sanitizeHTML } = await import('./security.js');
+                    const html = sanitizeHTML(marked.parse(greetingText));
                     greetingMessage.innerHTML = html;
                 } else {
                     greetingMessage.textContent = greetingText;
@@ -10916,7 +10918,6 @@ Hva kan jeg hjelpe deg med i dag?`;
     getEmployeeDisplayColor(employee) {
         return employee?.display_color || '#6366f1'; // Default to accent color
     },
-
     // CSV Export Functions
     /**
      * Open CSV export modal
@@ -11101,4 +11102,3 @@ Hva kan jeg hjelpe deg med i dag?`;
         }, 3000);
     }
 };
-
