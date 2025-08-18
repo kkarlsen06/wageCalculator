@@ -11180,7 +11180,7 @@ body.chatbox-view .chatbox-container {
   height: 2px;
   background: var(--border);
   position: relative;
-  top: -28px;
+  top: -18px;
   margin: 0 -4px;
 }
 
@@ -12208,6 +12208,7 @@ body.chatbox-view .chatbox-container {
 
   .progress-line {
     width: 40px;
+    top: -16px;
   }
 
   .form-sections {
