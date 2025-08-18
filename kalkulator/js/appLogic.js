@@ -854,6 +854,8 @@ export const app = {
         const employeeSelectGroup = employeeSelect?.closest('.form-group');
         const recurringSelectGroup = recurringEmployeeSelect?.closest('.form-group');
 
+        // Determine current context
+        const inEmployees = this.currentView === 'employees';
         // Determine if we have a current selection (view independent)
         const hasSelectedEmployeeId = this.selectedEmployeeId !== null;
 
@@ -866,6 +868,12 @@ export const app = {
         // Never show selects; assignment is driven by carousel selection
         if (employeeSelectGroup) employeeSelectGroup.style.display = 'none';
         if (recurringSelectGroup) recurringSelectGroup.style.display = 'none';
+
+        // If not in employees view (user context), ensure the pill is not shown
+        if (!inEmployees) {
+            if (existingPill) existingPill.remove();
+            return;
+        }
 
         // Create/update the pill only in employees view
         const modal = document.getElementById('addShiftModal');
