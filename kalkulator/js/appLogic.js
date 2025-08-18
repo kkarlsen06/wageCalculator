@@ -759,14 +759,14 @@ export const app = {
      * Show or hide employee select controls inside add/edit shift modals
      */
     toggleEmployeeSelectorsVisibility(show) {
-        const ids = ['employeeSelect', 'recurringEmployeeSelect', 'editEmployeeSelect'];
-        ids.forEach(id => {
+        // Always hide add-shift employee selectors; assignment comes from carousel selection
+        ['employeeSelect', 'recurringEmployeeSelect'].forEach(id => {
             const select = document.getElementById(id);
             if (!select) return;
-            // Parent form-group contains label + select
             const group = select.closest('.form-group') || select.parentElement;
-            if (group) group.style.display = show ? '' : 'none';
+            if (group) group.style.display = 'none';
         });
+        // Do not manage edit select visibility here; handled elsewhere
     },
 
     /**
@@ -854,10 +854,8 @@ export const app = {
         const employeeSelectGroup = employeeSelect?.closest('.form-group');
         const recurringSelectGroup = recurringEmployeeSelect?.closest('.form-group');
 
-        // Determine if we are in the Employees view and have a current selection
-        const isEmployeesView = this.currentView === 'employees';
+        // Determine if we have a current selection (view independent)
         const hasSelectedEmployeeId = this.selectedEmployeeId !== null;
-        const shouldHideSelectors = isEmployeesView && hasSelectedEmployeeId;
 
         // Ensure selects reflect the selected employee when available
         if (hasSelectedEmployeeId) {
@@ -865,9 +863,9 @@ export const app = {
             if (recurringEmployeeSelect) recurringEmployeeSelect.value = this.selectedEmployeeId;
         }
 
-        // Show/hide selects
-        if (employeeSelectGroup) employeeSelectGroup.style.display = shouldHideSelectors ? 'none' : '';
-        if (recurringSelectGroup) recurringSelectGroup.style.display = shouldHideSelectors ? 'none' : '';
+        // Never show selects; assignment is driven by carousel selection
+        if (employeeSelectGroup) employeeSelectGroup.style.display = 'none';
+        if (recurringSelectGroup) recurringSelectGroup.style.display = 'none';
 
         // Create/update the pill only in employees view
         const modal = document.getElementById('addShiftModal');
@@ -892,7 +890,7 @@ export const app = {
 
         // Populate pill details if we know the employee
         const selectedEmployee = this.getSelectedEmployee?.() || null;
-        if (shouldHideSelectors && selectedEmployee) {
+        if (hasSelectedEmployeeId && selectedEmployee) {
             pill.style.display = '';
             const nameEl = pill.querySelector('.name');
             const dotEl = pill.querySelector('.color-dot');
@@ -1096,7 +1094,7 @@ export const app = {
             const startMinute = document.getElementById('recurringStartMinute').value || '00';
             const endHour = document.getElementById('recurringEndHour').value;
             const endMinute = document.getElementById('recurringEndMinute').value || '00';
-            const employeeId = this.selectedEmployeeId || (document.getElementById('recurringEmployeeSelect')?.value || null);
+            const employeeId = this.selectedEmployeeId;
 
             if (!startDateStr || !freq || !duration || !startHour || !endHour) {
                 // Show validation alert message
@@ -1258,7 +1256,7 @@ export const app = {
             const startMinute = document.getElementById('startMinute').value || '00';
             const endHour = document.getElementById('endHour').value;
             const endMinute = document.getElementById('endMinute').value || '00';
-            const employeeId = this.selectedEmployeeId || (document.getElementById('employeeSelect')?.value || null);
+            const employeeId = this.selectedEmployeeId;
 
             if (!startHour || !endHour) {
                 // Show validation alert message
