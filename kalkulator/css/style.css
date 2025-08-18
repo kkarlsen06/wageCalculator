@@ -2890,6 +2890,11 @@ input[type="time"].form-control[value=""]:focus {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(5px);
+  /* Respect iOS PWA safe areas so content doesn't tuck under system bars */
+  padding: max(10px, env(safe-area-inset-top, 0px))
+           max(10px, env(safe-area-inset-right, 0px))
+           max(10px, env(safe-area-inset-bottom, 0px))
+           max(10px, env(safe-area-inset-left, 0px));
 }
 
 /* Special positioning for add shift modal to account for navigation header */
@@ -2903,7 +2908,10 @@ input[type="time"].form-control[value=""]:focus {
 /* Mobile override for add shift modal positioning */
 @media (max-width: 768px) {
   #addShiftModal.active {
-    padding: 10px !important;
+    padding: max(10px, env(safe-area-inset-top, 0px))
+             max(10px, env(safe-area-inset-right, 0px))
+             max(10px, env(safe-area-inset-bottom, 0px))
+             max(10px, env(safe-area-inset-left, 0px)) !important;
     align-items: center !important;
     justify-content: center !important;
     display: flex !important;
@@ -2936,7 +2944,8 @@ input[type="time"].form-control[value=""]:focus {
   border-radius: 24px;
   max-width: 600px;
   width: 100vw;
-  height: 100vh;
+  /* Avoid fixed 100vh which breaks in iOS PWAs; allow internal sections to define height */
+  height: auto;
   /* Subtle 3D Bevel Effect - consistent with other card elements */
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12), /* Enhanced depth shadow for modals */
@@ -2945,6 +2954,7 @@ input[type="time"].form-control[value=""]:focus {
     inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
     inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
   position: relative;
   border: 1px solid var(--border);
   box-shadow:
@@ -2958,7 +2968,8 @@ input[type="time"].form-control[value=""]:focus {
   .modal-content {
     width: 90vw;
     height: auto;
-    max-height: 90vh;
+    /* On desktop, cap modal height within viewport, accounting for safe areas where present */
+    max-height: calc(90vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
     margin: 0;
     border-radius: 24px;
   }
@@ -2970,12 +2981,12 @@ input[type="time"].form-control[value=""]:focus {
   height: auto !important;
   width: min(90vw, 600px) !important;
   max-width: 600px !important;
-  margin: 20px auto !important;
+  margin: 20px auto env(safe-area-inset-bottom, 0px) auto !important;
   overflow: visible !important;
   display: flex !important;
   flex-direction: column !important;
   /* Constrain height to viewport to ensure scrollability */
-  max-height: calc(100vh - 40px) !important;
+  max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
 }
 
 #addShiftModal .modal-body {
@@ -2995,7 +3006,7 @@ input[type="time"].form-control[value=""]:focus {
     max-width: 600px !important;
     margin: 0 auto !important;
     /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100vh - 40px) !important;
+    max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
@@ -3005,7 +3016,11 @@ input[type="time"].form-control[value=""]:focus {
     width: 100vw !important;
     margin: 0 !important;
     /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100vh - 20px) !important;
+    max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    /* Avoid stretching under the status bar and home indicator */
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+    padding-top: max(16px, env(safe-area-inset-top, 0px)) !important;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -5729,6 +5744,7 @@ input:checked + .slider:before {
 /* Modal Body Styling */
 .modal-body {
   padding: 20px;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Profile Picture Upload Component */
@@ -6481,7 +6497,7 @@ input:checked + .slider:before {
   display: flex !important;
   flex-direction: column !important;
   /* Constrain height to viewport to ensure scrollability */
-  max-height: calc(100vh - 40px) !important;
+  max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
 }
 
 #editShiftModal .modal-body {
@@ -6510,7 +6526,7 @@ input:checked + .slider:before {
     display: flex !important;
     flex-direction: column !important;
     /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100vh - 40px) !important;
+    max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
@@ -6518,9 +6534,9 @@ input:checked + .slider:before {
   #editShiftModal .modal-content {
     height: auto !important;
     width: 100vw !important;
-    margin: 10px 0 !important;
-    /* Remove height constraints to allow modal to grow with content */
-    max-height: none !important;
+    margin: 0 !important;
+    /* Constrain height to viewport to ensure scrollability and safe areas */
+    max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
     overflow: visible !important;
     display: flex !important;
     flex-direction: column !important;
@@ -11040,6 +11056,7 @@ body.chatbox-view .chatbox-container {
   width: 90vw;
   max-height: 85vh;
   height: auto;
+  /* Keep header/footer fixed; scroll inside sections */
   overflow: hidden;
   background: var(--bg-card);
   backdrop-filter: blur(20px);
@@ -11194,6 +11211,7 @@ body.chatbox-view .chatbox-container {
 .form-sections {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
   padding: 32px 40px;
 }
 
@@ -12151,15 +12169,19 @@ body.chatbox-view .chatbox-container {
 @media (max-width: 768px) {
   .employee-modal-content {
     width: 100vw;
-    height: 100vh;
+    /* Avoid fixed 100vh on iOS PWA; use dynamic viewport and safe areas */
+    height: auto;
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     max-width: none;
-    max-height: none;
     border-radius: 0;
     margin: 0;
     position: fixed;
     top: 0;
     left: 0;
     transform: none;
+    /* Keep content clear of status bar and home indicator */
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   }
 
   .employee-modal-content .modal-header {
@@ -12190,6 +12212,7 @@ body.chatbox-view .chatbox-container {
 
   .form-sections {
     padding: 24px 20px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .section-icon {
