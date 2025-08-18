@@ -15,7 +15,7 @@ const CONFIG = {
                 const ls = window.localStorage ? localStorage.getItem('apiBase') : null;
                 // Only allow known-safe origins
                 const allowlist = new Set([
-                    'https://wagecalculator-gbpd.onrender.com',
+                    'https://wageapp-prod.azurewebsites.net',
                     'http://localhost:5173'
                 ]);
                 const normalize = (val) => {
@@ -46,7 +46,7 @@ const CONFIG = {
             // fall through to prod
         }
         // Production default
-        return 'https://wagecalculator-gbpd.onrender.com';
+        return 'https://wageapp-prod.azurewebsites.net';
     })(),
     // Add other configuration options here
     debug: false,

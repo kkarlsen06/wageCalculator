@@ -29,7 +29,7 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
-app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : false }));
+app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : false, credentials: true }));
 app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
 // Note: express.static is registered after API routes to avoid intercepting API paths
 // ---------- third-party clients ----------
