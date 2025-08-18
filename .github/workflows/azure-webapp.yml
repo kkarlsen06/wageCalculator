@@ -20,6 +20,17 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Set App Settings
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az webapp config appsettings set -g rg-wageapp -n wageapp-prod --settings \
+              NODE_ENV=production \
+              SUPABASE_URL='${{ secrets.SUPABASE_URL }}' \
+              SUPABASE_SERVICE_ROLE_KEY='${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}' \
+              OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}' \
+              ENABLE_STATIC=true \
+              STATIC_DIR=.
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
