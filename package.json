@@ -7,8 +7,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "prebuild": "rimraf dist",
-    "clean": "rimraf dist",
+    "prebuild": "rm -rf dist",
+    "clean": "rm -rf dist",
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
