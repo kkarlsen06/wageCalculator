@@ -4,8 +4,13 @@ const API_BASE = window.CONFIG?.apiBase || '/api';
 // Remove global animation kill-switch. Initial app load animations are handled by
 // app-ready/animations-complete logic below.
 
-import { supabase as supa } from '../../src/supabase-client.js';
+import { supabase } from '../../src/supabase-client.js'
 // then just use supabase directly
+
+// DEBUG: check client
+supabase.auth.getSession().then(({ data, error }) => {
+  console.log("[debug] supabase session", data?.session, error)
+})
 
 function setAppHeight() {
   // Skip dynamic height calculations in chatbox-view mode to prevent viewport instability
