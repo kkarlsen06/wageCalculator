@@ -1,5 +1,5 @@
 // API Base URL configuration
-const API_BASE = window.CONFIG?.apiBase || '';
+const API_BASE = window.CONFIG?.apiBase || '/api';
 
 // Initialize Supabase client when DOM is loaded
 let supa;

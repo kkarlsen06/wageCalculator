@@ -1,5 +1,5 @@
 // API Base URL configuration
-const API_BASE = window.CONFIG?.apiBase || '';
+const API_BASE = window.CONFIG?.apiBase || '/api';
 
 // Remove global animation kill-switch. Initial app load animations are handled by
 // app-ready/animations-complete logic below.

@@ -3,8 +3,7 @@ info:
   title: WageCalculator API
   version: 1.0.0
 servers:
-  - url: https://wagecalculator-gbpd.onrender.com
-  - url: http://localhost:5173
+  - url: /api
 components:
   securitySchemes:
     bearerAuth:

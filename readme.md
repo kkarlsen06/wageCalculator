@@ -94,15 +94,7 @@ npm run dev
 ```
 
 ### Produksjon (Netlify)
-I Netlify Site Settings → Environment variables, legg til:
-```
-VITE_API_BASE=https://wagecalculator-gbpd.onrender.com
-```
-
-**Miljøvariabler:**
-- `VITE_API_BASE`: Base URL for API-endepunkter
-  - Lokal utvikling: `http://localhost:5173`
-  - Produksjon: `https://wagecalculator-gbpd.onrender.com`
+Frontend ruter nå alle API-kall via Netlify-proxy (`/api`). Ingen miljøvariabler for API-base er nødvendig.
 
 ## 📱 Responsivt design
 

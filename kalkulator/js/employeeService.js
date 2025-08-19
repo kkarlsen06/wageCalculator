@@ -5,7 +5,7 @@
  */
 
 export class EmployeeService {
-    constructor(apiBase = window.CONFIG?.apiBase || 'http://localhost:5173') {
+    constructor(apiBase = window.CONFIG?.apiBase || '/api') {
         this.apiBase = apiBase;
         this.cache = new Map();
         // Avatars removed
@@ -50,7 +50,7 @@ export class EmployeeService {
             this.setLoadingState('fetchEmployees', true);
             
             const headers = await this.getAuthHeaders();
-            const url = new URL(`${this.apiBase}/employees`);
+            const url = new URL(`${this.apiBase}/employees`, window.location.origin);
             if (includeArchived) {
                 url.searchParams.set('include_archived', '1');
             }

@@ -25,7 +25,7 @@ class FeatureFlags {
         }
 
         try {
-            const API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiBase) || '';
+            const API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiBase) || '/api';
 
             // Use dynamic import for fetch in Node.js environment
             const fetchFn = typeof fetch !== 'undefined' ? fetch : (await import('node-fetch')).default;
