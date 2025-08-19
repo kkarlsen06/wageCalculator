@@ -2,12 +2,18 @@
 console.log('[BOOT] Using server file:', import.meta.url);
 console.log('[BOOT] CWD:', process.cwd());
 
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Load .env from parent directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { OpenAI } from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { calcEmployeeShift } from './payroll/calc.js';
@@ -15,8 +21,6 @@ import { randomUUID } from 'node:crypto';
 import { verifySupabaseJWT } from './lib/auth/verifySupabaseJwt.js';
 
 // ---------- path helpers ----------
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
 const FRONTEND_DIR = __dirname;
 
 // ---------- app & core middleware ----------
@@ -75,7 +79,7 @@ const openai = (() => {
 })();
 // Initialize Supabase admin client
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+const supabaseSecretKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
 export const admin = supabaseUrl && supabaseSecretKey 
   ? createClient(supabaseUrl, supabaseSecretKey)
@@ -84,7 +88,7 @@ export const admin = supabaseUrl && supabaseSecretKey
 // Backwards compatibility wrapper
 const supabase = (() => {
   if (!supabaseUrl || !supabaseSecretKey) {
-    console.warn('[BOOT] SUPABASE_URL/SUPABASE_SECRET_KEY not set – DB features disabled.');
+    console.warn('[BOOT] SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) not set – DB features disabled.');
     return null;
   }
   try {

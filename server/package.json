@@ -12,6 +12,8 @@
     "check:jwt": "node scripts/dev-check-jwt.js"
   },
   "dependencies": {
+    "@azure/msal-node": "^3.7.1",
+    "@octokit/rest": "^22.0.0",
     "@supabase/supabase-js": "^2.53.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
