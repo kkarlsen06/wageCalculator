@@ -2,6 +2,7 @@ name: Deploy to Azure Web App
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch: {}
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
@@ -14,9 +15,10 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-      - name: Install server deps
+          cache-dependency-path: "server/package-lock.json"
+      - name: Install backend deps
         working-directory: ./server
-        run: npm install --no-fund --no-audit
+        run: npm ci --no-fund --no-audit
       - name: Smoke build (no-op for server)
         working-directory: ./server
         run: node -e "require('fs').accessSync('server.js')"
@@ -37,7 +39,10 @@ jobs:
               STATIC_DIR='.'
             az webapp config appsettings set -g rg-wageapp -n wageapp-prod --settings \
               SCM_DO_BUILD_DURING_DEPLOYMENT=true
-            az webapp config set -g rg-wageapp -n wageapp-prod --startup-file "npm start"
+            # Ensure the App Service runtime and startup are correct
+            az webapp config set -g rg-wageapp -n wageapp-prod --linux-fx-version "NODE|22-lts" --startup-file "npm start"
+            # Clear ZipDeploy run-from-package if set
+            az webapp config appsettings delete -g rg-wageapp -n wageapp-prod --setting-names WEBSITE_RUN_FROM_PACKAGE || true
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
