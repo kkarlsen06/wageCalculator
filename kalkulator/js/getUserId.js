@@ -4,35 +4,31 @@ let cachedUserId = null;
 async function getUserId() {
   if (cachedUserId) return cachedUserId;
 
-  // Try fast local verify first (claims)
+  // Try claims first
   const { data: claims } = await window.supa.auth.getClaims();
-  const idFromClaims = claims?.sub;
-  if (idFromClaims) {
-    console.debug("[auth] using userId from claims:", idFromClaims);
-    cachedUserId = idFromClaims;
+  const sub = (claims)?.sub;
+  if (sub) {
+    cachedUserId = sub;
     return cachedUserId;
   }
 
-  // Fallback to full user fetch
+  // Fallback to full user
   const { data: { user }, error } = await window.supa.auth.getUser();
-  if (error) throw error;
-  const id = user?.id;
-  if (!id) throw new Error("No authenticated user id found");
-  console.debug("[auth] using userId from getUser:", id);
-  cachedUserId = id;
-  return cachedUserId;
+  if (error) {
+    console.error("[auth] getUser() error:", error.message);
+    return null;
+  }
+  if (user?.id) {
+    cachedUserId = user.id;
+    return cachedUserId;
+  }
+
+  return null;
 }
 
 // Clear cache on auth state changes
 function clearUserIdCache() {
   cachedUserId = null;
-}
-
-// Guard function to check if user ID exists before queries
-async function guardedUserId() {
-  const userId = await getUserId();
-  if (!userId) throw new Error("Missing user id");
-  return userId;
 }
 
 // Set up auth state listener to clear cache on auth changes
@@ -48,4 +44,3 @@ if (window.supa) {
 // Make functions globally available
 window.getUserId = getUserId;
 window.clearUserIdCache = clearUserIdCache;
-window.guardedUserId = guardedUserId;
