@@ -1,3 +1,8 @@
+// Defensive guard to ensure getUserId helper is loaded
+if (!window.getUserId) {
+  console.error("getUserId helper not loaded before appLogic.js");
+}
+
 // Cache DOM elements to avoid repeated queries
 const domCache = {
     progressFill: null,
@@ -1176,7 +1181,7 @@ export const app = {
             const { data: claims } = await window.supa.auth.getClaims();
             const isAuthed = !!claims;
             if (!isAuthed) { alert('Autentiseringsfeil'); return; }
-            const userId = await getUserId();
+            const userId = await window.getUserId();
             if (!userId) {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
@@ -1305,7 +1310,7 @@ export const app = {
                 alert('Feil ved autentisering');
                 return;
             }
-            const userId = await getUserId();
+            const userId = await window.getUserId();
             if (!userId) {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
@@ -1877,7 +1882,7 @@ export const app = {
             this.updateDisplay();
             return;
         }
-        const userId = await getUserId();
+        const userId = await window.getUserId();
         if (!userId) {
             console.warn("[auth] Missing userId, skipping query");
             return;
@@ -2168,7 +2173,7 @@ export const app = {
         const { data: claims } = await window.supa.auth.getClaims();
         const isAuthed = !!claims;
         if (!isAuthed) return;
-        const userId = await getUserId();
+        const userId = await window.getUserId();
         if (!userId) {
             console.warn("[auth] Missing userId, skipping query");
             return;
@@ -6890,7 +6895,7 @@ export const app = {
             // Client-side fallback upsert into user_settings
             try {
                 const { data: claims } = await window.supa.auth.getClaims();
-                const userId = await getUserId();
+                const userId = await window.getUserId();
             if (!userId) {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
@@ -6996,7 +7001,7 @@ export const app = {
 
         try {
             const { data: claims } = await window.supa.auth.getClaims();
-            const userId = await getUserId();
+            const userId = await window.getUserId();
             if (!userId) {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
@@ -7043,7 +7048,7 @@ export const app = {
             // Client-side fallback clear
             try {
                 const { data: claims } = await window.supa.auth.getClaims();
-                const userId = await getUserId();
+                const userId = await window.getUserId();
             if (!userId) {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
@@ -8732,7 +8737,7 @@ export const app = {
 
         try {
             const { data: claims } = await window.supa.auth.getClaims();
-            const userId = await getUserId();
+            const userId = await window.getUserId();
             if (!userId) {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
@@ -8777,7 +8782,7 @@ export const app = {
 
         try {
             const { data: claims } = await window.supa.auth.getClaims();
-            const userId = await getUserId();
+            const userId = await window.getUserId();
             if (!userId) {
                 console.warn("[auth] Missing userId, skipping query");
                 return;

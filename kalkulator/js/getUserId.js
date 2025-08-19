@@ -2,13 +2,17 @@
 let cachedUserId = null;
 
 async function getUserId() {
-  if (cachedUserId) return cachedUserId;
+  if (cachedUserId) {
+    console.debug("[auth] Resolved userId:", cachedUserId);
+    return cachedUserId;
+  }
 
   // Try claims first
   const { data: claims } = await window.supa.auth.getClaims();
   const sub = (claims)?.sub;
   if (sub) {
     cachedUserId = sub;
+    console.debug("[auth] Resolved userId:", cachedUserId);
     return cachedUserId;
   }
 
@@ -20,6 +24,7 @@ async function getUserId() {
   }
   if (user?.id) {
     cachedUserId = user.id;
+    console.debug("[auth] Resolved userId:", cachedUserId);
     return cachedUserId;
   }
 
