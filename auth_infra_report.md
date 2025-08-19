@@ -7,7 +7,7 @@ This report identifies all Supabase environment variables and JWT-related authen
 
 ### Client-Side Environment Variables
 **File: `src/runtime-config.js`**
-- Lines 5-6: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` configuration
+- Lines 5-6: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` configuration
 - Lines 35-38: Security check to remove server-only keys from client config
 
 **File: `netlify.toml`**
@@ -76,7 +76,7 @@ Server-side authentication:
 
 ### Environment Variables in Use:
 - `VITE_SUPABASE_URL` (client-side)
-- `VITE_SUPABASE_ANON_KEY` (client-side)  
+- `VITE_SUPABASE_PUBLISHABLE_KEY` (client-side)  
 - `SUPABASE_URL` (server-side)
 - `SUPABASE_SERVICE_ROLE_KEY` (server-side)
 

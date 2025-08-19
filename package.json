@@ -15,7 +15,8 @@
     "smoke:userid": "node scripts/smoke-userid.js",
     "check:userid": "node scripts/check-userid.js",
     "dev:server": "npm --prefix server run dev:server",
-    "smoke:auth": "node scripts/smoke-auth.js"
+    "smoke:auth": "node scripts/smoke-auth.js",
+    "security:check": "scripts/security-check.sh"
   },
   "repository": {
     "type": "git",

@@ -25,6 +25,16 @@ jobs:
         working-directory: ./server
         run: npm ci --no-fund --no-audit
 
+      - name: Security scan - Check for leaked secrets in client code
+        run: |
+          if rg -n "(SUPABASE_SERVICE_ROLE_KEY|SUPABASE_ANON_KEY)" src/ kalkulator/ 2>/dev/null; then
+            echo "❌ Sensitive key pattern detected in client code"
+            echo "🔒 Service role keys must never be exposed to the browser"
+            exit 1
+          else
+            echo "✅ No sensitive keys found in client code"
+          fi
+
       - name: Smoke build (no-op for server)
         working-directory: ./server
         run: node -e "require('fs').accessSync('server.js')"
