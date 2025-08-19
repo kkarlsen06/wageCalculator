@@ -3436,6 +3436,10 @@ export const app = {
             this.fetchAndDisplayEmployeeShifts?.();
             this.renderEmployeeWorkSummary?.();
         }
+        // Render statistics tab specific content
+        if (this.currentView === 'stats') {
+            this.renderCurrentUserWorkSummary?.();
+        }
     },
 
     // Loading state management for UI refresh
@@ -8279,6 +8283,206 @@ export const app = {
                 // Best-effort restoration to previous values
                 // If prev values are not in scope, ignore
             }
+        }
+    },
+
+    // Render a work summary table for the current user in the statistics view
+    renderCurrentUserWorkSummary() {
+        try {
+            // Find mount point: prefer the parent of weeklyHoursChart (it may be moved), fallback to statistics-content
+            const weeklyHoursChart = document.getElementById('weeklyHoursChart');
+            const preferredMount = weeklyHoursChart ? weeklyHoursChart.parentElement : null;
+            const fallbackMount = document.querySelector('.statistics-content');
+            const mountPoint = preferredMount || fallbackMount;
+            if (!mountPoint) return;
+
+            // Ensure container exists and is mounted at the correct place
+            let container = document.getElementById('currentUserWorkSummary');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'currentUserWorkSummary';
+                container.style.marginTop = '16px';
+                mountPoint.appendChild(container);
+            } else if (container.parentElement !== mountPoint) {
+                container.parentElement.removeChild(container);
+                mountPoint.appendChild(container);
+            }
+
+            // Collect current month shifts (user's own in stats view)
+            const monthShifts = (this.shifts || []).filter(shift =>
+                shift.date.getMonth() === this.currentMonth - 1 &&
+                shift.date.getFullYear() === this.currentYear
+            );
+
+            // If no shifts, show empty state table
+            if (monthShifts.length === 0) {
+                container.innerHTML = `
+                    <div class="employee-work-summary">
+                        <div class="employee-work-summary-header">
+                            <h3 style="margin:0 0 12px 0;">${(document.getElementById('userNickname')?.textContent || 'Min oversikt')}</h3>
+                        </div>
+                        <div class="employee-work-summary-table-wrapper">
+                            <table class="employee-work-summary-table">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Sats</th>
+                                        <th>Timer</th>
+                                        <th>Beløp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4" style="text-align:center;color:var(--text-secondary);padding:16px;">Ingen vakter i valgt måned</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td>Totalt</td>
+                                        <td></td>
+                                        <td>0,00 t</td>
+                                        <td>${this.formatCurrencyDetailed(0)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Use current user settings for bonuses and pause deduction
+            const bonusesConfig = this.getCurrentBonuses();
+
+            // Aggregations
+            const baseAggregation = new Map(); // wageRate -> { hours, rate, pay }
+            const ubAggregation = new Map();   // `${from}-${to}|${rate}` -> { label, rate, hours, pay, sortKey }
+
+            const asDisplay = (hhmm) => {
+                if (hhmm === '23:59') return '24';
+                const [h, m] = hhmm.split(':');
+                return m === '00' ? `${parseInt(h, 10)}` : `${h}:${m}`;
+            };
+
+            for (const shift of monthShifts) {
+                const startMinutes = this.timeToMinutes(shift.startTime);
+                let endMinutes = this.timeToMinutes(shift.endTime);
+                if (endMinutes <= startMinutes) endMinutes += 24 * 60;
+
+                const wageRate = this.getWageRateForShift(shift);
+
+                // Calculate legal break deduction using user's current settings and bonuses
+                const breakResult = this.calculateLegalBreakDeduction(shift, wageRate, bonusesConfig, startMinutes, endMinutes);
+
+                // Determine paid hours for base row
+                let paidHoursForShift;
+                if (breakResult?.shouldDeduct && (breakResult.method === 'proportional' || breakResult.method === 'base_only')) {
+                    const adjusted = this.calculateAdjustedWages(breakResult, wageRate);
+                    paidHoursForShift = adjusted.totalHours;
+                } else {
+                    const durationHours = (endMinutes - startMinutes) / 60;
+                    paidHoursForShift = breakResult?.shouldDeduct ? Math.max(0, durationHours - (breakResult.deductionHours || 0)) : durationHours;
+                }
+
+                // Accumulate base hours per wage rate
+                const baseEntry = baseAggregation.get(wageRate) || { hours: 0, rate: wageRate, pay: 0 };
+                baseEntry.hours += paidHoursForShift;
+                baseEntry.pay = baseEntry.hours * baseEntry.rate;
+                baseAggregation.set(wageRate, baseEntry);
+
+                // Build wage periods for UB accumulation, respecting deduction method
+                let wagePeriods = [];
+                if (breakResult?.method === 'end_of_shift' && breakResult.shouldDeduct) {
+                    // Recalculate periods with adjusted end time
+                    wagePeriods = this.calculateWagePeriods(shift, wageRate, bonusesConfig, startMinutes, breakResult.adjustedEndMinutes);
+                } else if (breakResult?.auditTrail?.wagePeriods && breakResult.auditTrail.wagePeriods.length > 0) {
+                    wagePeriods = breakResult.auditTrail.wagePeriods.map(p => ({ ...p }));
+                } else {
+                    wagePeriods = this.calculateWagePeriods(shift, wageRate, bonusesConfig, startMinutes, endMinutes);
+                }
+
+                // Adjust period durations for proportional method
+                if (breakResult?.shouldDeduct && breakResult.method === 'proportional') {
+                    const totalH = wagePeriods.reduce((s, p) => s + p.durationHours, 0) || 1;
+                    const deduction = breakResult.deductionHours || 0;
+                    wagePeriods = wagePeriods.map(p => {
+                        const d = deduction * (p.durationHours / totalH);
+                        return { ...p, durationHours: Math.max(0, p.durationHours - d) };
+                    });
+                }
+
+                // Accumulate UB per slot
+                for (const p of wagePeriods) {
+                    if (!p || p.durationHours <= 0) continue;
+                    const duration = p.durationHours;
+                    for (const slot of (p.bonuses || [])) {
+                        const key = `${slot.from}-${slot.to}|${slot.rate}`;
+                        const label = `UB ${asDisplay(slot.from)}-${asDisplay(slot.to)}`;
+                        const entry = ubAggregation.get(key) || { label, rate: slot.rate, hours: 0, pay: 0, sortKey: this.timeToMinutes(slot.from) };
+                        entry.hours += duration;
+                        entry.pay = entry.hours * entry.rate;
+                        ubAggregation.set(key, entry);
+                    }
+                }
+            }
+
+            // Build table rows: base first, then UB rows by time
+            const baseRows = Array.from(baseAggregation.values())
+                .sort((a, b) => a.rate - b.rate)
+                .map(item => ({ label: 'Grunnlønn', rate: item.rate, hours: item.hours, pay: item.pay, group: 'base' }));
+
+            const ubRows = Array.from(ubAggregation.values())
+                .sort((a, b) => a.sortKey - b.sortKey || a.rate - b.rate)
+                .map(item => ({ label: item.label, rate: item.rate, hours: item.hours, pay: item.pay, group: 'ub' }));
+
+            const allRows = [...baseRows, ...ubRows];
+            const rows = allRows.map(item => `
+                <tr>
+                    <td class="col-type">${item.label}</td>
+                    <td class="col-rate">${this.formatCurrencyDetailed(item.rate)}</td>
+                    <td class="col-hours">${item.hours.toFixed(2).replace('.', ',')} t</td>
+                    <td class="col-pay">${this.formatCurrencyDetailed(item.pay)}</td>
+                </tr>
+            `).join('');
+
+            const totalHours = baseRows.reduce((s, r) => s + r.hours, 0);
+            const totalPay = allRows.reduce((s, r) => s + r.pay, 0);
+
+            const headerName = (document.getElementById('userNickname')?.textContent || 'Min oversikt');
+            const html = `
+                <div class="employee-work-summary">
+                    <div class="employee-work-summary-header">
+                        <h3 style="margin:0 0 12px 0;">${headerName}</h3>
+                    </div>
+                    <div class="employee-work-summary-table-wrapper">
+                        <table class="employee-work-summary-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Sats</th>
+                                    <th>Timer</th>
+                                    <th>Beløp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows || '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:16px;">Ingen vakter i valgt måned</td></tr>'}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>Totalt</td>
+                                    <td></td>
+                                    <td>${totalHours.toFixed(2).replace('.', ',')} t</td>
+                                    <td>${this.formatCurrencyDetailed(totalPay)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Error rendering current user work summary:', error);
         }
     },
     formatHours(hours) {

@@ -7,8 +7,10 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "vite",
+    "prebuild": "rimraf dist",
+    "clean": "rimraf dist",
     "build": "vite build",
+    "dev": "vite",
     "preview": "vite preview"
   },
   "repository": {
@@ -21,11 +23,10 @@
   "bugs": {
     "url": "https://github.com/kkarlsen06/wageCalculator/issues"
   },
-
   "homepage": "https://github.com/kkarlsen06/wageCalculator#readme",
   "type": "module",
   "devDependencies": {
+    "rimraf": "^6.0.1",
     "vite": "^7.1.3"
   }
 }
-
