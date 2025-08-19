@@ -3,6 +3,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   root: '.',
+  base: '/kalkulator/',
   server: {
     port: 5173,
     open: false,
@@ -26,5 +27,3 @@ export default defineConfig({
     }
   }
 });
-
-
