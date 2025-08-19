@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "/api/*"
+  to = "https://wageapp-prod.azurewebsites.net/api/:splat"
+  status = 200
+  force = true
