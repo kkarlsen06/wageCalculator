@@ -1,6 +1,9 @@
 # Netlify redirects file
 # Redirect for better URL structure
 
+# Proxy API requests to Azure backend (bypass SPA fallback)
+/api/*  https://wageapp-prod.azurewebsites.net/:splat  200!
+
 # Optional: redirect old auth.html to /kalkulator
 /*    /index.html   200
 /auth.html /kalkulator/ 301
