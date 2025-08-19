@@ -5,6 +5,8 @@ const API_BASE = window.CONFIG?.apiBase || '/api';
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
 import { supabase } from '../../src/supabase-client.js'
+const supa = supabase;
+window.supa = supa;
 
 document.addEventListener('DOMContentLoaded', async function() {
 
