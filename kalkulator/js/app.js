@@ -515,10 +515,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Fallback: read directly from user_settings via Supabase if backend not used
       if (!avatarUrl) {
         try {
+          const userId = user?.id;
+          if (!userId) return;
           const { data: row } = await supa
             .from('user_settings')
             .select('profile_picture_url')
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
             .maybeSingle();
           avatarUrl = row?.profile_picture_url || '';
         } catch (_) { /* ignore */ }

@@ -1176,7 +1176,7 @@ export const app = {
             const { data: claims } = await window.supa.auth.getClaims();
             const isAuthed = !!claims;
             if (!isAuthed) { alert('Autentiseringsfeil'); return; }
-            const userId = claims?.sub;
+            const userId = await guardedUserId();
 
             for (const d of dates) {
                 const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
@@ -1300,7 +1300,7 @@ export const app = {
                 alert('Feil ved autentisering');
                 return;
             }
-            const userId = claims?.sub;
+            const userId = await guardedUserId();
 
             // Process each selected date
             const createdShifts = [];
@@ -1867,7 +1867,7 @@ export const app = {
             this.updateDisplay();
             return;
         }
-        const userId = claims?.sub;
+        const userId = await guardedUserId();
 
         try {
             // Fetch shifts with employee data
@@ -2153,7 +2153,7 @@ export const app = {
         const { data: claims } = await window.supa.auth.getClaims();
         const isAuthed = !!claims;
         if (!isAuthed) return;
-        const userId = claims?.sub;
+        const userId = await guardedUserId();
 
         try {
             // First, try to fetch existing settings to see what columns exist
@@ -6870,7 +6870,7 @@ export const app = {
             // Client-side fallback upsert into user_settings
             try {
                 const { data: claims } = await window.supa.auth.getClaims();
-                const userId = claims?.sub;
+                const userId = await guardedUserId();
                 if (userId) {
                     const { error: updateError } = await window.supa
                         .from('user_settings')
@@ -6971,7 +6971,7 @@ export const app = {
 
         try {
             const { data: claims } = await window.supa.auth.getClaims();
-            const userId = claims?.sub;
+            const userId = await guardedUserId();
             if (!userId) throw new Error('Ingen bruker');
             if (window.supa.storage && window.supa.storage.from) {
                 const storage = window.supa.storage.from('profile-pictures');
@@ -7013,7 +7013,7 @@ export const app = {
             // Client-side fallback clear
             try {
                 const { data: claims } = await window.supa.auth.getClaims();
-                const userId = claims?.sub;
+                const userId = await guardedUserId();
                 if (userId) {
                     await window.supa
                         .from('user_settings')
@@ -8697,7 +8697,7 @@ export const app = {
 
         try {
             const { data: claims } = await window.supa.auth.getClaims();
-            const userId = claims?.sub;
+            const userId = await guardedUserId();
             if (!userId) return;
 
             // Delete all shifts
@@ -8737,7 +8737,7 @@ export const app = {
 
         try {
             const { data: claims } = await window.supa.auth.getClaims();
-            const userId = claims?.sub;
+            const userId = await guardedUserId();
             if (!userId) return;
 
             // Delete all shifts

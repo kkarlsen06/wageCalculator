@@ -11,7 +11,8 @@
     "clean": "rimraf dist",
     "build": "vite build",
     "dev": "vite",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "smoke:userid": "node scripts/smoke-userid.js"
   },
   "repository": {
     "type": "git",

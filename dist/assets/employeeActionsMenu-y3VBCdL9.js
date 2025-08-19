@@ -1,0 +1,47 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/employeeModal-DEG7fEJC.js","assets/kalkulator-CddgrMNO.js","assets/modulepreload-polyfill-B5Qt9EMX.js","assets/runtime-config-CwEj8XBa.js","assets/kalkulator-BYzzdff5.css"])))=>i.map(i=>d[i]);
+import{_ as c}from"./kalkulator-CddgrMNO.js";import"./modulepreload-polyfill-B5Qt9EMX.js";import"./runtime-config-CwEj8XBa.js";class m{constructor(e){this.app=e,this.currentMenu=null,this.currentEmployeeId=null,this.isVisible=!1,this.handleDocumentClick=this.handleDocumentClick.bind(this),this.handleKeyDown=this.handleKeyDown.bind(this),this.handleResize=this.handleResize.bind(this)}show(e,t,i={}){try{this.hide();const n=this.app.employees.find(r=>r.id===e);if(!n){console.error("Employee not found:",e);return}this.currentEmployeeId=e,this.createMenu(n,t,i),this.attachEventListeners(),this.isVisible=!0,this.announceMenuOpen(n.name)}catch(n){console.error("Error showing employee actions menu:",n)}}hide(){this.currentMenu&&(this.currentMenu.remove(),this.currentMenu=null),this.removeEventListeners(),this.currentEmployeeId=null,this.isVisible=!1}createMenu(e,t,i){this.currentMenu=document.createElement("div"),this.currentMenu.className="employee-actions-menu",this.currentMenu.setAttribute("role","menu"),this.currentMenu.setAttribute("aria-label",`Handlinger for ${e.name}`);const n=this.createMenuItems(e);this.currentMenu.innerHTML=`
+            <div class="menu-header">
+                <div class="menu-employee-info">
+                    <div class="menu-employee-avatar" style="--employee-color: ${this.app.getEmployeeDisplayColor(e)}">
+                        ${this.getEmployeeAvatarContent(e)}
+                    </div>
+                    <div class="menu-employee-name">${e.name}</div>
+                </div>
+                <button class="menu-close-btn" aria-label="Lukk meny">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="menu-items">
+                ${n}
+            </div>
+        `,this.positionMenu(t,i),document.body.appendChild(this.currentMenu),setTimeout(()=>{const r=this.currentMenu.querySelector(".menu-item");r&&r.focus()},100)}createMenuItems(e){return[{id:"edit",icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>`,label:"Rediger",description:"Rediger ansattinformasjon"},{id:"color",icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="13.5" cy="6.5" r=".5"></circle>
+                    <circle cx="17.5" cy="10.5" r=".5"></circle>
+                    <circle cx="8.5" cy="7.5" r=".5"></circle>
+                    <circle cx="6.5" cy="12.5" r=".5"></circle>
+                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+                </svg>`,label:"Endre farge",description:"Velg visningsfarge"},{id:"archive",icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3,6 5,6 21,6"></polyline>
+                    <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>`,label:e.archived_at?"Gjenopprett":"Arkiver",description:e.archived_at?"Gjenopprett ansatt":"Arkiver ansatt",className:"destructive"}].map(i=>`
+            <button class="menu-item ${i.className||""}" 
+                    data-action="${i.id}" 
+                    role="menuitem"
+                    aria-describedby="desc-${i.id}">
+                <div class="menu-item-icon">${i.icon}</div>
+                <div class="menu-item-content">
+                    <div class="menu-item-label">${i.label}</div>
+                    <div class="menu-item-description" id="desc-${i.id}">${i.description}</div>
+                </div>
+            </button>
+        `).join("")}getEmployeeAvatarContent(e){return`<div class="avatar-initials">${this.app.getEmployeeInitials(e)}</div>`}positionMenu(e,t){const i=e.getBoundingClientRect(),n=280,r=320,s=16;let o=i.left,a=i.bottom+8;o+n>window.innerWidth-s&&(o=window.innerWidth-n-s),o<s&&(o=s),a+r>window.innerHeight-s&&(a=i.top-r-8),a<s&&(a=s),this.currentMenu.style.left=`${o}px`,this.currentMenu.style.top=`${a}px`}attachEventListeners(){document.addEventListener("click",this.handleDocumentClick,!0),document.addEventListener("keydown",this.handleKeyDown),window.addEventListener("resize",this.handleResize),this.currentMenu&&this.currentMenu.addEventListener("click",this.handleMenuClick.bind(this))}removeEventListeners(){document.removeEventListener("click",this.handleDocumentClick,!0),document.removeEventListener("keydown",this.handleKeyDown),window.removeEventListener("resize",this.handleResize)}handleDocumentClick(e){this.currentMenu&&!this.currentMenu.contains(e.target)&&this.hide()}handleKeyDown(e){if(this.isVisible)switch(e.key){case"Escape":e.preventDefault(),this.hide();break;case"ArrowDown":e.preventDefault(),this.focusNextItem();break;case"ArrowUp":e.preventDefault(),this.focusPreviousItem();break}}handleResize(){this.isVisible&&this.hide()}handleMenuClick(e){const t=e.target.closest(".menu-item");if(e.target.closest(".menu-close-btn")){this.hide();return}if(t){const n=t.dataset.action;this.handleAction(n)}}async handleAction(e){try{const t=this.app.employees.find(i=>i.id===this.currentEmployeeId);if(!t)return;switch(this.hide(),e){case"edit":await this.handleEditEmployee(t);break;case"color":await this.handleChangeColor(t);break;case"archive":await this.handleArchiveEmployee(t);break}}catch(t){console.error("Error handling menu action:",t)}}async handleEditEmployee(e){try{const{EmployeeModal:t}=await c(async()=>{const{EmployeeModal:i}=await import("./employeeModal-DEG7fEJC.js");return{EmployeeModal:i}},__vite__mapDeps([0,1,2,3,4]));this.employeeModal||(this.employeeModal=new t(this.app)),await this.employeeModal.showEdit(e)}catch(t){console.error("Error opening edit employee modal:",t),this.showError("Kunne ikke åpne redigeringsvindu")}}async handleChangeColor(e){try{const{EmployeeModal:t}=await c(async()=>{const{EmployeeModal:i}=await import("./employeeModal-DEG7fEJC.js");return{EmployeeModal:i}},__vite__mapDeps([0,1,2,3,4]));this.employeeModal||(this.employeeModal=new t(this.app)),await this.employeeModal.showEdit(e),setTimeout(()=>{const i=document.querySelector("#employeeColor");i&&(i.focus(),i.scrollIntoView({behavior:"smooth",block:"center"}))},200)}catch(t){console.error("Error opening color picker:",t),this.showError("Kunne ikke åpne fargevalg")}}async handleArchiveEmployee(e){try{if(!await this.showArchiveConfirmation(e))return;const{employeeService:i}=await c(async()=>{const{employeeService:o}=await import("./employeeService-caDyaWb2.js");return{employeeService:o}},[]),n={...e},r=this.app.employees.findIndex(o=>o.id===e.id);if(r===-1)throw new Error("Ansatt ikke funnet");const s={...e,archived_at:new Date().toISOString(),_optimistic:!0,_loading:!0};this.app.employees[r]=s,this.app.onEmployeesLoaded();try{await i.archiveEmployee(e.id),this.app.employees[r]={...s,_optimistic:!1,_loading:!1},this.app.onEmployeesLoaded(),this.showSuccess(`${e.name} ble arkivert`)}catch(o){throw this.app.employees[r]=n,this.app.onEmployeesLoaded(),o}}catch(t){console.error("Error archiving employee:",t),this.showError(t.message||"Kunne ikke arkivere ansatt")}}async showArchiveConfirmation(e){try{const{confirmArchive:t}=await c(async()=>{const{confirmArchive:i}=await import("./confirmationDialog-zQaUvyPo.js");return{confirmArchive:i}},[]);return await t(e.name)}catch(t){return console.error("Error showing confirmation dialog:",t),new Promise(i=>{const n=confirm(`Er du sikker på at du vil arkivere ${e.name}?
+
+Arkiverte ansatte vil ikke vises i listen, men historiske data bevares.`);i(n)})}}showError(e){alert(e)}showSuccess(e){console.log("Success:",e),window.showToast&&window.showToast(e,"success")}focusNextItem(){const e=this.currentMenu.querySelectorAll(".menu-item"),i=(Array.from(e).findIndex(n=>n===document.activeElement)+1)%e.length;e[i].focus()}focusPreviousItem(){const e=this.currentMenu.querySelectorAll(".menu-item"),t=Array.from(e).findIndex(n=>n===document.activeElement),i=t<=0?e.length-1:t-1;e[i].focus()}announceMenuOpen(e){const t=document.createElement("div");t.setAttribute("aria-live","polite"),t.setAttribute("aria-atomic","true"),t.className="sr-only",t.textContent=`Handlingsmeny åpnet for ${e}`,document.body.appendChild(t),setTimeout(()=>t.remove(),1e3)}}export{m as EmployeeActionsMenu};

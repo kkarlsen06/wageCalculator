@@ -358,6 +358,13 @@ async function authenticateUser(req, res, next) {
   try {
     const claims = await verifySupabaseJWT(token);
     
+    // Ensure we have a valid user ID
+    if (!claims.sub) {
+      return res.status(401).json({ error: 'Invalid token: missing user ID' });
+    }
+    
+    console.debug('[auth] using userId:', claims.sub);
+    
     // Attach auth information to request
     req.auth = { 
       userId: claims.sub, 

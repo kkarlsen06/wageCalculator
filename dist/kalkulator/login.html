@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kompensasjonskalkulator - Beregn vaktlønn, tillegg og ekstratimer | kkarlsen.art</title>
+  <meta name="description" content="Automatisk kalkulator for vakter, tillegg og kompensasjon. Beregn nøyaktig lønn uansett turnus, kveldsvakter eller ekstrajobbing. Laget for å gi deg full oversikt.">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
+  <style>body{visibility:hidden;}</style>
+  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#000000">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Vaktberegner">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-navbutton-color" content="#000000">
+  <meta name="msapplication-TileColor" content="#000000">
+  <link rel="manifest" href="/assets/manifest-_cuJNeEB.json">
+  <script type="module" crossorigin src="/assets/login-D6YML7c7.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/error-handling-Do_n41nE.js">
+  <link rel="modulepreload" crossorigin href="/assets/runtime-config-CwEj8XBa.js">
+  <link rel="stylesheet" crossorigin href="/assets/kalkulator-BYzzdff5.css">
+</head>
+<body class="pb-80">
+  <!-- Skip links for accessibility -->
+  <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
+  
+  <!-- Tilbake til hovedside knapp -->
+  <div class="absolute-top-left">
+    <a href="/" class="btn btn-secondary back-link" aria-label="Tilbake til hovedside">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m12 19-7-7 7-7"/>
+        <path d="M19 12H5"/>
+      </svg>
+      Tilbake til hovedside
+    </a>
+  </div>
+
+  <main id="main-content">
+    <div id="auth-box" class="auth-center">
+      <div class="login-card" aria-labelledby="login-heading">
+        <form id="login-form" novalidate>
+          <h2 id="login-heading" class="mb-20">Logg inn</h2>
+          <label for="email" class="form-label">E-post</label>
+          <input id="email" name="email" type="email" placeholder="E-post" required class="form-control mb-12" aria-describedby="auth-msg" autocomplete="email" />
+          <label for="password" class="form-label">Passord</label>
+          <input id="password" name="password" type="password" placeholder="Passord" required class="form-control mb-18" aria-describedby="auth-msg" autocomplete="current-password" />
+          <button id="login-btn" type="submit" class="btn btn-primary mb-12">Logg inn</button>
+        </form>
+        <button id="signup-btn" class="btn btn-secondary mb-12">Opprett ny konto</button>
+        <button id="forgot-btn" class="mt-4" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;" aria-label="Tilbakestill passord">Glemt passord?</button>
+        <div id="auth-msg" role="alert" aria-live="polite" style="color: var(--error); min-height: 24px; text-align: center; font-size: 15px;"></div>
+      </div>
+    </div>
+
+  <div id="signup-card" class="auth-center" style="display:none;">
+    <div class="login-card">
+      <form id="signup-form" novalidate>
+        <h2 class="mb-20">Opprett ny konto</h2>
+        <label for="signup-email" class="form-label">E-post</label>
+        <input id="signup-email" name="email" type="email" placeholder="E-post" required class="form-control mb-12" autocomplete="email" />
+        <label for="signup-password" class="form-label">Passord</label>
+        <input id="signup-password" name="password" type="password" placeholder="Passord" required class="form-control mb-12" autocomplete="new-password" />
+        <label for="signup-name" class="form-label">Fornavn</label>
+        <input id="signup-name" name="given-name" type="text" placeholder="Fornavn" required class="form-control mb-18" autocomplete="given-name" />
+        <button id="create-account-btn" type="submit" class="btn btn-primary mb-12">Opprett konto</button>
+      </form>
+      <button id="back-login-signup-btn" class="btn btn-secondary">Tilbake til innlogging</button>
+      <p id="signup-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+    </div>
+  </div>
+
+  <div id="forgot-card" class="auth-center" style="display:none;">
+    <div class="login-card">
+      <form id="forgot-form" novalidate>
+        <h2 class="mb-20">Tilbakestill passord</h2>
+        <label for="forgot-email" class="form-label">E-post</label>
+        <input id="forgot-email" name="email" type="email" placeholder="E-post" required class="form-control mb-18" autocomplete="email" />
+        <button id="send-reset-btn" type="submit" class="btn btn-primary mb-12">Send tilbakestillings-link</button>
+      </form>
+      <button id="send-magic-link-btn" class="btn btn-secondary mb-12" style="display: none;">Send magisk lenke</button>
+      <button id="back-login-btn" class="btn btn-secondary">Tilbake</button>
+      <p id="forgot-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+    </div>
+  </div>
+
+  <div id="complete-profile-card" class="auth-center" style="display:none;">
+    <div class="login-card">
+      <form id="complete-profile-form" novalidate>
+        <h2 class="mb-20">Fullfør profilen din</h2>
+        <p style="margin-bottom: 20px; color: var(--text-secondary); text-align: center;">
+          Vennligst oppgi ditt fornavn for å fullføre profilen din.
+        </p>
+        <label for="complete-name" class="form-label">Fornavn</label>
+        <input id="complete-name" name="given-name" type="text" placeholder="Fornavn" required class="form-control mb-18" autocomplete="given-name" />
+        <button id="complete-profile-btn" type="submit" class="btn btn-primary mb-12">Fullfør profil</button>
+      </form>
+      <button id="skip-profile-btn" class="btn btn-secondary">Hopp over (kan gjøres senere)</button>
+      <p id="complete-profile-msg" style="color: var(--error); min-height: 24px; text-align: center; font-size: 15px;"></p>
+    </div>
+  </div>
+  </main>
+
+  <footer class="footer-auth">
+      Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent4);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
+  </footer>
+
+  <!-- Third-party globals required on login -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Vite entry for login/auth page -->
+
+</body>
+</html>
