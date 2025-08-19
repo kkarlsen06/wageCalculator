@@ -2,7 +2,6 @@
 const API_BASE = window.CONFIG?.apiBase || '/api';
 
 // Initialize Supabase client when DOM is loaded
-let supa;
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
 import { supabase as supa } from '../../supabase-client.js';
