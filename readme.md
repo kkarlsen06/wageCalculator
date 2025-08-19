@@ -107,7 +107,7 @@ curl -i http://localhost:3000/auth/debug -H "Authorization: Bearer <access_token
 
 ### Backend (server/.env)
 - `SUPABASE_URL` — required (PostgREST URL)
-- `SUPABASE_SECRET_KEY` — required (service role; never expose to client)
+- `SUPABASE_SERVICE_ROLE_KEY` — required (service role; never expose to client)
 - `OPENAI_API_KEY` — optional (disables OpenAI features if missing)
 - `CORS_ORIGINS` — comma-separated allowlist; empty disables CORS
 - `JSON_BODY_LIMIT` — e.g. `1mb`

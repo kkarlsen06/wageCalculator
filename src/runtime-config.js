@@ -9,9 +9,8 @@ const viteApiBase = import.meta.env.VITE_API_BASE;
 // Safe defaults (kept for local dev/backwards compatibility)
 const defaultConfig = {
   supabase: {
-    url: "https://iuwjdacxbirhmsglcbxp.supabase.co",
-    anonKey:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1d2pkYWN4YmlyaG1zZ2xjYnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NTIxNDAsImV4cCI6MjA2NDAyODE0MH0.iSjbvGVpM3zOWCGpg5HrQp37PjJCmiHIwVQLgc2LgcE",
+    url: "https://your-project-id.supabase.co",
+    anonKey: "sb_publishable_z9EoG7GZZMS3RL4hmilh5A_xI0va5Nb",
   },
   apiBase: "/api",
   debug: Boolean(import.meta.env && import.meta.env.DEV),

@@ -109,7 +109,7 @@ app.use('/settings', authMiddleware); // Legacy support
 app.use('/employees', authMiddleware); // Legacy support
 // Initialize Supabase admin client
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseSecretKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+const supabaseSecretKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const admin = supabaseUrl && supabaseSecretKey 
   ? createClient(supabaseUrl, supabaseSecretKey)
@@ -118,7 +118,7 @@ export const admin = supabaseUrl && supabaseSecretKey
 // Backwards compatibility wrapper
 const supabase = (() => {
   if (!supabaseUrl || !supabaseSecretKey) {
-    console.warn('[BOOT] SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) not set – DB features disabled.');
+    console.warn('[BOOT] SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not set – DB features disabled.');
     return null;
   }
   try {

@@ -10,7 +10,7 @@ Live app symptoms:
 - Auth is enforced with JWKS (correct), but downstream errors in DB calls (e.g., schema drift/missing tables/columns) were not surfaced in JSON; frontend treated them as hard failures.
 - Multiple code paths still referenced legacy `req.user_id`. Middleware already attaches both `req.auth.userId` and `req.user_id` for compatibility, so this is OK, but return paths weren’t instrumented for diagnostics.
 - Supabase client usage:
-  - Backend: `createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SECRET_KEY)` – correct.
+  - Backend: `createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)` – correct.
   - Frontend: `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY)` via `window.CONFIG` – correct.
   - No masking logs existed to confirm which keys were used in runtime.
 - Logout flow:

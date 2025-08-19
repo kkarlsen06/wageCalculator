@@ -7,7 +7,7 @@
   NPM_CONFIG_PRODUCTION = "false"
   # Vite envs used by src/runtime-config.js
   # Set these in Netlify UI or via netlify.toml for non-sensitive client config
-  # DO NOT add server-only secrets like SUPABASE_SECRET_KEY here
+  # DO NOT add server-only secrets here
   VITE_SUPABASE_URL = "https://iuwjdacxbirhmsglcbxp.supabase.co"
   VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_z9EoG7GZZMS3RL4hmilh5A_xI0va5Nb"
   # Optional: override API base (defaults to "/api")
