@@ -103,8 +103,10 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Ensure auth is enforced on key route groups
-app.use('/settings', authMiddleware);
-app.use('/employees', authMiddleware);
+app.use('/api/settings', authMiddleware);
+app.use('/api/employees', authMiddleware);
+app.use('/settings', authMiddleware); // Legacy support
+app.use('/employees', authMiddleware); // Legacy support
 // Initialize Supabase admin client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseSecretKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
@@ -4571,6 +4573,116 @@ if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_STATIC === 'true
     res.sendFile(path.join(staticRoot, 'kalkulator', 'index.html'));
   });
 }
+
+// ---------- API Routes with /api prefix ----------
+
+/**
+ * GET /api/employees - List all employees for the authenticated manager
+ * Query params: ?include_archived=1 to include archived employees
+ */
+app.get('/api/employees', async (req, res) => {
+  try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] GET /api/employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId ? resolvedUserId.slice(0,6) + '…' + resolvedUserId.slice(-4) : 'none'} body=${bodyPreview}`);
+  } catch (_) {}
+  
+  try {
+    const userId = req?.auth?.userId;
+    if (!userId) return res.status(401).json({ error: "Missing userId" });
+
+    const includeArchived = req.query.include_archived === '1';
+
+    let query = supabase
+      .from('employees')
+      .select('id, name, email, hourly_wage, tariff_level, birth_date, display_color, created_at, archived_at')
+      .eq('manager_id', userId)
+      .order('name');
+
+    // By default, exclude archived employees
+    if (!includeArchived) {
+      query = query.is('archived_at', null);
+    }
+
+    const { data: employees, error } = await query;
+
+    if (error) {
+      console.error("[/api/employees] DB error:", error.message, error.stack);
+      return res.status(500).json({
+        error: error.message,
+        code: error.code || null,
+        stack: process.env.NODE_ENV === "production" ? undefined : error.stack
+      });
+    }
+
+    const normalized = (employees || []).map(emp => ({
+      ...emp,
+      name: normalizeEmployeeName(emp?.name)
+    }));
+
+    res.json({ employees: normalized });
+  } catch (e) {
+    console.error("[/api/employees] Exception:", e.message, e.stack);
+    return res.status(500).json({
+      error: e.message,
+      code: e.code || null,
+      stack: process.env.NODE_ENV === "production" ? undefined : e.stack
+    });
+  }
+});
+
+/**
+ * GET /api/settings - Get user settings
+ */
+app.get('/api/settings', async (req, res) => {
+  try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] GET /api/settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId ? resolvedUserId.slice(0,6) + '…' + resolvedUserId.slice(-4) : 'none'} body=${bodyPreview}`);
+  } catch (_) {}
+  
+  try {
+    const userId = req?.auth?.userId;
+    if (!userId) return res.status(401).json({ error: "Missing userId" });
+
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('hourly_rate, profile_picture_url')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+      // If column missing, degrade gracefully
+      const msg = (error?.message || '').toString();
+      const isMissingColumn = msg.includes('profile_picture_url') || (error?.code === '42703');
+      const isMissingTable = (error?.code === '42P01') || msg.includes('relation') && msg.includes('does not exist');
+      if (!isMissingColumn && !isMissingTable) {
+        console.error("[/api/settings] DB error:", error.message, error.stack);
+        return res.status(500).json({
+          error: error.message,
+          code: error.code || null,
+          stack: process.env.NODE_ENV === "production" ? undefined : error.stack
+        });
+      }
+      // Degrade gracefully on schema drift (missing table/column)
+      console.warn('[/api/settings] schema drift – degrading:', { code: error?.code, msg });
+    }
+
+    return res.json({
+      hourly_rate: data?.hourly_rate ?? 0,
+      profile_picture_url: data?.profile_picture_url ?? null
+    });
+  } catch (e) {
+    console.error("[/api/settings] Exception:", e.message, e.stack);
+    return res.status(500).json({
+      error: e.message,
+      code: e.code || null,
+      stack: process.env.NODE_ENV === "production" ? undefined : e.stack
+    });
+  }
+});
 
 export default app;
 
