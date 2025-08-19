@@ -27,10 +27,8 @@ class FeatureFlags {
         try {
             const API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiBase) || '/api';
 
-            // Use dynamic import for fetch in Node.js environment
-            const fetchFn = typeof fetch !== 'undefined' ? fetch : (await import('node-fetch')).default;
-
-            const response = await fetchFn(`${API_BASE}/config`, {
+            // Use browser fetch only; node-fetch is not bundled in browser builds
+            const response = await fetch(`${API_BASE}/config`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'

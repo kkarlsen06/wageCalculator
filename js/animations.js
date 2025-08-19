@@ -21,17 +21,7 @@ function throttle(func, limit) {
 }
 
 // Debounce function for resize events
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
+// Duplicate debounce removed; using the earlier definition in this file
 
 // ───────────────────────────────────────────────────────────────────────────
 // INITIALIZATION

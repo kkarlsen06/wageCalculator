@@ -730,7 +730,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let appModule;
   try {
     // Bust cache to ensure latest appLogic edits are loaded
-    appModule = await import('./appLogic.js?v=7');
+    appModule = await import('./appLogic.js');
   } catch (e) {
     console.error('Failed to load appLogic module:', e);
   }
