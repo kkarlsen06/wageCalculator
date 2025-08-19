@@ -3,3 +3,4 @@ node_modules
 .augment
 # Local Netlify folder
 .netlify
+/dist
