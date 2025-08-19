@@ -92,6 +92,12 @@ npm start
 
 Provide required environment variables (see Environment below). The API expects `Authorization: Bearer <JWT>` headers for protected routes.
 
+Dev-only auth debug endpoint is available when `NODE_ENV !== 'production'`:
+
+```bash
+curl -i http://localhost:3000/auth/debug -H "Authorization: Bearer <access_token>"
+```
+
 ## Environment
 
 ### Frontend (Vite at build time)
@@ -112,6 +118,18 @@ Provide required environment variables (see Environment below). The API expects 
 - `ENABLE_STATIC` / `STATIC_DIR` — optional, serve additional static assets in dev
 
 Do not put server-only secrets in Netlify environment (frontend). Only `VITE_*` variables are safe for client builds.
+
+### Smoke tests
+
+- Verify JWT locally:
+
+```bash
+TEST_JWT="<paste access token>" SUPABASE_URL=$(grep 'VITE_SUPABASE_URL' netlify.toml | sed -E 's/.*"(https?:[^\"]+)"/\1/') npm run smoke:auth
+```
+
+### Proxies and Authorization
+
+Ensure your proxy (Azure App Service, Netlify, NGINX) forwards the `Authorization` header unchanged. We log `req.headers.authorization` on entry for `/settings` and `/employees`. If you see it empty in production but present locally, update proxy config to allow/forward Authorization.
 
 ## API
 

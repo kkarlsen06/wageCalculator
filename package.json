@@ -13,7 +13,9 @@
     "dev": "vite",
     "preview": "vite preview",
     "smoke:userid": "node scripts/smoke-userid.js",
-    "check:userid": "node scripts/check-userid.js"
+    "check:userid": "node scripts/check-userid.js",
+    "dev:server": "npm --prefix server run dev:server",
+    "smoke:auth": "node scripts/smoke-auth.js"
   },
   "repository": {
     "type": "git",

@@ -19,6 +19,9 @@ import { createClient } from '@supabase/supabase-js';
 import { calcEmployeeShift } from './payroll/calc.js';
 import { randomUUID } from 'node:crypto';
 import { verifySupabaseJWT } from './lib/auth/verifySupabaseJwt.js';
+// keep legacy alias imports functional
+import './lib/verifySupabaseJwt.js';
+import { authMiddleware } from './middleware/auth.js';
 
 // ---------- path helpers ----------
 const FRONTEND_DIR = __dirname;
@@ -77,6 +80,23 @@ const openai = (() => {
     return null;
   }
 })();
+
+// ---------- dev-only auth debug endpoint ----------
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/auth/debug', authMiddleware, (req, res) => {
+    try {
+      const authz = req.headers.authorization || '';
+      const userId = req?.auth?.userId || null;
+      return res.status(200).json({ ok: true, userId, hasAuthorization: Boolean(authz) });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+}
+
+// Ensure auth is enforced on key route groups
+app.use('/settings', authMiddleware);
+app.use('/employees', authMiddleware);
 // Initialize Supabase admin client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseSecretKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
@@ -1802,12 +1822,19 @@ app.get('/config', async (req, res) => {
 });
 
 // ---------- /settings ----------
-app.get('/settings', authenticateUser, async (req, res) => {
+app.get('/settings', async (req, res) => {
   try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    console.log(`[route] GET /settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+  } catch (_) {}
+  try {
+    const userId = req?.auth?.userId || req?.user_id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const { data, error } = await supabase
       .from('user_settings')
       .select('hourly_rate, profile_picture_url')
-      .eq('user_id', req.user_id)
+      .eq('user_id', userId)
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
@@ -1828,7 +1855,12 @@ app.get('/settings', authenticateUser, async (req, res) => {
   }
 });
 
-app.put('/settings', authenticateUser, async (req, res) => {
+app.put('/settings', async (req, res) => {
+  try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    console.log(`[route] PUT /settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+  } catch (_) {}
   try {
     if (isAiAgent(req)) {
       recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
@@ -1845,7 +1877,9 @@ app.put('/settings', authenticateUser, async (req, res) => {
       return res.status(400).json({ error: 'profile_picture_url must be a string or null' });
     }
 
-    const payload = { user_id: req.user_id };
+    const userId = req?.auth?.userId || req?.user_id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const payload = { user_id: userId };
     if (hourly_rate !== undefined) payload.hourly_rate = hourly_rate;
     if (profile_picture_url !== undefined) payload.profile_picture_url = profile_picture_url;
 
@@ -1866,7 +1900,7 @@ app.put('/settings', authenticateUser, async (req, res) => {
       const isMissingColumn = msg.includes('profile_picture_url') || (error?.code === '42703');
       if (isMissingColumn) {
         // Retry without profile_picture_url when column missing
-        const retryPayload = { user_id: req.user_id };
+        const retryPayload = { user_id: userId };
         if (hourly_rate !== undefined) retryPayload.hourly_rate = hourly_rate;
         const retry = await supabase
           .from('user_settings')
@@ -2373,9 +2407,15 @@ function normalizeEmployeeName(rawName) {
  * GET /employees - List all employees for the authenticated manager
  * Query params: ?include_archived=1 to include archived employees
  */
-app.get('/employees', authenticateUser, async (req, res) => {
+app.get('/employees', async (req, res) => {
   try {
-    const managerId = req.user_id;
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    console.log(`[route] GET /employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+  } catch (_) {}
+  try {
+    const managerId = req?.auth?.userId || req?.user_id;
+    if (!managerId) return res.status(401).json({ error: 'Unauthorized' });
     const includeArchived = req.query.include_archived === '1';
 
     let query = supabase
@@ -2412,14 +2452,20 @@ app.get('/employees', authenticateUser, async (req, res) => {
  * POST /employees - Create a new employee
  * Body: { name, email?, hourly_wage?, tariff_level?, birth_date?, display_color? }
  */
-app.post('/employees', authenticateUser, async (req, res) => {
+app.post('/employees', async (req, res) => {
+  try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    console.log(`[route] POST /employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+  } catch (_) {}
   try {
     if (isAiAgent(req)) {
       recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
       incrementAgentWriteDenied('/employees', 'POST', 'agent_write_blocked_middleware');
       return res.status(403).json({ error: 'Agent writes are not allowed' });
     }
-    const managerId = req.user_id;
+    const managerId = req?.auth?.userId || req?.user_id;
+    if (!managerId) return res.status(401).json({ error: 'Unauthorized' });
     const { name, email, hourly_wage, tariff_level, birth_date, display_color } = req.body;
 
     const normalizedName = typeof name === 'string' ? normalizeEmployeeName(name) : '';
@@ -2521,14 +2567,20 @@ app.post('/employees', authenticateUser, async (req, res) => {
  * PUT /employees/:id - Update an existing employee
  * Body: { name?, email?, hourly_wage?, tariff_level?, birth_date?, display_color? }
  */
-app.put('/employees/:id', authenticateUser, async (req, res) => {
+app.put('/employees/:id', async (req, res) => {
+  try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    console.log(`[route] PUT /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+  } catch (_) {}
   try {
     if (isAiAgent(req)) {
       recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
       incrementAgentWriteDenied('/employees', 'PUT', 'agent_write_blocked_middleware');
       return res.status(403).json({ error: 'Agent writes are not allowed' });
     }
-    const managerId = req.user_id;
+    const managerId = req?.auth?.userId || req?.user_id;
+    if (!managerId) return res.status(401).json({ error: 'Unauthorized' });
     const employeeId = req.params.id;
     const { name, email, hourly_wage, tariff_level, birth_date, display_color } = req.body;
 
@@ -2636,14 +2688,20 @@ app.put('/employees/:id', authenticateUser, async (req, res) => {
 /**
  * DELETE /employees/:id - Soft delete an employee (set archived_at)
  */
-app.delete('/employees/:id', authenticateUser, async (req, res) => {
+app.delete('/employees/:id', async (req, res) => {
+  try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    console.log(`[route] DELETE /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+  } catch (_) {}
   try {
     if (isAiAgent(req)) {
       recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
       incrementAgentWriteDenied('/employees', 'DELETE', 'agent_write_blocked_middleware');
       return res.status(403).json({ error: 'Agent writes are not allowed' });
     }
-    const managerId = req.user_id;
+    const managerId = req?.auth?.userId || req?.user_id;
+    if (!managerId) return res.status(401).json({ error: 'Unauthorized' });
     const employeeId = req.params.id;
 
     // Verify the employee belongs to the current manager

@@ -9,7 +9,9 @@
   },
   "scripts": {
     "start": "node server.js",
-    "check:jwt": "node scripts/dev-check-jwt.js"
+    "dev:server": "NODE_ENV=development node server.js",
+    "check:jwt": "node scripts/dev-check-jwt.js",
+    "smoke:auth": "node ../scripts/smoke-auth.js"
   },
   "dependencies": {
     "@azure/msal-node": "^3.7.1",
