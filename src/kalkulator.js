@@ -1,3 +1,6 @@
+// Initialize runtime config before any kalkulator scripts
+import '/src/runtime-config.js';
+
 // CSS is linked via kalkulator/index.html to avoid duplication
 
 // Third-party CDN globals are left as-is in HTML (Supabase, jsPDF, Cropper, marked, DOMPurify)
@@ -13,8 +16,7 @@ if (typeof window !== 'undefined' && !window.uuidv4) {
   };
 }
 
-// Load config and feature flags (attach to window)
-import '/kalkulator/js/config.js';
+// Load feature flags (reads window.CONFIG.apiBase)
 import '/kalkulator/js/featureFlags.js';
 
 // App bootstrap (was loaded via <script type="module" src="js/app.js">)

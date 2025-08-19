@@ -5,6 +5,13 @@
 [build.environment]
   NODE_VERSION = "22"
   NPM_CONFIG_PRODUCTION = "false"
+  # Vite envs used by src/runtime-config.js
+  # Set these in Netlify UI or via netlify.toml for non-sensitive client config
+  # DO NOT add server-only secrets like SUPABASE_SERVICE_ROLE_KEY here
+  # VITE_SUPABASE_URL = "https://your-project-id.supabase.co"
+  # VITE_SUPABASE_ANON_KEY = "public-anon-key"
+  # Optional: override API base (defaults to "/api")
+  # VITE_API_BASE = "/api"
 
 [[redirects]]
   from = "/api/*"

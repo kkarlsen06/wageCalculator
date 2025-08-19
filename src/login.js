@@ -8,7 +8,8 @@ import '/js/loading-helpers.js';
 import '/js/error-handling.js';
 
 // Config and auth logic
-import '/kalkulator/js/config.js';
+// Ensure window.CONFIG is initialized from Vite envs before auth logic runs
+import '/src/runtime-config.js';
 import '/kalkulator/js/auth.js';
 
 
