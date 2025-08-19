@@ -52,6 +52,25 @@ components:
 security:
   - bearerAuth: []
 paths:
+  /auth/debug:
+    get:
+      summary: Dev-only auth debug
+      description: Returns basic auth info (NODE_ENV !== production)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  userId:
+                    type: string
+                    nullable: true
+                  hasAuthorization:
+                    type: boolean
   /employees:
     get:
       summary: List employees

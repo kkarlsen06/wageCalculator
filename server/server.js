@@ -89,7 +89,15 @@ if (process.env.NODE_ENV !== 'production') {
       const userId = req?.auth?.userId || null;
       return res.status(200).json({ ok: true, userId, hasAuthorization: Boolean(authz) });
     } catch (e) {
-      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+      return res.status(500).json({ ok: false, error: e?.message || String(e), stack: e?.stack || null });
+    }
+  });
+  app.get('/auth/session-echo', (req, res) => {
+    try {
+      const authz = req.headers.authorization || '';
+      return res.status(200).json({ ok: true, hasAuthorization: Boolean(authz) });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e?.message || String(e), stack: e?.stack || null });
     }
   });
 }
@@ -118,6 +126,22 @@ const supabase = (() => {
     return null;
   }
 })();
+try {
+  const mask = (s) => {
+    if (!s) return '';
+    const str = String(s);
+    if (str.length <= 8) return str[0] + '…' + str[str.length - 1];
+    return str.slice(0, 4) + '…' + str.slice(-4);
+  };
+  const host = (() => {
+    try {
+      return new URL(supabaseUrl).host;
+    } catch (_) {
+      return (supabaseUrl || '').toString();
+    }
+  })();
+  console.log(`[boot] supabase admin url=${host} key=${mask(supabaseSecretKey)}`);
+} catch (_) {}
 // ---------- simple metrics & audit (in-memory fallback) ----------
 const AGENT_BLOCK_READS = process.env.AGENT_BLOCK_READS === 'true';
 
@@ -1826,7 +1850,8 @@ app.get('/settings', async (req, res) => {
   try {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
-    console.log(`[route] GET /settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] GET /settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     const userId = req?.auth?.userId || req?.user_id;
@@ -1839,10 +1864,16 @@ app.get('/settings', async (req, res) => {
 
     if (error && error.code !== 'PGRST116') {
       // If column missing, degrade gracefully
-      const isMissingColumn = (error?.message || '').includes('profile_picture_url') || (error?.code === '42703');
-      if (!isMissingColumn) {
-        return res.status(500).json({ error: 'Failed to fetch settings' });
+      const msg = (error?.message || '').toString();
+      const isMissingColumn = msg.includes('profile_picture_url') || (error?.code === '42703');
+      const isMissingTable = (error?.code === '42P01') || msg.includes('relation') && msg.includes('does not exist');
+      if (!isMissingColumn && !isMissingTable) {
+        console.error('GET /settings db error:', msg, error?.stack || '');
+        // Return debug info instead of raw 500 so client sees structured error
+        return res.status(500).json({ error: msg, code: error?.code || null, stack: error?.stack || null });
       }
+      // Degrade gracefully on schema drift (missing table/column)
+      console.warn('GET /settings schema drift – degrading:', { code: error?.code, msg });
     }
 
     return res.json({
@@ -1850,8 +1881,8 @@ app.get('/settings', async (req, res) => {
       profile_picture_url: data?.profile_picture_url ?? null
     });
   } catch (e) {
-    console.error('GET /settings error:', e);
-    return res.status(200).json({ hourly_rate: 0, profile_picture_url: null });
+    console.error('GET /settings error:', e?.message || e, e?.stack || '');
+    return res.status(200).json({ hourly_rate: 0, profile_picture_url: null, error: e?.message || String(e), stack: e?.stack || null });
   }
 });
 
@@ -1859,7 +1890,8 @@ app.put('/settings', async (req, res) => {
   try {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
-    console.log(`[route] PUT /settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] PUT /settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     if (isAiAgent(req)) {
@@ -1909,8 +1941,8 @@ app.put('/settings', async (req, res) => {
           .single();
         return res.json({ hourly_rate: retry.data?.hourly_rate ?? 0, profile_picture_url: null });
       }
-      console.error('PUT /settings error:', error);
-      return res.status(500).json({ error: 'Failed to update settings' });
+      console.error('PUT /settings error:', msg, error?.stack || '');
+      return res.status(500).json({ error: msg, code: error?.code || null, stack: error?.stack || null });
     }
 
     return res.json({
@@ -1918,8 +1950,8 @@ app.put('/settings', async (req, res) => {
       profile_picture_url: data?.profile_picture_url ?? null
     });
   } catch (e) {
-    console.error('PUT /settings exception:', e);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('PUT /settings exception:', e?.message || e, e?.stack || '');
+    return res.status(500).json({ error: e?.message || String(e), stack: e?.stack || null });
   }
 });
 // ---- DEBUG: list registered routes (recursive) ----
@@ -2411,7 +2443,8 @@ app.get('/employees', async (req, res) => {
   try {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
-    console.log(`[route] GET /employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] GET /employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     const managerId = req?.auth?.userId || req?.user_id;
@@ -2432,8 +2465,9 @@ app.get('/employees', async (req, res) => {
     const { data: employees, error } = await query;
 
     if (error) {
-      console.error('Error fetching employees:', error);
-      return res.status(500).json({ error: 'Failed to fetch employees' });
+      const msg = (error?.message || '').toString();
+      console.error('Error fetching employees:', msg, error?.stack || '');
+      return res.status(500).json({ error: msg, code: error?.code || null, stack: error?.stack || null });
     }
 
     const normalized = (employees || []).map(emp => ({
@@ -2443,8 +2477,8 @@ app.get('/employees', async (req, res) => {
 
     res.json({ employees: normalized });
   } catch (e) {
-    console.error('GET /employees error:', e);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('GET /employees error:', e?.message || e, e?.stack || '');
+    res.status(500).json({ error: e?.message || String(e), stack: e?.stack || null });
   }
 });
 
@@ -2456,7 +2490,8 @@ app.post('/employees', async (req, res) => {
   try {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
-    console.log(`[route] POST /employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] POST /employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     if (isAiAgent(req)) {
@@ -2552,14 +2587,15 @@ app.post('/employees', async (req, res) => {
       .single();
 
     if (insertError) {
-      console.error('Error creating employee:', insertError);
-      return res.status(500).json({ error: 'Failed to create employee' });
+      const msg = (insertError?.message || '').toString();
+      console.error('Error creating employee:', msg, insertError?.stack || '');
+      return res.status(500).json({ error: msg, code: insertError?.code || null, stack: insertError?.stack || null });
     }
 
     res.status(201).json({ employee: newEmployee });
   } catch (e) {
-    console.error('POST /employees error:', e);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('POST /employees error:', e?.message || e, e?.stack || '');
+    res.status(500).json({ error: e?.message || String(e), stack: e?.stack || null });
   }
 });
 
@@ -2571,7 +2607,8 @@ app.put('/employees/:id', async (req, res) => {
   try {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
-    console.log(`[route] PUT /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] PUT /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     if (isAiAgent(req)) {
@@ -2674,14 +2711,15 @@ app.put('/employees/:id', async (req, res) => {
       .single();
 
     if (updateError) {
-      console.error('Error updating employee:', updateError);
-      return res.status(500).json({ error: 'Failed to update employee' });
+      const msg = (updateError?.message || '').toString();
+      console.error('Error updating employee:', msg, updateError?.stack || '');
+      return res.status(500).json({ error: msg, code: updateError?.code || null, stack: updateError?.stack || null });
     }
 
     res.json({ employee: updatedEmployee });
   } catch (e) {
-    console.error('PUT /employees/:id error:', e);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('PUT /employees/:id error:', e?.message || e, e?.stack || '');
+    res.status(500).json({ error: e?.message || String(e), stack: e?.stack || null });
   }
 });
 
@@ -2692,7 +2730,8 @@ app.delete('/employees/:id', async (req, res) => {
   try {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
-    console.log(`[route] DELETE /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'}`);
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] DELETE /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     if (isAiAgent(req)) {
@@ -2712,7 +2751,9 @@ app.delete('/employees/:id', async (req, res) => {
       .single();
 
     if (fetchError || !existingEmployee || existingEmployee.manager_id !== managerId) {
-      return res.status(403).json({ error: 'Forbidden' });
+      const msg = (fetchError?.message || '').toString();
+      if (fetchError) console.error('Error fetching employee for delete:', msg, fetchError?.stack || '');
+      return res.status(403).json({ error: 'Forbidden', code: fetchError?.code || null, stack: fetchError?.stack || null });
     }
 
     // Check if already archived
@@ -2736,8 +2777,8 @@ app.delete('/employees/:id', async (req, res) => {
 
     res.json({ employee: archivedEmployee, message: 'Employee archived successfully' });
   } catch (e) {
-    console.error('DELETE /employees/:id error:', e);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('DELETE /employees/:id error:', e?.message || e, e?.stack || '');
+    res.status(500).json({ error: e?.message || String(e), stack: e?.stack || null });
   }
 });
 

@@ -25,8 +25,8 @@ export async function authMiddleware(req, res, next) {
     try { console.log(`[auth] ok userId=${claims.sub || 'none'}`); } catch (_) {}
     return next();
   } catch (e) {
-    console.error("[auth] verify fail:", e?.message || e);
-    return res.status(401).json({ error: "Invalid token" });
+    console.error("[auth] verify fail:", e?.message || e, e?.stack || "");
+    return res.status(401).json({ error: "Invalid token", stack: e?.stack || null });
   }
 }
 

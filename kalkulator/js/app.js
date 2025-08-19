@@ -459,6 +459,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.CONFIG.supabase.anonKey
   );
   window.supa = supa;
+  try {
+    const mask = (s) => {
+      if (!s) return '';
+      const str = String(s);
+      if (str.length <= 8) return str[0] + '…' + str[str.length - 1];
+      return str.slice(0, 4) + '…' + str.slice(-4);
+    };
+    const host = (() => { try { return new URL(window.CONFIG.supabase.url).host; } catch (_) { return window.CONFIG.supabase.url; } })();
+    console.log(`[boot] supabase client url=${host} key=${mask(window.CONFIG.supabase.anonKey)}`);
+  } catch (_) {}
 
   // Enhanced authentication guard with retry logic
   let session = null;
@@ -724,7 +734,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.chatbox && window.chatbox.clear) {
       window.chatbox.clear();
     }
-    await supa.auth.signOut();
+    try {
+      await supa.auth.signOut();
+    } catch (e) {
+      console.warn('signOut error:', e?.message || e);
+    }
+    try {
+      const { data: { session } } = await supa.auth.getSession();
+      console.log('[logout] session after signOut:', session ? 'still present' : 'null');
+    } catch (_) {}
+    try {
+      // Clear app caches/state that might assume a session
+      if (window.localStorage) {
+        localStorage.removeItem('appState');
+        localStorage.removeItem('employeeCache');
+      }
+      if (window.sessionStorage) {
+        sessionStorage.removeItem('supabase_recovery_flow');
+      }
+    } catch (_) {}
     window.location.href = 'login.html';
   };
 
