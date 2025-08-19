@@ -22,10 +22,6 @@
     "url": "https://github.com/kkarlsen06/wageCalculator/issues"
   },
 
-  "dependencies": {
-    "vite": "^7.1.3"
-  },
-  
   "homepage": "https://github.com/kkarlsen06/wageCalculator#readme",
   "type": "module",
   "devDependencies": {
