@@ -1,33 +1,22 @@
+// @ts-nocheck
 import { supabase } from "../../supabase-client.js";
-
 let cachedId = null;
-
+let inflight = null;
 export async function getUserId() {
   if (cachedId) return cachedId;
-
-  // Try claims first
-  const { data: claims } = await supabase.auth.getClaims();
-  const sub = (claims)?.sub;
-  if (sub) {
-    cachedId = sub;
-    return cachedId;
-  }
-
-  // Fallback to full user
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) {
-    console.error("[auth] getUser() error:", error.message);
-    return null;
-  }
-  if (user?.id) {
-    cachedId = user.id;
-    return cachedId;
-  }
-
-  return null;
-}
-
-// Clear cache on auth state changes
-export function clearUserIdCache() {
-  cachedId = null;
+  if (inflight) return inflight;
+  inflight = (async () => {
+    try {
+      const { data: claims } = await supabase.auth.getClaims();
+      const sub = claims && claims.sub;
+      if (sub) { cachedId = sub; console.debug("[auth] userId (claims):", cachedId); return cachedId; }
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) { console.warn("[auth] getUser() error:", error.message || error); return null; }
+      cachedId = user && user.id ? user.id : null;
+      if (cachedId) console.debug("[auth] userId (user):", cachedId);
+      return cachedId;
+    } catch (e) { console.warn("[auth] getUserId error:", e && e.message ? e.message : e); return null; }
+    finally { inflight = null; }
+  })();
+  return inflight;
 }

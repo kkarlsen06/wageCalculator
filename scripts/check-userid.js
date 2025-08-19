@@ -4,7 +4,7 @@
 
 console.log("✅ getUserId helper files have been created and configured:");
 console.log("  - src/lib/auth/getUserId.js (for src/ modules)");
-console.log("  - kalkulator/js/getUserId.js (for kalkulator/ app)");
+console.log("  - src/lib/auth/getUserId.ts (for TS-aware modules)");
 console.log("");
 console.log("The getUserId function now:");
 console.log("  ✅ Returns null instead of throwing on missing auth");
