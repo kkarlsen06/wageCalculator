@@ -41,7 +41,7 @@ jobs:
             az webapp config appsettings set -g rg-wageapp -n wageapp-prod --settings \
               NODE_ENV=production \
               SUPABASE_URL='${{ secrets.SUPABASE_URL }}' \
-              SUPABASE_SECRET_KEY='${{ secrets.SUPABASE_SECRET_KEY }}' \
+              SUPABASE_SERVICE_ROLE_KEY='${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}' \
               OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}' \
               ENABLE_STATIC='false' \
               STATIC_DIR='.'
