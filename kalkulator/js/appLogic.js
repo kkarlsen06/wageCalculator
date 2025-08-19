@@ -1176,6 +1176,7 @@ export const app = {
             const { data: claims } = await window.supa.auth.getClaims();
             const isAuthed = !!claims;
             if (!isAuthed) { alert('Autentiseringsfeil'); return; }
+            const userId = claims?.sub;
 
             for (const d of dates) {
                 const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
@@ -1197,7 +1198,7 @@ export const app = {
                 } else {
                     // Regular user shift with series, saved directly to user_shifts
                     const insertData = {
-                        user_id: user.id,
+                        user_id: userId,
                         shift_date: dateStr,
                         start_time: `${startHour}:${startMinute}`,
                         end_time: `${endHour}:${endMinute}`,
@@ -1299,6 +1300,7 @@ export const app = {
                 alert('Feil ved autentisering');
                 return;
             }
+            const userId = claims?.sub;
 
             // Process each selected date
             const createdShifts = [];
@@ -1340,7 +1342,7 @@ export const app = {
                 } else {
                     // Regular user shift
                     const insertData = {
-                        user_id: user.id,
+                        user_id: userId,
                         shift_date: finalDateStr,
                         start_time: newShift.startTime,
                         end_time: newShift.endTime,
@@ -1865,13 +1867,14 @@ export const app = {
             this.updateDisplay();
             return;
         }
+        const userId = claims?.sub;
 
         try {
             // Fetch shifts with employee data
             const { data: shifts, error: shiftsError } = await window.supa
                 .from('user_shifts')
                 .select('*')
-                .eq('user_id', user.id);
+                .eq('user_id', userId);
 
             if (shiftsError) {
                 console.error('Error fetching shifts from Supabase:', shiftsError);
@@ -1896,7 +1899,7 @@ export const app = {
             const { data: settings, error: settingsError } = await window.supa
                 .from('user_settings')
                 .select('*')
-                .eq('user_id', user.id)
+                .eq('user_id', userId)
                 .single();
 
             if (settingsError && settingsError.code !== 'PGRST116') {
@@ -2150,18 +2153,19 @@ export const app = {
         const { data: claims } = await window.supa.auth.getClaims();
         const isAuthed = !!claims;
         if (!isAuthed) return;
+        const userId = claims?.sub;
 
         try {
             // First, try to fetch existing settings to see what columns exist
             const { data: existingSettings } = await window.supa
                 .from('user_settings')
                 .select('*')
-                .eq('user_id', user.id)
+                .eq('user_id', userId)
                 .single();
 
             // Base settings data
             const settingsData = {
-                user_id: user.id,
+                user_id: userId,
                 updated_at: new Date().toISOString()
             };
 
@@ -2250,7 +2254,7 @@ export const app = {
 
                 // Try progressively smaller data sets
                 const minimalData = {
-                    user_id: user.id,
+                    user_id: userId,
                     updated_at: new Date().toISOString()
                 };
 
