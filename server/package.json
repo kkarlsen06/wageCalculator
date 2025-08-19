@@ -8,16 +8,16 @@
     "node": ">=22"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check:jwt": "node scripts/dev-check-jwt.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "jose": "^6.0.12",
     "morgan": "^1.10.0",
     "openai": "^5.12.0"
   }
 }
-
-

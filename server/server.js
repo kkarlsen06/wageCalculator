@@ -12,6 +12,7 @@ import { OpenAI } from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { calcEmployeeShift } from './payroll/calc.js';
 import { randomUUID } from 'node:crypto';
+import { verifySupabaseJWT } from './lib/auth/verifySupabaseJwt.js';
 
 // ---------- path helpers ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -72,15 +73,22 @@ const openai = (() => {
     return null;
   }
 })();
+// Initialize Supabase admin client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+
+export const admin = supabaseUrl && supabaseSecretKey 
+  ? createClient(supabaseUrl, supabaseSecretKey)
+  : null;
+
+// Backwards compatibility wrapper
 const supabase = (() => {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    console.warn('[BOOT] SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not set – DB features disabled.');
+  if (!supabaseUrl || !supabaseSecretKey) {
+    console.warn('[BOOT] SUPABASE_URL/SUPABASE_SECRET_KEY not set – DB features disabled.');
     return null;
   }
   try {
-    return createClient(url, key);
+    return admin;
   } catch (e) {
     console.warn('[BOOT] Failed to initialize Supabase client:', e?.message || e);
     return null;
@@ -337,21 +345,40 @@ const ORG_SETTINGS_MEM = new Map(); // key: manager_id, value: { break_policy }
 
 // ---------- auth middleware ----------
 async function authenticateUser(req, res, next) {
-  if (!supabase) return res.status(503).json({ error: 'Auth temporarily unavailable (DB disabled)' });
   const auth = req.headers.authorization || '';
   if (!auth.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing or invalid Authorization header' });
   }
   const token = auth.slice(7);
-
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid or expired token' });
-
-  req.user_id = user.id;
-  req.is_ai_agent = Boolean(user?.app_metadata?.ai_agent || user?.user_metadata?.ai_agent);
-  req.user = user;
-  req.user_role = user?.app_metadata?.role || user?.user_metadata?.role || null;
-  next();
+  
+  try {
+    const claims = await verifySupabaseJWT(token);
+    
+    // Attach auth information to request
+    req.auth = { 
+      userId: claims.sub, 
+      role: claims.role, 
+      email: claims.email 
+    };
+    
+    // Legacy compatibility - map to existing request properties
+    req.user_id = claims.sub;
+    req.is_ai_agent = Boolean(claims.ai_agent || claims.app_metadata?.ai_agent || claims.user_metadata?.ai_agent);
+    req.user_role = claims.role || claims.app_metadata?.role || claims.user_metadata?.role || null;
+    
+    // Create a user object for compatibility with existing code
+    req.user = {
+      id: claims.sub,
+      email: claims.email,
+      app_metadata: claims.app_metadata || {},
+      user_metadata: claims.user_metadata || {}
+    };
+    
+    next();
+  } catch (error) {
+    console.error('JWT verification failed:', error.message);
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
 }
 
 function requireAdmin(req, res, next) {
@@ -1919,13 +1946,13 @@ app.post('/chat', authenticateUser, async (req, res) => {
   // Get user message first for system prompt customization
   const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
 
-  // Get user information for personalization
-  const { data: { user }, error: userError } = await supabase.auth.getUser(req.headers.authorization?.slice(7));
+  // Get user information for personalization (already verified by authenticateUser middleware)
+  const user = req.user;
 
   // Choose tool allowlist based on whether this is an AI agent request
   const chatTools = getToolsForRequest(req);
   let userName = 'bruker';
-  if (!userError && user) {
+  if (user) {
     userName = user.user_metadata?.first_name ||
                user.email?.split('@')[0] ||
                'bruker';
