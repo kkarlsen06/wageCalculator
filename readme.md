@@ -96,12 +96,12 @@ Provide required environment variables (see Environment below). The API expects 
 
 ### Frontend (Vite at build time)
 - `VITE_SUPABASE_URL` (optional; default set in `src/runtime-config.js`)
-- `VITE_SUPABASE_ANON_KEY` (optional; default set in `src/runtime-config.js`)
+- `VITE_SUPABASE_PUBLISHABLE_KEY` (optional; default set in `src/runtime-config.js`)
 - `VITE_API_BASE` (optional; default `/api`) — set to `http://localhost:3000` for local backend
 
 ### Backend (server/.env)
 - `SUPABASE_URL` — required (PostgREST URL)
-- `SUPABASE_SERVICE_ROLE_KEY` — required (service role; never expose to client)
+- `SUPABASE_SECRET_KEY` — required (service role; never expose to client)
 - `OPENAI_API_KEY` — optional (disables OpenAI features if missing)
 - `CORS_ORIGINS` — comma-separated allowlist; empty disables CORS
 - `JSON_BODY_LIMIT` — e.g. `1mb`

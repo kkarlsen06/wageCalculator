@@ -3,7 +3,7 @@
 // browser-safe runtime config via window.CONFIG for legacy code paths.
 
 const viteSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const viteSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const viteSupabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const viteApiBase = import.meta.env.VITE_API_BASE;
 
 // Safe defaults (kept for local dev/backwards compatibility)
@@ -21,7 +21,7 @@ const defaultConfig = {
 const resolvedConfig = {
   supabase: {
     url: viteSupabaseUrl || defaultConfig.supabase.url,
-    anonKey: viteSupabaseAnonKey || defaultConfig.supabase.anonKey,
+    anonKey: viteSupabasePublishableKey || defaultConfig.supabase.anonKey,
   },
   apiBase: viteApiBase || defaultConfig.apiBase,
   debug: defaultConfig.debug,
