@@ -31,6 +31,32 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .filter(Boolean);
 app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : false, credentials: true }));
 app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
+// ---------- liveness & deep health ----------
+// Liveness: skal ALLTID svare 200 så lenge prosessen lever
+app.get('/health', (_req, res) => res.status(200).send('ok'));
+
+// Enkel timeout-wrapper for dype sjekker
+const withTimeout = (p, ms = 800) => Promise.race([
+  p,
+  new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms))
+]);
+
+// Valgfri dypsjekk: lett DB-ping
+app.get('/health/deep', async (_req, res) => {
+  try {
+    await withTimeout(
+      // Sørg for at feil kastes ved DB-feil
+      supabase
+        .from('employees')
+        .select('id')
+        .limit(1)
+        .then(({ error }) => { if (error) throw error; })
+    );
+    res.status(200).json({ ok: true });
+  } catch (e) {
+    res.status(503).json({ ok: false, error: e.message });
+  }
+});
 // Note: express.static is registered after API routes to avoid intercepting API paths
 // ---------- third-party clients ----------
 const openai   = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -1854,99 +1880,12 @@ app.get('/routes-debug2', (req, res) => {
 });
 
 
-// ---------- /health/employees ----------
-app.get('/health/employees', async (req, res) => {
-  try {
-    const healthChecks = {
-      timestamp: new Date().toISOString(),
-      status: 'healthy',
-      checks: {}
-    };
-
-    // 1. Check RLS on employees table
-    try {
-      const { data: rlsEmployees, error: rlsEmployeesError } = await supabase
-        .rpc('check_rls_enabled', { table_name: 'employees' });
-
-      healthChecks.checks.employees_rls = {
-        status: rlsEmployeesError ? 'error' : 'ok',
-        enabled: !rlsEmployeesError && rlsEmployees,
-        error: rlsEmployeesError?.message
-      };
-    } catch (error) {
-      healthChecks.checks.employees_rls = {
-        status: 'error',
-        enabled: false,
-        error: 'Failed to check RLS: ' + error.message
-      };
-    }
-
-    // 2. Check RLS on user_shifts table
-    try {
-      const { data: rlsShifts, error: rlsShiftsError } = await supabase
-        .rpc('check_rls_enabled', { table_name: 'user_shifts' });
-
-      healthChecks.checks.user_shifts_rls = {
-        status: rlsShiftsError ? 'error' : 'ok',
-        enabled: !rlsShiftsError && rlsShifts,
-        error: rlsShiftsError?.message
-      };
-    } catch (error) {
-      healthChecks.checks.user_shifts_rls = {
-        status: 'error',
-        enabled: false,
-        error: 'Failed to check RLS: ' + error.message
-      };
-    }
-
-    // 3. Check FK constraint user_shifts.employee_id -> employees.id ON DELETE SET NULL
-    try {
-      const { data: fkConstraint, error: fkError } = await supabase
-        .rpc('check_foreign_key_constraint', {
-          table_name: 'user_shifts',
-          column_name: 'employee_id',
-          referenced_table: 'employees',
-          referenced_column: 'id'
-        });
-
-      healthChecks.checks.employee_id_fk = {
-        status: fkError ? 'error' : 'ok',
-        exists: !fkError && fkConstraint,
-        on_delete_action: 'SET NULL', // Expected action
-        error: fkError?.message
-      };
-    } catch (error) {
-      healthChecks.checks.employee_id_fk = {
-        status: 'error',
-        exists: false,
-        error: 'Failed to check FK constraint: ' + error.message
-      };
-    }
-
-    // Avatar storage bucket checks removed
-
-    // Determine overall health status
-    const hasErrors = Object.values(healthChecks.checks).some(check => check.status === 'error');
-    const hasMissing = Object.values(healthChecks.checks).some(check => check.status === 'missing');
-
-    if (hasErrors) {
-      healthChecks.status = 'unhealthy';
-    } else if (hasMissing) {
-      healthChecks.status = 'degraded';
-    }
-
-    const statusCode = healthChecks.status === 'healthy' ? 200 :
-                      healthChecks.status === 'degraded' ? 200 : 503;
-
-    res.status(statusCode).json(healthChecks);
-  } catch (error) {
-    console.error('Health check error:', error);
-    res.status(503).json({
-      timestamp: new Date().toISOString(),
-      status: 'unhealthy',
-      error: 'Health check failed: ' + error.message
-    });
-  }
+// ---------- /health/employees (deprecated: use /health or /health/deep) ----------
+app.get('/health/employees', (req, res) => {
+  // Tidligere inneholdt denne ruten tunge RLS/FK-sjekker via RPC.
+  // Dette er fjernet for å hindre at liveness blir treg/ustabil.
+  // Bruk /health for enkel liveness og /health/deep for lett DB-ping.
+  res.status(200).json({ ok: true, note: 'use /health for liveness, /health/deep for db ping' });
 });
 
 // ---------- /chat ----------
