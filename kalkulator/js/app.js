@@ -4,7 +4,7 @@ const API_BASE = window.CONFIG?.apiBase || '/api';
 // Remove global animation kill-switch. Initial app load animations are handled by
 // app-ready/animations-complete logic below.
 
-import { supabase as supa } from '../../supabase-client.js';
+import { supabase as supa } from '../../src/supabase-client.js';
 // then just use supabase directly
 
 function setAppHeight() {
