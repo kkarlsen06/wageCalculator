@@ -1173,8 +1173,9 @@ export const app = {
             }
 
             // Insert each shift
-            const { data: { user }, error: authError } = await window.supa.auth.getUser();
-            if (authError || !user) { alert('Autentiseringsfeil'); return; }
+            const { data: claims } = await window.supa.auth.getClaims();
+            const isAuthed = !!claims;
+            if (!isAuthed) { alert('Autentiseringsfeil'); return; }
 
             for (const d of dates) {
                 const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
@@ -1291,14 +1292,11 @@ export const app = {
                 return;
             }
 
-            const { data: { user }, error: authError } = await window.supa.auth.getUser();
-            if (authError) {
-                console.error('addShift: Authentication error:', authError);
+            const { data: claims } = await window.supa.auth.getClaims();
+            const isAuthed = !!claims;
+            if (!isAuthed) {
+                console.error('addShift: Authentication error');
                 alert('Feil ved autentisering');
-                return;
-            }
-            if (!user) {
-                alert("Du er ikke innlogget");
                 return;
             }
 
@@ -1860,8 +1858,9 @@ export const app = {
 
     // Month navigation positioning function removed - now using static section header
     async loadFromSupabase() {
-        const { data: { user } } = await window.supa.auth.getUser();
-        if (!user) {
+        const { data: claims } = await window.supa.auth.getClaims();
+        const isAuthed = !!claims;
+        if (!isAuthed) {
             this.setDefaultSettings();
             this.updateDisplay();
             return;
@@ -2148,8 +2147,9 @@ export const app = {
         }
     },
     async saveSettingsToSupabase() {
-        const { data: { user } } = await window.supa.auth.getUser();
-        if (!user) return;
+        const { data: claims } = await window.supa.auth.getClaims();
+        const isAuthed = !!claims;
+        if (!isAuthed) return;
 
         try {
             // First, try to fetch existing settings to see what columns exist
@@ -6865,16 +6865,17 @@ export const app = {
             } catch (_) { /* ignore */ }
             // Client-side fallback upsert into user_settings
             try {
-                const { data: { user } } = await window.supa.auth.getUser();
-                if (user?.id) {
+                const { data: claims } = await window.supa.auth.getClaims();
+                const userId = claims?.sub;
+                if (userId) {
                     const { error: updateError } = await window.supa
                         .from('user_settings')
                         .update({ profile_picture_url: url })
-                        .eq('user_id', user.id);
+                        .eq('user_id', userId);
                     if (updateError) {
                         await window.supa
                             .from('user_settings')
-                            .upsert({ user_id: user.id, profile_picture_url: url }, { onConflict: 'user_id' });
+                            .upsert({ user_id: userId, profile_picture_url: url }, { onConflict: 'user_id' });
                     }
                 }
             } catch (_) { /* ignore */ }
@@ -6965,8 +6966,8 @@ export const app = {
         }
 
         try {
-            const { data: { user } } = await window.supa.auth.getUser();
-            const userId = user?.id;
+            const { data: claims } = await window.supa.auth.getClaims();
+            const userId = claims?.sub;
             if (!userId) throw new Error('Ingen bruker');
             if (window.supa.storage && window.supa.storage.from) {
                 const storage = window.supa.storage.from('profile-pictures');
@@ -7007,12 +7008,13 @@ export const app = {
             } catch (_) { /* ignore */ }
             // Client-side fallback clear
             try {
-                const { data: { user } } = await window.supa.auth.getUser();
-                if (user?.id) {
+                const { data: claims } = await window.supa.auth.getClaims();
+                const userId = claims?.sub;
+                if (userId) {
                     await window.supa
                         .from('user_settings')
                         .update({ profile_picture_url: null })
-                        .eq('user_id', user.id);
+                        .eq('user_id', userId);
                 }
             } catch (_) { /* ignore */ }
             await window.supa.auth.updateUser({ data: { avatar_url: null } });
@@ -7526,8 +7528,9 @@ export const app = {
 
     // Test function to check if break deduction columns exist in database
     async testBreakDeductionColumns() {
-        const { data: { user } } = await window.supa.auth.getUser();
-        if (!user) {
+        const { data: claims } = await window.supa.auth.getClaims();
+        const isAuthed = !!claims;
+        if (!isAuthed) {
             console.log('❌ Not logged in');
             return;
         }
@@ -8649,8 +8652,9 @@ export const app = {
 
         try {
             // THEN check authentication
-            const { data: { user } } = await window.supa.auth.getUser();
-            if (!user) {
+            const { data: claims } = await window.supa.auth.getClaims();
+            const isAuthed = !!claims;
+            if (!isAuthed) {
                 alert("Du er ikke innlogget");
                 return false;
             }
@@ -8688,14 +8692,15 @@ export const app = {
         }
 
         try {
-            const { data: { user } } = await window.supa.auth.getUser();
-            if (!user) return;
+            const { data: claims } = await window.supa.auth.getClaims();
+            const userId = claims?.sub;
+            if (!userId) return;
 
             // Delete all shifts
             const { error: shiftsError } = await window.supa
                 .from('user_shifts')
                 .delete()
-                .eq('user_id', user.id);
+                .eq('user_id', userId);
 
             if (shiftsError) {
                 console.error('Error deleting shifts:', shiftsError);
@@ -8727,14 +8732,15 @@ export const app = {
         }
 
         try {
-            const { data: { user } } = await window.supa.auth.getUser();
-            if (!user) return;
+            const { data: claims } = await window.supa.auth.getClaims();
+            const userId = claims?.sub;
+            if (!userId) return;
 
             // Delete all shifts
             const { error: shiftsError } = await window.supa
                 .from('user_shifts')
                 .delete()
-                .eq('user_id', user.id);
+                .eq('user_id', userId);
 
             if (shiftsError) {
                 console.error('Error deleting shifts:', shiftsError);
@@ -8744,7 +8750,7 @@ export const app = {
             const { error: settingsError } = await window.supa
                 .from('user_settings')
                 .delete()
-                .eq('user_id', user.id);
+                .eq('user_id', userId);
 
             if (settingsError) {
                 console.error('Error deleting settings:', settingsError);
@@ -9319,8 +9325,9 @@ export const app = {
             }
 
             // Default (dashboard) view: update personal shift directly in user_shifts
-            const { data: { user }, error: authError } = await window.supa.auth.getUser();
-            if (authError || !user) { alert('Feil ved autentisering'); return; }
+            const { data: claims } = await window.supa.auth.getClaims();
+            const isAuthed = !!claims;
+            if (!isAuthed) { alert('Feil ved autentisering'); return; }
 
             const dayOfWeek = this.editSelectedDate.getDay();
             const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
@@ -10428,8 +10435,9 @@ Hva kan jeg hjelpe deg med i dag?`;
     // Save imported shifts to Supabase database
     async saveImportedShiftsToSupabase(shifts) {
         try {
-            const { data: { user }, error: authError } = await window.supa.auth.getUser();
-            if (authError || !user) {
+            const { data: claims } = await window.supa.auth.getClaims();
+            const isAuthed = !!claims;
+            if (!isAuthed) {
                 throw new Error('Du er ikke innlogget');
             }
 
