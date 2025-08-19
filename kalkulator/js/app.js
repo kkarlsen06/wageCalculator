@@ -4,6 +4,9 @@ const API_BASE = window.CONFIG?.apiBase || '/api';
 // Remove global animation kill-switch. Initial app load animations are handled by
 // app-ready/animations-complete logic below.
 
+import { supabase as supa } from '../../supabase-client.js';
+// then just use supabase directly
+
 function setAppHeight() {
   // Skip dynamic height calculations in chatbox-view mode to prevent viewport instability
   if (document.body.classList.contains('chatbox-view')) {
@@ -454,10 +457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     earlyAppEl.style.setProperty('display', 'block', 'important');
     // Do NOT add 'app-ready' yet; that would hide content containers and suppress skeletons
   }
-  const supa = window.supabase.createClient(
-    window.CONFIG.supabase.url,
-    window.CONFIG.supabase.anonKey
-  );
+
   window.supa = supa;
   try {
     const mask = (s) => {

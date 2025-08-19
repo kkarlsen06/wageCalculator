@@ -5,13 +5,9 @@ const API_BASE = window.CONFIG?.apiBase || '/api';
 let supa;
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
-document.addEventListener('DOMContentLoaded', async function() {
+import { supabase as supa } from '../../supabase-client.js';
 
-  // Initialize Supabase client using configuration
-  supa = window.supabase.createClient(
-    window.CONFIG.supabase.url,
-    window.CONFIG.supabase.anonKey
-  );
+document.addEventListener('DOMContentLoaded', async function() {
 
   // Make supa available globally
   window.supa = supa;
