@@ -14,13 +14,12 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-      - run: npm ci
-      - run: npm run build --if-present
-      - name: Create deploy zip
-        run: |
-          zip -r app.zip . \
-            -x "node_modules/*" ".git/*" ".github/*" ".vscode/*" \
-               "coverage/*" "**/*.log"
+      - name: Install server deps
+        working-directory: ./server
+        run: npm install --no-fund --no-audit
+      - name: Smoke build (no-op for server)
+        working-directory: ./server
+        run: node -e "require('fs').accessSync('server.js')"
       - name: Azure Login (service principal)
         uses: azure/login@v2
         with:
@@ -34,13 +33,13 @@ jobs:
               SUPABASE_URL='${{ secrets.SUPABASE_URL }}' \
               SUPABASE_SERVICE_ROLE_KEY='${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}' \
               OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}' \
-              ENABLE_STATIC='true' \
+              ENABLE_STATIC='false' \
               STATIC_DIR='.'
             az webapp config appsettings set -g rg-wageapp -n wageapp-prod --settings \
               SCM_DO_BUILD_DURING_DEPLOYMENT=true
             az webapp config set -g rg-wageapp -n wageapp-prod --startup-file "npm start"
-      - name: Deploy to Azure Web App (zip)
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "wageapp-prod"
-          package: "app.zip"
+          package: "./server"

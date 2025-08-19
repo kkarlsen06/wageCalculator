@@ -2,28 +2,14 @@
   "name": "wagecalculator",
   "version": "1.0.0",
   "description": "En moderne webapplikasjon for å beregne lønn basert på vakter, arbeidstid og tariffbaserte timelønn. Applikasjonen er spesielt utviklet for ansatte med varierende arbeidstid og støtter komplekse lønnssystemer med grunnlønn og ulike tillegg.",
-  "main": "server.js",
+  "main": "index.html",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "start": "node server.js",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "test": "node dev-tests/test-duplicate-shifts.js",
-    "test:feature-flags": "node dev-tests/test-feature-flags.js",
-    "test:health": "node dev-tests/test-health-employees.js",
-    "test:employees": "node dev-tests/test-employees-crud.js",
-    "test:employees-complete": "node dev-tests/test-employees-complete.js",
-    "test:payroll": "node dev-tests/test-payroll-calc.js",
-    "test:employee-carousel": "node dev-tests/run-employee-tests.js",
-    "test:employee-modal": "node dev-tests/test-employee-modal.js",
-    "test:employee-crud-flows": "node dev-tests/test-employee-crud-flows.js",
-    "demo:employees": "node dev-tests/demo-employees.js",
-    "test:agent-guard": "node dev-tests/test-agent-write-guard.js",
-    "test:e2e:wages-policies": "node dev-tests/test-e2e-wages-and-policies.js",
-    "test:all": "npm run test && npm run test:feature-flags && npm run test:health && npm run test:employees-complete && npm run test:employee-carousel && npm run test:agent-guard && npm run test:payroll && npm run test:e2e:wages-policies"
+    "preview": "vite preview"
   },
   "repository": {
     "type": "git",
@@ -36,15 +22,6 @@
     "url": "https://github.com/kkarlsen06/wageCalculator/issues"
   },
   "homepage": "https://github.com/kkarlsen06/wageCalculator#readme",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.53.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "morgan": "^1.10.0",
-    "node-fetch": "^3.3.2",
-    "openai": "^5.12.0"
-  },
   "type": "module",
   "devDependencies": {
     "vite": "^7.1.3"

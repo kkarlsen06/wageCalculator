@@ -42,22 +42,23 @@ En moderne webapplikasjon for å beregne lønn basert på vakter, arbeidstid og 
 ## 🗂️ Prosjektstruktur
 
 ```
-kompensasjonskalkulator/
+wageCalculator/
 │
-├── index.html              # Portfolio/hovedside
-├── css/
-│   └── main.css           # Styling for hovedsiden
-├── kalkulator/            # Kalkulatorapplikasjon
-│   ├── index.html         # Innloggingsside
-│   ├── app.html           # Hovedkalkulator
-│   ├── css/
-│   │   └── style.css      # Styling for kalkulatoren
-│   └── js/
-│       ├── auth.js        # Autentisering og brukerhåndtering
-│       ├── app.js         # UI-kontrollere og brukerinteraksjon
-│       └── appLogic.js    # Forretningslogikk og beregninger
-├── _redirects             # Netlify redirects og routing
-└── README.md              # Prosjektdokumentasjon
+├── index.html              # Portfolio/hovedside (frontend)
+├── kalkulator/             # Kalkulatorapplikasjon (frontend)
+│   ├── index.html          # Hovedapp
+│   ├── login.html          # Innlogging
+│   ├── css/                # Styling
+│   └── js/                 # Frontend logikk
+├── css/                    # Felles CSS
+├── assets/                 # Bilder/ikoner
+├── vite.config.js          # Vite bundling
+├── netlify.toml            # Netlify build & proxy til Azure backend
+├── server/                 # Backend (Node/Express, Azure Web App)
+│   ├── server.js           # API/server
+│   └── payroll/            # Backend business logic
+│       └── calc.js
+└── package.json            # Frontend scripts (vite dev/build/preview)
 ```
 
 ## 🧪 Lokalt oppsett
@@ -68,10 +69,20 @@ kompensasjonskalkulator/
    cd kompensasjonskalkulator
    ```
 
-2. **Åpne i nettleser:**
-   - Åpne `index.html` for hovedsiden
-   - Naviger til `kalkulator/index.html` for kalkulatoren
-   - Eller bruk en lokal webserver for best opplevelse
+2. **Frontend (Vite):**
+   ```bash
+   npm install
+   npm run dev
+   # http://localhost:5173 (proxy til backend på :3000)
+   ```
+
+3. **Backend (Express):**
+   ```bash
+   cd server
+   npm install
+   npm start
+   # http://localhost:3000
+   ```
 
 3. **Utvikling:**
    ```bash

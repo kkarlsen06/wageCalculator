@@ -1,0 +1,23 @@
+{
+  "name": "wagecalculator-server",
+  "version": "1.0.0",
+  "description": "Backend server for wageCalculator (Azure Web App)",
+  "main": "server.js",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.53.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "morgan": "^1.10.0",
+    "openai": "^5.12.0"
+  }
+}
+
+

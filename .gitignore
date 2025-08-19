@@ -1,3 +1,5 @@
 node_modules
 .env
 .augment
+# Local Netlify folder
+.netlify

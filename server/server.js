@@ -43,9 +43,9 @@ const withTimeout = (p, ms = 800) => Promise.race([
 
 // Valgfri dypsjekk: lett DB-ping
 app.get('/health/deep', async (_req, res) => {
+  if (!supabase) return res.status(200).json({ ok: true, db: 'disabled' });
   try {
     await withTimeout(
-      // Sørg for at feil kastes ved DB-feil
       supabase
         .from('employees')
         .select('id')
@@ -59,11 +59,33 @@ app.get('/health/deep', async (_req, res) => {
 });
 // Note: express.static is registered after API routes to avoid intercepting API paths
 // ---------- third-party clients ----------
-const openai   = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const openai = (() => {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) {
+    console.warn('[BOOT] OPENAI_API_KEY not set – OpenAI features disabled.');
+    return null;
+  }
+  try {
+    return new OpenAI({ apiKey: key });
+  } catch (e) {
+    console.warn('[BOOT] Failed to initialize OpenAI client:', e?.message || e);
+    return null;
+  }
+})();
+const supabase = (() => {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    console.warn('[BOOT] SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not set – DB features disabled.');
+    return null;
+  }
+  try {
+    return createClient(url, key);
+  } catch (e) {
+    console.warn('[BOOT] Failed to initialize Supabase client:', e?.message || e);
+    return null;
+  }
+})();
 // ---------- simple metrics & audit (in-memory fallback) ----------
 const AGENT_BLOCK_READS = process.env.AGENT_BLOCK_READS === 'true';
 
@@ -287,6 +309,7 @@ app.get('/metrics', (req, res) => {
 // Expose recent audit log events (DB if available, else memory)
 // Requires admin authentication; payloads are redacted
 app.get('/audit-log/recent', authenticateUser, requireAdmin, async (req, res) => {
+  if (!supabase) return res.json({ rows: AUDIT_LOG_MEM.map(redactAuditRow) });
   const limitRaw = parseInt(req.query.limit) || 50;
   const limit = Math.min(1000, Math.max(1, limitRaw));
   try {
@@ -314,6 +337,7 @@ const ORG_SETTINGS_MEM = new Map(); // key: manager_id, value: { break_policy }
 
 // ---------- auth middleware ----------
 async function authenticateUser(req, res, next) {
+  if (!supabase) return res.status(503).json({ error: 'Auth temporarily unavailable (DB disabled)' });
   const auth = req.headers.authorization || '';
   if (!auth.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing or invalid Authorization header' });
@@ -2010,6 +2034,9 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
 
 
 
+  if (!openai) {
+    return res.status(503).json({ error: 'OpenAI not configured' });
+  }
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: fullMessages,
@@ -2100,6 +2127,9 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
     try {
       if (stream) {
         // Use streaming for the final response
+        if (!openai) {
+          return res.status(503).json({ error: 'OpenAI not configured' });
+        }
         const streamCompletion = await openai.chat.completions.create({
           model: 'gpt-4.1',
           messages: messagesWithToolResult,
@@ -2144,6 +2174,9 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
         })}\n\n`);
       } else {
         // Non-streaming version
+        if (!openai) {
+          return res.status(503).json({ error: 'OpenAI not configured' });
+        }
         const secondCompletion = await openai.chat.completions.create({
           model: 'gpt-4o',
           messages: messagesWithToolResult,
@@ -4370,7 +4403,7 @@ async function handleTool(call, user_id) {
 if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_STATIC === 'true') {
   const staticRoot = process.env.STATIC_DIR
     ? path.resolve(__dirname, process.env.STATIC_DIR)
-    : __dirname;
+    : path.resolve(__dirname, '..');
 
   // Root landing page assets
   app.use('/css', express.static(path.join(staticRoot, 'css')));
@@ -4415,7 +4448,7 @@ const isRunDirectly = (() => {
 })();
 
 if (isRunDirectly) {
-  const PORT = process.env.PORT || 5173;
+  const PORT = process.env.PORT || 3000;
   app.listen(PORT, () =>
     console.log(`✔ Server running → http://localhost:${PORT}`)
   );

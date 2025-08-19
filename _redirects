@@ -6,5 +6,5 @@
 
 # Optional: redirect old auth.html to /kalkulator
 /*    /index.html   200
-/auth.html /kalkulator/ 301
-/kalkulator/auth.html /kalkulator/ 301
+/auth.html /kalkulator/index.html 301
+/kalkulator/auth.html /kalkulator/index.html 301

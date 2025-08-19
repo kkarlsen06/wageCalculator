@@ -8,9 +8,10 @@ export default defineConfig({
     open: false,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'https://wageapp-prod.azurewebsites.net',
         changeOrigin: true,
-        secure: false,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
       }
     }
   },
