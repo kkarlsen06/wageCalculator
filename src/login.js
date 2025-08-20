@@ -4,8 +4,8 @@ import '/kalkulator/css/style.css';
 import 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 
 // Utilities (attach to window)
-import '/js/loading-helpers.js';
-import '/js/error-handling.js';
+import './js/loading-helpers.js';
+import './js/error-handling.js';
 
 // Config and auth logic
 // Ensure window.CONFIG is initialized from Vite envs before auth logic runs

@@ -14,7 +14,31 @@
   # VITE_API_BASE = "/api"
 
 [[redirects]]
+  # Proxy API requests to Azure backend
   from = "/api/*"
   to = "https://wageapp-prod.azurewebsites.net/:splat"
   status = 200
   force = true
+
+[[redirects]]
+  # Kalkulator SPA fallback
+  from = "/kalkulator/*"
+  to = "/kalkulator/index.html"
+  status = 200
+
+[[redirects]]
+  # Root SPA fallback (landing page)
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  # Old auth routes
+  from = "/auth.html"
+  to = "/kalkulator/index.html"
+  status = 301
+
+[[redirects]]
+  from = "/kalkulator/auth.html"
+  to = "/kalkulator/index.html"
+  status = 301
