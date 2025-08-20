@@ -1,4 +1,4 @@
-import { verifySupabaseJWT } from "../lib/verifySupabaseJwt.js";
+import { verifySupabaseJWT } from "../lib/auth/verifySupabaseJwt.js";
 
 export async function authMiddleware(req, res, next) {
   const authz = req.headers.authorization || "";

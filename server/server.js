@@ -19,8 +19,6 @@ import { createClient } from '@supabase/supabase-js';
 import { calcEmployeeShift } from './payroll/calc.js';
 import { randomUUID } from 'node:crypto';
 import { verifySupabaseJWT } from './lib/auth/verifySupabaseJwt.js';
-// keep legacy alias imports functional
-import './lib/verifySupabaseJwt.js';
 import { authMiddleware } from './middleware/auth.js';
 
 // ---------- path helpers ----------

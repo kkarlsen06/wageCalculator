@@ -48,7 +48,6 @@ wageCalculator/
 │   └── payroll/calc.js            # Core shift/payroll calculations
 ├── docs/
 │   ├── OPENAPI.yaml               # API schema (served under /api)
-│   ├── POSTMAN_COLLECTION.json    # Example requests
 │   ├── ARCHITECTURE_AND_SNAPSHOTS.md
 │   └── rls_policies.sql
 ├── vite.config.js                 # Multi-entry build + dev proxy (/api)
@@ -119,13 +118,7 @@ curl -i http://localhost:3000/auth/debug -H "Authorization: Bearer <access_token
 
 Do not put server-only secrets in Netlify environment (frontend). Only `VITE_*` variables are safe for client builds.
 
-### Smoke tests
-
-- Verify JWT locally:
-
-```bash
-TEST_JWT="<paste access token>" SUPABASE_URL=$(grep 'VITE_SUPABASE_URL' netlify.toml | sed -E 's/.*"(https?:[^\"]+)"/\1/') npm run smoke:auth
-```
+<!-- Dev smoke test scripts have been removed as part of repository cleanup -->
 
 ### Proxies and Authorization
 
@@ -134,7 +127,7 @@ Ensure your proxy (Azure App Service, Netlify, NGINX) forwards the `Authorizatio
 ## API
 
 - OpenAPI: see `docs/OPENAPI.yaml`
-- Postman: `docs/POSTMAN_COLLECTION.json`
+<!-- Non-fundamental docs (Postman collection, feature-specific guides) have been removed to keep the repo concise. -->
 
 Key endpoints (all under `API_BASE`, defaults to `/api` in frontend):
 - `GET /config` — feature flags (e.g., `{ features: { employees: true } }`)
