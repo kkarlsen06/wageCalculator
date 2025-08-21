@@ -3,8 +3,16 @@ const API_BASE = window.CONFIG?.apiBase || '/api';
 
 // Initialize Supabase client when DOM is loaded
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
+let redirectAttempts = 0; // Prevent infinite redirects
+const MAX_REDIRECT_ATTEMPTS = 3;
 
-import { supabase } from '../../src/supabase-client.js'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+
+// Create Supabase client with environment variables or fallbacks
+const supabaseUrl = 'https://iuwjdacxbirhmsglcbxp.supabase.co';
+const supabaseAnonKey = 'sb_publishable_z9EoG7GZZMS3RL4hmilh5A_xI0va5Nb';
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supa = supabase;
 window.supa = supa;
 
@@ -62,6 +70,20 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // Immediate redirect if already authenticated and not in a recovery flow
   try {
+    // Prevent infinite redirects
+    if (redirectAttempts >= MAX_REDIRECT_ATTEMPTS) {
+      console.error('Maximum redirect attempts reached, staying on login page');
+      document.body.style.visibility = 'visible';
+      return;
+    }
+
+    // Ensure Supabase client is properly initialized
+    if (!supa || !supa.auth) {
+      console.error('Supabase client not properly initialized');
+      document.body.style.visibility = 'visible';
+      return;
+    }
+
     const { data: { session } } = await supa.auth.getSession();
 
   if (session && !isRecoveryFlow && !isInPasswordRecovery) {
@@ -70,6 +92,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         headers: { Authorization: `Bearer ${session.access_token}` }
       });
       if (ok.status === 200) {          // token accepted by backend
+        redirectAttempts++;
+        console.log(`Redirecting to app (attempt ${redirectAttempts}/${MAX_REDIRECT_ATTEMPTS})`);
         window.location.replace('index.html');
         return;
       }
