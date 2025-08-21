@@ -1,4 +1,5 @@
 import '/kalkulator/css/style.css';
+import '/src/css/legal-modal.css';
 
 // Third-party globals
 import 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
@@ -11,5 +12,13 @@ import './js/error-handling.js';
 // Ensure window.CONFIG is initialized from Vite envs before auth logic runs
 import '/src/runtime-config.js';
 import '/kalkulator/js/auth.js';
+
+// Legal handler for terms acceptance
+import LegalHandler from '/kalkulator/js/legal-handler.js';
+
+// Initialize legal handler
+document.addEventListener('DOMContentLoaded', () => {
+    new LegalHandler();
+});
 
 

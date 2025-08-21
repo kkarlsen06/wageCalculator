@@ -1485,6 +1485,34 @@ html {
     transform: translateY(-2px);
 }
 
+.footer-privacy-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-base);
+}
+
+.footer-privacy-link:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+}
+
+.footer-privacy-link i {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+}
+
+.footer-privacy-link:hover i {
+    color: var(--primary);
+}
+
 /* ───────────────────────────────────────────────────────────────────────────
    ANIMATIONS
    ─────────────────────────────────────────────────────────────────────────── */

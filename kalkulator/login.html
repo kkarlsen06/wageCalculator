@@ -6,6 +6,7 @@
   <title>Kompensasjonskalkulator - Beregn vaktlønn, tillegg og ekstratimer | kkarlsen.art</title>
   <meta name="description" content="Automatisk kalkulator for vakter, tillegg og kompensasjon. Beregn nøyaktig lønn uansett turnus, kveldsvakter eller ekstrajobbing. Laget for å gi deg full oversikt.">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="../src/css/legal-modal.css">
   <link rel="icon" href="../src/assets/favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../src/assets/favicon.ico" type="image/x-icon">
   <style>body{visibility:hidden;}</style>
@@ -61,7 +62,19 @@
         <label for="signup-password" class="form-label">Passord</label>
         <input id="signup-password" name="password" type="password" placeholder="Passord" required class="form-control mb-12" autocomplete="new-password" />
         <label for="signup-name" class="form-label">Fornavn</label>
-        <input id="signup-name" name="given-name" type="text" placeholder="Fornavn" required class="form-control mb-18" autocomplete="given-name" />
+        <input id="signup-name" name="given-name" type="text" placeholder="Fornavn" required class="form-control mb-12" autocomplete="given-name" />
+        
+        <div class="form-checkbox-group mb-18">
+            <label class="form-checkbox-label">
+                <input type="checkbox" id="terms-accept" required class="form-checkbox" />
+                <span class="checkmark"></span>
+                <span class="checkbox-text">
+                    Jeg har lest og godtar <button type="button" class="link-button" id="show-terms-btn">vilkår og betingelser</button> og <button type="button" class="link-button" id="show-privacy-btn">personvernpolicy</button>
+                    <br><small style="color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block;">Klikk her for å lese vilkårene først</small>
+                </span>
+            </label>
+        </div>
+        
         <button id="create-account-btn" type="submit" class="btn btn-primary mb-12">Opprett konto</button>
       </form>
       <button id="back-login-signup-btn" class="btn btn-secondary">Tilbake til innlogging</button>
