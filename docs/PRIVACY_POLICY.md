@@ -1,108 +1,108 @@
-# Privacy Policy
+# Personvernpolicy
 
-**Last updated:** August 2025
+**Sist oppdatert:** August 2025
 
-## 1. Introduction
+## 1. Introduksjon
 
-This Privacy Policy describes how the Wage Calculator application ("we", "our", or "us") collects, uses, and protects your personal information when you use our service.
+Denne personvernpolicyen beskriver hvordan Lønnskalkulator-applikasjonen ("vi", "vår" eller "oss") samler inn, bruker og beskytter din personlige informasjon når du bruker vår tjeneste.
 
-## 2. Information We Collect
+## 2. Informasjon vi samler inn
 
-### 2.1 Personal Information
-- **Account Information**: Email address, password, and first name when you create an account
-- **Profile Information**: Profile picture (optional), hourly rate preferences, and user settings
-- **Employee Data**: Names, email addresses, birth dates, hourly wages, and tariff levels for employees you manage
-- **Shift Data**: Work schedules, start/end times, break periods, and wage calculations
+### 2.1 Personlig informasjon
+- **Kontoinformasjon**: E-postadresse, passord og fornavn når du oppretter en konto
+- **Profilinformasjon**: Profilbilde (valgfritt), timelønnsønsker og brukerinnstillinger
+- **Ansattdata**: Navn, e-postadresser, fødselsdatoer, timelønn og tariffnivåer for ansatte du administrerer
+- **Vaktdata**: Arbeidsplaner, start-/sluttider, pauser og lønnsberegninger
 
-### 2.2 Technical Information
-- **Usage Data**: How you interact with the application, features used, and performance metrics
-- **Device Information**: Browser type, operating system, and device identifiers
-- **Log Data**: Server logs, error reports, and audit trail information
+### 2.2 Teknisk informasjon
+- **Bruksdata**: Hvordan du samhandler med applikasjonen, funksjoner som brukes og ytelsesmetrikker
+- **Enhetsinformasjon**: Nettlesertype, operativsystem og enhetsidentifikatorer
+- **Loggdata**: Serverlogger, feilrapporter og revisjonsspor
 
-## 3. How We Use Your Information
+## 3. Hvordan vi bruker din informasjon
 
-### 3.1 Primary Purposes
-- **Service Provision**: To provide wage calculation services and manage your account
-- **Data Processing**: To calculate wages, overtime, and compensation based on your input
-- **User Experience**: To personalize your experience and improve our services
+### 3.1 Hovedformål
+- **Tjenesteytelse**: For å levere lønnsberegningstjenester og administrere din konto
+- **Databehandling**: For å beregne lønn, overtidsbetaling og kompensasjon basert på din input
+- **Brukeropplevelse**: For å tilpasse din opplevelse og forbedre våre tjenester
 
-### 3.2 Secondary Purposes
-- **Security**: To protect against fraud, abuse, and security threats
-- **Analytics**: To analyze usage patterns and improve application performance
-- **Compliance**: To meet legal obligations and enforce our terms of service
+### 3.2 Sekundære formål
+- **Sikkerhet**: For å beskytte mot svindel, misbruk og sikkerhetstrusler
+- **Analyse**: For å analysere bruksmønstre og forbedre applikasjonens ytelse
+- **Compliance**: For å oppfylle juridiske forpliktelser og håndheve våre brukervilkår
 
-## 4. Data Storage and Security
+## 4. Datalagring og sikkerhet
 
-### 4.1 Storage Location
-- All data is stored securely in Supabase cloud infrastructure
-- Data is processed in accordance with EU data protection regulations
-- We implement industry-standard security measures to protect your information
+### 4.1 Lagringsplassering
+- Alle data lagres sikkert i Supabase skyinfrastruktur
+- Data behandles i samsvar med EUs databeskyttelsesforskrifter
+- Vi implementerer bransjestandard sikkerhetstiltak for å beskytte din informasjon
 
-### 4.2 Security Measures
-- **Encryption**: Data is encrypted in transit and at rest
-- **Authentication**: Secure JWT-based authentication system
-- **Access Control**: Row-level security policies ensure data isolation
-- **Regular Audits**: Security assessments and vulnerability scanning
+### 4.2 Sikkerhetstiltak
+- **Kryptering**: Data er kryptert under overføring og i ro
+- **Autentisering**: Sikker JWT-basert autentiseringssystem
+- **Tilgangskontroll**: Radnivå sikkerhetspolicyer sikrer dataisolering
+- **Regelmessige revisjoner**: Sikkerhetsvurderinger og sårbarhetsskanning
 
-## 5. Data Sharing and Disclosure
+## 5. Datedeling og avsløring
 
-### 5.1 We Do Not Sell Your Data
-- We do not sell, rent, or trade your personal information to third parties
-- We do not use your data for advertising purposes
+### 5.1 Vi selger ikke dine data
+- Vi selger, leier ut eller bytter ikke din personlige informasjon til tredjeparter
+- Vi bruker ikke dine data til reklameformål
 
-### 5.2 Limited Sharing
-- **Service Providers**: We may share data with trusted third-party services (e.g., Supabase) necessary for service operation
-- **Legal Requirements**: We may disclose information if required by law or to protect our rights
-- **Business Transfers**: In case of business acquisition, data may be transferred to the new owner
+### 5.2 Begrenset deling
+- **Tjenesteleverandører**: Vi kan dele data med pålitelige tredjepartstjenester (f.eks. Supabase) nødvendig for tjenestefunksjon
+- **Juridiske krav**: Vi kan avsløre informasjon hvis påkrevd av lov eller for å beskytte våre rettigheter
+- **Forretningsoverføringer**: Ved forretningsovertakelse kan data overføres til den nye eieren
 
-## 6. Your Rights and Choices
+## 6. Dine rettigheter og valg
 
-### 6.1 Access and Control
-- **View Data**: Access your personal information and data through the application
-- **Update Information**: Modify your profile and preferences at any time
-- **Delete Account**: Request complete deletion of your account and associated data
+### 6.1 Tilgang og kontroll
+- **Se data**: Få tilgang til din personlige informasjon og data gjennom applikasjonen
+- **Oppdater informasjon**: Endre din profil og preferanser når som helst
+- **Slett konto**: Be om fullstendig sletting av din konto og tilknyttet data
 
-### 6.2 Data Portability
-- Export your data in standard formats
-- Transfer your information to other services
+### 6.2 Dataportabilitet
+- Eksporter dine data i standardformater
+- Overfør din informasjon til andre tjenester
 
-## 7. Data Retention
+## 7. Datalagring
 
-### 7.1 Retention Periods
-- **Active Accounts**: Data is retained while your account is active
-- **Deleted Accounts**: Data is permanently deleted within 30 days of account deletion
-- **Audit Logs**: Security and compliance logs are retained for up to 1 year
+### 7.1 Lagringsperioder
+- **Aktive kontoer**: Data beholdes så lenge din konto er aktiv
+- **Slettede kontoer**: Data slettes permanent innen 30 dager etter kontosletting
+- **Revisjonslogger**: Sikkerhets- og compliancelogger beholdes i opptil 1 år
 
-## 8. Children's Privacy
+## 8. Barns personvern
 
-Our service is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13.
+Vår tjeneste er ikke beregnet for barn under 13 år. Vi samler ikke bevisst inn personlig informasjon fra barn under 13 år.
 
-## 9. International Data Transfers
+## 9. Internasjonale dataoverføringer
 
-Your data may be processed in countries outside your residence. We ensure appropriate safeguards are in place to protect your information in accordance with applicable data protection laws.
+Dine data kan behandles i land utenfor din bosted. Vi sikrer at passende beskyttelsestiltak er på plass for å beskytte din informasjon i samsvar med gjeldende databeskyttelseslover.
 
-## 10. Changes to This Policy
+## 10. Endringer i denne policyen
 
-We may update this Privacy Policy from time to time. We will notify you of any material changes by:
-- Posting the new policy on our website
-- Sending an email notification to your registered email address
-- Displaying a notice within the application
+Vi kan oppdatere denne personvernpolicyen fra tid til annen. Vi vil varsle deg om eventuelle vesentlige endringer ved:
+- Å legge ut den nye policyen på vårt nettsted
+- Å sende en e-postvarsling til din registrerte e-postadresse
+- Å vise et varsel i applikasjonen
 
-## 11. Contact Information
+## 11. Kontaktinformasjon
 
-If you have questions about this Privacy Policy or our data practices, please contact us:
+Hvis du har spørsmål om denne personvernpolicyen eller våre datapraksiser, vennligst kontakt oss:
 
-- **Email**: kkarlsen06@kkarlsen.art
-- **Developer**: Hjalmar Kristensen-Karlsen
-- **Location**: Alta, Norway
+- **E-post**: kkarlsen06@kkarlsen.art
+- **Utvikler**: Hjalmar Kristensen-Karlsen
+- **Lokasjon**: Alta, Norge
 
-## 12. Legal Basis for Processing (EU Users)
+## 12. Juridisk grunnlag for behandling (EU-brukere)
 
-For users in the European Union, we process your data based on:
-- **Contract Performance**: To provide the wage calculation services you requested
-- **Legitimate Interest**: To improve our services and ensure security
-- **Consent**: Where you have explicitly agreed to specific data processing activities
+For brukere i Den europeiske union behandler vi dine data basert på:
+- **Kontraktsutførelse**: For å levere lønnsberegningstjenestene du har bedt om
+- **Berettiget interesse**: For å forbedre våre tjenester og sikre sikkerhet
+- **Samtykke**: Der du har uttrykkelig samtykket til spesifikke databehandlingsaktiviteter
 
-## 13. Complaints
+## 13. Klager
 
-If you believe we have not addressed your privacy concerns adequately, you have the right to lodge a complaint with your local data protection authority.
+Hvis du mener vi ikke har adressert dine personvernbekymringer tilstrekkelig, har du rett til å reise klage til din lokale databeskyttelsesmyndighet.

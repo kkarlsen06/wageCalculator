@@ -92,21 +92,21 @@ class LegalHandler {
 
 ## Legal Content
 
-### Privacy Policy Covers
-- Information collection and usage
-- Data storage and security
-- User rights and choices
-- Data retention policies
-- Contact information
-- EU GDPR compliance
+### Privacy Policy Covers (Personvernpolicy)
+- Informasjonsinnsamling og bruk
+- Datalagring og sikkerhet
+- Brukerrettigheter og valg
+- Datalagringsretningslinjer
+- Kontaktinformasjon
+- EU GDPR-compliance
 
-### Terms & Conditions Cover
-- Service description
-- User account requirements
-- Acceptable use policies
-- Service limitations
-- Liability disclaimers
-- Governing law (Norwegian)
+### Terms & Conditions Cover (Vilkår og betingelser)
+- Tjenestebeskrivelse
+- Brukerkontokrav
+- Akseptabel brukspolicy
+- Tjenestebegrensninger
+- Ansvarsfraskrivelser
+- Lovvalg (norsk)
 
 ## Accessibility Features
 

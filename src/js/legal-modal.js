@@ -33,8 +33,8 @@ class LegalModal {
             <div class="legal-modal-overlay"></div>
             <div class="legal-modal-container">
                 <div class="legal-modal-header">
-                    <h2 id="legal-modal-title">Privacy Policy & Terms</h2>
-                    <button class="legal-modal-close" aria-label="Close modal">
+                    <h2 id="legal-modal-title">Personvernpolicy & Vilkår</h2>
+                    <button class="legal-modal-close" aria-label="Lukk modal">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -43,117 +43,117 @@ class LegalModal {
                 </div>
                 
                 <div class="legal-modal-tabs">
-                    <button class="legal-tab active" data-tab="privacy">Privacy Policy</button>
-                    <button class="legal-tab" data-tab="terms">Terms & Conditions</button>
+                    <button class="legal-tab active" data-tab="privacy">Personvernpolicy</button>
+                    <button class="legal-tab" data-tab="terms">Vilkår og betingelser</button>
                 </div>
                 
                 <div class="legal-modal-content">
                     <div class="legal-tab-content active" id="privacy-content">
                         <div class="legal-content-scroll">
-                            <h3>Privacy Policy</h3>
-                            <p><strong>Last updated:</strong> January 2025</p>
+                            <h3>Personvernpolicy</h3>
+                            <p><strong>Sist oppdatert:</strong> August 2025</p>
                             
-                            <h4>1. Introduction</h4>
-                            <p>This Privacy Policy describes how the Wage Calculator application ("we", "our", or "us") collects, uses, and protects your personal information when you use our service.</p>
+                            <h4>1. Introduksjon</h4>
+                            <p>Denne personvernpolicyen beskriver hvordan Lønnskalkulator-applikasjonen ("vi", "vår" eller "oss") samler inn, bruker og beskytter din personlige informasjon når du bruker vår tjeneste.</p>
                             
-                            <h4>2. Information We Collect</h4>
-                            <h5>2.1 Personal Information</h5>
+                            <h4>2. Informasjon vi samler inn</h4>
+                            <h5>2.1 Personlig informasjon</h5>
                             <ul>
-                                <li><strong>Account Information:</strong> Email address, password, and first name when you create an account</li>
-                                <li><strong>Profile Information:</strong> Profile picture (optional), hourly rate preferences, and user settings</li>
-                                <li><strong>Employee Data:</strong> Names, email addresses, birth dates, hourly wages, and tariff levels for employees you manage</li>
-                                <li><strong>Shift Data:</strong> Work schedules, start/end times, break periods, and wage calculations</li>
+                                <li><strong>Kontoinformasjon:</strong> E-postadresse, passord og fornavn når du oppretter en konto</li>
+                                <li><strong>Profilinformasjon:</strong> Profilbilde (valgfritt), timelønnsønsker og brukerinnstillinger</li>
+                                <li><strong>Ansattdata:</strong> Navn, e-postadresser, fødselsdatoer, timelønn og tariffnivåer for ansatte du administrerer</li>
+                                <li><strong>Vaktdata:</strong> Arbeidsplaner, start-/sluttider, pauser og lønnsberegninger</li>
                             </ul>
                             
-                            <h5>2.2 Technical Information</h5>
+                            <h5>2.2 Teknisk informasjon</h5>
                             <ul>
-                                <li><strong>Usage Data:</strong> How you interact with the application, features used, and performance metrics</li>
-                                <li><strong>Device Information:</strong> Browser type, operating system, and device identifiers</li>
-                                <li><strong>Log Data:</strong> Server logs, error reports, and audit trail information</li>
+                                <li><strong>Bruksdata:</strong> Hvordan du samhandler med applikasjonen, funksjoner som brukes og ytelsesmetrikker</li>
+                                <li><strong>Enhetsinformasjon:</strong> Nettlesertype, operativsystem og enhetsidentifikatorer</li>
+                                <li><strong>Loggdata:</strong> Serverlogger, feilrapporter og revisjonsspor</li>
                             </ul>
                             
-                            <h4>3. How We Use Your Information</h4>
-                            <h5>3.1 Primary Purposes</h5>
+                            <h4>3. Hvordan vi bruker din informasjon</h4>
+                            <h5>3.1 Hovedformål</h5>
                             <ul>
-                                <li><strong>Service Provision:</strong> To provide wage calculation services and manage your account</li>
-                                <li><strong>Data Processing:</strong> To calculate wages, overtime, and compensation based on your input</li>
-                                <li><strong>User Experience:</strong> To personalize your experience and improve our services</li>
+                                <li><strong>Tjenesteytelse:</strong> For å levere lønnsberegningstjenester og administrere din konto</li>
+                                <li><strong>Databehandling:</strong> For å beregne lønn, overtidsbetaling og kompensasjon basert på din input</li>
+                                <li><strong>Brukeropplevelse:</strong> For å tilpasse din opplevelse og forbedre våre tjenester</li>
                             </ul>
                             
-                            <h4>4. Data Storage and Security</h4>
+                            <h4>4. Datalagring og sikkerhet</h4>
                             <ul>
-                                <li>All data is stored securely in Supabase cloud infrastructure</li>
-                                <li>Data is processed in accordance with EU data protection regulations</li>
-                                <li>We implement industry-standard security measures to protect your information</li>
+                                <li>Alle data lagres sikkert i Supabase skyinfrastruktur</li>
+                                <li>Data behandles i samsvar med EUs databeskyttelsesforskrifter</li>
+                                <li>Vi implementerer bransjestandard sikkerhetstiltak for å beskytte din informasjon</li>
                             </ul>
                             
-                            <h4>5. Your Rights</h4>
+                            <h4>5. Dine rettigheter</h4>
                             <ul>
-                                <li>Access, update, and delete your personal information</li>
-                                <li>Export your data in standard formats</li>
-                                <li>Request complete deletion of your account and associated data</li>
+                                <li>Få tilgang til, oppdater og slett din personlige informasjon</li>
+                                <li>Eksporter dine data i standardformater</li>
+                                <li>Be om fullstendig sletting av din konto og tilknyttet data</li>
                             </ul>
                             
-                            <h4>6. Contact Information</h4>
-                            <p>For questions about this Privacy Policy, contact us at: <strong>kkarlsen06@kkarlsen.art</strong></p>
+                            <h4>6. Kontaktinformasjon</h4>
+                            <p>For spørsmål om denne personvernpolicyen, kontakt oss på: <strong>kkarlsen06@kkarlsen.art</strong></p>
                         </div>
                     </div>
                     
                     <div class="legal-tab-content" id="terms-content">
                         <div class="legal-content-scroll">
-                            <h3>Terms and Conditions</h3>
-                            <p><strong>Last updated:</strong> January 2025</p>
+                            <h3>Vilkår og betingelser</h3>
+                            <p><strong>Sist oppdatert:</strong> Januar 2025</p>
                             
-                            <h4>1. Acceptance of Terms</h4>
-                            <p>By accessing and using the Wage Calculator application ("Service"), you accept and agree to be bound by the terms and provision of this agreement.</p>
+                            <h4>1. Godkjenning av vilkår</h4>
+                            <p>Ved å få tilgang til og bruke Lønnskalkulator-applikasjonen ("Tjeneste") godtar og samtykker du til å være bundet av vilkårene og bestemmelsene i denne avtalen.</p>
                             
-                            <h4>2. Description of Service</h4>
-                            <p>The Wage Calculator is a web-based application that provides:</p>
+                            <h4>2. Beskrivelse av tjeneste</h4>
+                            <p>Lønnskalkulatoren er en webbasert applikasjon som leverer:</p>
                             <ul>
-                                <li>Wage calculation services based on work schedules and tariff agreements</li>
-                                <li>Employee management and shift tracking</li>
-                                <li>Payroll calculation and reporting features</li>
-                                <li>User account management and data storage</li>
+                                <li>Lønnsberegningstjenester basert på arbeidsplaner og tariffavtaler</li>
+                                <li>Ansattadministrasjon og vaktsporing</li>
+                                <li>Lønnskalkulasjon og rapporteringsfunksjoner</li>
+                                <li>Brukerkontoadministrasjon og datalagring</li>
                             </ul>
                             
-                            <h4>3. User Accounts and Registration</h4>
+                            <h4>3. Brukerkontoer og registrering</h4>
                             <ul>
-                                <li>You must provide accurate, current, and complete information during registration</li>
-                                <li>You are responsible for maintaining the confidentiality of your account credentials</li>
-                                <li>You must be at least 18 years old to create an account</li>
+                                <li>Du må oppgi nøyaktig, oppdatert og fullstendig informasjon under registrering</li>
+                                <li>Du er ansvarlig for å opprettholde konfidensialiteten til dine kontotilganger</li>
+                                <li>Du må være minst 18 år gammel for å opprette en konto</li>
                             </ul>
                             
-                            <h4>4. Acceptable Use</h4>
-                            <h5>4.1 Permitted Uses</h5>
+                            <h4>4. Akseptabel bruk</h4>
+                            <h5>4.1 Tillatte bruksområder</h5>
                             <ul>
-                                <li>Personal wage calculations and employee management</li>
-                                <li>Business use for managing employee payroll</li>
-                                <li>Educational and research purposes</li>
+                                <li>Personlige lønnsberegninger og ansattadministrasjon</li>
+                                <li>Forretningsbruk for administrasjon av ansattlønn</li>
+                                <li>Utdannings- og forskningsformål</li>
                             </ul>
                             
-                            <h5>4.2 Prohibited Uses</h5>
+                            <h5>4.2 Forbudte bruksområder</h5>
                             <ul>
-                                <li>Attempting to gain unauthorized access to the system</li>
-                                <li>Using the service for illegal or fraudulent activities</li>
-                                <li>Interfering with the service's operation or other users' access</li>
+                                <li>Forsøk på å få uautorisert tilgang til systemet</li>
+                                <li>Bruk av tjenesten til ulovlige eller svindelaktige aktiviteter</li>
+                                <li>Forstyrrelse av tjenestens drift eller andre brukeres tilgang</li>
                             </ul>
                             
-                            <h4>5. Service Limitations</h4>
+                            <h4>5. Tjenestebegrensninger</h4>
                             <ul>
-                                <li>The service is provided "as is" without warranties of any kind</li>
-                                <li>We do not warrant the accuracy of calculations or results</li>
-                                <li>We are not liable for any losses related to wage calculations or business decisions</li>
+                                <li>Tjenesten leveres "som den er" uten garantier av noe slag</li>
+                                <li>Vi garanterer ikke nøyaktigheten av beregninger eller resultater</li>
+                                <li>Vi er ikke ansvarlige for eventuelle tap relatert til lønnsberegninger eller forretningsbeslutninger</li>
                             </ul>
                             
-                            <h4>6. Contact Information</h4>
-                            <p>For questions about these terms, contact us at: <strong>kkarlsen06@kkarlsen.art</strong></p>
+                            <h4>6. Kontaktinformasjon</h4>
+                            <p>For spørsmål om disse vilkårene, kontakt oss på: <strong>kkarlsen06@kkarlsen.art</strong></p>
                         </div>
                     </div>
                 </div>
                 
                 <div class="legal-modal-footer">
-                    <button class="btn btn-primary legal-modal-accept" id="legal-accept-btn">I Accept</button>
-                    <button class="btn btn-secondary legal-modal-decline" id="legal-decline-btn">Decline</button>
+                    <button class="btn btn-primary legal-modal-accept" id="legal-accept-btn">Jeg godtar</button>
+                    <button class="btn btn-secondary legal-modal-decline" id="legal-decline-btn">Avslå</button>
                 </div>
             </div>
         `;

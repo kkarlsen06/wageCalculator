@@ -1,158 +1,158 @@
-# Terms and Conditions
+# Vilkår og betingelser
 
-**Last updated:** January 2025
+**Sist oppdatert:** Januar 2025
 
-## 1. Acceptance of Terms
+## 1. Godkjenning av vilkår
 
-By accessing and using the Wage Calculator application ("Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+Ved å få tilgang til og bruke Lønnskalkulator-applikasjonen ("Tjeneste") godtar og samtykker du til å være bundet av vilkårene og bestemmelsene i denne avtalen. Hvis du ikke samtykker til å overholde ovenstående, vennligst ikke bruk denne tjenesten.
 
-## 2. Description of Service
+## 2. Beskrivelse av tjeneste
 
-The Wage Calculator is a web-based application that provides:
-- Wage calculation services based on work schedules and tariff agreements
-- Employee management and shift tracking
-- Payroll calculation and reporting features
-- User account management and data storage
+Lønnskalkulatoren er en webbasert applikasjon som leverer:
+- Lønnsberegningstjenester basert på arbeidsplaner og tariffavtaler
+- Ansattadministrasjon og vaktsporing
+- Lønnskalkulasjon og rapporteringsfunksjoner
+- Brukerkontoadministrasjon og datalagring
 
-## 3. User Accounts and Registration
+## 3. Brukerkontoer og registrering
 
-### 3.1 Account Creation
-- You must provide accurate, current, and complete information during registration
-- You are responsible for maintaining the confidentiality of your account credentials
-- You must be at least 18 years old to create an account
+### 3.1 Kontoopprettelse
+- Du må oppgi nøyaktig, oppdatert og fullstendig informasjon under registrering
+- Du er ansvarlig for å opprettholde konfidensialiteten til dine kontotilganger
+- Du må være minst 18 år gammel for å opprette en konto
 
-### 3.2 Account Security
-- You are responsible for all activities that occur under your account
-- You must notify us immediately of any unauthorized use of your account
-- We reserve the right to suspend or terminate accounts that violate these terms
+### 3.2 Kontosikkerhet
+- Du er ansvarlig for alle aktiviteter som skjer under din konto
+- Du må varsle oss umiddelbart om eventuell uautorisert bruk av din konto
+- Vi forbeholder oss retten til å suspendere eller avslutte kontoer som bryter disse vilkårene
 
-## 4. Acceptable Use
+## 4. Akseptabel bruk
 
-### 4.1 Permitted Uses
-- Personal wage calculations and employee management
-- Business use for managing employee payroll
-- Educational and research purposes
+### 4.1 Tillatte bruksområder
+- Personlige lønnsberegninger og ansattadministrasjon
+- Forretningsbruk for administrasjon av ansattlønn
+- Utdannings- og forskningsformål
 
-### 4.2 Prohibited Uses
-- Attempting to gain unauthorized access to the system
-- Using the service for illegal or fraudulent activities
-- Interfering with the service's operation or other users' access
-- Reverse engineering or attempting to extract source code
-- Sharing account credentials with unauthorized users
+### 4.2 Forbudte bruksområder
+- Forsøk på å få uautorisert tilgang til systemet
+- Bruk av tjenesten til ulovlige eller svindelaktige aktiviteter
+- Forstyrrelse av tjenestens drift eller andre brukeres tilgang
+- Reverse engineering eller forsøk på å ekstrahere kildekode
+- Deling av kontotilganger med uautoriserte brukere
 
-## 5. Data and Privacy
+## 5. Data og personvern
 
-### 5.1 Your Data
-- You retain ownership of all data you input into the service
-- You are responsible for the accuracy and legality of your data
-- You grant us a limited license to process your data to provide the service
+### 5.1 Dine data
+- Du beholder eierskapet til alle data du legger inn i tjenesten
+- Du er ansvarlig for nøyaktigheten og lovligheten av dine data
+- Du gir oss en begrenset lisens til å behandle dine data for å levere tjenesten
 
-### 5.2 Data Protection
-- We implement appropriate security measures to protect your data
-- Your data is processed in accordance with our Privacy Policy
-- We do not sell or share your personal information with third parties
+### 5.2 Databeskyttelse
+- Vi implementerer passende sikkerhetstiltak for å beskytte dine data
+- Dine data behandles i samsvar med vår personvernpolicy
+- Vi selger eller deler ikke din personlige informasjon med tredjeparter
 
-## 6. Service Availability and Limitations
+## 6. Tjenestetilgjengelighet og begrensninger
 
-### 6.1 Availability
-- We strive to maintain 99.9% uptime but do not guarantee uninterrupted service
-- The service may be temporarily unavailable for maintenance or updates
-- We will provide reasonable notice for scheduled maintenance
+### 6.1 Tilgjengelighet
+- Vi streber etter å opprettholde 99,9% oppetid, men garanterer ikke uavbrutt tjeneste
+- Tjenesten kan være midlertidig utilgjengelig for vedlikehold eller oppdateringer
+- Vi vil gi rimelig varsel for planlagt vedlikehold
 
-### 6.2 Limitations
-- The service is provided "as is" without warranties of any kind
-- We are not responsible for any losses resulting from service interruptions
-- We reserve the right to modify or discontinue features at any time
+### 6.2 Begrensninger
+- Tjenesten leveres "som den er" uten garantier av noe slag
+- Vi er ikke ansvarlige for eventuelle tap som følge av tjenesteavbrudd
+- Vi forbeholder oss retten til å endre eller avslutte funksjoner når som helst
 
-## 7. Intellectual Property
+## 7. Immaterielle rettigheter
 
-### 7.1 Our Rights
-- The service, including its design, code, and content, is our intellectual property
-- All trademarks, service marks, and logos are our property
-- You may not copy, reproduce, or distribute our intellectual property
+### 7.1 Våre rettigheter
+- Tjenesten, inkludert design, kode og innhold, er vår immaterielle eiendom
+- Alle varemerker, tjenestemerker og logoer er vår eiendom
+- Du kan ikke kopiere, reprodusere eller distribuere vår immaterielle eiendom
 
-### 7.2 Your Rights
-- You retain ownership of your original content and data
-- You grant us a license to use your feedback to improve our services
+### 7.2 Dine rettigheter
+- Du beholder eierskapet til ditt originale innhold og data
+- Du gir oss en lisens til å bruke din tilbakemelding for å forbedre våre tjenester
 
-## 8. Disclaimers and Limitations of Liability
+## 8. Fraskrivelser og ansvarsbegrensninger
 
-### 8.1 No Warranties
-- The service is provided without any warranties, express or implied
-- We do not warrant that the service will be error-free or uninterrupted
-- We do not warrant the accuracy of calculations or results
+### 8.1 Ingen garantier
+- Tjenesten leveres uten garantier, verken uttrykkelige eller underforståtte
+- Vi garanterer ikke at tjenesten vil være feilfri eller uavbrutt
+- Vi garanterer ikke nøyaktigheten av beregninger eller resultater
 
-### 8.2 Limitation of Liability
-- Our liability is limited to the amount you paid for the service in the past 12 months
-- We are not liable for indirect, incidental, or consequential damages
-- We are not liable for any losses related to wage calculations or business decisions
+### 8.2 Ansvarsbegrensning
+- Vårt ansvar er begrenset til beløpet du betalte for tjenesten de siste 12 månedene
+- Vi er ikke ansvarlige for indirekte, tilfeldige eller følgemessige skader
+- Vi er ikke ansvarlige for eventuelle tap relatert til lønnsberegninger eller forretningsbeslutninger
 
-## 9. Indemnification
+## 9. Erstatning
 
-You agree to indemnify and hold us harmless from any claims, damages, or expenses arising from:
-- Your use of the service
-- Your violation of these terms
-- Your violation of any third-party rights
+Du samtykker til å erstatte og holde oss skadesløse for eventuelle krav, skader eller utgifter som oppstår fra:
+- Din bruk av tjenesten
+- Din overtredelse av disse vilkårene
+- Din overtredelse av eventuelle tredjepartsrettigheter
 
-## 10. Termination
+## 10. Avslutning
 
-### 10.1 Termination by You
-- You may terminate your account at any time
-- Upon termination, your data will be deleted within 30 days
+### 10.1 Avslutning av deg
+- Du kan avslutte din konto når som helst
+- Ved avslutning vil dine data slettes innen 30 dager
 
-### 10.2 Termination by Us
-- We may terminate or suspend your account for violations of these terms
-- We will provide reasonable notice before termination except in cases of serious violations
+### 10.2 Avslutning av oss
+- Vi kan avslutte eller suspendere din konto for overtredelser av disse vilkårene
+- Vi vil gi rimelig varsel før avslutning, unntatt i tilfeller av alvorlige overtredelser
 
-## 11. Governing Law and Disputes
+## 11. Lovvalg og tvister
 
-### 11.1 Governing Law
-- These terms are governed by Norwegian law
-- Any disputes will be resolved in Norwegian courts
+### 11.1 Lovvalg
+- Disse vilkårene styres av norsk lov
+- Eventuelle tvister vil bli løst i norske domstoler
 
-### 11.2 Dispute Resolution
-- We encourage resolving disputes through direct communication
-- If disputes cannot be resolved, they will be subject to Norwegian jurisdiction
+### 11.2 Tvisteløsning
+- Vi oppfordrer til å løse tvister gjennom direkte kommunikasjon
+- Hvis tvister ikke kan løses, vil de være underlagt norsk jurisdiksjon
 
-## 12. Changes to Terms
+## 12. Endringer i vilkår
 
-### 12.1 Modifications
-- We may modify these terms at any time
-- Material changes will be communicated through the service or email
-- Continued use after changes constitutes acceptance of new terms
+### 12.1 Endringer
+- Vi kan endre disse vilkårene når som helst
+- Vesentlige endringer vil bli kommunisert gjennom tjenesten eller e-post
+- Fortsatt bruk etter endringer utgjør godkjenning av nye vilkår
 
-### 12.2 Notification
-- We will provide at least 30 days' notice for material changes
-- Changes will be effective immediately for non-material updates
+### 12.2 Varsling
+- Vi vil gi minst 30 dagers varsel for vesentlige endringer
+- Endringer vil være effektive umiddelbart for ikke-vesentlige oppdateringer
 
-## 13. Severability
+## 13. Ugyldighet
 
-If any provision of these terms is found to be unenforceable, the remaining provisions will continue in full force and effect.
+Hvis noen bestemmelse i disse vilkårene viser seg å være ugyldig, vil de gjenværende bestemmelsene fortsette i full kraft og virkning.
 
-## 14. Entire Agreement
+## 14. Hele avtalen
 
-These terms constitute the entire agreement between you and us regarding the service, superseding any prior agreements or understandings.
+Disse vilkårene utgjør hele avtalen mellom deg og oss angående tjenesten, og opphever eventuelle tidligere avtaler eller forståelser.
 
-## 15. Contact Information
+## 15. Kontaktinformasjon
 
-For questions about these terms, please contact us:
+For spørsmål om disse vilkårene, vennligst kontakt oss:
 
-- **Email**: kkarlsen06@kkarlsen.art
-- **Developer**: Hjalmar Kristensen-Karlsen
-- **Location**: Alta, Norway
+- **E-post**: kkarlsen06@kkarlsen.art
+- **Utvikler**: Hjalmar Kristensen-Karlsen
+- **Lokasjon**: Alta, Norge
 
-## 16. Special Provisions for Business Users
+## 16. Spesielle bestemmelser for forretningsbrukere
 
-### 16.1 Business Use
-- Business users must comply with applicable employment and tax laws
-- We are not responsible for compliance with local labor regulations
-- Business users should verify calculations independently
+### 16.1 Forretningsbruk
+- Forretningsbrukere må overholde gjeldende arbeids- og skattelover
+- Vi er ikke ansvarlige for overholdelse av lokale arbeidsforskrifter
+- Forretningsbrukere bør verifisere beregninger uavhengig
 
-### 16.2 Data Retention
-- Business data may be subject to different retention policies
-- We recommend exporting important data regularly
-- We are not responsible for data loss due to account termination
+### 16.2 Datalagring
+- Forretningsdata kan være underlagt andre lagringsretningslinjer
+- Vi anbefaler å eksportere viktig data regelmessig
+- Vi er ikke ansvarlige for datatap på grunn av kontosletting
 
 ## 17. Force Majeure
 
-We are not liable for any failure to perform due to circumstances beyond our reasonable control, including but not limited to natural disasters, government actions, or technical failures.
+Vi er ikke ansvarlige for eventuell manglende ytelse på grunn av omstendigheter utenfor vår rimelige kontroll, inkludert men ikke begrenset til naturkatastrofer, statlige handlinger eller tekniske feil.
