@@ -1,74 +1,50 @@
-## Architecture (2-minute read)
+## Architecture
 
-- "Manager personal shifts" table: `user_shifts`
-  - Owned by the manager (authenticated user)
-  - Can optionally reference `employees.id` via `employee_id`
-  - Used for the manager’s own planner UI and exports
+### High-level
+- Vite frontend (multi-page) serves the landing page and the calculator app under `/kalkulator/`
+- Node/Express backend under `server/` exposes REST API used by the app
+- Supabase Postgres used for data storage with RLS; Supabase Storage used for avatars
+- Netlify hosts the frontend; Netlify proxies `/api/*` to the Azure Web App backend
 
-- "Placeholder employees" table: `employees`
-  - Manager-owned rows, not real auth users
-  - Fields: `name`, `email?`, `hourly_wage?`, `tariff_level? (-2,-1,1..6, 0=custom)`
+### Frontend
+- Entry points:
+  - `index.html` → `src/main.js` (landing)
+  - `kalkulator/index.html` and `kalkulator/login.html` → `src/kalkulator.js` and legacy JS under `kalkulator/js/`
+- `src/runtime-config.js` bridges Vite envs to legacy code as `window.CONFIG`
+- `src/supabase-client.js` creates a publishable Supabase client using `VITE_*` vars
 
-- "Authoritative history" table: `employee_shifts`
-  - Every row captures immutable wage context at creation/edit time:
-    - `employee_name_snapshot`
-    - `tariff_level_snapshot`
-    - `hourly_wage_snapshot`
-  - Org break policy applied on read to compute `paid_hours` and `gross`
+### Backend
+- `server/server.js` is a single Express app with route groups:
+  - Health: `/health`, `/health/deep`
+  - Auth debug (dev only): `/auth/debug`, `/auth/session-echo`
+  - Config/flags: `/config`
+  - Settings: `/settings` (current user), `/org-settings`
+  - Employees: `/employees`
+  - Shifts: `/shifts` (personal planner), `/employee-shifts` (authoritative)
+  - Chat assistant: `/chat` (SSE streaming supported)
+  - Metrics: `/metrics`
+  - Audit log: `/audit-log/recent`
+- Auth: `server/middleware/auth.js` and `server/lib/auth/verifySupabaseJwt.js` enforce and verify bearer tokens using JWKS
+- Supabase admin client: created with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- Payroll calculation: `server/payroll/calc.js` computes `durationHours`, `paidHours`, `gross` with policy `break_policy`
 
-Flow overview:
-1) Manager creates an employee (custom wage or tariff)
-2) Creating an employee shift computes snapshots from the employee row
-3) Changing an employee later does NOT mutate old shift snapshots; new shifts take new snapshots
+Prefix behavior:
+- Some duplicates exist under `/api/*` (e.g., `/api/employees`, `/api/settings`) to support proxying. Prefer calling without `/api` when addressing the backend directly; use `/api` when going through the Netlify proxy.
 
-### Diagram
+### Runtime Data Flow
+1. Browser authenticates with Supabase Auth
+2. Client sends API requests with `Authorization: Bearer <access_token>`
+3. Server verifies JWT via JWKS, loads Supabase admin client, performs RLS-compliant queries
+4. Server returns normalized JSON to the client
 
-```mermaid
-graph TD
-  A["Manager"] --> B["user_shifts (personal)"]
-  A --> C["employees (placeholders)"]
-  C --> D["employee_shifts (history with snapshots)"]
-  E["org_settings.break_policy"] --> D
-```
+### Snapshots (Employee Shifts)
+- The `employee_shifts` table stores wage context snapshots:
+  - `employee_name_snapshot`
+  - `tariff_level_snapshot`
+  - `hourly_wage_snapshot`
+- Server derives:
+  - `duration_hours`, `paid_hours`, `gross`
+- This yields immutable and auditable shift history independent of later tariff or wage changes
 
-## Snapshots: what and why
-
-- Taken on create/update of `employee_shifts` from current `employees` row
-- Fields: `employee_name_snapshot`, `tariff_level_snapshot`, `hourly_wage_snapshot`
-- Purpose: history doesn’t change when employee wage/tariff changes later
-
-## Org settings: break_policy
-
-- Options: `fixed_0_5_over_5_5h`, `none`, `proportional_across_periods`, `from_base_rate`
-- Endpoint: `GET/PUT /org-settings`
-- Effect: controls automatic deduction applied when reading shifts:
-  - `fixed_0_5_over_5_5h`: deduct 0.5h when duration > 5.5h
-  - `none`: no automatic deduction
-  - The others are compatible variants; default safe fallback is proportional
-
-## Tariff levels
-
-- Supported levels: `-2, -1, 1..6`; `0 = custom wage`
-- Mapping implemented in server code (example values):
-  - -1: 129.91, -2: 132.90, 1: 184.54, 2: 185.38, 3: 187.46, 4: 193.05, 5: 210.81, 6: 256.14
-
-## Agent permissions
-
-- JWT claim `ai_agent=true` → read-only for `/employees` and `/employee-shifts`
-- Writes (POST/PUT/DELETE) return `403`, record an audit event, and increment a metric counter
-- Metrics: `/metrics` exposes `agent_write_denied_total{route,method,reason}`
-- Recent audit: `GET /audit-log/recent?limit=100`
-
-## Exports (CSV)
-
-- UI CSV includes columns in this order:
-  - `Dato, Dag, Start, Slutt, Timer, Grunnlønn, Tillegg, Totalt, Type, Serie`
-
-## Rollbacks
-
-- Emergency: disable employees feature or revert break policy via `/org-settings`
-- Legacy column re-enable: server tolerates missing columns (graceful fallbacks via helpers
-  like `isColumnMissing`), and UI retains legacy settings fields (e.g., `pauseDeduction`) to
-  preserve backward compatibility if you need to temporarily roll back DB changes.
 
 
