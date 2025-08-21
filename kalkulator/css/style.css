@@ -722,7 +722,7 @@ body.skeleton-active #app {
   opacity: 0;
   visibility: hidden;
   transform: translateY(8px);
-  transition: opacity 0.25s ease-out, transform 0.25s ease-out; /* Enable smooth coordinated fade */
+  transition: none; /* No transitions - immediate appearance */
 }
 
 /* Header should be immediately visible for profile info */
@@ -734,7 +734,7 @@ body.skeleton-active #app {
 /* Animation-ready state - elements become visible and animatable */
 #app.app-ready .app-container > .animate-ready {
   visibility: visible;
-  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+  transition: none; /* No transitions - immediate appearance */
 }
 
 /* Completed animation state */
@@ -742,6 +742,7 @@ body.skeleton-active #app {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  transition: none; /* No transitions - immediate appearance */
 }
 
 /* Fallback for legacy animation approach */
@@ -765,6 +766,122 @@ body.skeleton-active #app {
 #app.app-ready #totalHours,
 #app.app-ready .total-secondary-info,
 #app.app-ready .next-shift-content,
+#app.app-ready .next-payroll-content,
+#app.app-ready .chart-progress-label {
+  opacity: 0;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Show dynamic content after animations complete */
+#app.animations-complete #totalAmount,
+#app.animations-complete #totalHours,
+#app.animations-complete .total-secondary-info,
+#app.animations-complete .next-shift-content,
+#app.animations-complete .next-payroll-content,
+#app.animations-complete .chart-progress-label {
+  opacity: 1;
+}
+
+/* Show real content when skeletons are removed */
+body:not(.skeleton-active) .user-profile-btn,
+body:not(.skeleton-active) .tab-bar,
+body:not(.skeleton-active) .total-card #totalAmount,
+body:not(.skeleton-active) .total-card #totalSecondaryInfo,
+body:not(.skeleton-active) .total-card .total-label,
+body:not(.skeleton-active) .dashboard-month-nav .month-display,
+body:not(.skeleton-active) .shift-section .month-navigation .month-display,
+body:not(.skeleton-active) .month-nav-btn {
+  opacity: 1;
+  visibility: visible;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Ensure month picker has immediate appearance when becoming visible */
+body:not(.skeleton-active) .month-display {
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Month picker skeleton removed - no shimmer needed */
+
+/* Ensure total card skeleton is completely hidden when not active */
+body:not(.skeleton-active) .total-card .total-skeleton {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Mobile responsive skeleton positioning */
+@media (max-width: 768px) {
+  .total-card .total-skeleton {
+    padding: 14px 16px; /* Match mobile card padding */
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 360px) {
+  .total-card .total-skeleton {
+    padding: 12px 14px; /* Match extra small mobile card padding */
+  }
+}
+
+/* Landscape mobile devices */
+@media (max-width: 667px) and (orientation: landscape) and (max-height: 430px) {
+  .total-card .total-skeleton {
+    padding: 10px 12px; /* Match landscape mobile card padding */
+  }
+}
+
+/* Enhanced skeleton transition states */
+body.skeleton-active .skeleton {
+  opacity: 1;
+  visibility: visible;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Immediate hide of skeletons when removing skeleton-active */
+body:not(.skeleton-active) .skeleton {
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate disappearance */
+}
+
+/* Ensure skeleton shimmer animation continues during transition */
+.skeleton-line {
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+  will-change: background-position;
+}
+
+/* Ensure content is hidden until animations are complete */
+#app.app-ready:not(.animations-complete) .app-container > *:not(.header) {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Content becomes visible when animations are complete */
+#app.animations-complete .app-container > *:not(.header) {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Ensure all skeletons are hidden when animations are complete */
+#app.animations-complete .skeleton {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Ensure total card content fits within fixed height */
+.total-card .total-label,
+.total-card .total-amount,
+.total-card .total-secondary-info {
+  max-height: none; /* Allow natural height within fixed container */
+  overflow: visible; /* Allow content to be visible */
+}
+
 /* Skeleton loading styles */
 .skeleton {
   display: flex;
@@ -806,8 +923,7 @@ body.skeleton-active #app {
 /* Default: hide the custom skeleton chrome; reveal only when body has .skeleton-active */
 .profile-skeleton,
 .tab-bar-skeleton,
-.total-card .total-skeleton,
-.month-display-skeleton {
+.total-card .total-skeleton {
   display: none;
 }
 
@@ -863,23 +979,30 @@ body.skeleton-active .tab-bar-container {
   flex: 1 1 0;
 }
 
-/* Month display skeleton (inline block) */
-.month-display-skeleton {
-  width: 110px;
-  height: 14px;
-  border-radius: 7px;
-  margin: 0 8px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.1s ease-in-out infinite;
-}
+/* Month picker skeleton removed - no shimmer needed */
 
 /* Activate skeleton chrome and hide dynamic UI while loading */
-body.skeleton-active .profile-skeleton { display: flex; }
-body.skeleton-active .user-profile-btn { visibility: hidden; }
+body.skeleton-active .profile-skeleton { 
+  display: flex; 
+  opacity: 1;
+  visibility: visible;
+}
+body.skeleton-active .user-profile-btn { 
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate appearance */
+}
 
-body.skeleton-active .tab-bar-skeleton { display: flex; }
-body.skeleton-active .tab-bar { visibility: hidden; }
+body.skeleton-active .tab-bar-skeleton { 
+  display: flex; 
+  opacity: 1;
+  visibility: visible;
+}
+body.skeleton-active .tab-bar { 
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate appearance */
+}
 /* Render the actual tab bar but overlay a single long shimmer inside it */
 .tab-bar-skeleton {
   pointer-events: none;
@@ -917,12 +1040,18 @@ body.skeleton-active .floating-action-bar-backdrop { display: none !important; }
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
 }
 
-body.skeleton-active .total-card .total-skeleton { display: flex; }
+body.skeleton-active .total-card .total-skeleton { 
+  display: flex; 
+  opacity: 1;
+  visibility: visible;
+}
 /* Hide total card real content completely during shimmer so skeleton can center */
 body.skeleton-active .total-card #totalAmount,
 body.skeleton-active .total-card #totalSecondaryInfo,
 body.skeleton-active .total-card .total-label {
-  display: none !important;
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate appearance */
 }
 
 /* Align total-card skeleton with real text positions */
@@ -932,11 +1061,18 @@ body.skeleton-active .total-card .total-label {
   justify-items: center;
   align-items: center;
   row-gap: 10px;
-  padding: 8px 0; /* avoid stretching the card */
-  position: relative; /* sit naturally inside card flow */
-  margin: 0 auto; /* center horizontally */
-  width: 100%;
+  position: absolute; /* Position as overlay to prevent height changes */
+  top: 0; /* Start from top of card */
+  left: 0; /* Start from left of card */
+  right: 0; /* Extend to right edge */
+  bottom: 0; /* Extend to bottom edge */
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
   pointer-events: none;
+  z-index: 1; /* Ensure skeleton is above content during loading */
+  /* Center the skeleton grid within the full card area */
+  padding: 30px; /* Match card padding */
+  box-sizing: border-box; /* Include padding in sizing */
 }
 /* Line 1: Brutto label replacement (longer to account for injected text) */
 .total-card .total-skeleton .skeleton-line:nth-child(1) {
@@ -957,10 +1093,17 @@ body.skeleton-active .total-card .total-label {
   border-radius: 6px;
 }
 
-body.skeleton-active .dashboard-month-nav .month-display,
-body.skeleton-active .shift-section .month-navigation .month-display { display: none; }
-body.skeleton-active .dashboard-month-nav .month-display-skeleton,
-body.skeleton-active .shift-section .month-navigation .month-display-skeleton { display: inline-block; }
+/* Ensure skeleton is completely hidden when not active */
+.total-card .total-skeleton {
+  display: none; /* Hidden by default */
+}
+
+/* Only show skeleton when skeleton-active class is present */
+body.skeleton-active .total-card .total-skeleton {
+  display: grid;
+}
+
+/* Month display skeleton rules - handled by earlier CSS */
 
 /* While loading, hide the entire month navigation container to avoid layout jumps */
 body.skeleton-active .dashboard-month-nav,
@@ -968,12 +1111,1635 @@ body.skeleton-active .shift-section .month-navigation-container { display: none 
 
 /* Ensure next shift/payroll skeletons are visible until content populated */
 body.skeleton-active #nextShiftContent .skeleton,
-body.skeleton-active #nextPayrollContent .skeleton { display: block; }
+body.skeleton-active #nextPayrollContent .skeleton { 
+  display: block;
+  opacity: 1;
+  visibility: visible;
+}
 
 #app.app-ready .next-payroll-content,
 #app.app-ready .chart-progress-label {
   opacity: 0;
-  transition: opacity 0.3s ease-out;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Show dynamic content after animations complete */
+#app.app-ready.animations-complete #totalAmount,
+#app.app-ready.animations-complete #totalHours,
+#app.app-ready.animations-complete .total-secondary-info,
+#app.app-ready.animations-complete .next-shift-content,
+#app.app-ready.animations-complete .next-payroll-content,
+#app.app-ready.animations-complete .chart-progress-label {
+  opacity: 1;
+}
+
+@keyframes gradientSlide {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Calendar cell animation - animate in row by row, left to right */
+@keyframes calendarCellFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Special fade-in animation for week numbers */
+@keyframes weekNumberFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Special animation for other-month cells */
+@keyframes calendarCellFadeInOtherMonth {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.3;
+  }
+}
+
+body {
+  /* Simple top-to-bottom gradient: very dark at top, almost as dark at bottom */
+  background: linear-gradient(to bottom,
+    #0a0a0a 0%,     /* Very dark at top */
+    #0c0c0c 100%    /* Almost as dark at bottom */
+  );
+  background-attachment: fixed;
+  color: var(--text-primary);
+  height: var(--app-height, 100vh);
+  height: var(--app-height, 100dvh);
+  overflow: hidden;
+  position: relative;
+  /* Ensure browser chrome uses dark theme */
+  color-scheme: dark;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* iOS 26 support - allow content to extend behind floating system navbar */
+  /* Content will fill entire screen including behind system UI */
+}
+
+.app-container {
+  padding-left: 20px;
+  padding-right: 20px;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Mobile adjustments for app-container */
+@media (max-width: 480px) {
+  .app-container {
+    padding-left: 10px;
+    padding-right: 10px;
+    max-width: 100%;
+  }
+}
+
+.header {
+  /* iOS-style translucent navigation bar with frosted glass effect */
+  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  padding: 20px;
+  border-bottom: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border */
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
+  overflow: visible;
+  min-height: 80px; /* Fixed minimum height to prevent layout shift */
+  flex-shrink: 0;
+  z-index: 10000; /* Ensure header is above dashboard content */
+  /* iOS PWA safe area handling for header */
+  padding-top: max(20px, calc(20px + env(safe-area-inset-top)));
+  padding-left: max(20px, calc(20px + env(safe-area-inset-left)));
+  padding-right: max(20px, calc(20px + env(safe-area-inset-right)));
+  /* Ensure header and profile elements are immediately visible */
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.header.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* New header structure */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Dashboard Toggle Button */
+.dashboard-toggle-btn {
+  background: rgba(18, 18, 18, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: none;
+  border-radius: 16px;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  margin-left: 8px;
+}
+
+.dashboard-toggle-btn:hover {
+  background: rgba(18, 18, 18, 0.85);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* Active state with enhanced 3D bevel effect */
+.dashboard-toggle-btn.active {
+  background: rgba(18, 18, 18, 0.85);
+  color: var(--text-primary);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 2px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.23),
+    inset 2px 0 0 rgba(255, 255, 255, 0.08),
+    inset -2px 0 0 rgba(0, 0, 0, 0.13);
+}
+
+.toggle-text {
+  display: block;
+}
+
+/* Dashboard View Toggle Styles */
+.stats-view .dashboard-content {
+  /* In stats view, restructure dashboard to show only stats */
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+/* Hide statistics section by default - only show stats card when Stats button is pressed */
+.statistics-section {
+  display: none !important;
+}
+
+/* Keep statistics section hidden in stats view since chart is moved to dashboard */
+.stats-view .statistics-section {
+  display: none;
+}
+
+/* Hide all original dashboard cards in stats view with smooth transition */
+body.stats-view .dashboard-content .total-card,
+body.stats-view .dashboard-content .next-shift-card,
+body.stats-view .dashboard-content .next-payroll-card {
+  display: none !important;
+}
+
+/* Chatbox View Toggle Styles - Proper spacing without bottom gaps */
+.chatbox-view .dashboard-content {
+  /* In chatbox view, proper spacing from header but no bottom gaps */
+  gap: 20px; /* Consistent gap with other views for proper month picker spacing */
+  margin: 0; /* No margins */
+  padding: 20px 0 0 0; /* Top padding for header spacing, no bottom padding */
+  /* Simple flexbox layout that fills available space */
+  display: flex;
+  flex-direction: column;
+  /* Fill available viewport height but don't create bottom space */
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+}
+
+/* Hide all original dashboard cards in chatbox view with smooth transition */
+body.chatbox-view .dashboard-content .total-card,
+body.chatbox-view .dashboard-content .next-shift-card,
+body.chatbox-view .dashboard-content .next-payroll-card {
+  display: none !important;
+}
+
+/* Keep month navigation visible in chatbox view - only hide shift section navigation */
+body.chatbox-view .shift-section .month-navigation-container,
+.chatbox-view .shift-section .month-navigation-container {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Ensure dashboard month navigation remains visible in chatbox view */
+body.chatbox-view .dashboard-month-nav,
+.chatbox-view .dashboard-month-nav {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  left: auto !important;
+  height: auto !important;
+  width: auto !important;
+}
+
+/* Keep shifts section visible in chatbox view (similar to stats view) */
+/* Remove the display: none rule to allow shifts section to remain visible */
+
+/* Hide floating action bar in chatbox view */
+body.chatbox-view .floating-action-bar {
+  display: none !important;
+}
+
+/* Ensure header remains visible in chatbox view */
+body.chatbox-view .header {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
+/* Ensure proper spacing between dashboard and shifts in chatbox view */
+.chatbox-view .dashboard-section {
+  margin-bottom: 0; /* Remove bottom margin to reduce gap */
+}
+
+.chatbox-view .shift-section {
+  padding-top: 10px; /* Reduce top padding for tighter layout */
+}
+
+/* Hide shift section month navigation in chatbox view to avoid duplication */
+.chatbox-view .shift-section .month-navigation-container {
+  display: none !important;
+}
+
+/* Add smooth transitions for dashboard cards */
+.total-card,
+.next-shift-card,
+.next-payroll-card,
+.dashboard-month-nav,
+.floating-action-bar {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s ease-out;
+}
+
+/* Immediate hiding for smooth tab transitions */
+.total-card[style*="display: none"],
+.next-shift-card[style*="display: none"],
+.next-payroll-card[style*="display: none"],
+.dashboard-month-nav[style*="display: none"],
+.floating-action-bar[style*="display: none"] {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: none; /* Immediate hiding */
+}
+
+/* Position month picker prominently in stats view */
+.stats-view .dashboard-month-nav {
+  order: 2; /* Position after stats container */
+  margin-top: 20px;
+  margin-bottom: 20px;
+  display: flex !important; /* Ensure visibility in stats view */
+}
+
+/* Move shifts section up in stats view */
+.stats-view .shift-section {
+  margin-top: -20px; /* Move up to reduce gap */
+  padding-top: 20px;
+}
+
+/* Hide shift section month navigation in stats view to avoid duplication */
+.stats-view .shift-section .month-navigation-container {
+  display: none !important;
+}
+
+/* Enhanced stats view styling for better visual distinction */
+.stats-view .dashboard-section {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 0 0 32px 32px;
+  padding-bottom: 32px;
+}
+
+/* Dashboard stats container styling for stats view */
+.dashboard-stats-container {
+  order: 1;
+  margin: 0;
+  width: 100%;
+  flex: 1;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: statsContainerFadeIn 0.4s ease-out forwards;
+}
+
+/* Dashboard chatbox container styling for chatbox view - Fill remaining space */
+.dashboard-chatbox-container {
+  /* Take all remaining space after header padding */
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  /* Simple flexbox layout */
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: chatboxContainerFadeIn 0.4s ease-out forwards;
+}
+
+@keyframes statsContainerFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chatboxContainerFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ensure stats card maintains proper styling when moved to dashboard */
+.stats-view .dashboard-stats-container .weekly-hours-chart-card {
+  margin: 0;
+  width: 100%;
+  height: auto;
+}
+
+/* CSS Container Query support for responsive chatbox (where supported) */
+@supports (container-type: inline-size) {
+  .dashboard-chatbox-container {
+    container-type: inline-size;
+  }
+
+  @container (max-width: 768px) {
+    .chatbox-pill {
+      padding: 12px;
+    }
+  }
+}
+
+/* Simple chatbox pill styling - no forced heights */
+.chatbox-view .dashboard-chatbox-container .chatbox-pill {
+  /* Take all container space without forced heights */
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  /* Simple flexbox layout */
+  display: flex;
+  flex-direction: column;
+}
+
+/* When keyboard is visible, maximize chatbox pill height */
+body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
+  /* Take full container height when keyboard appears */
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
+  /* Remove any margins or padding that create gaps */
+  margin: 0;
+  padding: 0;
+}
+
+.chatbox-view .dashboard-chatbox-container .chatbox-expanded-content {
+  /* Take all available space in chatbox container */
+  flex: 1;
+  display: flex !important;
+  flex-direction: column;
+  /* Fill available space without creating bottom gaps */
+  min-height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.chatbox-view .dashboard-chatbox-container .chatbox-log {
+  /* Take all available space in expanded content but with height limits */
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Height restrictions for tab view */
+  max-height: 60vh;
+  min-height: 200px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  margin: 0;
+  padding: 16px; /* Essential padding for readability */
+}
+
+/* Ensure dashboard content uses flexbox ordering in both views */
+.stats-view .dashboard-content,
+.chatbox-view .dashboard-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure proper spacing between dashboard and shifts in stats view */
+.stats-view .dashboard-section {
+  margin-bottom: 0; /* Remove bottom margin to reduce gap */
+}
+
+.stats-view .shift-section {
+  padding-top: 10px; /* Reduce top padding for tighter layout */
+}
+
+.header-logo {
+  width: 28px;
+  height: 28px;
+  filter: grayscale(100%);
+}
+
+.header-logo-link {
+  display: inline-block;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.header-logo-link:hover {
+  opacity: 0.8;
+}
+
+.header-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.header-back-btn {
+  /* Back button styling */
+  background: rgba(18, 18, 18, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: none;
+  border-radius: 16px;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.header-back-btn:hover {
+  background: rgba(18, 18, 18, 0.85);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* Progress card - hele kortet er progressbaren */
+.progress-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 0;
+  /* spacing now handled by parent gap */
+  margin-bottom: 0;
+  border: 1px solid var(--border);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  position: relative;
+  overflow: hidden;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  opacity: 0.9;
+}
+
+.progress-card:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Removed shimmer animation from progress card to avoid conflicts with progress bar animation */
+
+/* Progress fill - den fargede delen som fyller kortet */
+.progress-fill {
+  height: 100%;
+  background: var(--gradient-secondary);
+  border-radius: 24px 0 0 24px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  /* Ensure initial state is 0% width for smooth animation */
+  width: 0%;
+  will-change: width;
+}
+
+/* Active progress fill - when nearing or completing goal */
+.progress-fill.active {
+  background: var(--gradient-secondary);
+}
+
+/* Initial loading state - ensures progress bar starts at 0% */
+.progress-fill.loading {
+  width: 0% !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0,0,0,0.03) 100%
+  );
+  border-radius: 0 24px 24px 0;
+}
+
+/* Removed progress bar shimmer to avoid conflicts with width animation */
+
+/* Removed unused progressShimmer keyframe */
+
+/* Confetti animation */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10px) translateX(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) translateX(var(--end-x, 0px)) rotate(var(--rotation, 360deg)) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.progress-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  /* Enhanced typography for better readability */
+  color: var(--text-primary);
+  font-size: var(--text-base); /* 16px - Slightly smaller for better balance */
+  font-weight: var(--font-weight-semibold); /* 600 - Stronger emphasis for better visibility */
+  font-family: var(--font-primary);
+
+  /* Typography smoothing for crisp text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
+
+  /* Improved positioning and layout */
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 4; /* Higher z-index to ensure visibility above progress fill effects */
+  width: 100%;
+  text-align: center;
+  letter-spacing: 0.01em; /* Slight positive tracking for better readability at smaller size */
+  line-height: 1.2; /* Tighter line height for better vertical centering */
+
+  /* Enhanced text shadow for better contrast against varying backgrounds */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 0 8px rgba(0, 0, 0, 0.2);
+
+  /* Smooth transitions for any text changes */
+  transition: all var(--speed-normal) var(--ease-default);
+
+  /* Ensure consistent rendering across browsers */
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.progress-fill.full {
+  border-radius: 24px;
+}
+
+.progress-fill.full::before {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.08) 50%,
+    transparent 100%
+  );
+}
+
+.progress-fill.full::after {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(16,120,59,0.08) 100%
+  );
+}
+
+/* Enhanced progress label states for better contrast optimization */
+.progress-label.low-progress {
+  /* When progress is low (0-25%), ensure good contrast against unfilled background */
+  color: var(--text-primary);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.progress-label.medium-progress {
+  /* When progress is medium (25-75%), optimize for mixed background */
+  color: var(--text-primary);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 8px rgba(0, 0, 0, 0.4),
+    0 0 16px rgba(255, 255, 255, 0.1);
+}
+
+.progress-label.high-progress {
+  /* When progress is high (75-100%), ensure visibility against filled background */
+  color: #FFFFFF;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.6),
+    0 0 10px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.progress-label.overachievement {
+  /* Special styling for overachievement state with neon background */
+  color: #FFFFFF;
+  font-weight: var(--font-weight-bold); /* 700 - Extra emphasis for achievement */
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.7),
+    0 0 12px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(58, 190, 246, 0.3);
+  animation: subtle-glow 2s ease-in-out infinite alternate;
+}
+
+/* Subtle glow animation for overachievement text */
+@keyframes subtle-glow {
+  0% {
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.5),
+      0 0 24px rgba(58, 190, 246, 0.3);
+  }
+  100% {
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.5),
+      0 0 24px rgba(58, 190, 246, 0.5),
+      0 0 32px rgba(58, 190, 246, 0.2);
+  }
+}
+
+/* Overachievement styling - when goal is exceeded */
+.progress-fill.overachievement {
+  background: var(--gradient-neon);
+}
+
+/* Removed glowing border for overachievement - cleaner look */
+
+@keyframes goalCelebrate {
+  0% {
+    filter: brightness(1.3);
+  }
+  50% {
+    filter: brightness(1.4);
+  }
+  100% {
+    filter: none;
+  }
+}
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--font-primary);
+}
+
+/* Base Body Styling with Inter optimizations */
+body {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-normal); /* 400 - Base text weight */
+  font-size: var(--text-base);
+  line-height: 1.6;
+  letter-spacing: -0.01em; /* Slight negative tracking for Inter */
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply max-width only to specific elements that need it */
+img, video, iframe, embed, object {
+  max-width: 100%;
+  height: auto;
+}
+
+html {
+  overflow: hidden; /* Completely prevent all scrolling */
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  /* Ensure browser chrome uses dark theme */
+  color-scheme: dark;
+  /* iOS 26 support - allow content to extend behind system UI */
+  -webkit-appearance: none;
+  appearance: none;
+  /* Ensure full viewport usage including behind system navbar */
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Allow scrolling when auth forms are visible */
+html:has(.auth-center),
+html.auth-mode {
+  overflow: auto;
+}
+
+body:has(.auth-center),
+body.auth-mode {
+  overflow: auto;
+}
+
+:root {
+  /* Typography - Inter Font System */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+
+  /* Font Weight Scale for Visual Hierarchy */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+
+  /* Modern Dark Theme with Neon Blue - aligned with landing page */
+  --primary: #4AC8FF;
+  --primary-dark: #2A8FD6;
+  --primary-light: #6AD4FF;
+  --secondary: #00D4FF;
+  --accent: #00F5FF;
+
+  /* Semantic colors */
+  --success: #00FF88;
+  --warning: #FFB800;
+  --error: #FF4757;
+  --info: #3ABEF6;
+
+  /* Background colors with improved integration */
+  --bg-primary: #121212;
+  --bg-secondary: rgba(26, 26, 26, 0.95);
+  --bg-tertiary: rgba(30, 30, 30, 0.92);
+  --bg-card: rgba(30, 30, 30, 0.85);
+  --bg-hover: rgba(42, 42, 42, 0.9);
+
+  /* Text colors with improved contrast */
+  --text-primary: #FFFFFF;
+  --text-secondary: #C0C0C0;
+  --text-tertiary: #909090;
+  --text-muted: #808080;
+
+  /* Legacy support - map old colors to new system */
+  --accent2: var(--primary);
+  --accent3: var(--secondary);
+  --accent4: var(--info);
+  --accent-light: rgba(58, 190, 246, 0.1);
+  --accent-alpha: rgba(58, 190, 246, 0.15);
+  --accent2-alpha: rgba(58, 190, 246, 0.15);
+  --accent3-alpha: rgba(0, 212, 255, 0.15);
+  --accent4-alpha: rgba(58, 190, 246, 0.15);
+  --danger: var(--error);
+
+  /* Border colors */
+  --border: #2a2a2f;
+  --border-light: #3a3a3f;
+  --border-color: var(--border);
+
+  /* Shadow colors - removed for flat design */
+
+  /* Glow effects removed */
+  /* Spacing - 8px grid system */
+  --space-1: 0.5rem;   /* 8px */
+  --space-2: 1rem;     /* 16px */
+  --space-3: 1.5rem;   /* 24px */
+  --space-4: 2rem;     /* 32px */
+  --space-5: 2.5rem;   /* 40px */
+  --space-6: 3rem;     /* 48px */
+  --space-8: 4rem;     /* 64px */
+  --space-10: 5rem;    /* 80px */
+  --space-12: 6rem;    /* 96px */
+
+  /* Animations - removed for flat design */
+  --gradient-primary: linear-gradient(135deg,
+    var(--accent) 0%,
+    var(--accent3) 50%,
+    var(--accent2) 100%);
+  --gradient-secondary: linear-gradient(135deg,
+    var(--accent-alpha) 0%,
+    var(--accent3-alpha) 50%,
+    var(--accent2-alpha) 100%);
+  --gradient-progress-bg: linear-gradient(135deg,
+    rgba(0, 245, 255, 0.08) 0%,
+    rgba(0, 212, 255, 0.08) 50%,
+    rgba(58, 190, 246, 0.08) 100%);
+  --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
+  --gradient-neon: linear-gradient(135deg, #3ABEF6 0%, #00D4FF 100%);
+  --speed-fast: 0.15s;
+  --speed-normal: 0.3s;
+  --speed-slow: 0.5s;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --border-radius: 12px;
+  --border-radius-large: 20px;
+}
+
+/* Removed global animation kill-switch. Initial-load suppression is managed via
+   #app.app-ready and .animations-complete states below. */
+
+/* Typography Styles - Optimized for Inter */
+
+/* Heading Styles */
+h1 {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-bold); /* 700 - Strong emphasis for main headings */
+  font-size: var(--text-4xl);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+h2 {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-semibold); /* 600 - Moderate emphasis for subheadings */
+  font-size: var(--text-3xl);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+}
+
+h3 {
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: var(--text-2xl);
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+h4 {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: var(--text-xl);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+h5, h6 {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: var(--text-lg);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+/* Body Text Variations */
+p {
+  font-family: var(--font-primary);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+/* Small Text */
+.text-small {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+/* Large Text */
+.text-large {
+  font-size: var(--text-lg);
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Numerical Data Styling (Perfect for Calculator) */
+.number-display {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: var(--text-xl);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums; /* Monospaced numbers */
+}
+
+/* Form Labels */
+label {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Input Fields */
+input, select, textarea {
+  font-family: var(--font-primary);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+/* Button Text */
+button {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for interactive elements */
+  font-size: var(--text-base);
+  line-height: 1.5;
+  letter-spacing: 0.025em; /* Positive tracking for better button readability */
+}
+
+/* Typography Utility Classes */
+.text-primary { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-tertiary { color: var(--text-tertiary) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+.font-light { font-weight: var(--font-weight-light) !important; }
+.font-normal { font-weight: var(--font-weight-normal) !important; }
+.font-medium { font-weight: var(--font-weight-medium) !important; }
+.font-semibold { font-weight: var(--font-weight-semibold) !important; }
+.font-bold { font-weight: var(--font-weight-bold) !important; }
+.font-extrabold { font-weight: var(--font-weight-extrabold) !important; }
+
+.text-xs { font-size: var(--text-xs) !important; }
+.text-sm { font-size: var(--text-sm) !important; }
+.text-base { font-size: var(--text-base) !important; }
+.text-lg { font-size: var(--text-lg) !important; }
+.text-xl { font-size: var(--text-xl) !important; }
+.text-2xl { font-size: var(--text-2xl) !important; }
+.text-3xl { font-size: var(--text-3xl) !important; }
+.text-4xl { font-size: var(--text-4xl) !important; }
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  :root {
+    --text-4xl: 2rem;     /* 32px on mobile */
+    --text-3xl: 1.75rem;  /* 28px on mobile */
+    --text-2xl: 1.375rem; /* 22px on mobile */
+  }
+
+  body {
+    font-size: var(--text-sm); /* Slightly smaller base on mobile */
+  }
+
+  .total-amount {
+    font-size: 3rem; /* 48px on mobile - smaller than desktop but still prominent */
+    font-weight: var(--font-weight-extrabold); /* Maintain maximum prominence on mobile */
+    letter-spacing: -0.02em; /* Consistent letter spacing */
+  }
+
+  .total-label {
+    font-weight: var(--font-weight-semibold); /* Consistent with desktop */
+    letter-spacing: 0.025em; /* Maintain label styling */
+    text-transform: uppercase;
+  }
+
+  .total-hours {
+    font-weight: var(--font-weight-medium); /* Consistent with desktop */
+    font-size: var(--text-base); /* 16px on mobile - appropriate for supporting text */
+    letter-spacing: -0.005em;
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Space between icon and text */
+    justify-content: center; /* Center the content horizontally */
+  }
+
+  /* Enhanced mobile progress label styling */
+  .progress-label {
+    font-size: var(--text-sm); /* 14px on mobile for better fit */
+    font-weight: var(--font-weight-bold); /* 700 - Stronger weight for mobile visibility */
+    letter-spacing: 0.02em; /* Slightly more tracking for mobile readability */
+
+    /* Enhanced text shadow for mobile screens */
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.4),
+      0 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Mobile-specific progress label states */
+  .progress-label.low-progress {
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.5),
+      0 0 14px rgba(0, 0, 0, 0.4);
+  }
+
+  .progress-label.medium-progress {
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.6),
+      0 0 10px rgba(0, 0, 0, 0.5),
+      0 0 18px rgba(255, 255, 255, 0.15);
+  }
+
+  .progress-label.high-progress {
+    text-shadow:
+      0 1px 4px rgba(0, 0, 0, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.5),
+      0 0 22px rgba(0, 0, 0, 0.3);
+  }
+
+  .progress-label.overachievement {
+    font-weight: var(--font-weight-extrabold); /* 800 - Maximum emphasis on mobile */
+    text-shadow:
+      0 1px 4px rgba(0, 0, 0, 0.8),
+      0 0 14px rgba(0, 0, 0, 0.6),
+      0 0 26px rgba(58, 190, 246, 0.4);
+  }
+}
+
+/* High DPI Display Optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Performance optimizations for animations */
+* {
+  /* Optimize animations for better performance */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Elements that will be animated should declare will-change */
+.progress-fill,
+.modal-content,
+.shift-item,
+.calendar-cell,
+.btn,
+.tab-btn {
+  will-change: transform, opacity;
+}
+
+/* Force hardware acceleration for performance-critical elements */
+.progress-fill,
+.modal-content {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Remove will-change after animations complete */
+.progress-fill[data-animating="false"],
+.modal-content.modal-open,
+.calendar-cell.animate-complete {
+  will-change: auto;
+}
+
+/* Accessibility - Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Exception for progress bar animation - this is important for user feedback */
+  .progress-fill {
+    transition-duration: 0.8s !important;
+  }
+
+  /* Simplified progress label animations for reduced motion */
+  .progress-label {
+    transition: color 0.2s ease !important;
+    animation: none !important;
+  }
+
+  .progress-label.overachievement {
+    animation: none !important;
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.5),
+      0 0 24px rgba(58, 190, 246, 0.4);
+  }
+
+  /* Disable will-change for reduced motion */
+  .progress-fill,
+  .modal-content,
+  .shift-item,
+  .calendar-cell,
+  .btn,
+  .tab-btn {
+    will-change: auto;
+  }
+}
+
+/* Accessibility - Focus management */
+.focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 9999;
+  font-size: var(--text-sm);
+  border: 1px solid var(--border-color);
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   FOUC/FOAC PREVENTION - Initial Hidden States
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Prevent flash of unstyled/animated content by ensuring elements start hidden */
+#app {
+  /* App container starts hidden and will be shown by JavaScript */
+  display: none !important;
+}
+
+/* If skeletons are active, show the app immediately so placeholders are visible */
+body.skeleton-active #app {
+  display: block !important;
+}
+
+/* When app is shown, ensure animatable elements start with opacity 0 */
+#app.app-ready .app-container > .content,
+#app.app-ready .app-container > .month-navigation-container {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Header should be immediately visible for profile info */
+#app.app-ready .header {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Animation-ready state - elements become visible and animatable */
+#app.app-ready .app-container > .animate-ready {
+  visibility: visible;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Completed animation state */
+#app.app-ready .app-container > .animate-complete {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Fallback for legacy animation approach */
+#app .app-container > *[style*="animation"] {
+  visibility: visible !important;
+}
+
+/* Ensure progress bars start in loading state to prevent width flash */
+#app.app-ready .progress-fill.loading {
+  width: 0% !important;
+  transition: none !important;
+}
+
+/* Allow progress bars to animate after app is ready */
+#app.app-ready.animations-complete .progress-fill {
+  transition: width 0.6s ease-out !important;
+}
+
+/* Prevent flash of default values in dynamic content */
+#app.app-ready #totalAmount,
+#app.app-ready #totalHours,
+#app.app-ready .total-secondary-info,
+#app.app-ready .next-shift-content,
+#app.app-ready .next-payroll-content,
+#app.app-ready .chart-progress-label {
+  opacity: 0;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Show dynamic content after animations complete */
+#app.animations-complete #totalAmount,
+#app.animations-complete #totalHours,
+#app.animations-complete .total-secondary-info,
+#app.animations-complete .next-shift-content,
+#app.animations-complete .next-payroll-content,
+#app.animations-complete .chart-progress-label {
+  opacity: 1;
+}
+
+/* Show real content when skeletons are removed */
+body:not(.skeleton-active) .user-profile-btn,
+body:not(.skeleton-active) .tab-bar,
+body:not(.skeleton-active) .total-card #totalAmount,
+body:not(.skeleton-active) .total-card #totalSecondaryInfo,
+body:not(.skeleton-active) .total-card .total-label,
+body:not(.skeleton-active) .dashboard-month-nav .month-display,
+body:not(.skeleton-active) .shift-section .month-navigation .month-display,
+body:not(.skeleton-active) .month-nav-btn {
+  opacity: 1;
+  visibility: visible;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Ensure month picker has immediate appearance when becoming visible */
+body:not(.skeleton-active) .month-display {
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Month picker skeleton removed - no shimmer needed */
+
+/* Ensure total card skeleton is completely hidden when not active */
+body:not(.skeleton-active) .total-card .total-skeleton {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Mobile responsive skeleton positioning */
+@media (max-width: 768px) {
+  .total-card .total-skeleton {
+    padding: 14px 16px; /* Match mobile card padding */
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 360px) {
+  .total-card .total-skeleton {
+    padding: 12px 14px; /* Match extra small mobile card padding */
+  }
+}
+
+/* Landscape mobile devices */
+@media (max-width: 667px) and (orientation: landscape) and (max-height: 430px) {
+  .total-card .total-skeleton {
+    padding: 10px 12px; /* Match landscape mobile card padding */
+  }
+}
+
+/* Enhanced skeleton transition states */
+body.skeleton-active .skeleton {
+  opacity: 1;
+  visibility: visible;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Immediate hide of skeletons when removing skeleton-active */
+body:not(.skeleton-active) .skeleton {
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate disappearance */
+}
+
+/* Ensure skeleton shimmer animation continues during transition */
+.skeleton-line {
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+  will-change: background-position;
+}
+
+/* Ensure content is hidden until animations are complete */
+#app.app-ready:not(.animations-complete) .app-container > *:not(.header) {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Content becomes visible when animations are complete */
+#app.animations-complete .app-container > *:not(.header) {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Ensure all skeletons are hidden when animations are complete */
+#app.animations-complete .skeleton {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Ensure total card content fits within fixed height */
+.total-card .total-label,
+.total-card .total-amount,
+.total-card .total-secondary-info {
+  max-height: none; /* Allow natural height within fixed container */
+  overflow: visible; /* Allow content to be visible */
+}
+
+/* Skeleton loading styles */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+}
+.skeleton-line.w-30 { width: 30%; }
+.skeleton-line.w-40 { width: 40%; }
+.skeleton-line.w-50 { width: 50%; }
+.skeleton-line.w-60 { width: 60%; }
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; opacity: 0.6; }
+  50% { opacity: 0.85; }
+  100% { background-position: -200% 0; opacity: 0.6; }
+}
+
+/* Card-specific skeleton spacing */
+.skeleton.skeleton-shift,
+.skeleton.skeleton-payroll {
+  padding: 8px 0;
+}
+
+/* Add separation inside next cards so lines don't touch */
+.next-shift-card .skeleton .skeleton-line + .skeleton-line,
+.next-payroll-card .skeleton .skeleton-line + .skeleton-line {
+  margin-top: 8px;
+}
+
+/* ===== Global skeleton toggles for initial app load ===== */
+/* Default: hide the custom skeleton chrome; reveal only when body has .skeleton-active */
+.profile-skeleton,
+.tab-bar-skeleton,
+.total-card .total-skeleton {
+  display: none;
+}
+
+/* Ensure the tab bar container is shown when shimmering */
+body.skeleton-active .tab-bar-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Keep containers positioned for overlay skeletons */
+.user-profile-container,
+.tab-bar-container {
+  position: relative;
+}
+
+/* Profile pill skeleton overlay */
+.profile-skeleton {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-skeleton .skeleton-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+}
+
+/* Tab bar skeleton overlay */
+.tab-bar-skeleton {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.tab-bar-skeleton .skeleton-block {
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+  flex: 1 1 0;
+}
+
+/* Month picker skeleton removed - no shimmer needed */
+
+/* Activate skeleton chrome and hide dynamic UI while loading */
+body.skeleton-active .profile-skeleton { 
+  display: flex; 
+  opacity: 1;
+  visibility: visible;
+}
+body.skeleton-active .user-profile-btn { 
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+body.skeleton-active .tab-bar-skeleton { 
+  display: flex; 
+  opacity: 1;
+  visibility: visible;
+}
+body.skeleton-active .tab-bar { 
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate appearance */
+}
+/* Render the actual tab bar but overlay a single long shimmer inside it */
+.tab-bar-skeleton {
+  pointer-events: none;
+}
+.tab-bar-skeleton .skeleton-block {
+  flex: 1 1 auto;
+}
+
+/* Replace profile pill shimmer with a single line */
+.profile-skeleton .skeleton-avatar { display: none; }
+.profile-skeleton .skeleton-line {
+  width: 96px;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+}
+
+/* Hide floating action bar during initial loading */
+body.skeleton-active .floating-action-bar,
+body.skeleton-active .floating-action-bar-backdrop { display: none !important; }
+.tab-bar-skeleton .skeleton-block + .skeleton-block { display: none; }
+.tab-bar-skeleton::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 28px; /* thinner shimmer line */
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.1s ease-in-out infinite;
+}
+
+body.skeleton-active .total-card .total-skeleton { 
+  display: flex; 
+  opacity: 1;
+  visibility: visible;
+}
+/* Hide total card real content completely during shimmer so skeleton can center */
+body.skeleton-active .total-card #totalAmount,
+body.skeleton-active .total-card #totalSecondaryInfo,
+body.skeleton-active .total-card .total-label {
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Align total-card skeleton with real text positions */
+.total-card .total-skeleton {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  justify-items: center;
+  align-items: center;
+  row-gap: 10px;
+  position: absolute; /* Position as overlay to prevent height changes */
+  top: 0; /* Start from top of card */
+  left: 0; /* Start from left of card */
+  right: 0; /* Extend to right edge */
+  bottom: 0; /* Extend to bottom edge */
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  pointer-events: none;
+  z-index: 1; /* Ensure skeleton is above content during loading */
+  /* Center the skeleton grid within the full card area */
+  padding: 30px; /* Match card padding */
+  box-sizing: border-box; /* Include padding in sizing */
+}
+/* Line 1: Brutto label replacement (longer to account for injected text) */
+.total-card .total-skeleton .skeleton-line:nth-child(1) {
+  height: 12px;
+  width: 140px;
+  border-radius: 6px;
+}
+/* Line 2: Main amount replacement (big, centered) */
+.total-card .total-skeleton .skeleton-line:nth-child(2) {
+  height: 40px; /* restore visual height */
+  width: min(70%, 420px); /* slightly wider for balance */
+  border-radius: 20px;
+}
+/* Line 3: Secondary info (shorter) */
+.total-card .total-skeleton .skeleton-line:nth-child(3) {
+  height: 12px;
+  width: min(45%, 300px);
+  border-radius: 6px;
+}
+
+/* Ensure skeleton is completely hidden when not active */
+.total-card .total-skeleton {
+  display: none; /* Hidden by default */
+}
+
+/* Only show skeleton when skeleton-active class is present */
+body.skeleton-active .total-card .total-skeleton {
+  display: grid;
+}
+
+/* Month display skeleton rules - handled by earlier CSS */
+
+/* While loading, hide the entire month navigation container to avoid layout jumps */
+body.skeleton-active .dashboard-month-nav,
+body.skeleton-active .shift-section .month-navigation-container { display: none !important; }
+
+/* Ensure next shift/payroll skeletons are visible until content populated */
+body.skeleton-active #nextShiftContent .skeleton,
+body.skeleton-active #nextPayrollContent .skeleton { 
+  display: block;
+  opacity: 1;
+  visibility: visible;
+}
+
+#app.app-ready .next-payroll-content,
+#app.app-ready .chart-progress-label {
+  opacity: 0;
+  transition: none; /* No transitions - immediate appearance */
 }
 
 /* Show dynamic content after animations complete */
@@ -1673,6 +3439,22 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   display: none !important;
 }
 
+/* Month picker skeleton removed - no shimmer needed */
+
+/* Hide real month picker during skeleton loading */
+body.skeleton-active .month-display {
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate appearance */
+}
+
+/* Hide month picker buttons during skeleton loading */
+body.skeleton-active .month-nav-btn {
+  opacity: 0;
+  visibility: hidden;
+  transition: none; /* No transitions - immediate appearance */
+}
+
 /* Month navigation container when positioned in dashboard - UPDATED: Always visible across all views */
 .dashboard-content .month-navigation-container {
   display: flex !important; /* Always show dashboard navigation across all views */
@@ -1810,6 +3592,12 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     padding: 14px 16px; /* Reduced from 30px to 14px vertical, 16px horizontal */
     border-radius: 20px; /* Slightly smaller radius */
     margin-bottom: 0;
+    /* Natural height based on content - removed fixed height for better spacing */
+    /* Consistent spacing system for mobile - proportional to screen size */
+    --spacing-base: 6px;
+    --spacing-label: calc(var(--spacing-base) * 1.67); /* 10px */
+    --spacing-amount: calc(var(--spacing-base) * 1.67); /* 10px */
+    --spacing-secondary: calc(var(--spacing-base) * 1); /* 6px */
   }
 
   /* Keep total amount readable on small screens */
@@ -1818,7 +3606,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     font-weight: var(--font-weight-extrabold);
     letter-spacing: -0.02em;
     line-height: 1.1; /* Slightly tighter line height */
-    margin-bottom: 10px; /* Reasonable margin */
+    /* Spacing now handled by CSS custom properties */
   }
 
   /* Keep total label readable */
@@ -1827,7 +3615,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     font-weight: var(--font-weight-semibold);
     letter-spacing: 0.025em;
     text-transform: uppercase;
-    margin-bottom: 10px; /* Reasonable margin */
+    /* Spacing now handled by CSS custom properties */
     line-height: 1.2;
   }
 
@@ -1837,7 +3625,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     font-weight: var(--font-weight-medium);
     letter-spacing: -0.005em;
     line-height: 1.3;
-    margin-top: 6px; /* Reasonable margin */
+    /* Spacing now handled by CSS custom properties */
     display: flex;
     justify-content: center; /* Center the content under main amount */
     text-align: center;
@@ -1957,19 +3745,25 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   .total-card {
     padding: 12px 14px; /* Even more reduced padding */
     border-radius: 18px; /* Smaller radius */
+    /* Natural height based on content - removed fixed height for better spacing */
+    /* Consistent spacing system for very small mobile - proportional to screen size */
+    --spacing-base: 5px;
+    --spacing-label: calc(var(--spacing-base) * 1.6); /* 8px */
+    --spacing-amount: calc(var(--spacing-base) * 1.6); /* 8px */
+    --spacing-secondary: calc(var(--spacing-base) * 1); /* 5px */
   }
 
   /* Maintain readable total amount on very small screens */
   .total-amount {
     font-size: 2.75rem !important; /* 44px - still readable */
     line-height: 1; /* Reasonable line height */
-    margin-bottom: 8px; /* Reasonable margin */
+    /* Spacing now handled by CSS custom properties */
   }
 
   /* Maintain readable total label */
   .total-label {
     font-size: 11px !important; /* Readable label */
-    margin-bottom: 8px; /* Reasonable margin */
+    /* Spacing now handled by CSS custom properties */
     line-height: 1.2;
   }
 
@@ -1977,7 +3771,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   .total-secondary-info {
     font-size: 14px !important; /* Readable secondary text */
     line-height: 1.3;
-    margin-top: 5px;
+    /* Spacing now handled by CSS custom properties */
     display: flex;
     justify-content: center; /* Center the content under main amount */
     text-align: center;
@@ -2089,24 +3883,30 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   .total-card {
     padding: 10px 12px; /* Ultra-minimal padding for landscape */
     border-radius: 16px;
+    /* Natural height based on content - removed fixed height for better spacing */
+    /* Consistent spacing system for landscape mobile - proportional to screen size */
+    --spacing-base: 4px;
+    --spacing-label: calc(var(--spacing-base) * 1.5); /* 6px */
+    --spacing-amount: calc(var(--spacing-base) * 1.5); /* 6px */
+    --spacing-secondary: calc(var(--spacing-base) * 1); /* 4px */
   }
 
   .total-amount {
     font-size: 2.5rem !important; /* 40px - readable even in landscape */
     line-height: 1;
-    margin-bottom: 6px;
+    /* Spacing now handled by CSS custom properties */
   }
 
   .total-label {
     font-size: 10px !important; /* Readable for landscape */
-    margin-bottom: 6px;
+    /* Spacing now handled by CSS custom properties */
     line-height: 1.1;
   }
 
   .total-secondary-info {
     font-size: 13px !important;
     line-height: 1.2;
-    margin-top: 4px;
+    /* Spacing now handled by CSS custom properties */
     display: flex;
     justify-content: center; /* Center the content under main amount */
     text-align: center;
@@ -4263,6 +6063,17 @@ input:checked + .slider:before {
   overflow: hidden;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
+  /* Natural height based on content - removed fixed height for better spacing */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  /* Consistent spacing system using CSS custom properties */
+  --spacing-base: 8px;
+  --spacing-label: calc(var(--spacing-base) * 2); /* 16px */
+  --spacing-amount: var(--spacing-base); /* 8px */
+  --spacing-secondary: calc(var(--spacing-base) * 1.25); /* 10px */
 }
 
 .total-card:hover {
@@ -4332,7 +6143,7 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-semibold); /* 600 - Subtle emphasis for section labels */
-  margin-bottom: 16px; /* Increased from 10px to 16px for better visual separation */
+  margin-bottom: var(--spacing-label); /* Consistent spacing using CSS custom property */
   letter-spacing: 0.025em; /* Slight positive tracking for labels */
   text-transform: uppercase; /* Modern label styling */
 }
@@ -4347,7 +6158,7 @@ input:checked + .slider:before {
   position: relative;
   z-index: 1;
   line-height: 1.1;
-  margin: 8px 0; /* Add some vertical spacing to accommodate larger size */
+  margin: var(--spacing-amount) 0; /* Consistent spacing using CSS custom property */
   letter-spacing: -0.02em; /* Tighter letter spacing for large amounts */
 }
 
@@ -4355,7 +6166,7 @@ input:checked + .slider:before {
   color: var(--text-primary); /* White color to match progress label */
   font-size: var(--text-lg); /* 18px - same size as progress label */
   font-weight: var(--font-weight-medium); /* 500 - Supporting text weight */
-  margin-top: 10px;
+  margin-top: var(--spacing-secondary); /* Consistent spacing using CSS custom property */
   letter-spacing: -0.005em; /* Subtle negative tracking */
   display: flex;
   justify-content: center; /* Center the content under main amount */

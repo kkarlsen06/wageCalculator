@@ -102,7 +102,7 @@ class LegalModal {
                     <div class="legal-tab-content" id="terms-content">
                         <div class="legal-content-scroll">
                             <h3>Vilkår og betingelser</h3>
-                            <p><strong>Sist oppdatert:</strong> Januar 2025</p>
+                            <p><strong>Sist oppdatert:</strong> August 2025</p>
                             
                             <h4>1. Godkjenning av vilkår</h4>
                             <p>Ved å få tilgang til og bruke Lønnskalkulator-applikasjonen ("Tjeneste") godtar og samtykker du til å være bundet av vilkårene og bestemmelsene i denne avtalen.</p>
@@ -120,7 +120,7 @@ class LegalModal {
                             <ul>
                                 <li>Du må oppgi nøyaktig, oppdatert og fullstendig informasjon under registrering</li>
                                 <li>Du er ansvarlig for å opprettholde konfidensialiteten til dine kontotilganger</li>
-                                <li>Du må være minst 18 år gammel for å opprette en konto</li>
+                                <li>Du må være minst 13 år gammel for å opprette en konto</li>
                             </ul>
                             
                             <h4>4. Akseptabel bruk</h4>

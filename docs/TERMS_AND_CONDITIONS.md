@@ -1,6 +1,6 @@
 # Vilkår og betingelser
 
-**Sist oppdatert:** Januar 2025
+**Sist oppdatert:** August 2025
 
 ## 1. Godkjenning av vilkår
 
@@ -19,7 +19,7 @@ Lønnskalkulatoren er en webbasert applikasjon som leverer:
 ### 3.1 Kontoopprettelse
 - Du må oppgi nøyaktig, oppdatert og fullstendig informasjon under registrering
 - Du er ansvarlig for å opprettholde konfidensialiteten til dine kontotilganger
-- Du må være minst 18 år gammel for å opprette en konto
+- Du må være minst 13 år gammel for å opprette en konto
 
 ### 3.2 Kontosikkerhet
 - Du er ansvarlig for alle aktiviteter som skjer under din konto

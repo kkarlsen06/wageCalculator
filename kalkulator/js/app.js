@@ -552,32 +552,146 @@ document.addEventListener('DOMContentLoaded', async () => {
           };
           topbarImg.onerror = () => {
             topbarImg.style.display = 'none';
-            if (profileIcon) profileIcon.style.display = '';
-            console.warn('Avatar image failed to load, showing placeholder');
+            if (profileIcon) profileIcon.style.display = 'block';
           };
           topbarImg.src = avatarUrl;
         } else {
           topbarImg.style.display = 'none';
-          if (profileIcon) profileIcon.style.display = '';
+          if (profileIcon) profileIcon.style.display = 'block';
         }
       }
-
-    } catch (err) {
-      console.error('Error loading profile info:', err);
-      // Fallback to default
-      const nicknameElement = document.getElementById('userNickname');
-      if (nicknameElement) {
-        nicknameElement.textContent = 'Bruker';
-      }
-      // Show placeholder profile icon
-      const topbarImg = document.getElementById('userAvatarImg');
-      const profileIcon = document.querySelector('.profile-icon');
-      if (topbarImg) topbarImg.style.display = 'none';
-      if (profileIcon) profileIcon.style.display = '';
+    } catch (error) {
+      console.error('Error loading profile info:', error);
     }
   }
 
-    // Profile pictures handled via avatar image element
+  // Enhanced skeleton removal with immediate appearance
+  async function removeSkeletonsSmoothly() {
+    // First, add app-ready class to enable content visibility
+    const appEl = document.getElementById('app');
+    if (appEl) {
+      appEl.classList.add('app-ready');
+    }
+
+    // Immediately add animations-complete class for instant content appearance
+    if (appEl) {
+      appEl.classList.add('animations-complete');
+    }
+
+    // Now remove skeleton-active class to hide skeletons immediately
+    document.body.classList.remove('skeleton-active');
+
+    // Ensure all skeleton elements are completely hidden
+    const skeletons = document.querySelectorAll('.skeleton');
+    skeletons.forEach(skeleton => {
+      skeleton.style.display = 'none';
+      skeleton.style.opacity = '0';
+      skeleton.style.visibility = 'hidden';
+    });
+  }
+
+  // Wait for both profile info and app initialization to complete
+  // before removing skeletons to ensure content is fully ready
+  let profileInfoLoaded = false;
+  let appInitialized = false;
+
+  async function checkAndRemoveSkeletons() {
+    if (profileInfoLoaded && appInitialized) {
+      // Add a small delay to ensure all content is rendered
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Wait for the app to finish its initial display update
+      await waitForAppReady();
+      
+      // Wait for content to be fully populated with real data
+      await waitForContentReady();
+      
+      // Now remove skeletons since content is ready
+      await removeSkeletonsSmoothly();
+    }
+  }
+
+  // Wait for the app to be in a ready state
+  async function waitForAppReady() {
+    const maxWaitTime = 3000; // Maximum 3 seconds
+    const checkInterval = 100; // Check every 100ms
+    let elapsed = 0;
+
+    while (elapsed < maxWaitTime) {
+      // Check if the app has finished its initial setup
+      // This includes waiting for the updateDisplay function to complete
+      if (window.app && window.app.shifts && window.app.shifts.length >= 0) {
+        console.log('App is ready, proceeding with content check');
+        break;
+      }
+
+      // Wait a bit more and check again
+      await new Promise(resolve => setTimeout(resolve, checkInterval));
+      elapsed += checkInterval;
+    }
+
+    if (elapsed >= maxWaitTime) {
+      console.warn('App readiness check timed out, proceeding anyway');
+    }
+  }
+
+  // Wait for content to be fully populated with real data
+  async function waitForContentReady() {
+    const maxWaitTime = 5000; // Maximum 5 seconds to prevent hanging
+    const checkInterval = 100; // Check every 100ms
+    let elapsed = 0;
+
+    while (elapsed < maxWaitTime) {
+      // Check if total amount has real data (not "0 kr")
+      const totalAmount = document.getElementById('totalAmount');
+      const hasRealTotalData = totalAmount && 
+        totalAmount.textContent && 
+        totalAmount.textContent !== '0 kr' && 
+        totalAmount.textContent !== '0';
+
+      // Check if next shift content has real data (not skeleton or empty state)
+      const nextShiftContent = document.getElementById('nextShiftContent');
+      const hasRealShiftData = nextShiftContent && 
+        !nextShiftContent.querySelector('.skeleton') &&
+        (nextShiftContent.children.length > 0 || nextShiftContent.querySelector('.next-shift-empty'));
+
+      // Check if next payroll content has real data
+      const nextPayrollContent = document.getElementById('nextPayrollContent');
+      const hasRealPayrollData = nextPayrollContent && 
+        !nextPayrollContent.querySelector('.skeleton') &&
+        (nextPayrollContent.children.length > 0 || nextPayrollContent.querySelector('.next-payroll-empty'));
+
+      // Check if month display has real data (not skeleton)
+      const monthDisplay = document.querySelector('.month-display');
+      const hasRealMonthData = monthDisplay && 
+        monthDisplay.textContent && 
+        monthDisplay.textContent !== '';
+
+      // If all content is ready, break out of the loop
+      if (hasRealTotalData && hasRealShiftData && hasRealPayrollData && hasRealMonthData) {
+        console.log('All content is ready, proceeding with skeleton removal');
+        break;
+      }
+
+      // Wait a bit more and check again
+      await new Promise(resolve => setTimeout(resolve, checkInterval));
+      elapsed += checkInterval;
+    }
+
+    if (elapsed >= maxWaitTime) {
+      console.warn('Content readiness check timed out, proceeding anyway');
+    }
+  }
+
+  // Mark profile info as loaded
+  loadAndDisplayProfileInfo().then(() => {
+    profileInfoLoaded = true;
+    checkAndRemoveSkeletons();
+  }).catch(error => {
+    console.error('Error loading profile info:', error);
+    profileInfoLoaded = true;
+    checkAndRemoveSkeletons();
+  });
 
   // Create and show welcome screen
   async function showWelcomeScreen() {
@@ -783,6 +897,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (app && typeof app.init === 'function') {
     try {
       await app.init();
+      // Mark app as initialized
+      appInitialized = true;
+      checkAndRemoveSkeletons();
     } catch (e) {
       initFailed = true;
       console.error('App initialization failed:', e);
@@ -792,10 +909,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       } catch (fallbackErr) {
         console.error('Fallback to local storage failed:', fallbackErr);
       }
+      // Mark app as initialized even on error to prevent hanging
+      appInitialized = true;
+      checkAndRemoveSkeletons();
     }
   } else {
     initFailed = true;
     console.error('App module not available or missing init()');
+    // Mark app as initialized even on error to prevent hanging
+    appInitialized = true;
+    checkAndRemoveSkeletons();
   }
 
   // Display the app container immediately with no animations
@@ -834,13 +957,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // When both profile info has run and app init has run, turn off skeletons.
-  // We don't need strict synchronization here; we can safely remove the class now
-  // because app.init() and loadAndDisplayProfileInfo() have both completed their awaits above.
-  document.body.classList.remove('skeleton-active');
-  // Also ensure total-card skeleton is removed once active shimmer is done
-  const totalSkel = document.querySelector('.total-card .total-skeleton');
-  if (totalSkel) totalSkel.style.display = 'none';
+  // Skeleton removal is now handled by checkAndRemoveSkeletons() function
+  // which ensures both profile info and app initialization are complete
 
   // Etter init og visning av app
   // Legg til event listeners for alle knapper
