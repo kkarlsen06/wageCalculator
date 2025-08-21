@@ -21,7 +21,17 @@ function throttle(func, limit) {
 }
 
 // Debounce function for resize events
-// Duplicate debounce removed; using the earlier definition in this file
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
 // ───────────────────────────────────────────────────────────────────────────
 // INITIALIZATION
@@ -64,13 +74,14 @@ setTimeout(() => {
     preventScrolling = false;
 }, 500);
 
-document.addEventListener('DOMContentLoaded', () => {
+// Export the initialization function to be called from main.js
+export function initAnimations() {
     // Single scroll to top on DOM ready
     window.scrollTo(0, 0);
 
     // Initialize animations with proper sequencing to prevent stuttering
     initAnimationsSequentially();
-});
+}
 
 // Initialize animations with staggered timing to prevent performance issues
 async function initAnimationsSequentially() {
@@ -144,7 +155,11 @@ function initNavbar() {
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
             const href = link.getAttribute('href');
-            if (href.startsWith('#')) {
+            // If this link opens the privacy modal, let dedicated handler manage it
+            if (link.hasAttribute('data-open-privacy')) {
+                return;
+            }
+            if (href && href.startsWith('#')) {
                 e.preventDefault();
                 const target = document.querySelector(href);
                 if (target) {
@@ -527,17 +542,7 @@ function initMobileStats() {
 // ───────────────────────────────────────────────────────────────────────────
 // UTILITY FUNCTIONS
 // ───────────────────────────────────────────────────────────────────────────
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
+// debounce function moved to top of file to avoid hoisting issues
 
 // ───────────────────────────────────────────────────────────────────────────
 // ANIMATION CSS INJECTION

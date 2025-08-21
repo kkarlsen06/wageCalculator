@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kompensasjonskalkulator - Beregn vaktlønn, tillegg og ekstratimer | kkarlsen.art</title>
   <meta name="description" content="Automatisk kalkulator for vakter, tillegg og kompensasjon. Beregn nøyaktig lønn uansett turnus, kveldsvakter eller ekstrajobbing. Laget for å gi deg full oversikt.">
-  <link rel="stylesheet" href=".css/style.css">
+  <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>body{visibility:hidden;}</style>
   <meta name="theme-color" content="#000000">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#000000">
@@ -61,7 +63,19 @@
         <label for="signup-password" class="form-label">Passord</label>
         <input id="signup-password" name="password" type="password" placeholder="Passord" required class="form-control mb-12" autocomplete="new-password" />
         <label for="signup-name" class="form-label">Fornavn</label>
-        <input id="signup-name" name="given-name" type="text" placeholder="Fornavn" required class="form-control mb-18" autocomplete="given-name" />
+        <input id="signup-name" name="given-name" type="text" placeholder="Fornavn" required class="form-control mb-12" autocomplete="given-name" />
+        
+        <div class="privacy-checkbox-container mb-18">
+          <label class="privacy-checkbox-label">
+            <input type="checkbox" id="privacy-accept" name="privacy-accept" required class="privacy-checkbox" />
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-text">
+              Jeg har lest og godtar 
+              <button type="button" class="privacy-link" data-open-privacy>personvernerklæringen</button>
+            </span>
+          </label>
+        </div>
+        
         <button id="create-account-btn" type="submit" class="btn btn-primary mb-12">Opprett konto</button>
       </form>
       <button id="back-login-signup-btn" class="btn btn-secondary">Tilbake til innlogging</button>
@@ -103,6 +117,85 @@
   <footer class="footer-auth">
       Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent4);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
   </footer>
+
+  <!-- Privacy Policy Modal -->
+  <div id="privacy-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="privacy-title" aria-describedby="privacy-desc">
+    <div class="modal__overlay" data-close-privacy></div>
+    <div class="modal__dialog" role="document">
+      <div class="modal__header">
+        <h2 id="privacy-title" class="modal__title">Personvernerklæring</h2>
+        <button class="modal__close" type="button" aria-label="Lukk personvernerklæring" data-close-privacy>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal__body" id="privacy-desc">
+        <div class="legal-content">
+          <p>
+            Denne personvernerklæringen beskriver hvordan vi behandler personopplysninger når du bruker
+            lønnskalkulatoren og tilknyttede nettsider. Vi tar personvern på alvor og behandler opplysninger
+            i samsvar med gjeldende regelverk (GDPR og norsk lov).
+          </p>
+
+          <h3>1. Hvem vi er</h3>
+          <p>Behandlingsansvarlig: Hjalmar Kristensen-Karlsen (kkarlsen.art).</p>
+
+          <h3>2. Hvilke data vi behandler</h3>
+          <ul>
+            <li><strong>Konto- og identifikasjonsdata</strong>: e‑postadresse og bruker‑ID ved innlogging.</li>
+            <li><strong>Bruks- og enhetsdata</strong>: nettleser, enhetstype, IP-adresse, tidsstempler og sidevisninger.</li>
+            <li><strong>Interaksjonsdata</strong>: klikk, navigasjon og preferanser på nettstedet.</li>
+            <li><strong>Innholdsdata</strong>: eventuelle verdier du lagrer frivillig i kalkulatoren når du er innlogget.</li>
+          </ul>
+
+          <h3>3. Formål med behandlingen</h3>
+          <ul>
+            <li>Levere og drifte tjenesten, inkludert autentisering og lagring av brukerdata.</li>
+            <li>Forbedre ytelse, stabilitet og brukeropplevelse.</li>
+            <li>Sikre tjenesten, forhindre misbruk og håndtere feil.</li>
+            <li>Kommunisere med deg ved behov (f.eks. støtte eller viktige endringer).</li>
+          </ul>
+
+          <h3>4. Rettslig grunnlag</h3>
+          <ul>
+            <li>Nødvendig for å oppfylle en avtale med deg (GDPR art. 6(1)(b)).</li>
+            <li>Berettiget interesse i å forbedre og sikre tjenesten (GDPR art. 6(1)(f)).</li>
+            <li>Samtykke for ikke‑nødvendige informasjonskapsler der dette benyttes (GDPR art. 6(1)(a)).</li>
+          </ul>
+
+          <h3>5. Lagring og sletting</h3>
+          <p>Personopplysninger lagres ikke lenger enn nødvendig for formålene over. Tekniske logger oppbevares normalt i opptil 90 dager, analytiske data i opptil 12 måneder, og kontodata så lenge du har en aktiv konto eller til sletting bes om.</p>
+
+          <h3>6. Deling av data</h3>
+          <p>Vi deler kun personopplysninger med betrodde databehandlere som bistår med drift av tjenesten (f.eks. hosting, autentisering og sikkerhet). Disse behandler opplysninger kun etter instruks og under databehandleravtale.</p>
+
+          <h3>7. Overføringer</h3>
+          <p>Dersom data behandles utenfor EØS, sikres dette gjennom gyldige overføringsmekanismer, herunder EUs standard personvernbestemmelser.</p>
+
+          <h3>8. Informasjonskapsler (cookies)</h3>
+          <p>Vi bruker kun nødvendige informasjonskapsler for grunnleggende funksjoner. Eventuelle analysecookies benyttes kun med samtykke og kan administreres i nettleseren din.</p>
+
+          <h3>9. Dine rettigheter</h3>
+          <ul>
+            <li>Innsyn, retting og sletting.</li>
+            <li>Begrensning av behandling og dataportabilitet.</li>
+            <li>Protestere mot behandling basert på berettiget interesse.</li>
+            <li>Trekk tilbake samtykke når behandlingen bygger på samtykke.</li>
+            <li>Klage til Datatilsynet dersom du mener behandlingen er i strid med regelverket.</li>
+          </ul>
+
+          <h3>10. Sikkerhet</h3>
+          <p>Vi gjennomfører egnede tekniske og organisatoriske tiltak for å beskytte personopplysninger mot uautorisert tilgang, endring, offentliggjøring eller ødeleggelse.</p>
+
+          <h3>11. Endringer</h3>
+          <p>Vi kan oppdatere denne erklæringen ved behov. Vesentlige endringer varsles på nettsiden.</p>
+
+          <h3>12. Kontakt</h3>
+          <p>Spørsmål om personvern kan rettes til <a href="mailto:kkarlsen06@kkarlsen.art">kkarlsen06@kkarlsen.art</a>.</p>
+          <p class="legal-updated">Oppdatert: 21. august 2025</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Third-party globals required on login -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

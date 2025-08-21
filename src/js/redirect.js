@@ -8,7 +8,7 @@ const hasRecoveryInSearch = searchParams.includes('access_token') && searchParam
 const hasLegacyRecovery = urlParams.has('token') && urlParams.get('type') === 'recovery';
 
 if (hasRecoveryInHash || hasRecoveryInSearch || hasLegacyRecovery) {
-  const redirectTarget = '/kalkulator/index.html';
+  const redirectTarget = '/kalkulator/login.html';
   if (hasRecoveryInHash) {
     window.location.href = redirectTarget + hashFragment;
   } else {

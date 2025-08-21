@@ -3,6 +3,7 @@ console.log('[BOOT] Using server file:', import.meta.url);
 console.log('[BOOT] CWD:', process.cwd());
 
 import dotenv from 'dotenv';
+import 'dotenv/config'
 import path from 'path';
 import { fileURLToPath } from 'url';
 

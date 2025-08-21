@@ -1469,20 +1469,166 @@ html {
     }
 }
 
-.footer-links {
-    display: flex;
-    gap: var(--space-md);
-}
-
-.footer-links a {
+ .footer-links {
+     display: flex;
+     gap: var(--space-md);
+     align-items: center;
+ }
+ 
+ .footer-links a {
+     color: var(--text-secondary);
+     font-size: var(--font-size-xl);
+     transition: all var(--transition-base);
+     text-decoration: none;
+ }
+ 
+ .footer-links a:hover {
+     color: var(--primary);
+     transform: translateY(-2px);
+ }
+ 
+ /* Footer privacy button */
+.footer-privacy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0.5rem 0.75rem;
+    font-size: var(--font-size-sm);
+    border-radius: 8px;
+    height: auto;
+    min-height: 44px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    font-size: var(--font-size-xl);
     transition: all var(--transition-base);
+    white-space: nowrap;
+}
+ 
+ .footer-privacy-btn:hover {
+     background: var(--bg-hover);
+     border-color: var(--border-light);
+     color: var(--text-primary);
+     transform: translateY(-2px);
+ }
+ 
+ .footer-privacy-btn i {
+     font-size: 1rem;
+     color: inherit;
+ }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   MODAL (PRIVACY POLICY)
+   ─────────────────────────────────────────────────────────────────────────── */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000;
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-base), visibility var(--transition-base);
+    pointer-events: none;
 }
 
-.footer-links a:hover {
-    color: var(--primary);
-    transform: translateY(-2px);
+.modal.is-open {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.modal.is-open .modal__dialog {
+    transform: scale(1);
+}
+
+.modal__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 11, 0.85);
+    backdrop-filter: blur(8px);
+}
+
+.modal__dialog {
+    position: relative;
+    margin: 2vh auto;
+    max-width: 800px;
+    width: calc(100vw - 2 * var(--space-md));
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow-xl), var(--shadow-glow);
+    max-height: 96vh;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9);
+    transition: transform var(--transition-base);
+}
+
+.modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal__title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-extrabold);
+}
+
+.modal__close {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-base), border-color var(--transition-base), transform var(--transition-fast);
+}
+
+.modal__close:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-light);
+    transform: translateY(-1px);
+}
+
+.modal__body {
+    padding: var(--space-xl) var(--space-xl);
+    overflow: auto;
+    max-height: calc(90vh - 84px);
+}
+
+/* Legal content typography */
+.legal-content p {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.legal-content h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin: var(--space-lg) 0 var(--space-sm);
+}
+
+.legal-content ul {
+    padding-left: var(--space-xl);
+    margin-bottom: var(--space-md);
+}
+
+.legal-content li {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-1);
 }
 
 /* ───────────────────────────────────────────────────────────────────────────

@@ -278,9 +278,15 @@ async function signUpWithDetails() {
   const email = window.authElements.signupEmail.value;
   const password = window.authElements.signupPassword.value;
   const firstName = window.authElements.signupName.value;
+  const privacyAccepted = document.getElementById('privacy-accept')?.checked;
 
   if (!email || !password || !firstName) {
     window.authElements.signupMsg.textContent = "Vennligst fyll ut alle påkrevde felt";
+    return;
+  }
+
+  if (!privacyAccepted) {
+    window.authElements.signupMsg.textContent = "Du må godta personvernerklæringen for å opprette en konto";
     return;
   }
 

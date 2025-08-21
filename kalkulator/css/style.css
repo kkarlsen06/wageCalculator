@@ -2594,6 +2594,87 @@ input[type="time"].form-control[value=""]:focus {
   50% { border-color: var(--accent); }
 }
 
+/* Privacy Checkbox Styles */
+.privacy-checkbox-container {
+  margin-bottom: var(--space-md);
+}
+
+.privacy-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.privacy-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkbox-custom {
+  position: relative;
+  height: 20px;
+  width: 20px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.privacy-checkbox:checked ~ .checkbox-custom {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.privacy-checkbox:checked ~ .checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.privacy-checkbox:focus ~ .checkbox-custom {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.privacy-checkbox:hover ~ .checkbox-custom {
+  border-color: var(--primary);
+}
+
+.checkbox-text {
+  flex: 1;
+  line-height: 1.5;
+}
+
+.privacy-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  transition: color var(--speed-normal) var(--ease-default);
+}
+
+.privacy-link:hover {
+  color: var(--accent);
+}
+
 /* Direct time input styling */
 .time-input {
   text-align: center;
@@ -14338,4 +14419,117 @@ body.chatbox-view .chatbox-container {
         transform: translateX(100%);
         opacity: 0;
     }
+}
+
+/* Privacy Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000;
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--speed-normal) var(--ease-default), visibility var(--speed-normal) var(--ease-default);
+    pointer-events: none;
+}
+
+.modal.is-open {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.modal.is-open .modal__dialog {
+    transform: scale(1);
+}
+
+.modal__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 11, 0.85);
+    backdrop-filter: blur(8px);
+}
+
+.modal__dialog {
+    position: relative;
+    margin: 2vh auto;
+    max-width: 800px;
+    width: calc(100vw - 2 * var(--space-md));
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 50px rgba(58, 190, 246, 0.3);
+    max-height: 96vh;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9);
+    transition: transform var(--speed-normal) var(--ease-default);
+}
+
+.modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    border-bottom: 1px solid var(--border);
+}
+
+.modal__title {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-extrabold);
+}
+
+.modal__close {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--speed-normal) var(--ease-default), border-color var(--speed-normal) var(--ease-default), transform var(--speed-fast) var(--ease-default);
+}
+
+.modal__close:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-light);
+    transform: translateY(-1px);
+}
+
+.modal__body {
+    padding: var(--space-xl) var(--space-xl);
+    overflow: auto;
+    max-height: calc(96vh - 84px);
+}
+
+/* Legal content typography */
+.legal-content p {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.legal-content h3 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-semibold);
+    margin: var(--space-lg) 0 var(--space-sm);
+}
+
+.legal-content ul {
+    padding-left: var(--space-xl);
+    margin-bottom: var(--space-md);
+}
+
+.legal-content li {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-1);
 }

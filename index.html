@@ -42,6 +42,7 @@
                 <a href="#calculator" class="nav-link" role="menuitem">Kalkulator</a>
                 <a href="#developer" class="nav-link" role="menuitem">Om utvikleren</a>
                 <a href="#tech" class="nav-link" role="menuitem">Teknologi</a>
+                <a href="#privacy-modal" class="nav-link" role="menuitem" data-open-privacy>Personvern</a>
                 <a href="https://github.com/kkarlsen06" target="_blank" rel="noopener noreferrer" class="nav-link nav-github" role="menuitem" aria-label="Åpne GitHub-profil i ny fane">
                     <i class="fab fa-github" aria-hidden="true"></i>
                     <span>GitHub</span>
@@ -381,8 +382,91 @@
                 <a href="mailto:kkarlsen06@kkarlsen.art" aria-label="Email">
                     <i class="fas fa-envelope"></i>
                 </a>
+                <a href="#privacy-modal" class="btn btn-secondary footer-privacy-btn" role="button" aria-haspopup="dialog" aria-controls="privacy-modal" data-open-privacy>
+                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                    <span>Personvernerklæring</span>
+                </a>
             </div>
         </div>
     </footer>
+    
+    <!-- Privacy Policy Modal -->
+    <div id="privacy-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="privacy-title" aria-describedby="privacy-desc">
+        <div class="modal__overlay" data-close-privacy></div>
+        <div class="modal__dialog" role="document">
+            <div class="modal__header">
+                <h2 id="privacy-title" class="modal__title">Personvernerklæring</h2>
+                <button class="modal__close" type="button" aria-label="Lukk personvernerklæring" data-close-privacy>
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal__body" id="privacy-desc">
+                <div class="legal-content">
+                    <p>
+                        Denne personvernerklæringen beskriver hvordan vi behandler personopplysninger når du bruker
+                        lønnskalkulatoren og tilknyttede nettsider. Vi tar personvern på alvor og behandler opplysninger
+                        i samsvar med gjeldende regelverk (GDPR og norsk lov).
+                    </p>
+
+                    <h3>1. Hvem vi er</h3>
+                    <p>Behandlingsansvarlig: Hjalmar Kristensen-Karlsen (kkarlsen.art).</p>
+
+                    <h3>2. Hvilke data vi behandler</h3>
+                    <ul>
+                        <li><strong>Konto- og identifikasjonsdata</strong>: e‑postadresse og bruker‑ID ved innlogging.</li>
+                        <li><strong>Bruks- og enhetsdata</strong>: nettleser, enhetstype, IP-adresse, tidsstempler og sidevisninger.</li>
+                        <li><strong>Interaksjonsdata</strong>: klikk, navigasjon og preferanser på nettstedet.</li>
+                        <li><strong>Innholdsdata</strong>: eventuelle verdier du lagrer frivillig i kalkulatoren når du er innlogget.</li>
+                    </ul>
+
+                    <h3>3. Formål med behandlingen</h3>
+                    <ul>
+                        <li>Levere og drifte tjenesten, inkludert autentisering og lagring av brukerdata.</li>
+                        <li>Forbedre ytelse, stabilitet og brukeropplevelse.</li>
+                        <li>Sikre tjenesten, forhindre misbruk og håndtere feil.</li>
+                        <li>Kommunisere med deg ved behov (f.eks. støtte eller viktige endringer).</li>
+                    </ul>
+
+                    <h3>4. Rettslig grunnlag</h3>
+                    <ul>
+                        <li>Nødvendig for å oppfylle en avtale med deg (GDPR art. 6(1)(b)).</li>
+                        <li>Berettiget interesse i å forbedre og sikre tjenesten (GDPR art. 6(1)(f)).</li>
+                        <li>Samtykke for ikke‑nødvendige informasjonskapsler der dette benyttes (GDPR art. 6(1)(a)).</li>
+                    </ul>
+
+                    <h3>5. Lagring og sletting</h3>
+                    <p>Personopplysninger lagres ikke lenger enn nødvendig for formålene over. Tekniske logger oppbevares normalt i opptil 90 dager, analytiske data i opptil 12 måneder, og kontodata så lenge du har en aktiv konto eller til sletting bes om.</p>
+
+                    <h3>6. Deling av data</h3>
+                    <p>Vi deler kun personopplysninger med betrodde databehandlere som bistår med drift av tjenesten (f.eks. hosting, autentisering og sikkerhet). Disse behandler opplysninger kun etter instruks og under databehandleravtale.</p>
+
+                    <h3>7. Overføringer</h3>
+                    <p>Dersom data behandles utenfor EØS, sikres dette gjennom gyldige overføringsmekanismer, herunder EUs standard personvernbestemmelser.</p>
+
+                    <h3>8. Informasjonskapsler (cookies)</h3>
+                    <p>Vi bruker kun nødvendige informasjonskapsler for grunnleggende funksjoner. Eventuelle analysecookies benyttes kun med samtykke og kan administreres i nettleseren din.</p>
+
+                    <h3>9. Dine rettigheter</h3>
+                    <ul>
+                        <li>Innsyn, retting og sletting.</li>
+                        <li>Begrensning av behandling og dataportabilitet.</li>
+                        <li>Protestere mot behandling basert på berettiget interesse.</li>
+                        <li>Trekk tilbake samtykke når behandlingen bygger på samtykke.</li>
+                        <li>Klage til Datatilsynet dersom du mener behandlingen er i strid med regelverket.</li>
+                    </ul>
+
+                    <h3>10. Sikkerhet</h3>
+                    <p>Vi gjennomfører egnede tekniske og organisatoriske tiltak for å beskytte personopplysninger mot uautorisert tilgang, endring, offentliggjøring eller ødeleggelse.</p>
+
+                    <h3>11. Endringer</h3>
+                    <p>Vi kan oppdatere denne erklæringen ved behov. Vesentlige endringer varsles på nettsiden.</p>
+
+                    <h3>12. Kontakt</h3>
+                    <p>Spørsmål om personvern kan rettes til <a href="mailto:kkarlsen06@kkarlsen.art">kkarlsen06@kkarlsen.art</a>.</p>
+                    <p class="legal-updated">Oppdatert: 21. august 2025</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
