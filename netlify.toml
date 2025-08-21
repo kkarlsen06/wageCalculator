@@ -42,3 +42,10 @@
   from = "/kalkulator/auth.html"
   to = "/kalkulator/index.html"
   status = 301
+
+# Security headers
+[[headers]]
+  # Apply to all routes (static files, SPA routes, and proxied API)
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
