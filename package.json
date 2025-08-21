@@ -10,6 +10,7 @@
     "prebuild": "rm -rf dist",
     "clean": "rm -rf dist",
     "build": "vite build",
+    "postbuild": "node scripts/postbuild.js",
     "dev": "vite",
     "preview": "vite preview",
     "dev:server": "npm --prefix server run dev:server",

@@ -21,7 +21,13 @@
   force = true
 
 [[redirects]]
-  # Kalkulator SPA fallback
+  # Allow direct access to login page
+  from = "/kalkulator/login.html"
+  to = "/kalkulator/login.html"
+  status = 200
+
+[[redirects]]
+  # Kalkulator SPA fallback for all other routes
   from = "/kalkulator/*"
   to = "/kalkulator/index.html"
   status = 200
