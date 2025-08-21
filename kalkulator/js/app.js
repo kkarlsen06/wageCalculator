@@ -1,11 +1,21 @@
 // API Base URL configuration
 const API_BASE = window.CONFIG?.apiBase || '/api';
 
+// Initialize Supabase client immediately
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+
+// Create Supabase client with hardcoded production values
+const supabaseUrl = 'https://iuwjdacxbirhmsglcbxp.supabase.co';
+const supabaseAnonKey = 'sb_publishable_z9EoG7GZZMS3RL4hmilh5A_xI0va5Nb';
+
+console.log('[app] Creating Supabase client with URL:', supabaseUrl);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Make it available globally
+window.supa = supabase;
+
 // Remove global animation kill-switch. Initial app load animations are handled by
 // app-ready/animations-complete logic below.
-
-import { supabase } from '../../src/supabase-client.js'
-// then just use supabase directly
 
 // DEBUG: check client
 supabase.auth.getSession().then(({ data, error }) => {
@@ -463,7 +473,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Do NOT add 'app-ready' yet; that would hide content containers and suppress skeletons
   }
 
-  window.supa = supa;
   try {
     const mask = (s) => {
       if (!s) return '';
@@ -480,9 +489,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   let retryCount = 0;
   const maxRetries = 3; // Reduced from 5 to 3
 
+  // Ensure Supabase client is properly initialized
+  if (!supabase || !supabase.auth) {
+    console.error('Supabase client not properly initialized');
+    // Don't redirect immediately, give it a chance to initialize
+    setTimeout(() => {
+      if (!supabase || !supabase.auth) {
+        console.error('Supabase client still not available after timeout, redirecting to login');
+        window.location.href = 'login.html';
+        return;
+      }
+    }, 1000);
+  }
+
   // Quick session check (non-blocking) - prefer retry loop to avoid false negatives
   try {
-    const { data: { session: quickSession } } = await supa.auth.getSession();
+    const { data: { session: quickSession } } = await supabase.auth.getSession();
     if (quickSession) {
       session = quickSession;
       console.log('Quick session check: Session found');
@@ -496,7 +518,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load and display profile information immediately after greeting
   async function loadAndDisplayProfileInfo() {
     try {
-      const { data: { user } } = await supa.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       // Load nickname
@@ -517,7 +539,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Load avatar: prefer /settings.profile_picture_url, fallback to user metadata
       let avatarUrl = '';
       try {
-        const { data: { session } } = await supa.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
         if (token) {
           const resp = await fetch(`${window.CONFIG.apiBase}/settings`, { headers: { Authorization: `Bearer ${token}` } });
@@ -532,7 +554,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
           const userId = user?.id;
           if (!userId) return;
-          const { data: row } = await supa
+          const { data: row } = await supabase
             .from('user_settings')
             .select('profile_picture_url')
             .eq('user_id', userId)
@@ -582,7 +604,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Create and show welcome screen
   async function showWelcomeScreen() {
     // Fetch user for name
-    const { data: { user } } = await supa.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     const firstName = user?.user_metadata?.first_name || '';
 
     // Create overlay
@@ -714,7 +736,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   while (!session && retryCount < maxRetries) {
     console.log(`App.html: Checking session (attempt ${retryCount + 1}/${maxRetries})`);
-    const { data: { session: currentSession } } = await supa.auth.getSession();
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
     session = currentSession;
 
     if (!session) {
@@ -725,6 +747,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         console.log(`App.html: No session after ${maxRetries} attempts, redirecting to login`);
         console.log('[login] no session – redirecting to login page');
+        
+        // Prevent infinite redirects - check if we're already on a login-related page
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('login.html') || currentPath.includes('auth.html')) {
+          console.error('Already on login page, preventing infinite redirect');
+          return;
+        }
+        
         window.location.href = 'login.html';
         return;
       }
@@ -740,12 +770,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.chatbox.clear();
     }
     try {
-      await supa.auth.signOut();
+      await supabase.auth.signOut();
     } catch (e) {
       console.warn('signOut error:', e?.message || e);
     }
     try {
-      const { data: { session } } = await supa.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       console.log('[logout] session after signOut:', session ? 'still present' : 'null');
     } catch (_) {}
     try {
@@ -1634,7 +1664,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get JWT token from Supabase session (declare outside try block)
     let token;
     try {
-      const { data: { session } } = await window.supa.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       token = session?.access_token;
 
       if (!token) {

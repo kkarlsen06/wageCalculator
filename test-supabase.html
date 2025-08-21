@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Test</title>
+</head>
+<body>
+    <h1>Supabase Client Test</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        
+        // Create Supabase client with hardcoded production values
+        const supabaseUrl = 'https://iuwjdacxbirhmsglcbxp.supabase.co';
+        const supabaseAnonKey = 'sb_publishable_z9EoG7GZZMS3RL4hmilh5A_xI0va5Nb';
+        
+        console.log('[test] Creating Supabase client with URL:', supabaseUrl);
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        
+        // Test the client
+        try {
+            const { data, error } = await supabase.auth.getSession();
+            console.log('[test] Session check result:', { data, error });
+            
+            document.getElementById('output').innerHTML = `
+                <p>Supabase client initialized successfully!</p>
+                <p>URL: ${supabaseUrl}</p>
+                <p>Session: ${data?.session ? 'Found' : 'None'}</p>
+                <p>Error: ${error || 'None'}</p>
+            `;
+        } catch (err) {
+            console.error('[test] Error:', err);
+            document.getElementById('output').innerHTML = `
+                <p>Error initializing Supabase client:</p>
+                <p>${err.message}</p>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -782,7 +782,6 @@ export const app = {
             if (container) container.innerHTML = '';
         }
     },
-
     /**
      * Create a filter chip element
      */
@@ -1070,7 +1069,7 @@ export const app = {
         this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
 
         // Reflect employee context in the modal (pill vs selectors)
-        this.updateEmployeeAssignmentUIInModal?.();
+        this.updateEmployeeAssignmentUIInModal();
 
     },
 
@@ -1566,7 +1565,6 @@ export const app = {
         // Add back button to wrapper
         progressWrapper.appendChild(backButton);
     },
-
     // Remove back button and restore original progress bar structure
     removeBackButton() {
         const progressWrapper = document.getElementById('progressBarWrapper');
@@ -1954,7 +1952,7 @@ export const app = {
 
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
-            this.monthlyGoal = settings.monthly_goal || 20000;
+                this.monthlyGoal = settings.monthly_goal || 20000;
                             this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
                 this.currencyFormat = settings.currency_format || false;
 
@@ -2348,7 +2346,6 @@ export const app = {
         this.formState = formState;
         localStorage.setItem('vaktberegnerFormState', JSON.stringify(formState));
     },
-
     // Restore form state after page restart
     restoreFormState() {
         try {
@@ -3850,7 +3847,6 @@ export const app = {
             }
         }
     },
-
     // Wage card tooltip management functions
     setupWageCardTooltip(card) {
         if (!card || card.hasTooltipListener) return;
@@ -4387,9 +4383,7 @@ export const app = {
 
             document.addEventListener('click', this.chartTooltipGlobalListener);
         }
-
     },
-
     // Render daily chart for drill-down view
     renderDailyChart(chartBars, chartLabels, chartTooltip) {
         const { dailyData, totalWeekHours, totalWeekEarnings } = this.getDailyDataForWeek(this.selectedWeek);
@@ -6247,9 +6241,6 @@ export const app = {
             this.updateCalendarCells();
         }
     },
-
-
-
     // Show detailed shift information in expanded view
     showShiftDetails(shiftId) {
         // Find the shift by ID
@@ -7799,7 +7790,6 @@ export const app = {
             }
         }
     },
-
     // Update method explanation based on selected method
     updateMethodExplanation() {
         const descriptions = ['proportionalInfo', 'baseOnlyInfo', 'endOfShiftInfo', 'noneInfo'];
@@ -9886,9 +9876,7 @@ export const app = {
 
         // Create the greeting message text
         const greetingText = `Hei ${userName}! 👋
-
 Jeg er LønnAI, din personlige assistent for vaktregistrering. Jeg kan hjelpe deg med å:
-
 • Registrere enkelvakter
 • Opprette vaktserier
 • Svare på spørsmål om lønn og tillegg
@@ -10675,7 +10663,6 @@ Hva kan jeg hjelpe deg med i dag?`;
         // Override chatbox close button for tab-based navigation
         this.setupChatboxCloseOverride();
     },
-
     // Setup export period options and event listeners
     setupExportPeriodOptions() {
         // Update current month label
@@ -11370,4 +11357,3 @@ Hva kan jeg hjelpe deg med i dag?`;
         }, 3000);
     }
 };
-
