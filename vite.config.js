@@ -25,10 +25,14 @@ export default defineConfig({
         login: resolve('kalkulator/login.html')
       },
       output: {
-        entryFileNames: (chunk) =>
-          chunk.name.startsWith('kalkulator') || chunk.name === 'login'
+        entryFileNames: (chunk) => {
+          if (chunk.name === 'login') {
+            return 'kalkulator/login-[hash].js';
+          }
+          return chunk.name.startsWith('kalkulator')
             ? 'kalkulator/[name]-[hash].js'
-            : '[name]-[hash].js',
+            : '[name]-[hash].js';
+        },
         chunkFileNames: (chunk) =>
           chunk.facadeModuleId?.includes('/kalkulator/')
             ? 'kalkulator/chunks/[name]-[hash].js'

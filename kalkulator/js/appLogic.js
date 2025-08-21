@@ -1,4 +1,13 @@
-import { getUserId } from "../../src/lib/auth/getUserId.js";
+// Helper function to get user ID from Supabase session
+async function getUserId() {
+    try {
+        const { data: { session } } = await window.supa.auth.getSession();
+        return session?.user?.id || null;
+    } catch (error) {
+        console.error('Error getting user ID:', error);
+        return null;
+    }
+}
 
 // Cache DOM elements to avoid repeated queries
 const domCache = {
