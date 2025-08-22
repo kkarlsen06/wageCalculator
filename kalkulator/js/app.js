@@ -599,13 +599,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (profileInfoLoaded && appInitialized) {
       // Add a small delay to ensure all content is rendered
       await new Promise(resolve => setTimeout(resolve, 200));
-      
+
       // Wait for the app to finish its initial display update
       await waitForAppReady();
-      
+
       // Wait for content to be fully populated with real data
       await waitForContentReady();
-      
+
       // Now remove skeletons since content is ready
       await removeSkeletonsSmoothly();
     }
@@ -644,27 +644,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     while (elapsed < maxWaitTime) {
       // Check if total amount has real data (not "0 kr")
       const totalAmount = document.getElementById('totalAmount');
-      const hasRealTotalData = totalAmount && 
-        totalAmount.textContent && 
-        totalAmount.textContent !== '0 kr' && 
+      const hasRealTotalData = totalAmount &&
+        totalAmount.textContent &&
+        totalAmount.textContent !== '0 kr' &&
         totalAmount.textContent !== '0';
 
       // Check if next shift content has real data (not skeleton or empty state)
       const nextShiftContent = document.getElementById('nextShiftContent');
-      const hasRealShiftData = nextShiftContent && 
+      const hasRealShiftData = nextShiftContent &&
         !nextShiftContent.querySelector('.skeleton') &&
         (nextShiftContent.children.length > 0 || nextShiftContent.querySelector('.next-shift-empty'));
 
       // Check if next payroll content has real data
       const nextPayrollContent = document.getElementById('nextPayrollContent');
-      const hasRealPayrollData = nextPayrollContent && 
+      const hasRealPayrollData = nextPayrollContent &&
         !nextPayrollContent.querySelector('.skeleton') &&
         (nextPayrollContent.children.length > 0 || nextPayrollContent.querySelector('.next-payroll-empty'));
 
       // Check if month display has real data (not skeleton)
       const monthDisplay = document.querySelector('.month-display');
-      const hasRealMonthData = monthDisplay && 
-        monthDisplay.textContent && 
+      const hasRealMonthData = monthDisplay &&
+        monthDisplay.textContent &&
         monthDisplay.textContent !== '';
 
       // If all content is ready, break out of the loop
