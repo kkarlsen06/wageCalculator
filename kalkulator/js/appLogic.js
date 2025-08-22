@@ -1,4 +1,7 @@
 import { getUserId } from "../../src/lib/auth/getUserId.js";
+import { fetchOnce } from "../../src/lib/net/fetchOnce.js";
+
+
 
 // Cache DOM elements to avoid repeated queries
 const domCache = {
@@ -305,12 +308,9 @@ export const app = {
         // Load organization settings for manager
         try {
             const headers = await this.getAuthHeaders?.();
-            const res = await fetch(`${window.CONFIG.apiBase}/org-settings`, { headers });
-            if (res.ok) {
-                const json = await res.json();
-                if (json && json.break_policy) {
-                    this.orgSettings = { break_policy: json.break_policy };
-                }
+            const data = await fetchOnce(`${window.CONFIG.apiBase}/org-settings`, { headers });
+            if (data && data.break_policy) {
+                this.orgSettings = { break_policy: data.break_policy };
             }
         } catch (_) {
             // ignore
@@ -491,7 +491,7 @@ export const app = {
         });
     },
 
-    
+
 
     async saveOrgSettings() {
         try {
@@ -9317,7 +9317,7 @@ export const app = {
                 if (selectedEmployeeId) {
                     body.employee_id = selectedEmployeeId;
                 }
-                
+
                 // Prefer direct id from the editing shift (no server lookup); fallback to lookup if missing
                 let targetId = this.editingShift?.id || null;
                 if (!targetId) {
@@ -9680,7 +9680,7 @@ export const app = {
         this.selectedEmployeeId = null;
         // Also clear from localStorage to prevent persistence issues
         localStorage.removeItem('selectedEmployeeId');
-        
+
         // Restore user's own shifts (not filtered by employee)
         this.shifts = [...this.userShifts];
 
@@ -9773,7 +9773,7 @@ export const app = {
             this.updateWeeklyHoursChart();
             this.updateShiftList();
             this.updateShiftCalendar();
-            
+
             // Render employee work summary
             if (this.currentView === 'employees') {
                 this.renderEmployeeWorkSummary?.();
@@ -9796,14 +9796,14 @@ export const app = {
         // Clear employee selection when switching to stats
         this.selectedEmployeeId = null;
         localStorage.removeItem('selectedEmployeeId');
-        
+
         // Restore user's own shifts (not filtered by employee)
         this.shifts = [...this.userShifts];
 
         // Use existing stats view functionality
         this.dashboardView = 'stats';
         this.applyDashboardView();
-        
+
         // Update the display with user's own data
         this.updateDisplay();
     },
@@ -9821,7 +9821,7 @@ export const app = {
         // Clear employee selection when switching to chat
         this.selectedEmployeeId = null;
         localStorage.removeItem('selectedEmployeeId');
-        
+
         // Restore user's own shifts (not filtered by employee)
         this.shifts = [...this.userShifts];
 
@@ -9838,7 +9838,7 @@ export const app = {
         this.expandChatboxForTabView();
 
         // Dashboard cards are already hidden in switchToView() for smooth transitions
-        
+
         // Update the display with user's own data
         this.updateDisplay();
     },
@@ -11208,7 +11208,7 @@ Hva kan jeg hjelpe deg med i dag?`;
         if (employeeSelect) {
             // Clear existing options
             employeeSelect.innerHTML = '<option value="">Alle ansatte</option>';
-            
+
             // Populate employee options using this.employees directly
             const employees = this.employees || [];
             employees
@@ -11222,7 +11222,7 @@ Hva kan jeg hjelpe deg med i dag?`;
                     }
                     employeeSelect.appendChild(option);
                 });
-            
+
             if (employees.length === 0) {
                 console.info('No employees available for selection');
             }
@@ -11232,10 +11232,10 @@ Hva kan jeg hjelpe deg med i dag?`;
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        
+
         const fromDateInput = document.getElementById('csvExportFromDate');
         const toDateInput = document.getElementById('csvExportToDate');
-        
+
         if (fromDateInput) {
             fromDateInput.value = firstDay.toISOString().split('T')[0];
         }
@@ -11285,7 +11285,7 @@ Hva kan jeg hjelpe deg med i dag?`;
             } catch (e) {
                 console.error('Failed to get auth session:', e);
             }
-            
+
             if (!token) {
                 alert('Du må være innlogget for å eksportere data');
                 return;
@@ -11306,34 +11306,34 @@ Hva kan jeg hjelpe deg med i dag?`;
             // Get the CSV content
             const blob = await response.blob();
             const downloadUrl = window.URL.createObjectURL(blob);
-            
+
             // Create download link
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = downloadUrl;
-            
+
             // Generate filename with date
             const dateStr = new Date().toISOString().split('T')[0];
-            const employeeName = employeeId ? 
+            const employeeName = employeeId ?
                 document.getElementById('csvExportEmployeeSelect')?.options[
                     document.getElementById('csvExportEmployeeSelect')?.selectedIndex
                 ]?.text.replace(/[^a-zA-Z0-9]/g, '_') : 'alle_ansatte';
             a.download = `lønnsrapport_${employeeName}_${dateStr}.csv`;
-            
+
             // Trigger download
             document.body.appendChild(a);
             a.click();
-            
+
             // Clean up
             window.URL.revokeObjectURL(downloadUrl);
             document.body.removeChild(a);
-            
+
             // Close modal
             this.closeCsvExportModal();
-            
+
             // Show success message
             this.showNotification('CSV-rapport lastet ned', 'success');
-            
+
         } catch (error) {
             console.error('CSV export error:', error);
             alert('Kunne ikke eksportere CSV: ' + error.message);
@@ -11359,9 +11359,9 @@ Hva kan jeg hjelpe deg med i dag?`;
             z-index: 10000;
             animation: slideIn 0.3s ease-out;
         `;
-        
+
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             notification.style.animation = 'slideOut 0.3s ease-out';
             setTimeout(() => {
