@@ -1,388 +1,248 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lønnskalkulator | Beregn lønn, tillegg og kompensasjon | kkarlsen.art</title>
-    <meta name="description" content="Gratis lønnskalkulator for nøyaktig beregning av lønn, tillegg og kompensasjon. Støtter Virke-tariff og egendefinerte lønnsrater. Perfekt for varierende arbeidstid.">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lønnskalkulator | Åpne appen</title>
+  <meta name="description" content="Futuristisk, minimalistisk landingsside som leder deg rett inn i Lønnskalkulatoren. Fokus på rask tilgang og tydelig handling." />
 
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
-    <!-- Styles are imported via Vite entry -->
-    <link rel="icon" href="/src/assets/favicon.ico">
-    
-    <!-- Vite entry -->
-    <script type="module" src="/src/main.js"></script>
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Icons (not used on this page; legal shield is inline SVG) -->
+
+  <!-- Favicon -->
+  <link rel="icon" href="/src/assets/favicon.ico" />
+
+  <!-- Vite entry (styles + legal modal) -->
+  <script type="module" src="/src/main.js"></script>
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <!-- Minimal page-specific styles to shape the layout and eye-candy -->
+  <style>
+    /* Page variable for balanced spacing */
+    :root { --landing-tag-gap: clamp(14px, 3vh, 26px); }
+    /* Layout */
+    .landing {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: clamp(16px, 5vw, 24px);
+      /* Account for fixed navbar height (60px) */
+      padding-top: calc(clamp(16px, 5vw, 24px) + 60px);
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+    }
+    .shell {
+      width: 100%;
+      max-width: 560px;
+      display: grid;
+      gap: 16px;
+    }
+    /* Glass card */
+    .glass {
+      background: linear-gradient(180deg, rgba(30,30,30,0.45), rgba(24,24,24,0.4));
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 24px 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-md);
+      text-align: center;
+      max-width: 100%;
+    }
+    /* Eyecandy chips */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      max-width: 100%;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      --b: rgba(255,255,255,0.05);
+      background: var(--b);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      line-height: 1;
+      backdrop-filter: blur(6px);
+      animation: chipFloat 6s ease-in-out infinite;
+    }
+    .chip svg { width: 16px; height: 16px; margin-right: 8px; vertical-align: -3px; color: var(--text-secondary); }
+    .chip:nth-child(2) { animation-delay: 0.6s; }
+    .chip:nth-child(3) { animation-delay: 1.2s; }
+    .chip:nth-child(4) { animation-delay: 1.8s; }
+    @keyframes chipFloat { 0%,100%{ transform: translateY(0)} 50%{ transform: translateY(-6px)} }
+
+    /* Title + subtitle */
+    .brand {
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-size: clamp(2rem, 6vw, 3rem);
+      margin-top: 6px;
+      margin-bottom: var(--landing-tag-gap);
+      color: var(--text-primary);
+      text-shadow: none;
+      overflow-wrap: anywhere;
+    }
+    .brand::after {
+      content: '';
+      display: block;
+      width: 56px;
+      height: 1px;
+      margin: 10px auto 0;
+      border-radius: 2px;
+      background: var(--gradient-primary);
+      opacity: 0.25;
+    }
+    .tagline {
+      color: var(--text-secondary);
+      margin: 0 auto var(--landing-tag-gap);
+      font-size: clamp(1rem, 1.5vw, 1.125rem);
+      max-width: 50ch;
+    }
+    .tagline-compact { display: inline; }
+
+    /* CTA */
+    .cta { display: grid; gap: 12px; justify-content: center; }
+    .open-app-btn { width: auto; align-self: center; }
+
+    /* Background eye-candy: rely on existing gradient orbs */
+    .bg-animation .gradient-orb { opacity: 0.08; filter: blur(140px); }
+    .orb-1 { top: -220px; left: -220px; }
+    .orb-2 { bottom: -320px; right: -320px; }
+    .orb-3 { top: 40%; left: 55%; opacity: 0.08; }
+
+    /* Footer cleanup */
+    .footer { margin-top: 32px; }
+    .footer-content { justify-content: center; gap: 14px; }
+    .footer-info p { margin: 0; color: var(--text-secondary); }
+    .footer-links { gap: 6px; }
+    /* Tidy shield button */
+    .footer .footer-privacy-link { width: 36px; height: 36px; background: transparent; border: 1px solid var(--border-color); border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+    .footer .footer-privacy-link:hover { background: var(--bg-hover); border-color: var(--border-light); box-shadow: none; transform: none; }
+    .footer .footer-privacy-link svg { width: 18px; height: 18px; color: var(--text-secondary); }
+    .footer .footer-privacy-link:hover svg { color: var(--primary); }
+
+    /* Centered top bar */
+    .navbar .nav-container { justify-content: center; }
+    .navbar .nav-logo { margin: 0 auto; }
+
+    /* Mobile layout: tasteful vertical balance (no card) */
+    @media (max-width: 600px) {
+      /* Emulate a ~2–3× zoomed feel */
+      html { font-size: 23px; }
+      .landing { display: flex; align-items: center; justify-content: center; padding-inline: 16px; padding-top: calc(60px + 16px); }
+      .shell { width: 100%; max-width: 480px; }
+      .glass { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; border-radius: 0; padding: 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: clamp(14px, 4vh, 28px); margin: clamp(28px, 10vh, 64px) 0 clamp(28px, 10vh, 72px); }
+      .brand { margin: 0 0 var(--landing-tag-gap); font-size: clamp(2.4rem, 9vw, 3.4rem); }
+      .tagline { margin: 0 auto var(--landing-tag-gap); font-size: clamp(1.25rem, 5vw, 1.5rem); }
+      .chips { gap: 12px; }
+      .chip { font-size: 1.12rem; padding: 11px 16px; }
+      .cta { margin-top: clamp(20px, 6vh, 36px); }
+      .open-app-btn { width: max-content; min-width: 0; height: 60px; font-size: 1.22rem; padding: 0 28px; }
+      .bg-animation .gradient-orb { opacity: 0.06; filter: blur(120px); }
+    }
+
+    /* Smaller phones tweaks */
+    @media (max-width: 480px) {
+      html { font-size: 24px; }
+      .shell { width: 100%; max-width: 420px; }
+      .glass { padding: 20px 16px; border-radius: 14px; }
+      .chips { gap: 12px; }
+      .chip { font-size: 1.18rem; padding: 12px 18px; }
+      .brand { font-size: clamp(2.6rem, 9.6vw, 3.5rem); }
+      .tagline { font-size: clamp(1.3rem, 5.6vw, 1.5rem); }
+      .tagline-compact { display: block; margin-top: 4px; }
+      .open-app-btn { width: max-content; min-width: 0; height: 64px; font-size: 1.28rem; padding: 0 32px; }
+    }
+
+    /* Desktop/tablet spacing: more air below chips, above CTA */
+    @media (min-width: 601px) {
+      .chips { margin-bottom: calc(var(--landing-tag-gap) * 2.2); }
+      .cta { margin-top: calc(var(--landing-tag-gap) * 1.6); }
+    }
+  </style>
 </head>
 <body>
-    <!-- Skip links for accessibility -->
-    <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
-    
-    <!-- Animated Background -->
-    <div class="bg-animation">
-        <div class="gradient-orb orb-1"></div>
-        <div class="gradient-orb orb-2"></div>
-        <div class="gradient-orb orb-3"></div>
+  <a href="#main" class="skip-link">Hopp til hovedinnhold</a>
+
+  <!-- Minimal top bar linking to GitHub -->
+  <nav class="navbar" role="navigation" aria-label="Toppnavigasjon">
+    <div class="nav-container">
+      <a href="https://github.com/kkarlsen06" target="_blank" rel="noopener noreferrer" class="nav-logo" aria-label="Åpne GitHub-profil i ny fane">
+        <span class="logo-text">kkarlsen_06 • DEV</span>
+      </a>
     </div>
+  </nav>
 
-    <!-- Navigation -->
-    <nav class="navbar" role="navigation" aria-label="Hovednavigasjon">
-        <div class="nav-container">
-            <a href="#" class="nav-logo" aria-label="Gå til toppen av siden">
-                <span class="logo-text">kkarlsen_06 • DEV</span>
-            </a>
-            <div class="nav-menu" role="menubar">
-                <a href="#hero" class="nav-link" role="menuitem">Hjem</a>
-                <a href="#calculator" class="nav-link" role="menuitem">Kalkulator</a>
-                <a href="#developer" class="nav-link" role="menuitem">Om utvikleren</a>
-                <a href="#tech" class="nav-link" role="menuitem">Teknologi</a>
-                <a href="https://github.com/kkarlsen06" target="_blank" rel="noopener noreferrer" class="nav-link nav-github" role="menuitem" aria-label="Åpne GitHub-profil i ny fane">
-                    <i class="fab fa-github" aria-hidden="true"></i>
-                    <span>GitHub</span>
-                </a>
-            </div>
-            <button class="nav-toggle" aria-label="Åpne/lukk navigasjonsmeny" aria-expanded="false">
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-            </button>
+  <!-- Subtle animated background reused from global styles -->
+  <div class="bg-animation" aria-hidden="true">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+
+  <main id="main" class="landing">
+    <div class="shell">
+      <section class="glass" aria-label="Åpne applikasjonen">
+        <h1 class="brand">Lønnskalkulator</h1>
+        <p class="tagline">
+          Beregn lønn, tillegg og kompensasjon.
+          <span class="tagline-compact">Uten støy. Rett på sak.</span>
+        </p>
+        <div class="chips" aria-hidden="true">
+          <span class="chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="4.5" y="3.5" width="15" height="17" rx="2"/>
+              <path d="M8 8h8M8 12h8M8 16h5"/>
+            </svg>
+            Nøyaktig
+          </span>
+          <span class="chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M13 3L4 14h6l-1 7l9-11h-6l1-7z"/>
+            </svg>
+            Rask
+          </span>
+          <span class="chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l7 3v5c0 4.5-3.5 8-7 8s-7-3.5-7-8V6l7-3z"/>
+              <path d="M9.5 12.5l2 2l3-4"/>
+            </svg>
+            Privat
+          </span>
+          <span class="chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 6l7 4l-7 4l-7-4l7-4z"/>
+              <path d="M19 14l-7 4l-7-4"/>
+            </svg>
+            Stabil
+          </span>
         </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main id="main-content">
-        <!-- Hero Section -->
-        <section id="hero" class="hero">
-        <div class="hero-container">
-            <div class="hero-content">
-                <!-- BADGE SECTION - Calculator focused -->
-                <div class="hero-badge">
-                    <span class="badge-text">Gratis å bruke</span>
-                    <span class="badge-dot"></span>
-                </div>
-
-                <!-- TITLE SECTION - Calculator focused -->
-                <div class="hero-top-section">
-                    <h1 class="hero-title">
-                        <span class="hero-name">Lønnskalkulator</span>
-                        <span class="hero-subtitle-static">Beregn din lønn nøyaktig</span>
-                    </h1>
-
-                    <p class="hero-description">
-                        <span class="hero-description-short">Få full oversikt over lønn, tillegg og kompensasjon basert på dine vakter.</span>
-                        <span class="hero-description-full"> Perfekt for deg med Virke-tariff eller egendefinerte lønnsrater.</span>
-                    </p>
-                </div>
-                
-                <!-- BOTTOM THIRD - CTA and Stats -->
-                <div class="hero-bottom-section">
-                    <div class="hero-cta">
-                        <a href="/kalkulator/index.html" class="btn btn-primary btn-hero">
-                            <i class="fas fa-calculator"></i>
-                            <span>Start kalkulatoren</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
-                    </div>
-                    
-                    <div class="hero-stats">
-                        <div class="stat">
-                            <span class="stat-number">100%</span>
-                            <span class="stat-label">Tariff-nøyaktig</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number">Gratis</span>
-                            <span class="stat-label">Alltid</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number">24/7</span>
-                            <span class="stat-label">Tilgjengelig</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="hero-visual">
-                <div class="floating-card">
-                    <div class="card-content">
-                        <div class="code-preview">
-                            <div class="code-header">
-                                <span class="code-dot red"></span>
-                                <span class="code-dot yellow"></span>
-                                <span class="code-dot green"></span>
-                            </div>
-                            <pre><code><span class="code-comment">// Beregn lønn med tillegg</span>
-<span class="code-keyword">function</span> <span class="code-function">calculateWage</span>(<span class="code-param">shift</span>) {
-  <span class="code-keyword">let</span> <span class="code-variable">basePay</span> = <span class="code-param">shift</span>.<span class="code-variable">hours</span> * <span class="code-variable">hourlyRate</span>;
-  <span class="code-keyword">let</span> <span class="code-variable">bonus</span> = <span class="code-number">0</span>;
-
-  <span class="code-comment">// Helgetillegg</span>
-  <span class="code-keyword">if</span> (<span class="code-function">isWeekend</span>(<span class="code-param">shift</span>.<span class="code-variable">date</span>)) {
-    <span class="code-variable">bonus</span> += <span class="code-variable">basePay</span> * <span class="code-number">0.18</span>;<span class="code-mobile-truncate">
-  }
-
-  <span class="code-keyword">return</span> <span class="code-variable">basePay</span> + <span class="code-variable">bonus</span>;
-}</span></code></pre>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="cta">
+          <a href="/kalkulator/" class="btn btn-primary btn-large open-app-btn" aria-label="Åpne kalkulatoren nå">
+            Åpne appen
+          </a>
         </div>
-        
-        <div class="scroll-indicator">
-            <div class="mouse">
-                <div class="wheel"></div>
-            </div>
-            <span class="scroll-text">Se funksjoner og utvikler</span>
-        </div>
-    </section>
+      </section>
+    </div>
+  </main>
 
-    <!-- Calculator Features Section -->
-    <section id="calculator" class="project-section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-label">Funksjoner</span>
-                <h2 class="section-title">Alt du trenger for lønnsberegning</h2>
-                <p class="section-description">
-                    En komplett løsning som håndterer komplekse lønnsberegninger automatisk.
-                    Støtter Virke-tariff 2025 og egendefinerte lønnsrater.
-                    <br> Få nøyaktige beregninger på sekunder.
-                </p>
-            </div>
-            
-            <div class="project-showcase">
-                <div class="showcase-content">
-                    <div class="showcase-features">
-                        <h3 class="features-title">Hovedfunksjoner</h3>
-                        <ul class="features-list">
-                            <li class="feature-item">
-                                <i class="fas fa-chart-line"></i>
-                                <div>
-                                    <h4>Avanserte beregninger</h4>
-                                    <p>Presise kalkulasjoner basert på gjeldende tariffavtaler</p>
-                                </div>
-                            </li>
-                            <li class="feature-item">
-                                <i class="fas fa-clock"></i>
-                                <div>
-                                    <h4>Sanntidsoppdateringer</h4>
-                                    <p>Se resultatene mens du fyller inn informasjon</p>
-                                </div>
-                            </li>
-                            <li class="feature-item">
-                                <i class="fas fa-shield-alt"></i>
-                                <div>
-                                    <h4>Sikker datalagring</h4>
-                                    <p>Dine data er trygge med Supabase-integrasjon</p>
-                                </div>
-                            </li>
-                            <li class="feature-item">
-                                <i class="fas fa-mobile-alt"></i>
-                                <div>
-                                    <h4>Responsivt design</h4>
-                                    <p>Fungerer perfekt på alle enheter</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <div class="showcase-preview">
-                        <div class="preview-window">
-                            <div class="window-header">
-                                <div class="window-controls">
-                                    <span class="control red"></span>
-                                    <span class="control yellow"></span>
-                                    <span class="control green"></span>
-                                </div>
-                                <span class="window-title">Lønnskalkulator</span>
-                            </div>
-                            <div class="window-content">
-                                <div class="preview-stats">
-                                    <div class="preview-stat">
-                                        <span class="stat-icon">$</span>
-                                        <span class="stat-value">45.750,-</span>
-                                        <span class="stat-label">Månedslønn</span>
-                                    </div>
-                                    <div class="preview-stat">
-                                        <span class="stat-icon">+</span>
-                                        <span class="stat-value">+18%</span>
-                                        <span class="stat-label">Tillegg</span>
-                                    </div>
-                                    <div class="preview-stat">
-                                        <span class="stat-icon">⏱</span>
-                                        <span class="stat-value">162.5t</span>
-                                        <span class="stat-label">Timer</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <a href="/kalkulator/index.html" class="showcase-cta">
-                            <span>Prøv kalkulatoren nå</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Developer Section -->
-    <section id="developer" class="developer-section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-label">Om utvikleren</span>
-                <h2 class="section-title">Hjalmar Karlsen</h2>
-                <p class="section-description">
-                    Utvikler fra Alta, Norge som brenner for å skape digitale løsninger som faktisk løser reelle problemer.
-                </p>
-            </div>
-
-            <div class="developer-content">
-                <div class="developer-info">
-                    <div class="developer-card">
-                        <div class="developer-avatar">
-                            <img src="/src/assets/kkarlsen_ikon_clean.png" alt="Hjalmar Karlsen" class="avatar-image">
-                        </div>
-                        <div class="developer-details">
-                            <h3>Hjalmar Kristensen-Karlsen</h3>
-                            <p class="developer-location">
-                                <i class="fas fa-map-marker-alt"></i>
-                                Alta, Norge
-                            </p>
-                            <p class="developer-status">
-                                <span class="status-indicator"></span>
-                                Tilgjengelig for oppdrag
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="developer-bio">
-                        <h4>Om meg</h4>
-                        <p>
-                            Jeg er en lidenskapelig utvikler som spesialiserer meg på moderne webutvikling
-                            med fokus på brukervennlighet og ytelse. Lønnskalkulatoren er et resultat av
-                            min erfaring med komplekse beregningssystemer og ønsket om å forenkle hverdagen
-                            for folk med varierende arbeidstid.
-                        </p>
-                        <p>
-                            Med bakgrunn innen både frontend og backend utvikling, lager jeg løsninger
-                            som er både teknisk solide og intuitive å bruke.
-                        </p>
-                    </div>
-
-                    <div class="developer-skills">
-                        <h4>Tekniske ferdigheter</h4>
-                        <div class="skills-grid">
-                            <div class="skill-item">
-                                <i class="fab fa-js-square"></i>
-                                <span>JavaScript/ES6+</span>
-                            </div>
-                            <div class="skill-item">
-                                <i class="fab fa-html5"></i>
-                                <span>HTML5 & CSS3</span>
-                            </div>
-                            <div class="skill-item">
-                                <i class="fas fa-database"></i>
-                                <span>Database Design</span>
-                            </div>
-                            <div class="skill-item">
-                                <i class="fas fa-mobile-alt"></i>
-                                <span>Responsiv Design</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="developer-contact">
-                    <h4>Ta kontakt</h4>
-                    <div class="contact-methods">
-                        <a href="mailto:kkarlsen06@kkarlsen.art" class="contact-item">
-                            <i class="fas fa-envelope"></i>
-                            <div>
-                                <span class="contact-label">E-post</span>
-                                <span class="contact-value">kkarlsen06@kkarlsen.art</span>
-                            </div>
-                        </a>
-                        <a href="https://github.com/kkarlsen06" target="_blank" class="contact-item">
-                            <i class="fab fa-github"></i>
-                            <div>
-                                <span class="contact-label">GitHub</span>
-                                <span class="contact-value">kkarlsen06</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Tech Stack Section -->
-    <section id="tech" class="tech-section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-label">Teknologi</span>
-                <h2 class="section-title">Pålitelig og sikker</h2>
-                <p class="section-description">
-                    Kalkulatoren er bygget med moderne teknologi for å sikre nøyaktighet, sikkerhet og tilgjengelighet
-                </p>
-            </div>
-            
-            <div class="tech-grid">
-                <div class="tech-card">
-                    <div class="tech-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3>Sikker</h3>
-                    <p>Dine data lagres trygt</p>
-                </div>
-                <div class="tech-card">
-                    <div class="tech-icon">
-                        <i class="fas fa-calculator"></i>
-                    </div>
-                    <h3>Nøyaktig</h3>
-                    <p>Presise beregninger</p>
-                </div>
-                <div class="tech-card">
-                    <div class="tech-icon">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h3>Responsiv</h3>
-                    <p>Fungerer på alle enheter</p>
-                </div>
-                <div class="tech-card">
-                    <div class="tech-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3>Rask</h3>
-                    <p>Øyeblikkelige resultater</p>
-                </div>
-            </div>
-        </div>
-    </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-info">
-                <p>&copy; 2025 Hjalmar Kristensen-Karlsen</p>
-                <p>Laget med <span class="heart">❤️</span> i Norge</p>
-            </div>
-            <div class="footer-links">
-                <a href="https://github.com/kkarlsen06" target="_blank" aria-label="GitHub">
-                    <i class="fab fa-github"></i>
-                </a>
-                <a href="mailto:kkarlsen06@kkarlsen.art" aria-label="Email">
-                    <i class="fas fa-envelope"></i>
-                </a>
-            </div>
-        </div>
-    </footer>
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-info">
+        <p>&copy; 2025 Hjalmar Kristensen-Karlsen</p>
+      </div>
+      <div class="footer-links"><!-- Privacy shield injected by src/main.js --></div>
+    </div>
+  </footer>
 </body>
 </html>
