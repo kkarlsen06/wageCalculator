@@ -35,6 +35,55 @@
       overflow: hidden;
       width: 100%;
     }
+    /* Gigantic, subtle background title (multiple copies) */
+    :root { --bg-gap: clamp(80px, 18vh, 240px); --bg-rot: -18deg; --bg-speed: 120s; }
+    .bg-title {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      user-select: none;
+      overflow: hidden;
+    }
+    .bg-title-rot {
+      position: absolute;
+      top: -20vh; /* start slightly above for coverage */
+      left: 50%;
+      transform: translateX(-50%) rotate(var(--bg-rot));
+      transform-origin: center;
+    }
+    .bg-title-track {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: bgScrollUp var(--bg-speed) linear infinite;
+    }
+    .bg-seq {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--bg-gap);
+    }
+    .bg-title .bg-word {
+      font-family: var(--font-main, 'Inter', system-ui, sans-serif);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+      line-height: 0.9;
+      font-size: clamp(12rem, 38vmin, 72rem);
+      color: var(--text-primary);
+      opacity: 0.06;
+      filter: brightness(0.65) saturate(0.8) contrast(0.9) blur(0.4px);
+    }
+    @keyframes bgScrollUp {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-50%); }
+    }
+    /* Reduced motion: keep them static if preferred */
+    @media (prefers-reduced-motion: reduce) {
+      .bg-title-track { animation: none; }
+    }
     .shell {
       width: 100%;
       max-width: 560px;
@@ -51,6 +100,8 @@
       box-shadow: var(--shadow-md);
       text-align: center;
       max-width: 100%;
+      position: relative; /* Keep above background title */
+      z-index: 2;
     }
     /* Eyecandy chips */
     .chips {
@@ -109,6 +160,7 @@
       max-width: 50ch;
     }
     .tagline-compact { display: inline; }
+    .line-break-mobile { display: inline; }
 
     /* CTA */
     .cta { display: grid; gap: 12px; justify-content: center; }
@@ -143,22 +195,31 @@
       .shell { width: 100%; max-width: 480px; }
       .glass { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; border-radius: 0; padding: 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: clamp(14px, 4vh, 28px); margin: clamp(28px, 10vh, 64px) 0 clamp(28px, 10vh, 72px); }
       .brand { margin: 0 0 var(--landing-tag-gap); font-size: clamp(2.4rem, 9vw, 3.4rem); }
+      /* Hide decorative underline on mobile */
+      .brand::after { display: none; }
+      /* Tweak mega titles on small screens for balance */
+      .bg-title .bg-word { font-size: clamp(9rem, 46vmin, 56rem); opacity: 0.05; }
+      /* Tighter background spacing on mobile */
+      .bg-title { --bg-gap: clamp(40px, 12vw, 88px); }
       .tagline { margin: 0 auto var(--landing-tag-gap); font-size: clamp(1.25rem, 5vw, 1.5rem); }
-      .chips { gap: 12px; }
-      .chip { font-size: 1.12rem; padding: 11px 16px; }
+      .line-break-mobile { display: block; }
+      /* Two-by-two grid for chips on mobile */
+      .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; justify-items: stretch; align-items: stretch; }
+      .chip { font-size: 1.12rem; padding: 11px 16px; width: 100%; justify-content: center; min-width: 0; }
       .cta { margin-top: clamp(20px, 6vh, 36px); }
       .open-app-btn { width: max-content; min-width: 0; height: 60px; font-size: 1.22rem; padding: 0 28px; }
       .bg-animation .gradient-orb { opacity: 0.06; filter: blur(120px); }
     }
 
-    /* Smaller phones tweaks */
-    @media (max-width: 480px) {
+    /* Smaller phones tweaks (only very small widths) */
+    @media (max-width: 380px) {
       html { font-size: 24px; }
       .shell { width: 100%; max-width: 420px; }
       .glass { padding: 20px 16px; border-radius: 14px; }
-      .chips { gap: 12px; }
-      .chip { font-size: 1.18rem; padding: 12px 18px; }
+      .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .chip { font-size: 1.18rem; padding: 12px 18px; width: 100%; justify-content: center; }
       .brand { font-size: clamp(1.05rem, 7.8vw, 1.6rem); white-space: nowrap; overflow-wrap: normal; }
+      .bg-title .bg-word { font-size: clamp(8rem, 58vmin, 52rem); opacity: 0.05; }
       .tagline { font-size: clamp(1.3rem, 5.6vw, 1.5rem); }
       .tagline-compact { display: block; margin-top: 4px; }
       .open-app-btn { width: max-content; min-width: 0; height: 64px; font-size: 1.28rem; padding: 0 32px; }
@@ -191,11 +252,34 @@
   </div>
 
   <main id="main" class="landing">
+    <!-- Subtle multi-copy background title with vertical scroll -->
+    <div class="bg-title" aria-hidden="true">
+      <div class="bg-title-rot">
+        <div class="bg-title-track">
+          <div class="bg-seq">
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+          </div>
+          <div class="bg-seq" aria-hidden="true">
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+            <span class="bg-word">Lønnskalkulator</span>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="shell">
       <section class="glass" aria-label="Åpne applikasjonen">
         <h1 class="brand">Lønnskalkulator</h1>
         <p class="tagline">
-          Beregn lønn, tillegg og kompensasjon.
+          Beregn lønn, tillegg <span class="line-break-mobile">og kompensasjon.</span>
           <span class="tagline-compact">Uten støy. Rett på sak.</span>
         </p>
         <div class="chips" aria-hidden="true">
@@ -241,7 +325,7 @@
       <div class="footer-info">
         <p>&copy; 2025 Hjalmar Kristensen-Karlsen</p>
       </div>
-      <div class="footer-links"><!-- Privacy shield injected by src/main.js --></div>
+      <div class="footer-links"><!-- Privacy button injected by src/main.js --></div>
     </div>
   </footer>
 </body>

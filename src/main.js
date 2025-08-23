@@ -14,27 +14,23 @@ import LegalModal from './js/legal-modal.js';
 document.addEventListener('DOMContentLoaded', () => {
     const legalModal = new LegalModal();
     
-    // Add shield icon to footer for privacy policy
+    // Add Personvernerklæring button to footer
     const footer = document.querySelector('.footer');
     if (footer) {
         const footerLinks = footer.querySelector('.footer-links');
         if (footerLinks) {
-            const privacyLink = document.createElement('a');
-            privacyLink.href = '#';
-            privacyLink.className = 'footer-privacy-link';
-            privacyLink.setAttribute('aria-label', 'Personvern og vilkår');
-            // Minimal inline SVG shield (no external icon libs)
-            privacyLink.innerHTML = `
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                    <path d="M12 3l7 3v5c0 4.418-3.582 8-8 8s-8-3.582-8-8V6l9-3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-                    <path d="M9.5 12.5l2 2l3-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>`;
-            privacyLink.addEventListener('click', (e) => {
+            const privacyBtn = document.createElement('button');
+            privacyBtn.type = 'button';
+            privacyBtn.className = 'btn btn-secondary';
+            privacyBtn.setAttribute('aria-label', 'Åpne personvernerklæringen');
+            privacyBtn.textContent = 'Personvernerklæring';
+            privacyBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 legalModal.showFromLandingPage();
+                legalModal.switchTab('privacy');
             });
 
-            footerLinks.appendChild(privacyLink);
+            footerLinks.appendChild(privacyBtn);
         }
     }
 
