@@ -490,43 +490,41 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
     const userEmail = req?.user?.email || req?.auth?.email || null;
     try {
       if (userEmail) {
-        const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
+        // 1) Find customer by email
+        const q = new URLSearchParams({ email: userEmail, limit: '1' });
+        const listResp = await fetch(`https://api.stripe.com/v1/customers?${q}`, {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${stripeKey}`
-          }
+          headers: { 'Authorization': `Bearer ${stripeKey}` }
         });
         if (listResp.ok) {
           const listData = await listResp.json().catch(() => null);
-          if (listData && Array.isArray(listData.data) && listData.data.length > 0) {
-            const existing = listData.data[0];
+          const existing = Array.isArray(listData?.data) ? listData.data[0] : null;
+          if (existing) {
             customerId = existing.id;
-            // Ensure Supabase user_id is persisted on the Customer metadata and merge existing keys
-            try {
-              const updateBody = new URLSearchParams();
-              if (existing && existing.metadata && typeof existing.metadata === 'object') {
-                for (const [k, v] of Object.entries(existing.metadata)) {
-                  if (k !== 'user_id' && v != null) {
-                    updateBody.set(`metadata[${k}]`, String(v));
-                  }
-                }
-              }
-              updateBody.set('metadata[user_id]', userId);
-              await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${stripeKey}`,
-                  'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: updateBody
-              });
-            } catch (_) { /* non-blocking */ }
+            // If missing, ensure metadata.user_id is present on the Customer
+            const hasMeta = existing?.metadata && existing.metadata.user_id;
+            if (!hasMeta) {
+              try {
+                const updateBody = new URLSearchParams({ 'metadata[user_id]': userId });
+                await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${stripeKey}`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                  },
+                  body: updateBody
+                });
+              } catch (_) { /* non-blocking */ }
+            }
           }
         }
+        // 2) If not found, create a new customer with metadata.user_id and optional name
         if (!customerId) {
           const createBody = new URLSearchParams();
           createBody.set('email', userEmail);
           createBody.set('metadata[user_id]', userId);
+          const userName = req?.user?.user_metadata?.full_name || req?.user?.user_metadata?.name || req?.user?.user_metadata?.display_name || null;
+          if (userName) createBody.set('name', userName);
           const createResp = await fetch('https://api.stripe.com/v1/customers', {
             method: 'POST',
             headers: {
@@ -544,6 +542,9 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
     } catch (e) {
       console.warn('[/api/checkout] Unable to attach/create customer by email:', e?.message || e);
     }
+
+    // Trace log to confirm we resolved/ensured a Customer with metadata
+    try { console.log("[/api/checkout] ensured customer", { customerId, userId, email: userEmail }); } catch (_) {}
 
     // Build form-encoded payload for Stripe API (REST)
     const body = new URLSearchParams();
