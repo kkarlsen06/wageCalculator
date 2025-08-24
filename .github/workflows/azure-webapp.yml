@@ -62,6 +62,12 @@ jobs:
             az webapp config set -g rg-wageapp -n wageapp-prod --linux-fx-version "NODE|22" --startup-file "npm start"
             az webapp config appsettings delete -g rg-wageapp -n wageapp-prod --setting-names WEBSITE_RUN_FROM_PACKAGE || true
 
+
+      - name: Wait for SCM restart
+        run: |
+          echo "Waiting 30s to avoid SCM restart conflict..."
+          sleep 30
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
