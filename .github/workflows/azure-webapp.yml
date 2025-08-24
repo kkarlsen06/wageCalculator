@@ -59,7 +59,7 @@ jobs:
               STATIC_DIR='.'
             az webapp config appsettings set -g rg-wageapp -n wageapp-prod --settings \
               SCM_DO_BUILD_DURING_DEPLOYMENT=false
-            az webapp config set -g rg-wageapp -n wageapp-prod --linux-fx-version "NODE|22" --startup-file "npm start"
+            az webapp config set -g rg-wageapp -n wageapp-prod --linux-fx-version "NODE|22-lts" --startup-file "npm start"
             az webapp config appsettings delete -g rg-wageapp -n wageapp-prod --setting-names WEBSITE_RUN_FROM_PACKAGE || true
 
 
