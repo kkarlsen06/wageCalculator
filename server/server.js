@@ -571,6 +571,9 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
     return res.status(500).json({ error: 'Failed to create checkout session' });
   }
 
+  });
+
+
 // ---------- Stripe Billing Portal ----------
 // Creates a Stripe Billing Portal session so users can manage/cancel their subscription.
 // - Auth required; derives user from JWT
@@ -609,21 +612,51 @@ app.post('/api/portal', authenticateUser, async (req, res) => {
       }
     }
 
-    if (!customerId) {
-      // As a fallback, try to find by email similar to checkout route
-      const userEmail = req?.user?.email || req?.auth?.email || null;
-      if (userEmail) {
-        try {
-          const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${stripeKey}` }
-          });
-          if (listResp.ok) {
-            const listJson = await listResp.json().catch(() => null);
-            customerId = listJson?.data?.[0]?.id || null;
-          }
-        } catch (_) { /* ignore */ }
-      }
+    // Verify customer exists or find/create by email
+    const userEmail = req?.user?.email || req?.auth?.email || null;
+
+    // If we have a candidate customerId, verify it exists in current mode (test vs live)
+    if (customerId) {
+      try {
+        const check = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (!check.ok) {
+          customerId = null; // invalid/mismatched mode; fall back to email search
+        }
+      } catch (_) { customerId = null; }
+    }
+
+    if (!customerId && userEmail) {
+      try {
+        const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (listResp.ok) {
+          const listJson = await listResp.json().catch(() => null);
+          customerId = listJson?.data?.[0]?.id || null;
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    // If still none, create a customer now (so portal can open even on fresh accounts)
+    if (!customerId && userEmail) {
+      try {
+        const createBody = new URLSearchParams();
+        createBody.set('email', userEmail);
+        createBody.set('metadata[user_id]', userId);
+        const createResp = await fetch('https://api.stripe.com/v1/customers', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: createBody
+        });
+        if (createResp.ok) {
+          const created = await createResp.json().catch(() => null);
+          customerId = created?.id || null;
+        }
+      } catch (_) { /* ignore */ }
     }
 
     if (!customerId) {
@@ -663,6 +696,8 @@ app.post('/api/portal', authenticateUser, async (req, res) => {
   } catch (e) {
     console.error('[/api/portal] Exception:', e?.message || e, e?.stack || '');
     return res.status(500).json({ error: 'Failed to create portal session' });
+  }
+});
 
 // Back-compat route without /api prefix in case of different proxy setups
 app.post('/portal', authenticateUser, async (req, res) => {
@@ -688,20 +723,50 @@ app.post('/portal', authenticateUser, async (req, res) => {
         }
       } catch (_) {}
     }
-    if (!customerId) {
-      const userEmail = req?.user?.email || req?.auth?.email || null;
-      if (userEmail) {
-        try {
-          const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
-            method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
-          });
-          if (listResp.ok) {
-            const listJson = await listResp.json().catch(() => null);
-            customerId = listJson?.data?.[0]?.id || null;
-          }
-        } catch (_) {}
-      }
+    // Verify customer exists or find/create by email
+    const userEmail = req?.user?.email || req?.auth?.email || null;
+
+    // If we have a candidate customerId, verify it exists in current mode (test vs live)
+    if (customerId) {
+      try {
+        const check = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (!check.ok) {
+          customerId = null; // invalid/mismatched mode; fall back to email search
+        }
+      } catch (_) { customerId = null; }
     }
+
+    if (!customerId && userEmail) {
+      try {
+        const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (listResp.ok) {
+          const listJson = await listResp.json().catch(() => null);
+          customerId = listJson?.data?.[0]?.id || null;
+        }
+      } catch (_) {}
+    }
+
+    // If still none, create a customer now
+    if (!customerId && userEmail) {
+      try {
+        const createBody = new URLSearchParams();
+        createBody.set('email', userEmail);
+        createBody.set('metadata[user_id]', userId);
+        const createResp = await fetch('https://api.stripe.com/v1/customers', {
+          method: 'POST', headers: { 'Authorization': `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body: createBody
+        });
+        if (createResp.ok) {
+          const created = await createResp.json().catch(() => null);
+          customerId = created?.id || null;
+        }
+      } catch (_) {}
+    }
+
     if (!customerId) return res.status(404).json({ error: 'No Stripe customer found for user' });
 
     const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').toString();
@@ -723,9 +788,6 @@ app.post('/portal', authenticateUser, async (req, res) => {
     return res.json({ url: data.url });
   } catch (e) {
     return res.status(500).json({ error: 'Failed to create portal session' });
-  }
-});
-
   }
 });
 
@@ -5197,7 +5259,6 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
-export default app;
 
 // Start server (kun når filen kjøres direkte)
 const isRunDirectly = (() => {
