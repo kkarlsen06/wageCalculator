@@ -920,13 +920,25 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           record.price_id = priceId;
         }
 
+        // Add one log printing { userId, priceId, status } before the DB call
+        console.log('[webhook] before DB call:', { userId, priceId, status });
 
         try {
-          const { data, error } = await supabase
-            .from('subscriptions')
-            .upsert(record, { onConflict: 'user_id' })
-            .single();
-          console.log('[webhook] upsert subscriptions:', { record, data, error });
+          if (type === 'customer.subscription.created') {
+            const { data, error } = await supabase
+              .from('subscriptions')
+              .upsert({ user_id: userId, ...record }, { onConflict: 'user_id' })
+              .single();
+            console.log('[webhook] create upsert:', { data, error });
+          } else if (type === 'customer.subscription.updated') {
+            const { data, error } = await supabase
+              .from('subscriptions')
+              .update(record)
+              .eq('user_id', userId)
+              .select()
+              .single();
+            console.log('[webhook] update:', { data, error });
+          }
         } catch (e) {
           console.error('[/api/stripe-webhook] Upsert exception:', e?.message || e);
         }
