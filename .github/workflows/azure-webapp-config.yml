@@ -22,7 +22,27 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Detect App Service Plan SKU
+        id: detect_sku
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            set -e
+            PLAN_ID=$(az webapp show -g rg-wageapp -n wageapp-prod --query serverFarmId -o tsv)
+            echo "plan_id=$PLAN_ID" >> $GITHUB_OUTPUT
+            SKU_TIER=$(az appservice plan show --ids "$PLAN_ID" --query sku.tier -o tsv)
+            echo "sku_tier=$SKU_TIER" >> $GITHUB_OUTPUT
+            case "$SKU_TIER" in
+              Standard|Premium|PremiumV2|PremiumV3|Isolated|IsolatedV2)
+                echo "can_use_slots=true" >> $GITHUB_OUTPUT
+                ;;
+              *)
+                echo "can_use_slots=false" >> $GITHUB_OUTPUT
+                ;;
+            esac
+
       - name: Ensure staging slot exists
+        if: steps.detect_sku.outputs.can_use_slots == 'true'
         uses: azure/CLI@v2
         with:
           inlineScript: |
@@ -51,7 +71,11 @@ jobs:
             az webapp config set -g rg-wageapp -n wageapp-prod --linux-fx-version "NODE|22-lts" --startup-file "npm start"
             az webapp config appsettings delete -g rg-wageapp -n wageapp-prod --setting-names WEBSITE_RUN_FROM_PACKAGE || true
 
-            # Mirror settings to staging slot
+      - name: Mirror settings to staging slot
+        if: steps.detect_sku.outputs.can_use_slots == 'true'
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
             az webapp config appsettings set -g rg-wageapp -n wageapp-prod --slot staging --settings \
               NODE_ENV=production \
               SUPABASE_URL='${{ secrets.SUPABASE_URL }}' \
@@ -63,11 +87,17 @@ jobs:
             az webapp config set -g rg-wageapp -n wageapp-prod --slot staging --linux-fx-version "NODE|22-lts" --startup-file "npm start"
             az webapp config appsettings delete -g rg-wageapp -n wageapp-prod --slot staging --setting-names WEBSITE_RUN_FROM_PACKAGE || true
 
-      - name: Configure Always On and Health Check (prod + staging)
+      - name: Configure Always On and Health Check (prod)
         uses: azure/CLI@v2
         with:
           inlineScript: |
             az webapp config set -g rg-wageapp -n wageapp-prod --always-on true --health-check-path "/config"
+
+      - name: Configure Always On and Health Check (staging)
+        if: steps.detect_sku.outputs.can_use_slots == 'true'
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
             az webapp config set -g rg-wageapp -n wageapp-prod --slot staging --always-on true --health-check-path "/config"
 
       - name: Wait for SCM restart to complete

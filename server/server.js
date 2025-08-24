@@ -5778,7 +5778,38 @@ const isRunDirectly = (() => {
 
 if (isRunDirectly) {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () =>
-    console.log(`✔ Server running → http://localhost:${PORT}`)
-  );
+  const server = app.listen(PORT, () => {
+    console.log(`✔ Server running → http://localhost:${PORT}`);
+  });
+
+  // Graceful shutdown to reduce dropped requests during restarts
+  const shutdownSignals = ['SIGTERM', 'SIGINT'];
+  const GRACE_MS = parseInt(process.env.GRACEFUL_SHUTDOWN_MS || '25000', 10);
+  let shuttingDown = false;
+
+  function gracefulShutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[shutdown] Received ${signal}. Stopping server, grace=${GRACE_MS}ms`);
+    try {
+      server.close(err => {
+        if (err) {
+          console.error('[shutdown] server.close error:', err?.message || err);
+        }
+        process.exit(0);
+      });
+      // Force exit after grace period
+      setTimeout(() => {
+        console.warn('[shutdown] Grace period elapsed; forcing exit');
+        process.exit(0);
+      }, Math.max(1000, GRACE_MS)).unref();
+    } catch (e) {
+      console.error('[shutdown] exception:', e?.message || e);
+      process.exit(0);
+    }
+  }
+
+  for (const sig of shutdownSignals) {
+    process.on(sig, () => gracefulShutdown(sig));
+  }
 }
