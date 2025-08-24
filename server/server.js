@@ -61,6 +61,8 @@ const corsOptions = {
 
 // Explicit preflight for /api/checkout to avoid Express auto-OPTIONS
 app.options('/api/checkout', cors(corsOptions));
+// Explicit preflight for /api/portal (Stripe Billing Portal)
+app.options('/api/portal', cors(corsOptions));
 
 
 // Do NOT apply to /api/stripe-webhook (keep express.raw)
@@ -538,7 +540,7 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
       body.set('customer', customerId);
     }
 
-	
+
     // Optional, can be toggled later via env if needed
     // body.set('automatic_tax[enabled]', 'true');
 
@@ -565,6 +567,100 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
   } catch (e) {
     console.error('[/api/checkout] Exception:', e?.message || e, e?.stack || '');
     return res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+
+// ---------- Stripe Billing Portal ----------
+// Creates a Stripe Billing Portal session so users can manage/cancel their subscription.
+// - Auth required; derives user from JWT
+// - Returns { url } to redirect the user
+app.post('/api/portal', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/api/portal', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return res.status(500).json({ error: 'Stripe not configured on server' });
+    }
+
+    const userId = req.user_id;
+
+    // Find the Stripe customer for this user
+    let customerId = null;
+    if (supabase) {
+      try {
+        const resp1 = await supabase
+          .from('subscriptions')
+          .select('stripe_customer_id')
+          .eq('user_id', userId)
+          .limit(1);
+        let row = null;
+        if (!resp1.error && Array.isArray(resp1.data) && resp1.data.length) {
+          row = resp1.data[0];
+        }
+        customerId = row?.stripe_customer_id || null;
+      } catch (_) {
+        // ignore; we'll still try to proceed
+      }
+    }
+
+    if (!customerId) {
+      // As a fallback, try to find by email similar to checkout route
+      const userEmail = req?.user?.email || req?.auth?.email || null;
+      if (userEmail) {
+        try {
+          const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${stripeKey}` }
+          });
+          if (listResp.ok) {
+            const listJson = await listResp.json().catch(() => null);
+            customerId = listJson?.data?.[0]?.id || null;
+          }
+        } catch (_) { /* ignore */ }
+      }
+    }
+
+    if (!customerId) {
+      return res.status(404).json({ error: 'No Stripe customer found for user' });
+    }
+
+    // Compute return URL back to app
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').toString();
+    const host = (req.headers['x-forwarded-host'] || req.get('host') || '').toString();
+    const envBase = process.env.APP_BASE_URL || process.env.PUBLIC_APP_BASE_URL || '';
+    const computedOrigin = host ? `${proto}://${host}` : '';
+    const appBase = (envBase || computedOrigin).replace(/\/$/, '');
+    const return_url = `${appBase}/kalkulator/index.html`;
+
+    // Create portal session via Stripe REST API
+    const form = new URLSearchParams();
+    form.set('customer', customerId);
+    form.set('return_url', return_url);
+
+    const resp = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${stripeKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: form
+    });
+
+    const data = await resp.json().catch(() => null);
+    if (!resp.ok || !data?.url) {
+      const msg = data?.error?.message || data?.error || 'Failed to create portal session';
+      console.error('[/api/portal] Stripe error:', msg, 'status=', resp.status, 'body=', data);
+      return res.status(500).json({ error: 'Failed to create portal session' });
+    }
+
+    return res.json({ url: data.url });
+  } catch (e) {
+    console.error('[/api/portal] Exception:', e?.message || e, e?.stack || '');
+    return res.status(500).json({ error: 'Failed to create portal session' });
   }
 });
 

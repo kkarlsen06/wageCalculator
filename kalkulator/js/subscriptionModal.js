@@ -46,6 +46,7 @@ export class SubscriptionModal {
           <div class="modal-footer-buttons">
             <button type="button" class="btn btn-secondary" id="upgradeProBtn">Oppgrader til Pro</button>
             <button type="button" class="btn btn-primary" id="upgradeMaxBtn">Oppgrader til Max</button>
+              <button type="button" class="btn btn-secondary" id="manageSubBtn" style="display:none;">Administrer abonnement</button>
           </div>
         </div>
       </div>
@@ -61,6 +62,7 @@ export class SubscriptionModal {
     // Cache elements
     this.proBtn = modal.querySelector('#upgradeProBtn');
     this.maxBtn = modal.querySelector('#upgradeMaxBtn');
+    this.manageBtn = modal.querySelector('#manageSubBtn');
     this.thanksEl = modal.querySelector('#subscriptionThanks');
 
     // Buttons
@@ -72,6 +74,16 @@ export class SubscriptionModal {
     this.maxBtn?.addEventListener('click', () => {
       if (window.startCheckout) {
         window.startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO', { mode: 'subscription' });
+      }
+    });
+    this.manageBtn?.addEventListener('click', async () => {
+      try {
+        if (window.startBillingPortal) {
+          this.manageBtn.classList.add('loading');
+          await window.startBillingPortal({ redirect: true });
+        }
+      } finally {
+        this.manageBtn.classList.remove('loading');
       }
     });
 
@@ -159,6 +171,9 @@ export class SubscriptionModal {
 
       // Show thanks heart if subscribed
       if (this.thanksEl) this.thanksEl.style.display = isSubscribed ? 'flex' : 'none';
+
+      // Toggle manage button visibility
+      if (this.manageBtn) this.manageBtn.style.display = isSubscribed ? '' : 'none';
 
       // Disable upgrade buttons if already subscribed (no plan-tier info available client-side yet)
       if (this.proBtn) {

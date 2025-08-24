@@ -75,6 +75,58 @@ export async function startCheckout(priceId, opts = {}) {
   return url;
 }
 
+/**
+ * Open Stripe Billing Portal for the current user.
+ * @param {{ redirect?: boolean }} [opts]
+ * @returns {Promise<string>} The Stripe Billing Portal URL
+ */
+export async function startBillingPortal(opts = {}) {
+  const { redirect = true } = opts;
+  // Get current session for JWT
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    const err = new Error('Not authenticated');
+    if (typeof window !== 'undefined' && window.ErrorHelper) {
+      window.ErrorHelper.showError('Du må være innlogget for å administrere abonnementet.');
+    }
+    throw err;
+  }
+
+  const res = await fetch(`${API_BASE}/api/portal`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!res.ok) {
+    const text = await safeReadText(res);
+    const msg = `Kunne ikke åpne administrasjonssiden (${res.status}).`;
+    if (typeof window !== 'undefined' && window.ErrorHelper) {
+      window.ErrorHelper.showError(msg);
+    }
+    const err = new Error(text || msg);
+    err.status = res.status;
+    throw err;
+  }
+
+  const { url } = await res.json();
+  if (!url) {
+    const err = new Error('Ugyldig svar fra serveren (mangler url).');
+    if (typeof window !== 'undefined' && window.ErrorHelper) {
+      window.ErrorHelper.showError('Ugyldig svar fra serveren (mangler url).');
+    }
+    throw err;
+  }
+
+  if (redirect && typeof window !== 'undefined') {
+    window.location.href = url;
+  }
+  return url;
+}
+
 async function safeReadText(res) {
   try { return await res.text(); } catch (_) { return ''; }
 }
@@ -82,5 +134,6 @@ async function safeReadText(res) {
 // Optional: expose on window for easy use in non-module contexts
 if (typeof window !== 'undefined') {
   window.startCheckout = startCheckout;
+  window.startBillingPortal = startBillingPortal;
 }
 
