@@ -965,7 +965,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('[onclick]').forEach(el => {
     const onClick = el.getAttribute('onclick');
     if (onClick) {
-      // Store the original onclick for repeated use
+      // Wire a safe listener that mirrors the inline handler
       el.addEventListener('click', (event) => {
         try {
           // Parse and execute the onclick handler safely
@@ -1012,9 +1012,50 @@ document.addEventListener('DOMContentLoaded', async () => {
           console.error('Error executing onclick handler:', error, 'Original onclick:', onClick);
         }
       });
-      // Keep the onclick attribute but set it to empty to prevent double execution
-      el.setAttribute('onclick', 'return false;');
+      // Remove the inline onclick attribute to satisfy strict CSP (no 'unsafe-inline')
+      el.removeAttribute('onclick');
     }
+  });
+
+  // Replace inline onchange handlers with safe listeners (CSP-friendly)
+  document.querySelectorAll('[onchange]').forEach(el => {
+    const onChange = el.getAttribute('onchange');
+    if (!onChange) return;
+
+    el.addEventListener('change', (event) => {
+      try {
+        if (onChange.includes('app.')) {
+          const match = onChange.match(/app\.(\w+)\((.*?)\)/);
+          if (match) {
+            const [, functionName, params] = match;
+            let parsedParams = [];
+            const p = params.trim();
+            if (p) {
+              if (/this\.value/.test(p)) {
+                parsedParams = [event.target?.value];
+              } else if (/this\.checked/.test(p)) {
+                parsedParams = [!!event.target?.checked];
+              } else if (p.includes("'") || p.includes('"')) {
+                parsedParams = [p.replace(/['"]/g, '')];
+              } else if (/^\d+$/.test(p)) {
+                parsedParams = [parseInt(p)];
+              } else if (p.includes('this')) {
+                parsedParams = [event.target];
+              }
+            }
+            if (app[functionName]) {
+              console.log(`Executing ${functionName} with params:`, parsedParams);
+              app[functionName](...parsedParams);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error executing onchange handler:', error, 'Original onchange:', onChange);
+      }
+    });
+
+    // Remove the inline attribute to prevent CSP violations
+    el.removeAttribute('onchange');
   });
 
   // Add event listeners for elements with class-based selectors (using event delegation)
