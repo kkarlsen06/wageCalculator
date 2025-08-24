@@ -1576,7 +1576,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 .header-logo {
   width: 28px;
   height: 28px;
-  filter: grayscale(100%);
+  filter: none;
 }
 
 .header-logo-link {
@@ -3195,7 +3195,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 .header-logo {
   width: 28px;
   height: 28px;
-  filter: grayscale(100%);
+  filter: none;
 }
 
 .header-logo-link {
