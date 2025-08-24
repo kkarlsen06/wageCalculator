@@ -68,6 +68,11 @@ export class SubscriptionModal {
     this.thanksEl = modal.querySelector('#subscriptionThanks');
 
     // Buttons
+    // Hide all action buttons initially to avoid flicker while loading state
+    if (this.proBtn) this.proBtn.style.display = 'none';
+    if (this.maxBtn) this.maxBtn.style.display = 'none';
+    // manageBtn is already hidden via inline style in markup
+
     this.proBtn?.addEventListener('click', () => {
       if (window.startCheckout) {
         window.startCheckout('price_1RzQ85Qiotkj8G58AO6st4fh', { mode: 'subscription' });
@@ -182,28 +187,10 @@ export class SubscriptionModal {
       // Show thanks heart if subscribed
       if (this.thanksEl) this.thanksEl.style.display = isSubscribed ? 'flex' : 'none';
 
-      // Toggle manage button visibility
+      // Buttons: when subscribed, only show Manage; otherwise show both upgrade buttons
       if (this.manageBtn) this.manageBtn.style.display = isSubscribed ? '' : 'none';
-
-      // Show/hide upgrade buttons based on current plan
-      if (this.proBtn) {
-        // Reset default visibility/state
-        this.proBtn.style.display = '';
-        this.proBtn.removeAttribute('disabled');
-        this.proBtn.title = '';
-        // If already on Pro, remove the Pro upgrade button
-        if (isSubscribed && priceId === PRO_PRICE) {
-          this.proBtn.style.display = 'none';
-        }
-      }
-      if (this.maxBtn) {
-        this.maxBtn.style.display = '';
-        this.maxBtn.removeAttribute('disabled');
-        this.maxBtn.title = '';
-        if (isSubscribed && priceId === MAX_PRICE) {
-          this.maxBtn.style.display = 'none';
-        }
-      }
+      if (this.proBtn) this.proBtn.style.display = isSubscribed ? 'none' : '';
+      if (this.maxBtn) this.maxBtn.style.display = isSubscribed ? 'none' : '';
     } catch (e) {
       console.error('[subscription] exception:', e);
       if (this.statusEl) this.statusEl.textContent = 'Kunne ikke hente abonnement.';
