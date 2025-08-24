@@ -821,7 +821,35 @@ app.post('/api/portal/upgrade', authenticateUser, async (req, res) => {
       }
     } catch (_) { /* ignore */ }
 
-    if (!customerId || !subscriptionId) {
+    if (!customerId) {
+      return res.status(400).json({ error: 'no-active-subscription' });
+    }
+
+    // Resolve active subscription from Stripe to avoid DB mismatch
+    try {
+      if (!subscriptionId) {
+        const listActive = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=active&limit=1`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (listActive.ok) {
+          const j = await listActive.json().catch(() => null);
+          const sid = j?.data?.[0]?.id || null;
+          if (sid) subscriptionId = sid;
+        }
+      }
+      if (!subscriptionId) {
+        const listTrial = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=trialing&limit=1`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (listTrial.ok) {
+          const j2 = await listTrial.json().catch(() => null);
+          const sid2 = j2?.data?.[0]?.id || null;
+          if (sid2) subscriptionId = sid2;
+        }
+      }
+    } catch (_) { /* ignore */ }
+
+    if (!subscriptionId) {
       return res.status(400).json({ error: 'no-active-subscription' });
     }
 
@@ -832,7 +860,6 @@ app.post('/api/portal/upgrade', authenticateUser, async (req, res) => {
     form.set('return_url', return_url);
     form.set('flow_data[type]', 'subscription_update');
     form.set('flow_data[subscription_update][subscription]', subscriptionId);
-
 
     // Optional: portal configuration ID via env
     const portalConfigId = process.env.STRIPE_PORTAL_CONFIG_ID;
@@ -888,7 +915,33 @@ app.post('/portal/upgrade', authenticateUser, async (req, res) => {
       }
     } catch (_) {}
 
-    if (!customerId || !subscriptionId) return res.status(400).json({ error: 'no-active-subscription' });
+    if (!customerId) return res.status(400).json({ error: 'no-active-subscription' });
+
+    // Resolve active subscription from Stripe to avoid DB mismatch
+    try {
+      if (!subscriptionId) {
+        const listActive = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=active&limit=1`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (listActive.ok) {
+          const j = await listActive.json().catch(() => null);
+          const sid = j?.data?.[0]?.id || null;
+          if (sid) subscriptionId = sid;
+        }
+      }
+      if (!subscriptionId) {
+        const listTrial = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=trialing&limit=1`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (listTrial.ok) {
+          const j2 = await listTrial.json().catch(() => null);
+          const sid2 = j2?.data?.[0]?.id || null;
+          if (sid2) subscriptionId = sid2;
+        }
+      }
+    } catch (_) {}
+
+    if (!subscriptionId) return res.status(400).json({ error: 'no-active-subscription' });
 
     const return_url = `${BASE_URL}/kalkulator/index.html?portal=done`;
     const form = new URLSearchParams();
@@ -896,7 +949,6 @@ app.post('/portal/upgrade', authenticateUser, async (req, res) => {
     form.set('return_url', return_url);
     form.set('flow_data[type]', 'subscription_update');
     form.set('flow_data[subscription_update][subscription]', subscriptionId);
-
 
     const portalConfigId = process.env.STRIPE_PORTAL_CONFIG_ID;
     if (portalConfigId) form.set('configuration', portalConfigId);
