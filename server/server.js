@@ -67,8 +67,12 @@ const corsOptions = {
 app.options('/api/checkout', cors(corsOptions));
 // Explicit preflight for /api/portal (Stripe Billing Portal)
 app.options('/api/portal', cors(corsOptions));
+// Explicit preflight for dedicated upgrade route
+app.options('/api/portal/upgrade', cors(corsOptions));
 // Also allow preflight for /portal (when proxies strip /api)
 app.options('/portal', cors(corsOptions));
+// Back-compat preflight when proxies strip /api for upgrade route
+app.options('/portal/upgrade', cors(corsOptions));
 
 // Also allow preflight for /checkout (when proxies strip /api)
 app.options('/checkout', cors(corsOptions));
@@ -782,6 +786,132 @@ app.post('/api/portal', authenticateUser, async (req, res) => {
     return res.status(500).json({ error: 'Failed to create portal session' });
   }
 });
+
+// Dedicated route to open Billing Portal with subscription_update flow to upgrade/downgrade existing sub
+app.post('/api/portal/upgrade', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/api/portal/upgrade', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return res.status(500).json({ error: 'Stripe not configured on server' });
+    }
+
+    const userId = req.user_id;
+
+    // Look up the user's ACTIVE subscription with both customer and subscription IDs
+    if (!supabase) return res.status(503).json({ error: 'Database not available' });
+
+    let customerId = null;
+    let subscriptionId = null;
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('stripe_customer_id, stripe_subscription_id, status')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .limit(1);
+      if (!error && Array.isArray(data) && data.length) {
+        customerId = data[0]?.stripe_customer_id || null;
+        subscriptionId = data[0]?.stripe_subscription_id || null;
+      }
+    } catch (_) { /* ignore */ }
+
+    if (!customerId || !subscriptionId) {
+      return res.status(400).json({ error: 'no-active-subscription' });
+    }
+
+    // Build portal session with flow_data=subscription_update
+    const return_url = `${BASE_URL}/kalkulator/index.html?portal=done`;
+    const form = new URLSearchParams();
+    form.set('customer', customerId);
+    form.set('return_url', return_url);
+    form.set('flow_data[type]', 'subscription_update');
+    form.set('flow_data[subscription_update][subscription]', subscriptionId);
+    form.set('flow_data[subscription_update][proration_behavior]', 'create_prorations');
+
+    // Optional: portal configuration ID via env
+    const portalConfigId = process.env.STRIPE_PORTAL_CONFIG_ID;
+    if (portalConfigId) {
+      form.set('configuration', portalConfigId);
+    }
+
+    const resp = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${stripeKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: form
+    });
+
+    const data = await resp.json().catch(() => null);
+    if (!resp.ok || !data?.url) {
+      const msg = data?.error?.message || data?.error || 'Failed to create portal session';
+      console.error('[/api/portal/upgrade] Stripe error:', msg, 'status=', resp.status, 'body=', data);
+      return res.status(500).json({ error: 'Failed to create portal session' });
+    }
+
+    return res.json({ url: data.url });
+  } catch (e) {
+    console.error('[/api/portal/upgrade] Exception:', e?.message || e, e?.stack || '');
+    return res.status(500).json({ error: 'Failed to create portal session' });
+  }
+});
+
+// Back-compat when proxies strip /api
+app.post('/portal/upgrade', authenticateUser, async (req, res) => {
+  // Delegate to the same logic; re-run minimal code to avoid complex router reentry
+  try {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) return res.status(500).json({ error: 'Stripe not configured on server' });
+
+    const userId = req.user_id;
+    if (!supabase) return res.status(503).json({ error: 'Database not available' });
+
+    let customerId = null;
+    let subscriptionId = null;
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('stripe_customer_id, stripe_subscription_id, status')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .limit(1);
+      if (!error && Array.isArray(data) && data.length) {
+        customerId = data[0]?.stripe_customer_id || null;
+        subscriptionId = data[0]?.stripe_subscription_id || null;
+      }
+    } catch (_) {}
+
+    if (!customerId || !subscriptionId) return res.status(400).json({ error: 'no-active-subscription' });
+
+    const return_url = `${BASE_URL}/kalkulator/index.html?portal=done`;
+    const form = new URLSearchParams();
+    form.set('customer', customerId);
+    form.set('return_url', return_url);
+    form.set('flow_data[type]', 'subscription_update');
+    form.set('flow_data[subscription_update][subscription]', subscriptionId);
+    form.set('flow_data[subscription_update][proration_behavior]', 'create_prorations');
+
+    const portalConfigId = process.env.STRIPE_PORTAL_CONFIG_ID;
+    if (portalConfigId) form.set('configuration', portalConfigId);
+
+    const resp = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
+      method: 'POST', headers: { 'Authorization': `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body: form
+    });
+    const data = await resp.json().catch(() => null);
+    if (!resp.ok || !data?.url) return res.status(500).json({ error: 'Failed to create portal session' });
+    return res.json({ url: data.url });
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to create portal session' });
+  }
+});
+
 
 // Back-compat route without /api prefix in case of different proxy setups
 app.post('/portal', authenticateUser, async (req, res) => {

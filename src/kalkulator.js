@@ -31,7 +31,10 @@ import '/kalkulator/js/app.js';
 // Ensure checkout helpers are available on the kalkulator page
 import '/src/js/checkout.js';
 
-// Checkout status toast on app page
+// Checkout/Portal status toast on app page
+import { refreshSubscriptionState } from '/kalkulator/js/subscriptionState.js';
+import { getUserId } from '/src/lib/auth/getUserId.js';
+
 if (typeof window !== 'undefined') {
   window.addEventListener('DOMContentLoaded', () => {
     try {
@@ -43,8 +46,31 @@ if (typeof window !== 'undefined') {
         } else if (status === 'cancel' || status === 'error' || status === 'failed') {
           window.ErrorHelper.showError('Betaling ble avbrutt eller feilet.');
         }
-        // Clean query param to avoid repeat on refresh
         params.delete('checkout');
+      }
+
+      const portal = params.get('portal');
+      if (portal) {
+        if (portal === 'done' && window.ErrorHelper) {
+          window.ErrorHelper.showSuccess('Abonnement oppdatert!');
+        }
+        // Immediately refresh subscription state without full reload
+        (async () => {
+          try {
+            const userId = await getUserId();
+            if (userId) {
+              await refreshSubscriptionState(userId);
+            } else {
+              console.warn('[sub] refresh skipped: no user');
+            }
+          } catch (e) {
+            console.warn('[sub] refresh failed', e);
+          }
+        })();
+        params.delete('portal');
+      }
+
+      if (status || portal) {
         const base = window.location.origin + window.location.pathname + (params.toString() ? `?${params}` : '');
         window.history.replaceState({}, document.title, base);
       }

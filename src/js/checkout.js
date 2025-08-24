@@ -157,6 +157,61 @@ export async function startBillingPortal(opts = {}) {
   return url;
 }
 
+/**
+ * Open Billing Portal deep link to upgrade an existing subscription.
+ * Uses flow_data=subscription_update targeting the user's active subscription.
+ */
+export async function startPortalUpgrade(opts = {}) {
+  const { redirect = true } = opts;
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    const err = new Error('Not authenticated');
+    if (typeof window !== 'undefined' && window.ErrorHelper) {
+      window.ErrorHelper.showError('Du må være innlogget for å oppgradere.');
+    }
+    throw err;
+  }
+
+  let res = await fetch(`${API_BASE}/api/portal/upgrade`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+  });
+  if (res.status === 404) {
+    try {
+      res = await fetch(`${API_BASE}/portal/upgrade`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+      });
+    } catch (_) { /* fall through */ }
+  }
+
+  if (!res.ok) {
+    const text = await safeReadText(res);
+    const msg = res.status === 400 ? 'Ingen aktivt abonnement å oppgradere.' : `Kunne ikke åpne Stripe (${res.status}).`;
+    if (typeof window !== 'undefined' && window.ErrorHelper) {
+      window.ErrorHelper.showError(msg);
+    }
+    const err = new Error(text || msg);
+    err.status = res.status;
+    throw err;
+  }
+
+  const { url } = await res.json();
+  if (!url) {
+    const err = new Error('Ugyldig svar fra serveren (mangler url).');
+    if (typeof window !== 'undefined' && window.ErrorHelper) {
+      window.ErrorHelper.showError('Ugyldig svar fra serveren (mangler url).');
+    }
+    throw err;
+  }
+
+  if (redirect && typeof window !== 'undefined') {
+    window.location.href = url;
+  }
+  return url;
+}
+
 async function safeReadText(res) {
   try { return await res.text(); } catch (_) { return ''; }
 }
@@ -165,5 +220,6 @@ async function safeReadText(res) {
 if (typeof window !== 'undefined') {
   window.startCheckout = startCheckout;
   window.startBillingPortal = startBillingPortal;
+  window.startPortalUpgrade = startPortalUpgrade;
 }
 

@@ -11,6 +11,8 @@ export class SubscriptionModal {
     this.statusEl = null;
     this.periodEl = null;
     this.planEl = null;
+    this.currentTier = null;
+    this.isActive = false;
   }
 
   createModal() {
@@ -89,15 +91,21 @@ export class SubscriptionModal {
       }
     });
     this.maxBtn?.addEventListener('click', async () => {
-      if (!window.startCheckout || !this.maxBtn) return;
+      if (!this.maxBtn) return;
       const btn = this.maxBtn;
       const wasDisabled = btn.disabled;
       btn.disabled = true;
       btn.setAttribute('aria-busy', 'true');
       try {
-        await window.startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO', { mode: 'subscription' });
+        // If currently on Pro, open Billing Portal deep link to update existing sub
+        if (this.currentTier === 'pro' && window.startPortalUpgrade) {
+          await window.startPortalUpgrade({ redirect: true });
+        } else if (window.startCheckout) {
+          // If no active sub, create Max via Checkout
+          await window.startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO', { mode: 'subscription' });
+        }
       } catch (_) {
-        // ErrorHelper in startCheckout already shows a toast; swallow to avoid unhandled rejection
+        // ErrorHelper already shows a toast; swallow
       } finally {
         btn.removeAttribute('aria-busy');
         btn.disabled = wasDisabled;
@@ -120,6 +128,10 @@ export class SubscriptionModal {
 
     document.body.appendChild(modal);
     this.modal = modal;
+
+    // Listen for global subscription state updates to re-render while open
+    this._onSubUpdated = () => this.updateFromGlobalState();
+    document.addEventListener('subscription:updated', this._onSubUpdated);
   }
 
   async show() {
@@ -134,7 +146,11 @@ export class SubscriptionModal {
     // Show modal centered like other modals
     this.modal.style.display = 'flex';
     this.modal.classList.add('active');
-    // Load subscription info
+
+    // If we already have global state (e.g., after portal return), render immediately
+    this.updateFromGlobalState();
+
+    // Load subscription info as a fallback
     await this.loadSubscription();
   }
 
@@ -147,6 +163,56 @@ export class SubscriptionModal {
     const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
     if (floatingBar) floatingBar.style.display = '';
     if (floatingBarBackdrop) floatingBarBackdrop.style.display = '';
+  }
+
+  updateFromGlobalState() {
+    if (!this.modal) return;
+    const row = window.SubscriptionState || null;
+    if (!row) {
+      if (this.statusEl) this.statusEl.textContent = 'Ingen aktivt abonnement';
+      if (this.periodEl) this.periodEl.textContent = '';
+      if (this.planEl) this.planEl.textContent = '';
+      if (this.thanksEl) this.thanksEl.style.display = 'none';
+      if (this.manageBtn) this.manageBtn.style.display = 'none';
+      if (this.proBtn) this.proBtn.style.display = '';
+      if (this.maxBtn) this.maxBtn.style.display = '';
+      this.currentTier = null;
+      this.isActive = false;
+      return;
+    }
+    const status = row.status || 'ukjent';
+    const endRaw = row.current_period_end;
+    const dateObj = typeof endRaw === 'number' ? new Date(endRaw * 1000) : (endRaw ? new Date(endRaw) : null);
+    const formatted = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('no-NO') : null;
+    const isActive = !!row.is_active;
+    const tier = String(row.tier || '').toLowerCase();
+    const plan = tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null;
+
+    this.currentTier = tier || null;
+    this.isActive = isActive;
+
+    if (this.statusEl) this.statusEl.textContent = `Status: ${status}${plan ? ` (${plan})` : ''}`;
+    if (this.periodEl) this.periodEl.textContent = formatted ? `Neste faktureringsdato: ${formatted}` : '';
+    if (this.planEl) this.planEl.textContent = plan ? `Plan: ${plan}` : '';
+    if (this.thanksEl) this.thanksEl.style.display = isActive ? 'flex' : 'none';
+
+    if (!isActive) {
+      if (this.manageBtn) this.manageBtn.style.display = 'none';
+      if (this.proBtn) this.proBtn.style.display = '';
+      if (this.maxBtn) this.maxBtn.style.display = '';
+    } else if (tier === 'pro') {
+      if (this.manageBtn) this.manageBtn.style.display = '';
+      if (this.proBtn) this.proBtn.style.display = 'none';
+      if (this.maxBtn) this.maxBtn.style.display = '';
+    } else if (tier === 'max') {
+      if (this.manageBtn) this.manageBtn.style.display = '';
+      if (this.proBtn) this.proBtn.style.display = 'none';
+      if (this.maxBtn) this.maxBtn.style.display = 'none';
+    } else {
+      if (this.manageBtn) this.manageBtn.style.display = '';
+      if (this.proBtn) this.proBtn.style.display = 'none';
+      if (this.maxBtn) this.maxBtn.style.display = 'none';
+    }
   }
 
   async loadSubscription() {
@@ -202,6 +268,9 @@ export class SubscriptionModal {
       const isActive = !!row.is_active;
       const tier = String(row.tier || '').toLowerCase();
       const plan = tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null;
+
+      // Remember current tier for button logic
+      this.currentTier = tier || null;
 
       // Update UI
       if (this.statusEl) this.statusEl.textContent = `Status: ${status}${plan ? ` (${plan})` : ''}`;

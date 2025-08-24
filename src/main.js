@@ -13,7 +13,7 @@ import LegalModal from './js/legal-modal.js';
 
 // Initialize legal modal
 document.addEventListener('DOMContentLoaded', () => {
-    // Show checkout status toast if present
+    // Show checkout/portal status toast if present
     try {
         const params = new URLSearchParams(window.location.search);
         const status = params.get('checkout');
@@ -23,8 +23,16 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (status === 'cancel' || status === 'error' || status === 'failed') {
                 window.ErrorHelper.showError('Betaling ble avbrutt eller feilet.');
             }
-            // Clean up URL to avoid repeated popups on refresh
             params.delete('checkout');
+        }
+        const portal = params.get('portal');
+        if (portal && window.ErrorHelper) {
+            if (portal === 'done') {
+                window.ErrorHelper.showSuccess('Abonnement oppdatert!');
+            }
+            params.delete('portal');
+        }
+        if (status || portal) {
             const base = window.location.origin + window.location.pathname + (params.toString() ? `?${params}` : '');
             window.history.replaceState({}, document.title, base);
         }
