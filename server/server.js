@@ -70,6 +70,9 @@ app.options('/api/portal', cors(corsOptions));
 // Also allow preflight for /portal (when proxies strip /api)
 app.options('/portal', cors(corsOptions));
 
+// Also allow preflight for /checkout (when proxies strip /api)
+app.options('/checkout', cors(corsOptions));
+
 
 // Do NOT apply to /api/stripe-webhook (keep express.raw)
 app.use((req, res, next) => {
@@ -584,8 +587,78 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
     console.error('[/api/checkout] Exception:', e?.message || e, e?.stack || '');
     return res.status(500).json({ error: 'Failed to create checkout session' });
   }
+});
 
-  });
+// Back-compat route without /api prefix in case of different proxy setups
+app.post('/checkout', authenticateUser, async (req, res) => {
+  try {
+    console.log("[/checkout] back-compat route hit");
+
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/checkout', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return res.status(500).json({ error: 'Stripe not configured on server' });
+    }
+
+    const { priceId, mode: modeRaw, quantity: qtyRaw } = req.body || {};
+    if (!priceId || typeof priceId !== 'string') {
+      return res.status(400).json({ error: 'Missing or invalid priceId' });
+    }
+
+    const mode = (modeRaw || 'subscription').toString();
+    if (!['subscription', 'payment'].includes(mode)) {
+      return res.status(400).json({ error: 'Invalid mode. Use "subscription" or "payment"' });
+    }
+
+    let quantity = 1;
+    if (qtyRaw != null) {
+      const q = Number(qtyRaw);
+      if (!Number.isInteger(q) || q < 1 || q > 999) {
+        return res.status(400).json({ error: 'Invalid quantity (1-999)' });
+      }
+      quantity = q;
+    }
+
+    const success_url = `${BASE_URL}/kalkulator/index.html?checkout=success`;
+    const cancel_url = `${BASE_URL}/kalkulator/index.html?checkout=cancel`;
+
+    const userId = req.user_id;
+
+    // Build form-encoded payload for Stripe API (REST)
+    const body = new URLSearchParams();
+    body.set('mode', mode);
+    body.set('success_url', success_url);
+    body.set('cancel_url', cancel_url);
+    body.set('line_items[0][price]', priceId);
+    body.set('line_items[0][quantity]', String(quantity));
+    body.set('metadata[user_id]', userId);
+    body.set('client_reference_id', userId);
+    body.set('allow_promotion_codes', 'true');
+
+    const resp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+
+    const data = await resp.json().catch(() => null);
+    if (!resp.ok || !data?.url) {
+      const msg = data?.error?.message || data?.error || 'Failed to create checkout session';
+      console.error('[/checkout] Stripe error:', msg, 'status=', resp.status, 'body=', data);
+      return res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+
+    return res.json({ url: data.url });
+  } catch (e) {
+    console.error('[/checkout] Exception:', e?.message || e, e?.stack || '');
+    return res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
 
 
 // ---------- Stripe Billing Portal ----------

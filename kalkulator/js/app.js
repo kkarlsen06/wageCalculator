@@ -581,13 +581,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Now remove skeleton-active class to hide skeletons immediately
     document.body.classList.remove('skeleton-active');
 
-    // Ensure all skeleton elements are completely hidden
-    const skeletons = document.querySelectorAll('.skeleton');
-    skeletons.forEach(skeleton => {
-      skeleton.style.display = 'none';
-      skeleton.style.opacity = '0';
-      skeleton.style.visibility = 'hidden';
-    });
+    // Do not force-hide all skeleton placeholders here.
+    // Leave per-section skeletons to disappear naturally as their data arrives.
   }
 
   // Wait for both profile info and app initialization to complete
@@ -596,17 +591,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   let appInitialized = false;
 
   async function checkAndRemoveSkeletons() {
-    if (profileInfoLoaded && appInitialized) {
-      // Add a small delay to ensure all content is rendered
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Wait for the app to finish its initial display update
-      await waitForAppReady();
-
-      // Wait for content to be fully populated with real data
-      await waitForContentReady();
-
-      // Now remove skeletons since content is ready
+    // Progressive reveal: as soon as the app has initialized,
+    // reveal the UI and let sections populate independently.
+    if (appInitialized) {
+      // Small microtask delay to allow any first paint/update
+      await new Promise(resolve => setTimeout(resolve, 50));
       await removeSkeletonsSmoothly();
     }
   }
