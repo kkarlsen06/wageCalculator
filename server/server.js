@@ -36,7 +36,7 @@ import Stripe from 'stripe';
 const FRONTEND_DIR = __dirname;
 
 // Hardcoded public base URL for Stripe redirects
-const BASE_URL = 'https://kkarlsen.art';
+const BASE_URL = 'https://www.kkarlsen.dev';
 
 // ---------- app & core middleware ----------
 const app = express();
@@ -48,6 +48,9 @@ app.use(morgan(logFormat));
 // CORS: allow dev frontend and production domain; skip Stripe webhook (must stay raw)
 const allowedOrigins = [
   'http://localhost:5173',
+  'https://www.kkarlsen.dev',
+  'https://kkarlsen.dev',
+  'https://www.kkarlsen.art',
   'https://kkarlsen.art'
 ];
 
@@ -1063,7 +1066,7 @@ app.post('/api/portal/upgrade', authenticateUser, async (req, res) => {
     }
 
     // Build portal session with flow_data=subscription_update
-    const return_url = `${BASE_URL}/kalkulator/index.html?portal=done`;
+    const return_url = `${(process.env.PUBLIC_APP_BASE_URL || BASE_URL)}/kalkulator/index.html?portal=done`;
     const form = new URLSearchParams();
     form.set('customer', customerId);
     form.set('return_url', return_url);
@@ -1152,7 +1155,7 @@ app.post('/portal/upgrade', authenticateUser, async (req, res) => {
 
     if (!subscriptionId) return res.status(400).json({ error: 'no-active-subscription' });
 
-    const return_url = `${BASE_URL}/kalkulator/index.html?portal=done`;
+    const return_url = `${(process.env.PUBLIC_APP_BASE_URL || BASE_URL)}/kalkulator/index.html?portal=done`;
     const form = new URLSearchParams();
     form.set('customer', customerId);
     form.set('return_url', return_url);
