@@ -39,7 +39,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (_) {}
 
     const legalModal = new LegalModal();
-    
+    // Auto-open legal modal when visiting /privacy or /terms directly
+    try {
+        const normalizedPath = window.location.pathname.replace(/\/+$/, ''); // strip trailing slash(es)
+        if (normalizedPath === '/privacy') {
+            legalModal.showFromLandingPage();
+            legalModal.switchTab('privacy');
+        } else if (normalizedPath === '/terms') {
+            legalModal.showFromLandingPage();
+            legalModal.switchTab('terms');
+        }
+    } catch (_) {}
+
+
     // Add Personvernerklæring button to footer
     const footer = document.querySelector('.footer');
     if (footer) {
