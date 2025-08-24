@@ -73,6 +73,12 @@ app.options('/api/portal/upgrade', cors(corsOptions));
 app.options('/portal', cors(corsOptions));
 // Back-compat preflight when proxies strip /api for upgrade route
 app.options('/portal/upgrade', cors(corsOptions));
+// Explicit preflight for new portal session route
+app.options('/api/stripe/create-portal-session', cors(corsOptions));
+// Back-compat preflight when proxies strip /api for portal session route
+app.options('/stripe/create-portal-session', cors(corsOptions));
+
+
 
 // Also allow preflight for /checkout (when proxies strip /api)
 app.options('/checkout', cors(corsOptions));
@@ -149,7 +155,7 @@ const stripe = (() => {
     return null;
   }
   try {
-    return new Stripe(key);
+    return new Stripe(key, { apiVersion: '2024-06-20' });
   } catch (e) {
     console.warn('[BOOT] Failed to initialize Stripe client:', e?.message || e);
     return null;
@@ -786,6 +792,169 @@ app.post('/api/portal', authenticateUser, async (req, res) => {
     return res.status(500).json({ error: 'Failed to create portal session' });
   }
 });
+
+// New unified Stripe Billing Portal session endpoint using Stripe SDK
+// POST /api/stripe/create-portal-session -> { url }
+app.post('/api/stripe/create-portal-session', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/api/stripe/create-portal-session', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    if (!stripe) {
+      return res.status(503).json({ error: 'Stripe client not initialized' });
+    }
+
+    const userId = req.user_id;
+    const stripeKeyConfigured = Boolean(process.env.STRIPE_SECRET_KEY);
+    if (!stripeKeyConfigured) {
+      return res.status(500).json({ error: 'Stripe not configured on server' });
+    }
+
+    // Resolve Stripe customer ID for this user
+    let customerId = null;
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .select('stripe_customer_id')
+          .eq('user_id', userId)
+          .limit(1);
+        if (!error && Array.isArray(data) && data.length) {
+          customerId = data[0]?.stripe_customer_id || null;
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    // Verify customer exists in current mode; fall back to email lookup or create
+    const userEmail = req?.user?.email || req?.auth?.email || null;
+    if (customerId) {
+      try {
+        const check = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+        });
+        if (!check.ok) customerId = null;
+      } catch (_) { customerId = null; }
+    }
+    if (!customerId && userEmail) {
+      try {
+        const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+        });
+        if (listResp.ok) {
+          const listJson = await listResp.json().catch(() => null);
+          customerId = listJson?.data?.[0]?.id || null;
+        }
+      } catch (_) { /* ignore */ }
+    }
+    if (!customerId && userEmail) {
+      try {
+        const created = await fetch('https://api.stripe.com/v1/customers', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({ email: userEmail, 'metadata[user_id]': userId })
+        });
+        if (created.ok) {
+          const j = await created.json().catch(() => null);
+          customerId = j?.id || null;
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    if (!customerId) {
+      return res.status(404).json({ error: 'No Stripe customer found for user' });
+    }
+
+    const base = process.env.PUBLIC_APP_BASE_URL || BASE_URL;
+    const returnUrl = `${base}/kalkulator/index.html?portal=done`;
+
+    // Create via Stripe SDK
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: returnUrl,
+    });
+
+    try { console.log('[/api/stripe/create-portal-session] ok', { userId, customerId, returnUrl }); } catch (_) {}
+
+    return res.json({ url: session?.url });
+  } catch (e) {
+    console.error('[/api/stripe/create-portal-session] Exception:', e?.message || e, e?.stack || '');
+    return res.status(500).json({ error: 'Failed to create portal session' });
+  }
+});
+
+// Back-compat when proxies strip /api prefix
+app.post('/stripe/create-portal-session', authenticateUser, async (req, res) => {
+  try {
+    if (!stripe) return res.status(503).json({ error: 'Stripe client not initialized' });
+    const userId = req.user_id;
+
+    // Resolve customer id as in the main route
+    let customerId = null;
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .select('stripe_customer_id')
+          .eq('user_id', userId)
+          .limit(1);
+        if (!error && Array.isArray(data) && data.length) {
+          customerId = data[0]?.stripe_customer_id || null;
+        }
+      } catch (_) {}
+    }
+
+    const userEmail = req?.user?.email || req?.auth?.email || null;
+    if (customerId) {
+      try {
+        const check = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+        });
+        if (!check.ok) customerId = null;
+      } catch (_) { customerId = null; }
+    }
+    if (!customerId && userEmail) {
+      try {
+        const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+        });
+        if (listResp.ok) {
+          const listJson = await listResp.json().catch(() => null);
+          customerId = listJson?.data?.[0]?.id || null;
+        }
+      } catch (_) {}
+    }
+    if (!customerId && userEmail) {
+      try {
+        const created = await fetch('https://api.stripe.com/v1/customers', {
+          method: 'POST', headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ email: userEmail, 'metadata[user_id]': userId })
+        });
+        if (created.ok) {
+          const j = await created.json().catch(() => null);
+          customerId = j?.id || null;
+        }
+      } catch (_) {}
+    }
+
+    if (!customerId) return res.status(404).json({ error: 'No Stripe customer found for user' });
+
+    const base = process.env.PUBLIC_APP_BASE_URL || BASE_URL;
+    const returnUrl = `${base}/kalkulator/index.html?portal=done`;
+
+    const session = await stripe.billingPortal.sessions.create({ customer: customerId, return_url: returnUrl });
+    return res.json({ url: session?.url });
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to create portal session' });
+  }
+});
+
+
 
 // Dedicated route to open Billing Portal with subscription_update flow to upgrade/downgrade existing sub
 app.post('/api/portal/upgrade', authenticateUser, async (req, res) => {

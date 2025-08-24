@@ -109,8 +109,8 @@ export async function startBillingPortal(opts = {}) {
     throw err;
   }
 
-  // Primary: call /api/portal (works in prod when API_BASE is same-origin)
-  let res = await fetch(`${API_BASE}/api/portal`, {
+  // Call server to create a Billing Portal session
+  let res = await fetch(`${API_BASE}/api/stripe/create-portal-session`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -118,10 +118,10 @@ export async function startBillingPortal(opts = {}) {
     }
   });
 
-  // Dev proxy often strips /api → backend receives /portal; retry without /api on 404
+  // Dev proxy often strips /api; try without /api on 404
   if (res.status === 404) {
     try {
-      res = await fetch(`${API_BASE}/portal`, {
+      res = await fetch(`${API_BASE}/stripe/create-portal-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
