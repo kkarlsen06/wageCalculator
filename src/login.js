@@ -2,7 +2,7 @@ import '/kalkulator/css/style.css';
 import '/src/css/legal-modal.css';
 
 // Third-party globals
-import 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+// Removed duplicate Supabase CDN import; using ESM client from /src/supabase-client.js
 
 // Utilities (attach to window)
 import './js/loading-helpers.js';

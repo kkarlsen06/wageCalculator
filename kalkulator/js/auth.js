@@ -8,28 +8,26 @@ import { supabase } from '../../src/supabase-client.js'
 const supa = supabase;
 window.supa = supa;
 
-document.addEventListener('DOMContentLoaded', async function() {
-
+async function initAuth() {
   // Make supa available globally
   window.supa = supa;
 
   // Enable auth mode for proper scrolling
   document.documentElement.classList.add('auth-mode');
   document.body.classList.add('auth-mode');
-  
+
   // Check if Supabase has processed the URL automatically
   await new Promise(resolve => setTimeout(resolve, 100)); // Give Supabase time to process
-  
+
   // Set up auth state listening IMMEDIATELY to catch any recovery events
   supa.auth.onAuthStateChange(async (event, session) => {
-    
     if (event === 'PASSWORD_RECOVERY') {
       isInPasswordRecovery = true;
       document.body.style.visibility = 'visible';
       setTimeout(() => showPasswordResetForm(), 50);
       return;
     }
-    
+
     if (event === 'SIGNED_IN' && (isInRecoveryMode() || sessionStorage.getItem('supabase_recovery_flow') === 'true')) {
       isInPasswordRecovery = true;
       document.body.style.visibility = 'visible';
@@ -37,11 +35,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       return;
     }
   });
-  
+
   // Check immediately if we have a recovery session
   try {
     const { data: { session } } = await supa.auth.getSession();
-    
+
     if (session && (isInRecoveryMode() || sessionStorage.getItem('supabase_recovery_flow') === 'true')) {
       isInPasswordRecovery = true;
       document.body.style.visibility = 'visible';
@@ -51,10 +49,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   } catch (e) {
     console.error('Error in immediate session check:', e);
   }
-  
+
   // Check if Supabase has processed the URL automatically
   await new Promise(resolve => setTimeout(resolve, 100)); // Give Supabase time to process
-  
+
   let shouldDisplayLoginPage = true; // Assume we display the login page by default
 
   // Check if we're in password recovery mode BEFORE checking session
@@ -64,20 +62,24 @@ document.addEventListener('DOMContentLoaded', async function() {
   try {
     const { data: { session } } = await supa.auth.getSession();
 
-  if (session && !isRecoveryFlow && !isInPasswordRecovery) {
-    try {
-      const ok = await fetch(`${API_BASE}/settings`, {
-        headers: { Authorization: `Bearer ${session.access_token}` }
-      });
-      if (ok.status === 200) {          // token accepted by backend
-        window.location.replace('index.html');
-        return;
-      }
-    } catch (_) { /* ignore network errors */ }
+    if (session && !isRecoveryFlow && !isInPasswordRecovery) {
+      try {
+        const ok = await fetch(`${API_BASE}/settings`, {
+          headers: { Authorization: `Bearer ${session.access_token}` }
+        });
+        if (ok.status === 200) {          // token accepted by backend
+          window.location.replace('index.html');
+          return;
+        }
+      } catch (_) { /* ignore network errors */ }
 
-    // token was bad – clear it and stay on login page
-    await supa.auth.signOut();
-    console.log('Stale token removed; showing login.');
+      // token was bad – clear it and stay on login page
+      try {
+        await supa.auth.signOut();
+      } catch (e) {
+        console.warn('signOut error:', e?.message || e);
+      }
+      console.log('Stale token removed; showing login.');
     } else if (session && isRecoveryFlow) {
       isInPasswordRecovery = true;
     }
@@ -93,13 +95,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (shouldDisplayLoginPage) {
     document.body.style.visibility = 'visible';
   }
-  
+
   // Set up event listeners now that elements are available
   setupEventListeners();
-  
+
   // Handle authentication state changes
   setupAuthStateHandling();
-  
+
   // Check if user is coming from password reset email (via URL hash)
   handlePasswordRecovery();
 
@@ -108,7 +110,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.warn('Fallback: Body was still hidden after initial setup, forcing visibility.');
     document.body.style.visibility = 'visible';
   }
-});
+}
+
+// Run initAuth immediately if DOM is already ready, otherwise wait for DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAuth);
+} else {
+  initAuth();
+}
 
 function setupEventListeners() {
   // Element refs

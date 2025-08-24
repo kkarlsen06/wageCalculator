@@ -1,0 +1,76 @@
+name: Configure Azure Web App
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: wageapp-prod-config
+  cancel-in-progress: true
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login (service principal)
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ensure staging slot exists
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            set -e
+            echo "Checking for existing 'staging' slot..."
+            if az webapp deployment slot show -g rg-wageapp -n wageapp-prod -s staging >/dev/null 2>&1; then
+              echo "Staging slot already exists."
+            else
+              echo "Creating staging slot..."
+              az webapp deployment slot create -g rg-wageapp -n wageapp-prod --slot staging
+            fi
+
+      - name: Apply app settings and runtime
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            # Apply app settings in a single operation to minimize SCM restarts
+            az webapp config appsettings set -g rg-wageapp -n wageapp-prod --settings \
+              NODE_ENV=production \
+              SUPABASE_URL='${{ secrets.SUPABASE_URL }}' \
+              SUPABASE_SERVICE_ROLE_KEY='${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}' \
+              OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}' \
+              ENABLE_STATIC='false' \
+              STATIC_DIR='.' \
+              SCM_DO_BUILD_DURING_DEPLOYMENT=false
+            az webapp config set -g rg-wageapp -n wageapp-prod --linux-fx-version "NODE|22-lts" --startup-file "npm start"
+            az webapp config appsettings delete -g rg-wageapp -n wageapp-prod --setting-names WEBSITE_RUN_FROM_PACKAGE || true
+
+            # Mirror settings to staging slot
+            az webapp config appsettings set -g rg-wageapp -n wageapp-prod --slot staging --settings \
+              NODE_ENV=production \
+              SUPABASE_URL='${{ secrets.SUPABASE_URL }}' \
+              SUPABASE_SERVICE_ROLE_KEY='${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}' \
+              OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}' \
+              ENABLE_STATIC='false' \
+              STATIC_DIR='.' \
+              SCM_DO_BUILD_DURING_DEPLOYMENT=false
+            az webapp config set -g rg-wageapp -n wageapp-prod --slot staging --linux-fx-version "NODE|22-lts" --startup-file "npm start"
+            az webapp config appsettings delete -g rg-wageapp -n wageapp-prod --slot staging --setting-names WEBSITE_RUN_FROM_PACKAGE || true
+
+      - name: Configure Always On and Health Check (prod + staging)
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az webapp config set -g rg-wageapp -n wageapp-prod --always-on true --health-check-path "/config"
+            az webapp config set -g rg-wageapp -n wageapp-prod --slot staging --always-on true --health-check-path "/config"
+
+      - name: Wait for SCM restart to complete
+        run: |
+          echo "Waiting 90s for SCM to stabilize after config changes..."
+          sleep 90

@@ -7,6 +7,10 @@ on:
       - "server/**"
   workflow_dispatch: {}
 
+concurrency:
+  group: wageapp-prod-webapp
+  cancel-in-progress: true
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
@@ -46,30 +50,80 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Set App Settings (from GitHub Secrets)
-        uses: azure/CLI@v2
-        with:
-          inlineScript: |
-            az webapp config appsettings set -g rg-wageapp -n wageapp-prod --settings \
-              NODE_ENV=production \
-              SUPABASE_URL='${{ secrets.SUPABASE_URL }}' \
-              SUPABASE_SERVICE_ROLE_KEY='${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}' \
-              OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}' \
-              ENABLE_STATIC='false' \
-              STATIC_DIR='.'
-            az webapp config appsettings set -g rg-wageapp -n wageapp-prod --settings \
-              SCM_DO_BUILD_DURING_DEPLOYMENT=false
-            az webapp config set -g rg-wageapp -n wageapp-prod --linux-fx-version "NODE|22-lts" --startup-file "npm start"
-            az webapp config appsettings delete -g rg-wageapp -n wageapp-prod --setting-names WEBSITE_RUN_FROM_PACKAGE || true
-
-
-      - name: Wait for SCM restart
-        run: |
-          echo "Waiting 30s to avoid SCM restart conflict..."
-          sleep 30
-
-      - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App (staging, attempt 1)
+        id: deploy1
+        continue-on-error: true
         uses: azure/webapps-deploy@v3
         with:
           app-name: wageapp-prod
+          slot-name: staging
           package: ./server
+
+      - name: Wait before retry (attempt 2)
+        if: steps.deploy1.outcome == 'failure'
+        run: |
+          echo "First deploy attempt failed. Waiting 45s before retry..."
+          sleep 45
+
+      - name: Deploy to Azure Web App (staging, attempt 2)
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        continue-on-error: true
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: wageapp-prod
+          slot-name: staging
+          package: ./server
+
+      - name: Wait before final retry (attempt 3)
+        if: steps.deploy2.outcome == 'failure'
+        run: |
+          echo "Second deploy attempt failed. Waiting 90s before final retry..."
+          sleep 90
+
+      - name: Deploy to Azure Web App (staging, attempt 3)
+        id: deploy3
+        if: steps.deploy2.outcome == 'failure'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: wageapp-prod
+          slot-name: staging
+          package: ./server
+
+      - name: Warm up staging slot
+        if: |
+          steps.deploy1.outcome == 'success' ||
+          steps.deploy2.outcome == 'success' ||
+          steps.deploy3.outcome == 'success'
+        run: |
+          set -e
+          echo "Warming up staging slot via /config health endpoint..."
+          for i in {1..24}; do
+            echo "Attempt $i: checking /config..."
+            if curl -fsS https://wageapp-prod-staging.azurewebsites.net/config | jq -e '.flags != null' >/dev/null 2>&1; then
+              echo "Health check passed."; break
+            fi
+            sleep 5
+          done
+          # Final assert
+          curl -fsS https://wageapp-prod-staging.azurewebsites.net/config | jq -e '.flags != null' >/dev/null
+
+      - name: Swap staging -> production
+        if: |
+          steps.deploy1.outcome == 'success' ||
+          steps.deploy2.outcome == 'success' ||
+          steps.deploy3.outcome == 'success'
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            echo "Swapping staging to production..."
+            az webapp deployment slot swap -g rg-wageapp -n wageapp-prod --slot staging --target-slot production
+
+      - name: Verify production health
+        if: |
+          steps.deploy1.outcome == 'success' ||
+          steps.deploy2.outcome == 'success' ||
+          steps.deploy3.outcome == 'success'
+        run: |
+          echo "Verifying production /config..."
+          curl -fsS https://wageapp-prod.azurewebsites.net/config | jq -e '.flags != null'

@@ -21,6 +21,12 @@
   force = true
 
 [[redirects]]
+  # Serve login page as-is (avoid SPA fallback)
+  from = "/kalkulator/login.html"
+  to = "/kalkulator/login.html"
+  status = 200
+
+[[redirects]]
   # Kalkulator SPA fallback
   from = "/kalkulator/*"
   to = "/kalkulator/index.html"
