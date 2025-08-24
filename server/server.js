@@ -898,6 +898,9 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           user_id: userId || null
         });
 
+        // Extract price_id from the subscription's first item (if present)
+        const priceId = sub?.items?.data?.[0]?.price?.id ?? null;
+
         if (!userId) {
           console.error('[webhook] still missing user_id; refusing to write');
           return;
@@ -911,6 +914,12 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           status: status,
           current_period_end: periodEndUnix ? new Date(Number(periodEndUnix) * 1000) : null
         };
+
+        // Include price_id on create/update if available so we can map plan tiers later
+        if ((type === 'customer.subscription.created' || type === 'customer.subscription.updated') && priceId) {
+          record.price_id = priceId;
+        }
+
 
         try {
           const { data, error } = await supabase
