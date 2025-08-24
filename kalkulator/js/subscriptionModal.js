@@ -37,7 +37,7 @@ export class SubscriptionModal {
           <div id="subscriptionStatus" style="margin-bottom: 12px; font-weight: 500;">Laster abonnement…</div>
           <div id="subscriptionPeriod" style="color: var(--text-secondary);"></div>
           <div id="subscriptionPlan" style="color: var(--text-secondary); margin-top: 4px;"></div>
-          <div id="subscriptionThanks" style="display:none; margin-top: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+          <div id="subscriptionThanks" style="display:none; margin-top: 12px; color: var(--text-secondary); align-items: center; gap: 8px;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
             </svg>
@@ -161,6 +161,11 @@ export class SubscriptionModal {
       if (!row) {
         if (this.statusEl) this.statusEl.textContent = 'Ingen aktivt abonnement';
         if (this.periodEl) this.periodEl.textContent = '';
+        if (this.planEl) this.planEl.textContent = '';
+        if (this.thanksEl) this.thanksEl.style.display = 'none';
+        if (this.manageBtn) this.manageBtn.style.display = 'none';
+        if (this.proBtn) this.proBtn.style.display = '';
+        if (this.maxBtn) this.maxBtn.style.display = '';
         return;
       }
 
@@ -171,7 +176,8 @@ export class SubscriptionModal {
         : (endRaw ? new Date(endRaw) : null);
       const formatted = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('no-NO') : null;
 
-      const isSubscribed = ['active', 'trialing', 'past_due', 'unpaid'].includes(String(status).toLowerCase());
+      const normalizedStatus = String(status).toLowerCase();
+      const isSubscribed = normalizedStatus === 'active';
 
       // Determine plan from price_id
       const PRO_PRICE = 'price_1RzQ85Qiotkj8G58AO6st4fh';
