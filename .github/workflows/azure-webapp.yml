@@ -109,13 +109,13 @@ jobs:
           echo "Warming up staging slot via /config health endpoint..."
           for i in {1..24}; do
             echo "Attempt $i: checking /config..."
-            if curl -fsS https://wageapp-prod-staging.azurewebsites.net/config | jq -e '.flags != null' >/dev/null 2>&1; then
+            if curl -fsS https://wageapp-prod-staging.azurewebsites.net/config | jq -e '.features != null' >/dev/null 2>&1; then
               echo "Health check passed."; break
             fi
             sleep 5
           done
           # Final assert
-          curl -fsS https://wageapp-prod-staging.azurewebsites.net/config | jq -e '.flags != null' >/dev/null
+          curl -fsS https://wageapp-prod-staging.azurewebsites.net/config | jq -e '.features != null' >/dev/null
 
       - name: Swap staging -> production
         if: steps.detect_slot.outputs.has_staging == 'true' && (steps.deploy1.outcome == 'success' || steps.deploy2.outcome == 'success' || steps.deploy3.outcome == 'success')
@@ -169,4 +169,4 @@ jobs:
             (steps.detect_slot.outputs.has_staging == 'false' && (steps.pdeploy1.outcome == 'success' || steps.pdeploy2.outcome == 'success' || steps.pdeploy3.outcome == 'success'))
         run: |
           echo "Verifying production /config..."
-          curl -fsS https://wageapp-prod.azurewebsites.net/config | jq -e '.flags != null'
+          curl -fsS https://wageapp-prod.azurewebsites.net/config | jq -e '.features != null'

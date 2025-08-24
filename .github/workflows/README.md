@@ -26,7 +26,7 @@ Routine deploys (automatic)
 - Trigger: push to `main` with changes under `server/**` or manual run of “Deploy to Azure Web App”.
 - Steps performed:
   - Deploy package `./server` to `staging` (with retry/backoff).
-  - Warm up staging by polling `https://wageapp-prod-staging.azurewebsites.net/config`.
+  - Warm up staging by polling `https://wageapp-prod-staging.azurewebsites.net/config` and checking that `.features` exists.
   - Swap `staging` → `production` for near zero downtime.
   - Verify production health at `/config`.
 
@@ -49,7 +49,7 @@ Rollback
   - `az webapp deployment slot swap -g rg-wageapp -n wageapp-prod --slot production --target-slot staging`
 
 Health endpoint
-- The workflows use `GET /config` as the health check.
+- The workflows use `GET /config` as the health check and expect a JSON body with a `features` key.
 - If you add a dedicated `/healthz` route, update both YAML files accordingly.
 
 Notes

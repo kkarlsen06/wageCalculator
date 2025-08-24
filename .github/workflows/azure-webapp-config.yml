@@ -91,14 +91,20 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            az webapp config set -g rg-wageapp -n wageapp-prod --always-on true --health-check-path "/config"
+            # Always On
+            az webapp config set -g rg-wageapp -n wageapp-prod --always-on true
+            # Health check path (use update --set for broad CLI compatibility)
+            az webapp update -g rg-wageapp -n wageapp-prod --set siteConfig.healthCheckPath="/config"
 
       - name: Configure Always On and Health Check (staging)
         if: steps.detect_sku.outputs.can_use_slots == 'true'
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            az webapp config set -g rg-wageapp -n wageapp-prod --slot staging --always-on true --health-check-path "/config"
+            # Always On
+            az webapp config set -g rg-wageapp -n wageapp-prod --slot staging --always-on true
+            # Health check path for slot
+            az webapp update -g rg-wageapp -n wageapp-prod --slot staging --set siteConfig.healthCheckPath="/config"
 
       - name: Wait for SCM restart to complete
         run: |
