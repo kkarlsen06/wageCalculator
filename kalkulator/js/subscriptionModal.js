@@ -104,8 +104,14 @@ export class SubscriptionModal {
           // If no active sub, create Max via Checkout
           await window.startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO', { mode: 'subscription' });
         }
-      } catch (_) {
-        // ErrorHelper already shows a toast; swallow
+      } catch (e) {
+        // Fallback: open general Billing Portal if upgrade deep-link fails (e.g. config not enabled)
+        console.warn('[sub] portal upgrade failed, falling back to billing portal', e);
+        try {
+          if (this.currentTier === 'pro' && window.startBillingPortal) {
+            await window.startBillingPortal({ redirect: true });
+          }
+        } catch (_) { /* swallow */ }
       } finally {
         btn.removeAttribute('aria-busy');
         btn.disabled = wasDisabled;
