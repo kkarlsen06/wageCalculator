@@ -825,8 +825,48 @@ app.post('/api/portal/upgrade', authenticateUser, async (req, res) => {
       return res.status(400).json({ error: 'no-active-subscription' });
     }
 
-    // Resolve active subscription from Stripe to avoid DB mismatch
+    // Verify customer exists in current mode; recover by email if needed
     try {
+      let okCustomer = false;
+      // 1) Check current customerId
+      try {
+        const check = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+          method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        okCustomer = check.ok;
+      } catch (_) { okCustomer = false; }
+
+      if (!okCustomer) {
+        // try to find by email (as in /portal route)
+        const userEmail = req?.user?.email || req?.auth?.email || null;
+        if (userEmail) {
+          try {
+            const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
+              method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
+            });
+            if (listResp.ok) {
+              const listJson = await listResp.json().catch(() => null);
+              const found = listJson?.data?.[0]?.id || null;
+              if (found) customerId = found;
+            }
+          } catch (_) {}
+        }
+      }
+
+      // 2) Verify/resolve subscription id for this customer
+      if (subscriptionId) {
+        const subCheck = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subscriptionId)}` , {
+          method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
+        });
+        if (subCheck.ok) {
+          const js = await subCheck.json().catch(() => null);
+          const subCust = js?.customer || null;
+          if (!subCust || subCust !== customerId) subscriptionId = null;
+        } else {
+          subscriptionId = null;
+        }
+      }
+
       if (!subscriptionId) {
         const listActive = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=active&limit=1`, {
           method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
