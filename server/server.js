@@ -63,6 +63,8 @@ const corsOptions = {
 app.options('/api/checkout', cors(corsOptions));
 // Explicit preflight for /api/portal (Stripe Billing Portal)
 app.options('/api/portal', cors(corsOptions));
+// Also allow preflight for /portal (when proxies strip /api)
+app.options('/portal', cors(corsOptions));
 
 
 // Do NOT apply to /api/stripe-webhook (keep express.raw)
@@ -661,6 +663,69 @@ app.post('/api/portal', authenticateUser, async (req, res) => {
   } catch (e) {
     console.error('[/api/portal] Exception:', e?.message || e, e?.stack || '');
     return res.status(500).json({ error: 'Failed to create portal session' });
+
+// Back-compat route without /api prefix in case of different proxy setups
+app.post('/portal', authenticateUser, async (req, res) => {
+  // Delegate to the same handler logic by rewriting path
+  req.url = '/api/portal';
+  // Call the /api/portal handler functionally by invoking fetch to itself could be messy;
+  // Instead, repeat minimal logic: find customer, create session, same as above
+  try {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) return res.status(500).json({ error: 'Stripe not configured on server' });
+
+    const userId = req.user_id;
+    let customerId = null;
+    if (supabase) {
+      try {
+        const resp1 = await supabase
+          .from('subscriptions')
+          .select('stripe_customer_id')
+          .eq('user_id', userId)
+          .limit(1);
+        if (!resp1.error && Array.isArray(resp1.data) && resp1.data.length) {
+          customerId = resp1.data[0]?.stripe_customer_id || null;
+        }
+      } catch (_) {}
+    }
+    if (!customerId) {
+      const userEmail = req?.user?.email || req?.auth?.email || null;
+      if (userEmail) {
+        try {
+          const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
+            method: 'GET', headers: { 'Authorization': `Bearer ${stripeKey}` }
+          });
+          if (listResp.ok) {
+            const listJson = await listResp.json().catch(() => null);
+            customerId = listJson?.data?.[0]?.id || null;
+          }
+        } catch (_) {}
+      }
+    }
+    if (!customerId) return res.status(404).json({ error: 'No Stripe customer found for user' });
+
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').toString();
+    const host = (req.headers['x-forwarded-host'] || req.get('host') || '').toString();
+    const envBase = process.env.APP_BASE_URL || process.env.PUBLIC_APP_BASE_URL || '';
+    const computedOrigin = host ? `${proto}://${host}` : '';
+    const appBase = (envBase || computedOrigin).replace(/\/$/, '');
+    const return_url = `${appBase}/kalkulator/index.html`;
+
+    const form = new URLSearchParams();
+    form.set('customer', customerId);
+    form.set('return_url', return_url);
+
+    const resp = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
+      method: 'POST', headers: { 'Authorization': `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body: form
+    });
+    const data = await resp.json().catch(() => null);
+    if (!resp.ok || !data?.url) return res.status(500).json({ error: 'Failed to create portal session' });
+    return res.json({ url: data.url });
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to create portal session' });
+  }
+});
+
   }
 });
 

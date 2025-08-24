@@ -93,13 +93,27 @@ export async function startBillingPortal(opts = {}) {
     throw err;
   }
 
-  const res = await fetch(`${API_BASE}/api/portal`, {
+  // Primary: call /api/portal (works in prod when API_BASE is same-origin)
+  let res = await fetch(`${API_BASE}/api/portal`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     }
   });
+
+  // Dev proxy often strips /api → backend receives /portal; retry without /api on 404
+  if (res.status === 404) {
+    try {
+      res = await fetch(`${API_BASE}/portal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (_) { /* fallthrough to error handling below */ }
+  }
 
   if (!res.ok) {
     const text = await safeReadText(res);
