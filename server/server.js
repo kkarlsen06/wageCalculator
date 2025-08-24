@@ -26,9 +26,10 @@ import morgan from 'morgan';
 import { OpenAI } from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { calcEmployeeShift } from './payroll/calc.js';
-import { randomUUID, createHmac, timingSafeEqual } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { verifySupabaseJWT } from './lib/auth/verifySupabaseJwt.js';
 import { authMiddleware } from './middleware/auth.js';
+import Stripe from 'stripe';
 // Node 22+ has global fetch; use Stripe REST API to avoid extra deps
 
 // ---------- path helpers ----------
@@ -129,6 +130,21 @@ const openai = (() => {
     return new OpenAI({ apiKey: key });
   } catch (e) {
     console.warn('[BOOT] Failed to initialize OpenAI client:', e?.message || e);
+    return null;
+  }
+})();
+
+// ---------- Stripe client ----------
+const stripe = (() => {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    console.warn('[BOOT] STRIPE_SECRET_KEY not set – Stripe SDK features disabled.');
+    return null;
+  }
+  try {
+    return new Stripe(key);
+  } catch (e) {
+    console.warn('[BOOT] Failed to initialize Stripe client:', e?.message || e);
     return null;
   }
 })();
@@ -784,171 +800,135 @@ app.post('/portal', authenticateUser, async (req, res) => {
 
 // ---------- Stripe Webhook ----------
 // Receives subscription lifecycle events. Uses raw body for signature verification.
-function parseStripeSignatureHeader(sigHeader) {
-  if (!sigHeader || typeof sigHeader !== 'string') return null;
-  const parts = sigHeader.split(',');
-  const out = { t: null, v1: [] };
-  for (const p of parts) {
-    const [k, v] = p.split('=');
-    if (k === 't') out.t = v;
-    if (k === 'v1') out.v1.push(v);
-  }
-  return out;
-}
-
-function verifyStripeSignature(rawBody, sigHeader, secret, toleranceSec = 300) {
-  const parsed = parseStripeSignatureHeader(sigHeader);
-  if (!parsed || !parsed.t || parsed.v1.length === 0) return false;
-  // Tolerance check
-  const ts = Number(parsed.t);
-  if (!Number.isFinite(ts)) return false;
-  const nowSec = Math.floor(Date.now() / 1000);
-  if (Math.abs(nowSec - ts) > toleranceSec) return false;
-  // Compute expected signature: HMAC-SHA256 of `${t}.${raw}` with endpoint secret
-  const payload = `${parsed.t}.${rawBody}`;
-  const hmac = createHmac('sha256', secret);
-  hmac.update(payload, 'utf8');
-  const expected = Buffer.from(hmac.digest('hex'), 'utf8');
-  // Compare against any provided v1 using timing-safe compare
-  for (const candidate of parsed.v1) {
-    try {
-      const actual = Buffer.from(candidate, 'utf8');
-      if (actual.length === expected.length && timingSafeEqual(actual, expected)) {
-        return true;
-      }
-    } catch (_) { /* ignore individual compare errors */ }
-  }
-  return false;
-}
+// Using official Stripe SDK for webhook verification and event retrieval
 
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   console.log("[webhook] hit", req.headers['stripe-signature']);
 
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error('[/api/stripe-webhook] Missing STRIPE_WEBHOOK_SECRET');
+    return res.status(503).send('webhook not configured');
+  }
+  if (!stripe) {
+    console.error('[/api/stripe-webhook] Stripe client not initialized (missing STRIPE_SECRET_KEY)');
+    return res.status(503).send('stripe not configured');
+  }
+
+  const sig = req.headers['stripe-signature'];
+  const rawBody = req.body instanceof Buffer ? req.body : Buffer.from(String(req.body || ''));
+
+  // 1) Verify signature using Stripe SDK
+  let event;
   try {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      console.error('[/api/stripe-webhook] Missing STRIPE_WEBHOOK_SECRET');
-      return res.status(503).send('webhook not configured');
-    }
+    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+  } catch (err) {
+    console.warn('[/api/stripe-webhook] constructEvent failed:', err?.message || err);
+    return res.status(400).send(`Webhook Error: ${err?.message || 'invalid signature'}`);
+  }
 
-    const sig = req.headers['stripe-signature'];
-    const raw = req.body instanceof Buffer ? req.body.toString('utf8') : String(req.body || '');
+  // 2) Retrieve the event from Stripe to ensure authenticity
+  let verifiedEvent;
+  try {
+    verifiedEvent = await stripe.events.retrieve(event.id);
+  } catch (err) {
+    console.warn('[/api/stripe-webhook] events.retrieve failed:', err?.message || err);
+    return res.status(400).send(`Event Retrieval Error: ${err?.message || 'failed to retrieve event'}`);
+  }
 
-    // Verify signature (manual, since stripe SDK is not installed)
-    const ok = verifyStripeSignature(raw, sig, webhookSecret);
-    if (!ok) {
-      console.warn('[/api/stripe-webhook] Signature verification failed');
-      return res.status(400).send('invalid signature');
-    }
+  // Respond success promptly; handle heavy work async using the verified event
+  res.status(200).json({ received: true });
 
-    // Parse the Stripe event
-    let event = null;
+  setImmediate(async () => {
     try {
-      event = JSON.parse(raw);
-    } catch (_) {
-      return res.status(400).send('invalid payload');
-    }
+      const type = verifiedEvent?.type || '';
+      if (!['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(type)) {
+        return; // ignore other events
+      }
 
-    // Acknowledge quickly; do heavy work async
-    res.status(200).send('ok');
+      const sub = verifiedEvent?.data?.object || {};
+      const subscriptionId = sub?.id || null;
+      const customerId = sub?.customer || null;
+      const status = sub?.status || null;
 
-    // Process asynchronously to avoid blocking webhook delivery
-    setImmediate(async () => {
-      try {
-        const type = event?.type || '';
-        if (!['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(type)) {
-          return; // ignore other events
-        }
+      // Resolve period end robustly
+      const periodEndUnix = (sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end ?? null);
 
-        const sub = event?.data?.object || {};
-        const subscriptionId = sub?.id || null;
-        const customerId = sub?.customer || null;
-        const status = sub?.status || null;
-
-        // Resolve period end robustly (some API versions may omit top-level current_period_end)
-        const periodEndUnix = (sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end ?? null);
-
-        // Always fetch the customer to resolve user_id reliably
-        let customer = null;
-        if (customerId && process.env.STRIPE_SECRET_KEY) {
-          try {
-            const resp = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
-              method: 'GET',
-              headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
-            });
-            if (resp.ok) {
-              customer = await resp.json().catch(() => null);
-            }
-          } catch (e) {
-            console.warn('[/api/stripe-webhook] Failed to fetch customer:', e?.message || e);
-          }
-        }
-
-        const userId = (sub?.metadata?.user_id) || (customer?.metadata?.user_id) || null;
-
-        console.log('[webhook] resolved userId:', userId, 'cust.meta:', customer?.metadata, 'sub.meta:', sub?.metadata);
-
-        // Detailed event log before DB upsert
-        console.log('[/api/stripe-webhook] Event details', {
-          type,
-          subscription_id: subscriptionId,
-          customer_id: customerId,
-          status,
-          current_period_end: periodEndUnix,
-          user_id: userId || null
-        });
-
-        // Extract price_id from the subscription's first item (if present)
-        const priceId = sub?.items?.data?.[0]?.price?.id ?? null;
-
-        if (!userId) {
-          console.error('[webhook] still missing user_id; refusing to write');
-          return;
-        }
-        if (!supabase) return; // need DB client to upsert
-
-        const record = {
-          user_id: userId,
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscriptionId,
-          status: status,
-          current_period_end: periodEndUnix ? new Date(Number(periodEndUnix) * 1000) : null
-        };
-
-        // Include price_id on create/update if available so we can map plan tiers later
-        if ((type === 'customer.subscription.created' || type === 'customer.subscription.updated') && priceId) {
-          record.price_id = priceId;
-        }
-
-        // Add one log printing { userId, priceId, status } before the DB call
-        console.log('[webhook] before DB call:', { userId, priceId, status });
-
+      // Always fetch the customer to resolve user_id reliably
+      let customer = null;
+      if (customerId && process.env.STRIPE_SECRET_KEY) {
         try {
-          if (type === 'customer.subscription.created') {
-            const { data, error } = await supabase
-              .from('subscriptions')
-              .upsert({ user_id: userId, ...record }, { onConflict: 'user_id' })
-              .single();
-            console.log('[webhook] create upsert:', { data, error });
-          } else if (type === 'customer.subscription.updated') {
-            const { data, error } = await supabase
-              .from('subscriptions')
-              .update(record)
-              .eq('user_id', userId)
-              .select()
-              .single();
-            console.log('[webhook] update:', { data, error });
+          const resp = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+          });
+          if (resp.ok) {
+            customer = await resp.json().catch(() => null);
           }
         } catch (e) {
-          console.error('[/api/stripe-webhook] Upsert exception:', e?.message || e);
+          console.warn('[/api/stripe-webhook] Failed to fetch customer:', e?.message || e);
+        }
+      }
+
+      const userId = (sub?.metadata?.user_id) || (customer?.metadata?.user_id) || null;
+
+      console.log('[webhook] resolved userId:', userId, 'cust.meta:', customer?.metadata, 'sub.meta:', sub?.metadata);
+
+      console.log('[/api/stripe-webhook] Event details', {
+        type,
+        subscription_id: subscriptionId,
+        customer_id: customerId,
+        status,
+        current_period_end: periodEndUnix,
+        user_id: userId || null
+      });
+
+      // Extract price_id from the subscription's first item (if present)
+      const priceId = sub?.items?.data?.[0]?.price?.id ?? null;
+
+      if (!userId) {
+        console.error('[webhook] still missing user_id; refusing to write');
+        return;
+      }
+      if (!supabase) return; // need DB client to upsert
+
+      const record = {
+        user_id: userId,
+        stripe_customer_id: customerId,
+        stripe_subscription_id: subscriptionId,
+        status: status,
+        current_period_end: periodEndUnix ? new Date(Number(periodEndUnix) * 1000) : null
+      };
+
+      if ((type === 'customer.subscription.created' || type === 'customer.subscription.updated') && priceId) {
+        record.price_id = priceId;
+      }
+
+      console.log('[webhook] before DB call:', { userId, priceId, status });
+
+      try {
+        if (type === 'customer.subscription.created') {
+          const { data, error } = await supabase
+            .from('subscriptions')
+            .upsert({ user_id: userId, ...record }, { onConflict: 'user_id' })
+            .single();
+          console.log('[webhook] create upsert:', { data, error });
+        } else if (type === 'customer.subscription.updated') {
+          const { data, error } = await supabase
+            .from('subscriptions')
+            .update(record)
+            .eq('user_id', userId)
+            .select()
+            .single();
+          console.log('[webhook] update:', { data, error });
         }
       } catch (e) {
-        console.error('[/api/stripe-webhook] Handler exception:', e?.message || e);
+        console.error('[/api/stripe-webhook] Upsert exception:', e?.message || e);
       }
-    });
-  } catch (e) {
-    try { return res.status(500).send('error'); } catch (_) { /* no-op */ }
-  }
+    } catch (e) {
+      console.error('[/api/stripe-webhook] Handler exception:', e?.message || e);
+    }
+  });
 });
 
 // Expose recent audit log events (DB if available, else memory)
