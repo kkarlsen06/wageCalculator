@@ -40,7 +40,7 @@ export async function startCheckout(priceId, opts = {}) {
   }
 
   // Call backend to create Checkout session
-  const res = await fetch(`${API_BASE}/api/checkout`, {
+  let res = await fetch(`${API_BASE}/api/checkout`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -49,9 +49,25 @@ export async function startCheckout(priceId, opts = {}) {
     body: JSON.stringify({ priceId, mode, quantity })
   });
 
+  // Some proxies strip /api → backend expects /checkout; retry without /api on 404
+  if (res.status === 404) {
+    try {
+      res = await fetch(`${API_BASE}/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ priceId, mode, quantity })
+      });
+    } catch (_) { /* fall through to error handling */ }
+  }
+
   if (!res.ok) {
     const text = await safeReadText(res);
-    const msg = `Kunne ikke starte Stripe Checkout (${res.status}).`;
+    const msg = res.status === 404
+      ? 'Kunne ikke starte kjøp (404). Tjenesten er ikke tilgjengelig her. Prøv å oppdatere siden eller kontakt support.'
+      : `Kunne ikke starte Stripe Checkout (${res.status}).`;
     if (typeof window !== 'undefined' && window.ErrorHelper) {
       window.ErrorHelper.showError(msg);
     }

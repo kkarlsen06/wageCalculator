@@ -73,14 +73,34 @@ export class SubscriptionModal {
     if (this.maxBtn) this.maxBtn.style.display = 'none';
     // manageBtn is already hidden via inline style in markup
 
-    this.proBtn?.addEventListener('click', () => {
-      if (window.startCheckout) {
-        window.startCheckout('price_1RzQ85Qiotkj8G58AO6st4fh', { mode: 'subscription' });
+    this.proBtn?.addEventListener('click', async () => {
+      if (!window.startCheckout || !this.proBtn) return;
+      const btn = this.proBtn;
+      const wasDisabled = btn.disabled;
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+      try {
+        await window.startCheckout('price_1RzQ85Qiotkj8G58AO6st4fh', { mode: 'subscription' });
+      } catch (_) {
+        // ErrorHelper in startCheckout already shows a toast; swallow to avoid unhandled rejection
+      } finally {
+        btn.removeAttribute('aria-busy');
+        btn.disabled = wasDisabled;
       }
     });
-    this.maxBtn?.addEventListener('click', () => {
-      if (window.startCheckout) {
-        window.startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO', { mode: 'subscription' });
+    this.maxBtn?.addEventListener('click', async () => {
+      if (!window.startCheckout || !this.maxBtn) return;
+      const btn = this.maxBtn;
+      const wasDisabled = btn.disabled;
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+      try {
+        await window.startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO', { mode: 'subscription' });
+      } catch (_) {
+        // ErrorHelper in startCheckout already shows a toast; swallow to avoid unhandled rejection
+      } finally {
+        btn.removeAttribute('aria-busy');
+        btn.disabled = wasDisabled;
       }
     });
     this.manageBtn?.addEventListener('click', async () => {
