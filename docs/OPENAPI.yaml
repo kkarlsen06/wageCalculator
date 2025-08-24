@@ -325,4 +325,46 @@ paths:
         '403': { description: Agent writes are not allowed }
         '500': { description: Internal server error }
 
+  /checkout:
+    post:
+      summary: Create Stripe Checkout session
+      description: |
+        Creates a Stripe Checkout session and returns the hosted checkout URL.
+        Authenticated user's `user_id` is attached in `metadata` and `client_reference_id`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                priceId:
+                  type: string
+                  description: Stripe Price ID
+                mode:
+                  type: string
+                  enum: [subscription, payment]
+                  description: Defaults to `subscription`
+                quantity:
+                  type: integer
+                  minimum: 1
+                  maximum: 999
+                  description: Defaults to 1
+              required: [priceId]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        '400': { description: Bad request }
+        '401': { description: Unauthorized }
+        '403': { description: Agent writes are not allowed }
+        '500': { description: Internal server error }
 

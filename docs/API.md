@@ -38,6 +38,7 @@ Full schema: see `docs/OPENAPI.yaml`.
 - `GET /metrics` — Prometheus metrics
 - `GET /audit-log/recent` — Admin-only recent audit entries (requires `role=admin` claim)
 - `GET /reports/wages` — CSV export of employee wages (auth required, AI agents blocked)
+- `POST /api/checkout` — Create a Stripe Checkout session and return the hosted checkout URL (auth required; AI agents blocked)
 
 ### Chat Assistant
 - `POST /chat` supports both streaming (SSE) and non-streaming responses.
@@ -67,3 +68,86 @@ curl -X POST \
 
 
 
+### Checkout (Stripe)
+
+- Route: `POST /api/checkout`
+- Auth: Bearer JWT required
+- Body:
+  - `priceId` (string, required): Stripe Price ID
+  - `mode` (string, optional): `'subscription'` (default) or `'payment'`
+  - `quantity` (integer, optional): defaults to `1` (range `1..999`)
+- Response: `{ url: string }` — the Stripe-hosted Checkout URL
+- Redirects: user is sent back to `/kalkulator/index.html?checkout=success` or `?checkout=cancel`
+- Notes:
+  - `metadata.user_id` and `client_reference_id` are set to the authenticated Supabase `user_id`.
+  - The server uses `APP_BASE_URL` (if set) or derives origin from `X-Forwarded-*` headers to build success/cancel URLs.
+  - The frontend shows a toast on return based on the `checkout` query param and then cleans it from the URL.
+
+Example (production via Netlify proxy):
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "priceId": "price_123",
+    "mode": "subscription",
+    "quantity": 1
+  }' \
+  https://your-frontend-domain.com/api/checkout
+```
+
+Example (local backend):
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{"priceId":"price_123","mode":"payment","quantity":2}' \
+  http://localhost:3000/api/checkout
+```
+
+Client examples
+
+```js
+// React/JS example (uses Supabase for auth)
+import { supabase } from '/src/supabase-client.js'
+
+async function startCheckout(priceId, { mode = 'subscription', quantity = 1 } = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error('Not authenticated');
+  const res = await fetch('/api/checkout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({ priceId, mode, quantity })
+  });
+  const { url } = await res.json();
+  window.location.href = url; // redirect to Stripe Checkout
+}
+
+// Example buttons
+<button onClick={() => startCheckout('price_1RzQ85Qiotkj8G58AO6st4fh')}>
+  Subscribe to Pro
+  </button>
+<button onClick={() => startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO')}>
+  Subscribe to Max
+</button>
+```
+
+```html
+<!-- Vanilla JS example using helper -->
+<script type="module">
+  import { startCheckout } from '/src/js/checkout.js'
+  document.getElementById('buyPro').addEventListener('click', () =>
+    startCheckout('price_1RzQ85Qiotkj8G58AO6st4fh')
+  )
+  document.getElementById('buyMax').addEventListener('click', () =>
+    startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO')
+  )
+</script>
+<button id="buyPro">Subscribe to Pro</button>
+<button id="buyMax">Subscribe to Max</button>
+```

@@ -12,6 +12,23 @@ import LegalModal from './js/legal-modal.js';
 
 // Initialize legal modal
 document.addEventListener('DOMContentLoaded', () => {
+    // Show checkout status toast if present
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get('checkout');
+        if (status && window.ErrorHelper) {
+            if (status === 'success') {
+                window.ErrorHelper.showSuccess('Betaling fullført!');
+            } else if (status === 'cancel' || status === 'error' || status === 'failed') {
+                window.ErrorHelper.showError('Betaling ble avbrutt eller feilet.');
+            }
+            // Clean up URL to avoid repeated popups on refresh
+            params.delete('checkout');
+            const base = window.location.origin + window.location.pathname + (params.toString() ? `?${params}` : '');
+            window.history.replaceState({}, document.title, base);
+        }
+    } catch (_) {}
+
     const legalModal = new LegalModal();
     
     // Add Personvernerklæring button to footer

@@ -12,15 +12,24 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
+// Boot check for Stripe configuration
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error("[boot] STRIPE_SECRET_KEY missing");
+} else {
+  console.log("[boot] Stripe configured");
+}
+
+
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { OpenAI } from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { calcEmployeeShift } from './payroll/calc.js';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHmac, timingSafeEqual } from 'node:crypto';
 import { verifySupabaseJWT } from './lib/auth/verifySupabaseJwt.js';
 import { authMiddleware } from './middleware/auth.js';
+// Node 22+ has global fetch; use Stripe REST API to avoid extra deps
 
 // ---------- path helpers ----------
 const FRONTEND_DIR = __dirname;
@@ -32,12 +41,49 @@ const app = express();
 const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 app.use(morgan(logFormat));
 
-const allowedOrigins = (process.env.CORS_ORIGINS || '')
-  .split(',')
-  .map(o => o.trim())
-  .filter(Boolean);
-app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : false, credentials: true }));
-app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
+// CORS: allow dev frontend and production domain; skip Stripe webhook (must stay raw)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://kkarlsen.art'
+];
+
+const corsOptions = {
+  origin(origin, callback) {
+    // allow non-browser requests (e.g., curl) with no Origin
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400
+};
+
+// Explicit preflight for /api/checkout to avoid Express auto-OPTIONS
+app.options('/api/checkout', cors(corsOptions));
+
+
+// Do NOT apply to /api/stripe-webhook (keep express.raw)
+app.use((req, res, next) => {
+  if (req.path === '/api/stripe-webhook') return next();
+  return cors(corsOptions)(req, res, next);
+});
+
+// Ensure preflight succeeds (Express 5 safe handler)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    if (req.path === '/api/stripe-webhook') return res.sendStatus(204);
+    return cors(corsOptions)(req, res, () => res.sendStatus(204));
+  }
+  next();
+});
+
+// Use JSON parser for all routes except Stripe webhook (needs raw body)
+const _jsonParser = express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' });
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/stripe-webhook') return next();
+  return _jsonParser(req, res, next);
+});
 // ---------- liveness & deep health ----------
 // Liveness: skal ALLTID svare 200 så lenge prosessen lever
 app.get('/health', (_req, res) => res.status(200).send('ok'));
@@ -110,7 +156,7 @@ app.use('/employees', authMiddleware); // Legacy support
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseSecretKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export const admin = supabaseUrl && supabaseSecretKey 
+export const admin = supabaseUrl && supabaseSecretKey
   ? createClient(supabaseUrl, supabaseSecretKey)
   : null;
 
@@ -363,6 +409,313 @@ app.get('/metrics', (req, res) => {
   }
 });
 
+// ---------- Stripe Checkout ----------
+// Creates a Stripe Checkout Session for subscriptions.
+// - Auth required; derives user_id from JWT (does not trust client-provided userId)
+// - Blocks ai_agent writes per security model
+// - Success/Cancel URLs redirect back to app with a `checkout` query flag
+app.post('/api/checkout', authenticateUser, async (req, res) => {
+  try {
+    console.log("[/api/checkout] begin, hasStripe=", !!process.env.STRIPE_SECRET_KEY);
+
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/api/checkout', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return res.status(500).json({ error: 'Stripe not configured on server' });
+    }
+
+    const { priceId, mode: modeRaw, quantity: qtyRaw } = req.body || {};
+    if (!priceId || typeof priceId !== 'string') {
+      return res.status(400).json({ error: 'Missing or invalid priceId' });
+    }
+
+    // mode: subscription (default) or payment (one-time). setup is not supported here.
+    const mode = (modeRaw || 'subscription').toString();
+    if (!['subscription', 'payment'].includes(mode)) {
+      return res.status(400).json({ error: 'Invalid mode. Use "subscription" or "payment"' });
+    }
+
+    // quantity: optional, default 1
+    let quantity = 1;
+    if (qtyRaw != null) {
+      const q = Number(qtyRaw);
+      if (!Number.isInteger(q) || q < 1 || q > 999) {
+        return res.status(400).json({ error: 'Invalid quantity (1-999)' });
+      }
+      quantity = q;
+    }
+
+    // Compute absolute app base URL for redirects. Prefer explicit env, then forwarded host/proto.
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').toString();
+    const host = (req.headers['x-forwarded-host'] || req.get('host') || '').toString();
+    const envBase = process.env.APP_BASE_URL || process.env.PUBLIC_APP_BASE_URL || '';
+    const computedOrigin = host ? `${proto}://${host}` : '';
+    const appBase = (envBase || computedOrigin).replace(/\/$/, '');
+    const appPath = '/kalkulator/index.html';
+    const success_url = `${appBase}${appPath}?checkout=success`;
+    const cancel_url = `${appBase}${appPath}?checkout=cancel`;
+
+
+	    // Extract Supabase user ID from verified JWT for consistent metadata
+	    const userId = req.user_id;
+
+    // Optionally create or reuse a Stripe customer by email
+    let customerId = null;
+    const userEmail = req?.user?.email || req?.auth?.email || null;
+    try {
+      if (userEmail) {
+        const listResp = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(userEmail)}&limit=1`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${stripeKey}`
+          }
+        });
+        if (listResp.ok) {
+          const listData = await listResp.json().catch(() => null);
+          if (listData && Array.isArray(listData.data) && listData.data.length > 0) {
+            const existing = listData.data[0];
+            customerId = existing.id;
+            // Ensure Supabase user_id is persisted on the Customer metadata and merge existing keys
+            try {
+              const updateBody = new URLSearchParams();
+              if (existing && existing.metadata && typeof existing.metadata === 'object') {
+                for (const [k, v] of Object.entries(existing.metadata)) {
+                  if (k !== 'user_id' && v != null) {
+                    updateBody.set(`metadata[${k}]`, String(v));
+                  }
+                }
+              }
+              updateBody.set('metadata[user_id]', userId);
+              await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${stripeKey}`,
+                  'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: updateBody
+              });
+            } catch (_) { /* non-blocking */ }
+          }
+        }
+        if (!customerId) {
+          const createBody = new URLSearchParams();
+          createBody.set('email', userEmail);
+          createBody.set('metadata[user_id]', userId);
+          const createResp = await fetch('https://api.stripe.com/v1/customers', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${stripeKey}`,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: createBody
+          });
+          if (createResp.ok) {
+            const created = await createResp.json().catch(() => null);
+            customerId = created?.id || null;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[/api/checkout] Unable to attach/create customer by email:', e?.message || e);
+    }
+
+    // Build form-encoded payload for Stripe API (REST)
+    const body = new URLSearchParams();
+    body.set('mode', mode);
+    body.set('success_url', success_url);
+    body.set('cancel_url', cancel_url);
+    body.set('line_items[0][price]', priceId);
+    body.set('line_items[0][quantity]', String(quantity));
+    body.set('metadata[user_id]', userId);
+    body.set('client_reference_id', userId);
+    body.set('allow_promotion_codes', 'true');
+    if (customerId) {
+      body.set('customer', customerId);
+    }
+
+	
+    // Optional, can be toggled later via env if needed
+    // body.set('automatic_tax[enabled]', 'true');
+
+    const resp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${stripeKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body
+    });
+
+    const data = await resp.json().catch(() => null);
+    if (!resp.ok || !data?.url) {
+      const msg = data?.error?.message || data?.error || 'Failed to create checkout session';
+      console.error('[/api/checkout] Stripe error:', msg, 'status=', resp.status, 'body=', data);
+      return res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+
+	    console.log("[/api/checkout] attaching metadata", { userId, customerId });
+
+
+    return res.json({ url: data.url });
+  } catch (e) {
+    console.error('[/api/checkout] Exception:', e?.message || e, e?.stack || '');
+    return res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
+// ---------- Stripe Webhook ----------
+// Receives subscription lifecycle events. Uses raw body for signature verification.
+function parseStripeSignatureHeader(sigHeader) {
+  if (!sigHeader || typeof sigHeader !== 'string') return null;
+  const parts = sigHeader.split(',');
+  const out = { t: null, v1: [] };
+  for (const p of parts) {
+    const [k, v] = p.split('=');
+    if (k === 't') out.t = v;
+    if (k === 'v1') out.v1.push(v);
+  }
+  return out;
+}
+
+function verifyStripeSignature(rawBody, sigHeader, secret, toleranceSec = 300) {
+  const parsed = parseStripeSignatureHeader(sigHeader);
+  if (!parsed || !parsed.t || parsed.v1.length === 0) return false;
+  // Tolerance check
+  const ts = Number(parsed.t);
+  if (!Number.isFinite(ts)) return false;
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSec - ts) > toleranceSec) return false;
+  // Compute expected signature: HMAC-SHA256 of `${t}.${raw}` with endpoint secret
+  const payload = `${parsed.t}.${rawBody}`;
+  const hmac = createHmac('sha256', secret);
+  hmac.update(payload, 'utf8');
+  const expected = Buffer.from(hmac.digest('hex'), 'utf8');
+  // Compare against any provided v1 using timing-safe compare
+  for (const candidate of parsed.v1) {
+    try {
+      const actual = Buffer.from(candidate, 'utf8');
+      if (actual.length === expected.length && timingSafeEqual(actual, expected)) {
+        return true;
+      }
+    } catch (_) { /* ignore individual compare errors */ }
+  }
+  return false;
+}
+
+app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  console.log("[webhook] hit", req.headers['stripe-signature']);
+
+  try {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('[/api/stripe-webhook] Missing STRIPE_WEBHOOK_SECRET');
+      return res.status(503).send('webhook not configured');
+    }
+
+    const sig = req.headers['stripe-signature'];
+    const raw = req.body instanceof Buffer ? req.body.toString('utf8') : String(req.body || '');
+
+    // Verify signature (manual, since stripe SDK is not installed)
+    const ok = verifyStripeSignature(raw, sig, webhookSecret);
+    if (!ok) {
+      console.warn('[/api/stripe-webhook] Signature verification failed');
+      return res.status(400).send('invalid signature');
+    }
+
+    // Parse the Stripe event
+    let event = null;
+    try {
+      event = JSON.parse(raw);
+    } catch (_) {
+      return res.status(400).send('invalid payload');
+    }
+
+    // Acknowledge quickly; do heavy work async
+    res.status(200).send('ok');
+
+    // Process asynchronously to avoid blocking webhook delivery
+    setImmediate(async () => {
+      try {
+        const type = event?.type || '';
+        if (!['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(type)) {
+          return; // ignore other events
+        }
+
+        const sub = event?.data?.object || {};
+        const subscriptionId = sub?.id || null;
+        const customerId = sub?.customer || null;
+        const status = sub?.status || null;
+
+        // Resolve period end robustly (some API versions may omit top-level current_period_end)
+        const periodEndUnix = (sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end ?? null);
+
+        // Always fetch the customer to resolve user_id reliably
+        let customer = null;
+        if (customerId && process.env.STRIPE_SECRET_KEY) {
+          try {
+            const resp = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+              method: 'GET',
+              headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+            });
+            if (resp.ok) {
+              customer = await resp.json().catch(() => null);
+            }
+          } catch (e) {
+            console.warn('[/api/stripe-webhook] Failed to fetch customer:', e?.message || e);
+          }
+        }
+
+        const userId = (sub?.metadata?.user_id) || (customer?.metadata?.user_id) || null;
+
+        console.log('[webhook] resolved userId:', userId, 'cust.meta:', customer?.metadata, 'sub.meta:', sub?.metadata);
+
+        // Detailed event log before DB upsert
+        console.log('[/api/stripe-webhook] Event details', {
+          type,
+          subscription_id: subscriptionId,
+          customer_id: customerId,
+          status,
+          current_period_end: periodEndUnix,
+          user_id: userId || null
+        });
+
+        if (!userId) {
+          console.error('[webhook] still missing user_id; refusing to write');
+          return;
+        }
+        if (!supabase) return; // need DB client to upsert
+
+        const record = {
+          user_id: userId,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscriptionId,
+          status: status,
+          current_period_end: periodEndUnix ? new Date(Number(periodEndUnix) * 1000) : null
+        };
+
+        try {
+          const { data, error } = await supabase
+            .from('subscriptions')
+            .upsert(record, { onConflict: 'user_id' })
+            .single();
+          console.log('[webhook] upsert subscriptions:', { record, data, error });
+        } catch (e) {
+          console.error('[/api/stripe-webhook] Upsert exception:', e?.message || e);
+        }
+      } catch (e) {
+        console.error('[/api/stripe-webhook] Handler exception:', e?.message || e);
+      }
+    });
+  } catch (e) {
+    try { return res.status(500).send('error'); } catch (_) { /* no-op */ }
+  }
+});
+
 // Expose recent audit log events (DB if available, else memory)
 // Requires admin authentication; payloads are redacted
 app.get('/audit-log/recent', authenticateUser, requireAdmin, async (req, res) => {
@@ -399,29 +752,29 @@ async function authenticateUser(req, res, next) {
     return res.status(401).json({ error: 'Missing or invalid Authorization header' });
   }
   const token = auth.slice(7);
-  
+
   try {
     const claims = await verifySupabaseJWT(token);
-    
+
     // Ensure we have a valid user ID
     if (!claims.sub) {
       return res.status(401).json({ error: 'Invalid token: missing user ID' });
     }
-    
+
     console.debug('[auth] using userId:', claims.sub);
-    
+
     // Attach auth information to request
-    req.auth = { 
-      userId: claims.sub, 
-      role: claims.role, 
-      email: claims.email 
+    req.auth = {
+      userId: claims.sub,
+      role: claims.role,
+      email: claims.email
     };
-    
+
     // Legacy compatibility - map to existing request properties
     req.user_id = claims.sub;
     req.is_ai_agent = Boolean(claims.ai_agent || claims.app_metadata?.ai_agent || claims.user_metadata?.ai_agent);
     req.user_role = claims.role || claims.app_metadata?.role || claims.user_metadata?.role || null;
-    
+
     // Create a user object for compatibility with existing code
     req.user = {
       id: claims.sub,
@@ -429,7 +782,7 @@ async function authenticateUser(req, res, next) {
       app_metadata: claims.app_metadata || {},
       user_metadata: claims.user_metadata || {}
     };
-    
+
     next();
   } catch (error) {
     console.error('JWT verification failed:', error.message);
@@ -3205,7 +3558,7 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
- 
+
  /**
   * PUT /employee-shifts/:id
   * Body: { employee_id?, shift_date?, start_time?, end_time?, break_minutes?, notes? }
@@ -3217,11 +3570,11 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
        incrementAgentWriteDenied('/employee-shifts', 'PUT', 'agent_write_blocked_middleware');
        return res.status(403).json({ error: 'Agent writes are not allowed' });
      }
- 
+
      const managerId = req.user_id;
      const id = req.params.id;
      const { employee_id, shift_date, start_time, end_time, break_minutes, notes } = req.body || {};
- 
+
      // Fetch existing row and assert ownership
      const { data: existing, error: fetchErr } = await supabase
        .from('employee_shifts')
@@ -3230,7 +3583,7 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
        .eq('manager_id', managerId)
        .single();
      if (fetchErr || !existing) return res.status(404).json({ error: 'Shift not found' });
- 
+
      // Validate formats if provided
      if (shift_date && !/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
        return res.status(400).json({ error: 'Invalid shift_date format. Use YYYY-MM-DD' });
@@ -3242,19 +3595,19 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
        const bm = parseInt(break_minutes);
        if (Number.isNaN(bm) || bm < 0) return res.status(400).json({ error: 'break_minutes must be a non-negative integer' });
      }
- 
+
      // Determine final employee and recompute snapshot
      const finalEmployeeId = employee_id !== undefined ? employee_id : existing.employee_id;
      const snap = await computeEmployeeSnapshot(managerId, finalEmployeeId);
      if (!snap.ok) return res.status(snap.statusCode || 400).json({ error: snap.error });
- 
+
      // Determine final date/times
      const finalDate = shift_date || existing.shift_date;
      const existingStartHHmm = formatTimeHHmm(existing.start_time);
      const existingEndHHmm = formatTimeHHmm(existing.end_time);
      const finalStartHHmm = start_time || existingStartHHmm;
      const finalEndHHmm = end_time || existingEndHHmm;
- 
+
      const updateData = {
        employee_id: finalEmployeeId,
        employee_name_snapshot: snap.snapshot.employee_name_snapshot,
@@ -3266,7 +3619,7 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
      if (shift_date || end_time) updateData.end_time = hhmmToUtcIso(finalDate, finalEndHHmm);
      if (break_minutes !== undefined) updateData.break_minutes = parseInt(break_minutes);
      if (notes !== undefined) updateData.notes = notes ?? null;
- 
+
      const { data: updated, error: updErr } = await supabase
        .from('employee_shifts')
        .update(updateData)
@@ -3274,12 +3627,12 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
        .eq('manager_id', managerId)
        .select('id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at')
        .single();
- 
+
      if (updErr) {
        console.error('PUT /employee-shifts update error:', updErr);
        return res.status(500).json({ error: 'Failed to update employee shift' });
      }
- 
+
      const resp = {
        ...updated,
        hourly_wage_snapshot: Number(updated.hourly_wage_snapshot),
@@ -3292,7 +3645,7 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
      return res.status(500).json({ error: 'Internal server error' });
    }
  });
- 
+
  /**
   * DELETE /employee-shifts/:id
   */
@@ -3303,10 +3656,10 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
        incrementAgentWriteDenied('/employee-shifts', 'DELETE', 'agent_write_blocked_middleware');
        return res.status(403).json({ error: 'Agent writes are not allowed' });
      }
- 
+
      const managerId = req.user_id;
      const id = req.params.id;
- 
+
      // Ensure row belongs to manager
      const { data: existing, error: fetchErr } = await supabase
        .from('employee_shifts')
@@ -3315,18 +3668,18 @@ app.post('/employee-shifts', authenticateUser, async (req, res) => {
        .eq('manager_id', managerId)
        .single();
      if (fetchErr || !existing) return res.status(404).json({ error: 'Shift not found' });
- 
+
      const { error } = await supabase
        .from('employee_shifts')
        .delete()
        .eq('id', id)
        .eq('manager_id', managerId);
- 
+
      if (error) {
        console.error('DELETE /employee-shifts error:', error);
        return res.status(500).json({ error: 'Failed to delete employee shift' });
      }
- 
+
      return res.status(204).send();
    } catch (e) {
      console.error('DELETE /employee-shifts exception:', e);
@@ -3358,7 +3711,7 @@ app.get('/reports/wages', authenticateUser, async (req, res) => {
         .select('id, manager_id')
         .eq('id', employee_id)
         .single();
-      
+
       if (error || !emp || emp.manager_id !== managerId) {
         return res.status(403).json({ error: 'Employee not found or access denied' });
       }
@@ -3390,7 +3743,7 @@ app.get('/reports/wages', authenticateUser, async (req, res) => {
     // Set CSV headers
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="wage_report_${new Date().toISOString().split('T')[0]}.csv"`);
-    
+
     // Write CSV header row
     res.write('employee_name,shift_date,start_time,end_time,duration_hours,break_minutes,break_policy_used,paid_hours,tariff_level_snapshot,hourly_wage_snapshot,gross_wage\n');
 
@@ -3398,7 +3751,7 @@ app.get('/reports/wages', authenticateUser, async (req, res) => {
     for (const shift of shifts || []) {
       const startHHmm = formatTimeHHmm(shift.start_time);
       const endHHmm = formatTimeHHmm(shift.end_time);
-      
+
       // Calculate wages using existing function
       const calc = calcEmployeeShift({
         start_time: startHHmm,
@@ -4586,7 +4939,7 @@ app.get('/api/employees', async (req, res) => {
     const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
     console.log(`[route] GET /api/employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId ? resolvedUserId.slice(0,6) + '…' + resolvedUserId.slice(-4) : 'none'} body=${bodyPreview}`);
   } catch (_) {}
-  
+
   try {
     const userId = req?.auth?.userId;
     if (!userId) return res.status(401).json({ error: "Missing userId" });
@@ -4641,7 +4994,7 @@ app.get('/api/settings', async (req, res) => {
     const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
     console.log(`[route] GET /api/settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId ? resolvedUserId.slice(0,6) + '…' + resolvedUserId.slice(-4) : 'none'} body=${bodyPreview}`);
   } catch (_) {}
-  
+
   try {
     const userId = req?.auth?.userId;
     if (!userId) return res.status(401).json({ error: "Missing userId" });

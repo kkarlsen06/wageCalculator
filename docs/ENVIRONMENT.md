@@ -17,6 +17,9 @@ These are loaded at build time by Vite, and surfaced to legacy code via `src/run
 - `SUPABASE_URL` (required): Supabase project URL
 - `SUPABASE_SERVICE_ROLE_KEY` (required): Service role key for server-side operations (never expose to client)
 - `OPENAI_API_KEY` (optional): Enables chat assistant endpoints
+- `STRIPE_SECRET_KEY` (required for checkout): Stripe secret API key used server-side
+- `STRIPE_WEBHOOK_SECRET` (required for webhook): Endpoint secret for validating `POST /api/stripe-webhook`
+- `APP_BASE_URL` (optional): Explicit base URL used to build Stripe success/cancel redirects
 - `CORS_ORIGINS` (optional): Comma-separated allowlist for CORS
 - `JSON_BODY_LIMIT` (optional, default `1mb`)
 - `FEATURE_EMPLOYEES` (optional, default ON): Set to `false` to hide feature in `/config`
@@ -30,6 +33,5 @@ Server-side JWT verification uses `${SUPABASE_URL}/auth/v1/.well-known/jwks.json
 ### Security Notes
 - Never place backend secrets (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`) in Netlify (frontend) environment.
 - The server verifies JWTs using JWKS from `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`.
-
 
 

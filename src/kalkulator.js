@@ -1,5 +1,6 @@
 // Initialize runtime config before any kalkulator scripts
 import '/src/runtime-config.js';
+import '/src/js/error-handling.js';
 
 // CSS is linked via kalkulator/index.html to avoid duplication
 
@@ -26,4 +27,26 @@ import '/kalkulator/js/app.js';
 // Expose inline handlers compatibility by attaching window.app if the module exported it.
 // window.app is attached by /kalkulator/js/app.js when it initializes
 
+// Ensure checkout helpers are available on the kalkulator page
+import '/src/js/checkout.js';
 
+// Checkout status toast on app page
+if (typeof window !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get('checkout');
+      if (status && window.ErrorHelper) {
+        if (status === 'success') {
+          window.ErrorHelper.showSuccess('Betaling fullført!');
+        } else if (status === 'cancel' || status === 'error' || status === 'failed') {
+          window.ErrorHelper.showError('Betaling ble avbrutt eller feilet.');
+        }
+        // Clean query param to avoid repeat on refresh
+        params.delete('checkout');
+        const base = window.location.origin + window.location.pathname + (params.toString() ? `?${params}` : '');
+        window.history.replaceState({}, document.title, base);
+      }
+    } catch (_) {}
+  });
+}

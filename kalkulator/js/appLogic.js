@@ -3324,6 +3324,28 @@ export const app = {
         }
     },
 
+    // Subscription modal
+    async openSubscription() {
+        // Close dropdown first
+        this.closeProfileDropdown();
+
+        // Close other modals if any
+        this.closeProfile();
+
+        try {
+            const { SubscriptionModal } = await import('./subscriptionModal.js');
+            if (!this._subscriptionModal) {
+                this._subscriptionModal = new SubscriptionModal();
+            }
+            await this._subscriptionModal.show();
+        } catch (e) {
+            console.error('Error opening subscription modal:', e);
+            if (window.ErrorHelper && window.ErrorHelper.showError) {
+                window.ErrorHelper.showError('Kunne ikke åpne abonnement.');
+            }
+        }
+    },
+
     // Load user nickname for header display (profile pictures removed)
     async loadUserNickname() {
         try {
@@ -11370,4 +11392,3 @@ Hva kan jeg hjelpe deg med i dag?`;
         }, 3000);
     }
 };
-
