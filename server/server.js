@@ -832,7 +832,7 @@ app.post('/api/portal/upgrade', authenticateUser, async (req, res) => {
     form.set('return_url', return_url);
     form.set('flow_data[type]', 'subscription_update');
     form.set('flow_data[subscription_update][subscription]', subscriptionId);
-    form.set('flow_data[subscription_update][proration_behavior]', 'create_prorations');
+
 
     // Optional: portal configuration ID via env
     const portalConfigId = process.env.STRIPE_PORTAL_CONFIG_ID;
@@ -896,7 +896,7 @@ app.post('/portal/upgrade', authenticateUser, async (req, res) => {
     form.set('return_url', return_url);
     form.set('flow_data[type]', 'subscription_update');
     form.set('flow_data[subscription_update][subscription]', subscriptionId);
-    form.set('flow_data[subscription_update][proration_behavior]', 'create_prorations');
+
 
     const portalConfigId = process.env.STRIPE_PORTAL_CONFIG_ID;
     if (portalConfigId) form.set('configuration', portalConfigId);
