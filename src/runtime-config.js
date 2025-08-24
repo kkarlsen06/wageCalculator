@@ -5,6 +5,8 @@
 const viteSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const viteSupabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const viteApiBase = import.meta.env.VITE_API_BASE;
+const isProd = Boolean(import.meta.env && import.meta.env.PROD);
+const isLocalHost = (u) => /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?/i.test(String(u || ''));
 
 // Safe defaults (kept for local dev/backwards compatibility)
 const defaultConfig = {
@@ -22,7 +24,9 @@ const resolvedConfig = {
     url: viteSupabaseUrl || defaultConfig.supabase.url,
     anonKey: viteSupabasePublishableKey || defaultConfig.supabase.anonKey,
   },
-  apiBase: viteApiBase || defaultConfig.apiBase,
+  apiBase: (typeof viteApiBase === 'string' && viteApiBase.trim() !== '' && !(isProd && isLocalHost(viteApiBase)))
+    ? viteApiBase
+    : (isProd ? '/api' : defaultConfig.apiBase),
   debug: defaultConfig.debug,
   version: defaultConfig.version,
 };
