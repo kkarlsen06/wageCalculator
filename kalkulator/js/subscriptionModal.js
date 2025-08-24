@@ -1,6 +1,6 @@
 // Subscription Modal Component
 // - Creates a modal matching existing .modal styling
-// - Fetches current user's subscription from Supabase 'subscriptions'
+// - Fetches current user's subscription from Supabase view 'subscription_tiers'
 // - Provides upgrade buttons that call window.startCheckout
 
 import { getUserId } from '../../src/lib/auth/getUserId.js';
@@ -165,10 +165,10 @@ export class SubscriptionModal {
         return;
       }
 
-      // Fetch possible subscription row(s) for the user
+      // Fetch subscription tier from Supabase view
       const { data, error } = await window.supa
-        .from('subscriptions')
-        .select('status,current_period_end,price_id')
+        .from('subscription_tiers')
+        .select('status,price_id,tier,is_active,current_period_end,updated_at')
         .eq('user_id', userId);
 
       if (error) {
@@ -178,6 +178,9 @@ export class SubscriptionModal {
       }
 
       const row = Array.isArray(data) && data.length ? data[0] : null;
+      if (import.meta?.env?.DEV || window.CONFIG?.debug) {
+        console.log('[subscription_tiers] raw row:', row);
+      }
       if (!row) {
         if (this.statusEl) this.statusEl.textContent = 'Ingen aktivt abonnement';
         if (this.periodEl) this.periodEl.textContent = '';
@@ -196,27 +199,40 @@ export class SubscriptionModal {
         : (endRaw ? new Date(endRaw) : null);
       const formatted = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('no-NO') : null;
 
-      const normalizedStatus = String(status).toLowerCase();
-      const isSubscribed = normalizedStatus === 'active';
-
-      // Determine plan from price_id
-      const PRO_PRICE = 'price_1RzQ85Qiotkj8G58AO6st4fh';
-      const MAX_PRICE = 'price_1RzQC1Qiotkj8G58tYo4U5oO';
-      const priceId = row.price_id || null;
-      const plan = priceId === PRO_PRICE ? 'Pro' : (priceId === MAX_PRICE ? 'Max' : (priceId ? 'Ukjent' : null));
+      const isActive = !!row.is_active;
+      const tier = String(row.tier || '').toLowerCase();
+      const plan = tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null;
 
       // Update UI
       if (this.statusEl) this.statusEl.textContent = `Status: ${status}${plan ? ` (${plan})` : ''}`;
       if (this.periodEl) this.periodEl.textContent = formatted ? `Neste faktureringsdato: ${formatted}` : '';
       if (this.planEl) this.planEl.textContent = plan ? `Plan: ${plan}` : '';
 
-      // Show thanks heart if subscribed
-      if (this.thanksEl) this.thanksEl.style.display = isSubscribed ? 'flex' : 'none';
+      // Show thanks heart if active
+      if (this.thanksEl) this.thanksEl.style.display = isActive ? 'flex' : 'none';
 
-      // Buttons: when subscribed, only show Manage; otherwise show both upgrade buttons
-      if (this.manageBtn) this.manageBtn.style.display = isSubscribed ? '' : 'none';
-      if (this.proBtn) this.proBtn.style.display = isSubscribed ? 'none' : '';
-      if (this.maxBtn) this.maxBtn.style.display = isSubscribed ? 'none' : '';
+      // Buttons per requirements:
+      // - tier = 'pro' and active → show Manage + offer upgrade to Max
+      // - tier = 'max' and active → show Manage only
+      // - is_active = false → show both upgrade options
+      if (!isActive) {
+        if (this.manageBtn) this.manageBtn.style.display = 'none';
+        if (this.proBtn) this.proBtn.style.display = '';
+        if (this.maxBtn) this.maxBtn.style.display = '';
+      } else if (tier === 'pro') {
+        if (this.manageBtn) this.manageBtn.style.display = '';
+        if (this.proBtn) this.proBtn.style.display = 'none';
+        if (this.maxBtn) this.maxBtn.style.display = '';
+      } else if (tier === 'max') {
+        if (this.manageBtn) this.manageBtn.style.display = '';
+        if (this.proBtn) this.proBtn.style.display = 'none';
+        if (this.maxBtn) this.maxBtn.style.display = 'none';
+      } else {
+        // Active but unknown tier: default to manage only
+        if (this.manageBtn) this.manageBtn.style.display = '';
+        if (this.proBtn) this.proBtn.style.display = 'none';
+        if (this.maxBtn) this.maxBtn.style.display = 'none';
+      }
     } catch (e) {
       console.error('[subscription] exception:', e);
       if (this.statusEl) this.statusEl.textContent = 'Kunne ikke hente abonnement.';

@@ -944,7 +944,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
         }
       }
 
-      const userId = (sub?.metadata?.user_id) || (customer?.metadata?.user_id) || null;
+      let userId = (sub?.metadata?.user_id) || (customer?.metadata?.user_id) || null;
 
       console.log('[webhook] resolved userId:', userId, 'cust.meta:', customer?.metadata, 'sub.meta:', sub?.metadata);
 
@@ -959,6 +959,47 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 
       // Extract price_id from the subscription's first item (if present)
       const priceId = sub?.items?.data?.[0]?.price?.id ?? null;
+
+      // Fallback: map customer.email -> user_id if metadata lookups failed
+      if (!userId && customer && typeof customer.email === 'string') {
+        const email = customer.email.trim().toLowerCase();
+        if (email) {
+          try {
+            // Prefer direct GoTrue Admin API to reliably filter by email
+            const base = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+            const url = `${base}/auth/v1/admin/users?email=${encodeURIComponent(email)}`;
+            const headers = {
+              'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+              'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY
+            };
+            let matches = [];
+            try {
+              const resp = await fetch(url, { headers });
+              if (resp.ok) {
+                const body = await resp.json().catch(() => null);
+                const users = Array.isArray(body?.users) ? body.users : (Array.isArray(body) ? body : []);
+                matches = users.filter(u => (String(u?.email || '').trim().toLowerCase() === email));
+              }
+            } catch (e) {
+              console.warn('[/api/stripe-webhook] admin email lookup failed:', e?.message || e);
+            }
+
+            if (matches.length === 1) {
+              userId = matches[0]?.id || null;
+              console.log('[webhook] fallback email map', { email, userId, subId: subscriptionId, custId: customerId, priceId, status });
+            } else if (matches.length > 1) {
+              console.warn('[webhook] email map failed', { email, subId: subscriptionId, custId: customerId, reason: 'multiple' });
+              return; // bail: ambiguous
+            } else {
+              console.info('[webhook] email map failed', { email, subId: subscriptionId, custId: customerId });
+              return; // no match: do not write
+            }
+          } catch (e) {
+            console.warn('[/api/stripe-webhook] email mapping exception:', e?.message || e);
+            return;
+          }
+        }
+      }
 
       if (!userId) {
         console.error('[webhook] still missing user_id; refusing to write');
@@ -995,6 +1036,14 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
             .select()
             .single();
           console.log('[webhook] update:', { data, error });
+        } else if (type === 'customer.subscription.deleted') {
+          const { data, error } = await supabase
+            .from('subscriptions')
+            .update(record)
+            .eq('user_id', userId)
+            .select()
+            .single();
+          console.log('[webhook] delete update:', { data, error });
         }
       } catch (e) {
         console.error('[/api/stripe-webhook] Upsert exception:', e?.message || e);
