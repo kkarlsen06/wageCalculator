@@ -34,6 +34,9 @@ import { authMiddleware } from './middleware/auth.js';
 // ---------- path helpers ----------
 const FRONTEND_DIR = __dirname;
 
+// Hardcoded public base URL for Stripe redirects
+const BASE_URL = 'https://kkarlsen.art';
+
 // ---------- app & core middleware ----------
 const app = express();
 
@@ -454,15 +457,10 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
       quantity = q;
     }
 
-    // Compute absolute app base URL for redirects. Prefer explicit env, then forwarded host/proto.
-    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').toString();
-    const host = (req.headers['x-forwarded-host'] || req.get('host') || '').toString();
-    const envBase = process.env.APP_BASE_URL || process.env.PUBLIC_APP_BASE_URL || '';
-    const computedOrigin = host ? `${proto}://${host}` : '';
-    const appBase = (envBase || computedOrigin).replace(/\/$/, '');
-    const appPath = '/kalkulator/index.html';
-    const success_url = `${appBase}${appPath}?checkout=success`;
-    const cancel_url = `${appBase}${appPath}?checkout=cancel`;
+    // Hardcoded base URL for production (as requested)
+    const success_url = `${BASE_URL}/kalkulator/index.html?checkout=success`;
+    const cancel_url = `${BASE_URL}/kalkulator/index.html?checkout=cancel`;
+    console.log('[stripe urls]', { success_url, cancel_url, return_url: `${BASE_URL}/kalkulator/index.html` });
 
 
 	    // Extract Supabase user ID from verified JWT for consistent metadata
@@ -663,13 +661,9 @@ app.post('/api/portal', authenticateUser, async (req, res) => {
       return res.status(404).json({ error: 'No Stripe customer found for user' });
     }
 
-    // Compute return URL back to app
-    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').toString();
-    const host = (req.headers['x-forwarded-host'] || req.get('host') || '').toString();
-    const envBase = process.env.APP_BASE_URL || process.env.PUBLIC_APP_BASE_URL || '';
-    const computedOrigin = host ? `${proto}://${host}` : '';
-    const appBase = (envBase || computedOrigin).replace(/\/$/, '');
-    const return_url = `${appBase}/kalkulator/index.html`;
+    // Hardcoded return URL for production (as requested)
+    const return_url = `${BASE_URL}/kalkulator/index.html`;
+    console.log('[stripe urls]', { return_url });
 
     // Create portal session via Stripe REST API
     const form = new URLSearchParams();
@@ -769,12 +763,9 @@ app.post('/portal', authenticateUser, async (req, res) => {
 
     if (!customerId) return res.status(404).json({ error: 'No Stripe customer found for user' });
 
-    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').toString();
-    const host = (req.headers['x-forwarded-host'] || req.get('host') || '').toString();
-    const envBase = process.env.APP_BASE_URL || process.env.PUBLIC_APP_BASE_URL || '';
-    const computedOrigin = host ? `${proto}://${host}` : '';
-    const appBase = (envBase || computedOrigin).replace(/\/$/, '');
-    const return_url = `${appBase}/kalkulator/index.html`;
+    // Hardcoded return URL for production (as requested)
+    const return_url = `${BASE_URL}/kalkulator/index.html`;
+    console.log('[stripe urls]', { return_url });
 
     const form = new URLSearchParams();
     form.set('customer', customerId);
