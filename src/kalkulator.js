@@ -1,5 +1,6 @@
 // Initialize runtime config before any kalkulator scripts
 import '/src/runtime-config.js';
+import '/src/js/apiBase.js'; // logs [api] base on boot
 import '/src/js/error-handling.js';
 
 // CSS is linked via kalkulator/index.html to avoid duplication

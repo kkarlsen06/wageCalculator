@@ -1,11 +1,5 @@
 import { supabase } from '../supabase-client.js'
-
-const API_BASE =
-  (import.meta?.env?.VITE_API_BASE)
-    ? import.meta.env.VITE_API_BASE
-    : ((typeof window !== 'undefined' && window.location?.hostname === 'localhost')
-        ? 'http://localhost:3000'
-        : '');
+import { API_BASE } from './apiBase.js'
 
 /**
  * Start a Stripe Checkout flow for a given price.

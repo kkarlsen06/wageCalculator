@@ -4,8 +4,10 @@
  * Following PLACEHOLDER_EMPLOYEES_V1 ruleset
  */
 
+import { API_BASE } from '../../src/js/apiBase.js';
+
 export class EmployeeService {
-    constructor(apiBase = window.CONFIG?.apiBase || '/api') {
+    constructor(apiBase = (window.CONFIG?.apiBase || API_BASE || '/api')) {
         this.apiBase = apiBase;
         this.cache = new Map();
         // Avatars removed

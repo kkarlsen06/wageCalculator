@@ -1,5 +1,6 @@
 import './styles.css';
 import './css/legal-modal.css';
+import './js/apiBase.js'; // logs [api] base on boot
 
 // Root landing page scripts (side-effect imports)
 import './js/loading-helpers.js';
