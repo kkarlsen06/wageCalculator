@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const { data: { user } } = await supa.auth.getUser();
       if (!user) return;
 
-      // Load theme preferences from database (priority: localStorage > database)
+      // Load theme preferences from database (priority: database > localStorage)
       if (window.themeManager && window.themeManager.loadThemeFromDatabase) {
         await window.themeManager.loadThemeFromDatabase();
       }

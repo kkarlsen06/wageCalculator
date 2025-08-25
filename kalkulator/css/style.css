@@ -4940,7 +4940,7 @@ input[type="time"].form-control[value=""]:focus {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 20px;
+  padding: 16px;
   margin-bottom: 24px;
 }
 
@@ -5003,7 +5003,7 @@ input[type="time"].form-control[value=""]:focus {
 /* Early user messages */
 .early-user-message,
 .early-user-subscribed {
-  display: flex !important;
+  display: none;
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
@@ -5011,33 +5011,33 @@ input[type="time"].form-control[value=""]:focus {
   background: linear-gradient(135deg, 
     rgba(147, 51, 234, 0.15), 
     rgba(126, 34, 206, 0.12)
-  ) !important;
-  border: 1px solid rgba(147, 51, 234, 0.3) !important;
+  );
+  border: 1px solid rgba(147, 51, 234, 0.3);
   border-radius: 12px;
-  color: var(--primary) !important;
+  color: var(--primary);
   font-size: var(--text-sm);
 }
 
 .early-user-message svg,
 .early-user-subscribed svg {
-  color: var(--primary) !important;
+  color: var(--primary);
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .early-user-content h4,
 .early-user-subscribed-content h4 {
-  margin: 0 0 8px 0 !important;
-  font-size: var(--text-base) !important;
-  font-weight: 600 !important;
-  color: var(--primary) !important;
+  margin: 0 0 8px 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--primary);
 }
 
 .early-user-content p,
 .early-user-subscribed-content p {
-  margin: 0 !important;
+  margin: 0;
   line-height: 1.5;
-  color: var(--primary) !important;
+  color: var(--primary);
   opacity: 0.9;
 }
 
@@ -5105,6 +5105,14 @@ input[type="time"].form-control[value=""]:focus {
 .feature::before {
   content: '✓';
   color: var(--success);
+  font-weight: 600;
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+.feature-limitation::before {
+  content: '✕';
+  color: var(--error);
   font-weight: 600;
   margin-right: 8px;
   font-size: 12px;
@@ -16826,5 +16834,137 @@ body.chatbox-view .chatbox-container {
     to {
         transform: translateX(100%);
         opacity: 0;
+    }
+}
+
+/* Employee Upgrade Prompt Styles */
+.employees-upgrade-container {
+    padding: 2rem 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.upgrade-prompt-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    padding: 2rem;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.upgrade-prompt-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.5rem;
+    padding: 8px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.upgrade-prompt-card h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+}
+
+.upgrade-description {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0 0 2rem 0;
+}
+
+.upgrade-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0 0 2rem 0;
+    text-align: left;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+}
+
+.feature-item svg {
+    color: var(--success);
+    flex-shrink: 0;
+}
+
+.feature-item span {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.upgrade-to-enterprise-btn {
+    width: 100%;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.upgrade-to-enterprise-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+}
+
+.upgrade-to-enterprise-btn[aria-busy="true"] {
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+.upgrade-to-enterprise-btn[aria-busy="true"] svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .employees-upgrade-container {
+        padding: 1rem 0.5rem;
+        min-height: 50vh;
+    }
+    
+    .upgrade-prompt-card {
+        padding: 1.5rem;
+    }
+    
+    .upgrade-prompt-card h3 {
+        font-size: 1.25rem;
+    }
+    
+    .upgrade-description {
+        font-size: 0.95rem;
     }
 }

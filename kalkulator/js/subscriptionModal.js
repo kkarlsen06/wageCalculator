@@ -102,9 +102,7 @@ export class SubscriptionModal {
                   <span class="feature">Lagre vakter i én måned</span>
                   <span class="feature">Grunnleggende rapporter</span>
                   <span class="feature">Enkel vaktplanlegging</span>
-                </div>
-                <div class="plan-limitation">
-                  Kun én måned med vakter om gangen
+                  <span class="feature feature-limitation">Kun én måned med vakter om gangen</span>
                 </div>
               </div>
               
@@ -340,13 +338,11 @@ export class SubscriptionModal {
         if (this.thanksEl) this.thanksEl.style.display = 'none';
         if (this.earlyUserSubscribedEl) {
           console.log('[subscription modal] updateFromGlobalState: FORCE hiding earlyUserSubscribedEl');
-          this.earlyUserSubscribedEl.style.display = 'none !important';
-          this.earlyUserSubscribedEl.style.visibility = 'hidden';
+          this.earlyUserSubscribedEl.style.display = 'none';
         }
         if (this.earlyUserEl) {
           console.log('[subscription modal] updateFromGlobalState: Setting earlyUserEl to flex');
           this.earlyUserEl.style.display = 'flex';
-          this.earlyUserEl.style.visibility = 'visible';
         }
         
         if (this.plansEl) this.plansEl.style.display = 'none';
@@ -360,9 +356,9 @@ export class SubscriptionModal {
       }
       
       // Regular free user
-      if (this.statusEl) this.statusEl.textContent = 'Gratis plan aktiv';
+      if (this.statusEl) this.statusEl.textContent = 'Gratis plan';
       if (this.periodEl) this.periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';
-      if (this.planEl) this.planEl.textContent = 'Aktuell plan: Gratis';
+      if (this.planEl) this.planEl.textContent = 'Se abonnementene nedenfor. Abonner for tilgang til flere funksjoner!';
       if (this.thanksEl) this.thanksEl.style.display = 'none';
       if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
       if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
@@ -388,35 +384,24 @@ export class SubscriptionModal {
 
     if (this.statusEl) this.statusEl.textContent = `${status.charAt(0).toUpperCase()}${status.slice(1)}${plan ? ` - ${plan}` : ''}`;
     if (this.periodEl) this.periodEl.textContent = formatted ? `Neste fornyelse: ${formatted}` : '';
-    if (this.planEl) this.planEl.textContent = plan ? `Aktuell plan: ${plan}` : '';
+    if (this.planEl) this.planEl.textContent = plan ? `Takk for abonnementet!` : '';
     
     // Handle special messages for early users - ensure they are mutually exclusive
     const showEarlyUserSubscribedMessage = beforePaywall && isActive && tier !== 'free';
     const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
     
-    // Always hide both first to ensure mutual exclusivity
-    if (this.thanksEl) {
-      this.thanksEl.style.setProperty('display', 'none', 'important');
-      this.thanksEl.style.visibility = 'hidden';
-    }
-    if (this.earlyUserSubscribedEl) {
-      this.earlyUserSubscribedEl.style.setProperty('display', 'none', 'important');
-      this.earlyUserSubscribedEl.style.visibility = 'hidden';
-    }
-    if (this.earlyUserEl) {
-      this.earlyUserEl.style.setProperty('display', 'none', 'important');
-      this.earlyUserEl.style.visibility = 'hidden';
-    }
+    // Always hide all first to ensure mutual exclusivity
+    if (this.thanksEl) this.thanksEl.style.display = 'none';
+    if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
+    if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
     
     // Then show the appropriate one
     if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
       console.log('[subscription modal] updateFromGlobalState: Showing earlyUserSubscribedEl', { beforePaywall, isActive, tier });
-      this.earlyUserSubscribedEl.style.setProperty('display', 'flex', 'important');
-      this.earlyUserSubscribedEl.style.visibility = 'visible';
+      this.earlyUserSubscribedEl.style.display = 'flex';
     } else if (showRegularThanks && this.thanksEl) {
       console.log('[subscription modal] updateFromGlobalState: Showing regular thanks', { beforePaywall, isActive, tier });
-      this.thanksEl.style.setProperty('display', 'flex', 'important');
-      this.thanksEl.style.visibility = 'visible';
+      this.thanksEl.style.display = 'flex';
     }
     if (this.plansEl) this.plansEl.style.display = isActive && tier !== 'free' ? 'none' : 'block';
     if (this.statusIcon) this.statusIcon.style.color = isActive ? 'var(--success)' : 'var(--text-secondary)';
@@ -507,13 +492,11 @@ export class SubscriptionModal {
           if (this.thanksEl) this.thanksEl.style.display = 'none';
           if (this.earlyUserSubscribedEl) {
             console.log('[subscription modal] FORCE hiding earlyUserSubscribedEl (should not show for non-subscribers)');
-            this.earlyUserSubscribedEl.style.setProperty('display', 'none', 'important');
-            this.earlyUserSubscribedEl.style.visibility = 'hidden';
+            this.earlyUserSubscribedEl.style.display = 'none';
           }
           if (this.earlyUserEl) {
             console.log('[subscription modal] Setting earlyUserEl to flex');
             this.earlyUserEl.style.display = 'flex';
-            this.earlyUserEl.style.visibility = 'visible';
           }
           
           if (this.plansEl) this.plansEl.style.display = 'none';
@@ -525,9 +508,9 @@ export class SubscriptionModal {
         }
         
         // Regular free user
-        if (this.statusEl) this.statusEl.textContent = 'Gratis plan aktiv';
+        if (this.statusEl) this.statusEl.textContent = 'Gratis plan';
         if (this.periodEl) this.periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';
-        if (this.planEl) this.planEl.textContent = 'Aktuell plan: Gratis';
+        if (this.planEl) this.planEl.textContent = 'Se abonnementene nedenfor. Abonner for tilgang til flere funksjoner!';
         if (this.thanksEl) this.thanksEl.style.display = 'none';
         if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
         if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
@@ -559,35 +542,24 @@ export class SubscriptionModal {
       // Update UI
       if (this.statusEl) this.statusEl.textContent = `${status.charAt(0).toUpperCase()}${status.slice(1)}${plan ? ` - ${plan}` : ''}`;
       if (this.periodEl) this.periodEl.textContent = formatted ? `Neste fornyelse: ${formatted}` : '';
-      if (this.planEl) this.planEl.textContent = plan ? `Aktuell plan: ${plan}` : '';
+      if (this.planEl) this.planEl.textContent = plan ? `Takk for abonnementet!` : '';
 
       // Handle special messages for early users - ensure they are mutually exclusive
       const showEarlyUserSubscribedMessage = beforePaywall && isActive && tier !== 'free';
       const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
       
-      // Always hide both first to ensure mutual exclusivity
-      if (this.thanksEl) {
-        this.thanksEl.style.setProperty('display', 'none', 'important');
-        this.thanksEl.style.visibility = 'hidden';
-      }
-      if (this.earlyUserSubscribedEl) {
-        this.earlyUserSubscribedEl.style.setProperty('display', 'none', 'important');
-        this.earlyUserSubscribedEl.style.visibility = 'hidden';
-      }
-      if (this.earlyUserEl) {
-        this.earlyUserEl.style.setProperty('display', 'none', 'important');
-        this.earlyUserEl.style.visibility = 'hidden';
-      }
+      // Always hide all first to ensure mutual exclusivity
+      if (this.thanksEl) this.thanksEl.style.display = 'none';
+      if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
+      if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
       
       // Then show the appropriate one
       if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
         console.log('[subscription modal] loadSubscription: Showing earlyUserSubscribedEl', { beforePaywall, isActive, tier });
-        this.earlyUserSubscribedEl.style.setProperty('display', 'flex', 'important');
-        this.earlyUserSubscribedEl.style.visibility = 'visible';
+        this.earlyUserSubscribedEl.style.display = 'flex';
       } else if (showRegularThanks && this.thanksEl) {
         console.log('[subscription modal] loadSubscription: Showing regular thanks', { beforePaywall, isActive, tier });
-        this.thanksEl.style.setProperty('display', 'flex', 'important');
-        this.thanksEl.style.visibility = 'visible';
+        this.thanksEl.style.display = 'flex';
       }
 
       // Buttons per requirements:

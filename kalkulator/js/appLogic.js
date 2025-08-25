@@ -9681,7 +9681,10 @@ export const app = {
                 this.showChatGPTView();
                 break;
             case 'employees':
-                this.showEmployeesView();
+                // Handle async call for employees view
+                this.showEmployeesView().catch(error => {
+                    console.error('Error showing employees view:', error);
+                });
                 break;
         }
     },
@@ -10017,7 +10020,7 @@ Hva kan jeg hjelpe deg med i dag?`;
         }
     },
 
-    showEmployeesView() {
+    async showEmployeesView() {
         const body = document.body;
 
         // Remove other view classes and add employees view
@@ -10039,27 +10042,35 @@ Hva kan jeg hjelpe deg med i dag?`;
             console.warn('Could not hide dashboard cards in employees view', e);
         }
 
-        // Show employees content with carousel
-        this.showEmployeesPlaceholder();
-
-        // Load employees if not already loaded
-        if (this.employees.length === 0 && !this.employeesLoading) {
-            this.loadEmployees().catch(error => {
-                console.error('Failed to load employees:', error);
-            });
-        }
-
         // Store current view for cleanup purposes
         this.currentView = 'employees';
 
-        // Clear previous (user_shifts) list while loading employee shifts
-        this.shifts = [];
-        this.updateDisplay();
-        this.fetchAndDisplayEmployeeShifts?.();
+        // Check for enterprise subscription
+        const hasEnterprise = await hasEnterpriseSubscription();
+        
+        if (hasEnterprise) {
+            // Show normal employee interface
+            this.showEmployeesPlaceholder();
 
-        // Preload avatars for better performance
-        if (this.employeeCarousel) {
-            this.employeeCarousel.preloadAvatars?.();
+            // Load employees if not already loaded
+            if (this.employees.length === 0 && !this.employeesLoading) {
+                this.loadEmployees().catch(error => {
+                    console.error('Failed to load employees:', error);
+                });
+            }
+
+            // Clear previous (user_shifts) list while loading employee shifts
+            this.shifts = [];
+            this.updateDisplay();
+            this.fetchAndDisplayEmployeeShifts?.();
+
+            // Preload avatars for better performance
+            if (this.employeeCarousel) {
+                this.employeeCarousel.preloadAvatars?.();
+            }
+        } else {
+            // Show upgrade prompt for non-enterprise users
+            this.showEmployeeUpgradePrompt();
         }
     },
 
@@ -10092,6 +10103,105 @@ Hva kan jeg hjelpe deg med i dag?`;
 
         // Initialize employee carousel
         this.initializeEmployeeCarousel();
+    },
+
+    showEmployeeUpgradePrompt() {
+        // Create or show employees container with upgrade prompt
+        let employeesContainer = document.querySelector('.employees-container');
+        if (!employeesContainer) {
+            employeesContainer = document.createElement('div');
+            employeesContainer.className = 'employees-container';
+            
+            // Insert after the tab bar
+            const tabBarContainer = document.querySelector('.tab-bar-container');
+            if (tabBarContainer) {
+                tabBarContainer.parentNode.insertBefore(employeesContainer, tabBarContainer.nextSibling);
+            }
+        }
+
+        employeesContainer.innerHTML = `
+            <div class="employees-upgrade-container">
+                <div class="upgrade-prompt-card">
+                    <div class="upgrade-prompt-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <path d="M20 8v6M23 11l-3-3-3 3"></path>
+                        </svg>
+                    </div>
+                    <h3>Ansattadministrasjon</h3>
+                    <p class="upgrade-description">
+                        Med Enterprise-abonnementet kan du administrere ansatte, 
+                        beregne lønn for teamet ditt og få avanserte rapporter.
+                    </p>
+                    <div class="upgrade-features">
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            <span>Administrer ansatte</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            <span>Lønnsberegning for ansatte</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            <span>Avanserte rapporter</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            <span>Dedikert støtte</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary upgrade-to-enterprise-btn" id="upgradeToEnterpriseBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                        </svg>
+                        Oppgrader til Enterprise
+                    </button>
+                </div>
+            </div>
+        `;
+
+        employeesContainer.style.display = 'block';
+
+        // Add event listener to upgrade button
+        const upgradeBtn = employeesContainer.querySelector('#upgradeToEnterpriseBtn');
+        if (upgradeBtn) {
+            upgradeBtn.addEventListener('click', async () => {
+                const btn = upgradeBtn;
+                const wasDisabled = btn.disabled;
+                btn.disabled = true;
+                btn.setAttribute('aria-busy', 'true');
+                
+                try {
+                    // Use the same logic as the subscription modal for Enterprise upgrade
+                    if (window.startCheckout) {
+                        await window.startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO', { mode: 'subscription' });
+                    } else {
+                        console.warn('startCheckout not available');
+                        if (window.showToast) {
+                            window.showToast('Kunne ikke starte oppgradering', 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Upgrade to Enterprise failed:', error);
+                    if (window.showToast) {
+                        window.showToast('Kunne ikke starte oppgradering', 'error');
+                    }
+                } finally {
+                    btn.removeAttribute('aria-busy');
+                    btn.disabled = wasDisabled;
+                }
+            });
+        }
     },
 
     /**
@@ -10159,8 +10269,8 @@ Hva kan jeg hjelpe deg med i dag?`;
     async updateTabBarVisibility() {
         const ansatteTab = document.getElementById('tabAnsatte');
         if (ansatteTab) {
-            const hasEnterprise = await hasEnterpriseSubscription();
-            ansatteTab.style.display = hasEnterprise ? 'flex' : 'none';
+            // Always show the Ansatte tab
+            ansatteTab.style.display = 'flex';
         }
     },
 

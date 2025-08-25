@@ -100,16 +100,13 @@ class ThemeManager {
           databaseTheme = row?.theme;
         }
 
-        // Apply database theme if found and no local storage preference exists
+        // Apply database theme if found (database takes precedence over local storage)
         if (databaseTheme && Object.values(THEMES).includes(databaseTheme)) {
-          const localTheme = this.getStoredTheme();
-          if (!localTheme) {
-            console.log(`Loading theme from database: ${databaseTheme}`);
-            this.currentTheme = databaseTheme;
-            this.applyTheme(databaseTheme);
-          } else {
-            console.log(`Local theme preference exists (${localTheme}), keeping it over database theme (${databaseTheme})`);
-          }
+          console.log(`Loading theme from database: ${databaseTheme}`);
+          this.currentTheme = databaseTheme;
+          this.applyTheme(databaseTheme);
+          // Update local storage to match database
+          this.saveTheme(databaseTheme);
         }
       }
     } catch (error) {
