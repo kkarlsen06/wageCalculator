@@ -1,0 +1,359 @@
+/**
+ * Theme System CSS Variables
+ * Provides light and dark theme color schemes
+ */
+
+/* Base theme variables (dark theme as default) */
+:root {
+  /* Typography - Inter Font System */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  /* Font Weight Scale for Visual Hierarchy */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  /* Font Sizes */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+
+  /* Spacing - 8px grid system */
+  --space-1: 0.5rem;   /* 8px */
+  --space-2: 1rem;     /* 16px */
+  --space-3: 1.5rem;   /* 24px */
+  --space-4: 2rem;     /* 32px */
+  --space-5: 2.5rem;   /* 40px */
+  --space-6: 3rem;     /* 48px */
+  --space-8: 4rem;     /* 64px */
+  --space-10: 5rem;    /* 80px */
+  --space-12: 6rem;    /* 96px */
+
+  /* Animations and transitions */
+  --speed-fast: 0.15s;
+  --speed-normal: 0.3s;
+  --speed-slow: 0.5s;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --border-radius: 12px;
+  --border-radius-large: 20px;
+}
+
+/* Dark Theme (default) */
+:root,
+html.theme-dark {
+  /* Modern Dark Theme with Neon Blue */
+  --primary: #4AC8FF;
+  --primary-dark: #2A8FD6;
+  --primary-light: #6AD4FF;
+  --secondary: #00D4FF;
+  --accent: #00F5FF;
+
+  /* Semantic colors */
+  --success: #00FF88;
+  --warning: #FFB800;
+  --error: #FF4757;
+  --info: #3ABEF6;
+
+  /* Background colors */
+  --bg-primary: #121212;
+  --bg-secondary: rgba(26, 26, 26, 0.95);
+  --bg-tertiary: rgba(30, 30, 30, 0.92);
+  --bg-card: rgba(30, 30, 30, 0.85);
+  --bg-hover: rgba(42, 42, 42, 0.9);
+
+  /* Text colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #C0C0C0;
+  --text-tertiary: #909090;
+  --text-muted: #808080;
+
+  /* Border colors */
+  --border: #2a2a2f;
+  --border-light: #3a3a3f;
+  --border-color: var(--border);
+
+  /* Legacy support - map old colors to new system */
+  --accent2: var(--primary);
+  --accent3: var(--secondary);
+  --accent4: var(--info);
+  --accent-light: rgba(58, 190, 246, 0.1);
+  --accent-alpha: rgba(58, 190, 246, 0.15);
+  --accent2-alpha: rgba(58, 190, 246, 0.15);
+  --accent3-alpha: rgba(0, 212, 255, 0.15);
+  --accent4-alpha: rgba(58, 190, 246, 0.15);
+  --danger: var(--error);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg,
+    var(--accent) 0%,
+    var(--accent3) 50%,
+    var(--accent2) 100%);
+  --gradient-secondary: linear-gradient(135deg,
+    var(--accent-alpha) 0%,
+    var(--accent3-alpha) 50%,
+    var(--accent2-alpha) 100%);
+  --gradient-progress-bg: linear-gradient(135deg,
+    rgba(0, 245, 255, 0.08) 0%,
+    rgba(0, 212, 255, 0.08) 50%,
+    rgba(58, 190, 246, 0.08) 100%);
+  --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
+  --gradient-neon: linear-gradient(135deg, #3ABEF6 0%, #00D4FF 100%);
+
+  /* Skeleton loading colors - Dark theme */
+  --skeleton-base: rgba(255, 255, 255, 0.06);
+  --skeleton-shimmer: rgba(255, 255, 255, 0.16);
+  --skeleton-gradient: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.06), 
+    rgba(255, 255, 255, 0.16), 
+    rgba(255, 255, 255, 0.06));
+}
+
+/* Light Theme */
+html.theme-light {
+  /* Modern Light Theme with Blue Accent */
+  --primary: #2563EB;
+  --primary-dark: #1D4ED8;
+  --primary-light: #3B82F6;
+  --secondary: #0EA5E9;
+  --accent: #06B6D4;
+
+  /* Semantic colors */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #3B82F6;
+
+  /* Background colors */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: rgba(248, 250, 252, 0.95);
+  --bg-tertiary: rgba(241, 245, 249, 0.92);
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-hover: rgba(241, 245, 249, 0.8);
+
+  /* Text colors */
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
+  --text-tertiary: #6B7280;
+  --text-muted: #9CA3AF;
+
+  /* Border colors */
+  --border: #E5E7EB;
+  --border-light: #D1D5DB;
+  --border-color: var(--border);
+
+  /* Legacy support - map old colors to new system */
+  --accent2: var(--primary);
+  --accent3: var(--secondary);
+  --accent4: var(--info);
+  --accent-light: rgba(37, 99, 235, 0.1);
+  --accent-alpha: rgba(37, 99, 235, 0.15);
+  --accent2-alpha: rgba(37, 99, 235, 0.15);
+  --accent3-alpha: rgba(14, 165, 233, 0.15);
+  --accent4-alpha: rgba(59, 130, 246, 0.15);
+  --danger: var(--error);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg,
+    var(--accent) 0%,
+    var(--accent3) 50%,
+    var(--accent2) 100%);
+  --gradient-secondary: linear-gradient(135deg,
+    var(--accent-alpha) 0%,
+    var(--accent3-alpha) 50%,
+    var(--accent2-alpha) 100%);
+  --gradient-progress-bg: linear-gradient(135deg,
+    rgba(6, 182, 212, 0.08) 0%,
+    rgba(14, 165, 233, 0.08) 50%,
+    rgba(37, 99, 235, 0.08) 100%);
+  --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
+  --gradient-neon: linear-gradient(135deg, #3B82F6 0%, #0EA5E9 100%);
+
+  /* Skeleton loading colors - Light theme */
+  --skeleton-base: rgba(0, 0, 0, 0.08);
+  --skeleton-shimmer: rgba(0, 0, 0, 0.18);
+  --skeleton-gradient: linear-gradient(90deg, 
+    rgba(0, 0, 0, 0.08), 
+    rgba(0, 0, 0, 0.18), 
+    rgba(0, 0, 0, 0.08));
+}
+
+/* Theme transition animations */
+*,
+*::before,
+*::after {
+  transition: 
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default);
+}
+
+/* Disable transitions during theme switching to prevent flashing */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}
+
+/* Update color scheme for different themes */
+html.theme-light {
+  color-scheme: light;
+}
+
+html.theme-dark {
+  color-scheme: dark;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  :root {
+    --text-4xl: 2rem;     /* 32px on mobile */
+    --text-3xl: 1.75rem;  /* 28px on mobile */
+    --text-2xl: 1.375rem; /* 22px on mobile */
+  }
+}
+
+/* High DPI Display Optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  html.theme-light,
+  html.theme-dark {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Theme Selector UI Components */
+.theme-selector {
+  margin: var(--space-2) 0;
+}
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  padding: var(--space-2);
+  border: 2px solid transparent;
+  border-radius: var(--border-radius);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.theme-option:hover {
+  background: var(--bg-hover);
+}
+
+.theme-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-option input[type="radio"]:checked + .theme-preview {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(74, 200, 255, 0.2);
+}
+
+.theme-option input[type="radio"]:checked ~ span {
+  color: var(--primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.theme-preview {
+  width: 64px;
+  height: 48px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all var(--speed-normal) var(--ease-default);
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-preview-header {
+  height: 12px;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.theme-preview-content {
+  flex: 1;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+/* Light theme preview */
+.theme-preview-light .theme-preview-header {
+  background: linear-gradient(135deg, #3B82F6, #0EA5E9);
+}
+
+.theme-preview-light .theme-preview-content {
+  background: #FFFFFF;
+}
+
+/* Dark theme preview */
+.theme-preview-dark .theme-preview-header {
+  background: linear-gradient(135deg, #4AC8FF, #00D4FF);
+}
+
+.theme-preview-dark .theme-preview-content {
+  background: #1F2937;
+}
+
+/* System theme preview */
+.theme-preview-system .theme-preview-header {
+  background: linear-gradient(135deg, 
+    #3B82F6 0%, 
+    #0EA5E9 25%, 
+    #4AC8FF 50%, 
+    #00D4FF 75%, 
+    #3B82F6 100%);
+}
+
+.theme-preview-system .theme-preview-content {
+  background: linear-gradient(135deg, 
+    #FFFFFF 0%, 
+    #F8FAFC 25%, 
+    #1F2937 50%, 
+    #121212 75%, 
+    #FFFFFF 100%);
+}
+
+.theme-option span {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  transition: all var(--speed-normal) var(--ease-default);
+  text-align: center;
+}
+
+/* Mobile responsive theme selector */
+@media (max-width: 768px) {
+  .theme-options {
+    gap: var(--space-1);
+  }
+  
+  .theme-option {
+    padding: var(--space-1);
+  }
+  
+  .theme-preview {
+    width: 56px;
+    height: 42px;
+  }
+  
+  .theme-option span {
+    font-size: var(--text-xs);
+  }
+}

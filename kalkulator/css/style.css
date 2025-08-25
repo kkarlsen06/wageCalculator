@@ -254,8 +254,7 @@ html {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  /* Ensure browser chrome uses dark theme */
-  color-scheme: dark;
+  /* Theme-aware color scheme now handled in themes.css */
   /* iOS 26 support - allow content to extend behind system UI */
   -webkit-appearance: none;
   appearance: none;
@@ -275,107 +274,7 @@ body.auth-mode {
   overflow: auto;
 }
 
-:root {
-  /* Typography - Inter Font System */
-  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-
-  /* Font Weight Scale for Visual Hierarchy */
-  --font-weight-light: 300;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --font-weight-extrabold: 800;
-
-  /* Font Sizes */
-  --text-xs: 0.75rem;    /* 12px */
-  --text-sm: 0.875rem;   /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg: 1.125rem;   /* 18px */
-  --text-xl: 1.25rem;    /* 20px */
-  --text-2xl: 1.5rem;    /* 24px */
-  --text-3xl: 1.875rem;  /* 30px */
-  --text-4xl: 2.25rem;   /* 36px */
-
-  /* Modern Dark Theme with Neon Blue - aligned with landing page */
-  --primary: #4AC8FF;
-  --primary-dark: #2A8FD6;
-  --primary-light: #6AD4FF;
-  --secondary: #00D4FF;
-  --accent: #00F5FF;
-
-  /* Semantic colors */
-  --success: #00FF88;
-  --warning: #FFB800;
-  --error: #FF4757;
-  --info: #3ABEF6;
-
-  /* Background colors with improved integration */
-  --bg-primary: #121212;
-  --bg-secondary: rgba(26, 26, 26, 0.95);
-  --bg-tertiary: rgba(30, 30, 30, 0.92);
-  --bg-card: rgba(30, 30, 30, 0.85);
-  --bg-hover: rgba(42, 42, 42, 0.9);
-
-  /* Text colors with improved contrast */
-  --text-primary: #FFFFFF;
-  --text-secondary: #C0C0C0;
-  --text-tertiary: #909090;
-  --text-muted: #808080;
-
-  /* Legacy support - map old colors to new system */
-  --accent2: var(--primary);
-  --accent3: var(--secondary);
-  --accent4: var(--info);
-  --accent-light: rgba(58, 190, 246, 0.1);
-  --accent-alpha: rgba(58, 190, 246, 0.15);
-  --accent2-alpha: rgba(58, 190, 246, 0.15);
-  --accent3-alpha: rgba(0, 212, 255, 0.15);
-  --accent4-alpha: rgba(58, 190, 246, 0.15);
-  --danger: var(--error);
-
-  /* Border colors */
-  --border: #2a2a2f;
-  --border-light: #3a3a3f;
-  --border-color: var(--border);
-
-  /* Shadow colors - removed for flat design */
-
-  /* Glow effects removed */
-  /* Spacing - 8px grid system */
-  --space-1: 0.5rem;   /* 8px */
-  --space-2: 1rem;     /* 16px */
-  --space-3: 1.5rem;   /* 24px */
-  --space-4: 2rem;     /* 32px */
-  --space-5: 2.5rem;   /* 40px */
-  --space-6: 3rem;     /* 48px */
-  --space-8: 4rem;     /* 64px */
-  --space-10: 5rem;    /* 80px */
-  --space-12: 6rem;    /* 96px */
-
-  /* Animations - removed for flat design */
-  --gradient-primary: linear-gradient(135deg,
-    var(--accent) 0%,
-    var(--accent3) 50%,
-    var(--accent2) 100%);
-  --gradient-secondary: linear-gradient(135deg,
-    var(--accent-alpha) 0%,
-    var(--accent3-alpha) 50%,
-    var(--accent2-alpha) 100%);
-  --gradient-progress-bg: linear-gradient(135deg,
-    rgba(0, 245, 255, 0.08) 0%,
-    rgba(0, 212, 255, 0.08) 50%,
-    rgba(58, 190, 246, 0.08) 100%);
-  --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
-  --gradient-neon: linear-gradient(135deg, #3ABEF6 0%, #00D4FF 100%);
-  --speed-fast: 0.15s;
-  --speed-normal: 0.3s;
-  --speed-slow: 0.5s;
-  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --border-radius: 12px;
-  --border-radius-large: 20px;
-}
+/* CSS Variables now defined in themes.css for proper theme switching support */
 
 /* Removed global animation kill-switch. Initial-load suppression is managed via
    #app.app-ready and .animations-complete states below. */
@@ -892,7 +791,7 @@ body:not(.skeleton-active) .skeleton {
 .skeleton-line {
   height: 12px;
   border-radius: 6px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
 }
@@ -955,7 +854,7 @@ body.skeleton-active .tab-bar-container {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
 }
@@ -973,7 +872,7 @@ body.skeleton-active .tab-bar-container {
 .tab-bar-skeleton .skeleton-block {
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
   flex: 1 1 0;
@@ -1017,7 +916,7 @@ body.skeleton-active .tab-bar {
   width: 96px;
   height: 14px;
   border-radius: 7px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
 }
@@ -1035,7 +934,7 @@ body.skeleton-active .floating-action-bar-backdrop { display: none !important; }
   transform: translateY(-50%);
   height: 28px; /* thinner shimmer line */
   border-radius: 8px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
 }
@@ -1174,19 +1073,13 @@ body.skeleton-active #nextPayrollContent .skeleton {
 }
 
 body {
-  /* Simple top-to-bottom gradient: very dark at top, almost as dark at bottom */
-  background: linear-gradient(to bottom,
-    #0a0a0a 0%,     /* Very dark at top */
-    #0c0c0c 100%    /* Almost as dark at bottom */
-  );
-  background-attachment: fixed;
+  /* Use theme-aware background */
+  background: var(--bg-primary);
   color: var(--text-primary);
   height: var(--app-height, 100vh);
   height: var(--app-height, 100dvh);
   overflow: hidden;
   position: relative;
-  /* Ensure browser chrome uses dark theme */
-  color-scheme: dark;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -1215,11 +1108,11 @@ body {
 
 .header {
   /* iOS-style translucent navigation bar with frosted glass effect */
-  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 20px;
-  border-bottom: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border */
+  border-bottom: 1px solid var(--border); /* More transparent border */
   border-radius: 0 0 24px 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
@@ -1258,7 +1151,7 @@ body {
 
 /* Dashboard Toggle Button */
 .dashboard-toggle-btn {
-  background: rgba(18, 18, 18, 0.75);
+  background: var(--bg-card);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none;
@@ -1274,14 +1167,14 @@ body {
 }
 
 .dashboard-toggle-btn:hover {
-  background: rgba(18, 18, 18, 0.85);
+  background: var(--bg-hover);
   color: var(--text-primary);
   transform: translateY(-1px);
 }
 
 /* Active state with enhanced 3D bevel effect */
 .dashboard-toggle-btn.active {
-  background: rgba(18, 18, 18, 0.85);
+  background: var(--bg-hover);
   color: var(--text-primary);
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.15),
@@ -1598,7 +1491,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 
 .header-back-btn {
   /* Back button styling */
-  background: rgba(18, 18, 18, 0.75);
+  background: var(--bg-card);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none;
@@ -1612,7 +1505,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 }
 
 .header-back-btn:hover {
-  background: rgba(18, 18, 18, 0.85);
+  background: var(--bg-hover);
   color: var(--text-primary);
   transform: translateY(-1px);
 }
@@ -1873,8 +1766,7 @@ html {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  /* Ensure browser chrome uses dark theme */
-  color-scheme: dark;
+  /* Theme-aware color scheme now handled in themes.css */
   /* iOS 26 support - allow content to extend behind system UI */
   -webkit-appearance: none;
   appearance: none;
@@ -1894,107 +1786,7 @@ body.auth-mode {
   overflow: auto;
 }
 
-:root {
-  /* Typography - Inter Font System */
-  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-
-  /* Font Weight Scale for Visual Hierarchy */
-  --font-weight-light: 300;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --font-weight-extrabold: 800;
-
-  /* Font Sizes */
-  --text-xs: 0.75rem;    /* 12px */
-  --text-sm: 0.875rem;   /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg: 1.125rem;   /* 18px */
-  --text-xl: 1.25rem;    /* 20px */
-  --text-2xl: 1.5rem;    /* 24px */
-  --text-3xl: 1.875rem;  /* 30px */
-  --text-4xl: 2.25rem;   /* 36px */
-
-  /* Modern Dark Theme with Neon Blue - aligned with landing page */
-  --primary: #4AC8FF;
-  --primary-dark: #2A8FD6;
-  --primary-light: #6AD4FF;
-  --secondary: #00D4FF;
-  --accent: #00F5FF;
-
-  /* Semantic colors */
-  --success: #00FF88;
-  --warning: #FFB800;
-  --error: #FF4757;
-  --info: #3ABEF6;
-
-  /* Background colors with improved integration */
-  --bg-primary: #121212;
-  --bg-secondary: rgba(26, 26, 26, 0.95);
-  --bg-tertiary: rgba(30, 30, 30, 0.92);
-  --bg-card: rgba(30, 30, 30, 0.85);
-  --bg-hover: rgba(42, 42, 42, 0.9);
-
-  /* Text colors with improved contrast */
-  --text-primary: #FFFFFF;
-  --text-secondary: #C0C0C0;
-  --text-tertiary: #909090;
-  --text-muted: #808080;
-
-  /* Legacy support - map old colors to new system */
-  --accent2: var(--primary);
-  --accent3: var(--secondary);
-  --accent4: var(--info);
-  --accent-light: rgba(58, 190, 246, 0.1);
-  --accent-alpha: rgba(58, 190, 246, 0.15);
-  --accent2-alpha: rgba(58, 190, 246, 0.15);
-  --accent3-alpha: rgba(0, 212, 255, 0.15);
-  --accent4-alpha: rgba(58, 190, 246, 0.15);
-  --danger: var(--error);
-
-  /* Border colors */
-  --border: #2a2a2f;
-  --border-light: #3a3a3f;
-  --border-color: var(--border);
-
-  /* Shadow colors - removed for flat design */
-
-  /* Glow effects removed */
-  /* Spacing - 8px grid system */
-  --space-1: 0.5rem;   /* 8px */
-  --space-2: 1rem;     /* 16px */
-  --space-3: 1.5rem;   /* 24px */
-  --space-4: 2rem;     /* 32px */
-  --space-5: 2.5rem;   /* 40px */
-  --space-6: 3rem;     /* 48px */
-  --space-8: 4rem;     /* 64px */
-  --space-10: 5rem;    /* 80px */
-  --space-12: 6rem;    /* 96px */
-
-  /* Animations - removed for flat design */
-  --gradient-primary: linear-gradient(135deg,
-    var(--accent) 0%,
-    var(--accent3) 50%,
-    var(--accent2) 100%);
-  --gradient-secondary: linear-gradient(135deg,
-    var(--accent-alpha) 0%,
-    var(--accent3-alpha) 50%,
-    var(--accent2-alpha) 100%);
-  --gradient-progress-bg: linear-gradient(135deg,
-    rgba(0, 245, 255, 0.08) 0%,
-    rgba(0, 212, 255, 0.08) 50%,
-    rgba(58, 190, 246, 0.08) 100%);
-  --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
-  --gradient-neon: linear-gradient(135deg, #3ABEF6 0%, #00D4FF 100%);
-  --speed-fast: 0.15s;
-  --speed-normal: 0.3s;
-  --speed-slow: 0.5s;
-  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --border-radius: 12px;
-  --border-radius-large: 20px;
-}
+/* CSS Variables now defined in themes.css for proper theme switching support */
 
 /* Removed global animation kill-switch. Initial-load suppression is managed via
    #app.app-ready and .animations-complete states below. */
@@ -2511,7 +2303,7 @@ body:not(.skeleton-active) .skeleton {
 .skeleton-line {
   height: 12px;
   border-radius: 6px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
 }
@@ -2574,7 +2366,7 @@ body.skeleton-active .tab-bar-container {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
 }
@@ -2592,7 +2384,7 @@ body.skeleton-active .tab-bar-container {
 .tab-bar-skeleton .skeleton-block {
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
   flex: 1 1 0;
@@ -2636,7 +2428,7 @@ body.skeleton-active .tab-bar {
   width: 96px;
   height: 14px;
   border-radius: 7px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
 }
@@ -2654,7 +2446,7 @@ body.skeleton-active .floating-action-bar-backdrop { display: none !important; }
   transform: translateY(-50%);
   height: 28px; /* thinner shimmer line */
   border-radius: 8px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+  background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
 }
@@ -2793,19 +2585,13 @@ body.skeleton-active #nextPayrollContent .skeleton {
 }
 
 body {
-  /* Simple top-to-bottom gradient: very dark at top, almost as dark at bottom */
-  background: linear-gradient(to bottom,
-    #0a0a0a 0%,     /* Very dark at top */
-    #0c0c0c 100%    /* Almost as dark at bottom */
-  );
-  background-attachment: fixed;
+  /* Use theme-aware background */
+  background: var(--bg-primary);
   color: var(--text-primary);
   height: var(--app-height, 100vh);
   height: var(--app-height, 100dvh);
   overflow: hidden;
   position: relative;
-  /* Ensure browser chrome uses dark theme */
-  color-scheme: dark;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -2834,11 +2620,11 @@ body {
 
 .header {
   /* iOS-style translucent navigation bar with frosted glass effect */
-  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 20px;
-  border-bottom: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border */
+  border-bottom: 1px solid var(--border); /* More transparent border */
   border-radius: 0 0 24px 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
@@ -2877,7 +2663,7 @@ body {
 
 /* Dashboard Toggle Button */
 .dashboard-toggle-btn {
-  background: rgba(18, 18, 18, 0.75);
+  background: var(--bg-card);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none;
@@ -2893,14 +2679,14 @@ body {
 }
 
 .dashboard-toggle-btn:hover {
-  background: rgba(18, 18, 18, 0.85);
+  background: var(--bg-hover);
   color: var(--text-primary);
   transform: translateY(-1px);
 }
 
 /* Active state with enhanced 3D bevel effect */
 .dashboard-toggle-btn.active {
-  background: rgba(18, 18, 18, 0.85);
+  background: var(--bg-hover);
   color: var(--text-primary);
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.15),
@@ -5903,7 +5689,7 @@ input[type="time"].form-control[value=""]:focus {
 
 .calendar-toggle-nav {
   display: flex;
-  background: rgba(26, 26, 29, 0.95);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
@@ -6431,7 +6217,7 @@ input:checked + .slider:before {
 
 .shift-item {
   /* iOS-style translucent background matching header, total card, and chart card */
-  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none; /* Remove border for consistent bevel effect */
@@ -6811,7 +6597,7 @@ input:checked + .slider:before {
 /* Overview Section Adjustments */
 .total-card {
   /* iOS-style translucent background matching header */
-  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 24px;
@@ -7371,7 +7157,7 @@ input:checked + .slider:before {
 
 /* Hover effect for clickable payroll item */
 .next-payroll-card .payroll-item:hover {
-  background: rgba(18, 18, 18, 0.85); /* Slightly more opaque on hover */
+  background: var(--bg-hover); /* Slightly more opaque on hover */
   transform: translateY(-1px); /* Subtle lift effect */
   transition: all 0.2s ease;
 }
@@ -7394,7 +7180,7 @@ input:checked + .slider:before {
 
 /* Style the shift-item when it's inside the next-shift-card */
 .next-shift-card .shift-item {
-  background: rgba(18, 18, 18, 0.75); /* Same as next payroll card - semi-transparent background */
+  background: var(--bg-card); /* Same as next payroll card - semi-transparent background */
   backdrop-filter: blur(20px) saturate(180%); /* Same as next payroll card - enhanced blur with saturation */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 24px; /* Fully rounded edges */
@@ -7416,7 +7202,7 @@ input:checked + .slider:before {
 
 /* Style the payroll-item when it's inside the next-payroll-card */
 .next-payroll-card .payroll-item {
-  background: rgba(18, 18, 18, 0.75); /* Same as header - semi-transparent background */
+  background: var(--bg-card); /* Same as header - semi-transparent background */
   backdrop-filter: blur(20px) saturate(180%); /* Same as header - enhanced blur with saturation */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none; /* Remove border/outline */
@@ -7453,7 +7239,7 @@ input:checked + .slider:before {
 
 /* Active next payroll - when it's soon */
 .next-payroll-card .payroll-item.active {
-  background: rgba(18, 18, 18, 0.85); /* Slightly more opaque when active */
+  background: var(--bg-hover); /* Slightly more opaque when active */
   /* Subtle 3D Bevel Effect for active state - reduced intensity */
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
@@ -9779,7 +9565,7 @@ body.chatbox-view .dashboard-content {
   left: 0;
   right: 0;
   margin: 0 auto;
-  background: rgba(26, 26, 29, 0.95);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
@@ -11201,12 +10987,12 @@ input[type="file"].form-control:focus {
 /* Weekly Hours Chart Card Styling */
 .weekly-hours-chart-card {
   /* iOS-style translucent background matching header and total card */
-  background: rgba(18, 18, 18, 0.75); /* Semi-transparent background to allow content to show through */
+  background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 24px;
   padding: 16px;
-  border: 1px solid rgba(42, 42, 47, 0.6); /* More transparent border matching header */
+  border: 1px solid var(--border); /* More transparent border matching header */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   /* spacing now handled by parent gap */
   margin-top: 0;
@@ -12762,10 +12548,10 @@ input[type="file"].form-control:focus {
 /* Tab bar styling as independent pill-shaped element */
 .tab-bar {
   /* Pill-shaped background with glassmorphism effect */
-  background: rgba(18, 18, 18, 0.75);
+  background: var(--bg-card);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(42, 42, 47, 0.6);
+  border: 1px solid var(--border);
   border-radius: 20px; /* Pill shape with proportional rounded corners */
   overflow: hidden;
   transition: all 0.3s ease;
@@ -13055,10 +12841,10 @@ input[type="file"].form-control:focus {
 
 /* Legacy placeholder styles (kept for backwards compatibility) */
 .employees-placeholder {
-  background: rgba(18, 18, 18, 0.75);
+  background: var(--bg-card);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(42, 42, 47, 0.6);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 40px 30px;
   text-align: center;
@@ -13714,7 +13500,7 @@ body.chatbox-view .chatbox-container {
   height: 32px;
   border-radius: 8px;
   background: transparent;
-  border: 1px solid rgba(42, 42, 47, 0.6);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -14558,7 +14344,7 @@ body.chatbox-view .chatbox-container {
   color: var(--text-primary);
   margin: 0;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(42, 42, 47, 0.6);
+  border-bottom: 1px solid var(--border);
 }
 
 /* Avatar Section */
@@ -14607,7 +14393,7 @@ body.chatbox-view .chatbox-container {
 .form-input {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid rgba(42, 42, 47, 0.6);
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg-tertiary);
   color: var(--text-primary);
@@ -14694,7 +14480,7 @@ body.chatbox-view .chatbox-container {
   height: 20px;
   width: 20px;
   background: var(--bg-tertiary);
-  border: 1px solid rgba(42, 42, 47, 0.6);
+  border: 1px solid var(--border);
   border-radius: 4px;
   flex-shrink: 0;
   margin-top: 2px;
@@ -14793,7 +14579,7 @@ body.chatbox-view .chatbox-container {
 .color-input {
   width: 60px;
   height: 40px;
-  border: 1px solid rgba(42, 42, 47, 0.6);
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: transparent;
   cursor: pointer;
@@ -15384,7 +15170,7 @@ body.chatbox-view .chatbox-container {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  border-bottom: 1px solid rgba(42, 42, 47, 0.6);
+  border-bottom: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.02);
 }
 
@@ -15430,7 +15216,7 @@ body.chatbox-view .chatbox-container {
   height: 32px;
   border-radius: 8px;
   background: transparent;
-  border: 1px solid rgba(42, 42, 47, 0.6);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -15749,10 +15535,10 @@ body.chatbox-view .chatbox-container {
 /* Pill-style container that can expand */
 .chatbox-pill {
   /* Match header's translucent background with frosted glass effect */
-  background: rgba(18, 18, 18, 0.75);
+  background: var(--bg-card);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(42, 42, 47, 0.6);
+  border: 1px solid var(--border);
   border-radius: 24px;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -15786,7 +15572,7 @@ body.chatbox-view .chatbox-container {
 
 .chatbox-pill.expanded:hover {
   transform: none;
-  background: rgba(18, 18, 18, 0.75); /* Keep original translucent background */
+  background: var(--bg-card); /* Keep original translucent background */
   /* Keep original subtle bevel effect when expanded */
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.08), /* Subtle depth shadow */

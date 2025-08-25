@@ -1,5 +1,6 @@
 import { getUserId } from "../../src/lib/auth/getUserId.js";
 import { fetchOnce } from "../../src/lib/net/fetchOnce.js";
+import { hasEnterpriseSubscription } from './subscriptionUtils.js';
 
 
 
@@ -345,7 +346,7 @@ export const app = {
             await this.loadFromSupabase();
         } catch (err) {
             console.error('loadFromSupabase failed:', err);
-            this.loadFromLocalStorage();
+            await this.loadFromLocalStorage();
         }
 
         // Initialize dashboard view from localStorage
@@ -508,7 +509,7 @@ export const app = {
                 const json = await res.json();
                 this.orgSettings = { break_policy: json.break_policy };
                 if (window.showToast) window.showToast('Lagret', 'success');
-                this.updateOrgSettingsUI();
+                await this.updateOrgSettingsUI();
                 // Re-render employees data so the breakdown reflects the new org policy
                 if (this.currentView === 'employees') {
                     await this.fetchAndDisplayEmployeeShifts?.();
@@ -523,21 +524,22 @@ export const app = {
         }
     },
 
-    onOrgWageCaregiverToggle() {
-        const toggle = document.getElementById('orgIsWageCaregiverToggle');
-        this.isWageCaregiver = !!(toggle && toggle.checked);
-        this.updateOrgSettingsUI();
-        // Reflect change immediately in the tab bar (show/hide Ansatte tab)
-        this.updateTabBarVisibility();
-        // Keep profile modal toggle in sync if open
-        const profileToggle = document.getElementById('isWageCaregiverToggle');
-        if (profileToggle) profileToggle.checked = this.isWageCaregiver;
-        // Persist flag in user_settings where we store profile-like preferences
-        this.saveSettingsToSupabase();
+    async onOrgWageCaregiverToggle() {
+        // This method is deprecated - enterprise features are now controlled by subscription tier
+        // Show message to user that this feature requires enterprise subscription
+        const hasEnterprise = await hasEnterpriseSubscription();
+        await this.updateOrgSettingsUI();
+        await this.updateTabBarVisibility();
+        
+        if (!hasEnterprise) {
+            // Show upgrade message or modal
+            console.log('Enterprise subscription required for wage caregiver features');
+        }
     },
 
-    updateOrgSettingsUI() {
-        const disabled = !this.isWageCaregiver;
+    async updateOrgSettingsUI() {
+        const hasEnterprise = await hasEnterpriseSubscription();
+        const disabled = !hasEnterprise;
         const section = document.getElementById('orgBreakPolicySection');
         const select = document.getElementById('breakPolicySelect');
         [section].forEach(el => { if (el) el.style.opacity = disabled ? '0.5' : '1'; });
@@ -2031,7 +2033,6 @@ export const app = {
                 this.taxDeductionEnabled = settings.tax_deduction_enabled === true;
                 this.taxPercentage = parseFloat(settings.tax_percentage) || 0.0;
                 this.payrollDay = parseInt(settings.payroll_day) || 15;
-                this.isWageCaregiver = settings.is_wage_caregiver === true;
 
 
 
@@ -2043,7 +2044,7 @@ export const app = {
             // Update UI elements to reflect loaded settings
             this.updateSettingsUI();
             // Update tab bar visibility based on settings
-            this.updateTabBarVisibility();
+            await this.updateTabBarVisibility();
             // Don't call updateDisplay here - it will be called with animation in init()
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
@@ -2062,8 +2063,7 @@ export const app = {
         };
         this.taxDeductionEnabled = false;
         this.taxPercentage = 0.0;
-        this.payrollDay = 15;
-        this.isWageCaregiver = false; // Default payroll day (15th of each month)
+        this.payrollDay = 15; // Default payroll day (15th of each month)
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.currentYear = new Date().getFullYear(); // Default to current year
         this.pauseDeduction = false; // Legacy setting - kept for backward compatibility
@@ -2190,15 +2190,18 @@ export const app = {
             defaultShiftsViewToggle.checked = this.defaultShiftsView === 'calendar';
         }
 
-        // Update wage caregiver toggle
+        // Update wage caregiver toggle based on subscription
         const isWageCaregiverToggle = document.getElementById('isWageCaregiverToggle');
         if (isWageCaregiverToggle) {
-            isWageCaregiverToggle.checked = this.isWageCaregiver;
+            hasEnterpriseSubscription().then(hasEnterprise => {
+                isWageCaregiverToggle.checked = hasEnterprise;
+                isWageCaregiverToggle.disabled = true; // Read-only, controlled by subscription
+            });
         }
 
 
 
-        // Update tab bar visibility based on wage caregiver setting
+        // Update tab bar visibility based on subscription
         this.updateTabBarVisibility();
 
 
@@ -2284,7 +2287,6 @@ export const app = {
                 if ('tax_deduction_enabled' in existingSettings) settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 if ('tax_percentage' in existingSettings) settingsData.tax_percentage = this.taxPercentage;
                 if ('payroll_day' in existingSettings) settingsData.payroll_day = this.payrollDay;
-                if ('is_wage_caregiver' in existingSettings) settingsData.is_wage_caregiver = this.isWageCaregiver;
 
                 // New break deduction settings - try to save them even if columns don't exist yet
                 settingsData.pause_deduction_enabled = this.pauseDeductionEnabled;
@@ -2292,9 +2294,6 @@ export const app = {
                 settingsData.pause_threshold_hours = this.pauseThresholdHours;
                 settingsData.pause_deduction_minutes = this.pauseDeductionMinutes;
                 settingsData.audit_break_calculations = this.auditBreakCalculations;
-
-                // Always try to save isWageCaregiver even if column doesn't exist yet
-                settingsData.is_wage_caregiver = this.isWageCaregiver;
 
 
 
@@ -2333,7 +2332,6 @@ export const app = {
                 settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 settingsData.tax_percentage = this.taxPercentage;
                 settingsData.payroll_day = this.payrollDay;
-                settingsData.is_wage_caregiver = this.isWageCaregiver;
             }
 
             const { error } = await window.supa
@@ -2361,7 +2359,7 @@ export const app = {
             console.error('Error in saveSettingsToSupabase:', e);
         }
     },
-    loadFromLocalStorage() {
+    async loadFromLocalStorage() {
         try {
             const saved = localStorage.getItem('lønnsberegnerSettings');
             if (saved) {
@@ -2389,10 +2387,9 @@ export const app = {
                 this.taxDeductionEnabled = data.taxDeductionEnabled || false;
                 this.taxPercentage = data.taxPercentage || 0.0;
                 this.payrollDay = parseInt(data.payrollDay) || 15;
-                this.isWageCaregiver = data.isWageCaregiver || false;
 
                 this.updateSettingsUI();
-                this.updateTabBarVisibility(); // Ensure tab bar visibility is updated
+                await this.updateTabBarVisibility(); // Ensure tab bar visibility is updated
             } else {
                 this.setDefaultSettings();
             }
@@ -2575,8 +2572,10 @@ export const app = {
             // Initialize wage caregiver toggle and UI state
             const orgToggle = document.getElementById('orgIsWageCaregiverToggle');
             if (orgToggle) {
-                orgToggle.checked = !!this.isWageCaregiver;
-                orgToggle.disabled = false;
+                hasEnterpriseSubscription().then(hasEnterprise => {
+                    orgToggle.checked = hasEnterprise;
+                    orgToggle.disabled = true; // Read-only, controlled by subscription
+                });
                 orgToggle.onchange = () => this.onOrgWageCaregiverToggle();
 
                 const slider = document.querySelector('#orgIsWageCaregiverToggle + .toggle-slider');
@@ -2590,7 +2589,7 @@ export const app = {
                 }
             }
 
-            this.updateOrgSettingsUI();
+            await this.updateOrgSettingsUI();
         }
     },
 
@@ -3474,8 +3473,7 @@ export const app = {
 
                 defaultShiftsView: this.defaultShiftsView,
                 taxDeductionEnabled: this.taxDeductionEnabled,
-                taxPercentage: this.taxPercentage,
-                isWageCaregiver: this.isWageCaregiver
+                taxPercentage: this.taxPercentage
             };
             localStorage.setItem('lønnsberegnerSettings', JSON.stringify(data));
         } catch (e) {
@@ -10158,10 +10156,11 @@ Hva kan jeg hjelpe deg med i dag?`;
         }
     },
 
-    updateTabBarVisibility() {
+    async updateTabBarVisibility() {
         const ansatteTab = document.getElementById('tabAnsatte');
         if (ansatteTab) {
-            ansatteTab.style.display = this.isWageCaregiver ? 'flex' : 'none';
+            const hasEnterprise = await hasEnterpriseSubscription();
+            ansatteTab.style.display = hasEnterprise ? 'flex' : 'none';
         }
     },
 
@@ -10183,15 +10182,21 @@ Hva kan jeg hjelpe deg med i dag?`;
         }
     },
 
-    toggleWageCaregiver() {
+    async toggleWageCaregiver() {
+        // This toggle is now read-only and controlled by subscription
         const toggle = document.getElementById('isWageCaregiverToggle');
         if (toggle) {
-            this.isWageCaregiver = toggle.checked;
+            const hasEnterprise = await hasEnterpriseSubscription();
+            toggle.checked = hasEnterprise;
+            toggle.disabled = true;
+            
+            // Show upgrade message if user doesn't have enterprise subscription
+            if (!hasEnterprise && window.showToast) {
+                window.showToast('Enterprise abonnement kreves for ansattfunksjoner', 'info');
+            }
 
-            // Save to both Supabase and localStorage
-            this.saveSettingsToSupabase();
-            this.saveToLocalStorage();
-            this.updateTabBarVisibility();
+            // Update tab bar visibility
+            await this.updateTabBarVisibility();
         }
     },
 

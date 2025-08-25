@@ -1,9 +1,3 @@
-# Improvement Suggestions for Kalkulator
-
-## Refactors and Code Structure
-- Replace inline `onclick` handlers with JavaScript event listeners to separate structure and behavior, making the markup easier to maintain and test.
-- Split large modules such as `kalkulator/js/app.js` into smaller, focused files or adopt a component-based framework to improve readability and long-term maintainability.
-
 ## UI/UX Enhancements
 - Provide a user-selectable light/dark theme instead of hardcoding the theme color to black, allowing the interface to match user or system preferences.
 - Implement offline caching with a service worker so that the calculator continues to function when the network is unavailable.

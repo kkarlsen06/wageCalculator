@@ -24,6 +24,9 @@ import '/kalkulator/js/featureFlags.js';
 // App bootstrap (was loaded via <script type="module" src="js/app.js">)
 import '/kalkulator/js/app.js';
 
+// Theme management system
+import '/kalkulator/js/themeIntegration.js';
+
 // If app.js uses ESM default export or side effects, ensure DOMContentLoaded init remains intact.
 // Expose inline handlers compatibility by attaching window.app if the module exported it.
 // window.app is attached by /kalkulator/js/app.js when it initializes

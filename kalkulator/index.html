@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/themes.css?v=1">
   <link rel="stylesheet" href="css/style.css?v=12">
   <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
   <link rel="icon" href="../src/assets/favicon.ico" type="image/x-icon">
@@ -582,17 +583,6 @@
                               Eksporter til CSV
                           </button>
                       </div>
-                      
-                      <div class="form-group form-group-with-hint">
-                          <div class="toggle-container">
-                              <label for="orgIsWageCaregiverToggle" class="toggle-label">Er lønnsansvarlig</label>
-                              <div class="toggle-switch">
-                                  <input type="checkbox" id="orgIsWageCaregiverToggle" class="toggle-input" onchange="app.onOrgWageCaregiverToggle()">
-                                  <span class="toggle-slider"></span>
-                              </div>
-                          </div>
-                          <small class="form-hint">Aktiverer funksjoner for teamledere som beregner lønn for ansatte</small>
-                      </div>
 
                       <div class="form-group" id="orgBreakPolicySection">
                           <label for="breakPolicySelect">Pausetrekk-policy</label>
@@ -609,6 +599,39 @@
                   </div>
 
               <div id="interfaceTab" class="tab-content">
+                  <div class="form-group form-group-with-hint">
+                      <label>Tema</label>
+                      <div class="theme-selector">
+                          <div class="theme-options">
+                              <label class="theme-option">
+                                  <input type="radio" name="theme" value="light" id="themeLight">
+                                  <div class="theme-preview theme-preview-light">
+                                      <div class="theme-preview-header"></div>
+                                      <div class="theme-preview-content"></div>
+                                  </div>
+                                  <span>Lyst</span>
+                              </label>
+                              <label class="theme-option">
+                                  <input type="radio" name="theme" value="dark" id="themeDark">
+                                  <div class="theme-preview theme-preview-dark">
+                                      <div class="theme-preview-header"></div>
+                                      <div class="theme-preview-content"></div>
+                                  </div>
+                                  <span>Mørkt</span>
+                              </label>
+                              <label class="theme-option">
+                                  <input type="radio" name="theme" value="system" id="themeSystem" checked>
+                                  <div class="theme-preview theme-preview-system">
+                                      <div class="theme-preview-header"></div>
+                                      <div class="theme-preview-content"></div>
+                                  </div>
+                                  <span>System</span>
+                              </label>
+                          </div>
+                      </div>
+                      <small class="form-hint">Velg mellom lyst, mørkt tema eller følg systeminnstillinger</small>
+                  </div>
+
                   <div class="form-group form-group-with-hint">
                       <label>Tidsinnskriving</label>
                       <div class="switch-group">
@@ -800,18 +823,6 @@
                            </div>
                            <small class="form-hint">Last opp et kvadratisk bilde. Du kan beskjære før lagring.</small>
                        </div>
-
-                      <!-- Wage Caregiver Setting -->
-                      <div class="form-group form-group-with-hint">
-                          <div class="toggle-container">
-                              <label for="isWageCaregiverToggle" class="toggle-label">Er lønnsansvarlig</label>
-                              <div class="toggle-switch">
-                                  <input type="checkbox" id="isWageCaregiverToggle" class="toggle-input">
-                                  <span class="toggle-slider"></span>
-                              </div>
-                          </div>
-                          <small class="form-hint">Aktiverer funksjoner for teamledere som beregner lønn for ansatte</small>
-                      </div>
 
       <!-- Crop Modal for avatar -->
       <div id="cropModal" class="modal" style="display: none;">

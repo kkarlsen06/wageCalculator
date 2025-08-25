@@ -39,22 +39,9 @@ function detectiOSPWA() {
 }
 
 function setThemeColor() {
-  // Ensure theme color is set to black for browser chrome
-  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-  if (themeColorMeta) {
-    themeColorMeta.setAttribute('content', '#000000');
-  }
-
-  // Also set for different color schemes
-  const lightThemeMeta = document.querySelector('meta[name="theme-color"][media*="light"]');
-  if (lightThemeMeta) {
-    lightThemeMeta.setAttribute('content', '#000000');
-  }
-
-  const darkThemeMeta = document.querySelector('meta[name="theme-color"][media*="dark"]');
-  if (darkThemeMeta) {
-    darkThemeMeta.setAttribute('content', '#000000');
-  }
+  // This function is now handled by the theme manager
+  // setThemeColor is no longer needed as theme manager handles meta theme colors
+  console.log('Theme colors are now managed by the theme system');
 }
 
 // Enhanced responsive month navigation handler - UPDATED: Always use dashboard navigation
@@ -498,6 +485,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const { data: { user } } = await supa.auth.getUser();
       if (!user) return;
+
+      // Load theme preferences from database (priority: localStorage > database)
+      if (window.themeManager && window.themeManager.loadThemeFromDatabase) {
+        await window.themeManager.loadThemeFromDatabase();
+      }
 
       // Load nickname
       const nicknameElement = document.getElementById('userNickname');
