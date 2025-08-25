@@ -390,15 +390,22 @@ export class SubscriptionModal {
     if (this.periodEl) this.periodEl.textContent = formatted ? `Neste fornyelse: ${formatted}` : '';
     if (this.planEl) this.planEl.textContent = plan ? `Aktuell plan: ${plan}` : '';
     
-    // Handle special messages for early users
+    // Handle special messages for early users - ensure they are mutually exclusive
     const showEarlyUserSubscribedMessage = beforePaywall && isActive && tier !== 'free';
     const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
     
-    if (this.thanksEl) this.thanksEl.style.display = showRegularThanks ? 'flex' : 'none';
+    // Always hide both first to ensure mutual exclusivity
+    if (this.thanksEl) this.thanksEl.style.display = 'none';
+    if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
     if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
-    if (this.earlyUserSubscribedEl) {
-      console.log('[subscription modal] updateFromGlobalState: Setting earlyUserSubscribedEl display:', showEarlyUserSubscribedMessage ? 'flex' : 'none', { showEarlyUserSubscribedMessage, beforePaywall, isActive, tier });
-      this.earlyUserSubscribedEl.style.display = showEarlyUserSubscribedMessage ? 'flex' : 'none';
+    
+    // Then show the appropriate one
+    if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
+      console.log('[subscription modal] updateFromGlobalState: Showing earlyUserSubscribedEl', { beforePaywall, isActive, tier });
+      this.earlyUserSubscribedEl.style.display = 'flex';
+    } else if (showRegularThanks && this.thanksEl) {
+      console.log('[subscription modal] updateFromGlobalState: Showing regular thanks', { beforePaywall, isActive, tier });
+      this.thanksEl.style.display = 'flex';
     }
     if (this.plansEl) this.plansEl.style.display = isActive && tier !== 'free' ? 'none' : 'block';
     if (this.statusIcon) this.statusIcon.style.color = isActive ? 'var(--success)' : 'var(--text-secondary)';
@@ -543,15 +550,22 @@ export class SubscriptionModal {
       if (this.periodEl) this.periodEl.textContent = formatted ? `Neste fornyelse: ${formatted}` : '';
       if (this.planEl) this.planEl.textContent = plan ? `Aktuell plan: ${plan}` : '';
 
-      // Handle special messages for early users
+      // Handle special messages for early users - ensure they are mutually exclusive
       const showEarlyUserSubscribedMessage = beforePaywall && isActive && tier !== 'free';
       const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
       
-      if (this.thanksEl) this.thanksEl.style.display = showRegularThanks ? 'flex' : 'none';
+      // Always hide both first to ensure mutual exclusivity
+      if (this.thanksEl) this.thanksEl.style.display = 'none';
+      if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
       if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
-      if (this.earlyUserSubscribedEl) {
-        console.log('[subscription modal] loadSubscription: Setting earlyUserSubscribedEl display:', showEarlyUserSubscribedMessage ? 'flex' : 'none', { showEarlyUserSubscribedMessage, beforePaywall, isActive, tier });
-        this.earlyUserSubscribedEl.style.display = showEarlyUserSubscribedMessage ? 'flex' : 'none';
+      
+      // Then show the appropriate one
+      if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
+        console.log('[subscription modal] loadSubscription: Showing earlyUserSubscribedEl', { beforePaywall, isActive, tier });
+        this.earlyUserSubscribedEl.style.display = 'flex';
+      } else if (showRegularThanks && this.thanksEl) {
+        console.log('[subscription modal] loadSubscription: Showing regular thanks', { beforePaywall, isActive, tier });
+        this.thanksEl.style.display = 'flex';
       }
 
       // Buttons per requirements:
