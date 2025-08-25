@@ -395,17 +395,28 @@ export class SubscriptionModal {
     const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
     
     // Always hide both first to ensure mutual exclusivity
-    if (this.thanksEl) this.thanksEl.style.display = 'none';
-    if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
-    if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
+    if (this.thanksEl) {
+      this.thanksEl.style.setProperty('display', 'none', 'important');
+      this.thanksEl.style.visibility = 'hidden';
+    }
+    if (this.earlyUserSubscribedEl) {
+      this.earlyUserSubscribedEl.style.setProperty('display', 'none', 'important');
+      this.earlyUserSubscribedEl.style.visibility = 'hidden';
+    }
+    if (this.earlyUserEl) {
+      this.earlyUserEl.style.setProperty('display', 'none', 'important');
+      this.earlyUserEl.style.visibility = 'hidden';
+    }
     
     // Then show the appropriate one
     if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
       console.log('[subscription modal] updateFromGlobalState: Showing earlyUserSubscribedEl', { beforePaywall, isActive, tier });
-      this.earlyUserSubscribedEl.style.display = 'flex';
+      this.earlyUserSubscribedEl.style.setProperty('display', 'flex', 'important');
+      this.earlyUserSubscribedEl.style.visibility = 'visible';
     } else if (showRegularThanks && this.thanksEl) {
       console.log('[subscription modal] updateFromGlobalState: Showing regular thanks', { beforePaywall, isActive, tier });
-      this.thanksEl.style.display = 'flex';
+      this.thanksEl.style.setProperty('display', 'flex', 'important');
+      this.thanksEl.style.visibility = 'visible';
     }
     if (this.plansEl) this.plansEl.style.display = isActive && tier !== 'free' ? 'none' : 'block';
     if (this.statusIcon) this.statusIcon.style.color = isActive ? 'var(--success)' : 'var(--text-secondary)';
@@ -555,17 +566,28 @@ export class SubscriptionModal {
       const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
       
       // Always hide both first to ensure mutual exclusivity
-      if (this.thanksEl) this.thanksEl.style.display = 'none';
-      if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
-      if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
+      if (this.thanksEl) {
+        this.thanksEl.style.setProperty('display', 'none', 'important');
+        this.thanksEl.style.visibility = 'hidden';
+      }
+      if (this.earlyUserSubscribedEl) {
+        this.earlyUserSubscribedEl.style.setProperty('display', 'none', 'important');
+        this.earlyUserSubscribedEl.style.visibility = 'hidden';
+      }
+      if (this.earlyUserEl) {
+        this.earlyUserEl.style.setProperty('display', 'none', 'important');
+        this.earlyUserEl.style.visibility = 'hidden';
+      }
       
       // Then show the appropriate one
       if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
         console.log('[subscription modal] loadSubscription: Showing earlyUserSubscribedEl', { beforePaywall, isActive, tier });
-        this.earlyUserSubscribedEl.style.display = 'flex';
+        this.earlyUserSubscribedEl.style.setProperty('display', 'flex', 'important');
+        this.earlyUserSubscribedEl.style.visibility = 'visible';
       } else if (showRegularThanks && this.thanksEl) {
         console.log('[subscription modal] loadSubscription: Showing regular thanks', { beforePaywall, isActive, tier });
-        this.thanksEl.style.display = 'flex';
+        this.thanksEl.style.setProperty('display', 'flex', 'important');
+        this.thanksEl.style.visibility = 'visible';
       }
 
       // Buttons per requirements:
