@@ -13,6 +13,7 @@ export class SubscriptionModal {
     this.planEl = null;
     this.currentTier = null;
     this.isActive = false;
+    this.beforePaywall = false;
   }
 
   createModal() {
@@ -68,6 +69,24 @@ export class SubscriptionModal {
                 <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
               </svg>
               <span>Takk for ditt verdsatte partnerskap</span>
+            </div>
+            <div id="earlyUserAppreciation" class="early-user-message" style="display:none;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
+              </svg>
+              <div class="early-user-content">
+                <h4>Takk for at du var med fra start &lt;3</h4>
+                <p>Du får fordelene fra Pro-planen helt gratis. Du kan fortsatt abonnere for å støtte.</p>
+              </div>
+            </div>
+            <div id="earlyUserSubscribedThanks" class="early-user-subscribed" style="display:none;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
+              </svg>
+              <div class="early-user-subscribed-content">
+                <h4>Utrolig takknemlige for støtten! &lt;3</h4>
+                <p>Du var med fra start og velger fortsatt å støtte oss. Det betyr alt for utviklingen av produktet.</p>
+              </div>
             </div>
           </div>
           
@@ -158,6 +177,8 @@ export class SubscriptionModal {
     this.manageBtn = modal.querySelector('#manageSubBtn');
     this.thanksEl = modal.querySelector('#subscriptionThanks');
     this.plansEl = modal.querySelector('#subscriptionPlans');
+    this.earlyUserEl = modal.querySelector('#earlyUserAppreciation');
+    this.earlyUserSubscribedEl = modal.querySelector('#earlyUserSubscribedThanks');
 
     // Initially show loading state, hide content and footer
     if (this.loadingEl) this.loadingEl.style.display = 'flex';
@@ -250,11 +271,13 @@ export class SubscriptionModal {
     this.modal.style.display = 'flex';
     this.modal.classList.add('active');
 
-    // If we already have global state (e.g., after portal return), render immediately
-    await this.updateFromGlobalState();
-
-    // Load subscription info as a fallback
+    // Load subscription info first to get accurate profile data
     await this.loadSubscription();
+    
+    // If we have global state, update with it (but profile data is already loaded)
+    if (window.SubscriptionState) {
+      await this.updateFromGlobalState();
+    }
   }
 
   hide() {
@@ -300,11 +323,49 @@ export class SubscriptionModal {
     await this.showContent();
     
     const row = window.SubscriptionState || null;
+    // Don't rely on window.UserProfile, use the instance property set by loadSubscription
+    const beforePaywall = this.beforePaywall;
+    
+    console.log('[subscription modal] updateFromGlobalState:', { row, beforePaywall, currentTier: this.currentTier });
+    
     if (!row) {
+      // Check if this is an early user with no subscription
+      if (beforePaywall) {
+        console.log('[subscription modal] updateFromGlobalState: Early user with no subscription');
+        if (this.statusEl) this.statusEl.textContent = 'Early User - Pro-fordeler gratis';
+        if (this.periodEl) this.periodEl.textContent = '';
+        if (this.planEl) this.planEl.textContent = '';
+        
+        // Force hide all other messages and show only the early user appreciation
+        if (this.thanksEl) this.thanksEl.style.display = 'none';
+        if (this.earlyUserSubscribedEl) {
+          console.log('[subscription modal] updateFromGlobalState: FORCE hiding earlyUserSubscribedEl');
+          this.earlyUserSubscribedEl.style.display = 'none !important';
+          this.earlyUserSubscribedEl.style.visibility = 'hidden';
+        }
+        if (this.earlyUserEl) {
+          console.log('[subscription modal] updateFromGlobalState: Setting earlyUserEl to flex');
+          this.earlyUserEl.style.display = 'flex';
+          this.earlyUserEl.style.visibility = 'visible';
+        }
+        
+        if (this.plansEl) this.plansEl.style.display = 'none';
+        if (this.manageBtn) this.manageBtn.style.display = 'none';
+        if (this.proBtn) this.proBtn.style.display = '';
+        if (this.maxBtn) this.maxBtn.style.display = '';
+        if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
+        this.currentTier = 'free';
+        this.isActive = true;
+        return;
+      }
+      
+      // Regular free user
       if (this.statusEl) this.statusEl.textContent = 'Gratis plan aktiv';
       if (this.periodEl) this.periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';
       if (this.planEl) this.planEl.textContent = 'Aktuell plan: Gratis';
       if (this.thanksEl) this.thanksEl.style.display = 'none';
+      if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
+      if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
       if (this.plansEl) this.plansEl.style.display = 'block';
       if (this.manageBtn) this.manageBtn.style.display = 'none';
       if (this.proBtn) this.proBtn.style.display = '';
@@ -328,7 +389,17 @@ export class SubscriptionModal {
     if (this.statusEl) this.statusEl.textContent = `${status.charAt(0).toUpperCase()}${status.slice(1)}${plan ? ` - ${plan}` : ''}`;
     if (this.periodEl) this.periodEl.textContent = formatted ? `Neste fornyelse: ${formatted}` : '';
     if (this.planEl) this.planEl.textContent = plan ? `Aktuell plan: ${plan}` : '';
-    if (this.thanksEl) this.thanksEl.style.display = isActive && tier !== 'free' ? 'flex' : 'none';
+    
+    // Handle special messages for early users
+    const showEarlyUserSubscribedMessage = beforePaywall && isActive && tier !== 'free';
+    const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
+    
+    if (this.thanksEl) this.thanksEl.style.display = showRegularThanks ? 'flex' : 'none';
+    if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
+    if (this.earlyUserSubscribedEl) {
+      console.log('[subscription modal] updateFromGlobalState: Setting earlyUserSubscribedEl display:', showEarlyUserSubscribedMessage ? 'flex' : 'none', { showEarlyUserSubscribedMessage, beforePaywall, isActive, tier });
+      this.earlyUserSubscribedEl.style.display = showEarlyUserSubscribedMessage ? 'flex' : 'none';
+    }
     if (this.plansEl) this.plansEl.style.display = isActive && tier !== 'free' ? 'none' : 'block';
     if (this.statusIcon) this.statusIcon.style.color = isActive ? 'var(--success)' : 'var(--text-secondary)';
 
@@ -374,11 +445,24 @@ export class SubscriptionModal {
         return;
       }
 
-      // Fetch subscription tier from Supabase view
-      const { data, error } = await window.supa
-        .from('subscription_tiers')
-        .select('status,price_id,tier,is_active,current_period_end,updated_at')
-        .eq('user_id', userId);
+      // Fetch both subscription tier and user profile data
+      const [subscriptionResult, profileResult] = await Promise.all([
+        window.supa
+          .from('subscription_tiers')
+          .select('status,price_id,tier,is_active,current_period_end,updated_at')
+          .eq('user_id', userId),
+        window.supa
+          .from('profiles')
+          .select('before_paywall')
+          .eq('id', userId)
+          .single()
+      ]);
+
+      const { data, error } = subscriptionResult;
+      const beforePaywall = profileResult.data?.before_paywall === true;
+      this.beforePaywall = beforePaywall;
+      
+      console.log('[subscription modal] loadSubscription profile data:', { beforePaywall, profileData: profileResult.data });
 
       if (error) {
         console.error('[subscription] fetch error:', error);
@@ -393,10 +477,42 @@ export class SubscriptionModal {
       }
       if (!row) {
         await this.showContent();
+        
+        // Check if this is an early user with no subscription
+        if (beforePaywall) {
+          console.log('[subscription modal] Early user with no subscription - showing first message only');
+          if (this.statusEl) this.statusEl.textContent = 'Early User - Pro-fordeler gratis';
+          if (this.periodEl) this.periodEl.textContent = '';
+          if (this.planEl) this.planEl.textContent = '';
+          
+          // Hide all other messages and show only the early user appreciation
+          if (this.thanksEl) this.thanksEl.style.display = 'none';
+          if (this.earlyUserSubscribedEl) {
+            console.log('[subscription modal] FORCE hiding earlyUserSubscribedEl (should not show for non-subscribers)');
+            this.earlyUserSubscribedEl.style.setProperty('display', 'none', 'important');
+            this.earlyUserSubscribedEl.style.visibility = 'hidden';
+          }
+          if (this.earlyUserEl) {
+            console.log('[subscription modal] Setting earlyUserEl to flex');
+            this.earlyUserEl.style.display = 'flex';
+            this.earlyUserEl.style.visibility = 'visible';
+          }
+          
+          if (this.plansEl) this.plansEl.style.display = 'none';
+          if (this.manageBtn) this.manageBtn.style.display = 'none';
+          if (this.proBtn) this.proBtn.style.display = '';
+          if (this.maxBtn) this.maxBtn.style.display = '';
+          if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
+          return;
+        }
+        
+        // Regular free user
         if (this.statusEl) this.statusEl.textContent = 'Gratis plan aktiv';
         if (this.periodEl) this.periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';
         if (this.planEl) this.planEl.textContent = 'Aktuell plan: Gratis';
         if (this.thanksEl) this.thanksEl.style.display = 'none';
+        if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
+        if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
         if (this.plansEl) this.plansEl.style.display = 'block';
         if (this.manageBtn) this.manageBtn.style.display = 'none';
         if (this.proBtn) this.proBtn.style.display = '';
@@ -427,8 +543,16 @@ export class SubscriptionModal {
       if (this.periodEl) this.periodEl.textContent = formatted ? `Neste fornyelse: ${formatted}` : '';
       if (this.planEl) this.planEl.textContent = plan ? `Aktuell plan: ${plan}` : '';
 
-      // Show thanks heart if active
-      if (this.thanksEl) this.thanksEl.style.display = isActive ? 'flex' : 'none';
+      // Handle special messages for early users
+      const showEarlyUserSubscribedMessage = beforePaywall && isActive && tier !== 'free';
+      const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
+      
+      if (this.thanksEl) this.thanksEl.style.display = showRegularThanks ? 'flex' : 'none';
+      if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
+      if (this.earlyUserSubscribedEl) {
+        console.log('[subscription modal] loadSubscription: Setting earlyUserSubscribedEl display:', showEarlyUserSubscribedMessage ? 'flex' : 'none', { showEarlyUserSubscribedMessage, beforePaywall, isActive, tier });
+        this.earlyUserSubscribedEl.style.display = showEarlyUserSubscribedMessage ? 'flex' : 'none';
+      }
 
       // Buttons per requirements:
       // - tier = 'free' and active → show both upgrade options

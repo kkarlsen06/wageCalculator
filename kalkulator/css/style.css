@@ -5214,6 +5214,47 @@ input[type="time"].form-control[value=""]:focus {
   flex-shrink: 0;
 }
 
+/* Early user messages */
+.early-user-message,
+.early-user-subscribed {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  background: linear-gradient(135deg, 
+    rgba(147, 51, 234, 0.15), 
+    rgba(126, 34, 206, 0.12)
+  ) !important;
+  border: 1px solid rgba(147, 51, 234, 0.3) !important;
+  border-radius: 12px;
+  color: var(--primary) !important;
+  font-size: var(--text-sm);
+}
+
+.early-user-message svg,
+.early-user-subscribed svg {
+  color: var(--primary) !important;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.early-user-content h4,
+.early-user-subscribed-content h4 {
+  margin: 0 0 8px 0 !important;
+  font-size: var(--text-base) !important;
+  font-weight: 600 !important;
+  color: var(--primary) !important;
+}
+
+.early-user-content p,
+.early-user-subscribed-content p {
+  margin: 0 !important;
+  line-height: 1.5;
+  color: var(--primary) !important;
+  opacity: 0.9;
+}
+
 .subscription-plans {
   margin-top: 8px;
 }
@@ -5326,6 +5367,7 @@ input[type="time"].form-control[value=""]:focus {
   gap: 8px;
   padding: 12px 20px;
   font-weight: 500;
+  line-height: 1.4;
   transition: all var(--speed-normal) var(--ease-default);
 }
 
@@ -5704,8 +5746,8 @@ input[type="time"].form-control[value=""]:focus {
     width: 95vw;
     max-height: 90vh;
     min-height: 300px;
-    top: 5vh;
-    transform: translateX(-50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
   
   #subscriptionModal .modal-body {
@@ -5743,8 +5785,8 @@ input[type="time"].form-control[value=""]:focus {
     width: 98vw;
     max-height: 95vh;
     min-height: 250px;
-    top: 2.5vh;
-    transform: translateX(-50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
   
   #subscriptionModal .modal-body {
