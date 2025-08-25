@@ -61,7 +61,7 @@ const corsOptions = {
     if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400
 };
@@ -85,6 +85,9 @@ app.options('/stripe/create-portal-session', cors(corsOptions));
 
 // Also allow preflight for /checkout (when proxies strip /api)
 app.options('/checkout', cors(corsOptions));
+
+// Explicit preflight for DELETE shifts endpoint
+app.options('/shifts/outside-month/:month', cors(corsOptions));
 
 
 // Do NOT apply to /api/stripe-webhook (keep express.raw)
@@ -2756,6 +2759,103 @@ async function validateEmployeeOwnership(managerId, employeeId) {
   }
 }
 
+// Validate if user can create shift based on subscription and paywall rules
+async function validateShiftCreation(userId, shiftDate) {
+  try {
+    // Get current subscription status and before_paywall flag
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('before_paywall')
+      .eq('id', userId)
+      .single();
+
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.warn('[paywall] Could not fetch profile:', profileError);
+    }
+
+    const { data: subscription, error: subError } = await supabase
+      .from('subscription_tiers')
+      .select('status, is_active')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (subError && subError.code !== 'PGRST116') {
+      console.warn('[paywall] Could not fetch subscription:', subError);
+      // If subscription_tiers table is not accessible, default to free tier rules
+      console.warn('[paywall] Defaulting to free tier validation due to subscription query error');
+    }
+
+    const isActiveSubscription = subscription?.is_active === true;
+    const beforePaywall = userProfile?.before_paywall === true;
+
+    // Rule 1: Active subscription = full access
+    if (isActiveSubscription) {
+      return { valid: true };
+    }
+
+    // Rule 2: No active subscription but before_paywall = true = grandfathered access
+    if (beforePaywall) {
+      return { valid: true };
+    }
+
+    // Rule 3: Check if user has shifts outside current month (free tier limitation)
+    const targetMonth = shiftDate.substring(0, 7); // YYYY-MM format
+
+    // Get all distinct months where user has shifts
+    const { data: existingShifts, error } = await supabase
+      .from('user_shifts')
+      .select('shift_date')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.warn('[paywall] Could not fetch existing shifts:', error);
+      return { valid: false, error: 'System error', requiresUpgrade: false };
+    }
+
+    if (!existingShifts || existingShifts.length === 0) {
+      // No existing shifts = can create
+      return { valid: true };
+    }
+
+    // Extract unique months from existing shifts
+    const existingMonths = new Set(
+      existingShifts.map(shift => shift.shift_date.substring(0, 7))
+    );
+
+    // If user only has shifts in target month, allow creation
+    if (existingMonths.size === 1 && existingMonths.has(targetMonth)) {
+      return { valid: true };
+    }
+
+    // If user has no shifts in target month, but has shifts in other months, block
+    if (!existingMonths.has(targetMonth) && existingMonths.size > 0) {
+      return {
+        valid: false,
+        error: 'premium_feature_required',
+        requiresUpgrade: true,
+        otherMonths: Array.from(existingMonths).filter(month => month !== targetMonth)
+      };
+    }
+
+    // If user has shifts in target month AND other months, block
+    if (existingMonths.has(targetMonth) && existingMonths.size > 1) {
+      return {
+        valid: false,
+        error: 'premium_feature_required',
+        requiresUpgrade: true,
+        otherMonths: Array.from(existingMonths).filter(month => month !== targetMonth)
+      };
+    }
+
+    // Default allow (shouldn't reach here)
+    return { valid: true };
+
+  } catch (error) {
+    console.error('[paywall] Validation error:', error);
+    return { valid: false, error: 'System error', requiresUpgrade: false };
+  }
+}
+
 
 // Decode JWT payload from Authorization header (to read custom claims like ai_agent)
 function getJwtPayloadFromAuthHeader(req) {
@@ -4128,6 +4228,77 @@ app.delete('/shifts/:id', authenticateUser, async (req, res) => {
   }
 });
 
+/**
+ * DELETE /shifts/outside-month/:month - Delete all shifts outside specified month (for free tier)
+ */
+app.delete('/shifts/outside-month/:month', authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user_id;
+    const monthParam = req.params.month; // Expected format: YYYY-MM
+    
+    // Validate month format
+    if (!/^\d{4}-\d{2}$/.test(monthParam)) {
+      return res.status(400).json({ error: 'Invalid month format. Expected YYYY-MM' });
+    }
+
+    // First, fetch all shifts for the user to find ones to delete
+    const { data: allShifts, error: fetchError } = await supabase
+      .from('user_shifts')
+      .select('id, shift_date')
+      .eq('user_id', userId);
+
+    if (fetchError) {
+      console.error('Error fetching shifts for deletion:', fetchError);
+      return res.status(500).json({ error: 'Failed to fetch shifts' });
+    }
+
+    if (!allShifts || allShifts.length === 0) {
+      return res.status(200).json({ 
+        success: true, 
+        deletedCount: 0,
+        message: 'No shifts found to delete'
+      });
+    }
+
+    // Filter shifts that are NOT in the target month
+    const shiftsToDelete = allShifts.filter(shift => {
+      const shiftMonth = shift.shift_date.substring(0, 7); // Extract YYYY-MM
+      return shiftMonth !== monthParam;
+    });
+
+    if (shiftsToDelete.length === 0) {
+      return res.status(200).json({ 
+        success: true, 
+        deletedCount: 0,
+        message: `No shifts outside ${monthParam} found`
+      });
+    }
+
+    // Delete the filtered shifts by their IDs
+    const idsToDelete = shiftsToDelete.map(shift => shift.id);
+    const { data, error } = await supabase
+      .from('user_shifts')
+      .delete()
+      .eq('user_id', userId)
+      .in('id', idsToDelete)
+      .select('id');
+
+    if (error) {
+      console.error('Error deleting shifts outside month:', error);
+      return res.status(500).json({ error: 'Failed to delete shifts' });
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      deletedCount: data ? data.length : 0,
+      message: `Deleted ${data ? data.length : 0} shifts outside ${monthParam}`
+    });
+  } catch (error) {
+    console.error('DELETE /shifts/outside-month/:month error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ---------- employee-shifts CRUD endpoints ----------
 
 // ---- DEBUG: announce registration of /employee-shifts routes ----
@@ -4531,6 +4702,23 @@ async function handleTool(call, user_id) {
   let toolResult = '';
 
   if (fnName === 'addShift') {
+      // Validate subscription and paywall rules
+      const paywallValidation = await validateShiftCreation(user_id, args.shift_date);
+      if (!paywallValidation.valid) {
+        toolResult = JSON.stringify({
+          status: 'paywall_blocked',
+          inserted: [],
+          updated: [],
+          deleted: [],
+          shift_summary: paywallValidation.error === 'premium_feature_required' 
+            ? 'Du har funnet en premium-funksjon. Oppgrader til et abonnement eller slett alle vakter i de andre månedene.'
+            : 'Kunne ikke opprette vakt.',
+          requiresUpgrade: paywallValidation.requiresUpgrade,
+          otherMonths: paywallValidation.otherMonths
+        });
+        return toolResult;
+      }
+
       // Validate employee_id if provided
       if (args.employee_id) {
         const validation = await validateEmployeeOwnership(user_id, args.employee_id);

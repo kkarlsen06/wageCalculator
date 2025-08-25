@@ -6,25 +6,38 @@ import { supabase } from '/src/supabase-client.js';
  * - Dispatches `subscription:updated` with { detail: data }
  */
 export async function refreshSubscriptionState(userId) {
-  if (!userId) { console.warn('[sub] refresh: missing userId'); return null; }
+  if (!userId) {
+    console.warn('[sub] refresh: missing userId');
+    return null;
+  }
   try {
     console.log('[sub] refresh start', { userId });
     const { data, error } = await supabase
       .from('subscription_tiers')
       .select('status, price_id, tier, is_active, current_period_end, updated_at')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
+
     if (error) {
       console.warn('[sub] refresh error', error);
       return null;
     }
-    window.SubscriptionState = data || null;
-    console.log('[sub] refresh data', data);
-    document.dispatchEvent(new CustomEvent('subscription:updated', { detail: data }));
-    return data;
+
+    const state = data ?? {
+      status: 'none',
+      price_id: null,
+      tier: 'free',
+      is_active: false,
+      current_period_end: null,
+      updated_at: null,
+    };
+
+    window.SubscriptionState = state;
+    console.log('[sub] refresh data', state);
+    document.dispatchEvent(new CustomEvent('subscription:updated', { detail: state }));
+    return state;
   } catch (e) {
     console.warn('[sub] refresh exception', e);
     return null;
   }
 }
-

@@ -5059,37 +5059,715 @@ input[type="time"].form-control[value=""]:focus {
   transform: translate(-50%, -50%);
   margin: 0;
   z-index: 1300;
-  max-width: 480px;
+  max-width: 580px;
   width: 92vw;
   height: auto;
-  max-height: 80vh;
-  min-height: 360px;
-  overflow: hidden;
+  max-height: 85vh;
+  min-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
   border-radius: 24px;
   border: 2px solid var(--border);
   display: flex;
   flex-direction: column;
-  /* Give breathing room below footer within rounded container, incl. safe area */
-  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+#subscriptionModal .modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 20px 24px;
+  min-height: 0; /* Allow flexbox to shrink content */
 }
 
 #subscriptionModal .modal-footer {
+  flex-shrink: 0;
   padding: 16px 24px 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+#subscriptionModal .modal-loading {
+  flex: 1 1 auto;
+  padding: 20px 24px;
+}
+
+/* Custom scrollbar for subscription modal */
+#subscriptionModal .modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+#subscriptionModal .modal-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+
+#subscriptionModal .modal-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+#subscriptionModal .modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+#subscriptionModal .modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+#subscriptionModal .modal-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+
+#subscriptionModal .modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+#subscriptionModal .modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Subscription Modal Professional Styling */
+#subscriptionModal .modal-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#subscriptionModal .modal-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin: 0;
+}
+
+.subscription-status-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.status-icon {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.status-text {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.period-info,
+.plan-info {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.plan-info {
+  font-weight: 500;
+}
+
+.appreciation-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, 
+    rgba(34, 197, 94, 0.1), 
+    rgba(16, 185, 129, 0.08)
+  );
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 12px;
+  color: var(--success);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.appreciation-message svg {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.subscription-plans {
+  margin-top: 8px;
+}
+
+.subscription-plans h4 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.plan-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.plan-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.plan-header {
+  margin-bottom: 12px;
+}
+
+.plan-card h5 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.plan-price {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.plan-features {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feature {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.feature::before {
+  content: '✓';
+  color: var(--success);
+  font-weight: 600;
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+.plan-limitation {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 6px;
+  font-size: var(--text-xs);
+  color: rgba(245, 158, 11, 0.9);
+  font-weight: 500;
+  text-align: center;
+}
+
+.free-plan {
+  background: linear-gradient(135deg, 
+    rgba(34, 197, 94, 0.05), 
+    rgba(16, 185, 129, 0.03)
+  );
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.pro-plan {
+  background: linear-gradient(135deg, 
+    rgba(99, 102, 241, 0.05), 
+    rgba(139, 92, 246, 0.03)
+  );
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.max-plan {
+  background: linear-gradient(135deg, 
+    rgba(168, 85, 247, 0.08), 
+    rgba(236, 72, 153, 0.05)
+  );
+  border-color: rgba(168, 85, 247, 0.25);
+}
+
+/* Button styling improvements for subscription modal */
+#subscriptionModal .modal-footer-buttons .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-weight: 500;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+#subscriptionModal .modal-footer-buttons .btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+#subscriptionModal .modal-footer-buttons .btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+#subscriptionModal .modal-footer-buttons .btn-outline:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+/* Loading state for subscription modal */
+.modal-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 40px 20px;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner svg {
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+.loading-text {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Smooth transitions for content appearance */
+#modalContent,
+#modalFooter {
+  transition: opacity 0.2s ease-in-out;
+}
+
+#modalContent[style*="display: none"],
+#modalFooter[style*="display: none"] {
+  opacity: 0;
+}
+
+#modalContent[style*="display: block"],
+#modalFooter[style*="display: block"] {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .plans-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .free-plan {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Premium Feature Modal Styles */
+.premium-feature-modal {
+  z-index: 1300; /* Higher than subscription modal */
+}
+
+.premium-feature-content {
+  max-width: 540px;
+  width: 90vw;
+  border-radius: 20px;
+}
+
+.premium-feature-content .modal-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 40px 32px 20px 32px;
+  border-bottom: none;
+}
+
+.premium-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary, #FFB020) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  color: white;
+  box-shadow: 0 6px 24px rgba(255, 183, 77, 0.25);
+}
+
+.premium-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.premium-feature-content .modal-title {
+  color: var(--text-primary);
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.modal-description {
+  padding: 0 32px 24px 32px;
+  text-align: center;
+}
+
+.modal-description p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.premium-feature-content .modal-body {
+  padding: 0 32px 24px 32px;
+}
+
+.limitation-info {
+  padding: 0;
+}
+
+.info-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.info-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.info-header svg {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+.info-header span {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.info-card p {
+  color: var(--text-secondary);
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.months-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.month-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.premium-feature-content .modal-footer {
+  padding: 24px 32px 32px 32px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  border-radius: 0 0 20px 20px;
+}
+
+.premium-feature-content .modal-footer-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.premium-feature-content .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  white-space: nowrap;
+  min-height: 50px;
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.premium-feature-content .btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.premium-feature-content .btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary, #FFB020) 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(255, 183, 77, 0.3);
+  font-weight: 700;
+  order: 1;
+}
+
+.premium-feature-content .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(255, 183, 77, 0.4);
+}
+
+.premium-feature-content .btn-secondary {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  order: 2;
+}
+
+.premium-feature-content .btn-secondary:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.premium-feature-content .btn-outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  order: 3;
+  font-weight: 500;
+}
+
+.premium-feature-content .btn-outline:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+/* Action buttons layout for larger screens */
+@media (min-width: 500px) {
+  .premium-feature-content .modal-footer-buttons {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .premium-feature-content .btn-outline {
+    flex: 0 0 auto;
+    min-width: 100px;
+    max-width: 120px;
+    order: 1;
+  }
+  
+  .premium-feature-content .btn-secondary {
+    flex: 0 1 auto;
+    min-width: 140px;
+    max-width: 160px;
+    order: 2;
+  }
+  
+  .premium-feature-content .btn-primary {
+    flex: 0 1 auto;
+    min-width: 130px;
+    max-width: 150px;
+    order: 3;
+  }
+}
+
+@media (max-width: 499px) {
+  .premium-feature-content {
+    width: 95vw;
+  }
+  
+  .premium-feature-content .modal-header {
+    padding: 32px 24px 16px 24px;
+  }
+  
+  .modal-description {
+    padding: 0 24px 20px 24px;
+  }
+  
+  .premium-feature-content .modal-body {
+    padding: 0 24px 20px 24px;
+  }
+  
+  .premium-feature-content .modal-footer {
+    padding: 20px 24px 28px 24px;
+  }
+  
+  .months-list {
+    justify-content: center;
+  }
+  
+  .premium-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+  }
+  
+  .premium-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .premium-feature-content .modal-title {
+    font-size: 24px;
+  }
+  
+  .modal-description p {
+    font-size: 15px;
+  }
 }
 
 @media (max-width: 600px) {
   #subscriptionModal .modal-content {
     width: 95vw;
-    max-height: 85vh;
-    min-height: 320px;
+    max-height: 90vh;
+    min-height: 300px;
+    top: 5vh;
+    transform: translateX(-50%);
+  }
+  
+  #subscriptionModal .modal-body {
+    padding: 16px 20px;
+  }
+  
+  #subscriptionModal .modal-footer {
+    padding: 12px 20px 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+  
+  .plans-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .subscription-status-card {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  
+  #subscriptionModal .modal-footer-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  #subscriptionModal .modal-footer-buttons .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
   #subscriptionModal .modal-content {
     width: 98vw;
-    max-height: 90vh;
-    min-height: 300px;
+    max-height: 95vh;
+    min-height: 250px;
+    top: 2.5vh;
+    transform: translateX(-50%);
+  }
+  
+  #subscriptionModal .modal-body {
+    padding: 12px 16px;
+  }
+  
+  #subscriptionModal .modal-footer {
+    padding: 8px 16px 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+  
+  .status-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .status-text {
+    font-size: var(--text-base);
+  }
+  
+  .plan-card {
+    padding: 12px;
   }
 }
 
@@ -14427,6 +15105,10 @@ body.chatbox-view .chatbox-container {
 }
 
 /* ===== CONFIRMATION DIALOG STYLES ===== */
+
+.confirmation-modal {
+  z-index: 1400; /* Higher than premium modal (1300) */
+}
 
 .confirmation-modal .modal-content {
   max-width: 400px;

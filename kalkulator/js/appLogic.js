@@ -1135,6 +1135,9 @@ export const app = {
             // Get weekday from the selected date (0=Sunday, 1=Monday, etc.)
             const weekday = first.getDay();
 
+            // Reset series paywall flag for new series
+            this._seriesPaywallShown = false;
+            
             // Build occurrences
             const dates = [new Date(first)];
             let next = new Date(first);
@@ -1203,6 +1206,41 @@ export const app = {
                     });
                     if (!resp.ok) { const e = await resp.json().catch(() => ({})); console.error('Gjentakende API-feil:', e); continue; }
                 } else {
+                    // Regular user shift with series - validate subscription first
+                    const { validateShiftCreation } = await import('./subscriptionValidator.js');
+                    const validation = await validateShiftCreation(dateStr);
+                    
+                    if (!validation.canCreate) {
+                        if (validation.requiresUpgrade) {
+                            // Show premium feature modal only once for the series
+                            if (!this._seriesPaywallShown) {
+                                const { PremiumFeatureModal } = await import('./premiumFeatureModal.js');
+                                const currentMonth = dateStr.substring(0, 7); // YYYY-MM
+                                const canProceed = await PremiumFeatureModal.showAndHandle({
+                                    otherMonths: validation.otherMonths || [],
+                                    currentMonth: currentMonth
+                                });
+                                
+                                if (!canProceed) {
+                                    // User chose not to proceed, break out of entire series
+                                    break;
+                                }
+                                
+                                this._seriesPaywallShown = true;
+                            }
+                            
+                            // Re-validate after potential deletion
+                            const revalidation = await validateShiftCreation(dateStr);
+                            if (!revalidation.canCreate) {
+                                console.warn(`Skipping shift for ${dateStr} - still blocked after paywall handling`);
+                                continue;
+                            }
+                        } else {
+                            console.warn(`Skipping shift for ${dateStr} - ${validation.reason}`);
+                            continue;
+                        }
+                    }
+                    
                     // Regular user shift with series, saved directly to user_shifts
                     const insertData = {
                         user_id: userId,
@@ -1352,7 +1390,38 @@ export const app = {
                         continue;
                     }
                 } else {
-                    // Regular user shift
+                    // Regular user shift - validate subscription first
+                    const { validateShiftCreation } = await import('./subscriptionValidator.js');
+                    const validation = await validateShiftCreation(finalDateStr);
+                    
+                    if (!validation.canCreate) {
+                        if (validation.requiresUpgrade) {
+                            // Show premium feature modal
+                            const { PremiumFeatureModal } = await import('./premiumFeatureModal.js');
+                            const currentMonth = finalDateStr.substring(0, 7); // YYYY-MM
+                            const canProceed = await PremiumFeatureModal.showAndHandle({
+                                otherMonths: validation.otherMonths || [],
+                                currentMonth: currentMonth
+                            });
+                            
+                            if (!canProceed) {
+                                continue; // Skip this shift creation
+                            }
+                            
+                            // If user deleted other shifts, re-validate
+                            const revalidation = await validateShiftCreation(finalDateStr);
+                            if (!revalidation.canCreate) {
+                                const { getValidationMessage } = await import('./subscriptionValidator.js');
+                                alert(getValidationMessage(revalidation));
+                                continue;
+                            }
+                        } else {
+                            const { getValidationMessage } = await import('./subscriptionValidator.js');
+                            alert(getValidationMessage(validation));
+                            continue;
+                        }
+                    }
+
                     const insertData = {
                         user_id: userId,
                         shift_date: finalDateStr,
