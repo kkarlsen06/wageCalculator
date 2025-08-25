@@ -4,8 +4,8 @@ A modern, production-grade web app for calculating wages based on shifts, hourly
 
 ### Live
 
-- Landing page: `https://kkarlsen.art`
-- App: `https://kkarlsen.art/kalkulator`
+- Landing page: `https://kkarlsen.dev`
+- App: `https://kkarlsen.dev/kalkulator`
 
 Note: In production, the frontend is built with Vite and hosted on Netlify. API requests are proxied to an Azure Web App (`/api -> https://wageapp-prod.azurewebsites.net`).
 
