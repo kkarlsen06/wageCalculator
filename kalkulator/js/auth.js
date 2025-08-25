@@ -5,6 +5,7 @@ const API_BASE = window.CONFIG?.apiBase || '/api';
 let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
 import { supabase } from '../../src/supabase-client.js'
+import { signInWithGoogle } from './auth-google.js'
 const supa = supabase;
 window.supa = supa;
 
@@ -150,6 +151,7 @@ function setupEventListeners() {
   const sendResetBtn   = document.getElementById("send-reset-btn");
   const sendMagicLinkBtn = document.getElementById("send-magic-link-btn"); // New button
   const backLoginBtn   = document.getElementById("back-login-btn");
+  const googleBtn      = document.getElementById("btn-google");
 
   // Store references globally for other functions to use
   window.authElements = {
@@ -158,7 +160,7 @@ function setupEventListeners() {
     createAccountBtn, backLoginSignupBtn, signupMsg,
     completeProfileCard, completeName, 
     completeProfileBtn, skipProfileBtn, completeProfileMsg,
-    forgotBtn, forgotCard, forgotEmailInp, sendResetBtn, sendMagicLinkBtn, backLoginBtn // Added sendMagicLinkBtn
+    forgotBtn, forgotCard, forgotEmailInp, sendResetBtn, sendMagicLinkBtn, backLoginBtn, googleBtn
   };
 
   // Auth actions
@@ -209,6 +211,7 @@ function setupEventListeners() {
   if (backLoginBtn) backLoginBtn.onclick = () => toggleForgot(false);
   if (sendResetBtn) sendResetBtn.onclick = () => sendResetLink(forgotEmailInp.value);
   if (sendMagicLinkBtn) sendMagicLinkBtn.onclick = () => sendMagicLink(forgotEmailInp.value); // New event listener
+  if (googleBtn) googleBtn.onclick = () => handleGoogleSignIn();
 
   // Add enter key functionality
   if (passInp && loginBtn) {
@@ -267,6 +270,15 @@ async function signIn(email, password) {
   } catch (err) {
     console.error("Supabase error:", err);
     window.authElements.authMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
+  }
+}
+
+async function handleGoogleSignIn() {
+  try {
+    await signInWithGoogle();
+  } catch (e) {
+    console.error("[oauth] Google sign-in failed:", e);
+    window.authElements.authMsg.textContent = "Google innlogging feilet. Prøv igjen.";
   }
 }
 

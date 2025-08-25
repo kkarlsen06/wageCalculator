@@ -3293,6 +3293,34 @@ export const app = {
             // Initialize avatar controls (choose/remove handlers)
             this.initProfileAvatarControls();
 
+            // Initialize Google link button
+            this.initGoogleLinkButton();
+
+            // Wire profile form + input handlers for immediate save
+            const profileForm = document.getElementById('profile-form');
+            const nameInput = document.getElementById('profileName');
+            if (profileForm) {
+                const formSubmitHandler = (e) => {
+                    e.preventDefault();
+                    this.updateProfile();
+                };
+                profileForm.addEventListener('submit', formSubmitHandler);
+                modal.profileFormSubmitHandler = formSubmitHandler; // Store for cleanup
+            }
+            if (nameInput) {
+                const blurHandler = () => { this.updateProfile(); };
+                const enterHandler = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.updateProfile();
+                    }
+                };
+                nameInput.addEventListener('blur', blurHandler);
+                nameInput.addEventListener('keypress', enterHandler);
+                modal.profileNameBlurHandler = blurHandler;   // Store for cleanup
+                modal.profileNameKeyHandler = enterHandler;   // Store for cleanup
+            }
+
             // Show the modal
             modal.style.display = 'flex';
             modal.classList.add('active');
@@ -3300,6 +3328,8 @@ export const app = {
             // Add keyboard support
             const keydownHandler = (e) => {
                 if (e.key === 'Escape') {
+                    // Ensure pending name edits are saved
+                    this.updateProfile();
                     this.closeProfile();
                 }
             };
@@ -3309,6 +3339,8 @@ export const app = {
             // Add click outside handler
             const clickOutsideHandler = (e) => {
                 if (e.target === modal) {
+                    // Ensure pending name edits are saved
+                    this.updateProfile();
                     this.closeProfile();
                 }
             };
@@ -3320,6 +3352,8 @@ export const app = {
     closeProfile() {
         const modal = document.getElementById('profileModal');
         if (modal) {
+            // Best-effort: save pending name changes before closing
+            try { this.updateProfile(); } catch (_) {}
             modal.style.display = 'none';
             modal.classList.remove('active');
 
@@ -3331,6 +3365,22 @@ export const app = {
             if (modal.clickOutsideHandler) {
                 modal.removeEventListener('click', modal.clickOutsideHandler);
                 modal.clickOutsideHandler = null;
+            }
+            const profileForm = document.getElementById('profile-form');
+            const nameInput = document.getElementById('profileName');
+            if (profileForm && modal.profileFormSubmitHandler) {
+                profileForm.removeEventListener('submit', modal.profileFormSubmitHandler);
+                modal.profileFormSubmitHandler = null;
+            }
+            if (nameInput) {
+                if (modal.profileNameBlurHandler) {
+                    nameInput.removeEventListener('blur', modal.profileNameBlurHandler);
+                    modal.profileNameBlurHandler = null;
+                }
+                if (modal.profileNameKeyHandler) {
+                    nameInput.removeEventListener('keypress', modal.profileNameKeyHandler);
+                    modal.profileNameKeyHandler = null;
+                }
             }
 
             // Restore floating action bar visibility when modal closes
@@ -6837,7 +6887,16 @@ export const app = {
                 }, 3000);
             }
 
-            // Update the nickname in the header
+            // Immediate UI feedback: update nickname without waiting for auth refresh
+            const nicknameElement = document.getElementById('userNickname');
+            if (nicknameElement && firstName.trim()) {
+                nicknameElement.textContent = firstName.trim();
+            }
+            if (window.chatbox && window.chatbox.updatePlaceholder) {
+                window.chatbox.updatePlaceholder();
+            }
+
+            // Also refresh from Supabase to ensure persistence across reloads
             this.loadUserNickname();
 
         } catch (err) {
@@ -6870,6 +6929,49 @@ export const app = {
         if (removeBtn) {
             removeBtn.onclick = () => this.removeProfileAvatar();
         }
+    },
+
+    async initGoogleLinkButton() {
+        const linkBtn = document.getElementById('btn-link-google');
+        if (!linkBtn) return;
+
+        try {
+            // Check if user already has Google linked
+            const { data: { user } } = await window.supa.auth.getUser();
+            const hasGoogleLinked = user?.identities?.some(identity => identity.provider === 'google');
+            
+            if (hasGoogleLinked) {
+                linkBtn.style.display = 'none';
+                return;
+            }
+        } catch (e) {
+            console.error('[oauth] Failed to check linked identities:', e);
+        }
+
+        // Import the link function and set up handler
+        const { linkGoogleIdentity } = await import('./link-google.js');
+        
+        linkBtn.addEventListener('click', async () => {
+            linkBtn.disabled = true;
+            const originalText = linkBtn.textContent;
+            linkBtn.textContent = 'Åpner Google...';
+            
+            try {
+                const authUrl = await linkGoogleIdentity();
+                if (authUrl) {
+                    // The OAuth flow will handle the redirect automatically
+                    // User will be redirected to Google and then back to the app
+                    console.info('[oauth] Redirecting to Google for account linking');
+                } else {
+                    throw new Error('No auth URL returned');
+                }
+            } catch (e) {
+                console.error('[oauth] Link failed:', e);
+                alert('Klarte ikke å koble Google-kontoen. Prøv igjen.');
+                linkBtn.disabled = false;
+                linkBtn.textContent = originalText;
+            }
+        });
     },
 
     async openCropperWithFile(file) {
