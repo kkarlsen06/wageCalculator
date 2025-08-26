@@ -306,8 +306,8 @@ async function signUpWithDetails() {
   }
 
   try {
-    const { error, data } = await supa.auth.signUp({ 
-      email, 
+    const { data, error } = await supa.auth.signUp({
+      email,
       password,
       options: {
         data: {
@@ -315,17 +315,23 @@ async function signUpWithDetails() {
         }
       }
     });
-    
+
     if (error) {
-      window.authElements.signupMsg.textContent = error.message;
-      return;
+      console.error('[signup] failed', error);
+      window.authElements.signupMsg.textContent = 'Kunne ikke opprette konto. Se konsollen.';
+    } else if (data?.session) {
+      // instant login
+      window.location.href = `${window.location.origin}/kalkulator/index.html`;
+    } else {
+      // fallback if confirm-email still on
+      window.authElements.signupMsg.style.color = 'var(--success)';
+      window.authElements.signupMsg.textContent = 'Registrering OK – sjekk e-post for bekreftelse!';
     }
 
-    window.authElements.signupMsg.style.color = "var(--success)";
-    window.authElements.signupMsg.textContent = "Registrering OK – sjekk e-post for bekreftelse!";
+    console.log('[signup]', { user: !!data?.user, session: !!data?.session, error });
   } catch (err) {
-    console.error("Supabase error:", err);
-    window.authElements.signupMsg.textContent = "Kunne ikke koble til autentiseringstjeneste";
+    console.error('Supabase error:', err);
+    window.authElements.signupMsg.textContent = 'Kunne ikke koble til autentiseringstjeneste';
   }
 }
 
