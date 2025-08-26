@@ -1249,6 +1249,12 @@
             delete settingsData[key];
           }
         });
+        // HOTFIX: never store base64 data URLs in DB (can blow index size in prod)
+        if (typeof settingsData.profile_picture_url === 'string' &&
+            settingsData.profile_picture_url.startsWith('data:')) {
+          console.warn('[onboarding] stripping inline profile picture data URL before save');
+          delete settingsData.profile_picture_url;
+        }
 
         // Save settings to user_settings table
         const { error: settingsError } = await supabase
