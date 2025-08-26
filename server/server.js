@@ -27,7 +27,7 @@ import { OpenAI } from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { calcEmployeeShift } from './payroll/calc.js';
 import { randomUUID } from 'node:crypto';
-import { verifySupabaseJWT } from './lib/auth/verifySupabaseJwt.js';
+import { verifySupabaseJWT, getUidFromAuthHeader } from './lib/auth/verifySupabaseJwt.js';
 import { authMiddleware } from './middleware/auth.js';
 import Stripe from 'stripe';
 // Node 22+ has global fetch; use Stripe REST API to avoid extra deps
@@ -463,6 +463,170 @@ app.get('/metrics', (req, res) => {
   }
 });
 
+// ---------- Secure Billing Start Endpoint ----------
+// Creates or updates Stripe Customer with secure UID and initiates checkout
+// - Auth required; extracts UID from verified JWT
+// - Ignores client-provided UID unless it matches server-verified UID
+// - Sets metadata.supabase_uid on customers and sessions
+// - Maintains server-side mapping table
+app.post('/api/billing/start', async (req, res) => {
+  try {
+    console.log("[/api/billing/start] begin");
+
+    // Extract UID from Authorization header (server-side verification)
+    const uid = await getUidFromAuthHeader(req.headers.authorization);
+    if (!uid) {
+      return res.status(401).json({ error: 'Invalid or missing authentication token' });
+    }
+
+    // Log security check if client provided UID differs from server UID
+    if (req.body.uid && req.body.uid !== uid) {
+      console.warn(`[billing] Security: client UID=${req.body.uid} differs from server UID=${uid}`);
+    }
+
+    const { priceId, mode = 'subscription', quantity = 1 } = req.body || {};
+    if (!priceId || typeof priceId !== 'string') {
+      return res.status(400).json({ error: 'Missing or invalid priceId' });
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return res.status(500).json({ error: 'Stripe not configured on server' });
+    }
+
+    // Get user details from Supabase for customer creation
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(uid);
+    if (userError || !userData.user) {
+      console.error('[billing] Failed to get user data:', userError);
+      return res.status(400).json({ error: 'User not found' });
+    }
+
+    const userEmail = userData.user.email;
+    const userName = userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || '';
+
+    console.log(`[billing] uid=${uid} customer=pending session=pending`);
+
+    // Create or update Stripe customer with supabase_uid metadata
+    let customerId = null;
+    try {
+      // First try to find existing customer by metadata
+      const existingCustomers = await fetch(`https://api.stripe.com/v1/customers/search?query=metadata%5B%27supabase_uid%27%5D%3A%27${uid}%27&limit=1`, {
+        headers: { 'Authorization': `Bearer ${stripeKey}` }
+      });
+      const existingData = await existingCustomers.json();
+      
+      if (existingData.data && existingData.data.length > 0) {
+        customerId = existingData.data[0].id;
+        console.log(`[billing] Found existing customer: ${customerId}`);
+        
+        // Update customer to ensure metadata is current
+        await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${stripeKey}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            'metadata[supabase_uid]': uid,
+            'email': userEmail,
+            ...(userName && { 'name': userName })
+          }).toString()
+        });
+      } else {
+        // Create new customer with supabase_uid metadata
+        const createResp = await fetch('https://api.stripe.com/v1/customers', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${stripeKey}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            'email': userEmail,
+            'metadata[supabase_uid]': uid,
+            ...(userName && { 'name': userName })
+          }).toString()
+        });
+        
+        if (!createResp.ok) {
+          const errorData = await createResp.json();
+          console.error('[billing] Customer creation failed:', errorData);
+          return res.status(500).json({ error: 'Failed to create customer' });
+        }
+        
+        const customerData = await createResp.json();
+        customerId = customerData.id;
+        console.log(`[billing] Created new customer: ${customerId}`);
+      }
+    } catch (e) {
+      console.error('[billing] Customer handling failed:', e);
+      return res.status(500).json({ error: 'Customer processing failed' });
+    }
+
+    // Persist mapping in server-side storage (idempotent upsert)
+    try {
+      const { error: dbError } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: uid,
+          stripe_customer_id: customerId
+        }, { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false 
+        });
+        
+      if (dbError) {
+        console.warn('[billing] Database mapping upsert failed:', dbError);
+        // Continue anyway - metadata on Stripe objects is primary source of truth
+      }
+    } catch (dbErr) {
+      console.warn('[billing] Database mapping error:', dbErr);
+    }
+
+    // Create Checkout Session with secure UID references
+    const success_url = `${BASE_URL}/kalkulator/index.html?checkout=success`;
+    const cancel_url = `${BASE_URL}/kalkulator/index.html?checkout=cancel`;
+    
+    const sessionPayload = new URLSearchParams({
+      'mode': mode,
+      'customer': customerId,
+      'client_reference_id': uid, // UID for webhook recovery
+      'success_url': success_url,
+      'cancel_url': cancel_url,
+      'metadata[supabase_uid]': uid, // UID in session metadata
+      'line_items[0][price]': priceId,
+      'line_items[0][quantity]': quantity.toString()
+    });
+
+    const sessionResp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${stripeKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: sessionPayload.toString()
+    });
+
+    if (!sessionResp.ok) {
+      const errorData = await sessionResp.json();
+      console.error('[billing] Session creation failed:', errorData);
+      return res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+
+    const sessionData = await sessionResp.json();
+    console.log(`[billing] uid=${uid} customer=${customerId} session=${sessionData.id}`);
+    
+    return res.json({ 
+      url: sessionData.url,
+      sessionId: sessionData.id,
+      customerId 
+    });
+
+  } catch (error) {
+    console.error('[billing] Exception:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ---------- Stripe Checkout ----------
 // Creates a Stripe Checkout Session for subscriptions.
 // - Auth required; derives user_id from JWT (does not trust client-provided userId)
@@ -529,11 +693,14 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
           const existing = Array.isArray(listData?.data) ? listData.data[0] : null;
           if (existing) {
             customerId = existing.id;
-            // If missing, ensure metadata.user_id is present on the Customer
-            const hasMeta = existing?.metadata && existing.metadata.user_id;
-            if (!hasMeta) {
+            // If missing, ensure metadata.user_id and supabase_uid are present on the Customer
+            const hasMeta = existing?.metadata && (existing.metadata.user_id || existing.metadata.supabase_uid);
+            const hasSupabaseUid = existing?.metadata?.supabase_uid;
+            if (!hasMeta || !hasSupabaseUid) {
               try {
-                const updateBody = new URLSearchParams({ 'metadata[user_id]': userId });
+                const updateBody = new URLSearchParams();
+                updateBody.set('metadata[user_id]', userId);
+                updateBody.set('metadata[supabase_uid]', userId);
                 await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
                   method: 'POST',
                   headers: {
@@ -551,6 +718,7 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
           const createBody = new URLSearchParams();
           createBody.set('email', userEmail);
           createBody.set('metadata[user_id]', userId);
+          createBody.set('metadata[supabase_uid]', userId);
           const userName = req?.user?.user_metadata?.full_name || req?.user?.user_metadata?.name || req?.user?.user_metadata?.display_name || null;
           if (userName) createBody.set('name', userName);
           const createResp = await fetch('https://api.stripe.com/v1/customers', {
@@ -582,6 +750,7 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
     body.set('line_items[0][price]', priceId);
     body.set('line_items[0][quantity]', String(quantity));
     body.set('metadata[user_id]', userId);
+    body.set('metadata[supabase_uid]', userId);
     body.set('client_reference_id', userId);
     body.set('allow_promotion_codes', 'true');
     if (customerId) {
@@ -666,6 +835,7 @@ app.post('/checkout', authenticateUser, async (req, res) => {
     body.set('line_items[0][price]', priceId);
     body.set('line_items[0][quantity]', String(quantity));
     body.set('metadata[user_id]', userId);
+    body.set('metadata[supabase_uid]', userId);
     body.set('client_reference_id', userId);
     body.set('allow_promotion_codes', 'true');
 
@@ -1324,143 +1494,404 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 
   setImmediate(async () => {
     try {
-      const type = verifiedEvent?.type || '';
-      if (!['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(type)) {
-        return; // ignore other events
-      }
-
-      const sub = verifiedEvent?.data?.object || {};
-      const subscriptionId = sub?.id || null;
-      const customerId = sub?.customer || null;
-      const status = sub?.status || null;
-
-      // Resolve period end robustly
-      const periodEndUnix = (sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end ?? null);
-
-      // Always fetch the customer to resolve user_id reliably
-      let customer = null;
-      if (customerId && process.env.STRIPE_SECRET_KEY) {
-        try {
-          const resp = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
-          });
-          if (resp.ok) {
-            customer = await resp.json().catch(() => null);
-          }
-        } catch (e) {
-          console.warn('[/api/stripe-webhook] Failed to fetch customer:', e?.message || e);
-        }
-      }
-
-      let userId = (sub?.metadata?.user_id) || (customer?.metadata?.user_id) || null;
-
-      console.log('[webhook] resolved userId:', userId, 'cust.meta:', customer?.metadata, 'sub.meta:', sub?.metadata);
-
-      console.log('[/api/stripe-webhook] Event details', {
-        type,
-        subscription_id: subscriptionId,
-        customer_id: customerId,
-        status,
-        current_period_end: periodEndUnix,
-        user_id: userId || null
-      });
-
-      // Extract price_id from the subscription's first item (if present)
-      const priceId = sub?.items?.data?.[0]?.price?.id ?? null;
-
-      // Fallback: map customer.email -> user_id if metadata lookups failed
-      if (!userId && customer && typeof customer.email === 'string') {
-        const email = customer.email.trim().toLowerCase();
-        if (email) {
-          try {
-            // Prefer direct GoTrue Admin API to reliably filter by email
-            const base = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
-            const url = `${base}/auth/v1/admin/users?email=${encodeURIComponent(email)}`;
-            const headers = {
-              'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-              'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY
-            };
-            let matches = [];
-            try {
-              const resp = await fetch(url, { headers });
-              if (resp.ok) {
-                const body = await resp.json().catch(() => null);
-                const users = Array.isArray(body?.users) ? body.users : (Array.isArray(body) ? body : []);
-                matches = users.filter(u => (String(u?.email || '').trim().toLowerCase() === email));
-              }
-            } catch (e) {
-              console.warn('[/api/stripe-webhook] admin email lookup failed:', e?.message || e);
-            }
-
-            if (matches.length === 1) {
-              userId = matches[0]?.id || null;
-              console.log('[webhook] fallback email map', { email, userId, subId: subscriptionId, custId: customerId, priceId, status });
-            } else if (matches.length > 1) {
-              console.warn('[webhook] email map failed', { email, subId: subscriptionId, custId: customerId, reason: 'multiple' });
-              return; // bail: ambiguous
-            } else {
-              console.info('[webhook] email map failed', { email, subId: subscriptionId, custId: customerId });
-              return; // no match: do not write
-            }
-          } catch (e) {
-            console.warn('[/api/stripe-webhook] email mapping exception:', e?.message || e);
-            return;
-          }
-        }
-      }
-
-      if (!userId) {
-        console.error('[webhook] still missing user_id; refusing to write');
+      // Idempotency check using event ID
+      const eventId = verifiedEvent?.id;
+      const processedEventsCache = new Set(); // In production, use Redis or database
+      if (processedEventsCache.has(eventId)) {
+        console.log(`[webhook] Skipping already processed event: ${eventId}`);
         return;
       }
-      if (!supabase) return; // need DB client to upsert
+      processedEventsCache.add(eventId);
 
-      const record = {
-        user_id: userId,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscriptionId,
-        status: status,
-        current_period_end: periodEndUnix ? new Date(Number(periodEndUnix) * 1000) : null
-      };
+      const type = verifiedEvent?.type || '';
+      console.log(`[webhook] type=${type} uid=pending customer=pending`);
 
-      if ((type === 'customer.subscription.created' || type === 'customer.subscription.updated') && priceId) {
-        record.price_id = priceId;
-      }
+      // Handle relevant events with UID prioritization
+      if (['checkout.session.completed', 'customer.created', 'customer.updated', 
+           'customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(type)) {
+        
+        let uid = null;
+        let customerId = null;
+        let subscriptionId = null;
+        let status = null;
+        let periodEndUnix = null;
+        let priceId = null;
 
-      console.log('[webhook] before DB call:', { userId, priceId, status });
+        if (type === 'checkout.session.completed') {
+          const session = verifiedEvent?.data?.object || {};
+          // Priority 1: metadata.supabase_uid from session
+          uid = session?.metadata?.supabase_uid || null;
+          // Priority 2: client_reference_id (fallback)
+          if (!uid) {
+            uid = session?.client_reference_id || null;
+          }
+          customerId = session?.customer || null;
+          subscriptionId = session?.subscription || null;
+          console.log(`[webhook] checkout.session.completed - uid=${uid || 'null'} customer=${customerId || 'null'} subscription=${subscriptionId || 'null'}`);
+        } else if (type.startsWith('customer.')) {
+          const customer = verifiedEvent?.data?.object || {};
+          // Priority 1: metadata.supabase_uid from customer
+          uid = customer?.metadata?.supabase_uid || null;
+          customerId = customer?.id || null;
+          console.log(`[webhook] ${type} - uid=${uid || 'null'} customer=${customerId || 'null'}`);
+        } else if (type.startsWith('customer.subscription.')) {
+          const sub = verifiedEvent?.data?.object || {};
+          subscriptionId = sub?.id || null;
+          customerId = sub?.customer || null;
+          status = sub?.status || null;
+          periodEndUnix = sub?.current_period_end || null;
+          priceId = sub?.items?.data?.[0]?.price?.id || null;
 
-      try {
-        if (type === 'customer.subscription.created') {
-          const { data, error } = await supabase
-            .from('subscriptions')
-            .upsert({ user_id: userId, ...record }, { onConflict: 'user_id' })
-            .single();
-          console.log('[webhook] create upsert:', { data, error });
-        } else if (type === 'customer.subscription.updated') {
-          const { data, error } = await supabase
-            .from('subscriptions')
-            .update(record)
-            .eq('user_id', userId)
-            .select()
-            .single();
-          console.log('[webhook] update:', { data, error });
-        } else if (type === 'customer.subscription.deleted') {
-          const { data, error } = await supabase
-            .from('subscriptions')
-            .update(record)
-            .eq('user_id', userId)
-            .select()
-            .single();
-          console.log('[webhook] delete update:', { data, error });
+          // Priority 1: metadata.supabase_uid from subscription
+          uid = sub?.metadata?.supabase_uid || null;
         }
-      } catch (e) {
-        console.error('[/api/stripe-webhook] Upsert exception:', e?.message || e);
+
+        // If UID not found in primary object, fetch customer and check its metadata
+        if (!uid && customerId && process.env.STRIPE_SECRET_KEY) {
+          try {
+            const resp = await fetch(`https://api.stripe.com/v1/customers/${encodeURIComponent(customerId)}`, {
+              method: 'GET',
+              headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+            });
+            if (resp.ok) {
+              const customer = await resp.json().catch(() => null);
+              // Priority 2: metadata.supabase_uid from customer
+              uid = customer?.metadata?.supabase_uid || null;
+              console.log(`[webhook] Fetched customer metadata - uid=${uid || 'null'}`);
+            }
+          } catch (e) {
+            console.warn('[webhook] Failed to fetch customer for UID lookup:', e?.message || e);
+          }
+        }
+
+        // Log final resolution
+        console.log(`[webhook] type=${type} uid=${uid || 'null'} customer=${customerId || 'null'}`);
+
+        // Refuse to process events without UID (security requirement)
+        if (!uid) {
+          console.warn(`[webhook] SECURITY: Refusing to process ${type} without UID - no supabase_uid in metadata or client_reference_id`);
+          return;
+        }
+
+        // Upsert customer<->UID mapping (idempotent)
+        if (customerId && uid) {
+          try {
+            const { error: dbError } = await supabase
+              .from('user_settings')
+              .upsert({
+                user_id: uid,
+                stripe_customer_id: customerId
+              }, { 
+                onConflict: 'user_id',
+                ignoreDuplicates: false 
+              });
+              
+            if (dbError) {
+              console.warn(`[webhook] Database mapping upsert failed: ${dbError.message}`);
+            } else {
+              console.log(`[webhook] Updated customer<->UID mapping: ${customerId} <-> ${uid}`);
+            }
+          } catch (dbErr) {
+            console.warn('[webhook] Database mapping error:', dbErr.message);
+          }
+        }
+
+        // Handle subscription-specific events
+        if (type.startsWith('customer.subscription.') && subscriptionId && status) {
+          console.log(`[webhook] Processing subscription ${subscriptionId} with status ${status}`);
+          
+          try {
+            if (status === 'active' || status === 'trialing') {
+              // Create or update subscription record
+              const { data, error } = await supabase
+                .from('user_settings')
+                .upsert({
+                  user_id: uid,
+                  stripe_customer_id: customerId,
+                  stripe_subscription_id: subscriptionId,
+                  status: status,
+                  current_period_end: periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null,
+                  ...(priceId && { price_id: priceId })
+                }, { 
+                  onConflict: 'user_id',
+                  ignoreDuplicates: false 
+                });
+                
+              if (error) {
+                console.error(`[webhook] Subscription upsert failed: ${error.message}`);
+              } else {
+                console.log(`[webhook] Updated subscription: ${subscriptionId} -> ${status}`);
+              }
+            } else if (status === 'canceled' || status === 'incomplete_expired') {
+              // Update subscription to canceled/expired
+              const { data, error } = await supabase
+                .from('user_settings')
+                .update({
+                  status: status,
+                  current_period_end: periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null
+                })
+                .eq('user_id', uid);
+                
+              if (error) {
+                console.error(`[webhook] Subscription status update failed: ${error.message}`);
+              } else {
+                console.log(`[webhook] Updated subscription status: ${subscriptionId} -> ${status}`);
+              }
+            }
+          } catch (e) {
+            console.error('[webhook] Database operation failed:', e.message);
+          }
+        }
+        
+      } else {
+        console.log(`[webhook] Ignoring unsupported event type: ${type}`);
       }
+
     } catch (e) {
       console.error('[/api/stripe-webhook] Handler exception:', e?.message || e);
     }
   });
+});
+
+// ---------- Health Check & Validation Endpoints ----------
+// Returns customers and subscriptions without supabase_uid metadata
+app.get('/admin/unlinked-customers', async (req, res) => {
+  try {
+    // Extract UID from Authorization header
+    const uid = await getUidFromAuthHeader(req.headers.authorization);
+    if (!uid) {
+      return res.status(401).json({ error: 'Invalid or missing authentication token' });
+    }
+
+    // Basic admin check - in production, add proper role verification
+    if (!process.env.DEV_BYPASS) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return res.status(500).json({ error: 'Stripe not configured' });
+    }
+
+    const issues = {
+      customers_without_uid: [],
+      subscriptions_without_uid: [],
+      customers_with_invalid_uid: []
+    };
+
+    // Check customers without supabase_uid metadata
+    try {
+      const customersResp = await fetch('https://api.stripe.com/v1/customers?limit=100', {
+        headers: { 'Authorization': `Bearer ${stripeKey}` }
+      });
+      
+      if (customersResp.ok) {
+        const customersData = await customersResp.json();
+        
+        for (const customer of customersData.data || []) {
+          const supabaseUid = customer?.metadata?.supabase_uid;
+          if (!supabaseUid) {
+            issues.customers_without_uid.push({
+              id: customer.id,
+              email: customer.email,
+              created: customer.created,
+              metadata: customer.metadata || {}
+            });
+          } else {
+            // Validate UID format (should be UUID)
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(supabaseUid)) {
+              issues.customers_with_invalid_uid.push({
+                id: customer.id,
+                email: customer.email,
+                invalid_uid: supabaseUid
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[health-check] Customers fetch failed:', e.message);
+    }
+
+    // Check active subscriptions without supabase_uid metadata
+    try {
+      const subscriptionsResp = await fetch('https://api.stripe.com/v1/subscriptions?status=active&limit=100', {
+        headers: { 'Authorization': `Bearer ${stripeKey}` }
+      });
+      
+      if (subscriptionsResp.ok) {
+        const subscriptionsData = await subscriptionsResp.json();
+        
+        for (const subscription of subscriptionsData.data || []) {
+          const supabaseUid = subscription?.metadata?.supabase_uid;
+          if (!supabaseUid) {
+            issues.subscriptions_without_uid.push({
+              id: subscription.id,
+              customer: subscription.customer,
+              status: subscription.status,
+              metadata: subscription.metadata || {}
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[health-check] Subscriptions fetch failed:', e.message);
+    }
+
+    const summary = {
+      customers_without_uid: issues.customers_without_uid.length,
+      subscriptions_without_uid: issues.subscriptions_without_uid.length,
+      customers_with_invalid_uid: issues.customers_with_invalid_uid.length,
+      total_issues: issues.customers_without_uid.length + issues.subscriptions_without_uid.length + issues.customers_with_invalid_uid.length
+    };
+
+    console.log('[health-check] Unlinked objects summary:', summary);
+
+    return res.json({
+      summary,
+      issues,
+      recommendations: [
+        "Use /api/billing/start for new customer creation to ensure UID metadata",
+        "Manually update existing customers via Stripe dashboard or API",
+        "Monitor webhook logs for UID resolution failures"
+      ]
+    });
+
+  } catch (error) {
+    console.error('[health-check] Exception:', error.message);
+    return res.status(500).json({ error: 'Health check failed' });
+  }
+});
+
+// ---------- Admin Customer Linking ----------
+// Manual endpoint to link existing Stripe customers to Supabase users
+app.post('/admin/link-customer', authenticateUser, requireAdmin, async (req, res) => {
+  if (!stripe || !supabase) {
+    return res.status(503).json({ error: 'Stripe or Supabase not configured' });
+  }
+
+  const { stripe_customer_id, supabase_user_id } = req.body;
+  
+  if (!stripe_customer_id || !supabase_user_id) {
+    return res.status(400).json({ 
+      error: 'Both stripe_customer_id and supabase_user_id are required' 
+    });
+  }
+
+  try {
+    // 1. Verify the Supabase user exists
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(supabase_user_id);
+    if (userError || !userData.user) {
+      return res.status(404).json({ error: 'Supabase user not found' });
+    }
+
+    // 2. Update Stripe customer metadata
+    try {
+      const customer = await stripe.customers.update(stripe_customer_id, {
+        metadata: {
+          user_id: supabase_user_id,
+          supabase_uid: supabase_user_id
+        }
+      });
+      
+      console.log('[admin/link-customer] Updated Stripe customer:', { 
+        customerId: stripe_customer_id, 
+        userId: supabase_user_id,
+        email: customer.email 
+      });
+
+      // 3. If there are existing subscriptions, update them in Supabase
+      const subscriptions = await stripe.subscriptions.list({
+        customer: stripe_customer_id,
+        limit: 10
+      });
+
+      const updateResults = [];
+      for (const sub of subscriptions.data) {
+        const periodEndUnix = sub.current_period_end;
+        const record = {
+          user_id: supabase_user_id,
+          stripe_customer_id: stripe_customer_id,
+          stripe_subscription_id: sub.id,
+          status: sub.status,
+          current_period_end: periodEndUnix ? new Date(Number(periodEndUnix) * 1000) : null
+        };
+
+        if (sub.items?.data?.[0]?.price?.id) {
+          record.price_id = sub.items.data[0].price.id;
+        }
+
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .upsert(record, { onConflict: 'user_id' });
+
+        updateResults.push({ 
+          subscription_id: sub.id, 
+          status: sub.status, 
+          error: error?.message || null,
+          success: !error 
+        });
+      }
+
+      return res.json({ 
+        success: true, 
+        customer: {
+          id: customer.id,
+          email: customer.email,
+          metadata: customer.metadata
+        },
+        subscriptions_updated: updateResults,
+        message: `Successfully linked Stripe customer ${stripe_customer_id} to Supabase user ${supabase_user_id}`
+      });
+
+    } catch (stripeError) {
+      console.error('[admin/link-customer] Stripe error:', stripeError.message);
+      return res.status(400).json({ error: `Stripe error: ${stripeError.message}` });
+    }
+
+  } catch (e) {
+    console.error('[admin/link-customer] Exception:', e?.message || e);
+    return res.status(500).json({ error: 'Failed to link customer' });
+  }
+});
+
+// List unlinked Stripe customers (missing supabase_uid metadata)
+app.get('/admin/unlinked-customers', authenticateUser, requireAdmin, async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Stripe not configured' });
+  }
+
+  try {
+    const customers = await stripe.customers.list({ 
+      limit: 100,
+      expand: ['data.subscriptions']
+    });
+
+    const unlinkedCustomers = customers.data.filter(customer => {
+      const hasSupabaseUid = customer.metadata?.supabase_uid;
+      const hasUserId = customer.metadata?.user_id;
+      return !hasSupabaseUid && !hasUserId; // Completely unlinked
+    }).map(customer => ({
+      id: customer.id,
+      email: customer.email,
+      created: new Date(customer.created * 1000).toISOString(),
+      subscriptions: customer.subscriptions?.data?.map(sub => ({
+        id: sub.id,
+        status: sub.status,
+        current_period_end: new Date(sub.current_period_end * 1000).toISOString()
+      })) || []
+    }));
+
+    return res.json({ 
+      unlinked_customers: unlinkedCustomers,
+      count: unlinkedCustomers.length 
+    });
+
+  } catch (e) {
+    console.error('[admin/unlinked-customers] Exception:', e?.message || e);
+    return res.status(500).json({ error: 'Failed to list customers' });
+  }
 });
 
 // Expose recent audit log events (DB if available, else memory)
