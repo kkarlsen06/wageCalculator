@@ -13,8 +13,11 @@ export async function hasEnterpriseSubscription() {
       return false;
     }
 
-    // Get latest subscription state
-    const subscriptionState = await refreshSubscriptionState(userId);
+    // Use cached state if available, otherwise refresh
+    let subscriptionState = window.SubscriptionState;
+    if (!subscriptionState) {
+      subscriptionState = await refreshSubscriptionState(userId);
+    }
     
     if (!subscriptionState) {
       return false;
