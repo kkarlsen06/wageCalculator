@@ -831,7 +831,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Check onboarding status after successful authentication
   if (session?.user) {
     const user = session.user;
-    
+
     // Check if user has finished onboarding
     if (!user.user_metadata?.finishedOnboarding) {
       console.log('User has not finished onboarding, redirecting to onboarding...');
@@ -878,6 +878,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const app = appModule?.app;
   window.app = app;
+
+
+  // React to subscription changes by toggling visibility of the Ansatte tab
+  try {
+    document.addEventListener('subscription:updated', async () => {
+      if (window.app && typeof window.app.updateTabBarVisibility === 'function') {
+        try { await window.app.updateTabBarVisibility(); } catch (_) {}
+      }
+    });
+  } catch (_) {}
 
   // Skip welcome screen animations entirely
   // await showWelcomeScreen();

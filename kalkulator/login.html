@@ -69,7 +69,7 @@
           </svg>
           <span>Fortsett med Google</span>
         </button>
-        <button id="forgot-btn" class="mt-4" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;" aria-label="Tilbakestill passord">Glemt passord?</button>
+        <button id="show-reset-btn" class="mt-4" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;" aria-label="Tilbakestill med kode">Tilbakestill med kode</button>
         <div id="auth-msg" role="alert" aria-live="polite" style="color: var(--error); min-height: 24px; text-align: center; font-size: 15px;"></div>
       </div>
     </div>
@@ -103,17 +103,33 @@
     </div>
   </div>
 
-  <div id="forgot-card" class="auth-center" style="display:none;">
+  <div id="reset-form" class="auth-center" style="display:none;">
     <div class="login-card">
-      <form id="forgot-form" novalidate>
-        <h2 class="mb-20">Tilbakestill passord</h2>
-        <label for="forgot-email" class="form-label">E-post</label>
-        <input id="forgot-email" name="email" type="email" placeholder="E-post" required class="form-control mb-18" autocomplete="email" />
-        <button id="send-reset-btn" type="submit" class="btn btn-primary mb-12">Send tilbakestillings-link</button>
-      </form>
-      <button id="send-magic-link-btn" class="btn btn-secondary mb-12" style="display: none;">Send magisk lenke</button>
-      <button id="back-login-btn" class="btn btn-secondary">Tilbake</button>
-      <p id="forgot-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+      <div id="reset-step-1">
+        <form id="reset-email-form" novalidate>
+          <h2 class="mb-20">Tilbakestill med kode</h2>
+          <label for="reset-email" class="form-label">E-post</label>
+          <input id="reset-email" name="email" type="email" placeholder="E-post" required class="form-control mb-18" autocomplete="email" />
+          <button id="reset-send" type="submit" class="btn btn-primary mb-12">Send kode</button>
+        </form>
+        <button id="back-to-login-btn" class="btn btn-secondary">Tilbake</button>
+      </div>
+
+      <div id="reset-step-2" style="display:none;">
+        <form id="reset-code-form" novalidate>
+          <h2 class="mb-20">Skriv inn kode og nytt passord</h2>
+          <label for="reset-code" class="form-label">6-sifret kode fra e-post</label>
+          <input id="reset-code" name="code" type="text" placeholder="123456" required class="form-control mb-12" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" />
+          <label for="reset-password" class="form-label">Nytt passord</label>
+          <input id="reset-password" name="password" type="password" placeholder="Nytt passord" required class="form-control mb-18" autocomplete="new-password" />
+          <button id="reset-confirm" type="submit" class="btn btn-primary mb-12">Oppdater passord</button>
+        </form>
+        <button id="reset-back" class="btn btn-secondary mb-12">Tilbake til e-post</button>
+        <p id="resend-timer" style="font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 8px;"></p>
+        <button id="reset-resend" class="btn" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;" disabled>Send ny kode</button>
+      </div>
+
+      <p id="reset-msg" role="alert" aria-live="polite" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
     </div>
   </div>
 

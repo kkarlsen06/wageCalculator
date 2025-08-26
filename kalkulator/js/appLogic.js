@@ -10268,8 +10268,9 @@ Hva kan jeg hjelpe deg med i dag?`;
                 this.employeeCarousel.preloadAvatars?.();
             }
         } else {
-            // Show upgrade prompt for non-enterprise users
-            this.showEmployeeUpgradePrompt();
+            // Non-Enterprise: hide/deny employees view and redirect to dashboard
+            if (window.showToast) { window.showToast('Ansatte krever Enterprise-abonnement', 'info'); }
+            this.switchToView('dashboard');
         }
     },
 
@@ -10467,9 +10468,15 @@ Hva kan jeg hjelpe deg med i dag?`;
 
     async updateTabBarVisibility() {
         const ansatteTab = document.getElementById('tabAnsatte');
-        if (ansatteTab) {
-            // Always show the Ansatte tab
-            ansatteTab.style.display = 'flex';
+        if (!ansatteTab) return;
+
+        const hasEnterprise = await hasEnterpriseSubscription();
+        // Only show the Ansatte tab for Enterprise (max) subscribers
+        ansatteTab.style.display = hasEnterprise ? 'flex' : 'none';
+
+        // If user somehow is on employees view without Enterprise, redirect to dashboard
+        if (!hasEnterprise && this.currentView === 'employees') {
+            this.switchToView('dashboard');
         }
     },
 

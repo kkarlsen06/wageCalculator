@@ -2,7 +2,6 @@
 const API_BASE = window.CONFIG?.apiBase || '/api';
 
 // Initialize Supabase client when DOM is loaded
-let isInPasswordRecovery = false; // Flag to track if we're in password recovery flow
 
 import { supabase } from '../../src/supabase-client.js'
 import { signInWithGoogle } from './auth-google.js'
@@ -20,50 +19,19 @@ async function initAuth() {
   // Check if Supabase has processed the URL automatically
   await new Promise(resolve => setTimeout(resolve, 100)); // Give Supabase time to process
 
-  // Set up auth state listening IMMEDIATELY to catch any recovery events
-  supa.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'PASSWORD_RECOVERY') {
-      isInPasswordRecovery = true;
-      document.body.style.visibility = 'visible';
-      setTimeout(() => showPasswordResetForm(), 50);
-      return;
-    }
 
-    if (event === 'SIGNED_IN' && (isInRecoveryMode() || sessionStorage.getItem('supabase_recovery_flow') === 'true')) {
-      isInPasswordRecovery = true;
-      document.body.style.visibility = 'visible';
-      setTimeout(() => showPasswordResetForm(), 50);
-      return;
-    }
-  });
-
-  // Check immediately if we have a recovery session
-  try {
-    const { data: { session } } = await supa.auth.getSession();
-
-    if (session && (isInRecoveryMode() || sessionStorage.getItem('supabase_recovery_flow') === 'true')) {
-      isInPasswordRecovery = true;
-      document.body.style.visibility = 'visible';
-      setTimeout(() => showPasswordResetForm(), 100);
-      return;
-    }
-  } catch (e) {
-    console.error('Error in immediate session check:', e);
-  }
 
   // Check if Supabase has processed the URL automatically
   await new Promise(resolve => setTimeout(resolve, 100)); // Give Supabase time to process
 
   let shouldDisplayLoginPage = true; // Assume we display the login page by default
 
-  // Check if we're in password recovery mode BEFORE checking session
-  const isRecoveryFlow = isInRecoveryMode();
 
   // Immediate redirect if already authenticated and not in a recovery flow
   try {
     const { data: { session } } = await supa.auth.getSession();
 
-    if (session && !isRecoveryFlow && !isInPasswordRecovery) {
+    if (session) {
       try {
         const ok = await fetch(`${API_BASE}/settings`, {
           headers: { Authorization: `Bearer ${session.access_token}` }
@@ -81,8 +49,6 @@ async function initAuth() {
         console.warn('signOut error:', e?.message || e);
       }
       console.log('Stale token removed; showing login.');
-    } else if (session && isRecoveryFlow) {
-      isInPasswordRecovery = true;
     }
 
     // Always make body visible when staying on login page
@@ -103,8 +69,6 @@ async function initAuth() {
   // Handle authentication state changes
   setupAuthStateHandling();
 
-  // Check if user is coming from password reset email (via URL hash)
-  handlePasswordRecovery();
 
   // Fallback: If after all checks, the page is meant to be shown but is still hidden
   if (shouldDisplayLoginPage && document.body.style.visibility === 'hidden') {
@@ -145,12 +109,19 @@ function setupEventListeners() {
   const skipProfileBtn = document.getElementById("skip-profile-btn");
   const completeProfileMsg = document.getElementById("complete-profile-msg");
 
-  const forgotBtn      = document.getElementById("forgot-btn");
-  const forgotCard     = document.getElementById("forgot-card");
-  const forgotEmailInp = document.getElementById("forgot-email");
-  const sendResetBtn   = document.getElementById("send-reset-btn");
-  const sendMagicLinkBtn = document.getElementById("send-magic-link-btn"); // New button
-  const backLoginBtn   = document.getElementById("back-login-btn");
+  const showResetBtn   = document.getElementById("show-reset-btn");
+  const resetForm      = document.getElementById("reset-form");
+  const resetStep1     = document.getElementById("reset-step-1");
+  const resetStep2     = document.getElementById("reset-step-2");
+  const resetEmailInp  = document.getElementById("reset-email");
+  const resetSendBtn   = document.getElementById("reset-send");
+  const resetCodeInp   = document.getElementById("reset-code");
+  const resetPasswordInp = document.getElementById("reset-password");
+  const resetConfirmBtn = document.getElementById("reset-confirm");
+  const resetBackBtn   = document.getElementById("reset-back");
+  const backToLoginBtn = document.getElementById("back-to-login-btn");
+  const resetResendBtn = document.getElementById("reset-resend");
+  const resendTimer    = document.getElementById("resend-timer");
   const googleBtn      = document.getElementById("btn-google");
 
   // Store references globally for other functions to use
@@ -160,7 +131,9 @@ function setupEventListeners() {
     createAccountBtn, backLoginSignupBtn, signupMsg,
     completeProfileCard, completeName, 
     completeProfileBtn, skipProfileBtn, completeProfileMsg,
-    forgotBtn, forgotCard, forgotEmailInp, sendResetBtn, sendMagicLinkBtn, backLoginBtn, googleBtn
+    showResetBtn, resetForm, resetStep1, resetStep2, resetEmailInp, resetSendBtn,
+    resetCodeInp, resetPasswordInp, resetConfirmBtn, resetBackBtn, backToLoginBtn,
+    resetResendBtn, resendTimer, googleBtn
   };
 
   // Auth actions
@@ -186,11 +159,20 @@ function setupEventListeners() {
     });
   }
 
-  const forgotForm = document.getElementById('forgot-form');
-  if (forgotForm) {
-    forgotForm.addEventListener('submit', function(event) {
+  // Reset form handlers
+  const resetEmailForm = document.getElementById('reset-email-form');
+  if (resetEmailForm) {
+    resetEmailForm.addEventListener('submit', function(event) {
       event.preventDefault();
-      sendResetLink(forgotEmailInp.value);
+      handleSendRecoveryCode();
+    });
+  }
+
+  const resetCodeForm = document.getElementById('reset-code-form');
+  if (resetCodeForm) {
+    resetCodeForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      handleVerifyCodeAndSetPassword();
     });
   }
 
@@ -206,11 +188,13 @@ function setupEventListeners() {
   if (completeProfileBtn) completeProfileBtn.onclick = () => completeProfile();
   if (skipProfileBtn) skipProfileBtn.onclick = () => skipProfileCompletion();
 
-  // Forgot password
-  if (forgotBtn) forgotBtn.onclick = () => toggleForgot(true);
-  if (backLoginBtn) backLoginBtn.onclick = () => toggleForgot(false);
-  if (sendResetBtn) sendResetBtn.onclick = () => sendResetLink(forgotEmailInp.value);
-  if (sendMagicLinkBtn) sendMagicLinkBtn.onclick = () => sendMagicLink(forgotEmailInp.value); // New event listener
+  // Reset form navigation
+  if (showResetBtn) showResetBtn.onclick = () => showResetForm();
+  if (backToLoginBtn) backToLoginBtn.onclick = () => showLoginForm();
+  if (resetBackBtn) resetBackBtn.onclick = () => showResetStep1();
+  if (resetSendBtn) resetSendBtn.onclick = () => handleSendRecoveryCode();
+  if (resetConfirmBtn) resetConfirmBtn.onclick = () => handleVerifyCodeAndSetPassword();
+  if (resetResendBtn) resetResendBtn.onclick = () => handleResendCode();
   if (googleBtn) googleBtn.onclick = () => handleGoogleSignIn();
 
   // Add enter key functionality
@@ -252,11 +236,30 @@ function setupEventListeners() {
     });
   }
 
-  if (forgotEmailInp && sendResetBtn) {
-    forgotEmailInp.addEventListener('keypress', function(event) {
+  // Enter key support for reset forms
+  if (resetEmailInp && resetSendBtn) {
+    resetEmailInp.addEventListener('keypress', function(event) {
       if (event.key === 'Enter') {
         event.preventDefault();
-        sendResetBtn.click();
+        resetSendBtn.click();
+      }
+    });
+  }
+
+  if (resetCodeInp && resetConfirmBtn) {
+    resetCodeInp.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        resetPasswordInp.focus();
+      }
+    });
+  }
+
+  if (resetPasswordInp && resetConfirmBtn) {
+    resetPasswordInp.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        resetConfirmBtn.click();
       }
     });
   }
@@ -285,14 +288,45 @@ async function handleGoogleSignIn() {
 function showSignupForm() {
   window.authElements.authBox.style.display = "none";
   window.authElements.signupCard.style.display = "flex";
-  window.authElements.forgotCard.style.display = "none";
+  window.authElements.resetForm.style.display = "none";
 }
 
 function showLoginForm() {
   window.authElements.authBox.style.display = "flex";
   window.authElements.signupCard.style.display = "none";
-  window.authElements.forgotCard.style.display = "none";
+  window.authElements.resetForm.style.display = "none";
   window.authElements.completeProfileCard.style.display = "none";
+}
+
+function showResetForm() {
+  window.authElements.authBox.style.display = "none";
+  window.authElements.signupCard.style.display = "none";
+  window.authElements.resetForm.style.display = "flex";
+  window.authElements.resetStep1.style.display = "block";
+  window.authElements.resetStep2.style.display = "none";
+  window.authElements.completeProfileCard.style.display = "none";
+  
+  // Clear any messages and reset form
+  const resetMsg = document.getElementById('reset-msg');
+  if (resetMsg) resetMsg.textContent = '';
+  if (window.authElements.resetEmailInp) window.authElements.resetEmailInp.value = '';
+}
+
+function showResetStep1() {
+  window.authElements.resetStep1.style.display = "block";
+  window.authElements.resetStep2.style.display = "none";
+  // Clear step 2 inputs
+  if (window.authElements.resetCodeInp) window.authElements.resetCodeInp.value = '';
+  if (window.authElements.resetPasswordInp) window.authElements.resetPasswordInp.value = '';
+}
+
+function showResetStep2() {
+  window.authElements.resetStep1.style.display = "none";
+  window.authElements.resetStep2.style.display = "block";
+  // Focus the code input
+  if (window.authElements.resetCodeInp) {
+    setTimeout(() => window.authElements.resetCodeInp.focus(), 100);
+  }
 }
 
 async function signUpWithDetails() {
@@ -451,6 +485,105 @@ async function skipProfileCompletion() {
   window.location.href = "index.html";
 }
 
+// Reset form handlers
+async function handleSendRecoveryCode() {
+  const email = window.authElements.resetEmailInp.value.trim();
+  if (!email) {
+    const msg = document.getElementById('reset-msg');
+    if (msg) {
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Vennligst skriv inn e-postadresse';
+    }
+    return;
+  }
+
+  // Disable button during request
+  const btn = window.authElements.resetSendBtn;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Sender...';
+  }
+
+  const success = await sendRecoveryCode(email);
+  if (success) {
+    showResetStep2();
+    startResendTimer();
+  }
+
+  // Re-enable button
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Send kode';
+  }
+}
+
+async function handleVerifyCodeAndSetPassword() {
+  const email = window.authElements.resetEmailInp.value.trim();
+  const code = window.authElements.resetCodeInp.value.trim();
+  const password = window.authElements.resetPasswordInp.value;
+
+  if (!email || !code || !password) {
+    const msg = document.getElementById('reset-msg');
+    if (msg) {
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Vennligst fyll ut alle felt';
+    }
+    return;
+  }
+
+  // Disable button during request
+  const btn = window.authElements.resetConfirmBtn;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Oppdaterer...';
+  }
+
+  await verifyCodeAndSetPassword(email, code, password);
+
+  // Re-enable button (verifyCodeAndSetPassword handles this in finally block)
+}
+
+async function handleResendCode() {
+  const email = window.authElements.resetEmailInp.value.trim();
+  if (!email) return;
+
+  const btn = window.authElements.resetResendBtn;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Sender...';
+  }
+
+  const success = await sendRecoveryCode(email);
+  if (success) {
+    startResendTimer();
+  }
+}
+
+function startResendTimer() {
+  const timer = window.authElements.resendTimer;
+  const resendBtn = window.authElements.resetResendBtn;
+  
+  if (!timer || !resendBtn) return;
+
+  let seconds = 60;
+  resendBtn.disabled = true;
+  
+  const updateTimer = () => {
+    timer.textContent = `Send ny kode (${seconds}s)`;
+    seconds--;
+    
+    if (seconds < 0) {
+      timer.textContent = '';
+      resendBtn.disabled = false;
+      resendBtn.textContent = 'Send ny kode';
+    } else {
+      setTimeout(updateTimer, 1000);
+    }
+  };
+  
+  updateTimer();
+}
+
 // Legacy function - no longer used since we have signUpWithDetails
 async function signUp(email, password) {
   try {
@@ -463,31 +596,7 @@ async function signUp(email, password) {
   }
 }
 
-function toggleForgot(show) {
-  window.authElements.forgotCard.style.display = show ? "flex" : "none";
-  window.authElements.authBox.style.display    = show ? "none" : "flex";
-}
 
-async function sendResetLink(email) {
-  try {
-    // Use the current domain to ensure consistency
-    const currentDomain = window.location.origin;
-    const redirectUrl = `${currentDomain}/kalkulator/login.html`;
-    
-    
-    const { error } = await supa.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl
-    });
-    const msg = document.getElementById("forgot-msg");
-    msg.style.color = error ? "var(--danger)" : "var(--success)";
-    msg.textContent = error ? error.message : "Sjekk e-posten din for lenke!";
-  } catch (err) {
-    const msg = document.getElementById("forgot-msg");
-    msg.style.color = "var(--danger)";
-    msg.textContent = "Kunne ikke sende e-post";
-    console.error("Supabase reset error:", err);
-  }
-}
 
 async function sendMagicLink(email) {
   try {
@@ -513,272 +622,91 @@ async function sendMagicLink(email) {
   }
 }
 
-// Check if current URL contains recovery tokens
-function isInRecoveryMode() {
-  const hashFragment = window.location.hash;
-  const urlParams = new URLSearchParams(window.location.search);
-  const currentUrl = window.location.href;
-  
-  // Check for recovery tokens in either hash fragment or query parameters
-  const hasRecoveryInHash = hashFragment.includes('access_token') && hashFragment.includes('type=recovery');
-  const hasRecoveryInQuery = urlParams.has('token') && urlParams.get('type') === 'recovery';
-  const hasRecoveryInSearch = window.location.search.includes('access_token') && window.location.search.includes('type=recovery');
-  
-  // Check for the specific recovery type parameter in different formats
-  const hasRecoveryType = hashFragment.includes('type=recovery') || window.location.search.includes('type=recovery');
-  
-  // Check if we came from Supabase verify URL (even if tokens are not visible anymore)
-  const supabaseHost = (() => { try { return new URL(window.CONFIG?.supabase?.url || import.meta.env.VITE_SUPABASE_URL).host; } catch (_) { return 'id.kkarlsen.dev'; } })();
-  const cameFromSupabaseVerify = (document.referrer.includes(`${supabaseHost}/auth/v1/verify`)) ||
-                                sessionStorage.getItem('supabase_recovery_flow') === 'true';
-  
-  // Parse hash fragment as URL parameters if it contains access_token
-  let hashParams = null;
-  if (hashFragment.startsWith('#') && hashFragment.includes('access_token')) {
-    try {
-      hashParams = new URLSearchParams(hashFragment.substring(1));
-    } catch (e) {
-      console.error('Error parsing hash fragment:', e);
+// Minimal helper
+function isValidEmail(s){ return /^\S+@\S+\.\S+$/.test(String(s||'').trim()); }
+
+let otpCooldownUntil = 0;
+
+export async function sendRecoveryCode(email) {
+  const msg = document.getElementById('reset-msg');
+  const btn = document.getElementById('reset-send');
+  try {
+    if (!isValidEmail(email)) throw new Error('Ugyldig e-postadresse');
+
+    const now = Date.now();
+    if (now < otpCooldownUntil) {
+      const secs = Math.ceil((otpCooldownUntil - now)/1000);
+      throw new Error(`Vent ${secs}s før du sender på nytt`);
     }
+
+    // Optional CAPTCHA: gotrue_meta_security: { captcha_token }
+    const { error } = await supa.auth.resetPasswordForEmail(email /* , { gotrue_meta_security: { captcha_token } } */);
+    if (error) throw error;
+
+    otpCooldownUntil = Date.now() + 60_000; // 60s cooldown
+    if (msg) { msg.style.color = 'var(--success)'; msg.textContent = 'Kode sendt! Sjekk e-posten din.'; }
+    return true;
+  } catch (e) {
+    if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = e.message || 'Kunne ikke sende kode'; }
+    return false;
+  } finally {
+    if (btn) btn.disabled = false;
   }
-  
-  const hasHashRecoveryType = hashParams && hashParams.get('type') === 'recovery';
-  
-  const isRecovery = hasRecoveryInHash || hasRecoveryInQuery || hasRecoveryInSearch || 
-                    hasRecoveryType || cameFromSupabaseVerify || hasHashRecoveryType;
-  
-  
-  // If we detect recovery mode, mark it in sessionStorage for future checks
-  if (isRecovery) {
-    sessionStorage.setItem('supabase_recovery_flow', 'true');
-  }
-  
-  return isRecovery;
 }
+
+export async function verifyCodeAndSetPassword(email, code, newPassword) {
+  const msg = document.getElementById('reset-msg');
+  const btn = document.getElementById('reset-confirm');
+  try {
+    if (!isValidEmail(email)) throw new Error('Ugyldig e-postadresse');
+    if (!(code && /^\d{6}$/.test(code))) throw new Error('Koden må være 6 sifre');
+    if (!newPassword || newPassword.length < 8) throw new Error('Passordet må ha minst 8 tegn');
+
+    const { error: vErr } = await supa.auth.verifyOtp({ email, token: code, type: 'recovery' });
+    if (vErr) throw vErr;
+
+    const { error: uErr } = await supa.auth.updateUser({ password: newPassword });
+    if (uErr) throw uErr;
+
+    if (msg) { msg.style.color = 'var(--success)'; msg.textContent = 'Passord oppdatert! Logg inn med det nye passordet.'; }
+
+    // Optional: Sign out to force fresh credentials, then show login form
+    await supa.auth.signOut();
+    // Toggle UI back to login:
+    const sectionLogin = document.getElementById('auth-box');
+    const sectionReset = document.getElementById('reset-form');
+    if (sectionReset) sectionReset.style.display = 'none';
+    if (sectionLogin) sectionLogin.style.display = 'flex';
+    return true;
+  } catch (e) {
+    if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = e.message || 'Kunne ikke oppdatere passord'; }
+    return false;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 
 function setupAuthStateHandling() {
   // Redirect if already logged in
   supa.auth.onAuthStateChange(async (event, session) => {
-  
-    // Handle different auth events
-    if (event === 'PASSWORD_RECOVERY') {
-      isInPasswordRecovery = true;
-      showPasswordResetForm();
-    } else if (event === 'SIGNED_IN') {
-      // Check if this sign in is from a recovery flow
-      if (isInRecoveryMode() || isInPasswordRecovery) {
-        isInPasswordRecovery = true;
-        showPasswordResetForm();
-      } else {
-        await checkAndShowProfileCompletion();
-      }
-    } else if (event === 'TOKEN_REFRESHED' && (isInRecoveryMode() || isInPasswordRecovery)) {
-      isInPasswordRecovery = true;
-      showPasswordResetForm();
-    } else if (session && !isInRecoveryMode() && !isInPasswordRecovery && event !== 'SIGNED_OUT') {
+    if (event === 'SIGNED_IN') {
+      await checkAndShowProfileCompletion();
+    } else if (session && event !== 'SIGNED_OUT') {
       await checkAndShowProfileCompletion();
     }
   });
 
-  // Check current session - but respect recovery mode
+  // Check current session
   (async () => {
-    if (!isInRecoveryMode() && !isInPasswordRecovery) {
-      const { data: { session } } = await supa.auth.getSession();
-      if (session) {
-        await checkAndShowProfileCompletion();
-      }
-    } else {
-      // If we're in recovery mode, make sure the form shows
-      if (isInRecoveryMode()) {
-        isInPasswordRecovery = true;
-        setTimeout(() => showPasswordResetForm(), 200);
-      }
+    const { data: { session } } = await supa.auth.getSession();
+    if (session) {
+      await checkAndShowProfileCompletion();
     }
   })();
 }
 
-// Handle password recovery from email link
-async function handlePasswordRecovery() {
-  const isRecovery = isInRecoveryMode();
-  
-  // Also check if Supabase has set any auth-related data
-  const hashFragment = window.location.hash;
-  const hasAuthFragment = hashFragment.includes('access_token') || hashFragment.includes('refresh_token');
-                    
-  if (isRecovery || hasAuthFragment) {
-    isInPasswordRecovery = true; // Set the flag
-    document.body.style.visibility = 'visible'; // Make body visible for recovery form
-    
-    // Show the password reset form immediately
-    setTimeout(() => {
-      showPasswordResetForm();
-    }, 100); // Small delay to ensure DOM is ready
-  }
-}
 
-// Show password reset form
-function showPasswordResetForm() {
-    
-    // Hide normal login form and forgot password form
-    if (window.authElements?.authBox) window.authElements.authBox.style.display = 'none';
-    if (window.authElements?.signupCard) window.authElements.signupCard.style.display = 'none';
-    if (window.authElements?.forgotCard) window.authElements.forgotCard.style.display = 'none';
-    if (window.authElements?.completeProfileCard) window.authElements.completeProfileCard.style.display = 'none';
-    
-    // Create or show password reset form
-    let resetForm = document.getElementById('reset-password-form');
-    if (!resetForm) {
-        resetForm = createPasswordResetForm();
-        document.body.appendChild(resetForm);
-    }
-    resetForm.style.display = 'flex';
-}
 
-// Create password reset form
-function createPasswordResetForm() {
-    const resetForm = document.createElement('div');
-    resetForm.id = 'reset-password-form';
-    resetForm.className = 'auth-center';
-    resetForm.innerHTML = `
-        <div class="login-card">
-            <form id="reset-password-form-element" novalidate>
-                <h2 style="margin-bottom: 20px;">Sett nytt passord</h2>
-                <label for="new-password" class="form-label">Nytt passord</label>
-                <input id="new-password" name="new-password" type="password" placeholder="Nytt passord" required class="form-control" style="margin-bottom: 12px;" autocomplete="new-password" />
-                <label for="confirm-password" class="form-label">Bekreft passord</label>
-                <input id="confirm-password" name="confirm-password" type="password" placeholder="Bekreft passord" required class="form-control" style="margin-bottom: 18px;" autocomplete="new-password" />
-                <button id="update-password-btn" type="submit" class="btn btn-primary" style="margin-bottom: 12px;">Oppdater passord</button>
-            </form>
-            <button id="cancel-reset-btn" class="btn btn-secondary">Avbryt</button>
-            <p id="reset-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
-        </div>
-    `;
-    
-    // Add event listeners
-    const updateBtn = resetForm.querySelector('#update-password-btn');
-    const cancelBtn = resetForm.querySelector('#cancel-reset-btn');
-    const newPasswordInp = resetForm.querySelector('#new-password');
-    const confirmPasswordInp = resetForm.querySelector('#confirm-password');
-    const resetFormElement = resetForm.querySelector('#reset-password-form-element');
 
-    updateBtn.onclick = () => updatePassword(newPasswordInp.value, confirmPasswordInp.value);
-    cancelBtn.onclick = () => cancelPasswordReset();
 
-    // Add form submission handler
-    if (resetFormElement) {
-        resetFormElement.addEventListener('submit', function(event) {
-            event.preventDefault();
-            updatePassword(newPasswordInp.value, confirmPasswordInp.value);
-        });
-    }
-    
-    // Add enter key support for password reset form
-    newPasswordInp.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            confirmPasswordInp.focus();
-        }
-    });
-    
-    confirmPasswordInp.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            updateBtn.click();
-        }
-    });
-    
-    return resetForm;
-}
-
-// Update password
-async function updatePassword(newPassword, confirmPassword) {
-    const resetMsg = document.getElementById('reset-msg');
-    const updateBtn = document.getElementById('update-password-btn');
-    
-    // Reset message styling
-    resetMsg.style.color = 'var(--danger)';
-    
-    if (!newPassword || newPassword.length < 6) {
-        resetMsg.textContent = 'Passordet må være minst 6 tegn';
-        return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-        resetMsg.textContent = 'Passordene stemmer ikke overens';
-        return;
-    }
-    
-    // Disable button during update
-    updateBtn.disabled = true;
-    updateBtn.textContent = 'Oppdaterer...';
-    resetMsg.textContent = '';
-    
-    try {
-        // First verify we have a session from the recovery link
-        const { data: { session } } = await supa.auth.getSession();
-        
-        if (!session) {
-            resetMsg.textContent = 'Ugyldig eller utløpt tilbakestillingslenke. Prøv å be om en ny lenke.';
-            return;
-        }
-        
-        // Verify this is actually a recovery session by checking user metadata or URL
-        const isRecoverySession = isInRecoveryMode() || isInPasswordRecovery;
-        if (!isRecoverySession) {
-            console.warn('Attempting password update without recovery context');
-        }
-        
-        
-        const { error } = await supa.auth.updateUser({
-            password: newPassword
-        });
-        
-        if (error) {
-            console.error('Password update error:', error);
-            resetMsg.textContent = error.message || 'Kunne ikke oppdatere passord';
-        } else {
-            resetMsg.style.color = 'var(--success)';
-            resetMsg.textContent = 'Passord oppdatert! Omdirigerer...';
-            
-            // Clear the recovery flag and hash, then redirect to app
-            isInPasswordRecovery = false;
-            window.location.hash = '';
-            sessionStorage.removeItem('supabase_recovery_flow');
-            
-            // Sign out and then redirect to login to force fresh authentication
-            setTimeout(async () => {
-                await supa.auth.signOut();
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 500);
-            }, 1500);
-        }
-    } catch (err) {
-        console.error('Password update exception:', err);
-        resetMsg.textContent = 'Kunne ikke oppdatere passord. Prøv igjen.';
-    } finally {
-        // Re-enable button
-        updateBtn.disabled = false;
-        updateBtn.textContent = 'Oppdater passord';
-    }
-}
-
-// Cancel password reset
-function cancelPasswordReset() {
-    // Clear the recovery flag and hash
-    isInPasswordRecovery = false;
-    window.location.hash = '';
-    sessionStorage.removeItem('supabase_recovery_flow');
-    
-    // Hide reset form and show login form
-    const resetForm = document.getElementById('reset-password-form');
-    if (resetForm) {
-        resetForm.style.display = 'none';
-    }
-    
-    if (window.authElements?.authBox) window.authElements.authBox.style.display = 'flex';
-    if (window.authElements?.forgotCard) window.authElements.forgotCard.style.display = 'none';
-    
-    // Clear any messages
-    if (window.authElements?.authMsg) window.authElements.authMsg.textContent = '';
-}
