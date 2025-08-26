@@ -6925,45 +6925,97 @@ export const app = {
 
     async initGoogleLinkButton() {
         const linkBtn = document.getElementById('btn-link-google');
-        if (!linkBtn) return;
+        const unlinkBtn = document.getElementById('btn-unlink-google');
+        const warnSpan = document.getElementById('google-unlink-warning');
+        if (!linkBtn && !unlinkBtn) return;
 
-        try {
-            // Check if user already has Google linked
-            const { data: { user } } = await window.supa.auth.getUser();
-            const hasGoogleLinked = user?.identities?.some(identity => identity.provider === 'google');
-            
-            if (hasGoogleLinked) {
-                linkBtn.style.display = 'none';
-                return;
-            }
-        } catch (e) {
-            console.error('[oauth] Failed to check linked identities:', e);
-        }
+        // Lazy import helpers
+        const [{ getAuthSnapshot, unlinkGoogleIdentity }, { linkGoogleIdentity }] = await Promise.all([
+            import('./oauth-google-manage.js'),
+            import('./link-google.js')
+        ]);
 
-        // Import the link function and set up handler
-        const { linkGoogleIdentity } = await import('./link-google.js');
-        
-        linkBtn.addEventListener('click', async () => {
-            linkBtn.disabled = true;
-            const originalText = linkBtn.textContent;
-            linkBtn.textContent = 'Åpner Google...';
-            
+        const renderGoogleControls = async () => {
             try {
-                const authUrl = await linkGoogleIdentity();
-                if (authUrl) {
-                    // The OAuth flow will handle the redirect automatically
-                    // User will be redirected to Google and then back to the app
-                    console.info('[oauth] Redirecting to Google for account linking');
+                const { hasGoogle, hasEmail, otherProviders } = await getAuthSnapshot();
+                const hasAlternative = hasEmail || (otherProviders && otherProviders.length > 0);
+
+                if (hasGoogle) {
+                    if (linkBtn) linkBtn.style.display = 'none';
+                    if (unlinkBtn) unlinkBtn.style.display = 'inline-flex';
+
+                    if (!hasAlternative) {
+                        if (warnSpan) warnSpan.style.display = 'inline';
+                        if (unlinkBtn) {
+                            unlinkBtn.disabled = true;
+                            unlinkBtn.classList.add('disabled');
+                            unlinkBtn.style.opacity = '0.6';
+                            unlinkBtn.style.cursor = 'not-allowed';
+                        }
+                    } else {
+                        if (warnSpan) warnSpan.style.display = 'none';
+                        if (unlinkBtn) {
+                            unlinkBtn.disabled = false;
+                            unlinkBtn.classList.remove('disabled');
+                            unlinkBtn.style.opacity = '';
+                            unlinkBtn.style.cursor = '';
+                        }
+                    }
                 } else {
-                    throw new Error('No auth URL returned');
+                    if (linkBtn) linkBtn.style.display = 'flex';
+                    if (unlinkBtn) unlinkBtn.style.display = 'none';
+                    if (warnSpan) warnSpan.style.display = 'none';
                 }
             } catch (e) {
-                console.error('[oauth] Link failed:', e);
-                alert('Klarte ikke å koble Google-kontoen. Prøv igjen.');
-                linkBtn.disabled = false;
-                linkBtn.textContent = originalText;
+                console.error('[oauth] render controls failed', e);
             }
-        });
+        };
+
+        // Bind clicks (idempotent)
+        if (linkBtn && !linkBtn._bound) {
+            linkBtn._bound = true;
+            linkBtn.addEventListener('click', async () => {
+                linkBtn.disabled = true;
+                const originalText = linkBtn.textContent;
+                linkBtn.textContent = 'Åpner Google...';
+                try {
+                    await linkGoogleIdentity();
+                } catch (e) {
+                    console.error('[oauth] link failed', e);
+                    alert('Klarte ikke å koble Google-kontoen.');
+                } finally {
+                    linkBtn.disabled = false;
+                    linkBtn.textContent = originalText;
+                    await renderGoogleControls();
+                }
+            });
+        }
+
+        if (unlinkBtn && !unlinkBtn._bound) {
+            unlinkBtn._bound = true;
+            unlinkBtn.addEventListener('click', async () => {
+                unlinkBtn.disabled = true;
+                try {
+                    const res = await unlinkGoogleIdentity();
+                    if (res.ok) {
+                        alert('Google-kontoen er koblet fra.');
+                    } else if (res.reason === 'no_alternative') {
+                        alert('Kan ikke fjerne Google: du mangler annet innloggingsalternativ.');
+                    } else if (res.reason === 'not_linked') {
+                        alert('Ingen Google-konto er koblet.');
+                    }
+                } catch (e) {
+                    console.error('[oauth] unlink failed', e);
+                    alert('Klarte ikke å fjerne Google-kontoen. Se konsollen.');
+                } finally {
+                    unlinkBtn.disabled = false;
+                    await renderGoogleControls();
+                }
+            });
+        }
+
+        // Initial render
+        await renderGoogleControls();
     },
 
     async openCropperWithFile(file) {
