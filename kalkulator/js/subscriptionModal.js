@@ -75,8 +75,8 @@ export class SubscriptionModal {
                 <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
               </svg>
               <div class="early-user-content">
-                <h4>Takk for at du var med fra start &lt;3</h4>
-                <p>Du får fordelene fra Pro-planen helt gratis. Du kan fortsatt abonnere for å støtte.</p>
+                <h4>Du var her helt fra starten, tusen takk! &lt;3</h4>
+                <p>Nyt professional-goder helt gratis. PS. Du kan fortsatt abonnere for å støtte oss.</p>
               </div>
             </div>
             <div id="earlyUserSubscribedThanks" class="early-user-subscribed" style="display:none;">
@@ -84,8 +84,8 @@ export class SubscriptionModal {
                 <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
               </svg>
               <div class="early-user-subscribed-content">
-                <h4>Utrolig takknemlige for støtten! &lt;3</h4>
-                <p>Du var med fra start og velger fortsatt å støtte oss. Det betyr alt for utviklingen av produktet.</p>
+                <h4>Wow! Du var her fra starten, og støtter oss via abonnement i tillegg?! Legende! &lt;3</h4>
+                <p>Dette betyr alt for utviklingen av produktet. Tusen takk!</p>
               </div>
             </div>
           </div>
@@ -375,9 +375,11 @@ export class SubscriptionModal {
     const endRaw = row.current_period_end;
     const dateObj = typeof endRaw === 'number' ? new Date(endRaw * 1000) : (endRaw ? new Date(endRaw) : null);
     const formatted = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('no-NO') : null;
-    const isActive = !!row.is_active;
+    // Consider subscription active if either is_active is true OR status is "active"
+    // This handles cases where status="active" but is_active=false
+    const isActive = !!row.is_active || (row.status === 'active');
     const tier = String(row.tier || '').toLowerCase();
-    const plan = tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null;
+    const plan = tier === 'max' ? 'Enterprise' : (tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null);
 
     this.currentTier = tier || null;
     this.isActive = isActive;
@@ -387,7 +389,7 @@ export class SubscriptionModal {
     if (this.planEl) this.planEl.textContent = plan ? `Takk for abonnementet!` : '';
     
     // Handle special messages for early users - ensure they are mutually exclusive
-    const showEarlyUserSubscribedMessage = beforePaywall && isActive && tier !== 'free';
+    const showEarlyUserSubscribedMessage = beforePaywall && isActive;
     const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
     
     // Always hide all first to ensure mutual exclusivity
@@ -465,7 +467,8 @@ export class SubscriptionModal {
       const beforePaywall = profileResult.data?.before_paywall === true;
       this.beforePaywall = beforePaywall;
       
-      console.log('[subscription modal] loadSubscription profile data:', { beforePaywall, profileData: profileResult.data });
+      console.log('[subscription modal] loadSubscription profile data:', beforePaywall, profileResult.data);
+      console.log('[subscription modal] loadSubscription subscription data:', data, error, Array.isArray(data) && data.length ? data[0] : null);
 
       if (error) {
         console.error('[subscription] fetch error:', error);
@@ -529,15 +532,26 @@ export class SubscriptionModal {
         : (endRaw ? new Date(endRaw) : null);
       const formatted = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('no-NO') : null;
 
-      const isActive = !!row.is_active;
+      // Consider subscription active if either is_active is true OR status is "active"
+      // This handles cases where status="active" but is_active=false
+      const isActive = !!row.is_active || (row.status === 'active');
       const tier = String(row.tier || '').toLowerCase();
-      const plan = tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null;
+      const plan = tier === 'max' ? 'Enterprise' : (tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null);
 
       // Show content now that we have data
       await this.showContent();
       
       // Remember current tier for button logic
       this.currentTier = tier || null;
+      
+      console.log('[subscription modal] loadSubscription values:');
+      console.log('  beforePaywall:', beforePaywall);
+      console.log('  isActive:', isActive);  
+      console.log('  tier:', tier);
+      console.log('  plan:', plan);
+      console.log('  raw row:', row);
+      console.log('  showEarlyUserSubscribedMessage:', beforePaywall && isActive);
+      console.log('  showRegularThanks:', !beforePaywall && isActive && tier !== 'free');
 
       // Update UI
       if (this.statusEl) this.statusEl.textContent = `${status.charAt(0).toUpperCase()}${status.slice(1)}${plan ? ` - ${plan}` : ''}`;
@@ -545,7 +559,7 @@ export class SubscriptionModal {
       if (this.planEl) this.planEl.textContent = plan ? `Takk for abonnementet!` : '';
 
       // Handle special messages for early users - ensure they are mutually exclusive
-      const showEarlyUserSubscribedMessage = beforePaywall && isActive && tier !== 'free';
+      const showEarlyUserSubscribedMessage = beforePaywall && isActive;
       const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
       
       // Always hide all first to ensure mutual exclusivity
@@ -560,6 +574,15 @@ export class SubscriptionModal {
       } else if (showRegularThanks && this.thanksEl) {
         console.log('[subscription modal] loadSubscription: Showing regular thanks', { beforePaywall, isActive, tier });
         this.thanksEl.style.display = 'flex';
+      } else {
+        console.log('[subscription modal] loadSubscription: NO MESSAGE SHOWN');
+        console.log('  showEarlyUserSubscribedMessage:', showEarlyUserSubscribedMessage);
+        console.log('  showRegularThanks:', showRegularThanks);
+        console.log('  beforePaywall:', beforePaywall);
+        console.log('  isActive:', isActive);
+        console.log('  tier:', tier);
+        console.log('  hasEarlyUserSubscribedEl:', !!this.earlyUserSubscribedEl);
+        console.log('  hasThanksEl:', !!this.thanksEl);
       }
 
       // Buttons per requirements:
@@ -567,24 +590,34 @@ export class SubscriptionModal {
       // - tier = 'pro' and active → show Manage + offer upgrade to Max
       // - tier = 'max' and active → show Manage only
       // - is_active = false → show both upgrade options
+      console.log('[subscription modal] Button logic:');
+      console.log('  isActive:', isActive);
+      console.log('  tier:', tier);
+      console.log('  beforePaywall:', beforePaywall);
+      
       if (!isActive) {
+        console.log('[subscription modal] Not active - showing upgrade buttons');
         if (this.manageBtn) this.manageBtn.style.display = 'none';
         if (this.proBtn) this.proBtn.style.display = '';
         if (this.maxBtn) this.maxBtn.style.display = '';
       } else if (tier === 'free') {
+        console.log('[subscription modal] Active free tier - showing upgrade buttons');
         // Free plan users can upgrade to either Pro or Enterprise
         if (this.manageBtn) this.manageBtn.style.display = 'none';
         if (this.proBtn) this.proBtn.style.display = '';
         if (this.maxBtn) this.maxBtn.style.display = '';
       } else if (tier === 'pro') {
+        console.log('[subscription modal] Active pro tier - showing manage + max upgrade');
         if (this.manageBtn) this.manageBtn.style.display = '';
         if (this.proBtn) this.proBtn.style.display = 'none';
         if (this.maxBtn) this.maxBtn.style.display = '';
       } else if (tier === 'max') {
+        console.log('[subscription modal] Active max tier - showing manage only');
         if (this.manageBtn) this.manageBtn.style.display = '';
         if (this.proBtn) this.proBtn.style.display = 'none';
         if (this.maxBtn) this.maxBtn.style.display = 'none';
       } else {
+        console.log('[subscription modal] Active unknown tier - showing manage only');
         // Active but unknown tier: default to manage only
         if (this.manageBtn) this.manageBtn.style.display = '';
         if (this.proBtn) this.proBtn.style.display = 'none';
