@@ -2120,12 +2120,8 @@ export const app = {
 
         const pauseDeductionMethodSelect = document.getElementById('pauseDeductionMethodSelect');
         if (pauseDeductionMethodSelect) {
-            // Map org break policy to closest UI method for display
-            const policy = this.orgSettings?.break_policy;
-            const mapped = policy === 'fixed_0_5_over_5_5h' ? 'end_of_shift'
-                         : policy === 'none' ? 'none'
-                         : this.pauseDeductionMethod;
-            pauseDeductionMethodSelect.value = mapped;
+            // Always show the user's personal setting, not org policy override
+            pauseDeductionMethodSelect.value = this.pauseDeductionMethod;
         }
 
         const pauseThresholdInput = document.getElementById('pauseThresholdInput');
@@ -2807,10 +2803,21 @@ export const app = {
                 // Add auto-save event listeners to the inputs (only on change, not blur)
                 const inputs = slot.querySelectorAll('input');
                 inputs.forEach(input => {
+                    // Add time formatting for time inputs
+                    if (input.type === 'time') {
+                        input.addEventListener('blur', () => {
+                            this.formatTimeInput(input);
+                        });
+                    }
+                    
                     input.addEventListener('change', () => {
+                        // Format time inputs on change as well
+                        if (input.type === 'time') {
+                            this.formatTimeInput(input);
+                        }
                         this.autoSaveCustomBonuses();
                     });
-                    // Removed blur event to reduce frequent saving
+                    // Removed blur event to reduce frequent saving (except for time formatting)
                 });
 
                 // Add click event listener to the remove button
@@ -2853,10 +2860,21 @@ export const app = {
         // Add auto-save event listeners to the inputs (only on change, not blur)
         const inputs = slot.querySelectorAll('input');
         inputs.forEach(input => {
+            // Add time formatting for time inputs
+            if (input.type === 'time') {
+                input.addEventListener('blur', () => {
+                    this.formatTimeInput(input);
+                });
+            }
+            
             input.addEventListener('change', () => {
+                // Format time inputs on change as well
+                if (input.type === 'time') {
+                    this.formatTimeInput(input);
+                }
                 this.autoSaveCustomBonuses();
             });
-            // Removed blur event to reduce frequent saving
+            // Removed blur event to reduce frequent saving (except for time formatting)
         });
 
         // Add click event listener to the remove button
@@ -2878,8 +2896,29 @@ export const app = {
         if (!this.usePreset) {
             this.saveCustomBonusesSilent().catch(console.error);
         }
+    },
 
-
+    // Helper function to format time inputs - converts "18" to "18:00"
+    formatTimeInput(input) {
+        const value = input.value.trim();
+        if (!value) return;
+        
+        // If user entered just a number (whole hour), format it as HH:00
+        if (/^\d{1,2}$/.test(value)) {
+            const hour = parseInt(value);
+            if (hour >= 0 && hour <= 23) {
+                input.value = hour.toString().padStart(2, '0') + ':00';
+            }
+        }
+        // If user entered HH:M format, pad the minute to HH:MM
+        else if (/^\d{1,2}:\d{1}$/.test(value)) {
+            const parts = value.split(':');
+            const hour = parseInt(parts[0]);
+            const minute = parseInt(parts[1]);
+            if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+                input.value = hour.toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0');
+            }
+        }
     },
 
     // Auto-save custom bonuses with debouncing to avoid too many saves
@@ -2971,14 +3010,15 @@ export const app = {
             // Show the modal
             modal.style.display = 'flex';
 
+            // Set up event delegation for collapsible toggle buttons
+            this.setupCollapsibleEventListeners();
+
             // Ensure custom bonus slots are populated if custom mode is active
             if (!this.usePreset) {
                 setTimeout(() => {
                     this.populateCustomBonusSlots();
                 }, 100);
             }
-
-
         }
     },
 
@@ -3071,6 +3111,61 @@ export const app = {
 
         // Close profile dropdown if open
         this.closeProfileDropdown();
+    },
+
+    // Set up event delegation for collapsible toggle buttons
+    setupCollapsibleEventListeners() {
+        const modal = document.getElementById('settingsModal');
+        if (!modal) return;
+        
+        // Remove any existing listeners to prevent duplicates
+        modal.removeEventListener('click', this.handleCollapsibleToggle);
+        
+        // Add single delegated event listener
+        this.handleCollapsibleToggle = (event) => {
+            const button = event.target.closest('.settings-collapse-toggle');
+            if (!button) return;
+            
+            const sectionId = button.getAttribute('data-toggle-section');
+            if (!sectionId) return;
+            
+            event.preventDefault();
+            this.toggleSettingsSection(sectionId, button);
+        };
+        
+        modal.addEventListener('click', this.handleCollapsibleToggle);
+        console.log('Collapsible event listeners set up');
+    },
+
+    // Toggle collapsible settings sections
+    toggleSettingsSection(sectionId, buttonElement) {
+        const section = document.getElementById(sectionId);
+        
+        console.log(`Debug: toggleSettingsSection called with:`, { sectionId, buttonElement, section });
+        
+        if (!section) {
+            console.warn(`toggleSettingsSection: Could not find section '${sectionId}'`);
+            return;
+        }
+        
+        if (!buttonElement) {
+            console.warn(`toggleSettingsSection: No button element provided for '${sectionId}'`);
+            return;
+        }
+        
+        const isExpanded = buttonElement.getAttribute('aria-expanded') === 'true';
+        
+        if (isExpanded) {
+            // Collapse
+            section.style.display = 'none';
+            buttonElement.setAttribute('aria-expanded', 'false');
+            console.log(`Collapsed section: ${sectionId}`);
+        } else {
+            // Expand
+            section.style.display = 'block';
+            buttonElement.setAttribute('aria-expanded', 'true');
+            console.log(`Expanded section: ${sectionId}`);
+        }
     },
 
     // Dashboard view toggle functionality

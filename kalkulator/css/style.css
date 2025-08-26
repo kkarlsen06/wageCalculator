@@ -16898,3 +16898,211 @@ body.chatbox-view .chatbox-container {
         font-size: 0.95rem;
     }
 }
+
+/* ============================================================================
+   SETTINGS MODAL HIERARCHICAL STRUCTURE
+   ============================================================================ */
+
+/*
+ * HIERARCHICAL DESIGN GUIDELINES:
+ * 
+ * Level 1: Main settings (primary toggles/options)
+ *   - No special classes needed
+ *   - Direct children of tab content
+ *   - Examples: "Lønnstype", "Pausetrekk-innstillinger", "Tema"
+ * 
+ * Level 2: Sub-settings (dependent options with 20px indentation + left border)
+ *   - Class: .settings-level-2
+ *   - Dependent on Level 1 toggles
+ *   - Examples: "Lønnstrinn", "Skatteprosent", "Pausetrekk-metode"
+ * 
+ * Level 3: Advanced/collapsible sections (additional 20px indentation)
+ *   - Class: .settings-level-3
+ *   - Usually inside collapsible containers
+ *   - Examples: "Avanserte innstillinger", "Tidsformat-detaljer"
+ * 
+ * Level 4: Deep nested options (16px indentation with dotted border)
+ *   - Class: .settings-level-4
+ *   - Deeply nested configuration options
+ *   - Examples: Individual settings within collapsed advanced sections
+ */
+
+/* Settings hierarchy levels for consistent indentation and visual structure */
+.settings-level-2 {
+  margin-left: 20px;
+  padding-left: 16px;
+  border-left: 2px solid var(--border);
+  position: relative;
+}
+
+.settings-level-3 {
+  margin-left: 20px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(var(--border-rgb), 0.5);
+  position: relative;
+}
+
+.settings-level-4 {
+  margin-left: 16px;
+  padding-left: 12px;
+  border-left: 1px dotted rgba(var(--border-rgb), 0.3);
+  position: relative;
+}
+
+/* Settings subsections - containers for child settings */
+.settings-subsection {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+/* Collapsible toggle buttons */
+.settings-collapse-toggle {
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  width: 100%;
+  text-align: left;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.settings-collapse-toggle:hover {
+  color: var(--text-primary);
+  background: rgba(var(--accent-rgb), 0.05);
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.settings-collapse-toggle[aria-expanded="true"] .collapse-icon {
+  transform: rotate(180deg);
+}
+
+.collapse-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* Collapsible content containers */
+.settings-collapsible-content {
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 12px;
+}
+
+.settings-collapsible-content[style*="display: none"] {
+  height: 0 !important;
+  margin: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+}
+
+.settings-collapsible-content[style*="display: block"] {
+  opacity: 1 !important;
+  height: auto !important;
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+    opacity: 0;
+    margin: 0;
+  }
+  to {
+    height: auto;
+    opacity: 1;
+    margin-top: 12px;
+  }
+}
+
+/* Visual improvements for hierarchical labels */
+.settings-level-2 label,
+.settings-level-3 label,
+.settings-level-4 label {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.settings-level-2 label {
+  font-size: var(--text-base);
+}
+
+/* Enhanced form hints for hierarchical structure */
+.settings-level-2 .form-hint,
+.settings-level-3 .form-hint,
+.settings-level-4 .form-hint {
+  color: rgba(var(--text-secondary-rgb), 0.8);
+  font-size: 12px;
+}
+
+/* Spacing adjustments for hierarchical form groups */
+.settings-level-2 .form-group,
+.settings-level-3 .form-group,
+.settings-level-4 .form-group {
+  margin-bottom: 16px;
+}
+
+.settings-level-3 .form-group,
+.settings-level-4 .form-group {
+  margin-bottom: 12px;
+}
+
+/* Switch groups in hierarchical structure */
+.settings-level-2 .switch-group,
+.settings-level-3 .switch-group,
+.settings-level-4 .switch-group {
+  margin-top: 8px;
+}
+
+/* Method descriptions in advanced settings */
+.method-description {
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(var(--bg-tertiary-rgb), 0.5);
+  border: 1px solid rgba(var(--border-rgb), 0.5);
+  margin-bottom: 8px;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.method-description strong {
+  color: var(--text-primary);
+}
+
+/* Responsive adjustments for hierarchical structure */
+@media (max-width: 600px) {
+  .settings-level-2,
+  .settings-level-3,
+  .settings-level-4 {
+    margin-left: 12px;
+    padding-left: 12px;
+  }
+  
+  .settings-collapse-toggle {
+    font-size: 14px;
+  }
+  
+  .method-description {
+    padding: 10px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-level-2,
+  .settings-level-3,
+  .settings-level-4 {
+    margin-left: 8px;
+    padding-left: 8px;
+  }
+}

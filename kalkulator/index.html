@@ -407,8 +407,8 @@
                       </div>
                   </div>
 
-                  <div id="presetWageSection">
-                      <div class="form-group">
+                  <div id="presetWageSection" class="settings-subsection">
+                      <div class="form-group settings-level-2">
                           <label>Lønnstrinn (Virke 2025)</label>
                           <select class="form-control" id="wageSelect" onchange="app.updateWageLevel(this.value)">
                               <option value="-1">Unge arbeidstakere under 16 år (129,91 kr/t)</option>
@@ -423,41 +423,46 @@
                       </div>
                   </div>
 
-                  <div id="customWageSection" style="display: none;">
-                      <div class="form-group">
+                  <div id="customWageSection" class="settings-subsection" style="display: none;">
+                      <div class="form-group settings-level-2">
                           <label>Timelønn (kr)</label>
                           <input type="number" class="form-control" id="customWageInput" placeholder="200" step="0.01" onchange="app.updateCustomWage(this.value)">
                       </div>
 
-                      <div class="info-box">
-                          <div class="info-content">
-                              <strong>Viktig:</strong> Fyll ut både timer og minutter for alle tidsperioder (f.eks. 18:00, ikke bare 18).
-                              Tomme felt lagres ikke automatisk.
-                          </div>
-                      </div>
+                      <!-- Collapsible bonus settings -->
+                      <div class="form-group settings-level-2">
+                          <button type="button" class="settings-collapse-toggle" data-toggle-section="bonusWageSettings" aria-expanded="false">
+                              <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="6 9 12 15 18 9"></polyline>
+                              </svg>
+                              <span>Tillegg og bonuser</span>
+                          </button>
+                          
+                          <div class="settings-collapsible-content" id="bonusWageSettings" style="display: none;">
+                              <div class="form-group settings-level-3">
+                                  <label>Ukedag-tillegg (man-fre)</label>
+                                  <div class="bonus-slots" id="weekdayBonusSlots">
+                                      <!-- Dynamisk innhold -->
+                                  </div>
+                                  <button class="btn btn-secondary" onclick="app.addBonusSlot('weekday')">+ Legg til tidsperiode</button>
+                              </div>
 
-                      <div class="form-group">
-                          <label>Ukedag-tillegg (man-fre)</label>
-                          <div class="bonus-slots" id="weekdayBonusSlots">
-                              <!-- Dynamisk innhold -->
-                          </div>
-                          <button class="btn btn-secondary" onclick="app.addBonusSlot('weekday')">+ Legg til tidsperiode</button>
-                      </div>
+                              <div class="form-group settings-level-3">
+                                  <label>Lørdag-tillegg</label>
+                                  <div class="bonus-slots" id="saturdayBonusSlots">
+                                      <!-- Dynamisk innhold -->
+                                  </div>
+                                  <button class="btn btn-secondary" onclick="app.addBonusSlot('saturday')">+ Legg til tidsperiode</button>
+                              </div>
 
-                      <div class="form-group">
-                          <label>Lørdag-tillegg</label>
-                          <div class="bonus-slots" id="saturdayBonusSlots">
-                              <!-- Dynamisk innhold -->
+                              <div class="form-group settings-level-3">
+                                  <label>Søndag/helligdag-tillegg</label>
+                                  <div class="bonus-slots" id="sundayBonusSlots">
+                                      <!-- Dynamisk innhold -->
+                                  </div>
+                                  <button class="btn btn-secondary" onclick="app.addBonusSlot('sunday')">+ Legg til tidsperiode</button>
+                              </div>
                           </div>
-                          <button class="btn btn-secondary" onclick="app.addBonusSlot('saturday')">+ Legg til tidsperiode</button>
-                      </div>
-
-                      <div class="form-group">
-                          <label>Søndag/helligdag-tillegg</label>
-                          <div class="bonus-slots" id="sundayBonusSlots">
-                              <!-- Dynamisk innhold -->
-                          </div>
-                          <button class="btn btn-secondary" onclick="app.addBonusSlot('sunday')">+ Legg til tidsperiode</button>
                       </div>
                   </div>
 
@@ -477,50 +482,62 @@
                         </label>
                       </div>
 
-                      <!-- Break Deduction Method -->
-                      <div class="form-group" id="breakDeductionMethodSection">
-                        <label for="pauseDeductionMethodSelect">Pausetrekk-metode</label>
-                        <select id="pauseDeductionMethodSelect" class="form-control">
-                          <option value="proportional">Proporsjonal (anbefalt)</option>
-                          <option value="base_only">Kun grunnlønn</option>
-                          <option value="end_of_shift">Slutt av vakt (legacy)</option>
-                          <option value="none">Ingen trekk (betalt pause)</option>
-                        </select>
-                        <small class="form-hint">Velg hvordan pausetrekk skal beregnes</small>
-                      </div>
-
-                      <!-- Method Explanation -->
-                      <div class="form-group" id="methodExplanation">
-                        <div class="method-info">
-                          <div id="proportionalInfo" class="method-description">
-                            <strong>Proporsjonal trekk:</strong> Trekker pausetid proporsjonalt fra alle lønnsperioder. Juridisk korrekt metode.
+                      <!-- Sub-settings for break deduction (level 2) -->
+                      <div class="settings-subsection" id="breakDeductionSubsection">
+                          <!-- Break Deduction Method -->
+                          <div class="form-group settings-level-2">
+                            <label for="pauseDeductionMethodSelect">Pausetrekk-metode</label>
+                            <select id="pauseDeductionMethodSelect" class="form-control">
+                              <option value="proportional">Proporsjonal (anbefalt)</option>
+                              <option value="base_only">Kun grunnlønn</option>
+                              <option value="end_of_shift">Slutt av vakt (legacy)</option>
+                              <option value="none">Ingen trekk (betalt pause)</option>
+                            </select>
+                            <small class="form-hint">Velg hvordan pausetrekk skal beregnes</small>
                           </div>
-                          <div id="baseOnlyInfo" class="method-description" style="display: none;">
-                            <strong>Kun grunnlønn:</strong> Trekker pausetid kun fra grunnlønn-timer, bevarer tillegg.
+
+                          <!-- Collapsible Advanced Settings -->
+                          <div class="form-group settings-level-2">
+                              <button type="button" class="settings-collapse-toggle" data-toggle-section="advancedBreakSettings" aria-expanded="false">
+                                  <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <polyline points="6 9 12 15 18 9"></polyline>
+                                  </svg>
+                                  <span>Avanserte innstillinger</span>
+                              </button>
+                              
+                              <div class="settings-collapsible-content" id="advancedBreakSettings" style="display: none;">
+                                  <!-- Method Explanation -->
+                                  <div class="form-group settings-level-3" id="methodExplanation">
+                                    <div class="method-info">
+                                      <div id="proportionalInfo" class="method-description">
+                                        <strong>Proporsjonal trekk:</strong> Trekker pausetid proporsjonalt fra alle lønnsperioder. Juridisk korrekt metode.
+                                      </div>
+                                      <div id="baseOnlyInfo" class="method-description" style="display: none;">
+                                        <strong>Kun grunnlønn:</strong> Trekker pausetid kun fra grunnlønn-timer, bevarer tillegg.
+                                      </div>
+                                      <div id="endOfShiftInfo" class="method-description" style="display: none;">
+                                        <strong>⚠️ Slutt av vakt:</strong> Trekker fra slutten av vakten. Kan være juridisk problematisk.
+                                      </div>
+                                      <div id="noneInfo" class="method-description" style="display: none;">
+                                        <strong>Ingen trekk:</strong> Alle timer betales, inkludert pausetid.
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div class="form-group settings-level-3" id="pauseThresholdSection">
+                                    <label for="pauseThresholdInput">Pausetrekk-terskel (timer)</label>
+                                    <input type="number" id="pauseThresholdInput" class="form-control" min="0" max="24" step="0.5" value="5.5">
+                                    <small class="form-hint">Minimum vaktlengde for å utløse pausetrekk</small>
+                                  </div>
+
+                                  <div class="form-group settings-level-3" id="pauseDeductionMinutesSection">
+                                    <label for="pauseDeductionMinutesInput">Pausetrekk (minutter)</label>
+                                    <input type="number" id="pauseDeductionMinutesInput" class="form-control" min="0" max="120" step="15" value="30">
+                                    <small class="form-hint">Antall minutter som trekkes fra</small>
+                                  </div>
+                              </div>
                           </div>
-                          <div id="endOfShiftInfo" class="method-description" style="display: none;">
-                            <strong>⚠️ Slutt av vakt:</strong> Trekker fra slutten av vakten. Kan være juridisk problematisk.
-                          </div>
-                          <div id="noneInfo" class="method-description" style="display: none;">
-                            <strong>Ingen trekk:</strong> Alle timer betales, inkludert pausetid.
-                          </div>
-                        </div>
                       </div>
-
-                      <!-- Advanced Settings -->
-                      <div class="form-group" id="pauseThresholdSection">
-                        <label for="pauseThresholdInput">Pausetrekk-terskel (timer)</label>
-                        <input type="number" id="pauseThresholdInput" class="form-control" min="0" max="24" step="0.5" value="5.5">
-                        <small class="form-hint">Minimum vaktlengde for å utløse pausetrekk</small>
-                      </div>
-
-                      <div class="form-group" id="pauseDeductionMinutesSection">
-                        <label for="pauseDeductionMinutesInput">Pausetrekk (minutter)</label>
-                        <input type="number" id="pauseDeductionMinutesInput" class="form-control" min="0" max="120" step="15" value="30">
-                        <small class="form-hint">Antall minutter som trekkes fra</small>
-                      </div>
-
-
                   </div>
 
                   <div class="form-group form-group-with-hint">
@@ -544,15 +561,16 @@
                             <span class="slider"></span>
                         </label>
                       </div>
-                  </div>
-
-                  <div class="form-group" id="taxPercentageSection" style="display: none;">
-                      <label for="taxPercentageInput">Skatteprosent (%)</label>
-                      <div class="switch-group">
-                          <input type="number" id="taxPercentageInput" class="form-control" min="0" max="100" step="0.1" style="max-width:140px;display:inline-block;" placeholder="25.0" onchange="app.updateTaxPercentage(this.value)">
-                          <span class="text-secondary" style="margin-left:8px;">%</span>
+                      
+                      <!-- Tax percentage sub-setting -->
+                      <div class="form-group settings-level-2" id="taxPercentageSection" style="display: none;">
+                          <label for="taxPercentageInput">Skatteprosent (%)</label>
+                          <div class="switch-group">
+                              <input type="number" id="taxPercentageInput" class="form-control" min="0" max="100" step="0.1" style="max-width:140px;display:inline-block;" placeholder="25.0" onchange="app.updateTaxPercentage(this.value)">
+                              <span class="text-secondary" style="margin-left:8px;">%</span>
+                          </div>
+                          <small class="form-hint">Skriv inn skatteprosenten som skal trekkes fra bruttolønnen</small>
                       </div>
-                      <small class="form-hint">Skriv inn skatteprosenten som skal trekkes fra bruttolønnen</small>
                   </div>
 
                   <div class="form-group form-group-with-hint">
@@ -570,21 +588,8 @@
                           <small class="form-hint">Gjelder alle ansatte ved lønnsberegning</small>
                       </div>
                       
-                      <!-- CSV Export Button -->
-                      <div class="form-group form-group-with-hint">
-                          <label>Eksporter lønnsdata</label>
-                          <small class="form-hint">Last ned lønnsrapport for alle ansatte som CSV</small>
-                          <button type="button" class="btn btn-primary" style="margin-top: 10px;" onclick="app.openCsvExportModal()">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                  <polyline points="7 10 12 15 17 10"></polyline>
-                                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                              </svg>
-                              Eksporter til CSV
-                          </button>
-                      </div>
-
-                      <div class="form-group" id="orgBreakPolicySection">
+                      <!-- Policy Settings -->
+                      <div class="form-group settings-level-2">
                           <label for="breakPolicySelect">Pausetrekk-policy</label>
                           <select id="breakPolicySelect" class="form-control">
                               <option value="proportional_across_periods">Proporsjonal (anbefalt)</option>
@@ -595,11 +600,36 @@
                           <small class="form-hint">Endringen påvirker rapporter/oversikter for ansattes vakter.</small>
                       </div>
 
-                      <!-- Save button removed; changes are saved immediately on selection change -->
+                      <!-- Data Management -->
+                      <div class="form-group form-group-with-hint" style="margin-top: 32px;">
+                          <label>Datahåndtering</label>
+                          <small class="form-hint">Eksporter og administrer organisasjonsdata</small>
+                      </div>
+                      
+                      <div class="form-group settings-level-2">
+                          <label>Lønnsrapporter</label>
+                          <div style="margin-top: 10px;">
+                              <button type="button" class="btn btn-primary" onclick="app.openCsvExportModal()">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                      <polyline points="7 10 12 15 17 10"></polyline>
+                                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                                  </svg>
+                                  Eksporter til CSV
+                              </button>
+                          </div>
+                          <small class="form-hint">Last ned lønnsrapport for alle ansatte som CSV</small>
+                      </div>
                   </div>
 
               <div id="interfaceTab" class="tab-content">
+                  <!-- Visual Settings -->
                   <div class="form-group form-group-with-hint">
+                      <label>Utseende</label>
+                      <small class="form-hint">Tilpass appens visuelle stil</small>
+                  </div>
+                  
+                  <div class="form-group settings-level-2">
                       <label>Tema</label>
                       <div class="theme-selector">
                           <div class="theme-options">
@@ -632,51 +662,7 @@
                       <small class="form-hint">Velg mellom lyst, mørkt tema eller følg systeminnstillinger</small>
                   </div>
 
-                  <div class="form-group form-group-with-hint">
-                      <label>Tidsinnskriving</label>
-                      <div class="switch-group">
-                        <div>
-                          <span class="text-secondary">Skriv inn tid direkte i stedet for dropdown-menyer</span>
-                          <small class="form-hint">Raskere registrering av vakter for erfarne brukere</small>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="directTimeInputToggle">
-                            <span class="slider"></span>
-                        </label>
-                      </div>
-                  </div>
-
-                  <div class="form-group form-group-with-hint">
-                      <label>Minuttformat</label>
-                      <div class="switch-group">
-                        <div>
-                          <span class="text-secondary">Vis hvert minutt i stedet for 15-minutters intervaller</span>
-                          <small class="form-hint">Mer presise tidsvalg, men lengre dropdown-lister</small>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="fullMinuteRangeToggle">
-                            <span class="slider"></span>
-                        </label>
-                      </div>
-                  </div>
-
-                  <div class="form-group form-group-with-hint">
-                      <label>Valutaformat</label>
-                      <div class="switch-group">
-                        <div>
-                          <span class="text-secondary">Vis kroner som "NOK" i stedet for "kr"</span>
-                          <small class="form-hint">Mer formelt valutaformat for eksport og rapporter</small>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="currencyFormatToggle">
-                            <span class="slider"></span>
-                        </label>
-                      </div>
-                  </div>
-
-
-
-                  <div class="form-group form-group-with-hint">
+                  <div class="form-group settings-level-2">
                       <label>Standard vaktvisning</label>
                       <div class="switch-group">
                         <div>
@@ -689,36 +675,104 @@
                         </label>
                       </div>
                   </div>
+
+                  <!-- Input & Formatting Settings -->
+                  <div class="form-group form-group-with-hint" style="margin-top: 32px;">
+                      <label>Inndata og formatering</label>
+                      <small class="form-hint">Tilpass hvordan du registrerer data og hvordan den vises</small>
+                  </div>
+
+                  <div class="form-group settings-level-2">
+                      <label>Tidsinnskriving</label>
+                      <div class="switch-group">
+                        <div>
+                          <span class="text-secondary">Skriv inn tid direkte i stedet for dropdown-menyer</span>
+                          <small class="form-hint">Raskere registrering av vakter for erfarne brukere</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="directTimeInputToggle">
+                            <span class="slider"></span>
+                        </label>
+                      </div>
+                      
+                      <!-- Collapsible time format details -->
+                      <div class="settings-subsection" id="timeInputSubsection">
+                          <div class="form-group settings-level-3">
+                              <button type="button" class="settings-collapse-toggle" data-toggle-section="timeFormatSettings" aria-expanded="false">
+                                  <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <polyline points="6 9 12 15 18 9"></polyline>
+                                  </svg>
+                                  <span>Tidsformat-detaljer</span>
+                              </button>
+                              
+                              <div class="settings-collapsible-content" id="timeFormatSettings" style="display: none;">
+                                  <div class="form-group settings-level-4">
+                                      <label>Minuttformat</label>
+                                      <div class="switch-group">
+                                        <div>
+                                          <span class="text-secondary">Vis hvert minutt i stedet for 15-minutters intervaller</span>
+                                          <small class="form-hint">Mer presise tidsvalg, men lengre dropdown-lister</small>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" id="fullMinuteRangeToggle">
+                                            <span class="slider"></span>
+                                        </label>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <div class="form-group settings-level-2">
+                      <label>Valutaformat</label>
+                      <div class="switch-group">
+                        <div>
+                          <span class="text-secondary">Vis kroner som "NOK" i stedet for "kr"</span>
+                          <small class="form-hint">Mer formelt valutaformat for eksport og rapporter</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="currencyFormatToggle">
+                            <span class="slider"></span>
+                        </label>
+                      </div>
+                  </div>
               </div>
 
 
 
               <div id="dataTab" class="tab-content">
-                  <div id="exportOptionsSection" class="form-group form-group-with-hint">
-                      <label class="export-section-header">Dataeksport</label>
+                  <!-- Export Section -->
+                  <div class="form-group form-group-with-hint">
+                      <label class="export-section-header">Eksporter data</label>
                       <small class="form-hint">Last ned dine vaktdata for regnskapsføring eller backup</small>
-
-                      <div class="export-period-options">
-                          <label class="radio-option">
-                              <input type="radio" name="exportPeriod" value="all">
-                              <span>Alle data</span>
-                          </label>
-                          <label class="radio-option">
-                              <input type="radio" name="exportPeriod" value="current">
-                              <span id="currentMonthLabel">Inneværende måned</span>
-                          </label>
-                          <label class="radio-option">
-                              <input type="radio" name="exportPeriod" value="year">
-                              <span>Hele året</span>
-                          </label>
-                          <label class="radio-option">
-                              <input type="radio" name="exportPeriod" value="custom">
-                              <span>Egendefinert</span>
-                          </label>
+                  </div>
+                  
+                  <div id="exportOptionsSection" class="settings-level-2">
+                      <div class="form-group">
+                          <label>Velg tidsperiode</label>
+                          <div class="export-period-options">
+                              <label class="radio-option">
+                                  <input type="radio" name="exportPeriod" value="current">
+                                  <span id="currentMonthLabel">Inneværende måned</span>
+                              </label>
+                              <label class="radio-option">
+                                  <input type="radio" name="exportPeriod" value="year">
+                                  <span>Hele året</span>
+                              </label>
+                              <label class="radio-option">
+                                  <input type="radio" name="exportPeriod" value="all">
+                                  <span>Alle data</span>
+                              </label>
+                              <label class="radio-option">
+                                  <input type="radio" name="exportPeriod" value="custom">
+                                  <span>Egendefinert periode</span>
+                              </label>
+                          </div>
                       </div>
 
-                      <div id="customPeriodSection" style="display: none;">
-                          <label class="custom-period-header">Velg tidsperiode</label>
+                      <div id="customPeriodSection" class="form-group settings-level-3" style="display: none;">
+                          <label class="custom-period-header">Egendefinert tidsperiode</label>
                           <small class="form-hint">Velg start- og sluttdato for eksporten</small>
                           <div class="form-row">
                               <input type="date" id="exportStartDate" class="form-control" style="margin-right: 8px;" placeholder="Fra dato">
@@ -726,30 +780,39 @@
                           </div>
                       </div>
 
-                      <div class="export-buttons-container">
-                          <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('csv')">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                  <polyline points="14 2 14 8 20 8"></polyline>
-                                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                              </svg>
-                              Eksporter som CSV
-                          </button>
-                          <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('pdf')">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                  <polyline points="14 2 14 8 20 8"></polyline>
-                                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                              </svg>
-                              Eksporter som PDF
-                          </button>
+                      <div class="form-group">
+                          <label>Eksportformat</label>
+                          <div class="export-buttons-container">
+                              <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('csv')">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                      <polyline points="14 2 14 8 20 8"></polyline>
+                                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                                  </svg>
+                                  Eksporter som CSV
+                              </button>
+                              <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('pdf')">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                      <polyline points="14 2 14 8 20 8"></polyline>
+                                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                                  </svg>
+                                  Eksporter som PDF
+                              </button>
+                          </div>
                       </div>
                   </div>
 
-                  <div class="form-group form-group-with-hint">
-                      <label>Dataimport</label>
+                  <!-- Import Section -->
+                  <div class="form-group form-group-with-hint" style="margin-top: 32px;">
+                      <label>Importer data</label>
+                      <small class="form-hint">Last opp vaktdata fra andre systemer</small>
+                  </div>
+                  
+                  <div class="form-group settings-level-2">
+                      <label>Velg fil og importer</label>
                       <div class="form-row">
                           <input type="file" id="importFileData" class="form-control" accept=".csv,.json" style="margin-right: 8px;">
                           <button class="btn btn-secondary" onclick="app.importDataFromDataTab()">
@@ -761,7 +824,7 @@
                               Importer vakter
                           </button>
                       </div>
-                      <small class="form-hint">Importer vaktdata fra CSV eller JSON-fil</small>
+                      <small class="form-hint">Støttede formater: CSV og JSON</small>
                   </div>
               </div>
               </div>
