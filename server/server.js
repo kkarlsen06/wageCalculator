@@ -1535,33 +1535,25 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           customerId = customer?.id || null;
           console.log(`[webhook] ${type} - uid=${uid || 'null'} customer=${customerId || 'null'}`);
         } else if (type.startsWith('customer.subscription.')) {
-          const sub = verifiedEvent?.data?.object || {};
-          subscriptionId = sub?.id || null;
+          const obj = verifiedEvent?.data?.object || {};
+          subscriptionId = obj?.id || null;
           // Extract customer ID correctly - handle both string and object cases
-          customerId = typeof sub.customer === 'string'
-            ? sub.customer
-            : sub.customer?.id || null;
-          status = sub?.status || null;
-          periodEndUnix = sub?.current_period_end || null;
-          priceId = sub?.items?.data?.[0]?.price?.id || null;
+          customerId = typeof obj.customer === 'string'
+            ? obj.customer
+            : obj.customer?.id || null;
+          status = obj?.status || null;
+          periodEndUnix = obj?.current_period_end || null;
+          priceId = obj?.items?.data?.[0]?.price?.id || null;
 
-          // Improved UID resolution with fallback priority
-          // Priority 1: metadata.supabase_uid from subscription
-          uid = sub?.metadata?.supabase_uid || null;
-          // Priority 2: client_reference_id from subscription
-          if (!uid) {
-            uid = sub?.client_reference_id || null;
-          }
-        }
-
-        // If UID still not found and customerId exists, fetch customer and check its metadata
-        if (!uid && customerId) {
-          try {
-            const cust = await stripe.customers.retrieve(customerId);
-            uid = cust?.metadata?.supabase_uid || null;
-            console.log(`[webhook] Fetched customer metadata - uid=${uid || 'null'}`);
-          } catch (e) {
-            console.warn('[webhook] failed to fetch customer %s: %s', customerId, e?.message || e);
+          // UID resolution with priority
+          uid = obj?.metadata?.supabase_uid || obj?.client_reference_id || null;
+          if (!uid && customerId) {
+            try {
+              const cust = await stripe.customers.retrieve(customerId);
+              uid = cust?.metadata?.supabase_uid || null;
+            } catch (e) {
+              console.warn('[webhook] failed to fetch customer %s: %s', customerId, e?.message || e);
+            }
           }
         }
 
