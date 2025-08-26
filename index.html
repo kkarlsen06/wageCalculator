@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lønnskalkulator | Åpne appen</title>
-  <meta name="description" content="Futuristisk, minimalistisk landingsside som leder deg rett inn i Lønnskalkulatoren. Fokus på rask tilgang og tydelig handling." />
+  <title>Regn ut lønn riktig, hver måned | Lønnskalkulator</title>
+  <meta name="description" content="Lønnskalkulatoren som tar vakter, tillegg og tariff på alvor. Null Excel. Bare fasit." />
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -17,6 +17,14 @@
   <link rel="apple-touch-icon" sizes="921x921" href="/icons/apple-touch-icon.png">
 
   <link rel="canonical" href="https://www.kkarlsen.dev/">
+
+  <!-- Open Graph / Twitter meta tags -->
+  <meta property="og:title" content="Regn ut lønn riktig, hver måned | Lønnskalkulator" />
+  <meta property="og:description" content="Lønnskalkulatoren som tar vakter, tillegg og tariff på alvor. Null Excel. Bare fasit." />
+  <meta property="og:image" content="/assets/og-image.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.kkarlsen.dev/" />
+  <meta name="twitter:card" content="summary_large_image" />
 
   <!-- Vite entry (styles + legal modal) -->
   <script type="module" src="/src/main.js"></script>
@@ -234,6 +242,29 @@
       .chips { margin-bottom: calc(var(--landing-tag-gap) * 2.2); }
       .cta { margin-top: calc(var(--landing-tag-gap) * 1.6); }
     }
+
+    /* Demo section styling */
+    .demo {
+      padding: clamp(32px, 8vh, 64px) clamp(16px, 5vw, 24px);
+      text-align: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .demo h2 {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: clamp(24px, 6vh, 48px);
+      letter-spacing: -0.02em;
+    }
+    .demo img {
+      max-width: min(100%, 800px);
+      max-height: 80vh;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+    }
   </style>
 </head>
 <body>
@@ -281,10 +312,9 @@
     </div>
     <div class="shell">
       <section class="glass" aria-label="Åpne applikasjonen">
-        <h1 class="brand">Lønnskalkulator</h1>
+        <h1 class="brand">Få kontroll <br> over lønnen din</h1>
         <p class="tagline">
-          Beregn lønn, tillegg <span class="line-break-mobile">og kompensasjon.</span>
-          <span class="tagline-compact">Uten støy. Rett på sak.</span>
+          Lønnskalkulatoren som tar vakter,<br>tillegg og tariff på alvor. Excel er over.
         </p>
         <div class="chips" aria-hidden="true">
           <span class="chip">
@@ -319,10 +349,16 @@
           <a href="/kalkulator/login.html" class="btn btn-primary btn-large open-app-btn" aria-label="Åpne kalkulatoren nå">
             Åpne appen
           </a>
+          <a href="#demo" class="btn btn-secondary btn-large">Se demo (30 sek)</a>
         </div>
       </section>
     </div>
   </main>
+
+  <section id="demo" class="demo">
+    <h2>Se hvor enkelt det er</h2>
+    <img src="/assets/demo.gif" alt="Demo av lønnskalkulatoren" loading="lazy" />
+  </section>
 
   <footer class="footer">
     <div class="footer-content">
