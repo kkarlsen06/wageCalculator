@@ -267,7 +267,7 @@ export const app = {
     directTimeInput: false, // Setting for using direct time input instead of dropdowns
     monthlyGoal: 20000, // Monthly income goal
     shiftView: 'list',
-    calendarDisplayMode: 'money', // 'money' or 'hours'
+    calendarDisplayMode: 'hours', // 'money' or 'hours' - default to hours view
     selectedDate: null,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
@@ -5234,12 +5234,8 @@ export const app = {
                 // No shifts at all
                 nextShiftContent.style.display = 'none';
                 nextShiftEmpty.style.display = 'flex';
-                // Reset empty message for current month
-                const emptyMessage = nextShiftEmpty.querySelector('.empty-message');
-                if (emptyMessage) {
-                    emptyMessage.textContent = 'Ingen kommende vakter';
-                }
                 this.stopNextShiftTimer(); // Stop timer when no shifts
+                this.checkDashboardCardsLoaded(); // Check if both cards are loaded
             } else {
                 // Show most recent shift
                 nextShiftContent.style.display = 'flex';
@@ -5328,6 +5324,7 @@ export const app = {
                 `;
 
                 this.stopNextShiftTimer(); // Stop timer when showing last shift
+                this.checkDashboardCardsLoaded(); // Check if both cards are loaded
             }
         } else {
             // Show next shift details
@@ -5455,6 +5452,9 @@ export const app = {
             // Click handler is handled by global event delegation in app.js
             // No need for direct event listener here
         }
+        
+        // Check if both cards are loaded after updating this card
+        this.checkDashboardCardsLoaded();
     },
 
     displayCurrentShiftCard(currentShift, now) {
@@ -5887,6 +5887,7 @@ export const app = {
             // No shifts in earnings month
             nextPayrollContent.style.display = 'none';
             nextPayrollEmpty.style.display = 'flex';
+            this.checkDashboardCardsLoaded(); // Check if both cards are loaded
             return;
         }
 
@@ -5982,6 +5983,30 @@ export const app = {
                 e.stopPropagation();
                 this.openPaydateSettings();
             });
+        }
+        
+        // Check if both cards are loaded after updating this card
+        this.checkDashboardCardsLoaded();
+    },
+
+    // Helper function to check if both dashboard cards are loaded and show month picker if ready
+    checkDashboardCardsLoaded() {
+        const nextShiftContent = document.getElementById('nextShiftContent');
+        const nextPayrollContent = document.getElementById('nextPayrollContent');
+        
+        // Check if both cards have been populated (either with content or marked as empty)
+        const shiftLoaded = nextShiftContent && (
+            nextShiftContent.dataset.populated === '1' || 
+            document.getElementById('nextShiftEmpty')?.style.display === 'flex'
+        );
+        const payrollLoaded = nextPayrollContent && (
+            nextPayrollContent.dataset.populated === '1' ||
+            document.getElementById('nextPayrollEmpty')?.style.display === 'flex'
+        );
+        
+        if (shiftLoaded && payrollLoaded) {
+            // Both cards are loaded, safe to show month picker
+            document.body.classList.add('dashboard-cards-loaded');
         }
     },
 
@@ -10061,7 +10086,10 @@ export const app = {
         this.shifts = [...this.userShifts];
 
         // Ensure month navigation remains visible in stats view
-        this.ensureMonthPickerVisibility();
+        // Use requestAnimationFrame to prevent layout jumping on mobile
+        requestAnimationFrame(() => {
+            this.ensureMonthPickerVisibility();
+        });
 
         // Use existing stats view functionality
         this.dashboardView = 'stats';

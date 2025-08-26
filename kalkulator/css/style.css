@@ -1008,6 +1008,9 @@ body.skeleton-active .total-card .total-skeleton {
 body.skeleton-active .dashboard-month-nav,
 body.skeleton-active .shift-section .month-navigation-container { display: none !important; }
 
+/* Keep month navigation hidden until dashboard cards are fully loaded to prevent layout jumps */
+body:not(.dashboard-cards-loaded) .dashboard-month-nav { display: none !important; }
+
 /* Ensure next shift/payroll skeletons are visible until content populated */
 body.skeleton-active #nextShiftContent .skeleton,
 body.skeleton-active #nextPayrollContent .skeleton { 
@@ -2519,6 +2522,9 @@ body.skeleton-active .total-card .total-skeleton {
 /* While loading, hide the entire month navigation container to avoid layout jumps */
 body.skeleton-active .dashboard-month-nav,
 body.skeleton-active .shift-section .month-navigation-container { display: none !important; }
+
+/* Keep month navigation hidden until dashboard cards are fully loaded to prevent layout jumps */
+body:not(.dashboard-cards-loaded) .dashboard-month-nav { display: none !important; }
 
 /* Ensure next shift/payroll skeletons are visible until content populated */
 body.skeleton-active #nextShiftContent .skeleton,
@@ -4216,14 +4222,57 @@ input[type="time"].form-control[value=""]:focus {
   flex: 1;
 }
 
+/* Make week-number header transparent but keep in layout - higher specificity to override .week-number.header background */
+#addShiftModal .date-grid .week-number.header,
+#editShiftModal .date-grid .week-number.header,
+.date-grid .week-number.header {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  /* Override any inherited styles that might add background */
+  background-image: none !important;
+  background-clip: initial !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  /* Make sure it has no visible content */
+  text-shadow: none !important;
+  outline: none !important;
+}
+
+/* Style regular week numbers in date-grid to prevent movement */
+.date-grid .week-number:not(.header) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 4px 2px;
+  min-height: 45px;
+  position: relative;
+  transform: rotate(180deg);
+  /* Prevent any animations or transitions that could cause movement */
+  transition: none !important;
+  animation: none !important;
+  opacity: 1 !important;
+}
+
 .date-cell {
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: rgba(255, 255, 255, 0.02);
-  border: none;
+  /* Use same background as main calendar cells */
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 4px 2px;
   cursor: pointer;
@@ -4246,7 +4295,8 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .date-cell.disabled {
-  background: var(--bg-secondary);
+  /* Use same background as other-month cells in main calendar */
+  background: var(--bg-tertiary);
   opacity: 0.6;
   cursor: not-allowed;
   color: var(--text-tertiary);
@@ -4601,11 +4651,24 @@ input[type="time"].form-control[value=""]:focus {
     height: auto !important;
     width: 100vw !important;
     margin: 0 !important;
-    /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
-    /* Avoid stretching under the status bar and home indicator */
-    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
-    padding-top: max(16px, env(safe-area-inset-top, 0px)) !important;
+    /* Constrain height to viewport - use dvh for better mobile support */
+    max-height: calc(100dvh - 20px) !important;
+    /* Rounded top corners for mobile sheet-style modal */
+    border-radius: 20px 20px 0 0 !important;
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    /* Ensure modal doesn't extend beyond viewport */
+    overflow: hidden !important;
+  }
+  
+  #addShiftModal .modal-body {
+    /* Allow internal scrolling with proper viewport calculation */
+    max-height: calc(100dvh - 160px) !important; /* Account for buttons and padding */
+    overflow-y: auto !important;
+    padding: 16px 20px !important;
     -webkit-overflow-scrolling: touch;
   }
 }
@@ -6757,6 +6820,15 @@ input:checked + .slider:before {
   padding: 0 20px;
 }
 
+/* Hide the empty top-left corner in calendar header */
+.calendar-header::before {
+  content: '';
+  background: transparent !important;
+  border: none !important;
+  grid-column: 1;
+  grid-row: 1;
+}
+
 /* Special header layout for shift calendar */
 .shift-calendar .calendar-header {
   grid-template-columns: repeat(7, 1fr);
@@ -6829,7 +6901,8 @@ input:checked + .slider:before {
 
 
 .calendar-cell.other-month {
-  background: var(--bg-secondary);
+  /* In light mode: darker than normal cells, in dark mode: lighter than normal cells */
+  background: var(--bg-tertiary);
   border: 1px solid var(--border);
   /* Use special animation that ends with opacity 0.3 */
   animation: calendarCellFadeInOtherMonth 0.3s var(--ease-default) forwards;
