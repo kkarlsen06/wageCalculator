@@ -21,6 +21,12 @@
   force = true
 
 [[redirects]]
+  # Serve onboarding as an actual file (avoid SPA fallback)
+  from = "/kalkulator/onboarding.html"
+  to = "/kalkulator/onboarding.html"
+  status = 200
+
+[[redirects]]
   # Serve login page as-is (avoid SPA fallback)
   from = "/kalkulator/login.html"
   to = "/kalkulator/login.html"
