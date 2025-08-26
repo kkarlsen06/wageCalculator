@@ -562,25 +562,25 @@ app.post('/api/billing/start', async (req, res) => {
       return res.status(500).json({ error: 'Customer processing failed' });
     }
 
-    // Persist mapping in server-side storage (idempotent upsert)
     try {
-      const { error: dbError } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: uid,
-          stripe_customer_id: customerId
-        }, { 
-          onConflict: 'user_id',
-          ignoreDuplicates: false 
-        });
-        
-      if (dbError) {
-        console.warn('[billing] Database mapping upsert failed:', dbError);
-        // Continue anyway - metadata on Stripe objects is primary source of truth
+        const { data, error: dbError } = await supabase
+          .from('subscriptions')
+          .upsert(
+            { user_id: uid, stripe_customer_id: customerId },
+            { onConflict: 'user_id', ignoreDuplicates: false }
+          )
+          .select();
+        if (dbError) {
+          console.warn('[billing] Database mapping upsert failed:', {
+            message: dbError.message, details: dbError.details, hint: dbError.hint
+          });
+          // Continue anyway - Stripe metadata is source of truth
+        } else {
+          console.log('[billing] Mapping upsert ok:', data);
+        }
+      } catch (dbErr) {
+        console.warn('[billing] Database mapping error:', dbErr?.message || dbErr);
       }
-    } catch (dbErr) {
-      console.warn('[billing] Database mapping error:', dbErr);
-    }
 
     // Create Checkout Session with secure UID references
     const success_url = `${BASE_URL}/kalkulator/index.html?checkout=success`;
@@ -1528,37 +1528,65 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           customerId = session?.customer || null;
           subscriptionId = session?.subscription || null;
           console.log(`[webhook] checkout.session.completed - uid=${uid || 'null'} customer=${customerId || 'null'} subscription=${subscriptionId || 'null'}`);
-        } else if (type.startsWith('customer.')) {
-          const customer = verifiedEvent?.data?.object || {};
-          // Priority 1: metadata.supabase_uid from customer
-          uid = customer?.metadata?.supabase_uid || null;
-          customerId = customer?.id || null;
-          console.log(`[webhook] ${type} - uid=${uid || 'null'} customer=${customerId || 'null'}`);
         } else if (type.startsWith('customer.subscription.')) {
           const obj = verifiedEvent?.data?.object || {};
           subscriptionId = obj?.id || null;
-          // Extract customer ID correctly - handle both string and object cases
-          customerId = typeof obj.customer === 'string'
-            ? obj.customer
-            : obj.customer?.id || null;
           status = obj?.status || null;
           periodEndUnix = obj?.current_period_end || null;
           priceId = obj?.items?.data?.[0]?.price?.id || null;
 
-          // UID resolution with priority
+          // Try to get the real customer id from the subscription payload
+          // Stripe delivers either a string "cus_..." or an expanded object
+          customerId = (typeof obj.customer === 'string')
+            ? obj.customer
+            : (obj.customer?.id || null);
+
+          // If it still looks wrong or missing, re-fetch the subscription with expand=customer
+          if (!customerId || /^sub_/.test(customerId)) {
+            try {
+              const sub = await stripe.subscriptions.retrieve(subscriptionId, { expand: ['customer'] });
+              customerId = (typeof sub.customer === 'string') ? sub.customer : (sub.customer?.id || null);
+              // Also prefer metadata from the latest authoritative object
+              if (!priceId) {
+                try { priceId = sub?.items?.data?.[0]?.price?.id || null; } catch (_) {}
+              }
+              if (!status) status = sub?.status || status || null;
+              if (!periodEndUnix) periodEndUnix = sub?.current_period_end || periodEndUnix || null;
+            } catch (e) {
+              console.warn('[webhook] failed to retrieve subscription %s: %s', subscriptionId || 'null', e?.message || e);
+            }
+          }
+
+          // Resolve UID with clear priority:
+          // 1) subscription.metadata.supabase_uid
+          // 2) subscription.client_reference_id (rare on subs, but keep for safety)
+          // 3) customer.metadata.supabase_uid (or .user_id as fallback)
           uid = obj?.metadata?.supabase_uid || obj?.client_reference_id || null;
+
           if (!uid && customerId) {
             try {
               const cust = await stripe.customers.retrieve(customerId);
-              uid = cust?.metadata?.supabase_uid || null;
+              uid = cust?.metadata?.supabase_uid || cust?.metadata?.user_id || null;
             } catch (e) {
               console.warn('[webhook] failed to fetch customer %s: %s', customerId, e?.message || e);
             }
           }
+
+          console.log('[webhook] customer.subscription.event - uid=%s customer=%s subscription=%s status=%s',
+            uid || 'null',
+            customerId || 'null',
+            subscriptionId || 'null',
+            status || 'null'
+          );
         }
 
         // Log final resolution
-        console.log('[webhook] %s - uid=%s customer=%s', type, uid || 'null', customerId || 'null');
+        console.log('[webhook] %s - uid=%s customer=%s subscription=%s',
+            type,
+            uid || 'null',
+            customerId || 'null',
+            subscriptionId || 'null'
+          );
 
         // Refuse to process events without UID (security requirement)
         if (!uid) {
@@ -1570,7 +1598,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
         if (customerId && uid) {
           try {
             const { error: dbError } = await supabase
-              .from('user_settings')
+              .from('subscriptions')
               .upsert({
                 user_id: uid,
                 stripe_customer_id: customerId
@@ -1597,13 +1625,13 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
             if (status === 'active' || status === 'trialing') {
               // Create or update subscription record
               const { data, error } = await supabase
-                .from('user_settings')
+                .from('subscriptions')
                 .upsert({
                   user_id: uid,
                   stripe_customer_id: customerId,
                   stripe_subscription_id: subscriptionId,
                   status: status,
-                  current_period_end: periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null,
+                  current_period_end: periodEndUnix ? new Date(Number(periodEndUnix) * 1000).toISOString() : null,
                   ...(priceId && { price_id: priceId })
                 }, { 
                   onConflict: 'user_id',
@@ -1615,15 +1643,15 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
               } else {
                 console.log(`[webhook] Updated subscription: ${subscriptionId} -> ${status}`);
               }
-            } else if (status === 'canceled' || status === 'incomplete_expired') {
-              // Update subscription to canceled/expired
-              const { data, error } = await supabase
-                .from('user_settings')
-                .update({
-                  status: status,
-                  current_period_end: periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null
-                })
-                .eq('user_id', uid);
+              } else if (status === 'canceled' || status === 'incomplete_expired') {
+                  // Update subscription to canceled/expired
+                  const { data, error } = await supabase
+                    .from('subscriptions')
+                    .update({
+                      status,
+                      current_period_end: periodEndUnix ? new Date(Number(periodEndUnix) * 1000).toISOString() : null
+                    })
+                    .eq('user_id', uid);
                 
               if (error) {
                 console.error(`[webhook] Subscription status update failed: ${error.message}`);
