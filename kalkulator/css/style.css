@@ -4649,24 +4649,24 @@ input[type="time"].form-control[value=""]:focus {
 @media (max-width: 768px) {
   #addShiftModal .modal-content {
     height: auto !important;
-    width: 100vw !important;
-    margin: 0 !important;
+    width: min(95vw, 500px) !important;
+    margin: 0 auto !important;
     /* Constrain height to viewport - use dvh for better mobile support */
-    max-height: calc(100dvh - 20px) !important;
-    /* Rounded top corners for mobile sheet-style modal */
-    border-radius: 20px 20px 0 0 !important;
-    position: fixed !important;
+    max-height: calc(100dvh - 40px) !important;
+    /* Rounded corners for centered modal */
+    border-radius: 20px !important;
+    position: relative !important;
     top: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
     /* Ensure modal doesn't extend beyond viewport */
     overflow: hidden !important;
   }
   
   #addShiftModal .modal-body {
     /* Allow internal scrolling with proper viewport calculation */
-    max-height: calc(100dvh - 160px) !important; /* Account for buttons and padding */
+    max-height: calc(100dvh - 140px) !important; /* Account for buttons and padding */
     overflow-y: auto !important;
     padding: 16px 20px !important;
     -webkit-overflow-scrolling: touch;
