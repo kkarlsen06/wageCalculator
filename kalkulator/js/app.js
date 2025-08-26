@@ -833,9 +833,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = session.user;
 
     // Check if user has finished onboarding
-    if (!user.user_metadata?.finishedOnboarding) {
-      console.log('User has not finished onboarding, redirecting to onboarding...');
-      window.location.href = '/kalkulator/onboarding.html';
+    const isOnOnboarding = location.pathname.endsWith('/kalkulator/onboarding.html');
+    if (!user.user_metadata?.finishedOnboarding && !isOnOnboarding) {
+      console.log('→ redirect to onboarding (finishedOnboarding=false)');
+      location.replace('/kalkulator/onboarding.html?from=' + encodeURIComponent(location.pathname));
       return;
     }
   }
