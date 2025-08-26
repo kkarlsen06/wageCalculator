@@ -916,7 +916,8 @@
   </div>
 
   <script type="module">
-    import { supabase } from '../src/supabase-client.js';
+    // Use the globally available supabase client from bootstrap-supa.js
+    const supabase = window.supa;
     
     let currentStep = 1;
     const totalSteps = 7;
@@ -1243,12 +1244,20 @@
           custom_bonuses: onboardingData.custom_bonuses || { weekday: [], saturday: [], sunday: [] }
         };
 
-        // Remove null/undefined values to avoid database errors
+        // Remove null/undefined/empty string values to avoid database errors
         Object.keys(settingsData).forEach(key => {
-          if (settingsData[key] === null || settingsData[key] === undefined) {
+          if (settingsData[key] === null || settingsData[key] === undefined || settingsData[key] === '') {
             delete settingsData[key];
           }
         });
+        
+        // Ensure numeric fields are properly handled
+        if (settingsData.monthly_goal === undefined || settingsData.monthly_goal === '') {
+          settingsData.monthly_goal = null;
+        }
+        if (settingsData.payroll_day === undefined || settingsData.payroll_day === '') {
+          settingsData.payroll_day = null;
+        }
         // HOTFIX: never store base64 data URLs in DB (can blow index size in prod)
         if (typeof settingsData.profile_picture_url === 'string' &&
             settingsData.profile_picture_url.startsWith('data:')) {
@@ -1311,24 +1320,77 @@
       }
     };
 
-    // Profile picture handling
-    document.getElementById('profilePicture').addEventListener('change', function(e) {
+    // Profile picture handling with Supabase Storage upload
+    document.getElementById('profilePicture').addEventListener('change', async function(e) {
       const file = e.target.files[0];
       if (file) {
+        // Show preview instantly with FileReader
         const reader = new FileReader();
         reader.onload = function(e) {
-          setProfilePicture(e.target.result);
+          setProfilePreview(e.target.result);
         };
         reader.readAsDataURL(file);
+        
+        // Upload to Supabase Storage for actual storage
+        try {
+          const publicUrl = await uploadProfilePictureToStorage(file);
+          if (publicUrl) {
+            onboardingData.profile_picture_url = publicUrl;
+          }
+        } catch (error) {
+          console.error('Failed to upload profile picture:', error);
+          // Keep the preview but don't save the URL
+        }
       }
     });
 
-    function setProfilePicture(url) {
+    function setProfilePreview(url) {
       const preview = document.getElementById('profilePreview');
       const placeholder = document.getElementById('profilePlaceholder');
       
       preview.innerHTML = `<img src="${url}" alt="Profilbilde">`;
+    }
+    
+    function setProfilePicture(url) {
+      setProfilePreview(url);
       onboardingData.profile_picture_url = url;
+    }
+    
+    // Upload profile picture to Supabase Storage
+    async function uploadProfilePictureToStorage(file) {
+      try {
+        if (!user?.id) throw new Error('No user ID available');
+        
+        // Create a unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/onboarding_${Date.now()}.${fileExt}`;
+        
+        // Upload to the same bucket used by settings modal
+        const { error: uploadError } = await supabase.storage
+          .from('profile-pictures')
+          .upload(fileName, file, {
+            contentType: file.type,
+            upsert: true
+          });
+        
+        if (uploadError) {
+          throw uploadError;
+        }
+        
+        // Get the public URL
+        const { data: publicData } = supabase.storage
+          .from('profile-pictures')
+          .getPublicUrl(fileName);
+        
+        if (publicData?.publicUrl) {
+          return publicData.publicUrl;
+        } else {
+          throw new Error('Failed to get public URL');
+        }
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        throw error;
+      }
     }
 
     // Break settings
@@ -1381,6 +1443,12 @@
     // Bonus slots management for custom wages
     window.addBonusSlot = function(type) {
       const container = document.getElementById(`${type}BonusSlots`);
+      
+      // Check if we already have 10 slots for this type - silently return if so
+      const existingSlots = container.querySelectorAll('.bonus-slot');
+      if (existingSlots.length >= 10) {
+        return;
+      }
       
       // Set appropriate defaults based on type
       let defaultFrom, defaultTo, defaultAmount, placeholder;
