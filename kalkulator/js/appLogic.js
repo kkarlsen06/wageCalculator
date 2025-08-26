@@ -481,8 +481,6 @@ export const app = {
         // Setup monthly goal input after everything is loaded
         setupMonthlyGoalInput();
 
-        // Check if we should show the recurring feature introduction
-        this.checkAndShowRecurringIntro();
 
         // Profile pictures removed: no listeners to initialize
 
@@ -2026,7 +2024,6 @@ export const app = {
                 this.fullMinuteRange = settings.full_minute_range || false;
                             this.directTimeInput = settings.direct_time_input || false;
             this.monthlyGoal = settings.monthly_goal || 20000;
-                            this.hasSeenRecurringIntro = settings.has_seen_recurring_intro || false;
                 this.currencyFormat = settings.currency_format || false;
 
                 this.defaultShiftsView = settings.default_shifts_view || 'list';
@@ -2077,7 +2074,6 @@ export const app = {
         this.fullMinuteRange = false; // Default to 15-minute intervals
         this.directTimeInput = false; // Default to dropdown time selection
         this.monthlyGoal = 20000; // Default monthly goal
-        this.hasSeenRecurringIntro = false; // Track if user has seen recurring feature intro
         this.currencyFormat = false; // Default to "kr" instead of "NOK"
 
         this.defaultShiftsView = 'list'; // Default to list view for shifts
@@ -2277,7 +2273,6 @@ export const app = {
                 if ('full_minute_range' in existingSettings) settingsData.full_minute_range = this.fullMinuteRange;
                 if ('direct_time_input' in existingSettings) settingsData.direct_time_input = this.directTimeInput;
                 if ('monthly_goal' in existingSettings) settingsData.monthly_goal = this.monthlyGoal;
-                if ('has_seen_recurring_intro' in existingSettings) settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 if ('currency_format' in existingSettings) settingsData.currency_format = this.currencyFormat;
 
                 if ('default_shifts_view' in existingSettings) settingsData.default_shifts_view = this.defaultShiftsView;
@@ -2324,7 +2319,6 @@ export const app = {
                 settingsData.full_minute_range = this.fullMinuteRange;
                 settingsData.direct_time_input = this.directTimeInput;
                 settingsData.monthly_goal = this.monthlyGoal;
-                settingsData.has_seen_recurring_intro = this.hasSeenRecurringIntro;
                 settingsData.currency_format = this.currencyFormat;
 
                 settingsData.default_shifts_view = this.defaultShiftsView;
@@ -2380,7 +2374,6 @@ export const app = {
                 this.fullMinuteRange = data.fullMinuteRange || false;
                 this.directTimeInput = data.directTimeInput || false;
                 this.monthlyGoal = data.monthlyGoal || 20000;
-                this.hasSeenRecurringIntro = data.hasSeenRecurringIntro || false;
                 this.currencyFormat = data.currencyFormat || false;
 
                 this.defaultShiftsView = data.defaultShiftsView || 'list';
@@ -3518,7 +3511,6 @@ export const app = {
 
                 fullMinuteRange: this.fullMinuteRange,
                 directTimeInput: this.directTimeInput,
-                hasSeenRecurringIntro: this.hasSeenRecurringIntro,
                 currencyFormat: this.currencyFormat,
 
                 defaultShiftsView: this.defaultShiftsView,
@@ -9625,107 +9617,6 @@ export const app = {
         }
     },
 
-    // Feature introduction for recurring shifts
-    showRecurringIntroduction() {
-        // Close any open modals first
-        this.closeSettings(false); // Don't save settings when closing as cleanup
-        this.closeAddShiftModal();
-        this.closeEditShift();
-
-        // Create modal HTML
-        const modalHtml = `
-            <div id="recurringIntroModal" class="modal" style="display: flex;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2 class="modal-title">✨ Ny funksjon: Gjentakende vakter</h2>
-                    </div>
-                    <div class="modal-body" style="padding: 20px;">
-                        <div style="margin-bottom: 16px;">
-                            <p style="margin-bottom: 12px; font-size: 15px;">Vi har lagt til en ny måte å legge inn faste vakter på!</p>
-
-                            <div style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                                <h4 style="margin: 0 0 8px 0; color: var(--accent); font-size: 14px;">Slik fungerer det:</h4>
-                                <ul style="margin: 0; padding-left: 16px; line-height: 1.4; font-size: 14px; text-align: left;">
-                                    <li>Trykk på "Legg til vakt"-knappen</li>
-                                    <li>Velg "Gjentakende" i stedet for "Enkel"</li>
-                                    <li>Bestem hvor ofte vakten gjentas</li>
-                                    <li>Systemet legger til alle vaktene automatisk</li>
-                                </ul>
-                            </div>
-
-                            <div style="background: var(--accent-light); padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);">
-                                <p style="margin: 0; font-weight: 500; color: var(--text-primary); line-height: 1.4; font-size: 14px;">
-                                    💡 <strong>Tips:</strong> Har du en fast vakt som gjentar seg?
-                                    Bruk "Gjentakende" funksjonen så slipper du å legge inn den samme vakten gang på gang!
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="form-actions" style="margin-top: 16px;">
-                            <button class="btn btn-primary" onclick="app.dismissRecurringIntro()" style="width: 100%; max-width: 200px; margin: 0 auto; display: block;">
-                                Forstått, takk!
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Add to DOM
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-        // Add escape key listener
-        this.recurringIntroKeyHandler = (e) => {
-            if (e.key === 'Escape') {
-                this.dismissRecurringIntro();
-            }
-        };
-        document.addEventListener('keydown', this.recurringIntroKeyHandler);
-    },
-
-    async dismissRecurringIntro() {
-        // Only mark as seen if this is the first time (automatic show)
-        // If user manually opens it, don't mark as seen so they can see it again if needed
-        if (!this.hasSeenRecurringIntro) {
-            this.hasSeenRecurringIntro = true;
-
-            // Save to both localStorage and Supabase
-            this.saveToLocalStorage();
-            await this.saveSettingsToSupabase();
-        }
-
-        // Remove modal
-        const modal = document.getElementById('recurringIntroModal');
-        if (modal) {
-            modal.remove();
-        }
-
-        // Remove event listener
-        if (this.recurringIntroKeyHandler) {
-            document.removeEventListener('keydown', this.recurringIntroKeyHandler);
-            this.recurringIntroKeyHandler = null;
-        }
-    },
-
-    // Check if we should show the recurring introduction
-    checkAndShowRecurringIntro() {
-        // Show if user hasn't seen it and either:
-        // 1. Has at least one existing shift (active user who would benefit), or
-        // 2. Has no shifts but has been using the app (might be new user learning)
-        const shouldShow = !this.hasSeenRecurringIntro && (
-            this.userShifts.length > 0 ||
-            // Show to new users after a longer delay to let them explore first
-            this.userShifts.length === 0
-        );
-
-        if (shouldShow) {
-            // Longer delay for new users, shorter for users with existing shifts
-            const delay = this.userShifts.length > 0 ? 1500 : 5000;
-            setTimeout(() => {
-                this.showRecurringIntroduction();
-            }, delay);
-        }
-    },
 
     // Tab bar functionality
     setupTabBarEventListeners() {
