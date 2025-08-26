@@ -137,6 +137,19 @@ app.get('/health/deep', async (_req, res) => {
     res.status(503).json({ ok: false, error: e.message });
   }
 });
+
+// ---------- API landing (root) ----------
+// Always return JSON at '/'; do not redirect to frontend
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'kkarlsen wage calculator API',
+    version: '1.0.0',
+    main: 'https://www.kkarlsen.dev/',
+    lastUpdated: new Date().toISOString()
+  });
+});
+
 // Note: express.static is registered after API routes to avoid intercepting API paths
 // ---------- third-party clients ----------
 const openai = (() => {
@@ -229,7 +242,6 @@ try {
       return (supabaseUrl || '').toString();
     }
   })();
-  console.log(`[boot] supabase admin url=${host} key=${mask(supabaseSecretKey)}`);
 } catch (_) {}
 // ---------- simple metrics & audit (in-memory fallback) ----------
 const AGENT_BLOCK_READS = process.env.AGENT_BLOCK_READS === 'true';
@@ -4235,7 +4247,7 @@ app.delete('/shifts/outside-month/:month', authenticateUser, async (req, res) =>
   try {
     const userId = req.user_id;
     const monthParam = req.params.month; // Expected format: YYYY-MM
-    
+
     // Validate month format
     if (!/^\d{4}-\d{2}$/.test(monthParam)) {
       return res.status(400).json({ error: 'Invalid month format. Expected YYYY-MM' });
@@ -4253,8 +4265,8 @@ app.delete('/shifts/outside-month/:month', authenticateUser, async (req, res) =>
     }
 
     if (!allShifts || allShifts.length === 0) {
-      return res.status(200).json({ 
-        success: true, 
+      return res.status(200).json({
+        success: true,
         deletedCount: 0,
         message: 'No shifts found to delete'
       });
@@ -4267,8 +4279,8 @@ app.delete('/shifts/outside-month/:month', authenticateUser, async (req, res) =>
     });
 
     if (shiftsToDelete.length === 0) {
-      return res.status(200).json({ 
-        success: true, 
+      return res.status(200).json({
+        success: true,
         deletedCount: 0,
         message: `No shifts outside ${monthParam} found`
       });
@@ -4288,8 +4300,8 @@ app.delete('/shifts/outside-month/:month', authenticateUser, async (req, res) =>
       return res.status(500).json({ error: 'Failed to delete shifts' });
     }
 
-    return res.status(200).json({ 
-      success: true, 
+    return res.status(200).json({
+      success: true,
       deletedCount: data ? data.length : 0,
       message: `Deleted ${data ? data.length : 0} shifts outside ${monthParam}`
     });
@@ -4298,11 +4310,6 @@ app.delete('/shifts/outside-month/:month', authenticateUser, async (req, res) =>
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// ---------- employee-shifts CRUD endpoints ----------
-
-// ---- DEBUG: announce registration of /employee-shifts routes ----
-console.log('[BOOT] Registering /employee-shifts routes...');
 
 /**
  * GET /employee-shifts
@@ -4710,7 +4717,7 @@ async function handleTool(call, user_id) {
           inserted: [],
           updated: [],
           deleted: [],
-          shift_summary: paywallValidation.error === 'premium_feature_required' 
+          shift_summary: paywallValidation.error === 'premium_feature_required'
             ? 'Du har funnet en premium-funksjon. Oppgrader til et abonnement eller slett alle vakter i de andre månedene.'
             : 'Kunne ikke opprette vakt.',
           requiresUpgrade: paywallValidation.requiresUpgrade,

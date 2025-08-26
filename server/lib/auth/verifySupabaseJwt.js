@@ -10,7 +10,7 @@ const base = projectUrl.replace(/\/+$/, "");
 // Supabase issuer claim
 const issuer = `${base}/auth/v1`;
 // Supabase JWKS endpoint
-const jwks = createRemoteJWKSet(new URL(`${issuer}/keys`));
+const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
 
 export async function verifySupabaseJWT(token) {
   const { payload, protectedHeader } = await jwtVerify(token, jwks, {
