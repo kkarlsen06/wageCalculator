@@ -8,7 +8,7 @@ if (!projectUrl) {
 // Strip trailing slashes
 const base = projectUrl.replace(/\/+$/, "");
 // Supabase issuer claim
-const issuer = `${base}/auth/v1`;
+const issuer = `iuwjdacxbirhmsglcbxp.supabase.co/auth/v1`;
 // Supabase JWKS endpoint
 const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
 
