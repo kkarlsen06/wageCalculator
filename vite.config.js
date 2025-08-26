@@ -22,8 +22,9 @@ export default defineConfig({
       input: {
         main: resolve('index.html'),
         kalkulator: resolve('kalkulator/index.html'),
-        login: resolve('kalkulator/login.html')
-      },
+        login: resolve('kalkulator/login.html'),
+        onboarding: resolve('kalkulator/onboarding.html')
+      },  
       output: {
         entryFileNames: '[name]-[hash].js',
         chunkFileNames: 'chunks/[name]-[hash].js',
