@@ -2,7 +2,7 @@
 // Note: Vite builds will override via `src/runtime-config.js`
 const CONFIG = {
     supabase: {
-        url: "https://your-project-id.supabase.co",
+        url: "https://id.kkarlsen.dev",
         anonKey: "sb_publishable_z9EoG7GZZMS3RL4hmilh5A_xI0va5Nb"
     },
     apiBase: '/api',

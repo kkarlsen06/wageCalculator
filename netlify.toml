@@ -8,7 +8,7 @@
   # Vite envs used by src/runtime-config.js
   # Set these in Netlify UI or via netlify.toml for non-sensitive client config
   # DO NOT add server-only secrets here
-  VITE_SUPABASE_URL = "https://iuwjdacxbirhmsglcbxp.supabase.co"
+  VITE_SUPABASE_URL = "https://id.kkarlsen.dev"
   VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_z9EoG7GZZMS3RL4hmilh5A_xI0va5Nb"
   # Optional: override API base (defaults to "/api")
   # VITE_API_BASE = "/api"
@@ -57,5 +57,5 @@
     X-Content-Type-Options = "nosniff"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://iuwjdacxbirhmsglcbxp.supabase.co; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; connect-src 'self' https://iuwjdacxbirhmsglcbxp.supabase.co wss://iuwjdacxbirhmsglcbxp.supabase.co;"
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://id.kkarlsen.dev; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; connect-src 'self' https://id.kkarlsen.dev wss://id.kkarlsen.dev;"
     X-Frame-Options = "DENY"

@@ -528,7 +528,8 @@ function isInRecoveryMode() {
   const hasRecoveryType = hashFragment.includes('type=recovery') || window.location.search.includes('type=recovery');
   
   // Check if we came from Supabase verify URL (even if tokens are not visible anymore)
-  const cameFromSupabaseVerify = document.referrer.includes('supabase.co/auth/v1/verify') || 
+  const supabaseHost = (() => { try { return new URL(window.CONFIG?.supabase?.url || import.meta.env.VITE_SUPABASE_URL).host; } catch (_) { return 'id.kkarlsen.dev'; } })();
+  const cameFromSupabaseVerify = (document.referrer.includes(`${supabaseHost}/auth/v1/verify`)) ||
                                 sessionStorage.getItem('supabase_recovery_flow') === 'true';
   
   // Parse hash fragment as URL parameters if it contains access_token

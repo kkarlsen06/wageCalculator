@@ -9937,6 +9937,9 @@ export const app = {
         // Restore user's own shifts (not filtered by employee)
         this.shifts = [...this.userShifts];
 
+        // Ensure month navigation remains visible in stats view
+        this.ensureMonthPickerVisibility();
+
         // Use existing stats view functionality
         this.dashboardView = 'stats';
         this.applyDashboardView();
