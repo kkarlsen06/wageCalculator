@@ -3435,6 +3435,34 @@ export const app = {
         }
     },
 
+    // Restart onboarding functionality
+    async restartOnboarding() {
+        try {
+            // Update user metadata to set finishedOnboarding to false
+            const { error } = await window.supa.auth.updateUser({
+                data: {
+                    finishedOnboarding: false
+                }
+            });
+
+            if (error) {
+                console.error('Error resetting onboarding flag:', error);
+                alert('Det oppstod en feil ved tilbakestilling av onboarding. Prøv igjen.');
+                return;
+            }
+
+            // Close profile modal
+            this.closeProfile();
+
+            // Redirect to onboarding page
+            window.location.href = '/kalkulator/onboarding.html';
+
+        } catch (error) {
+            console.error('Error restarting onboarding:', error);
+            alert('Det oppstod en feil ved tilbakestilling av onboarding. Prøv igjen.');
+        }
+    },
+
     // Subscription modal
     async openSubscription() {
         // Close dropdown first

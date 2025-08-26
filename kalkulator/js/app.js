@@ -828,6 +828,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // Check onboarding status after successful authentication
+  if (session?.user) {
+    const user = session.user;
+    
+    // Check if user has finished onboarding
+    if (!user.user_metadata?.finishedOnboarding) {
+      console.log('User has not finished onboarding, redirecting to onboarding...');
+      window.location.href = '/kalkulator/onboarding.html';
+      return;
+    }
+  }
+
   // Expose logout function
   window.logout = async () => {
     // Clear chat log before signing out
