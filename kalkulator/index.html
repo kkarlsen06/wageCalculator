@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/themes.css?v=1">
   <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/index.css?v=1">
   <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
   <link rel="icon" href="../src/assets/favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../src/assets/favicon.ico" type="image/x-icon">
@@ -34,7 +35,7 @@
     <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
 
     <!-- Hoved-appen skjules til bruker er innlogget -->
-    <div id="app" style="display:none">
+    <div id="app" class="hidden">
       <!-- Snap container for full-screen sections -->
       <div class="snap-container">
 
@@ -51,9 +52,9 @@
                           </div>
                           <div class="header-right">
                                 <div class="user-profile-container">
-                                    <button class="user-profile-btn" onclick="app.toggleProfileDropdown()" aria-label="Åpne brukerprofil">
+                                    <button class="user-profile-btn" id="userProfileBtn" aria-label="Åpne brukerprofil">
                                         <span class="user-nickname" id="userNickname">Bruker</span>
-                                         <img id="userAvatarImg" class="topbar-avatar" alt="Profilbilde" style="display:none;" />
+                                         <img id="userAvatarImg" class="topbar-avatar hidden" alt="Profilbilde" />
                                         <svg class="icon-sm profile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                             <circle cx="12" cy="7" r="4"></circle>
@@ -64,17 +65,17 @@
                                          <div class="skeleton-avatar"></div>
                                          <div class="skeleton-line w-40"></div>
                                      </div>
-                                    <div class="profile-dropdown" id="profileDropdown" style="display: none;">
-                                        <div class="dropdown-item" onclick="app.openProfile()">
+                                    <div class="profile-dropdown hidden" id="profileDropdown">
+                                        <div class="dropdown-item" id="openProfileItem">
                                             <span>Profil</span>
                                         </div>
-                                        <div class="dropdown-item" onclick="app.openSettings()">
+                                        <div class="dropdown-item" id="openSettingsItem">
                                             <span>Innstillinger</span>
                                         </div>
-                                        <div class="dropdown-item" onclick="app.openSubscription()">
+                                        <div class="dropdown-item" id="openSubscriptionItem">
                                             <span>Abonnement</span>
                                         </div>
-                                        <div class="dropdown-item logout-item" onclick="app.handleLogout()">
+                                        <div class="dropdown-item logout-item" id="logoutItem">
                                             <span>Logg ut</span>
                                         </div>
                                     </div>
@@ -115,7 +116,7 @@
                               </div>
                               <span class="tab-text">LønnAI</span>
                           </button>
-                          <button class="tab-btn" id="tabAnsatte" data-view="employees" aria-label="Bytt til ansattvisning" style="display: none;">
+                          <button class="tab-btn hidden" id="tabAnsatte" data-view="employees" aria-label="Bytt til ansattvisning">
                               <div class="tab-icon-badge">
                                   <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -158,7 +159,7 @@
                                 <div class="skeleton-line w-40"></div>
                               </div>
                           </div>
-                          <div class="next-shift-empty" id="nextShiftEmpty" style="display: none;">
+                          <div class="next-shift-empty hidden" id="nextShiftEmpty">
                           </div>
                       </div>
 
@@ -170,12 +171,12 @@
                                 <div class="skeleton-line w-30"></div>
                               </div>
                           </div>
-                          <div class="next-payroll-empty" id="nextPayrollEmpty" style="display: none;">
+                          <div class="next-payroll-empty hidden" id="nextPayrollEmpty">
                           </div>
                       </div>
 
                       <!-- Chat Bot Section - Now managed by tab bar -->
-                      <section id="chatbox" class="chatbox-container" style="display: none;">
+                      <section id="chatbox" class="chatbox-container hidden">
                           <div class="chatbox-pill" id="chatboxPill">
                               <!-- Always visible pill header -->
                               <div class="chatbox-pill-content">
@@ -188,7 +189,7 @@
                                   <div class="chatbox-pill-text-container">
                                       <span class="chatbox-pill-text" id="chatboxPillPlaceholder">Trenger du hjelp, Bruker?...</span>
                                   </div>
-                                  <button class="chatbox-close" id="chatboxClose" aria-label="Lukk chat" style="display: none;">
+                                  <button class="chatbox-close hidden" id="chatboxClose" aria-label="Lukk chat">
                                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                           <line x1="18" y1="6" x2="6" y2="18"></line>
                                           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -197,7 +198,7 @@
                               </div>
 
                               <!-- Expanded content (shown after first message) -->
-                              <div class="chatbox-expanded-content" id="chatboxExpandedContent" style="display: none;">
+                              <div class="chatbox-expanded-content hidden" id="chatboxExpandedContent">
                                   <div class="chatbox-log" id="chatboxLog">
                                       <!-- Chat messages will be populated here -->
                                   </div>
@@ -218,14 +219,14 @@
                       <!-- This navigation stays in dashboard section across all screen sizes -->
                       <div class="month-navigation-container dashboard-month-nav">
                           <div class="month-navigation">
-                              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+                              <button class="month-nav-btn" id="monthPrevTop" aria-label="Forrige måned">
                                   <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                       <polyline points="15 18 9 12 15 6"></polyline>
                                   </svg>
                               </button>
                               <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
                               <!-- Month picker skeleton removed - will be hidden during loading -->
-                              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+                              <button class="month-nav-btn" id="monthNextTop" aria-label="Neste måned">
                                   <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                       <polyline points="9 6 15 12 9 18"></polyline>
                                   </svg>
@@ -292,7 +293,7 @@
 
                           <!-- Progress bar positioned below both cards -->
                           <div class="chart-progress-bar" title="Månedlig mål fremdrift">
-                              <div class="chart-progress-fill loading" style="width: 0%"></div>
+                              <div class="chart-progress-fill loading"></div>
                               <span class="chart-progress-label">0 % av 0 kr</span>
                           </div>
                       </div>
@@ -307,14 +308,14 @@
                   <!-- This navigation is shown on screens < 1024px and hidden on larger screens -->
                   <div class="month-navigation-container">
                       <div class="month-navigation">
-                          <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+                          <button class="month-nav-btn" id="monthPrevBottom" aria-label="Forrige måned">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                   <polyline points="15 18 9 12 15 6"></polyline>
                               </svg>
                           </button>
                           <span class="month-display" id="currentMonth">Mai 2025</span>
                           <!-- Month picker skeleton removed - will be hidden during loading -->
-                          <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+                          <button class="month-nav-btn" id="monthNextBottom" aria-label="Neste måned">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                   <polyline points="9 6 15 12 9 18"></polyline>
                               </svg>
@@ -323,7 +324,7 @@
                   </div>
 
                   <!-- Employee Filter Bar -->
-                  <div class="employee-filter-bar" id="employeeFilterBar" style="display: none;">
+                  <div class="employee-filter-bar hidden" id="employeeFilterBar">
                       <div class="filter-scroll-container">
                           <button class="filter-chip active" data-employee-id="" aria-label="Vis alle vakter">
                               <span>Alle</span>
@@ -345,13 +346,13 @@
                           <p>Ingen vakter registrert ennå</p>
                       </div>
                   </div>
-                  <div id="shiftCalendar" class="shift-calendar" style="display:none;"></div>
+                  <div id="shiftCalendar" class="shift-calendar hidden"></div>
 
                   <!-- Calendar display toggle -->
-                  <div class="calendar-display-toggle" style="display:none;">
+                  <div class="calendar-display-toggle hidden">
                       <div class="calendar-toggle-nav">
-                          <button class="calendar-toggle-btn active" onclick="app.switchCalendarDisplay('hours')">Varighet</button>
-                          <button class="calendar-toggle-btn" onclick="app.switchCalendarDisplay('money')">Lønn</button>
+                          <button class="calendar-toggle-btn active" data-action="cal-display" data-value="hours">Varighet</button>
+                          <button class="calendar-toggle-btn" data-action="cal-display" data-value="money">Lønn</button>
                       </div>
                   </div>
               </div>
@@ -366,10 +367,10 @@
       <!-- Floating action bar for shift controls - moved outside snap-container for true fixed positioning -->
       <div class="floating-action-bar">
           <div class="tab-nav view-toggle">
-              <button class="tab-btn active" onclick="app.switchShiftView('list')">Liste</button>
-              <button class="tab-btn" onclick="app.switchShiftView('calendar')">Kalender</button>
+              <button class="tab-btn active" data-action="shift-view" data-value="list">Liste</button>
+              <button class="tab-btn" data-action="shift-view" data-value="calendar">Kalender</button>
           </div>
-          <button class="add-btn" onclick="app.openAddShiftModal()">
+          <button class="add-btn" id="openAddShiftBtn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="8" x2="12" y2="16"></line>
@@ -383,10 +384,10 @@
       <div id="settingsModal" class="modal">
           <div class="modal-content">
                 <div class="tab-nav">
-                    <button class="tab-btn active" data-tab="wage" onclick="app.switchSettingsTabSync('wage')">Lønn</button>
-                    <button class="tab-btn" data-tab="interface" onclick="app.switchSettingsTabSync('interface')">UI</button>
-                    <button class="tab-btn" data-tab="org" onclick="app.switchSettingsTabSync('org')">Bedrift</button>
-                    <button class="tab-btn" data-tab="data" onclick="app.switchSettingsTabSync('data')">Data</button>
+                    <button class="tab-btn active" data-tab="wage" data-action="settings-tab">Lønn</button>
+                    <button class="tab-btn" data-tab="interface" data-action="settings-tab">UI</button>
+                    <button class="tab-btn" data-tab="org" data-action="settings-tab">Bedrift</button>
+                    <button class="tab-btn" data-tab="data" data-action="settings-tab">Data</button>
                 </div>
 
               <div class="tab-content-wrapper">
@@ -394,12 +395,12 @@
                   <div class="form-group">
                       <div class="flex justify-between align-center mb-10">
                           <label>Lønnstype</label>
-                          <span id="presetBadge" class="preset-badge" style="display: none;">Virke-tariff</span>
+                          <span id="presetBadge" class="preset-badge hidden">Virke-tariff</span>
                       </div>
                       <div class="switch-group">
                           <span>Bruk forhåndsinnstilt tariff</span>
                           <label class="switch">
-                              <input type="checkbox" id="usePresetToggle" checked onchange="app.togglePreset()">
+                              <input type="checkbox" id="usePresetToggle" checked>
                               <span class="slider"></span>
                           </label>
                       </div>
@@ -408,7 +409,7 @@
                   <div id="presetWageSection" class="settings-subsection">
                       <div class="form-group settings-level-2">
                           <label>Lønnstrinn (Virke 2025)</label>
-                          <select class="form-control" id="wageSelect" onchange="app.updateWageLevel(this.value)">
+                          <select class="form-control" id="wageSelect">
                               <option value="-1">Unge arbeidstakere under 16 år (129,91 kr/t)</option>
                               <option value="-2">Unge arbeidstakere under 18 år (132,90 kr/t)</option>
                               <option value="1" selected>Trinn 1 (184,54 kr/t)</option>
@@ -421,10 +422,10 @@
                       </div>
                   </div>
 
-                  <div id="customWageSection" class="settings-subsection" style="display: none;">
+                  <div id="customWageSection" class="settings-subsection hidden">
                       <div class="form-group settings-level-2">
                           <label>Timelønn (kr)</label>
-                          <input type="number" class="form-control" id="customWageInput" placeholder="200" step="0.01" onchange="app.updateCustomWage(this.value)">
+                          <input type="number" class="form-control" id="customWageInput" placeholder="200" step="0.01">
                       </div>
 
                       <!-- Collapsible bonus settings -->
@@ -436,13 +437,13 @@
                               <span>Tillegg og bonuser</span>
                           </button>
                           
-                          <div class="settings-collapsible-content" id="bonusWageSettings" style="display: none;">
+                          <div class="settings-collapsible-content hidden" id="bonusWageSettings">
                               <div class="form-group settings-level-3">
                                   <label>Ukedag-tillegg (man-fre)</label>
                                   <div class="bonus-slots" id="weekdayBonusSlots">
                                       <!-- Dynamisk innhold -->
                                   </div>
-                                  <button class="btn btn-secondary" onclick="app.addBonusSlot('weekday')">+ Legg til tidsperiode</button>
+                                  <button class="btn btn-secondary" data-action="add-bonus" data-type="weekday">+ Legg til tidsperiode</button>
                               </div>
 
                               <div class="form-group settings-level-3">
@@ -450,7 +451,7 @@
                                   <div class="bonus-slots" id="saturdayBonusSlots">
                                       <!-- Dynamisk innhold -->
                                   </div>
-                                  <button class="btn btn-secondary" onclick="app.addBonusSlot('saturday')">+ Legg til tidsperiode</button>
+                                  <button class="btn btn-secondary" data-action="add-bonus" data-type="saturday">+ Legg til tidsperiode</button>
                               </div>
 
                               <div class="form-group settings-level-3">
@@ -458,7 +459,7 @@
                                   <div class="bonus-slots" id="sundayBonusSlots">
                                       <!-- Dynamisk innhold -->
                                   </div>
-                                  <button class="btn btn-secondary" onclick="app.addBonusSlot('sunday')">+ Legg til tidsperiode</button>
+                                  <button class="btn btn-secondary" data-action="add-bonus" data-type="sunday">+ Legg til tidsperiode</button>
                               </div>
                           </div>
                       </div>
@@ -503,20 +504,20 @@
                                   <span>Avanserte innstillinger</span>
                               </button>
                               
-                              <div class="settings-collapsible-content" id="advancedBreakSettings" style="display: none;">
+                              <div class="settings-collapsible-content hidden" id="advancedBreakSettings">
                                   <!-- Method Explanation -->
                                   <div class="form-group settings-level-3" id="methodExplanation">
                                     <div class="method-info">
                                       <div id="proportionalInfo" class="method-description">
                                         <strong>Proporsjonal trekk:</strong> Trekker pausetid proporsjonalt fra alle lønnsperioder. Juridisk korrekt metode.
                                       </div>
-                                      <div id="baseOnlyInfo" class="method-description" style="display: none;">
+                                      <div id="baseOnlyInfo" class="method-description hidden">
                                         <strong>Kun grunnlønn:</strong> Trekker pausetid kun fra grunnlønn-timer, bevarer tillegg.
                                       </div>
-                                      <div id="endOfShiftInfo" class="method-description" style="display: none;">
+                                      <div id="endOfShiftInfo" class="method-description hidden">
                                         <strong>⚠️ Slutt av vakt:</strong> Trekker fra slutten av vakten. Kan være juridisk problematisk.
                                       </div>
-                                      <div id="noneInfo" class="method-description" style="display: none;">
+                                      <div id="noneInfo" class="method-description hidden">
                                         <strong>Ingen trekk:</strong> Alle timer betales, inkludert pausetid.
                                       </div>
                                     </div>
@@ -541,8 +542,8 @@
                   <div class="form-group form-group-with-hint">
                       <label for="monthlyGoalInput">Månedlig inntektsmål</label>
                       <div class="switch-group">
-                          <input type="number" id="monthlyGoalInput" class="form-control" min="0" step="100" style="max-width:140px;display:inline-block;" placeholder="20000">
-                          <button class="btn btn-secondary" id="saveMonthlyGoalBtn" style="margin-left:8px;">Lagre</button>
+                          <input type="number" id="monthlyGoalInput" class="form-control max-w-140 inline-block" min="0" step="100" placeholder="20000">
+                          <button class="btn btn-secondary ml-8" id="saveMonthlyGoalBtn">Lagre</button>
                       </div>
                       <small class="form-hint">Brukes til fremdriftslinjen i dashbordet og måloppfølging</small>
                   </div>
@@ -555,17 +556,17 @@
                           <small class="form-hint">Viser netto lønn etter skattetrekk i totalen</small>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="taxDeductionToggle" onchange="app.toggleTaxDeduction()">
+                            <input type="checkbox" id="taxDeductionToggle">
                             <span class="slider"></span>
                         </label>
                       </div>
                       
                       <!-- Tax percentage sub-setting -->
-                      <div class="form-group settings-level-2" id="taxPercentageSection" style="display: none;">
+                      <div class="form-group settings-level-2 hidden" id="taxPercentageSection">
                           <label for="taxPercentageInput">Skatteprosent (%)</label>
                           <div class="switch-group">
-                              <input type="number" id="taxPercentageInput" class="form-control" min="0" max="100" step="0.1" style="max-width:140px;display:inline-block;" placeholder="25.0" onchange="app.updateTaxPercentage(this.value)">
-                              <span class="text-secondary" style="margin-left:8px;">%</span>
+                              <input type="number" id="taxPercentageInput" class="form-control max-w-140 inline-block" min="0" max="100" step="0.1" placeholder="25.0">
+                              <span class="text-secondary ml-8">%</span>
                           </div>
                           <small class="form-hint">Skriv inn skatteprosenten som skal trekkes fra bruttolønnen</small>
                       </div>
@@ -574,7 +575,7 @@
                   <div class="form-group form-group-with-hint">
                       <label for="payrollDayInput">Lønningsdag</label>
                       <div class="switch-group">
-                          <input type="number" id="payrollDayInput" class="form-control" min="1" max="31" step="1" style="max-width:140px;display:inline-block;" placeholder="15" onchange="app.updatePayrollDay(this.value)">
+                          <input type="number" id="payrollDayInput" class="form-control max-w-140 inline-block" min="1" max="31" step="1" placeholder="15">
                       </div>
                       <small class="form-hint">Velg hvilken dag i måneden du får utbetalt lønn (1-31)</small>
                   </div>
@@ -599,15 +600,15 @@
                       </div>
 
                       <!-- Data Management -->
-                      <div class="form-group form-group-with-hint" style="margin-top: 32px;">
+                      <div class="form-group form-group-with-hint mt-32">
                           <label>Datahåndtering</label>
                           <small class="form-hint">Eksporter og administrer organisasjonsdata</small>
                       </div>
                       
                       <div class="form-group settings-level-2">
                           <label>Lønnsrapporter</label>
-                          <div style="margin-top: 10px;">
-                              <button type="button" class="btn btn-primary" onclick="app.openCsvExportModal()">
+                          <div class="mt-10">
+                              <button type="button" class="btn btn-primary" id="openCsvExportBtn">
                                   <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                       <polyline points="7 10 12 15 17 10"></polyline>
@@ -675,7 +676,7 @@
                   </div>
 
                   <!-- Input & Formatting Settings -->
-                  <div class="form-group form-group-with-hint" style="margin-top: 32px;">
+                  <div class="form-group form-group-with-hint mt-32">
                       <label>Inndata og formatering</label>
                       <small class="form-hint">Tilpass hvordan du registrerer data og hvordan den vises</small>
                   </div>
@@ -703,7 +704,7 @@
                                   <span>Tidsformat-detaljer</span>
                               </button>
                               
-                              <div class="settings-collapsible-content" id="timeFormatSettings" style="display: none;">
+                              <div class="settings-collapsible-content hidden" id="timeFormatSettings">
                                   <div class="form-group settings-level-4">
                                       <label>Minuttformat</label>
                                       <div class="switch-group">
@@ -769,11 +770,11 @@
                           </div>
                       </div>
 
-                      <div id="customPeriodSection" class="form-group settings-level-3" style="display: none;">
+                      <div id="customPeriodSection" class="form-group settings-level-3 hidden">
                           <label class="custom-period-header">Egendefinert tidsperiode</label>
                           <small class="form-hint">Velg start- og sluttdato for eksporten</small>
                           <div class="form-row">
-                              <input type="date" id="exportStartDate" class="form-control" style="margin-right: 8px;" placeholder="Fra dato">
+                              <input type="date" id="exportStartDate" class="form-control mr-8" placeholder="Fra dato">
                               <input type="date" id="exportEndDate" class="form-control" placeholder="Til dato">
                           </div>
                       </div>
@@ -781,7 +782,7 @@
                       <div class="form-group">
                           <label>Eksportformat</label>
                           <div class="export-buttons-container">
-                              <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('csv')">
+                              <button class="btn btn-secondary" data-action="export-with-period" data-type="csv">
                                   <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                       <polyline points="14 2 14 8 20 8"></polyline>
@@ -790,7 +791,7 @@
                                   </svg>
                                   Eksporter som CSV
                               </button>
-                              <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('pdf')">
+                              <button class="btn btn-secondary" data-action="export-with-period" data-type="pdf">
                                   <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                       <polyline points="14 2 14 8 20 8"></polyline>
@@ -804,7 +805,7 @@
                   </div>
 
                   <!-- Import Section -->
-                  <div class="form-group form-group-with-hint" style="margin-top: 32px;">
+                  <div class="form-group form-group-with-hint mt-32">
                       <label>Importer data</label>
                       <small class="form-hint">Last opp vaktdata fra andre systemer</small>
                   </div>
@@ -812,8 +813,8 @@
                   <div class="form-group settings-level-2">
                       <label>Velg fil og importer</label>
                       <div class="form-row">
-                          <input type="file" id="importFileData" class="form-control" accept=".csv,.json" style="margin-right: 8px;">
-                          <button class="btn btn-secondary" onclick="app.importDataFromDataTab()">
+                          <input type="file" id="importFileData" class="form-control mr-8" accept=".csv,.json">
+                          <button class="btn btn-secondary" id="importDataBtn">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                   <polyline points="7 10 12 15 17 10"></polyline>
@@ -829,7 +830,7 @@
 
               <!-- Fixed bottom close button for settings modal -->
               <div class="modal-fixed-footer">
-                  <button class="btn btn-secondary modal-close-bottom" onclick="app.closeSettings()">
+                  <button class="btn btn-secondary modal-close-bottom" id="closeSettingsBtn">
                       <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18"></line>
                           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -863,8 +864,8 @@
                        <div class="form-group form-group-with-hint avatar-section">
                            <label>Profilbilde</label>
                            <div class="avatar-upload-container">
-                               <div class="avatar-preview" id="profileAvatarPreview" style="width: 96px; height: 96px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);">
-                                   <img id="profileAvatarImage" alt="Forhåndsvisning" style="width:100%; height:100%; object-fit: cover; display: none;" />
+                               <div class="avatar-preview" id="profileAvatarPreview">
+                                   <img id="profileAvatarImage" class="obj-cover hidden" alt="Forhåndsvisning" />
                                    <div id="profileAvatarPlaceholder" class="avatar-placeholder" aria-hidden="true">
                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -872,40 +873,40 @@
                                        </svg>
                                    </div>
                                </div>
-                               <div class="avatar-upload-controls" style="display:flex; gap: 8px; align-items: center;">
-                                   <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;" />
+                               <div class="avatar-upload-controls flex align-center gap-8">
+                                   <input type="file" id="profileAvatarInput" accept="image/*" class="hidden" />
                                    <button type="button" class="btn btn-secondary avatar-upload-btn" id="profileAvatarChooseBtn">Velg bilde</button>
                                    <button type="button" class="btn btn-danger avatar-remove-btn" id="profileAvatarRemoveBtn">Fjern</button>
                                </div>
-                               <div id="profilePictureProgress" style="display:none; width: 100%; max-width: 260px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
-                                   <div id="profilePictureProgressFill" style="height: 8px; width: 0%; background: var(--accent);"></div>
-                                   <div id="profilePictureProgressText" style="font-size: 12px; padding: 6px 8px; color: var(--text-secondary);">Laster opp...</div>
+                               <div id="profilePictureProgress" class="upload-progress hidden">
+                                   <div id="profilePictureProgressFill" class="upload-progress-fill"></div>
+                                   <div id="profilePictureProgressText" class="upload-progress-text">Laster opp...</div>
                                </div>
                            </div>
                            <small class="form-hint">Last opp et kvadratisk bilde. Du kan beskjære før lagring.</small>
                        </div>
 
       <!-- Crop Modal for avatar -->
-      <div id="cropModal" class="modal" style="display: none;">
-          <div class="modal-content" style="max-width: 420px; width: 92vw;">
+      <div id="cropModal" class="modal hidden">
+          <div class="modal-content modal-content-narrow">
               <div class="modal-header">
                   <h2 class="modal-title">Juster profilbilde</h2>
               </div>
               <div class="modal-body">
-                  <div style="width:100%; max-height: 48vh; display:flex; align-items:center; justify-content:center;">
-                      <div style="width: 280px; height: 280px; border-radius: 50%; overflow: hidden; background: var(--bg-secondary); display:flex; align-items:center; justify-content:center;">
-                          <img id="cropImage" class="crop-image" alt="Beskjær bilde" style="max-width:100%; display:block;" />
+                  <div class="crop-stage">
+                      <div class="crop-circle">
+                          <img id="cropImage" class="crop-image d-block" alt="Beskjær bilde" />
                       </div>
                   </div>
-                  <div style="display:flex; align-items:center; gap:8px; margin-top: 8px;">
-                      <button type="button" id="zoomOutBtn" class="btn btn-secondary zoom-btn" aria-label="Zoom ut" style="min-width:40px; width:40px; height:40px; border-radius:50%;">−</button>
-                      <input id="cropZoomSlider" class="zoom-slider" type="range" min="0.5" max="3" step="0.01" value="1" style="flex:1;" />
-                      <button type="button" id="zoomInBtn" class="btn btn-secondary zoom-btn" aria-label="Zoom inn" style="min-width:40px; width:40px; height:40px; border-radius:50%;">+</button>
+                  <div class="flex align-center gap-8 mt-8">
+                      <button type="button" id="zoomOutBtn" class="btn btn-secondary zoom-btn btn-circle-40" aria-label="Zoom ut">−</button>
+                      <input id="cropZoomSlider" class="zoom-slider flex-1" type="range" min="0.5" max="3" step="0.01" value="1" />
+                      <button type="button" id="zoomInBtn" class="btn btn-secondary zoom-btn btn-circle-40" aria-label="Zoom inn">+</button>
                   </div>
-                  <small class="form-hint" style="display:block; margin-top:6px; text-align:center;">Dra for å flytte. Klyp eller bruk zoom-knappene.</small>
+                  <small class="form-hint block mt-6 text-center">Dra for å flytte. Klyp eller bruk zoom-knappene.</small>
               </div>
               <div class="modal-fixed-footer">
-                  <div class="modal-bottom-actions" style="display:flex; gap:8px;">
+                  <div class="modal-bottom-actions flex gap-8">
                       <button type="button" class="btn btn-primary" id="confirmCropBtn">Lagre</button>
                       <button type="button" class="btn btn-secondary modal-close-bottom" id="cancelCropBtn">Avbryt</button>
                   </div>
@@ -916,12 +917,12 @@
 
                   </form>
 
-                  <p id="profile-update-msg" style="color: var(--success); min-height: 24px; text-align: center; font-size: 14px;"></p>
+                  <p id="profile-update-msg" class="profile-update-msg"></p>
 
-                  <div class="form-group form-group-with-hint" style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                  <div class="form-group form-group-with-hint section-divider">
                       <label>Kontotilkoblinger</label>
-                      <div id="google-linking-row" class="form-row" style="margin-bottom: 16px; display:flex; align-items:center; gap:8px;">
-                          <button id="btn-link-google" type="button" class="btn btn-secondary" style="display: flex; align-items: center; gap: 8px;">
+                      <div id="google-linking-row" class="form-row mb-16 flex align-center gap-8">
+                          <button id="btn-link-google" type="button" class="btn btn-secondary flex align-center gap-8">
                             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 48 48">
                               <path d="M44.5 20H24v8.5h11.8C34.6 33.9 29.9 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 12.4 2 3 11.4 3 23s9.4 21 21 21 20-9.4 20-21c0-1.2-.1-2.1-.3-3z" fill="#FFC107"/>
                               <path d="M6.3 14.7l7 5.1C14.7 16.3 18.9 13 24 13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 15.5 2 8.2 6.7 6.3 14.7z" fill="#FF3D00"/>
@@ -930,10 +931,10 @@
                             </svg>
                             Koble til Google
                           </button>
-                          <button id="btn-unlink-google" type="button" class="btn btn-danger" style="display:none; align-items: center; gap: 8px;">
+                          <button id="btn-unlink-google" type="button" class="btn btn-danger hidden align-center gap-8">
                             Fjern Google-konto
                           </button>
-                          <span id="google-unlink-warning" class="form-hint" style="display:none; color: #FBBF24; font-size: 12px;">
+                          <span id="google-unlink-warning" class="form-hint warning-hint hidden">
                             Du må ha et annet innloggingsalternativ før du kan fjerne Google.
                           </span>
                       </div>
@@ -943,14 +944,14 @@
                   <div class="form-group form-group-with-hint">
                       <label>Kontoadministrasjon</label>
                       <div class="form-row">
-                          <button class="btn btn-primary" onclick="app.restartOnboarding()" style="margin-right: 8px;">
+                          <button class="btn btn-primary mr-8" id="restartOnboardingBtn">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M1 4v6h6"></path>
                                   <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
                               </svg>
                               Start onboarding på nytt
                           </button>
-                          <button class="btn btn-danger" onclick="app.clearAllShifts()">
+                          <button class="btn btn-danger" id="clearAllShiftsBtn">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M3 6h18"></path>
                                   <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
@@ -967,7 +968,7 @@
 
               <!-- Fixed bottom close button for profile modal -->
               <div class="modal-fixed-footer">
-                  <button class="btn btn-secondary" onclick="logout()" style="margin-right: auto;">
+                  <button class="btn btn-secondary mr-auto" id="logoutBtn">
                       <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                           <polyline points="16 17 21 12 16 7"></polyline>
@@ -975,7 +976,7 @@
                       </svg>
                       Logg ut
                   </button>
-                  <button class="btn btn-secondary modal-close-bottom" onclick="app.closeProfile()">
+                  <button class="btn btn-secondary modal-close-bottom" id="closeProfileBtn">
                       <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18"></line>
                           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1024,8 +1025,8 @@
                   </form>
 
                   <!-- Modal buttons inside scrollable content -->
-                  <div class="modal-button-group" style="margin-top: 24px; padding: 16px 0;">
-                      <button type="button" class="btn btn-primary" onclick="app.updateShift()">
+                  <div class="modal-button-group mt-24 pad-y-16">
+                      <button type="button" class="btn btn-primary" id="updateShiftBtn">
                           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                               <polyline points="17 21 17 13 7 13 7 21"></polyline>
@@ -1033,7 +1034,7 @@
                           </svg>
                           Lagre endringer
                       </button>
-                      <button type="button" class="btn btn-secondary modal-close-bottom" onclick="app.closeEditShift()">
+                      <button type="button" class="btn btn-secondary modal-close-bottom" id="closeEditShiftBtn">
                           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <line x1="18" y1="6" x2="6" y2="18"></line>
                               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1049,15 +1050,15 @@
           <div class="modal-content">
               <div class="modal-body">
                   <form id="shiftForm">
-                      <div class="tab-nav" style="margin-bottom:16px;">
-                          <button type="button" class="tab-btn active" onclick="app.switchAddShiftTab('simple')">Enkel</button>
-                          <button type="button" class="tab-btn" onclick="app.switchAddShiftTab('recurring')">Serie</button>
+                      <div class="tab-nav mb-16">
+                          <button type="button" class="tab-btn active" data-action="switch-add-tab" data-value="simple">Enkel</button>
+                          <button type="button" class="tab-btn" data-action="switch-add-tab" data-value="recurring">Serie</button>
                       </div>
 
                       <div id="simpleFields" class="tab-content active">
                           <div class="form-group">
                               <div class="date-grid" id="dateGrid"></div>
-                              <div class="selected-dates-info" id="selectedDatesInfo" style="display: none;">
+                              <div class="selected-dates-info hidden" id="selectedDatesInfo">
                                   <span id="selectedDatesCount">0</span> datoer valgt
                               </div>
                           </div>
@@ -1090,7 +1091,7 @@
                           </div>
                       </div>
                       <div id="recurringFields" class="tab-content">
-                          <div class="form-group" style="margin-bottom: 24px;">
+                          <div class="form-group mb-24">
                               <label>Hyppighet</label>
                               <select class="form-control" id="recurringFrequency">
                                   <option value="1">Hver uke</option>
@@ -1099,17 +1100,17 @@
                                   <option value="4">Hver 4. uke</option>
                               </select>
                           </div>
-                          <div class="form-group" style="margin-bottom: 24px;">
+                          <div class="form-group mb-24">
                               <label>Første vakt</label>
                               <input type="date" class="form-control" id="recurringStartDate" />
                           </div>
-                          <div class="form-group" style="margin-bottom: 24px;">
+                          <div class="form-group mb-24">
                               <label for="recurringEmployeeSelect">Ansatt</label>
                               <select class="form-control" id="recurringEmployeeSelect" aria-label="Velg ansatt for vaktserien">
                                   <option value="">Ikke tildelt</option>
                               </select>
                           </div>
-                          <div class="form-group" style="margin-bottom: 24px;">
+                          <div class="form-group mb-24">
                               <label>Arbeidstid</label>
                               <div class="form-row">
                                   <select class="form-control" id="recurringStartHour">
@@ -1138,8 +1139,8 @@
                   </form>
 
                   <!-- Modal buttons inside scrollable content -->
-                  <div class="modal-button-group" style="margin-top: 24px; padding: 16px 0;">
-                      <button type="button" class="btn btn-primary" onclick="app.addShift()">
+                  <div class="modal-button-group mt-24 pad-y-16">
+                      <button type="button" class="btn btn-primary" id="addShiftBtn">
                           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <circle cx="12" cy="12" r="10"></circle>
                               <line x1="12" y1="8" x2="12" y2="16"></line>
@@ -1147,7 +1148,7 @@
                           </svg>
                           Legg til vakt
                       </button>
-                      <button type="button" class="btn btn-secondary modal-close-bottom" onclick="app.closeAddShiftModal()">
+                      <button type="button" class="btn btn-secondary modal-close-bottom" id="closeAddShiftModalBtn">
                           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <line x1="18" y1="6" x2="6" y2="18"></line>
                               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1165,7 +1166,7 @@
           <div class="modal-content">
               <div class="modal-header">
                   <h2 class="modal-title">Eksporter lønnsrapport</h2>
-                  <button type="button" class="modal-close" onclick="app.closeCsvExportModal()" aria-label="Lukk">
+                  <button type="button" class="modal-close" id="closeCsvExportModalBtn" aria-label="Lukk">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18"></line>
                           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1200,8 +1201,8 @@
                       </div>
                   </form>
 
-                  <div class="modal-button-group" style="margin-top: 24px;">
-                      <button type="button" class="btn btn-primary" onclick="app.exportCsvReport()">
+                  <div class="modal-button-group mt-24">
+                      <button type="button" class="btn btn-primary" id="exportCsvReportBtn">
                           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                               <polyline points="7 10 12 15 17 10"></polyline>
@@ -1209,7 +1210,7 @@
                           </svg>
                           Last ned CSV
                       </button>
-                      <button type="button" class="btn btn-secondary" onclick="app.closeCsvExportModal()">
+                      <button type="button" class="btn btn-secondary" id="closeCsvExportModalBtn2">
                           Avbryt
                       </button>
                   </div>
@@ -1231,5 +1232,6 @@
     <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
     <!-- Vite kalkulator entry -->
     <script type="module" src="/src/kalkulator.js"></script>
+    <script type="module" src="/kalkulator/js/index-bindings.js"></script>
 </body>
 </html>

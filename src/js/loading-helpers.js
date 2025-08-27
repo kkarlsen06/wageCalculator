@@ -104,8 +104,8 @@ class LoadingManager {
         return `
             <div class="skeleton-container">
                 <div class="skeleton skeleton-line"></div>
-                <div class="skeleton skeleton-line" style="width: 80%;"></div>
-                <div class="skeleton skeleton-line" style="width: 60%;"></div>
+                <div class="skeleton skeleton-line w-80p"></div>
+                <div class="skeleton skeleton-line w-60p"></div>
             </div>
         `;
     }

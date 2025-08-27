@@ -51,7 +51,7 @@ export class SubscriptionModal {
         </div>
         
         <!-- Main content - hidden initially -->
-        <div class="modal-body" id="modalContent" style="display: none;">
+        <div class="modal-body hidden" id="modalContent">
           <div class="subscription-status-card">
             <div class="status-header">
               <svg class="status-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -64,13 +64,13 @@ export class SubscriptionModal {
               <div id="subscriptionPeriod" class="period-info"></div>
               <div id="subscriptionPlan" class="plan-info"></div>
             </div>
-            <div id="subscriptionThanks" class="appreciation-message" style="display:none;">
+            <div id="subscriptionThanks" class="appreciation-message hidden">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
               </svg>
               <span>Takk for ditt verdsatte partnerskap</span>
             </div>
-            <div id="earlyUserAppreciation" class="early-user-message" style="display:none;">
+            <div id="earlyUserAppreciation" class="early-user-message hidden">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
               </svg>
@@ -79,7 +79,7 @@ export class SubscriptionModal {
                 <p>Nyt professional-goder helt gratis. PS. Du kan fortsatt abonnere for å støtte oss.</p>
               </div>
             </div>
-            <div id="earlyUserSubscribedThanks" class="early-user-subscribed" style="display:none;">
+            <div id="earlyUserSubscribedThanks" class="early-user-subscribed hidden">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
               </svg>
@@ -90,7 +90,7 @@ export class SubscriptionModal {
             </div>
           </div>
           
-          <div class="subscription-plans" id="subscriptionPlans" style="display:none;">
+          <div class="subscription-plans hidden" id="subscriptionPlans">
             <h4>Tilgjengelige planer</h4>
             <div class="plans-grid">
               <div class="plan-card free-plan">
@@ -137,7 +137,7 @@ export class SubscriptionModal {
         </div>
         
         <!-- Footer - hidden initially -->
-        <div class="modal-footer" id="modalFooter" style="display: none;">
+        <div class="modal-footer hidden" id="modalFooter">
           <div class="modal-footer-buttons">
             <button type="button" class="btn btn-secondary" id="upgradeProBtn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -151,7 +151,7 @@ export class SubscriptionModal {
               </svg>
               Oppgrader til Enterprise
             </button>
-            <button type="button" class="btn btn-outline" id="manageSubBtn" style="display:none;">
+            <button type="button" class="btn btn-outline hidden" id="manageSubBtn">
               Administrer abonnement
             </button>
           </div>

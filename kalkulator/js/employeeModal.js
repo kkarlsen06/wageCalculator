@@ -313,7 +313,7 @@ export class EmployeeModal {
                         </div>
 
                         <!-- Wage Information Section -->
-                        <div class="form-section" data-section="2" style="display: none;">
+                        <div class="form-section hidden" data-section="2">
                             <div class="section-icon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="12" y1="1" x2="12" y2="23"></line>
@@ -393,7 +393,7 @@ export class EmployeeModal {
                                         </label>
                                     </div>
                                     <!-- Hidden select for form submission -->
-                                    <select id="employeeTariff" name="tariff_level" class="form-input" style="display: none;" aria-describedby="tariffError">
+                                    <select id="employeeTariff" name="tariff_level" class="form-input hidden" aria-describedby="tariffError">
                                         <option value="0">Egendefinert</option>
                                         <option value="-2">Under 18 år</option>
                                         <option value="-1">Under 16 år</option>
@@ -407,7 +407,7 @@ export class EmployeeModal {
                                     <div class="form-error" id="tariffError" role="alert"></div>
                                 </div>
 
-                                <div class="form-group custom-wage-group" id="customWageSection" style="display: none;">
+                                <div class="form-group custom-wage-group hidden" id="customWageSection">
                                     <label for="employeeWage" class="form-label">
                                         <span class="label-text">Angi timelønn</span>
                                     </label>
@@ -457,7 +457,7 @@ export class EmployeeModal {
                         </div>
 
                         <!-- Appearance Section -->
-                        <div class="form-section" data-section="3" style="display: none;">
+                        <div class="form-section hidden" data-section="3">
                             <div class="section-icon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="3"></circle>
@@ -492,7 +492,7 @@ export class EmployeeModal {
 
                     <div class="modal-footer">
                         <div class="footer-left">
-                            <button type="button" class="btn btn-ghost nav-btn prev-btn" style="display: none;">
+                            <button type="button" class="btn btn-ghost nav-btn prev-btn hidden">
                                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="15 18 9 12 15 6"></polyline>
                                 </svg>
@@ -509,11 +509,11 @@ export class EmployeeModal {
                                     <polyline points="9 18 15 12 9 6"></polyline>
                                 </svg>
                             </button>
-                            <button type="submit" class="btn btn-primary submit-btn" style="display: none;">
+                            <button type="submit" class="btn btn-primary submit-btn hidden">
                                 <span class="btn-text">
                                     ${submitText}
                                 </span>
-                                <span class="btn-loading" style="display: none;">
+                                <span class="btn-loading hidden">
                                     <svg class="loading-spinner" viewBox="0 0 24 24">
                                         <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
                                             <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>

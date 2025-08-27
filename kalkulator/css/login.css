@@ -1,2 +1,25 @@
 /* Moved from inline style in login.html for CSP compliance */
 body { visibility: hidden; }
+
+/* Utilities shared with login page */
+.hidden { display: none !important; }
+.flex { display: flex; }
+.align-center { align-items: center; }
+.justify-center { justify-content: center; }
+.gap-8 { gap: 8px; }
+.fs-14 { font-size: 14px; }
+.mb-20 { margin-bottom: 20px; }
+.mt-4 { margin-top: 1rem; }
+
+/* Link-style buttons */
+.link-button { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; }
+.text-accent { color: var(--accent); }
+.no-underline { text-decoration: none; }
+.link-accent4 { color: var(--accent4); }
+
+/* Messages */
+.auth-msg { color: var(--error); min-height: 24px; text-align: center; font-size: 15px; }
+.auth-error-msg { color: var(--error); min-height: 24px; text-align: center; font-size: 15px; }
+.resend-timer { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 8px; }
+.lead-secondary-center { color: var(--text-secondary); text-align: center; }
+.terms-note { color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block; }

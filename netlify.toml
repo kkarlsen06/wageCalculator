@@ -72,18 +72,4 @@
   [headers.values]
     Content-Security-Policy = "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://id.kkarlsen.dev https://*.supabase.co https://lh3.googleusercontent.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; connect-src 'self' https://id.kkarlsen.dev wss://id.kkarlsen.dev;"
 
-[[headers]]
-  # Allow inline styles on pages that still use style attributes
-  for = "/index.html"
-  [headers.values]
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://id.kkarlsen.dev https://*.supabase.co https://lh3.googleusercontent.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; connect-src 'self' https://id.kkarlsen.dev wss://id.kkarlsen.dev;"
-
-[[headers]]
-  for = "/kalkulator/index.html"
-  [headers.values]
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://id.kkarlsen.dev https://*.supabase.co https://lh3.googleusercontent.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; connect-src 'self' https://id.kkarlsen.dev wss://id.kkarlsen.dev;"
-
-[[headers]]
-  for = "/kalkulator/login.html"
-  [headers.values]
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://id.kkarlsen.dev https://*.supabase.co https://lh3.googleusercontent.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; connect-src 'self' https://id.kkarlsen.dev wss://id.kkarlsen.dev;"
+# Per-page overrides for kalkulator index and login removed; relying on global CSP

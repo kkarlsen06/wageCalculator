@@ -52,8 +52,8 @@ export class EmployeeCarousel {
                 <div class="carousel-instructions sr-only" aria-live="polite" id="carouselInstructions">
                     Bruk piltastene for å navigere mellom ansatte. Trykk Enter eller mellomrom for å velge. Trykk og hold eller bruk Shift+F10 for handlingsmeny.
                 </div>
-                <div class="carousel-edge-blur left" aria-hidden="true" style="display: none;"></div>
-                <button class="carousel-arrow carousel-arrow-left" aria-label="Scroll venstre" style="display: none;">
+                <div class="carousel-edge-blur left hidden" aria-hidden="true"></div>
+                <button class="carousel-arrow carousel-arrow-left hidden" aria-label="Scroll venstre">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
@@ -62,12 +62,12 @@ export class EmployeeCarousel {
                      aria-describedby="carouselInstructions">
                     <!-- Employee tiles will be rendered here -->
                 </div>
-                <button class="carousel-arrow carousel-arrow-right" aria-label="Scroll høyre" style="display: none;">
+                <button class="carousel-arrow carousel-arrow-right hidden" aria-label="Scroll høyre">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </button>
-                <div class="carousel-edge-blur right" aria-hidden="true" style="display: none;"></div>
+                <div class="carousel-edge-blur right hidden" aria-hidden="true"></div>
                 <div class="carousel-status sr-only" aria-live="polite" id="carouselStatus">
                     <!-- Status updates will be announced here -->
                 </div>
@@ -357,7 +357,7 @@ export class EmployeeCarousel {
         this.track.innerHTML = `
             <div class="employee-carousel-error">
                 <div class="error-message">Kunne ikke laste ansatte</div>
-                <button class="retry-btn" onclick="app.loadEmployees()">Prøv igjen</button>
+                <button class="retry-btn" id="retryEmployeesBtn">Prøv igjen</button>
             </div>
         `;
     }

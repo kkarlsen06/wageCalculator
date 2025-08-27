@@ -60,7 +60,7 @@
         </div>
 
         <!-- Google button -->
-        <button id="btn-google" type="button" class="btn btn-secondary mb-12" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <button id="btn-google" type="button" class="btn btn-secondary mb-12 flex align-center justify-center gap-8">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
             <path d="M44.5 20H24v8.5h11.8C34.6 33.9 29.9 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 12.4 2 3 11.4 3 23s9.4 21 21 21 20-9.4 20-21c0-1.2-.1-2.1-.3-3z" fill="#FFC107"/>
             <path d="M6.3 14.7l7 5.1C14.7 16.3 18.9 13 24 13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 15.5 2 8.2 6.7 6.3 14.7z" fill="#FF3D00"/>
@@ -69,12 +69,12 @@
           </svg>
           <span>Fortsett med Google</span>
         </button>
-        <button id="show-reset-btn" class="mt-4" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;" aria-label="Tilbakestill med kode">Tilbakestill med kode</button>
-        <div id="auth-msg" role="alert" aria-live="polite" style="color: var(--error); min-height: 24px; text-align: center; font-size: 15px;"></div>
+        <button id="show-reset-btn" class="mt-4 link-button fs-14 text-accent" aria-label="Tilbakestill med kode">Tilbakestill med kode</button>
+        <div id="auth-msg" role="alert" aria-live="polite" class="auth-msg"></div>
       </div>
     </div>
 
-  <div id="signup-card" class="auth-center" style="display:none;">
+  <div id="signup-card" class="auth-center hidden">
     <div class="login-card">
       <form id="signup-form" novalidate>
         <h2 class="mb-20">Opprett ny konto</h2>
@@ -91,7 +91,7 @@
                 <span class="checkmark"></span>
                 <span class="checkbox-text">
                     Jeg har lest og godtar <button type="button" class="link-button" id="show-terms-btn">vilkår og betingelser</button> og <button type="button" class="link-button" id="show-privacy-btn">personvernpolicy</button>
-                    <br><small style="color: var(--text-secondary); font-size: 12px; margin-top: 4px; display: block;">Klikk her for å lese vilkårene først</small>
+                    <br><small class="terms-note">Klikk her for å lese vilkårene først</small>
                 </span>
             </label>
         </div>
@@ -99,11 +99,11 @@
         <button id="create-account-btn" type="submit" class="btn btn-primary mb-12">Opprett konto</button>
       </form>
       <button id="back-login-signup-btn" class="btn btn-secondary">Tilbake til innlogging</button>
-      <p id="signup-msg" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+      <p id="signup-msg" class="auth-error-msg"></p>
     </div>
   </div>
 
-  <div id="reset-form" class="auth-center" style="display:none;">
+  <div id="reset-form" class="auth-center hidden">
     <div class="login-card">
       <div id="reset-step-1">
         <form id="reset-email-form" novalidate>
@@ -115,7 +115,7 @@
         <button id="back-to-login-btn" class="btn btn-secondary">Tilbake</button>
       </div>
 
-      <div id="reset-step-2" style="display:none;">
+      <div id="reset-step-2" class="hidden">
         <form id="reset-code-form" novalidate>
           <h2 class="mb-20">Skriv inn kode og nytt passord</h2>
           <label for="reset-code" class="form-label">6-sifret kode fra e-post</label>
@@ -125,19 +125,19 @@
           <button id="reset-confirm" type="submit" class="btn btn-primary mb-12">Oppdater passord</button>
         </form>
         <button id="reset-back" class="btn btn-secondary mb-12">Tilbake til e-post</button>
-        <p id="resend-timer" style="font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 8px;"></p>
-        <button id="reset-resend" class="btn" style="background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;" disabled>Send ny kode</button>
+        <p id="resend-timer" class="resend-timer"></p>
+        <button id="reset-resend" class="btn link-button fs-14 text-accent" disabled>Send ny kode</button>
       </div>
 
-      <p id="reset-msg" role="alert" aria-live="polite" style="color: var(--danger); min-height: 24px; text-align: center; font-size: 15px;"></p>
+      <p id="reset-msg" role="alert" aria-live="polite" class="auth-error-msg"></p>
     </div>
   </div>
 
-  <div id="complete-profile-card" class="auth-center" style="display:none;">
+  <div id="complete-profile-card" class="auth-center hidden">
     <div class="login-card">
       <form id="complete-profile-form" novalidate>
         <h2 class="mb-20">Fullfør profilen din</h2>
-        <p style="margin-bottom: 20px; color: var(--text-secondary); text-align: center;">
+        <p class="lead-secondary-center mb-20">
           Vennligst oppgi ditt fornavn for å fullføre profilen din.
         </p>
         <label for="complete-name" class="form-label">Fornavn</label>
@@ -145,13 +145,13 @@
         <button id="complete-profile-btn" type="submit" class="btn btn-primary mb-12">Fullfør profil</button>
       </form>
       <button id="skip-profile-btn" class="btn btn-secondary">Hopp over (kan gjøres senere)</button>
-      <p id="complete-profile-msg" style="color: var(--error); min-height: 24px; text-align: center; font-size: 15px;"></p>
+      <p id="complete-profile-msg" class="auth-error-msg"></p>
     </div>
   </div>
   </main>
 
   <footer class="footer-auth">
-      Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" style="color:var(--accent4);text-decoration:none;">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
+      Laget av <a href="https://github.com/kkarlsen-productions" target="_blank" class="link-accent4 no-underline">Hjalmar Samuel Kristensen-Karlsen</a> &middot; 2025
   </footer>
 
   <!-- Vite entry for login/auth page -->

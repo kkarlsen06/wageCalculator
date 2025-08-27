@@ -4656,7 +4656,7 @@ export const app = {
 
         if (daysWithShifts.length === 0) {
             // No shifts for this week
-            chartBars.innerHTML = '<div class="chart-empty-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text-secondary); font-size: 12px; font-weight: 500; opacity: 0.6; text-align: center; pointer-events: none;">Ingen vakter denne uken</div>';
+            chartBars.innerHTML = '<div class="chart-empty-message center-abs text-secondary fs-12 fw-500 o-60 text-center no-pointer">Ingen vakter denne uken</div>';
             chartLabels.innerHTML = '';
             return;
         }
@@ -5029,7 +5029,7 @@ export const app = {
                 ` : '';
 
                 shiftsHtml.push(`
-                    <div class="shift-item ${typeClass}${currentDateClass}" data-shift-id="${shift.id}" style="cursor: pointer;">
+                    <div class="shift-item ${typeClass}${currentDateClass} cursor-pointer" data-shift-id="${shift.id}">
                         <div class="shift-info">
                             <div class="shift-date">
                                 <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
@@ -5296,7 +5296,7 @@ export const app = {
 
                 // No highlighting for last shift (remove active class)
                 nextShiftContent.innerHTML = `
-                    <div class="shift-item ${typeClass}" data-shift-id="${lastShift.id}" style="cursor: pointer; position: relative;">
+                    <div class="shift-item ${typeClass} cursor-pointer pos-rel" data-shift-id="${lastShift.id}">
                         <div class="next-shift-badge">Siste</div>
                         <div class="shift-info">
                             <div class="shift-date">
@@ -5421,7 +5421,7 @@ export const app = {
             const activeClass = (isToday || isTomorrow) ? ' active' : '';
 
             nextShiftContent.innerHTML = `
-                <div class="shift-item ${typeClass}${activeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer; position: relative;">
+                <div class="shift-item ${typeClass}${activeClass} cursor-pointer pos-rel" data-shift-id="${nextShift.id}">
                     <div class="next-shift-badge">Neste</div>
                     <div class="shift-info">
                         <div class="shift-date">
@@ -5544,7 +5544,7 @@ export const app = {
         ` : '';
 
         nextShiftContent.innerHTML = `
-            <div class="shift-item ${typeClass} active" data-shift-id="${currentShift.id}" style="cursor: pointer; position: relative;">
+            <div class="shift-item ${typeClass} active cursor-pointer pos-rel" data-shift-id="${currentShift.id}">
                 <div class="next-shift-badge">NÅ</div>
                 <div class="shift-info">
                     <div class="shift-date">
@@ -5778,7 +5778,7 @@ export const app = {
 
         // No highlighting for best shift (remove active class)
         nextShiftContent.innerHTML = `
-            <div class="shift-item ${typeClass}" data-shift-id="${bestShift.id}" style="cursor: pointer; position: relative;">
+            <div class="shift-item ${typeClass} cursor-pointer pos-rel" data-shift-id="${bestShift.id}">
                 <div class="next-shift-badge">Beste</div>
                 <div class="shift-info">
                     <div class="shift-date">
@@ -5948,7 +5948,7 @@ export const app = {
         nextPayrollContent.dataset.populated = '1';
 
         nextPayrollContent.innerHTML = `
-            <div class="payroll-item${activeClass}" style="cursor: pointer; position: relative;">
+            <div class="payroll-item${activeClass} cursor-pointer pos-rel">
                 <div class="next-payroll-badge">Lønn</div>
                 <div class="shift-info">
                     <div class="shift-date">
@@ -8679,7 +8679,7 @@ export const app = {
                             </tr>
                         </thead>
                         <tbody>
-                            ${rows || '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:16px;">Ingen vakter i valgt måned</td></tr>'}
+                            ${rows || '<tr><td colspan="4" class="text-center text-secondary pad-16">Ingen vakter i valgt måned</td></tr>'}
                         </tbody>
                         <tfoot>
                             <tr>
@@ -8760,7 +8760,7 @@ export const app = {
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td colspan="4" style="text-align:center;color:var(--text-secondary);padding:16px;">Ingen vakter i valgt måned</td>
+                                        <td colspan="4" class="text-center text-secondary pad-16">Ingen vakter i valgt måned</td>
                                     </tr>
                                 </tbody>
                                 <tfoot>
@@ -8892,7 +8892,7 @@ export const app = {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${rows || '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:16px;">Ingen vakter i valgt måned</td></tr>'}
+                                ${rows || '<tr><td colspan="4" class="text-center text-secondary pad-16">Ingen vakter i valgt måned</td></tr>'}
                             </tbody>
                             <tfoot>
                                 <tr>
