@@ -680,7 +680,7 @@
             </div>
           </div>
           <input type="file" id="profilePicture" accept="image/*" style="display: none;">
-          <button type="button" class="btn btn-secondary" onclick="document.getElementById('profilePicture').click()">
+          <button type="button" class="btn btn-secondary" id="uploadProfileButton">
             Velg bilde
           </button>
         </div>
@@ -695,11 +695,11 @@
       </div>
 
       <div class="wage-type-options">
-        <div class="wage-option" data-value="virke" onclick="selectWageType('virke')">
+        <div class="wage-option" data-value="virke">
           <div class="wage-option-title">Virke-tariff</div>
           <div class="wage-option-subtitle">Lønnstrinn basert på tariffavtalen</div>
         </div>
-        <div class="wage-option" data-value="custom" onclick="selectWageType('custom')">
+        <div class="wage-option" data-value="custom">
           <div class="wage-option-title">Egen lønn</div>
           <div class="wage-option-subtitle">Egendefinert timelønn</div>
         </div>
@@ -733,21 +733,21 @@
             <label class="form-label">Ukedag-tillegg (mandag-fredag)</label>
             <div class="form-hint">Ekstra betaling for kveldsvakter og lignende</div>
             <div class="bonus-slots" id="weekdayBonusSlots"></div>
-            <button type="button" class="btn-add-bonus" onclick="addBonusSlot('weekday')">+ Legg til kveldstillegg</button>
+            <button type="button" class="btn-add-bonus" id="addWeekdayBonus">+ Legg til kveldstillegg</button>
           </div>
 
           <div class="form-group">
             <label class="form-label">Lørdag-tillegg</label>
             <div class="form-hint">Helgetillegg for lørdager</div>
             <div class="bonus-slots" id="saturdayBonusSlots"></div>
-            <button type="button" class="btn-add-bonus" onclick="addBonusSlot('saturday')">+ Legg til lørdagstillegg</button>
+            <button type="button" class="btn-add-bonus" id="addSaturdayBonus">+ Legg til lørdagstillegg</button>
           </div>
 
           <div class="form-group">
             <label class="form-label">Søndag/helligdag-tillegg</label>
             <div class="form-hint">Høyeste tillegg for søndager og helligdager</div>
             <div class="bonus-slots" id="sundayBonusSlots"></div>
-            <button type="button" class="btn-add-bonus" onclick="addBonusSlot('sunday')">+ Legg til søndagstillegg</button>
+            <button type="button" class="btn-add-bonus" id="addSundayBonus">+ Legg til søndagstillegg</button>
           </div>
         </div>
       </div>
@@ -766,13 +766,13 @@
           <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 4px;">Alle timer betales, inkludert pausetid</div>
         </div>
         <label class="switch">
-          <input type="checkbox" id="paidBreakToggle" onchange="togglePaidBreak()">
+          <input type="checkbox" id="paidBreakToggle">
           <span class="slider"></span>
         </label>
       </div>
 
       <div class="advanced-section" id="breakAdvancedSection">
-        <div class="advanced-toggle" onclick="toggleAdvancedBreaks()">
+        <div class="advanced-toggle" id="advancedBreaksToggle">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
@@ -822,7 +822,7 @@
           <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 4px;">Viser netto lønn etter skattetrekk</div>
         </div>
         <label class="switch">
-          <input type="checkbox" id="taxDeductionToggle" onchange="toggleTaxDeduction()">
+          <input type="checkbox" id="taxDeductionToggle">
           <span class="slider"></span>
         </label>
       </div>
@@ -849,7 +849,7 @@
 
       <div class="theme-options">
         <label class="theme-option">
-          <input type="radio" name="theme" value="light" onchange="previewTheme('light')">
+          <input type="radio" name="theme" value="light">
           <div class="theme-preview theme-preview-light">
             <div class="theme-preview-header"></div>
             <div class="theme-preview-content"></div>
@@ -857,7 +857,7 @@
           <span>Lyst</span>
         </label>
         <label class="theme-option">
-          <input type="radio" name="theme" value="dark" onchange="previewTheme('dark')">
+          <input type="radio" name="theme" value="dark">
           <div class="theme-preview theme-preview-dark">
             <div class="theme-preview-header"></div>
             <div class="theme-preview-content"></div>
@@ -865,7 +865,7 @@
           <span>Mørkt</span>
         </label>
         <label class="theme-option">
-          <input type="radio" name="theme" value="system" checked onchange="previewTheme('system')">
+          <input type="radio" name="theme" value="system" checked>
           <div class="theme-preview theme-preview-system">
             <div class="theme-preview-header"></div>
             <div class="theme-preview-content"></div>
@@ -897,16 +897,16 @@
 
     <!-- Navigation -->
     <div class="onboarding-nav">
-      <button type="button" class="btn btn-secondary" id="backBtn" onclick="previousStep()">
+      <button type="button" class="btn btn-secondary" id="backBtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
         Tilbake
       </button>
 
-      <a href="#" class="skip-link" id="skipLink" onclick="skipStep()">Hopp over</a>
+      <a href="#" class="skip-link" id="skipLink">Hopp over</a>
 
-      <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">
+      <button type="button" class="btn btn-primary" id="nextBtn">
         Neste
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 6 15 12 9 18"></polyline>
@@ -915,9 +915,10 @@
     </div>
   </div>
 
-  <script type="module">
-    // Use the globally available supabase client from bootstrap-supa.js
-    const supabase = window.supa;
+  <!-- Moved inline module to external file for CSP safety -->
+  <script type="module" src="/kalkulator/js/onboarding.js"></script>
+</body>
+</html>
     
     let currentStep = 1;
     const totalSteps = 7;
@@ -1524,6 +1525,6 @@
 
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', initOnboarding);
-  </script>
+  
 </body>
 </html>
