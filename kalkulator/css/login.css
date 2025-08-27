@@ -1,0 +1,2 @@
+/* Moved from inline style in login.html for CSP compliance */
+body { visibility: hidden; }

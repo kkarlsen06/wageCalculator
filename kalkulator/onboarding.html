@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <style id="scroll-hotfix">
-    html, body { overflow-y: auto !important; }
-  </style>
-  <style id="onboard-hidden-fix">.hidden{display:none!important}</style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Velkommen - Lønnsberegner</title>
@@ -20,7 +16,9 @@
   <meta name="theme-color" content="#000000">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#000000">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
-  <style>
+  <link rel="stylesheet" href="css/onboarding.css?v=1">
+  <!-- Inline styles moved to css/onboarding.css for CSP compliance -->
+  <!--
     body {
       margin: 0;
       padding: var(--space-4);
@@ -639,7 +637,7 @@
         margin: 0;
       }
     }
-  </style>
+  -->
 </head>
 <body>
   <div class="onboarding-container">
@@ -679,7 +677,7 @@
               </svg>
             </div>
           </div>
-          <input type="file" id="profilePicture" accept="image/*" style="display: none;">
+          <input type="file" id="profilePicture" accept="image/*">
           <button type="button" class="btn btn-secondary" id="uploadProfileButton">
             Velg bilde
           </button>
@@ -762,8 +760,8 @@
 
       <div class="switch-group">
         <div>
-          <div style="font-weight: var(--font-weight-medium); color: var(--text-primary);">Betalt pause</div>
-          <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 4px;">Alle timer betales, inkludert pausetid</div>
+          <div class="switch-title">Betalt pause</div>
+          <div class="switch-subtitle">Alle timer betales, inkludert pausetid</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="paidBreakToggle">
@@ -818,8 +816,8 @@
 
       <div class="switch-group">
         <div>
-          <div style="font-weight: var(--font-weight-medium); color: var(--text-primary);">Trekk skatt</div>
-          <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 4px;">Viser netto lønn etter skattetrekk</div>
+          <div class="switch-title">Trekk skatt</div>
+          <div class="switch-subtitle">Viser netto lønn etter skattetrekk</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="taxDeductionToggle">
@@ -919,7 +917,7 @@
   <script type="module" src="/kalkulator/js/onboarding.js"></script>
 </body>
 </html>
-    
+<!--
     let currentStep = 1;
     const totalSteps = 7;
     let onboardingData = {};
@@ -1525,6 +1523,4 @@
 
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', initOnboarding);
-  
-</body>
-</html>
+-->
