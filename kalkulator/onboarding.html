@@ -10,8 +10,289 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/themes.css?v=1">
   <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/onboarding.css?v=1">
   <link rel="icon" href="../src/assets/favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="../src/assets/favicon.ico" type="image/x-icon">
   <script type="module" src="/kalkulator/js/bootstrap-supa.js"></script>
   <meta name="theme-color" content="#000000">
-  <meta name="th
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#000000">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
+</head>
+<body>
+  <div class="onboarding-container">
+    <!-- Progress bar -->
+    <div class="onboarding-progress">
+      <div class="onboarding-progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div class="onboarding-step active" id="step1">
+      <div class="step-header">
+        <div class="welcome-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <h1 class="step-title">Velkommen!</h1>
+        <p class="step-subtitle">La oss sette opp din personlige lønnskalkulator. Det tar bare noen få minutter.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Fornavn</label>
+        <input type="text" class="form-control" id="firstName" placeholder="F.eks. Ola" maxlength="50" required>
+        <div class="form-error" id="firstNameError">Vennligst fyll inn fornavnet ditt</div>
+        <div class="form-hint">Dette vises i velkomstmeldinger og rapporter</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Profilbilde (valgfritt)</label>
+        <div class="profile-upload">
+          <div class="profile-preview" id="profilePreview">
+            <div class="profile-placeholder" id="profilePlaceholder">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+          <input type="file" id="profilePicture" accept="image/*">
+          <button type="button" class="btn btn-secondary" id="uploadProfileButton">
+            Velg bilde
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Wage Type -->
+    <div class="onboarding-step" id="step2">
+      <div class="step-header">
+        <h1 class="step-title">Lønnstype</h1>
+        <p class="step-subtitle">Velg hvordan lønnen din beregnes</p>
+      </div>
+
+      <div class="wage-type-options">
+        <div class="wage-option" data-value="virke">
+          <div class="wage-option-title">Virke-tariff</div>
+          <div class="wage-option-subtitle">Lønnstrinn basert på tariffavtalen</div>
+        </div>
+        <div class="wage-option" data-value="custom">
+          <div class="wage-option-title">Egen lønn</div>
+          <div class="wage-option-subtitle">Egendefinert timelønn</div>
+        </div>
+      </div>
+
+      <!-- Virke wage level selector -->
+      <div class="form-group hidden" id="virkeWageSection">
+        <label class="form-label">Lønnstrinn (Virke 2025)</label>
+        <select class="form-control" id="wageSelect">
+          <option value="-1">Unge arbeidstakere under 16 år (129,91 kr/t)</option>
+          <option value="-2">Unge arbeidstakere under 18 år (132,90 kr/t)</option>
+          <option value="1" selected>Trinn 1 (184,54 kr/t)</option>
+          <option value="2">Trinn 2 (185,38 kr/t)</option>
+          <option value="3">Trinn 3 (187,46 kr/t)</option>
+          <option value="4">Trinn 4 (193,05 kr/t)</option>
+          <option value="5">Trinn 5 (210,81 kr/t)</option>
+          <option value="6">Trinn 6 (256,14 kr/t)</option>
+        </select>
+      </div>
+
+      <!-- Custom wage section -->
+      <div class="form-group hidden" id="customWageSection">
+        <label class="form-label">Timelønn (kr)</label>
+        <input type="number" class="form-control" id="customWageInput" placeholder="200.00" step="0.01" min="50" max="1000" required>
+        <div class="form-error" id="customWageError">Vennligst fyll inn en gyldig timelønn (50-1000 kr)</div>
+        <div class="form-hint">Grunnlønn per time før tillegg</div>
+
+        <!-- Supplements editor -->
+        <div class="advanced-section" id="supplementsSection">
+          <div class="form-group">
+            <label class="form-label">Ukedag-tillegg (mandag-fredag)</label>
+            <div class="form-hint">Ekstra betaling for kveldsvakter og lignende</div>
+            <div class="bonus-slots" id="weekdayBonusSlots"></div>
+            <button type="button" class="btn-add-bonus" id="addWeekdayBonus">+ Legg til kveldstillegg</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Lørdag-tillegg</label>
+            <div class="form-hint">Helgetillegg for lørdager</div>
+            <div class="bonus-slots" id="saturdayBonusSlots"></div>
+            <button type="button" class="btn-add-bonus" id="addSaturdayBonus">+ Legg til lørdagstillegg</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Søndag/helligdag-tillegg</label>
+            <div class="form-hint">Høyeste tillegg for søndager og helligdager</div>
+            <div class="bonus-slots" id="sundayBonusSlots"></div>
+            <button type="button" class="btn-add-bonus" id="addSundayBonus">+ Legg til søndagstillegg</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Breaks -->
+    <div class="onboarding-step" id="step3">
+      <div class="step-header">
+        <h1 class="step-title">Pauseinnstillinger</h1>
+        <p class="step-subtitle">Hvordan skal pausetid håndteres i lønnsberegningen?</p>
+      </div>
+
+      <div class="switch-group">
+        <div>
+          <div class="switch-title">Betalt pause</div>
+          <div class="switch-subtitle">Alle timer betales, inkludert pausetid</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="paidBreakToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="advanced-section" id="breakAdvancedSection">
+        <div class="advanced-toggle" id="advancedBreaksToggle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+          Avanserte innstillinger
+        </div>
+        
+        <div class="hidden" id="breakAdvancedContent">
+          <div class="form-group">
+            <label class="form-label">Pausetrekk-terskel (timer)</label>
+            <input type="number" class="form-control" id="pauseThreshold" value="5.5" step="0.5" min="0" max="24">
+            <div class="form-hint">Minimum vaktlengde for å utløse pausetrekk</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Pausetrekk (minutter)</label>
+            <input type="number" class="form-control" id="pauseDuration" value="30" step="15" min="0" max="120">
+            <div class="form-hint">Antall minutter som trekkes fra</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Monthly Goal -->
+    <div class="onboarding-step" id="step4">
+      <div class="step-header">
+        <h1 class="step-title">Månedlig mål</h1>
+        <p class="step-subtitle">Sett et inntektsmål for å følge fremdriften din</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Månedlig inntektsmål (NOK)</label>
+        <input type="number" class="form-control" id="monthlyGoal" placeholder="20 000" step="1000" min="1000" max="200000">
+        <div class="form-hint">Brukes til fremdriftslinjen i dashbordet og måloppfølging (valgfritt)</div>
+      </div>
+    </div>
+
+    <!-- Step 5: Taxes & Payday -->
+    <div class="onboarding-step" id="step5">
+      <div class="step-header">
+        <h1 class="step-title">Skatt og lønningsdag</h1>
+        <p class="step-subtitle">Konfigurer skattetrekk og når du får utbetalt lønn</p>
+      </div>
+
+      <div class="switch-group">
+        <div>
+          <div class="switch-title">Trekk skatt</div>
+          <div class="switch-subtitle">Viser netto lønn etter skattetrekk</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="taxDeductionToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="form-group hidden" id="taxPercentageSection">
+        <label class="form-label">Skatteprosent (%)</label>
+        <input type="number" class="form-control" id="taxPercentage" placeholder="25.0" step="0.5" min="0" max="50" value="25.0">
+        <div class="form-hint">Typisk skattetrekk er 20-35% avhengig av inntekt</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Lønningsdag (valgfritt)</label>
+        <input type="number" class="form-control" id="payrollDay" placeholder="15" min="1" max="31">
+        <div class="form-hint">Hvilken dag i måneden du får utbetalt lønn (1-31)</div>
+      </div>
+    </div>
+
+    <!-- Step 6: Theme -->
+    <div class="onboarding-step" id="step6">
+      <div class="step-header">
+        <h1 class="step-title">Velg tema</h1>
+        <p class="step-subtitle">Tilpass utseendet til dine preferanser</p>
+      </div>
+
+      <div class="theme-options">
+        <label class="theme-option">
+          <input type="radio" name="theme" value="light">
+          <div class="theme-preview theme-preview-light">
+            <div class="theme-preview-header"></div>
+            <div class="theme-preview-content"></div>
+          </div>
+          <span>Lyst</span>
+        </label>
+        <label class="theme-option">
+          <input type="radio" name="theme" value="dark">
+          <div class="theme-preview theme-preview-dark">
+            <div class="theme-preview-header"></div>
+            <div class="theme-preview-content"></div>
+          </div>
+          <span>Mørkt</span>
+        </label>
+        <label class="theme-option">
+          <input type="radio" name="theme" value="system" checked>
+          <div class="theme-preview theme-preview-system">
+            <div class="theme-preview-header"></div>
+            <div class="theme-preview-content"></div>
+          </div>
+          <span>System</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Step 7: Done -->
+    <div class="onboarding-step" id="step7">
+      <div class="step-header">
+        <div class="completion-icon">
+          <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h1 class="step-title">Alt klart!</h1>
+        <p class="step-subtitle">Lønnsberegeneren din er nå konfigurert og klar til bruk. Velkommen ombord!</p>
+      </div>
+
+      <div class="info-box">
+        <div class="info-content">
+          <strong>Hva skjer nå?</strong><br>
+          Du blir sendt til dashbordet hvor du kan begynne å registrere vakter og følge med på inntektene dine.
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="onboarding-nav">
+      <button type="button" class="btn btn-secondary" id="backBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        Tilbake
+      </button>
+
+      <a href="#" class="skip-link" id="skipLink">Hopp over</a>
+
+      <button type="button" class="btn btn-primary" id="nextBtn">
+        Neste
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 6 15 12 9 18"></polyline>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Moved inline module to external file for CSP safety -->
+  <script type="module" src="/kalkulator/js/onboarding.js"></script>
+</body>
+</html>
