@@ -859,10 +859,17 @@ body:not(.skeleton-active) #app.animations-complete .skeleton {
   }
 }
 
-/* Ensure next payroll shimmer starts at top edge of its card space */
+/* Remove shimmer for Next Payroll: hide entirely during loading */
+body.skeleton-active #nextPayrollContent .skeleton,
 body.skeleton-active #nextPayrollCard .skeleton.skeleton-payroll {
-  margin-top: 0 !important;
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
+/* Also hide the whole payroll card while loading to avoid blank gap */
+body.skeleton-active .next-payroll-card { display: none !important; }
+/* And while dashboard cards are not yet loaded, keep payroll card hidden to prevent layout jumps */
+body:not(.dashboard-cards-loaded) .next-payroll-card { display: none !important; min-height: 0 !important; }
 
 /* Force the next-payroll container itself to align content to the top in shimmer */
 body.skeleton-active #nextPayrollCard {
