@@ -772,8 +772,8 @@ body:not(.skeleton-active) .skeleton {
   transition: none; /* No transitions - immediate appearance */
 }
 
-/* Ensure all skeletons are hidden when animations are complete */
-#app.animations-complete .skeleton {
+/* Ensure all skeletons are hidden when animations are complete (but only after skeletons are deactivated) */
+body:not(.skeleton-active) #app.animations-complete .skeleton {
   display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
@@ -816,6 +816,69 @@ body:not(.skeleton-active) .skeleton {
 .skeleton.skeleton-shift,
 .skeleton.skeleton-payroll {
   padding: 8px 0;
+}
+
+/* Align next-card shimmers with real content insets (beyond badge) */
+.next-shift-card .skeleton.skeleton-shift,
+.next-payroll-card .skeleton.skeleton-payroll {
+  /* Match card interior padding and extra left offset for badge */
+  padding: 18px 18px 18px 44px; /* Tuned inset to match live text */
+  position: absolute; /* Overlay to guarantee top alignment */
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+/* Match vertical line heights and spacing to real content */
+.next-shift-card .skeleton.skeleton-shift .skeleton-line:nth-child(1),
+.next-payroll-card .skeleton.skeleton-payroll .skeleton-line:nth-child(1) {
+  height: 22px; /* ~ line-height of 18px text */
+  border-radius: 11px;
+}
+.next-shift-card .skeleton.skeleton-shift .skeleton-line + .skeleton-line,
+.next-payroll-card .skeleton.skeleton-payroll .skeleton-line + .skeleton-line {
+  margin-top: 8px; /* Match .shift-info/.shift-amount-wrapper gap */
+}
+.next-shift-card .skeleton.skeleton-shift .skeleton-line:nth-child(2),
+.next-payroll-card .skeleton.skeleton-payroll .skeleton-line:nth-child(2) {
+  height: 18px; /* ~ line-height of small detail line */
+  border-radius: 9px;
+}
+
+@media (max-width: 480px) {
+  .next-shift-card .skeleton.skeleton-shift,
+  .next-payroll-card .skeleton.skeleton-payroll {
+    padding: 16px 16px 16px 44px; /* Slightly reduced inset on mobile */
+  }
+}
+
+@media (max-width: 360px) {
+  .next-shift-card .skeleton.skeleton-shift,
+  .next-payroll-card .skeleton.skeleton-payroll {
+    padding: 14px 14px 14px 42px; /* Slightly reduced inset on very small screens */
+  }
+}
+
+/* Ensure next payroll shimmer starts at top edge of its card space */
+body.skeleton-active #nextPayrollCard .skeleton.skeleton-payroll {
+  margin-top: 0 !important;
+}
+
+/* Force the next-payroll container itself to align content to the top in shimmer */
+body.skeleton-active #nextPayrollCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+body.skeleton-active #nextPayrollContent {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Ensure skeleton sits at the top of the card area during shimmer (no vertical centering) */
+body.skeleton-active #nextShiftContent,
+body.skeleton-active #nextPayrollContent {
+  justify-content: flex-start;
 }
 
 /* Add separation inside next cards so lines don't touch */
@@ -906,6 +969,21 @@ body.skeleton-active .profile-skeleton {
   opacity: 1;
   visibility: visible;
 }
+/* Hide next cards' real content while shimmering to avoid flashes */
+body.skeleton-active #nextShiftContent > :not(.skeleton),
+body.skeleton-active #nextPayrollContent > :not(.skeleton) {
+  display: none !important;
+}
+
+/* Preserve next cards' height until populated to avoid layout jumps */
+body.skeleton-active .next-shift-card,
+body:not(.dashboard-cards-loaded) .next-shift-card {
+  min-height: 80px; /* Match real .shift-item/.payroll-item min-height */
+}
+body.skeleton-active .next-payroll-card,
+body:not(.dashboard-cards-loaded) .next-payroll-card {
+  min-height: 80px; /* Match real .shift-item/.payroll-item min-height */
+}
 body.skeleton-active .user-profile-btn { 
   opacity: 0;
   visibility: hidden;
@@ -966,6 +1044,21 @@ body.skeleton-active .total-card .total-skeleton {
   display: flex; 
   opacity: 1;
   visibility: visible;
+}
+/* Hide next cards' real content while shimmering to avoid flashes */
+body.skeleton-active #nextShiftContent > :not(.skeleton),
+body.skeleton-active #nextPayrollContent > :not(.skeleton) {
+  display: none !important;
+}
+
+/* Preserve next cards' height until populated to avoid layout jumps */
+body.skeleton-active .next-shift-card,
+body:not(.dashboard-cards-loaded) .next-shift-card {
+  min-height: 96px;
+}
+body.skeleton-active .next-payroll-card,
+body:not(.dashboard-cards-loaded) .next-payroll-card {
+  min-height: 96px;
 }
 /* Preserve overall card height during shimmer to match final layout */
 body.skeleton-active .total-card,
@@ -2311,8 +2404,8 @@ body:not(.skeleton-active) .skeleton {
   transition: none; /* No transitions - immediate appearance */
 }
 
-/* Ensure all skeletons are hidden when animations are complete */
-#app.animations-complete .skeleton {
+/* Ensure all skeletons are hidden when animations are complete (but only after skeletons are deactivated) */
+body:not(.skeleton-active) #app.animations-complete .skeleton {
   display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
@@ -7237,6 +7330,7 @@ input:checked + .slider:before {
   gap: 6px;
   flex: 1;
   justify-content: center;
+  position: relative; /* Anchor shimmer overlay */
 }
 
 .next-payroll-content {
@@ -7245,6 +7339,7 @@ input:checked + .slider:before {
   gap: 6px;
   flex: 1;
   justify-content: center;
+  position: relative; /* Anchor shimmer overlay */
 }
 
 /* Style the shift-item when it's inside the next-shift-card */
