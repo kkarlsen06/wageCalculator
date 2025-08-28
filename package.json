@@ -8,13 +8,13 @@
   },
   "scripts": {
     "prebuild": "rm -rf dist",
-    "clean": "rm -rf dist",
     "build": "vite build",
     "dev": "vite",
-    "preview": "vite preview",
+    "preview": "vite preview --host",
     "dev:server": "npm --prefix server run dev:server",
-    "security:check": "scripts/security-check.sh"
+    "redev": "npm run build && npm run dev"
   },
+
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kkarlsen06/wageCalculator.git"
