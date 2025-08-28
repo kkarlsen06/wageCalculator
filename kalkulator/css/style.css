@@ -6836,6 +6836,12 @@ input:checked + .slider:before {
   gap: 1px;
 }
 
+/* In shift calendar, remove the empty top-left header cell to avoid shifting weekday labels */
+.shift-calendar .calendar-header::before {
+  content: none !important;
+  display: none !important;
+}
+
 .calendar-day-header {
   font-weight: 600;
   font-size: 12px;
