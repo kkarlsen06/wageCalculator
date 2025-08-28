@@ -3944,6 +3944,12 @@ export const app = {
             }
         }
 
+        // Mark total-card as populated so skeleton removal can wait for real data
+        const totalCard = document.querySelector('.total-card');
+        if (totalCard) {
+            totalCard.dataset.populated = '1';
+        }
+
         // Update header shift count
         const headerShiftCountEl = document.getElementById('headerShiftCount');
         if (headerShiftCountEl) {

@@ -583,13 +583,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   let appInitialized = false;
 
   async function checkAndRemoveSkeletons() {
-    // Progressive reveal: as soon as the app has initialized,
-    // reveal the UI and let sections populate independently.
-    if (appInitialized) {
-      // Small microtask delay to allow any first paint/update
-      await new Promise(resolve => setTimeout(resolve, 50));
-      await removeSkeletonsSmoothly();
-    }
+    // Only proceed when both app and profile are ready
+    if (!(appInitialized && profileInfoLoaded)) return;
+
+    // Wait until content has real data to avoid a flash of defaults
+    try {
+      await waitForContentReady();
+    } catch (_) { /* fall through on timeout */ }
+
+    // Small microtask delay to allow any first paint/update
+    await new Promise(resolve => setTimeout(resolve, 50));
+    await removeSkeletonsSmoothly();
   }
 
   // Wait for the app to be in a ready state
@@ -623,12 +627,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let elapsed = 0;
 
     while (elapsed < maxWaitTime) {
-      // Check if total amount has real data (not "0 kr")
-      const totalAmount = document.getElementById('totalAmount');
-      const hasRealTotalData = totalAmount &&
-        totalAmount.textContent &&
-        totalAmount.textContent !== '0 kr' &&
-        totalAmount.textContent !== '0';
+      // Check if total card has been populated by appLogic (works even if value is 0 kr)
+      const totalCard = document.querySelector('.total-card');
+      const hasRealTotalData = totalCard && totalCard.dataset.populated === '1';
 
       // Check if next shift content has real data (not skeleton or empty state)
       const nextShiftContent = document.getElementById('nextShiftContent');

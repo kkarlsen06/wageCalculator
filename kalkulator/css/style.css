@@ -714,6 +714,12 @@ body:not(.skeleton-active) .total-card .total-skeleton {
   .total-card .total-skeleton {
     padding: 14px 16px; /* Match mobile card padding */
   }
+  /* Match mobile typography metrics during shimmer */
+  body.skeleton-active .total-card,
+  body:not(.dashboard-cards-loaded) .total-card { min-height: 154px; }
+  .total-card .total-skeleton .skeleton-line:nth-child(1) { height: 14px; margin-bottom: 20px; }
+  .total-card .total-skeleton .skeleton-line:nth-child(2) { height: 53px; margin-bottom: 16px; }
+  .total-card .total-skeleton .skeleton-line:nth-child(3) { height: 20px; }
 }
 
 /* Extra small mobile devices */
@@ -863,15 +869,29 @@ body.skeleton-active .tab-bar-container {
 .tab-bar-skeleton {
   position: absolute;
   inset: 0;
+  /* Align skeleton overlay with container content area (exclude container padding/safe areas) */
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
   display: none;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  /* Match real tab bar padding on desktop */
+  padding: 4px;
+  /* Match the pill corner radius of the real tab bar */
+  border-radius: 20px;
+  overflow: hidden;
+  /* Show only the shimmer line; no container outline */
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  z-index: 1; /* Ensure skeleton overlays real tab bar */
 }
 
 .tab-bar-skeleton .skeleton-block {
   height: 44px;
-  border-radius: 12px;
+  /* Match the pill corner radius */
+  border-radius: 20px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -900,6 +920,7 @@ body.skeleton-active .tab-bar-skeleton {
 body.skeleton-active .tab-bar { 
   opacity: 0;
   visibility: hidden;
+  display: none !important; /* Fully remove from paint during shimmer */
   transition: none; /* No transitions - immediate appearance */
 }
 /* Render the actual tab bar but overlay a single long shimmer inside it */
@@ -928,12 +949,14 @@ body.skeleton-active .floating-action-bar-backdrop { display: none !important; }
 .tab-bar-skeleton::before {
   content: '';
   position: absolute;
+  /* Inside shimmer shorter than bar shimmer for button representation */
   left: 12px;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
   height: 28px; /* thinner shimmer line */
-  border-radius: 8px;
+  /* Match the pill corner radius */
+  border-radius: 20px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -944,6 +967,12 @@ body.skeleton-active .total-card .total-skeleton {
   opacity: 1;
   visibility: visible;
 }
+/* Preserve overall card height during shimmer to match final layout */
+body.skeleton-active .total-card,
+body:not(.dashboard-cards-loaded) .total-card {
+  min-height: 216px; /* approx: padding(60) + label(22) + gap(24) + amount(62) + gap(18) + secondary(30) */
+}
+/* Preserve overall card height during shimmer to match final layout */
 /* Hide total card real content completely during shimmer so skeleton can center */
 body.skeleton-active .total-card #totalAmount,
 body.skeleton-active .total-card #totalSecondaryInfo,
@@ -955,11 +984,10 @@ body.skeleton-active .total-card .total-label {
 
 /* Align total-card skeleton with real text positions */
 .total-card .total-skeleton {
-  display: grid;
-  grid-template-rows: auto auto auto;
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  row-gap: 10px;
   position: absolute; /* Position as overlay to prevent height changes */
   top: 0; /* Start from top of card */
   left: 0; /* Start from left of card */
@@ -969,25 +997,27 @@ body.skeleton-active .total-card .total-label {
   height: 100%; /* Full height */
   pointer-events: none;
   z-index: 1; /* Ensure skeleton is above content during loading */
-  /* Center the skeleton grid within the full card area */
+  /* Center the skeleton within the full card area */
   padding: 30px; /* Match card padding */
   box-sizing: border-box; /* Include padding in sizing */
 }
 /* Line 1: Brutto label replacement (longer to account for injected text) */
 .total-card .total-skeleton .skeleton-line:nth-child(1) {
-  height: 12px;
+  height: 22px; /* ~ line-height of 14px label text */
   width: 140px;
   border-radius: 6px;
+  margin-bottom: 24px; /* label->amount spacing (16) + amount top (8) */
 }
 /* Line 2: Main amount replacement (big, centered) */
 .total-card .total-skeleton .skeleton-line:nth-child(2) {
-  height: 40px; /* restore visual height */
+  height: 62px; /* ~ 3.5rem * 1.1 line-height */
   width: min(70%, 420px); /* slightly wider for balance */
   border-radius: 20px;
+  margin-bottom: 18px; /* amount bottom (8) + secondary top (10) */
 }
 /* Line 3: Secondary info (shorter) */
 .total-card .total-skeleton .skeleton-line:nth-child(3) {
-  height: 12px;
+  height: 29px; /* ~ line-height of 18px secondary text */
   width: min(45%, 300px);
   border-radius: 6px;
 }
@@ -999,7 +1029,7 @@ body.skeleton-active .total-card .total-label {
 
 /* Only show skeleton when skeleton-active class is present */
 body.skeleton-active .total-card .total-skeleton {
-  display: grid;
+  display: flex;
 }
 
 /* Month display skeleton rules - handled by earlier CSS */
@@ -2378,15 +2408,29 @@ body.skeleton-active .tab-bar-container {
 .tab-bar-skeleton {
   position: absolute;
   inset: 0;
+  /* Align skeleton overlay with container content area (exclude container padding/safe areas) */
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
   display: none;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  /* Match real tab bar padding on desktop */
+  padding: 4px;
+  /* Match the pill corner radius of the real tab bar */
+  border-radius: 20px;
+  overflow: hidden;
+  /* Show only the shimmer line; no container outline */
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  z-index: 1; /* Ensure skeleton overlays real tab bar */
 }
 
 .tab-bar-skeleton .skeleton-block {
   height: 44px;
-  border-radius: 12px;
+  /* Match the pill corner radius */
+  border-radius: 20px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -2412,9 +2456,14 @@ body.skeleton-active .tab-bar-skeleton {
   opacity: 1;
   visibility: visible;
 }
+/* Preserve layout height while the real tab bar is hidden */
+body.skeleton-active .tab-bar-container {
+  min-height: 48px; /* Match desktop min-height of real tab bar */
+}
 body.skeleton-active .tab-bar { 
   opacity: 0;
   visibility: hidden;
+  display: none !important; /* Fully remove from paint during shimmer */
   transition: none; /* No transitions - immediate appearance */
 }
 /* Render the actual tab bar but overlay a single long shimmer inside it */
@@ -2443,12 +2492,14 @@ body.skeleton-active .floating-action-bar-backdrop { display: none !important; }
 .tab-bar-skeleton::before {
   content: '';
   position: absolute;
+  /* Inside shimmer shorter than bar shimmer for button representation */
   left: 12px;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
   height: 28px; /* thinner shimmer line */
-  border-radius: 8px;
+  /* Match the pill corner radius */
+  border-radius: 20px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -2470,11 +2521,10 @@ body.skeleton-active .total-card .total-label {
 
 /* Align total-card skeleton with real text positions */
 .total-card .total-skeleton {
-  display: grid;
-  grid-template-rows: auto auto auto;
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  row-gap: 10px;
   position: absolute; /* Position as overlay to prevent height changes */
   top: 0; /* Start from top of card */
   left: 0; /* Start from left of card */
@@ -2484,25 +2534,27 @@ body.skeleton-active .total-card .total-label {
   height: 100%; /* Full height */
   pointer-events: none;
   z-index: 1; /* Ensure skeleton is above content during loading */
-  /* Center the skeleton grid within the full card area */
+  /* Center the skeleton within the full card area */
   padding: 30px; /* Match card padding */
   box-sizing: border-box; /* Include padding in sizing */
 }
 /* Line 1: Brutto label replacement (longer to account for injected text) */
 .total-card .total-skeleton .skeleton-line:nth-child(1) {
-  height: 12px;
+  height: 22px; /* ~ line-height of 14px label text */
   width: 140px;
   border-radius: 6px;
+  margin-bottom: 24px; /* label->amount spacing (16) + amount top (8) */
 }
 /* Line 2: Main amount replacement (big, centered) */
 .total-card .total-skeleton .skeleton-line:nth-child(2) {
-  height: 40px; /* restore visual height */
+  height: 62px; /* ~ 3.5rem * 1.1 line-height */
   width: min(70%, 420px); /* slightly wider for balance */
   border-radius: 20px;
+  margin-bottom: 18px; /* amount bottom (8) + secondary top (10) */
 }
 /* Line 3: Secondary info (shorter) */
 .total-card .total-skeleton .skeleton-line:nth-child(3) {
-  height: 12px;
+  height: 29px; /* ~ line-height of 18px secondary text */
   width: min(45%, 300px);
   border-radius: 6px;
 }
@@ -2514,7 +2566,7 @@ body.skeleton-active .total-card .total-label {
 
 /* Only show skeleton when skeleton-active class is present */
 body.skeleton-active .total-card .total-skeleton {
-  display: grid;
+  display: flex;
 }
 
 /* Month display skeleton rules - handled by earlier CSS */
@@ -12624,6 +12676,11 @@ input[type="file"].form-control:focus {
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 }
 
+/* Ensure active buttons inside the tab bar do not gain borders from generic tab styles */
+.tab-bar .tab-btn.active {
+  border: none;
+}
+
 /* Tab icon badge - similar to ChatGPT icon badge */
 .tab-icon-badge {
   width: 24px;
@@ -12670,17 +12727,34 @@ input[type="file"].form-control:focus {
   }
 
   .tab-bar {
-    padding: 3px; /* Minimal padding to show mobile pill curves */
+    /* Increase horizontal padding to match effective vertical spacing */
+    padding: 3px 6px;
     gap: 1px;
     min-height: 44px; /* Reduced mobile height for pill appearance */
-    border-radius: 18px; /* Proportional pill radius for mobile */
+    /* Keep desktop pill radius on mobile for visual consistency */
+    border-radius: 20px;
+  }
+
+  /* Sync skeleton overlay spacing to real tab bar on mobile */
+  .tab-bar-skeleton {
+    padding: 3px 6px;
+  }
+  .tab-bar-skeleton::before {
+    /* Inner shimmer with extra inset to represent buttons */
+    left: 12px;
+    right: 12px;
+  }
+  /* Preserve layout height when real tab bar is hidden */
+  body.skeleton-active .tab-bar-container {
+    min-height: 44px; /* Match mobile min-height of real tab bar */
   }
 
   .tab-btn {
     padding: 4px 8px; /* Reduced for mobile pill proportions */
     gap: 4px;
     min-height: 32px; /* Reduced to fit mobile pill height */
-    border-radius: 15px; /* Slightly smaller than mobile container to show pill curves */
+    /* Match desktop button radius to align with container */
+    border-radius: 16px;
   }
 
   .tab-icon-badge {
@@ -12715,8 +12789,24 @@ input[type="file"].form-control:focus {
 
   .tab-bar {
     min-height: 40px;
-    padding: 2px; /* Minimal padding to show very small pill curves */
-    border-radius: 16px; /* Proportional pill radius for very small screens */
+    /* Increase horizontal padding to match effective vertical spacing */
+    padding: 2px 6px;
+    /* Keep desktop pill radius even on very small screens */
+    border-radius: 20px;
+  }
+
+  /* Sync skeleton overlay spacing to real tab bar on extra small screens */
+  .tab-bar-skeleton {
+    padding: 2px 6px;
+  }
+  .tab-bar-skeleton::before {
+    /* Inner shimmer with extra inset to represent buttons */
+    left: 12px;
+    right: 12px;
+  }
+  /* Preserve layout height when real tab bar is hidden */
+  body.skeleton-active .tab-bar-container {
+    min-height: 40px; /* Match extra small min-height of real tab bar */
   }
 
   .tab-btn {
@@ -12724,7 +12814,8 @@ input[type="file"].form-control:focus {
     gap: 3px;
     flex-direction: row; /* Changed from column to row for horizontal layout */
     min-height: 28px; /* Reduced to fit very small pill height */
-    border-radius: 13px; /* Slightly smaller than extra small container to show pill curves */
+    /* Match desktop button radius for consistency */
+    border-radius: 16px;
   }
 
   .tab-icon-badge {
