@@ -742,10 +742,10 @@ export class EmployeeCarousel {
         // Only show arrows on desktop
         const isDesktop = window.innerWidth > 768;
         if (!isDesktop) {
-            this.leftArrow.style.display = 'none';
-            this.rightArrow.style.display = 'none';
-            if (this.leftEdgeBlur) this.leftEdgeBlur.style.display = 'none';
-            if (this.rightEdgeBlur) this.rightEdgeBlur.style.display = 'none';
+            this.leftArrow?.classList.add('hidden');
+            this.rightArrow?.classList.add('hidden');
+            if (this.leftEdgeBlur) this.leftEdgeBlur.classList.add('hidden');
+            if (this.rightEdgeBlur) this.rightEdgeBlur.classList.add('hidden');
             return;
         }
         
@@ -755,13 +755,13 @@ export class EmployeeCarousel {
         
         // Show/hide left arrow
         const showLeft = scrollLeft > 5;
-        this.leftArrow.style.display = showLeft ? 'flex' : 'none';
-        if (this.leftEdgeBlur) this.leftEdgeBlur.style.display = showLeft ? 'block' : 'none';
+        this.leftArrow?.classList[showLeft ? 'remove' : 'add']('hidden');
+        if (this.leftEdgeBlur) this.leftEdgeBlur.classList[showLeft ? 'remove' : 'add']('hidden');
         
         // Show/hide right arrow
         const showRight = scrollLeft < scrollWidth - clientWidth - 5;
-        this.rightArrow.style.display = showRight ? 'flex' : 'none';
-        if (this.rightEdgeBlur) this.rightEdgeBlur.style.display = showRight ? 'block' : 'none';
+        this.rightArrow?.classList[showRight ? 'remove' : 'add']('hidden');
+        if (this.rightEdgeBlur) this.rightEdgeBlur.classList[showRight ? 'remove' : 'add']('hidden');
     }
 
     /**

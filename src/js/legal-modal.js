@@ -273,10 +273,13 @@ class LegalModal {
 
     // Method to show without accept/decline buttons (for info display)
     showInfo() {
+        const show = (el) => el && el.classList.remove('hidden');
+        const hide = (el) => el && el.classList.add('hidden');
+        const toggleHidden = (el, on) => el && el.classList[on ? 'add' : 'remove']('hidden');
         console.log('showInfo called');
         const footer = this.modal.querySelector('.legal-modal-footer');
         if (footer) {
-            footer.style.display = 'none';
+            hide(footer);
             console.log('Footer hidden in showInfo');
         }
         this.open();
@@ -284,9 +287,12 @@ class LegalModal {
 
     // Method to show with accept/decline buttons (for consent)
     showConsent() {
+        const show = (el) => el && el.classList.remove('hidden');
+        const hide = (el) => el && el.classList.add('hidden');
+        const toggleHidden = (el, on) => el && el.classList[on ? 'add' : 'remove']('hidden');
         const footer = this.modal.querySelector('.legal-modal-footer');
         if (footer) {
-            footer.style.display = 'flex';
+            show(footer);
         }
         this.open();
     }
@@ -298,7 +304,8 @@ class LegalModal {
         // Hide the footer with accept/decline buttons for landing page
         const footer = this.modal.querySelector('.legal-modal-footer');
         if (footer) {
-            footer.style.display = 'none';
+            const hide = (el) => el && el.classList.add('hidden');
+            hide(footer);
             console.log('Footer hidden');
         }
         

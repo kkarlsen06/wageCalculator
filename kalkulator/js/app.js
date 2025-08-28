@@ -5,6 +5,9 @@ const API_BASE = window.CONFIG?.apiBase || '/api';
 // app-ready/animations-complete logic below.
 
 import { supabase } from '../../src/supabase-client.js'
+export const show = (el) => el && el.classList.remove('hidden');
+export const hide = (el) => el && el.classList.add('hidden');
+export const toggleHidden = (el, on) => el && el.classList[on ? 'add' : 'remove']('hidden');
 // then just use supabase directly
 
 // DEBUG: check client
@@ -539,17 +542,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (avatarUrl) {
           // Attach robust handlers before setting src
           topbarImg.onload = () => {
-            topbarImg.style.display = 'block';
-            if (profileIcon) profileIcon.style.display = 'none';
+            show(topbarImg);
+            if (profileIcon) hide(profileIcon);
           };
           topbarImg.onerror = () => {
-            topbarImg.style.display = 'none';
-            if (profileIcon) profileIcon.style.display = 'block';
+            hide(topbarImg);
+            if (profileIcon) show(profileIcon);
           };
           topbarImg.src = avatarUrl;
         } else {
-          topbarImg.style.display = 'none';
-          if (profileIcon) profileIcon.style.display = 'block';
+          hide(topbarImg);
+          if (profileIcon) show(profileIcon);
         }
       }
     } catch (error) {
@@ -880,6 +883,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const app = appModule?.app;
   window.app = app;
 
+  // Last UI-bindingene etter at window.app eksisterer
+  await import('./index-bindings.js');
 
   // React to subscription changes by toggling visibility of the Ansatte tab
   try {
@@ -1141,7 +1146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
          for (const [modalId, closeAction] of Object.entries(modalActions)) {
            const modal = document.getElementById(modalId);
-           if (modal && modal.style.display === 'block') {
+           if (modal && !modal.classList.contains('hidden')) {
              closeAction();
              break;
            }
@@ -1163,7 +1168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (snapContainer && floatingBar && floatingBarBackdrop && shiftSection) {
     // Initially hide the floating bar and backdrop
-    floatingBar.style.display = 'none';
+    if (floatingBar) floatingBar.classList.add('hidden');
     floatingBar.style.opacity = '0';
     floatingBarBackdrop.style.opacity = '0';
 
@@ -1188,7 +1193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Show with fade in animation
         isVisible = true;
         clearTimeout(animationTimeout);
-        floatingBar.style.display = 'flex';
+        if (floatingBar) floatingBar.classList.remove('hidden');
         floatingBar.style.animation = 'fadeInUp 0.3s ease-out forwards';
         floatingBar.style.opacity = '1';
         floatingBarBackdrop.style.opacity = '1';
@@ -1203,7 +1208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Hide completely after animation completes
         animationTimeout = setTimeout(() => {
           if (!isVisible) {
-            floatingBar.style.display = 'none';
+            if (floatingBar) floatingBar.classList.add('hidden');
           }
         }, 300);
       }
@@ -1390,8 +1395,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyChatboxView();
 
     chatElements.pill.classList.add('expanded');
-    chatElements.expandedContent.style.display = 'block';
-    chatElements.close.style.display = 'flex';
+    chatElements.expandedContent.classList.remove('hidden');
+    chatElements.close.classList.remove('hidden');
 
     // Add class to body for CSS targeting (fallback for browsers without :has() support)
     document.body.classList.add('chatbox-expanded-active');
@@ -1425,8 +1430,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     restoreNormalDashboardView();
 
     chatElements.pill.classList.remove('expanded');
-    chatElements.expandedContent.style.display = 'none';
-    chatElements.close.style.display = 'none';
+    chatElements.expandedContent.classList.add('hidden');
+    chatElements.close.classList.add('hidden');
     // Pill text is always visible - no need to hide/show
 
     // Remove class from body
@@ -1478,21 +1483,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const monthNav = document.querySelector('.dashboard-month-nav');
     const floatingActionBar = document.querySelector('.floating-action-bar');
 
-    if (totalCard) totalCard.style.display = 'none';
-    if (nextShiftCard) nextShiftCard.style.display = 'none';
-    if (nextPayrollCard) nextPayrollCard.style.display = 'none';
+    if (totalCard) totalCard.classList.add('hidden');
+    if (nextShiftCard) nextShiftCard.classList.add('hidden');
+    if (nextPayrollCard) nextPayrollCard.classList.add('hidden');
     // Completely hide month navigation - multiple approaches to ensure it's gone
     if (monthNav) {
-      monthNav.style.display = 'none';
+      if (monthNav) monthNav.classList.add('hidden');
       monthNav.style.visibility = 'hidden';
       monthNav.style.height = '0';
       monthNav.style.margin = '0';
       monthNav.style.padding = '0';
       monthNav.style.opacity = '0';
     }
-    // Keep shifts section visible (similar to stats view) - remove the line that was hiding it
-    // if (shiftSection) shiftSection.style.display = 'none'; // REMOVED: Let shifts section remain visible
-    if (floatingActionBar) floatingActionBar.style.display = 'none'; // Hide floating action bar
+    // Keep shifts section visible (similar to stats view) - previous inline display toggle removed
+    if (floatingActionBar) floatingActionBar.classList.add('hidden'); // Hide floating action bar
 
     // Move the chatbox to dashboard content if not already there
     if (chatboxContainer && dashboardContent && !dashboardContent.contains(chatboxContainer)) {
@@ -1522,12 +1526,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const monthNav = document.querySelector('.dashboard-month-nav');
     const floatingActionBar = document.querySelector('.floating-action-bar');
 
-    if (totalCard) totalCard.style.display = '';
-    if (nextShiftCard) nextShiftCard.style.display = '';
-    if (nextPayrollCard) nextPayrollCard.style.display = '';
+    if (totalCard) totalCard.classList.remove('hidden');
+    if (nextShiftCard) nextShiftCard.classList.remove('hidden');
+    if (nextPayrollCard) nextPayrollCard.classList.remove('hidden');
     // Completely restore month navigation - clear ALL inline styles
     if (monthNav) {
-      monthNav.style.display = '';
+      if (monthNav) monthNav.classList.remove('hidden');
       monthNav.style.visibility = '';
       monthNav.style.height = '';
       monthNav.style.margin = '';
@@ -1537,9 +1541,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       monthNav.style.position = '';
       monthNav.style.left = '';
     }
-    // Shifts section was never hidden, so no need to restore it
-    // if (shiftSection) shiftSection.style.display = ''; // REMOVED: shifts section was never hidden
-    if (floatingActionBar) floatingActionBar.style.display = ''; // Restore floating action bar
+    // Shifts section was never hidden, so no need to restore it (inline display toggles removed)
+    if (floatingActionBar) floatingActionBar.classList.remove('hidden'); // Restore floating action bar
 
     // Move the chatbox back to its original position
     const dashboardChatboxContainer = document.querySelector('.dashboard-chatbox-container');
@@ -2126,10 +2129,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       chatElements.pill.classList.remove('expanded');
     }
     if (chatElements.expandedContent) {
-      chatElements.expandedContent.style.display = 'none';
+      chatElements.expandedContent.classList.add('hidden');
     }
     if (chatElements.close) {
-      chatElements.close.style.display = 'none';
+      chatElements.close.classList.add('hidden');
     }
     // Pill text is always visible - no need to manipulate display
   }

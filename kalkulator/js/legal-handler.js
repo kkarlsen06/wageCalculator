@@ -162,17 +162,20 @@ class LegalHandler {
         // Show error message
         const signupMsg = document.getElementById('signup-msg');
         if (signupMsg) {
+            const show = (el) => el && el.classList.remove('hidden');
+            const hide = (el) => el && el.classList.add('hidden');
+            const toggleHidden = (el, on) => el && el.classList[on ? 'add' : 'remove']('hidden');
             if (!this.hasViewedTerms) {
                 signupMsg.textContent = 'Vennligst les vilkår og betingelser ved å klikke på avkrysningsboksen.';
             } else {
                 signupMsg.textContent = 'Du må godta vilkår og betingelser for å opprette en konto.';
             }
-            signupMsg.style.display = 'block';
+            show(signupMsg);
             
             // Clear message after 5 seconds
             setTimeout(() => {
                 signupMsg.textContent = '';
-                signupMsg.style.display = 'none';
+                hide(signupMsg);
             }, 5000);
         }
 

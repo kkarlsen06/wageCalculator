@@ -179,9 +179,12 @@ export class SubscriptionModal {
     this.earlyUserSubscribedEl = modal.querySelector('#earlyUserSubscribedThanks');
 
     // Initially show loading state, hide content and footer
-    if (this.loadingEl) this.loadingEl.style.display = 'flex';
-    if (this.contentEl) this.contentEl.style.display = 'none';
-    if (this.footerEl) this.footerEl.style.display = 'none';
+    const show = (el) => el && el.classList.remove('hidden');
+    const hide = (el) => el && el.classList.add('hidden');
+    const toggleHidden = (el, on) => el && el.classList[on ? 'add' : 'remove']('hidden');
+    if (this.loadingEl) show(this.loadingEl);
+    if (this.contentEl) hide(this.contentEl);
+    if (this.footerEl) hide(this.footerEl);
 
     this.proBtn?.addEventListener('click', async () => {
       if (!window.startCheckout || !this.proBtn) return;
@@ -262,11 +265,11 @@ export class SubscriptionModal {
     // Hide floating action bar if present
     const floatingBar = document.querySelector('.floating-action-bar');
     const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
-    if (floatingBar) floatingBar.style.display = 'none';
-    if (floatingBarBackdrop) floatingBarBackdrop.style.display = 'none';
+    if (floatingBar) floatingBar.classList.add('hidden');
+    if (floatingBarBackdrop) floatingBarBackdrop.classList.add('hidden');
 
     // Show modal centered like other modals
-    this.modal.style.display = 'flex';
+    this.modal.classList.remove('hidden');
     this.modal.classList.add('active');
 
     // Load subscription info first to get accurate profile data
@@ -281,12 +284,12 @@ export class SubscriptionModal {
   hide() {
     if (!this.modal) return;
     this.modal.classList.remove('active');
-    this.modal.style.display = 'none';
+    this.modal.classList.add('hidden');
     // Restore floating action bar
     const floatingBar = document.querySelector('.floating-action-bar');
     const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
-    if (floatingBar) floatingBar.style.display = '';
-    if (floatingBarBackdrop) floatingBarBackdrop.style.display = '';
+    if (floatingBar) floatingBar.classList.remove('hidden');
+    if (floatingBarBackdrop) floatingBarBackdrop.classList.remove('hidden');
   }
 
   async showContent(minDelay = 350) {
@@ -303,15 +306,9 @@ export class SubscriptionModal {
     }
     
     // Hide loading and show content with smooth transition
-    if (this.loadingEl) {
-      this.loadingEl.style.display = 'none';
-    }
-    if (this.contentEl) {
-      this.contentEl.style.display = 'block';
-    }
-    if (this.footerEl) {
-      this.footerEl.style.display = 'block';
-    }
+    if (this.loadingEl) this.loadingEl.classList.add('hidden');
+    if (this.contentEl) this.contentEl.classList.remove('hidden');
+    if (this.footerEl) this.footerEl.classList.remove('hidden');
   }
 
   async updateFromGlobalState() {
@@ -335,20 +332,20 @@ export class SubscriptionModal {
         if (this.planEl) this.planEl.textContent = '';
         
         // Force hide all other messages and show only the early user appreciation
-        if (this.thanksEl) this.thanksEl.style.display = 'none';
+        if (this.thanksEl) this.thanksEl.classList.add('hidden');
         if (this.earlyUserSubscribedEl) {
           console.log('[subscription modal] updateFromGlobalState: FORCE hiding earlyUserSubscribedEl');
-          this.earlyUserSubscribedEl.style.display = 'none';
+          this.earlyUserSubscribedEl.classList.add('hidden');
         }
         if (this.earlyUserEl) {
           console.log('[subscription modal] updateFromGlobalState: Setting earlyUserEl to flex');
-          this.earlyUserEl.style.display = 'flex';
+          this.earlyUserEl.classList.remove('hidden');
         }
         
-        if (this.plansEl) this.plansEl.style.display = 'none';
-        if (this.manageBtn) this.manageBtn.style.display = 'none';
-        if (this.proBtn) this.proBtn.style.display = '';
-        if (this.maxBtn) this.maxBtn.style.display = '';
+        if (this.plansEl) this.plansEl.classList.add('hidden');
+        if (this.manageBtn) this.manageBtn.classList.add('hidden');
+        if (this.proBtn) this.proBtn.classList.remove('hidden');
+        if (this.maxBtn) this.maxBtn.classList.remove('hidden');
         if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
         this.currentTier = 'free';
         this.isActive = true;
@@ -359,13 +356,13 @@ export class SubscriptionModal {
       if (this.statusEl) this.statusEl.textContent = 'Gratis plan';
       if (this.periodEl) this.periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';
       if (this.planEl) this.planEl.textContent = 'Se abonnementene nedenfor. Abonner for tilgang til flere funksjoner!';
-      if (this.thanksEl) this.thanksEl.style.display = 'none';
-      if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
-      if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
-      if (this.plansEl) this.plansEl.style.display = 'block';
-      if (this.manageBtn) this.manageBtn.style.display = 'none';
-      if (this.proBtn) this.proBtn.style.display = '';
-      if (this.maxBtn) this.maxBtn.style.display = '';
+      if (this.thanksEl) this.thanksEl.classList.add('hidden');
+      if (this.earlyUserEl) this.earlyUserEl.classList.add('hidden');
+      if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.classList.add('hidden');
+      if (this.plansEl) this.plansEl.classList.remove('hidden');
+      if (this.manageBtn) this.manageBtn.classList.add('hidden');
+      if (this.proBtn) this.proBtn.classList.remove('hidden');
+      if (this.maxBtn) this.maxBtn.classList.remove('hidden');
       if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
       this.currentTier = 'free';
       this.isActive = true;
@@ -393,42 +390,42 @@ export class SubscriptionModal {
     const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
     
     // Always hide all first to ensure mutual exclusivity
-    if (this.thanksEl) this.thanksEl.style.display = 'none';
-    if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
-    if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
+    if (this.thanksEl) this.thanksEl.classList.add('hidden');
+    if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.classList.add('hidden');
+    if (this.earlyUserEl) this.earlyUserEl.classList.add('hidden');
     
     // Then show the appropriate one
     if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
       console.log('[subscription modal] updateFromGlobalState: Showing earlyUserSubscribedEl', { beforePaywall, isActive, tier });
-      this.earlyUserSubscribedEl.style.display = 'flex';
+      this.earlyUserSubscribedEl.classList.remove('hidden');
     } else if (showRegularThanks && this.thanksEl) {
       console.log('[subscription modal] updateFromGlobalState: Showing regular thanks', { beforePaywall, isActive, tier });
-      this.thanksEl.style.display = 'flex';
+      this.thanksEl.classList.remove('hidden');
     }
-    if (this.plansEl) this.plansEl.style.display = isActive && tier !== 'free' ? 'none' : 'block';
+    if (this.plansEl) this.plansEl.classList[isActive && tier !== 'free' ? 'add' : 'remove']('hidden');
     if (this.statusIcon) this.statusIcon.style.color = isActive ? 'var(--success)' : 'var(--text-secondary)';
 
     if (!isActive) {
-      if (this.manageBtn) this.manageBtn.style.display = 'none';
-      if (this.proBtn) this.proBtn.style.display = '';
-      if (this.maxBtn) this.maxBtn.style.display = '';
+      if (this.manageBtn) this.manageBtn.classList.add('hidden');
+      if (this.proBtn) this.proBtn.classList.remove('hidden');
+      if (this.maxBtn) this.maxBtn.classList.remove('hidden');
     } else if (tier === 'free') {
       // Free plan users can upgrade to either Pro or Enterprise
-      if (this.manageBtn) this.manageBtn.style.display = 'none';
-      if (this.proBtn) this.proBtn.style.display = '';
-      if (this.maxBtn) this.maxBtn.style.display = '';
+      if (this.manageBtn) this.manageBtn.classList.add('hidden');
+      if (this.proBtn) this.proBtn.classList.remove('hidden');
+      if (this.maxBtn) this.maxBtn.classList.remove('hidden');
     } else if (tier === 'pro') {
-      if (this.manageBtn) this.manageBtn.style.display = '';
-      if (this.proBtn) this.proBtn.style.display = 'none';
-      if (this.maxBtn) this.maxBtn.style.display = '';
+      if (this.manageBtn) this.manageBtn.classList.remove('hidden');
+      if (this.proBtn) this.proBtn.classList.add('hidden');
+      if (this.maxBtn) this.maxBtn.classList.remove('hidden');
     } else if (tier === 'max') {
-      if (this.manageBtn) this.manageBtn.style.display = '';
-      if (this.proBtn) this.proBtn.style.display = 'none';
-      if (this.maxBtn) this.maxBtn.style.display = 'none';
+      if (this.manageBtn) this.manageBtn.classList.remove('hidden');
+      if (this.proBtn) this.proBtn.classList.add('hidden');
+      if (this.maxBtn) this.maxBtn.classList.add('hidden');
     } else {
-      if (this.manageBtn) this.manageBtn.style.display = '';
-      if (this.proBtn) this.proBtn.style.display = 'none';
-      if (this.maxBtn) this.maxBtn.style.display = 'none';
+      if (this.manageBtn) this.manageBtn.classList.remove('hidden');
+      if (this.proBtn) this.proBtn.classList.add('hidden');
+      if (this.maxBtn) this.maxBtn.classList.add('hidden');
     }
   }
 
@@ -492,20 +489,20 @@ export class SubscriptionModal {
           if (this.planEl) this.planEl.textContent = '';
           
           // Hide all other messages and show only the early user appreciation
-          if (this.thanksEl) this.thanksEl.style.display = 'none';
+          if (this.thanksEl) this.thanksEl.classList.add('hidden');
           if (this.earlyUserSubscribedEl) {
             console.log('[subscription modal] FORCE hiding earlyUserSubscribedEl (should not show for non-subscribers)');
-            this.earlyUserSubscribedEl.style.display = 'none';
+            this.earlyUserSubscribedEl.classList.add('hidden');
           }
           if (this.earlyUserEl) {
             console.log('[subscription modal] Setting earlyUserEl to flex');
-            this.earlyUserEl.style.display = 'flex';
+            this.earlyUserEl.classList.remove('hidden');
           }
           
-          if (this.plansEl) this.plansEl.style.display = 'none';
-          if (this.manageBtn) this.manageBtn.style.display = 'none';
-          if (this.proBtn) this.proBtn.style.display = '';
-          if (this.maxBtn) this.maxBtn.style.display = '';
+          if (this.plansEl) this.plansEl.classList.add('hidden');
+          if (this.manageBtn) this.manageBtn.classList.add('hidden');
+          if (this.proBtn) this.proBtn.classList.remove('hidden');
+          if (this.maxBtn) this.maxBtn.classList.remove('hidden');
           if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
           return;
         }
@@ -514,13 +511,13 @@ export class SubscriptionModal {
         if (this.statusEl) this.statusEl.textContent = 'Gratis plan';
         if (this.periodEl) this.periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';
         if (this.planEl) this.planEl.textContent = 'Se abonnementene nedenfor. Abonner for tilgang til flere funksjoner!';
-        if (this.thanksEl) this.thanksEl.style.display = 'none';
-        if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
-        if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
-        if (this.plansEl) this.plansEl.style.display = 'block';
-        if (this.manageBtn) this.manageBtn.style.display = 'none';
-        if (this.proBtn) this.proBtn.style.display = '';
-        if (this.maxBtn) this.maxBtn.style.display = '';
+        if (this.thanksEl) this.thanksEl.classList.add('hidden');
+        if (this.earlyUserEl) this.earlyUserEl.classList.add('hidden');
+        if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.classList.add('hidden');
+        if (this.plansEl) this.plansEl.classList.remove('hidden');
+        if (this.manageBtn) this.manageBtn.classList.add('hidden');
+        if (this.proBtn) this.proBtn.classList.remove('hidden');
+        if (this.maxBtn) this.maxBtn.classList.remove('hidden');
         if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
         return;
       }
@@ -563,17 +560,17 @@ export class SubscriptionModal {
       const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
       
       // Always hide all first to ensure mutual exclusivity
-      if (this.thanksEl) this.thanksEl.style.display = 'none';
-      if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
-      if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
+      if (this.thanksEl) this.thanksEl.classList.add('hidden');
+      if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.classList.add('hidden');
+      if (this.earlyUserEl) this.earlyUserEl.classList.add('hidden');
       
       // Then show the appropriate one
       if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
         console.log('[subscription modal] loadSubscription: Showing earlyUserSubscribedEl', { beforePaywall, isActive, tier });
-        this.earlyUserSubscribedEl.style.display = 'flex';
+        this.earlyUserSubscribedEl.classList.remove('hidden');
       } else if (showRegularThanks && this.thanksEl) {
         console.log('[subscription modal] loadSubscription: Showing regular thanks', { beforePaywall, isActive, tier });
-        this.thanksEl.style.display = 'flex';
+        this.thanksEl.classList.remove('hidden');
       } else {
         console.log('[subscription modal] loadSubscription: NO MESSAGE SHOWN');
         console.log('  showEarlyUserSubscribedMessage:', showEarlyUserSubscribedMessage);
@@ -597,31 +594,31 @@ export class SubscriptionModal {
       
       if (!isActive) {
         console.log('[subscription modal] Not active - showing upgrade buttons');
-        if (this.manageBtn) this.manageBtn.style.display = 'none';
-        if (this.proBtn) this.proBtn.style.display = '';
-        if (this.maxBtn) this.maxBtn.style.display = '';
+        if (this.manageBtn) this.manageBtn.classList.add('hidden');
+        if (this.proBtn) this.proBtn.classList.remove('hidden');
+        if (this.maxBtn) this.maxBtn.classList.remove('hidden');
       } else if (tier === 'free') {
         console.log('[subscription modal] Active free tier - showing upgrade buttons');
         // Free plan users can upgrade to either Pro or Enterprise
-        if (this.manageBtn) this.manageBtn.style.display = 'none';
-        if (this.proBtn) this.proBtn.style.display = '';
-        if (this.maxBtn) this.maxBtn.style.display = '';
+        if (this.manageBtn) this.manageBtn.classList.add('hidden');
+        if (this.proBtn) this.proBtn.classList.remove('hidden');
+        if (this.maxBtn) this.maxBtn.classList.remove('hidden');
       } else if (tier === 'pro') {
         console.log('[subscription modal] Active pro tier - showing manage + max upgrade');
-        if (this.manageBtn) this.manageBtn.style.display = '';
-        if (this.proBtn) this.proBtn.style.display = 'none';
-        if (this.maxBtn) this.maxBtn.style.display = '';
+        if (this.manageBtn) this.manageBtn.classList.remove('hidden');
+        if (this.proBtn) this.proBtn.classList.add('hidden');
+        if (this.maxBtn) this.maxBtn.classList.remove('hidden');
       } else if (tier === 'max') {
         console.log('[subscription modal] Active max tier - showing manage only');
-        if (this.manageBtn) this.manageBtn.style.display = '';
-        if (this.proBtn) this.proBtn.style.display = 'none';
-        if (this.maxBtn) this.maxBtn.style.display = 'none';
+        if (this.manageBtn) this.manageBtn.classList.remove('hidden');
+        if (this.proBtn) this.proBtn.classList.add('hidden');
+        if (this.maxBtn) this.maxBtn.classList.add('hidden');
       } else {
         console.log('[subscription modal] Active unknown tier - showing manage only');
         // Active but unknown tier: default to manage only
-        if (this.manageBtn) this.manageBtn.style.display = '';
-        if (this.proBtn) this.proBtn.style.display = 'none';
-        if (this.maxBtn) this.maxBtn.style.display = 'none';
+        if (this.manageBtn) this.manageBtn.classList.remove('hidden');
+        if (this.proBtn) this.proBtn.classList.add('hidden');
+        if (this.maxBtn) this.maxBtn.classList.add('hidden');
       }
     } catch (e) {
       console.error('[subscription] exception:', e);

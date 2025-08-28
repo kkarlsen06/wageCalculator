@@ -4,6 +4,10 @@ const API_BASE = window.CONFIG?.apiBase || '/api';
 // Initialize Supabase client when DOM is loaded
 
 import { supabase } from '../../src/supabase-client.js'
+// Helpers for class-based toggling
+export const show = (el) => el && el.classList.remove('hidden');
+export const hide = (el) => el && el.classList.add('hidden');
+export const toggleHidden = (el, on) => el && el.classList[on ? 'add' : 'remove']('hidden');
 import { signInWithGoogle } from './auth-google.js'
 const supa = supabase;
 window.supa = supa;
@@ -286,25 +290,25 @@ async function handleGoogleSignIn() {
 }
 
 function showSignupForm() {
-  window.authElements.authBox.style.display = "none";
-  window.authElements.signupCard.style.display = "flex";
-  window.authElements.resetForm.style.display = "none";
+  hide(window.authElements.authBox);
+  show(window.authElements.signupCard);
+  hide(window.authElements.resetForm);
 }
 
 function showLoginForm() {
-  window.authElements.authBox.style.display = "flex";
-  window.authElements.signupCard.style.display = "none";
-  window.authElements.resetForm.style.display = "none";
-  window.authElements.completeProfileCard.style.display = "none";
+  show(window.authElements.authBox);
+  hide(window.authElements.signupCard);
+  hide(window.authElements.resetForm);
+  hide(window.authElements.completeProfileCard);
 }
 
 function showResetForm() {
-  window.authElements.authBox.style.display = "none";
-  window.authElements.signupCard.style.display = "none";
-  window.authElements.resetForm.style.display = "flex";
-  window.authElements.resetStep1.style.display = "block";
-  window.authElements.resetStep2.style.display = "none";
-  window.authElements.completeProfileCard.style.display = "none";
+  hide(window.authElements.authBox);
+  hide(window.authElements.signupCard);
+  show(window.authElements.resetForm);
+  show(window.authElements.resetStep1);
+  hide(window.authElements.resetStep2);
+  hide(window.authElements.completeProfileCard);
   
   // Clear any messages and reset form
   const resetMsg = document.getElementById('reset-msg');
@@ -313,16 +317,16 @@ function showResetForm() {
 }
 
 function showResetStep1() {
-  window.authElements.resetStep1.style.display = "block";
-  window.authElements.resetStep2.style.display = "none";
+  show(window.authElements.resetStep1);
+  hide(window.authElements.resetStep2);
   // Clear step 2 inputs
   if (window.authElements.resetCodeInp) window.authElements.resetCodeInp.value = '';
   if (window.authElements.resetPasswordInp) window.authElements.resetPasswordInp.value = '';
 }
 
 function showResetStep2() {
-  window.authElements.resetStep1.style.display = "none";
-  window.authElements.resetStep2.style.display = "block";
+  hide(window.authElements.resetStep1);
+  show(window.authElements.resetStep2);
   // Focus the code input
   if (window.authElements.resetCodeInp) {
     setTimeout(() => window.authElements.resetCodeInp.focus(), 100);
@@ -446,10 +450,10 @@ async function checkAndShowProfileCompletion() {
 }
 
 function showProfileCompletionForm() {
-  window.authElements.authBox.style.display = "none";
-  window.authElements.signupCard.style.display = "none";
-  window.authElements.forgotCard.style.display = "none";
-  window.authElements.completeProfileCard.style.display = "flex";
+  hide(window.authElements.authBox);
+  hide(window.authElements.signupCard);
+  hide(window.authElements.forgotCard);
+  show(window.authElements.completeProfileCard);
 }
 
 async function completeProfile() {
@@ -675,8 +679,8 @@ export async function verifyCodeAndSetPassword(email, code, newPassword) {
     // Toggle UI back to login:
     const sectionLogin = document.getElementById('auth-box');
     const sectionReset = document.getElementById('reset-form');
-    if (sectionReset) sectionReset.style.display = 'none';
-    if (sectionLogin) sectionLogin.style.display = 'flex';
+    if (sectionReset) hide(sectionReset);
+    if (sectionLogin) show(sectionLogin);
     return true;
   } catch (e) {
     if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = e.message || 'Kunne ikke oppdatere passord'; }
@@ -705,7 +709,6 @@ function setupAuthStateHandling() {
     }
   })();
 }
-
 
 
 

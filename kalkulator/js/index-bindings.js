@@ -4,8 +4,30 @@ function on(el, evt, handler) {
   if (el) el.addEventListener(evt, handler);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const app = window.app || window;
+// Bind inline behaviors to external listeners to satisfy CSP
+function initBindings() {
+    const app = window.app || window;
+
+    // --- PROBE START (temporary) ---
+  const ids = [
+    'openAddShiftBtn','userProfileBtn',
+    'monthPrevTop','monthNextTop','logoutBtn'
+  ];
+  const found = Object.fromEntries(ids.map(id => [id, !!document.getElementById(id)]));
+  const methods = {
+    openAddShiftModal: typeof app.openAddShiftModal,
+    toggleProfileDropdown: typeof app.toggleProfileDropdown,
+    navigateToPreviousMonth: typeof app.navigateToPreviousMonth,
+    navigateToNextMonth: typeof app.navigateToNextMonth,
+  };
+  window.__bindingsProbe = { ranAt: Date.now(), readyState: document.readyState, found, methods };
+  console.info('[bindings] init', window.__bindingsProbe);
+  // log when clicks happen (capture phase) to prove listeners vs. bubbling issues
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#openAddShiftBtn')) console.info('[bindings] click: openAddShiftBtn');
+    if (e.target.closest('#userProfileBtn')) console.info('[bindings] click: userProfileBtn');
+  }, true);
+  // --- PROBE END ---
 
   // Profile menu
   on(document.getElementById('userProfileBtn'), 'click', () => app.toggleProfileDropdown && app.toggleProfileDropdown());
@@ -88,4 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Employee carousel retry
   on(document.getElementById('retryEmployeesBtn'), 'click', () => app.loadEmployees && app.loadEmployees());
-});
+}
+
+// Run immediately if DOM is already ready, otherwise wait once
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initBindings, { once: true });
+} else {
+  initBindings();
+}

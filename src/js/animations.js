@@ -29,6 +29,9 @@ function throttle(func, limit) {
 
 // Immediate scroll prevention - run first
 (function() {
+    const show = (el) => el && el.classList.remove('hidden');
+    const hide = (el) => el && el.classList.add('hidden');
+    const toggleHidden = (el, on) => el && el.classList[on ? 'add' : 'remove']('hidden');
     // Prevent browser scroll restoration
     if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
@@ -433,7 +436,8 @@ function initMobileStats() {
             heroStats.style.transform = 'translateX(-50%)';
             heroStats.style.position = 'fixed';
             heroStats.style.opacity = '1';
-            heroStats.style.display = 'flex';
+            // ensure visible
+            show(heroStats);
         }
     };
     
@@ -453,11 +457,7 @@ function initMobileStats() {
         const currentHeight = window.innerHeight;
         const heightDiff = initialHeight - currentHeight;
         
-        if (heightDiff > 150) {
-            heroStats.style.display = 'none';
-        } else {
-            heroStats.style.display = 'flex';
-        }
+        toggleHidden(heroStats, heightDiff > 150);
     }, 100);
     
     const removeExistingListeners = () => {
@@ -505,7 +505,8 @@ function initMobileStats() {
                 addMobileListeners();
             } else {
                 heroStats.style.bottom = '';
-                heroStats.style.display = '';
+                // reset to visible state
+                show(heroStats);
                 heroStats.style.left = '';
                 heroStats.style.transform = '';
                 heroStats.style.position = '';
@@ -622,4 +623,3 @@ if ('performance' in window) {
         console.log(`Page load time: ${pageLoadTime}ms`);
     });
 }
-

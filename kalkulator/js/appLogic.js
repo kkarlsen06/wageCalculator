@@ -4,6 +4,10 @@ import { hasEnterpriseSubscription } from './subscriptionUtils.js';
 
 
 
+export const show = (el) => el && el.classList.remove('hidden');
+export const hide = (el) => el && el.classList.add('hidden');
+export const toggleHidden = (el, on) => el && el.classList[on ? 'add' : 'remove']('hidden');
+
 // Cache DOM elements to avoid repeated queries
 const domCache = {
     progressFill: null,
@@ -766,7 +770,7 @@ export const app = {
             const select = document.getElementById(id);
             if (!select) return;
             const group = select.closest('.form-group') || select.parentElement;
-            if (group) group.style.display = 'none';
+            if (group) group.classList.add('hidden');
         });
         // Do not manage edit select visibility here; handled elsewhere
     },
@@ -777,7 +781,7 @@ export const app = {
     populateEmployeeFilterBar() {
         const filterBar = document.getElementById('employeeFilterBar');
         if (filterBar) {
-            filterBar.style.display = 'none';
+            filterBar.classList.add('hidden');
             const container = filterBar.querySelector('.filter-scroll-container');
             if (container) container.innerHTML = '';
         }
@@ -868,8 +872,8 @@ export const app = {
         }
 
         // Never show selects; assignment is driven by carousel selection
-        if (employeeSelectGroup) employeeSelectGroup.style.display = 'none';
-        if (recurringSelectGroup) recurringSelectGroup.style.display = 'none';
+        if (employeeSelectGroup) employeeSelectGroup.classList.add('hidden');
+        if (recurringSelectGroup) recurringSelectGroup.classList.add('hidden');
 
         // If not in employees view (user context), ensure the pill is not shown
         if (!inEmployees) {
@@ -884,7 +888,7 @@ export const app = {
         if (!pill) {
             pill = document.createElement('div');
             pill.id = pillId;
-            pill.style.display = 'none';
+            pill.classList.add('hidden');
             pill.style.marginBottom = '16px';
             pill.innerHTML = `
                 <div class="form-group">
@@ -901,7 +905,7 @@ export const app = {
         // Populate pill details if we know the employee
         const selectedEmployee = this.getSelectedEmployee?.() || null;
         if (hasSelectedEmployeeId && selectedEmployee) {
-            pill.style.display = '';
+            pill.classList.remove('hidden');
             const nameEl = pill.querySelector('.name');
             const dotEl = pill.querySelector('.color-dot');
             if (nameEl) nameEl.textContent = selectedEmployee.name;
@@ -936,7 +940,7 @@ export const app = {
                 clickable.dataset.boundEdit = '1';
             }
         } else {
-            pill.style.display = 'none';
+            pill.classList.add('hidden');
         }
     },
 
@@ -978,10 +982,10 @@ export const app = {
         const floatingBar = document.querySelector('.floating-action-bar');
         const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
         if (floatingBar) {
-            floatingBar.style.display = 'none';
+            floatingBar.classList.add('hidden');
         }
         if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = 'none';
+            floatingBarBackdrop.classList.add('hidden');
         }
 
         // Populate form elements if they're empty
@@ -1003,7 +1007,7 @@ export const app = {
 
         // Show the modal
         const modal = document.getElementById('addShiftModal');
-        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
         modal.classList.add('active');
 
         // Clear any previously selected dates
@@ -1037,9 +1041,9 @@ export const app = {
 
         if (count > 0) {
             countElement.textContent = count;
-            infoElement.style.display = 'block';
+            infoElement.classList.remove('hidden');
         } else {
-            infoElement.style.display = 'none';
+            infoElement.classList.add('hidden');
         }
     },
 
@@ -1076,17 +1080,17 @@ export const app = {
 
     closeAddShiftModal() {
         const modal = document.getElementById('addShiftModal');
-        modal.style.display = 'none';
+        modal.classList.add('hidden');
         modal.classList.remove('active');
 
         // Restore floating action bar visibility when modal closes
         const floatingBar = document.querySelector('.floating-action-bar');
         const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
         if (floatingBar) {
-            floatingBar.style.display = '';
+            floatingBar.classList.remove('hidden');
         }
         if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = '';
+            floatingBarBackdrop.classList.remove('hidden');
         }
     },
     async addShift() {
@@ -2216,11 +2220,11 @@ export const app = {
 
         if (presetSection && customSection) {
             if (this.usePreset) {
-                presetSection.style.display = 'block';
-                customSection.style.display = 'none';
+                presetSection.classList.remove('hidden');
+                customSection.classList.add('hidden');
             } else {
-                presetSection.style.display = 'none';
-                customSection.style.display = 'block';
+                presetSection.classList.add('hidden');
+                customSection.classList.remove('hidden');
                 // Always populate when switching to custom mode
                 setTimeout(() => {
                     this.populateCustomBonusSlots();
@@ -2616,9 +2620,9 @@ export const app = {
         const taxPercentageSection = document.getElementById('taxPercentageSection');
         if (taxPercentageSection) {
             if (this.taxDeductionEnabled) {
-                taxPercentageSection.style.display = 'block';
+                taxPercentageSection.classList.remove('hidden');
             } else {
-                taxPercentageSection.style.display = 'none';
+                taxPercentageSection.classList.add('hidden');
             }
         } else {
             console.log('Tax percentage section element not found - modal may not be loaded yet');
@@ -2662,7 +2666,7 @@ export const app = {
 
         if (taxPercentageSection) {
             const shouldShow = this.taxDeductionEnabled;
-            taxPercentageSection.style.display = shouldShow ? 'block' : 'none';
+            taxPercentageSection.classList[shouldShow ? 'remove' : 'add']('hidden');
             console.log('Set section visibility to:', shouldShow ? 'visible' : 'hidden');
         }
     },
@@ -2988,10 +2992,10 @@ export const app = {
         const floatingBar = document.querySelector('.floating-action-bar');
         const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
         if (floatingBar) {
-            floatingBar.style.display = 'none';
+            floatingBar.classList.add('hidden');
         }
         if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = 'none';
+            floatingBarBackdrop.classList.add('hidden');
         }
 
         const modal = document.getElementById('settingsModal');
@@ -3008,7 +3012,7 @@ export const app = {
             }, 50);
 
             // Show the modal
-            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
 
             // Set up event delegation for collapsible toggle buttons
             this.setupCollapsibleEventListeners();
@@ -3032,10 +3036,10 @@ export const app = {
         const floatingBar = document.querySelector('.floating-action-bar');
         const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
         if (floatingBar) {
-            floatingBar.style.display = 'none';
+            floatingBar.classList.add('hidden');
         }
         if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = 'none';
+            floatingBarBackdrop.classList.add('hidden');
         }
 
         const modal = document.getElementById('settingsModal');
@@ -3052,7 +3056,7 @@ export const app = {
             }, 50);
 
             // Show the modal
-            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
 
             // Ensure custom bonus slots are populated if custom mode is active
             if (!this.usePreset) {
@@ -3096,17 +3100,17 @@ export const app = {
         }
 
         if (modal) {
-            modal.style.display = 'none';
+            modal.classList.add('hidden');
         }
 
         // Restore floating action bar visibility when modal closes
         const floatingBar = document.querySelector('.floating-action-bar');
         const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
         if (floatingBar) {
-            floatingBar.style.display = '';
+            floatingBar.classList.remove('hidden');
         }
         if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = '';
+            floatingBarBackdrop.classList.remove('hidden');
         }
 
         // Close profile dropdown if open
@@ -3157,12 +3161,12 @@ export const app = {
         
         if (isExpanded) {
             // Collapse
-            section.style.display = 'none';
+            section.classList.add('hidden');
             buttonElement.setAttribute('aria-expanded', 'false');
             console.log(`Collapsed section: ${sectionId}`);
         } else {
             // Expand
-            section.style.display = 'block';
+            section.classList.remove('hidden');
             buttonElement.setAttribute('aria-expanded', 'true');
             console.log(`Expanded section: ${sectionId}`);
         }
@@ -3214,15 +3218,15 @@ export const app = {
             const nextPayrollCard = document.querySelector('.next-payroll-card');
 
             if (totalCard) {
-                totalCard.style.display = 'none';
+                totalCard.classList.add('hidden');
                 console.log('Manually hid total card');
             }
             if (nextShiftCard) {
-                nextShiftCard.style.display = 'none';
+                nextShiftCard.classList.add('hidden');
                 console.log('Manually hid next shift card');
             }
             if (nextPayrollCard) {
-                nextPayrollCard.style.display = 'none';
+                nextPayrollCard.classList.add('hidden');
                 console.log('Manually hid next payroll card');
             }
 
@@ -3249,15 +3253,15 @@ export const app = {
             const nextPayrollCard = document.querySelector('.next-payroll-card');
 
             if (totalCard) {
-                totalCard.style.display = '';
+                totalCard.classList.remove('hidden');
                 console.log('Showed total card');
             }
             if (nextShiftCard) {
-                nextShiftCard.style.display = '';
+                nextShiftCard.classList.remove('hidden');
                 console.log('Showed next shift card');
             }
             if (nextPayrollCard) {
-                nextPayrollCard.style.display = '';
+                nextPayrollCard.classList.remove('hidden');
                 console.log('Showed next payroll card');
             }
 
@@ -3300,7 +3304,7 @@ export const app = {
         this.closeShiftDetails();
 
         // Show dropdown with animation
-        dropdown.style.display = 'block';
+        dropdown.classList.remove('hidden');
         // Force reflow to ensure display change is applied
         dropdown.offsetHeight;
         dropdown.classList.add('show');
@@ -3321,7 +3325,7 @@ export const app = {
         // Hide after animation completes
         setTimeout(() => {
             if (!dropdown.classList.contains('show')) {
-                dropdown.style.display = 'none';
+                dropdown.classList.add('hidden');
             }
         }, 200);
 
@@ -3367,10 +3371,10 @@ export const app = {
         const floatingBar = document.querySelector('.floating-action-bar');
         const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
         if (floatingBar) {
-            floatingBar.style.display = 'none';
+            floatingBar.classList.add('hidden');
         }
         if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = 'none';
+            floatingBarBackdrop.classList.add('hidden');
         }
 
         const modal = document.getElementById('profileModal');
@@ -3410,7 +3414,7 @@ export const app = {
             }
 
             // Show the modal
-            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
             modal.classList.add('active');
 
             // Add keyboard support
@@ -3442,7 +3446,7 @@ export const app = {
         if (modal) {
             // Best-effort: save pending name changes before closing
             try { this.updateProfile(); } catch (_) {}
-            modal.style.display = 'none';
+            modal.classList.add('hidden');
             modal.classList.remove('active');
 
             // Remove event listeners
@@ -3475,10 +3479,10 @@ export const app = {
             const floatingBar = document.querySelector('.floating-action-bar');
             const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
             if (floatingBar) {
-                floatingBar.style.display = '';
+                floatingBar.classList.remove('hidden');
             }
             if (floatingBarBackdrop) {
-                floatingBarBackdrop.style.display = '';
+                floatingBarBackdrop.classList.remove('hidden');
             }
         }
     },
@@ -3495,7 +3499,7 @@ export const app = {
         const statBackdrop = document.querySelector('.stat-backdrop');
 
         if (statModal) {
-            statModal.style.display = 'none';
+            statModal.classList.add('hidden');
             statModal.remove();
         }
 
@@ -5094,7 +5098,7 @@ export const app = {
 
         // Always hide in Employees tab
         if (this.currentView === 'employees') {
-            nextShiftCard.style.display = 'none';
+            nextShiftCard.classList.add('hidden');
             return;
         }
 
@@ -5103,12 +5107,12 @@ export const app = {
         const currentYear = now.getFullYear();
 
         // Show the card (handled differently per month)
-        nextShiftCard.style.display = 'block';
+        nextShiftCard.classList.remove('hidden');
         // Ensure skeleton is visible until we populate content
         const contentEl = document.getElementById('nextShiftContent');
         if (contentEl && !contentEl.dataset.populated) {
             const skel = contentEl.querySelector('.skeleton');
-            if (skel) skel.style.display = 'block';
+            if (skel) skel.classList.remove('hidden');
         }
 
         // If we're not viewing the current month and year, show the best shift from selected month
@@ -5232,14 +5236,14 @@ export const app = {
 
             if (pastShifts.length === 0) {
                 // No shifts at all
-                nextShiftContent.style.display = 'none';
-                nextShiftEmpty.style.display = 'flex';
+                nextShiftContent.classList.add('hidden');
+                nextShiftEmpty.classList.remove('hidden');
                 this.stopNextShiftTimer(); // Stop timer when no shifts
                 this.checkDashboardCardsLoaded(); // Check if both cards are loaded
             } else {
                 // Show most recent shift
-                nextShiftContent.style.display = 'flex';
-                nextShiftEmpty.style.display = 'none';
+                nextShiftContent.classList.remove('hidden');
+                nextShiftEmpty.classList.add('hidden');
 
                 const lastShift = pastShifts[0];
                 const calculation = this.calculateShift(lastShift);
@@ -5328,11 +5332,11 @@ export const app = {
             }
         } else {
             // Show next shift details
-            nextShiftContent.style.display = 'flex';
-            nextShiftEmpty.style.display = 'none';
+            nextShiftContent.classList.remove('hidden');
+            nextShiftEmpty.classList.add('hidden');
             // Hide skeleton and mark as populated
             const skel = nextShiftContent.querySelector('.skeleton');
-            if (skel) skel.style.display = 'none';
+            if (skel) skel.classList.add('hidden');
             nextShiftContent.dataset.populated = '1';
 
             const nextShift = upcomingShifts[0];
@@ -5461,8 +5465,8 @@ export const app = {
         const nextShiftContent = document.getElementById('nextShiftContent');
         const nextShiftEmpty = document.getElementById('nextShiftEmpty');
 
-        nextShiftContent.style.display = 'flex';
-        nextShiftEmpty.style.display = 'none';
+        nextShiftContent.classList.remove('hidden');
+        nextShiftEmpty.classList.add('hidden');
 
         // Calculate earnings so far
         const currentEarnings = this.calculateCurrentShiftEarnings(currentShift, now);
@@ -5677,8 +5681,8 @@ export const app = {
 
         if (monthShifts.length === 0) {
             // No shifts in this month
-            nextShiftContent.style.display = 'none';
-            nextShiftEmpty.style.display = 'flex';
+            nextShiftContent.classList.add('hidden');
+            nextShiftEmpty.classList.remove('hidden');
             // Update empty message for non-current months
             const emptyMessage = nextShiftEmpty.querySelector('.empty-message');
             if (emptyMessage) {
@@ -5722,8 +5726,8 @@ export const app = {
         const calculation = bestShiftData.calculation;
 
         // Show the best shift
-        nextShiftContent.style.display = 'flex';
-        nextShiftEmpty.style.display = 'none';
+        nextShiftContent.classList.remove('hidden');
+        nextShiftEmpty.classList.add('hidden');
 
         // Format date
         const shiftDate = new Date(bestShift.date);
@@ -5817,18 +5821,18 @@ export const app = {
 
         // Always hide in Employees tab
         if (this.currentView === 'employees') {
-            nextPayrollCard.style.display = 'none';
+            nextPayrollCard.classList.add('hidden');
             return;
         }
 
         // Show the card
         // Reset placeholder visibility in case of re-renders
         const skel2 = nextPayrollContent.querySelector('.skeleton');
-        if (skel2 && !nextPayrollContent.dataset.populated) skel2.style.display = 'block';
+        if (skel2 && !nextPayrollContent.dataset.populated) skel2.classList.remove('hidden');
         // Ensure skeleton is visible until populated
         if (nextPayrollContent && !nextPayrollContent.dataset.populated) {
             const skel = nextPayrollContent.querySelector('.skeleton');
-            if (skel) skel.style.display = 'block';
+            if (skel) skel.classList.remove('hidden');
         }
 
         // Use the selected month from month picker instead of current month
@@ -5885,8 +5889,8 @@ export const app = {
 
         if (earningsMonthShifts.length === 0) {
             // No shifts in earnings month
-            nextPayrollContent.style.display = 'none';
-            nextPayrollEmpty.style.display = 'flex';
+            nextPayrollContent.classList.add('hidden');
+            nextPayrollEmpty.classList.remove('hidden');
             this.checkDashboardCardsLoaded(); // Check if both cards are loaded
             return;
         }
@@ -5939,12 +5943,12 @@ export const app = {
         const activeClass = !isPastPayroll && isCurrentMonth && Math.ceil((payrollDate - now) / (1000 * 60 * 60 * 24)) <= 7 ? ' active' : '';
 
         // Show payroll details
-        nextPayrollContent.style.display = 'flex';
-        nextPayrollEmpty.style.display = 'none';
+        nextPayrollContent.classList.remove('hidden');
+        nextPayrollEmpty.classList.add('hidden');
 
         // Hide skeleton and mark populated before injecting content
         const skelP = nextPayrollContent.querySelector('.skeleton');
-        if (skelP) skelP.style.display = 'none';
+        if (skelP) skelP.classList.add('hidden');
         nextPayrollContent.dataset.populated = '1';
 
         nextPayrollContent.innerHTML = `
@@ -5997,11 +6001,11 @@ export const app = {
         // Check if both cards have been populated (either with content or marked as empty)
         const shiftLoaded = nextShiftContent && (
             nextShiftContent.dataset.populated === '1' || 
-            document.getElementById('nextShiftEmpty')?.style.display === 'flex'
+            !document.getElementById('nextShiftEmpty')?.classList.contains('hidden')
         );
         const payrollLoaded = nextPayrollContent && (
             nextPayrollContent.dataset.populated === '1' ||
-            document.getElementById('nextPayrollEmpty')?.style.display === 'flex'
+            !document.getElementById('nextPayrollEmpty')?.classList.contains('hidden')
         );
         
         if (shiftLoaded && payrollLoaded) {
@@ -6492,23 +6496,23 @@ export const app = {
         if (!list || !cal) return;
 
         if (view === 'calendar') {
-            list.style.display = 'none';
-            cal.style.display = 'flex';
-            if (toggle) toggle.style.display = 'flex';
+            list.classList.add('hidden');
+            cal.classList.remove('hidden');
+            if (toggle) toggle.classList.remove('hidden');
             this.updateShiftCalendar();
         } else {
-            list.style.display = 'flex';
-            cal.style.display = 'none';
-            if (toggle) toggle.style.display = 'none';
+            list.classList.remove('hidden');
+            cal.classList.add('hidden');
+            if (toggle) toggle.classList.add('hidden');
         }
 
         // Ensure employees UI elements remain visible in Employees tab
         if (this.currentView === 'employees') {
             this.ensureMonthPickerVisibility?.();
             const employeesContainer = document.querySelector('.employees-container');
-            if (employeesContainer) employeesContainer.style.display = 'block';
+            if (employeesContainer) employeesContainer.classList.remove('hidden');
             const carouselContainer = document.getElementById('employeeCarouselContainer');
-            if (carouselContainer) carouselContainer.style.display = 'block';
+            if (carouselContainer) carouselContainer.classList.remove('hidden');
         }
     },
 
@@ -6543,10 +6547,10 @@ export const app = {
         const floatingBar = document.querySelector('.floating-action-bar');
         const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
         if (floatingBar) {
-            floatingBar.style.display = 'none';
+            floatingBar.classList.add('hidden');
         }
         if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = 'none';
+            floatingBarBackdrop.classList.add('hidden');
         }
 
         // Hide header
@@ -6869,10 +6873,10 @@ export const app = {
         const floatingBar = document.querySelector('.floating-action-bar');
         const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
         if (floatingBar) {
-            floatingBar.style.display = '';
+            floatingBar.classList.remove('hidden');
         }
         if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = '';
+            floatingBarBackdrop.classList.remove('hidden');
         }
 
         // Immediately disable pointer events on backdrop to prevent double-tap
@@ -6966,17 +6970,17 @@ export const app = {
             const profileIcon = document.querySelector('.profile-icon');
             if (avatarUrl && imgEl) {
                 imgEl.src = avatarUrl;
-                imgEl.onload = () => { imgEl.style.display = 'block'; placeholder && (placeholder.style.display = 'none'); };
+                imgEl.onload = () => { imgEl.classList.remove('hidden'); placeholder && placeholder.classList.add('hidden'); };
                 if (topbarImg) {
                     topbarImg.src = avatarUrl;
-                    topbarImg.style.display = 'block';
+                    topbarImg.classList.remove('hidden');
                 }
-                if (profileIcon) profileIcon.style.display = 'none';
+                if (profileIcon) profileIcon.classList.add('hidden');
             } else {
-                if (imgEl) imgEl.style.display = 'none';
-                if (placeholder) placeholder.style.display = '';
-                if (topbarImg) topbarImg.style.display = 'none';
-                if (profileIcon) profileIcon.style.display = '';
+                if (imgEl) imgEl.classList.add('hidden');
+                if (placeholder) placeholder.classList.remove('hidden');
+                if (topbarImg) topbarImg.classList.add('hidden');
+                if (profileIcon) profileIcon.classList.remove('hidden');
             }
 
         } catch (err) {
@@ -6993,14 +6997,6 @@ export const app = {
             const msgElement = document.getElementById('profile-update-msg');
 
             const firstName = nameField?.value || '';
-
-            if (!firstName.trim()) {
-                if (msgElement) {
-                    msgElement.style.color = 'var(--danger)';
-                    msgElement.textContent = 'Fornavn er påkrevd';
-                }
-                return;
-            }
 
             // Update user metadata
             const { error } = await window.supa.auth.updateUser({
@@ -7089,11 +7085,11 @@ export const app = {
                 const hasAlternative = hasEmail || (otherProviders && otherProviders.length > 0);
 
                 if (hasGoogle) {
-                    if (linkBtn) linkBtn.style.display = 'none';
-                    if (unlinkBtn) unlinkBtn.style.display = 'inline-flex';
+                    if (linkBtn) linkBtn.classList.add('hidden');
+                    if (unlinkBtn) unlinkBtn.classList.remove('hidden');
 
                     if (!hasAlternative) {
-                        if (warnSpan) warnSpan.style.display = 'inline';
+                        if (warnSpan) warnSpan.classList.remove('hidden');
                         if (unlinkBtn) {
                             unlinkBtn.disabled = true;
                             unlinkBtn.classList.add('disabled');
@@ -7101,7 +7097,7 @@ export const app = {
                             unlinkBtn.style.cursor = 'not-allowed';
                         }
                     } else {
-                        if (warnSpan) warnSpan.style.display = 'none';
+                        if (warnSpan) warnSpan.classList.add('hidden');
                         if (unlinkBtn) {
                             unlinkBtn.disabled = false;
                             unlinkBtn.classList.remove('disabled');
@@ -7110,9 +7106,9 @@ export const app = {
                         }
                     }
                 } else {
-                    if (linkBtn) linkBtn.style.display = 'flex';
-                    if (unlinkBtn) unlinkBtn.style.display = 'none';
-                    if (warnSpan) warnSpan.style.display = 'none';
+                    if (linkBtn) linkBtn.classList.remove('hidden');
+                    if (unlinkBtn) unlinkBtn.classList.add('hidden');
+                    if (warnSpan) warnSpan.classList.add('hidden');
                 }
             } catch (e) {
                 console.error('[oauth] render controls failed', e);
@@ -7182,7 +7178,7 @@ export const app = {
             img.src = objectUrl;
 
             // Show modal
-            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
             modal.classList.add('active');
 
             // Init cropper
@@ -7300,18 +7296,18 @@ export const app = {
             const placeholder = document.getElementById('profileAvatarPlaceholder');
             const topbarImg = document.getElementById('userAvatarImg');
             if (imgEl) {
-                imgEl.onload = () => { imgEl.style.display = 'block'; };
-                imgEl.onerror = () => { imgEl.style.display = 'none'; };
+                imgEl.onload = () => { imgEl.classList.remove('hidden'); };
+                imgEl.onerror = () => { imgEl.classList.add('hidden'); };
                 imgEl.src = url;
             }
-            if (placeholder) placeholder.style.display = 'none';
+            if (placeholder) placeholder.classList.add('hidden');
             if (topbarImg) {
-                topbarImg.onload = () => { topbarImg.style.display = 'block'; };
-                topbarImg.onerror = () => { topbarImg.style.display = 'none'; };
+                topbarImg.onload = () => { topbarImg.classList.remove('hidden'); };
+                topbarImg.onerror = () => { topbarImg.classList.add('hidden'); };
                 topbarImg.src = url;
             }
             const profileIcon = document.querySelector('.profile-icon');
-            if (profileIcon) profileIcon.style.display = 'none';
+            if (profileIcon) profileIcon.classList.add('hidden');
 
             this.updateProfilePictureProgress(100, 'Ferdig');
 
@@ -7333,10 +7329,10 @@ export const app = {
         }
         if (!keepModalHidden && modal) {
             modal.classList.remove('active');
-            modal.style.display = 'none';
+            modal.classList.add('hidden');
         } else if (modal) {
             modal.classList.remove('active');
-            modal.style.display = 'none';
+            modal.classList.add('hidden');
         }
         if (this._cropObjectUrl) {
             URL.revokeObjectURL(this._cropObjectUrl);
@@ -7445,11 +7441,11 @@ export const app = {
             const imgEl = document.getElementById('profileAvatarImage');
             const placeholder = document.getElementById('profileAvatarPlaceholder');
             const topbarImg = document.getElementById('userAvatarImg');
-            if (imgEl) imgEl.style.display = 'none';
-            if (placeholder) placeholder.style.display = '';
-            if (topbarImg) topbarImg.style.display = 'none';
+            if (imgEl) imgEl.classList.add('hidden');
+            if (placeholder) placeholder.classList.remove('hidden');
+            if (topbarImg) topbarImg.classList.add('hidden');
             const profileIcon = document.querySelector('.profile-icon');
-            if (profileIcon) profileIcon.style.display = '';
+            if (profileIcon) profileIcon.classList.remove('hidden');
         } catch (e) {
             console.error('removeProfileAvatar error', e);
             this.showUploadError('Kunne ikke fjerne profilbilde');
@@ -7481,7 +7477,7 @@ export const app = {
     showProfilePictureProgress(show) {
         const progressElement = document.getElementById('profilePictureProgress');
         if (progressElement) {
-            progressElement.style.display = show ? 'flex' : 'none';
+            progressElement.classList[show ? 'remove' : 'add']('hidden');
         }
     },
 
@@ -8189,7 +8185,7 @@ export const app = {
         descriptions.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
-                element.style.display = 'none';
+                element.classList.add('hidden');
             }
         });
 
@@ -8210,9 +8206,7 @@ export const app = {
         }
 
         const activeElement = document.getElementById(activeId);
-        if (activeElement) {
-            activeElement.style.display = 'block';
-        }
+        if (activeElement) activeElement.classList.remove('hidden');
     },
 
     timeToMinutes(timeStr) {
@@ -9240,7 +9234,7 @@ export const app = {
     openEditModal(shift) {
         const editModal = document.getElementById('editShiftModal');
         if (editModal) {
-            editModal.style.display = 'flex';
+            editModal.classList.remove('hidden');
             editModal.classList.add('active');
 
             // Populate the edit form with current shift data
@@ -9259,10 +9253,10 @@ export const app = {
             const floatingBar = document.querySelector('.floating-action-bar');
             const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
             if (floatingBar) {
-                floatingBar.style.display = 'none';
+                floatingBar.classList.add('hidden');
             }
             if (floatingBarBackdrop) {
-                floatingBarBackdrop.style.display = 'none';
+                floatingBarBackdrop.classList.add('hidden');
             }
 
             // Add backdrop click handler
@@ -9285,7 +9279,7 @@ export const app = {
     closeEditShift() {
         const editModal = document.getElementById('editShiftModal');
         if (editModal) {
-            editModal.style.display = 'none';
+            editModal.classList.add('hidden');
             editModal.classList.remove('active');
 
             // Show header again
@@ -9308,10 +9302,10 @@ export const app = {
             const floatingBar = document.querySelector('.floating-action-bar');
             const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
             if (floatingBar) {
-                floatingBar.style.display = '';
+                floatingBar.classList.remove('hidden');
             }
             if (floatingBarBackdrop) {
-                floatingBarBackdrop.style.display = '';
+                floatingBarBackdrop.classList.remove('hidden');
             }
 
             // Clear editing state
@@ -9388,7 +9382,7 @@ export const app = {
             // Hide the dropdown group in employees view
             const editSelect = modal.querySelector('#editEmployeeSelect');
             const group = editSelect?.closest('.form-group') || editSelect?.parentElement;
-            if (group) group.style.display = 'none';
+            if (group) group.classList.add('hidden');
 
             // If we have an employee, render the pill
             if (employee) {
@@ -9852,11 +9846,11 @@ export const app = {
             const monthNav = document.querySelector('.dashboard-month-nav');
             const floatingActionBar = document.querySelector('.floating-action-bar');
 
-            if (totalCard) totalCard.style.display = 'none';
-            if (nextShiftCard) nextShiftCard.style.display = 'none';
-            if (nextPayrollCard) nextPayrollCard.style.display = 'none';
-            if (monthNav) monthNav.style.display = 'none';
-            if (floatingActionBar) floatingActionBar.style.display = 'none';
+            if (totalCard) totalCard.classList.add('hidden');
+            if (nextShiftCard) nextShiftCard.classList.add('hidden');
+            if (nextPayrollCard) nextPayrollCard.classList.add('hidden');
+            if (monthNav) monthNav.classList.add('hidden');
+            if (floatingActionBar) floatingActionBar.classList.add('hidden');
         }
 
         // Clean up all previous view states to prevent overlap
@@ -9899,18 +9893,18 @@ export const app = {
         const dashboardStatsContainer = document.querySelector('.dashboard-stats-container');
 
         if (chatboxContainer) {
-            chatboxContainer.style.display = 'none';
+            chatboxContainer.classList.add('hidden');
             // Reset chatbox to collapsed state only if not switching to chatgpt view
             const chatboxPill = document.getElementById('chatboxPill');
             const expandedContent = document.getElementById('chatboxExpandedContent');
             const chatboxClose = document.getElementById('chatboxClose');
             if (chatboxPill) chatboxPill.classList.remove('expanded');
-            if (expandedContent) expandedContent.style.display = 'none';
-            if (chatboxClose) chatboxClose.style.display = 'none';
+            if (expandedContent) expandedContent.classList.add('hidden');
+            if (chatboxClose) chatboxClose.classList.add('hidden');
         }
 
         if (employeesContainer) {
-            employeesContainer.style.display = 'none';
+            employeesContainer.classList.add('hidden');
         }
 
         // Before removing dashboardStatsContainer, move the chart back to statistics section
@@ -9942,7 +9936,7 @@ export const app = {
     ensureMonthPickerVisibility() {
         const monthNav = document.querySelector('.dashboard-month-nav');
         if (monthNav) {
-            monthNav.style.display = 'flex';
+            monthNav.classList.remove('hidden');
             monthNav.style.visibility = 'visible';
             monthNav.style.opacity = '1';
             monthNav.style.position = 'relative';
@@ -9976,20 +9970,20 @@ export const app = {
         const floatingActionBar = document.querySelector('.floating-action-bar');
         const chatboxContainer = document.querySelector('.chatbox-container');
 
-        if (totalCard) totalCard.style.display = '';
-        if (nextShiftCard) nextShiftCard.style.display = '';
-        if (nextPayrollCard) nextPayrollCard.style.display = '';
+        if (totalCard) totalCard.classList.remove('hidden');
+        if (nextShiftCard) nextShiftCard.classList.remove('hidden');
+        if (nextPayrollCard) nextPayrollCard.classList.remove('hidden');
         // Ensure month navigation is always visible and properly styled
         this.ensureMonthPickerVisibility();
-        if (floatingActionBar) floatingActionBar.style.display = 'flex';
+        if (floatingActionBar) floatingActionBar.classList.remove('hidden');
 
         // Hide chatbox container completely in dashboard view
         if (chatboxContainer) {
-            chatboxContainer.style.display = 'none';
+            chatboxContainer.classList.add('hidden');
             const chatboxPill = document.getElementById('chatboxPill');
             const expandedContent = document.getElementById('chatboxExpandedContent');
             if (chatboxPill) chatboxPill.classList.remove('expanded');
-            if (expandedContent) expandedContent.style.display = 'none';
+            if (expandedContent) expandedContent.classList.add('hidden');
         }
 
         // Remove stats container from dashboard if it exists, but first move chart back
@@ -10119,7 +10113,7 @@ export const app = {
         // Show the chatbox container
         const chatboxContainer = document.querySelector('.chatbox-container');
         if (chatboxContainer) {
-            chatboxContainer.style.display = 'block';
+        chatboxContainer.classList.remove('hidden');
         }
 
         // Ensure month navigation remains visible in chatbox view
@@ -10145,11 +10139,11 @@ export const app = {
             chatboxPill.classList.add('expanded');
 
             // Show expanded content (chat log and input)
-            expandedContent.style.display = 'block';
+            expandedContent.classList.remove('hidden');
 
             // Show close button
             if (chatboxClose) {
-                chatboxClose.style.display = 'block';
+                chatboxClose.classList.remove('hidden');
             }
 
             // Add greeting message if chat log is empty
@@ -10234,9 +10228,9 @@ Hva kan jeg hjelpe deg med i dag?`;
             const totalCard = document.querySelector('.total-card');
             const nextShiftCard = document.querySelector('.next-shift-card');
             const nextPayrollCard = document.querySelector('.next-payroll-card');
-            if (totalCard) totalCard.style.display = 'none';
-            if (nextShiftCard) nextShiftCard.style.display = 'none';
-            if (nextPayrollCard) nextPayrollCard.style.display = 'none';
+            if (totalCard) totalCard.classList.add('hidden');
+            if (nextShiftCard) nextShiftCard.classList.add('hidden');
+            if (nextPayrollCard) nextPayrollCard.classList.add('hidden');
         } catch (e) {
             console.warn('Could not hide dashboard cards in employees view', e);
         }
@@ -10299,7 +10293,7 @@ Hva kan jeg hjelpe deg med i dag?`;
                 tabBarContainer.parentNode.insertBefore(employeesContainer, tabBarContainer.nextSibling);
             }
         }
-        employeesContainer.style.display = 'block';
+        employeesContainer.classList.remove('hidden');
 
         // Initialize employee carousel
         this.initializeEmployeeCarousel();
@@ -10370,7 +10364,7 @@ Hva kan jeg hjelpe deg med i dag?`;
             </div>
         `;
 
-        employeesContainer.style.display = 'block';
+        employeesContainer.classList.remove('hidden');
 
         // Add event listener to upgrade button
         const upgradeBtn = employeesContainer.querySelector('#upgradeToEnterpriseBtn');
@@ -10472,7 +10466,7 @@ Hva kan jeg hjelpe deg med i dag?`;
 
         const hasEnterprise = await hasEnterpriseSubscription();
         // Only show the Ansatte tab for Enterprise (max) subscribers
-        ansatteTab.style.display = hasEnterprise ? 'flex' : 'none';
+        ansatteTab.classList[hasEnterprise ? 'remove' : 'add']('hidden');
 
         // If user somehow is on employees view without Enterprise, redirect to dashboard
         if (!hasEnterprise && this.currentView === 'employees') {
@@ -11101,7 +11095,7 @@ Hva kan jeg hjelpe deg med i dag?`;
             radio.addEventListener('change', () => {
                 // Handle custom period section
                 if (radio.value === 'custom') {
-                    customSection.style.display = 'block';
+                    customSection.classList.remove('hidden');
                     // Set default dates if empty
                     const startDate = document.getElementById('exportStartDate');
                     const endDate = document.getElementById('exportEndDate');
@@ -11116,7 +11110,7 @@ Hva kan jeg hjelpe deg med i dag?`;
                         endDate.value = lastDay.toISOString().split('T')[0];
                     }
                 } else {
-                    customSection.style.display = 'none';
+                    customSection.classList.add('hidden');
                 }
             });
         });
@@ -11126,7 +11120,7 @@ Hva kan jeg hjelpe deg med i dag?`;
         if (checkedRadio) {
             // Show custom section if custom period is selected
             if (checkedRadio.value === 'custom') {
-                customSection.style.display = 'block';
+                customSection.classList.remove('hidden');
             }
         }
     },
@@ -11721,7 +11715,7 @@ Hva kan jeg hjelpe deg med i dag?`;
 
             // Create download link
             const a = document.createElement('a');
-            a.style.display = 'none';
+            a.classList.add('hidden');
             a.href = downloadUrl;
 
             // Generate filename with date

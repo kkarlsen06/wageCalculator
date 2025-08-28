@@ -1,4 +1,7 @@
 // Onboarding module: moved from inline script to satisfy CSP (no unsafe-inline)
+export const show = (el) => el && el.classList.remove('hidden');
+export const hide = (el) => el && el.classList.add('hidden');
+export const toggleHidden = (el, on) => el && el.classList[on ? 'add' : 'remove']('hidden');
 // Uses globally available Supabase client from bootstrap-supa.js
 
 const supabase = window.supa;
@@ -210,13 +213,13 @@ function updateNavigationButtons() {
   const backBtn = document.getElementById('backBtn');
   const nextBtn = document.getElementById('nextBtn');
   const skipLink = document.getElementById('skipLink');
-  if (backBtn) backBtn.style.display = currentStep === 1 ? 'none' : 'flex';
+  if (backBtn) toggleHidden(backBtn, currentStep === 1);
   if (currentStep === totalSteps) {
     if (nextBtn) nextBtn.innerHTML = 'Gå til dashboard <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>';
-    if (skipLink) skipLink.style.display = 'none';
+    if (skipLink) hide(skipLink);
   } else {
     if (nextBtn) nextBtn.innerHTML = 'Neste <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>';
-    if (skipLink) skipLink.style.display = (currentStep === 4 || currentStep === 5) ? 'inline' : 'none';
+    if (skipLink) toggleHidden(skipLink, !(currentStep === 4 || currentStep === 5));
   }
 }
 
@@ -450,7 +453,7 @@ async function uploadProfilePictureToStorage(file) {
 function togglePaidBreak() {
   const isChecked = document.getElementById('paidBreakToggle').checked;
   const advancedSection = document.getElementById('breakAdvancedSection');
-  advancedSection.style.display = isChecked ? 'none' : 'block';
+  toggleHidden(advancedSection, isChecked);
 }
 
 function toggleAdvancedBreaks() {
@@ -542,4 +545,3 @@ function collectCustomBonuses() {
 }
 
 document.addEventListener('DOMContentLoaded', initOnboarding);
-

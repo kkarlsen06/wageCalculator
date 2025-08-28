@@ -725,7 +725,7 @@ export class EmployeeModal {
         const sections = this.modal.querySelectorAll('.form-section[data-section]');
         sections.forEach(section => {
             const sectionNum = parseInt(section.dataset.section);
-            section.style.display = sectionNum === this.currentStep ? 'block' : 'none';
+            section.classList[sectionNum === this.currentStep ? 'remove' : 'add']('hidden');
         });
 
         // Update navigation buttons
@@ -733,17 +733,11 @@ export class EmployeeModal {
         const nextBtn = this.modal.querySelector('.next-btn');
         const submitBtn = this.modal.querySelector('.submit-btn');
 
-        if (prevBtn) {
-            prevBtn.style.display = this.currentStep > 1 ? 'flex' : 'none';
-        }
+        if (prevBtn) prevBtn.classList[this.currentStep > 1 ? 'remove' : 'add']('hidden');
 
-        if (nextBtn) {
-            nextBtn.style.display = this.currentStep < this.totalSteps ? 'flex' : 'none';
-        }
+        if (nextBtn) nextBtn.classList[this.currentStep < this.totalSteps ? 'remove' : 'add']('hidden');
 
-        if (submitBtn) {
-            submitBtn.style.display = this.currentStep === this.totalSteps ? 'flex' : 'none';
-        }
+        if (submitBtn) submitBtn.classList[this.currentStep === this.totalSteps ? 'remove' : 'add']('hidden');
 
         // Focus first input in current section
         const currentSection = this.modal.querySelector(`.form-section[data-section="${this.currentStep}"]`);
@@ -832,7 +826,7 @@ export class EmployeeModal {
         if (!section) return;
         const level = parseInt(this.formData.tariff_level || 0);
         const show = level === 0; // 0 = Egendefinert
-        section.style.display = show ? 'block' : 'none';
+        section.classList[show ? 'remove' : 'add']('hidden');
     }
 
 
@@ -1117,11 +1111,11 @@ export class EmployeeModal {
         }
 
         if (btnText) {
-            btnText.style.display = submitting ? 'none' : 'inline';
+            btnText.classList[submitting ? 'add' : 'remove']('hidden');
         }
 
         if (btnLoading) {
-            btnLoading.style.display = submitting ? 'inline-flex' : 'none';
+            btnLoading.classList[submitting ? 'remove' : 'add']('hidden');
         }
 
         // Disable form inputs
@@ -1392,7 +1386,7 @@ export class EmployeeModal {
 
         // Update error message
         errorElement.textContent = errorMessage;
-        errorElement.style.display = hasError ? 'block' : 'none';
+        errorElement.classList[hasError ? 'remove' : 'add']('hidden');
 
         // Update ARIA attributes
         input.setAttribute('aria-invalid', hasError.toString());
