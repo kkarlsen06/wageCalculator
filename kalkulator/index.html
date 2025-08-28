@@ -1232,5 +1232,36 @@
     <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
     <!-- Vite kalkulator entry -->
     <script type="module" src="/src/kalkulator.js"></script>
+    +    <script>
+    // temporary probe — capture phase, logs + blocks default submit/
+    (() => {
+      const app = window.app || {};
+      const openers = ['#openSettingsItem','#settingsBtn','[data-action="open-settings"]'];
+      window.__settingsProbe = {
+        methods: {
+          openSettings: typeof app.openSettings,
+          openSettingsModal: typeof app.openSettingsModal,
+          openSettingsUI: typeof app.openSettingsUI
+        }
+      };
+      console.info('[settings-probe] methods',
+    window.__settingsProbe.methods);
+      const handler = (e) => {
+        const t = e.target.closest(openers.join(','));
+        if (!t) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        console.info('[settings-probe] click target:', t.id || t.getAttribute('data-action') || t.className);
+        console.info('[settings-probe] calling which method? ->',
+          app.openSettings ? 'app.openSettings' :
+          app.openSettingsModal ? 'app.openSettingsModal' :
+          app.openSettingsUI ? 'app.openSettingsUI' : 'NONE'
+        );
+      };
+      document.addEventListener('click', handler, true);
+      console.info('[settings-probe] armed');
+    })();
+    </script>
 </body>
 </html>
+

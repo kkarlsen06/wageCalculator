@@ -27,7 +27,37 @@ function initBindings() {
     if (e.target.closest('#openAddShiftBtn')) console.info('[bindings] click: openAddShiftBtn');
     if (e.target.closest('#userProfileBtn')) console.info('[bindings] click: userProfileBtn');
   }, true);
+
   // --- PROBE END ---
+  
+    const openSettings = () => {
+    // Use app methods if present
+    if (app?.openSettings) return app.openSettings();
+    if (app?.openSettingsModal) return app.openSettingsModal();
+    if (app?.openSettingsUI) return app.openSettingsUI();
+    // Fallback: open modal directly
+    const modal =
+      document.getElementById('settingsModal') ||
+      document.querySelector('[data-modal="settings"]');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.removeAttribute('aria-hidden');
+      document.body.classList.add('modal-open');
+      // focus first focusable
+      const first = modal.querySelector(
+        'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
+      );
+      first?.focus();
+    }
+  };
+  // Triggers
+  on(document.getElementById('openSettingsItem'), 'click', (e) => { e.preventDefault(); openSettings(); });
+  on(document.getElementById('settingsBtn'), 'click', (e) => { e.preventDefault(); openSettings(); });
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-action="open-settings"]');
+    if (t) { e.preventDefault(); openSettings(); }
+  }, true);
+
 
   // Profile menu
   on(document.getElementById('userProfileBtn'), 'click', () => app.toggleProfileDropdown && app.toggleProfileDropdown());
