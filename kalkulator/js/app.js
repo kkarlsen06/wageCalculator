@@ -2019,16 +2019,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (event.tool_calls && event.tool_calls.length > 0) {
           const toolCallsText = event.tool_calls.map(call => call.name).join(', ');
           updateSpinnerText(spinnerElement, `GPT planlegger: ${toolCallsText}`);
+        } else {
+          // No tools -> model will respond directly
+          updateSpinnerText(spinnerElement, 'Skriver svar');
         }
         break;
       case 'tool_calls_start':
-        updateSpinnerText(spinnerElement, event.message);
+        // Backend may send only { iteration, count }
+        if (event.message) {
+          updateSpinnerText(spinnerElement, event.message);
+        } else {
+          const c = Number(event.count) || 0;
+          const msg = c <= 1 ? 'Kjører 1 verktøy' : `Kjører ${c} verktøy`;
+          updateSpinnerText(spinnerElement, msg);
+        }
         break;
       case 'tool_call_start':
-        updateSpinnerText(spinnerElement, event.message);
+        // Legacy alias; prefer unified 'tool_call'
+        updateSpinnerText(spinnerElement, event.message || 'Kjører verktøy');
         break;
       case 'tool_call_complete':
-        updateSpinnerText(spinnerElement, event.message + ' ✓');
+        updateSpinnerText(spinnerElement, (event.message || 'Verktøy ferdig') + ' ✓');
+        break;
+      case 'tool_call':
+        // Current backend emits { type: 'tool_call', iteration, name, argsSummary }
+        if (event.name) {
+          updateSpinnerText(spinnerElement, `Kjører: ${event.name}`);
+        } else {
+          updateSpinnerText(spinnerElement, 'Kjører verktøy');
+        }
+        break;
+      case 'tool_result':
+        // Current backend emits { type: 'tool_result', iteration, name, ok, duration_ms }
+        if (event.name) {
+          const mark = event.ok ? '✓' : '✗';
+          updateSpinnerText(spinnerElement, `Ferdig: ${event.name} ${mark}`);
+        } else {
+          updateSpinnerText(spinnerElement, event.ok ? 'Verktøy fullført ✓' : 'Verktøy feilet ✗');
+        }
         break;
       case 'text_stream_start':
         // Replace spinner with empty text element for streaming
