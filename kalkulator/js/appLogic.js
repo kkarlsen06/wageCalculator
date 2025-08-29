@@ -4973,6 +4973,17 @@ export const app = {
         const todayWeekNumber = this.getISOWeekNumber(today);
         const todayInCurrentMonth = today.getMonth() === this.currentMonth - 1 && today.getFullYear() === this.currentYear;
 
+        // Helper function to create current date separator HTML
+        const createCurrentDateSeparator = () => {
+            const dayNumber = today.getDate();
+            return `
+                <div class="current-date-separator">
+                    <div class="current-date-separator-line"></div>
+                    <span class="current-date-separator-date">${dayNumber}.</span>
+                </div>
+            `;
+        };
+
         weekNumbers.forEach((weekNumber) => {
             const weekShifts = weekGroups[weekNumber];
 
@@ -5014,11 +5025,7 @@ export const app = {
                 // Check if today comes before the first shift of this week
                 const weekShiftDates = weekShifts.map(shift => shift.date.getTime()).sort((a, b) => a - b);
                 if (today.getTime() < weekShiftDates[0]) {
-                    shiftsHtml.push(`
-                        <div class="current-date-separator">
-                            <div class="current-date-separator-line"></div>
-                        </div>
-                    `);
+                    shiftsHtml.push(createCurrentDateSeparator());
                 }
             }
 
@@ -5042,11 +5049,7 @@ export const app = {
                         !sortedWeekShifts.some(s => s.date.getDate() === today.getDate() && 
                                                    s.date.getMonth() === today.getMonth() && 
                                                    s.date.getFullYear() === today.getFullYear())) {
-                        shiftsHtml.push(`
-                            <div class="current-date-separator">
-                                <div class="current-date-separator-line"></div>
-                            </div>
-                        `);
+                        shiftsHtml.push(createCurrentDateSeparator());
                     }
                 }
 
@@ -5124,11 +5127,7 @@ export const app = {
                     shift.date.getMonth() === today.getMonth() && 
                     shift.date.getFullYear() === today.getFullYear()
                 )) {
-                    shiftsHtml.push(`
-                        <div class="current-date-separator">
-                            <div class="current-date-separator-line"></div>
-                        </div>
-                    `);
+                    shiftsHtml.push(createCurrentDateSeparator());
                 }
             }
         });
@@ -5167,9 +5166,7 @@ export const app = {
                     </div>
                     <div class="week-separator-line"></div>
                 </div>
-                <div class="current-date-separator">
-                    <div class="current-date-separator-line"></div>
-                </div>
+                ${createCurrentDateSeparator()}
             `;
 
             // Insert the week with current date separator at the correct position
