@@ -9,10 +9,10 @@
   "scripts": {
     "prebuild": "rm -rf dist",
     "build": "vite build",
-    "dev": "vite",
+    "dev": "vite --host",
     "preview": "vite preview --host",
     "dev:server": "npm --prefix server run dev:server",
-    "redev": "npm run build && npm run dev"
+    "redev": "npm run build && npm run preview"
   },
 
   "repository": {
