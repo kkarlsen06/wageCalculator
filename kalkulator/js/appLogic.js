@@ -4963,11 +4963,17 @@ export const app = {
             weekGroups[weekNumber].push(shift);
         });
 
-        // Create HTML with week separators
+        // Create HTML with week separators and current date indicator
         const shiftsHtml = [];
         const weekNumbers = Object.keys(weekGroups).sort((a, b) => a - b); // Sort weeks ascending (earliest first)
+        
+        // Get current date for comparison
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayWeekNumber = this.getISOWeekNumber(today);
+        const todayInCurrentMonth = today.getMonth() === this.currentMonth - 1 && today.getFullYear() === this.currentYear;
 
-        weekNumbers.forEach((weekNumber, weekIndex) => {
+        weekNumbers.forEach((weekNumber) => {
             const weekShifts = weekGroups[weekNumber];
 
             // Calculate weekly wage total
@@ -4999,8 +5005,51 @@ export const app = {
                 </div>
             `);
 
-            // Add shifts for this week
-            weekShifts.forEach(shift => {
+            // Check if current date separator should be shown at the top of this week
+            if (todayInCurrentMonth && parseInt(weekNumber) === todayWeekNumber && !weekShifts.some(shift => 
+                shift.date.getDate() === today.getDate() && 
+                shift.date.getMonth() === today.getMonth() && 
+                shift.date.getFullYear() === today.getFullYear()
+            )) {
+                // Check if today comes before the first shift of this week
+                const weekShiftDates = weekShifts.map(shift => shift.date.getTime()).sort((a, b) => a - b);
+                if (today.getTime() < weekShiftDates[0]) {
+                    shiftsHtml.push(`
+                        <div class="current-date-separator">
+                            <div class="current-date-separator-line"></div>
+                        </div>
+                    `);
+                }
+            }
+
+            // Sort shifts within the week by date
+            const sortedWeekShifts = weekShifts.sort((a, b) => a.date - b.date);
+            
+            // Add shifts for this week, checking for current date separator placement
+            sortedWeekShifts.forEach((shift, shiftIndex) => {
+                // Check if current date separator should be inserted before this shift
+                if (todayInCurrentMonth && parseInt(weekNumber) === todayWeekNumber) {
+                    const nextShift = sortedWeekShifts[shiftIndex];
+                    const prevShift = sortedWeekShifts[shiftIndex - 1];
+                    
+                    // Check if today falls between previous shift and current shift
+                    const todayTime = today.getTime();
+                    const currentShiftTime = nextShift.date.getTime();
+                    const prevShiftTime = prevShift ? prevShift.date.getTime() : 0;
+                    
+                    // Insert separator if today is between shifts and no shift exists on current date
+                    if (todayTime > prevShiftTime && todayTime < currentShiftTime && 
+                        !sortedWeekShifts.some(s => s.date.getDate() === today.getDate() && 
+                                                   s.date.getMonth() === today.getMonth() && 
+                                                   s.date.getFullYear() === today.getFullYear())) {
+                        shiftsHtml.push(`
+                            <div class="current-date-separator">
+                                <div class="current-date-separator-line"></div>
+                            </div>
+                        `);
+                    }
+                }
+
                 const calc = this.calculateShift(shift);
                 const day = shift.date.getDate();
                 const weekday = this.WEEKDAYS[shift.date.getDay()];
@@ -5020,7 +5069,6 @@ export const app = {
                 ` : '';
 
                 // Check if this shift is on the current date
-                const today = new Date();
                 const isCurrentDate = shift.date.getDate() === today.getDate() &&
                                     shift.date.getMonth() === today.getMonth() &&
                                     shift.date.getFullYear() === today.getFullYear();
@@ -5064,7 +5112,70 @@ export const app = {
                     </div>
                 `);
             });
+
+            // Check if current date separator should be shown at the end of this week
+            if (todayInCurrentMonth && parseInt(weekNumber) === todayWeekNumber) {
+                const lastShiftTime = Math.max(...sortedWeekShifts.map(shift => shift.date.getTime()));
+                const todayTime = today.getTime();
+                
+                // If today is after the last shift of the week and no shift exists on current date
+                if (todayTime > lastShiftTime && !sortedWeekShifts.some(shift => 
+                    shift.date.getDate() === today.getDate() && 
+                    shift.date.getMonth() === today.getMonth() && 
+                    shift.date.getFullYear() === today.getFullYear()
+                )) {
+                    shiftsHtml.push(`
+                        <div class="current-date-separator">
+                            <div class="current-date-separator-line"></div>
+                        </div>
+                    `);
+                }
+            }
         });
+
+        // Handle case where today is in a week with no shifts
+        if (todayInCurrentMonth && !weekNumbers.includes(todayWeekNumber.toString())) {
+            // Find where to insert this week in the chronological order
+            const todayWeekNum = parseInt(todayWeekNumber);
+            let insertIndex = 0;
+            
+            for (let i = 0; i < weekNumbers.length; i++) {
+                if (parseInt(weekNumbers[i]) > todayWeekNum) {
+                    insertIndex = i;
+                    break;
+                } else if (i === weekNumbers.length - 1) {
+                    insertIndex = weekNumbers.length;
+                }
+            }
+
+            const separatorHtml = `
+                <div class="week-separator">
+                    <div class="week-separator-line"></div>
+                    <div class="week-separator-content">
+                        <div class="week-separator-left">
+                            <span class="week-separator-week">Uke ${todayWeekNumber}</span>
+                            <svg class="week-separator-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="week-separator-right">
+                            <svg class="week-separator-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                            <span class="week-separator-total">${this.formatCurrency(0)}</span>
+                        </div>
+                    </div>
+                    <div class="week-separator-line"></div>
+                </div>
+                <div class="current-date-separator">
+                    <div class="current-date-separator-line"></div>
+                </div>
+            `;
+
+            // Insert the week with current date separator at the correct position
+            const insertPosition = insertIndex * 2; // Account for existing week separators and shifts
+            shiftsHtml.splice(insertPosition, 0, separatorHtml);
+        }
 
         shiftList.innerHTML = shiftsHtml.join('');
     },
