@@ -15889,15 +15889,16 @@ body.chatbox-view .chatbox-container {
   pointer-events: none; /* Disable text interactions when expanded */
 }
 
-/* Ensure close button remains clickable when expanded */
-.chatbox-pill.expanded .chatbox-close {
-  pointer-events: auto; /* Re-enable close button */
+/* Ensure close and new chat buttons remain clickable when expanded */
+.chatbox-pill.expanded .chatbox-close,
+.chatbox-pill.expanded .chatbox-new-chat {
+  pointer-events: auto; /* Re-enable buttons */
 }
 
 .chatbox-pill-content {
   display: flex;
   align-items: center;
-  gap: 0; /* Remove gap since we're using badge positioning */
+  gap: 8px; /* Add gap between buttons */
   justify-content: flex-start;
   padding: 12px 20px 12px 44px; /* Add left padding to account for badge */
   cursor: pointer;
@@ -15968,7 +15969,8 @@ body.chatbox-view .chatbox-container {
   align-items: center;
 }
 
-.chatbox-close {
+.chatbox-close,
+.chatbox-new-chat {
   background: none;
   border: none;
   padding: 4px;
@@ -15979,16 +15981,31 @@ body.chatbox-view .chatbox-container {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  width: 24px; /* Fixed width for consistent alignment */
+  height: 24px; /* Fixed height for consistent alignment */
+  min-width: 24px; /* Prevent shrinking */
+  min-height: 24px; /* Prevent shrinking */
+  line-height: 1; /* Override global button line-height for proper alignment */
+  font-size: 0; /* Remove any text-based spacing issues */
 }
 
-.chatbox-close:hover {
+/* Push the new chat button (first button) to the right */
+.chatbox-new-chat {
+  margin-left: auto;
+}
+
+.chatbox-close:hover,
+.chatbox-new-chat:hover {
   background: var(--bg-tertiary);
 }
 
-.chatbox-close svg {
+.chatbox-close svg,
+.chatbox-new-chat svg {
   width: 16px;
   height: 16px;
   color: var(--text-secondary);
+  display: block; /* Ensure SVG is treated as block element */
+  flex-shrink: 0; /* Prevent SVG from shrinking */
 }
 
 /* Expanded content within the pill */

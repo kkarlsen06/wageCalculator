@@ -1243,6 +1243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       pill: document.getElementById('chatboxPill'),
       expandedContent: document.getElementById('chatboxExpandedContent'),
       close: document.getElementById('chatboxClose'),
+      newChat: document.getElementById('chatboxNewChat'),
       log: document.getElementById('chatboxLog'),
       input: document.getElementById('chatboxInput'),
       send: document.getElementById('chatboxSend'),
@@ -1302,6 +1303,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.stopPropagation();
         e.preventDefault();
         collapseChatbox();
+      });
+    }
+
+    // New chat button
+    if (chatElements.newChat) {
+      chatElements.newChat.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        startNewChat();
       });
     }
 
@@ -1392,6 +1402,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatElements.pill.classList.add('expanded');
     chatElements.expandedContent.style.display = 'block';
     chatElements.close.style.display = 'flex';
+    if (chatElements.newChat) {
+      chatElements.newChat.style.display = 'flex';
+    }
 
     // Add class to body for CSS targeting (fallback for browsers without :has() support)
     document.body.classList.add('chatbox-expanded-active');
@@ -1427,6 +1440,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatElements.pill.classList.remove('expanded');
     chatElements.expandedContent.style.display = 'none';
     chatElements.close.style.display = 'none';
+    if (chatElements.newChat) {
+      chatElements.newChat.style.display = 'none';
+    }
     // Pill text is always visible - no need to hide/show
 
     // Remove class from body
@@ -1437,6 +1453,34 @@ document.addEventListener('DOMContentLoaded', async () => {
       chatElements.log.innerHTML = '';
     }
     chatMessages = [];
+  }
+
+  function startNewChat() {
+    // Clear current chat messages and history
+    chatMessages = [];
+    if (chatElements.log) {
+      chatElements.log.innerHTML = '';
+    }
+    
+    // Reset chat state
+    hasFirstMessage = false;
+    
+    // Add a new greeting message
+    addGreetingMessage();
+    
+    // Focus the input field
+    setTimeout(() => {
+      if (chatElements.input) {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        
+        chatElements.input.focus({ preventScroll: true });
+        
+        setTimeout(() => {
+          window.scrollTo(scrollLeft, scrollTop);
+        }, 0);
+      }
+    }, 100);
   }
 
   function autoResizeTextarea() {
@@ -2021,7 +2065,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           updateSpinnerText(spinnerElement, `GPT planlegger: ${toolCallsText}`);
         } else {
           // No tools -> model will respond directly
-          updateSpinnerText(spinnerElement, 'Skriver svar');
+          updateSpinnerText(spinnerElement, 'Venter på svar');
         }
         break;
       case 'tool_calls_start':
@@ -2155,6 +2199,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (chatElements.close) {
       chatElements.close.style.display = 'none';
     }
+    if (chatElements.newChat) {
+      chatElements.newChat.style.display = 'none';
+    }
     // Pill text is always visible - no need to manipulate display
   }
 
@@ -2164,6 +2211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     clear: clearChatLog,
     expand: expandChatbox,
     collapse: collapseChatbox,
+    startNewChat: startNewChat,
     updateText: updateChatboxPlaceholder,
     appendMessage: appendMessage,
     streamText: streamText,
