@@ -46,25 +46,21 @@ const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 app.use(morgan(logFormat));
 
 // CORS: allow dev frontend and production domain; skip Stripe webhook (must stay raw)
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://www.kkarlsen.dev',
-  'https://kkarlsen.dev',
-  'https://www.kkarlsen.art',
-  'https://kkarlsen.art'
-];
-
-const corsOptions = {
-  origin(origin, callback) {
-    // allow non-browser requests (e.g., curl) with no Origin
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
-  },
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400
-};
+const ALLOW_ORIGINS = [
+   /^http:\/\/localhost:(4173|5173|3000)$/,
+   /^http:\/\/127\.0\.0\.1:\d+$/,
+   /^https?:\/\/.*kkarlsen\.(dev|art)$/
+ ];
+ const corsOptions = {
+   origin: (origin, cb) => {
+     if (!origin) return cb(null, true); // curl/same-origin
+     const ok = ALLOW_ORIGINS.some(re => re.test(origin));
+     return ok ? cb(null, true) : cb(new Error('Not allowed by CORS'));
+   },
+   credentials: true,
+   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+   allowedHeaders: ['Content-Type','Authorization','X-Requested-With']
+ };
 
 // Explicit preflight for /api/checkout to avoid Express auto-OPTIONS
 app.options('/api/checkout', cors(corsOptions));
@@ -165,6 +161,87 @@ const openai = (() => {
     return null;
   }
 })();
+
+// -------- Agent loop config & transient storage --------
+// Agent loop for Chat Completions — how it works:
+// - Maintains a single messages array in OpenAI chat format.
+// - Calls chat.completions.create; if tool_calls are returned, executes them
+//   (concurrently when multiple), appends results as tool messages, and loops.
+// - Emits lightweight SSE events for tool_call and tool_result (no raw payloads).
+// - Enforces limits: 10 iterations, 20s per tool, 120s wall clock per request.
+// - Truncates tool output to <= 8000 chars; if larger, stores in-memory and
+//   passes a handle + preview back to the model.
+const MAX_ITERATIONS = 10;
+const PER_TOOL_TIMEOUT_MS = 20_000;
+const WALL_CLOCK_CAP_MS = 120_000;
+const MODEL_TOOL_OUTPUT_TRUNCATE = 8000;
+const TOOL_PREVIEW_LEN = 512;
+
+// simple in-memory store for oversized tool outputs
+const TOOL_OUTPUT_STORE = new Map(); // key: uuid -> full string
+
+function truncateToolOutput(content) {
+  try {
+    let s = typeof content === 'string' ? content : JSON.stringify(content);
+    const size_bytes = Buffer.byteLength(s || '', 'utf8');
+    if (!s) return { content: '', size_bytes, stored: false };
+    if (s.length <= MODEL_TOOL_OUTPUT_TRUNCATE) {
+      return { content: s, size_bytes, stored: false };
+    }
+    const uuid = randomUUID();
+    TOOL_OUTPUT_STORE.set(uuid, s);
+    const handlePayload = {
+      handle: `tool://${uuid}`,
+      preview: s.slice(0, TOOL_PREVIEW_LEN)
+    };
+    return { content: JSON.stringify(handlePayload), size_bytes, stored: true, handle: uuid };
+  } catch (_) {
+    const fallback = String(content ?? '');
+    return { content: fallback.slice(0, MODEL_TOOL_OUTPUT_TRUNCATE), size_bytes: Buffer.byteLength(fallback, 'utf8'), stored: false };
+  }
+}
+
+function withTimeoutPromise(p, ms) {
+  return Promise.race([
+    p,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('tool_timeout')), ms))
+  ]);
+}
+
+async function runToolWithTimeout(call, user_id, iter, res) {
+  const start = Date.now();
+  const name = call?.function?.name || 'unknown';
+  let ok = true;
+  let rawOutput = '';
+  try {
+    // Emit SSE tool_call summary event (no raw args)
+    if (res) {
+      const argsSummary = (() => {
+        try {
+          const a = call?.function?.arguments || '';
+          return String(a).slice(0, 240);
+        } catch { return ''; }
+      })();
+      res.write(`data: ${JSON.stringify({ type: 'tool_call', iteration: iter, name, argsSummary })}\n\n`);
+    }
+
+    rawOutput = await withTimeoutPromise(handleTool(call, user_id), PER_TOOL_TIMEOUT_MS);
+  } catch (e) {
+    ok = false;
+    rawOutput = JSON.stringify({ error: e?.message || String(e) });
+  }
+  const duration_ms = Date.now() - start;
+  const { content, size_bytes } = truncateToolOutput(rawOutput);
+  // Structured tool log
+  try {
+    console.log(JSON.stringify({ phase: 'tool', iter, name, ok, duration_ms, out_len: size_bytes }));
+  } catch (_) {}
+  // Emit SSE tool_result summary
+  if (res) {
+    res.write(`data: ${JSON.stringify({ type: 'tool_result', iteration: iter, name, ok, duration_ms, size_bytes })}\n\n`);
+  }
+  return { content, size_bytes, ok };
+}
 
 // ---------- Stripe client ----------
 const stripe = (() => {
@@ -3671,34 +3748,27 @@ app.get('/health/employees', (req, res) => {
 app.post('/chat', authenticateUser, async (req, res) => {
   const { messages, stream = false, currentMonth, currentYear } = req.body;
 
-  // Get user message first for system prompt customization
-  const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
-
-  // Get user information for personalization (already verified by authenticateUser middleware)
-  const user = req.user;
-
-  // Choose tool allowlist based on whether this is an AI agent request
-  const chatTools = getToolsForRequest(req);
-  let userName = 'bruker';
-  if (user) {
-    userName = user.user_metadata?.first_name ||
-               user.email?.split('@')[0] ||
-               'bruker';
+  if (!openai) {
+    return res.status(503).json({ error: 'OpenAI not configured' });
   }
 
-  // Inject relative dates and user name for GPT context
+  // User info for light personalization
+  const user = req.user;
+  let userName = 'bruker';
+  if (user) {
+    userName = user.user_metadata?.first_name || user.email?.split('@')[0] || 'bruker';
+  }
+
+  // Time/context hints
   const today = new Date().toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
   const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
-
-  // Get current viewing context from frontend (defaults to current month/year if not provided)
   const viewingMonth = currentMonth || new Date().getMonth() + 1;
   const viewingYear = currentYear || new Date().getFullYear();
   const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
   const viewingMonthName = monthNames[viewingMonth - 1];
-
-  // Concise, task-focused system prompt (server is the single source of instruction)
   const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
   const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
+
   const systemContextHint = {
     role: 'system',
     content:
@@ -3728,242 +3798,208 @@ Policy for verktøy:
 
 Svarformat til bruker:
 - Datoformat: dd.mm.yyyy. Bruk korte avsnitt; bruk fet skrift for dato/klokkeslett. Unngå punktlister og nummerering.
-- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider).
-
-Eksempler på verktøybruk (illustrasjon):
-- "i morgen 09-17" → addShift({ shift_date: <YYYY-MM-DD for i morgen>, start_time: "09:00", end_time: "17:00" })
-- "flytt fredagens vakt til 18:00" → editShift({ date_reference: "Friday", new_start_time: "18:00" })
-- "legg til hverdager i denne måneden 08-16" → addSeries({ from_date: "${firstDay}", to_date: "${lastDay}", days: [1,2,3,4,5], start: "08:00", end: "16:00" })`
+- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider).`
   };
-  const fullMessages = [systemContextHint, ...messages];
 
-  // Set up streaming if requested
+  // Tool allowlist based on ai_agent claim
+  const chatTools = getToolsForRequest(req);
+
+  // SSE setup
   if (stream) {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
-
-    // Send initial status
     res.write(`data: ${JSON.stringify({ type: 'status', message: 'Starter GPT-forespørsel' })}\n\n`);
   }
 
-  // First call: Let GPT choose tools - force tool usage for multi-step operations
-  const isMultiStep = /\bog\b.*\bog\b|vis.*og.*endre|vis.*og.*slett|vis.*og.*gjør|legg til.*og.*legg til|hent.*og.*endre/.test(userMessage);
+  // Maintain a single messages array for the agent loop
+  const convo = [systemContextHint, ...messages];
+  const startedAt = Date.now();
 
+  let finalAssistantContent = null;
+  let iter = 0;
+  let done = false;
 
-
-  if (!openai) {
-    return res.status(503).json({ error: 'OpenAI not configured' });
-  }
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: fullMessages,
-    tools: chatTools, // tool allowlist based on ai_agent claim
-    tool_choice: isMultiStep ? 'required' : 'auto'
-  });
-
-  const choice = completion.choices[0].message;
-
-  // Log what GPT decided to do
-  console.log('=== GPT RESPONSE ===');
-  console.log('Content:', choice.content);
-  console.log('Tool calls:', choice.tool_calls?.length || 0);
-  if (choice.tool_calls) {
-    choice.tool_calls.forEach((call, i) => {
-      console.log(`Tool ${i+1}: ${call.function.name}(${call.function.arguments})`);
+  while (!done && iter < MAX_ITERATIONS && (Date.now() - startedAt) < WALL_CLOCK_CAP_MS) {
+    iter += 1;
+    const t0 = Date.now();
+    // Sanitize conversation to avoid sending assistant messages with tool_calls: []
+    const sanitizedConvo = (function sanitizeMessagesForOpenAI(msgs) {
+      try {
+        return msgs.map(m => {
+          if (m && m.role === 'assistant') {
+            if (Array.isArray(m.tool_calls)) {
+              if (m.tool_calls.length === 0) {
+                const { tool_calls, ...rest } = m;
+                return rest;
+              }
+              // Ensure content is null when tool_calls exist
+              return { ...m, content: m.content ?? null };
+            }
+          }
+          return m;
+        });
+      } catch (_) {
+        return msgs;
+      }
+    })(convo);
+    // One model turn
+    const turn = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: sanitizedConvo,
+      tools: chatTools,
+      tool_choice: 'auto'
     });
-  }
-  console.log('==================');
 
-  if (stream) {
-    res.write(`data: ${JSON.stringify({
-      type: 'gpt_response',
-      content: choice.content,
-      tool_calls: choice.tool_calls?.map(call => ({
-        name: call.function.name,
-        arguments: call.function.arguments
-      })) || []
-    })}\n\n`);
-  }
+    const msg = turn.choices?.[0]?.message || {};
+    const toolCalls = msg.tool_calls || [];
 
-  if (choice.tool_calls && choice.tool_calls.length > 0) {
-    // Handle multiple tool calls
-    const toolMessages = [];
+    // Structured loop log
+    try {
+      console.log(JSON.stringify({ phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 }));
+    } catch (_) {}
 
+    // Reflect assistant decision on stream (no payloads)
     if (stream) {
-      res.write(`data: ${JSON.stringify({
-        type: 'tool_calls_start',
-        count: choice.tool_calls.length,
-        message: `Utfører ${choice.tool_calls.length} operasjon${choice.tool_calls.length > 1 ? 'er' : ''}`
-      })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'gpt_response', iteration: iter, content: msg.content || null, tool_calls: toolCalls.map(c => ({ name: c.function?.name })) })}\n\n`);
     }
 
-    for (const call of choice.tool_calls) {
-      if (stream) {
-        res.write(`data: ${JSON.stringify({
-          type: 'tool_call_start',
-          name: call.function.name,
-          arguments: JSON.parse(call.function.arguments),
-          message: `Utfører ${call.function.name}`
-        })}\n\n`);
+    // Append assistant turn to history
+    if (toolCalls.length > 0) {
+      // Assistant decided to call tools: include tool_calls and set content to null
+      convo.push({ role: 'assistant', content: null, tool_calls: toolCalls });
+    } else {
+      // No tools: push a plain assistant message without tool_calls
+      convo.push({ role: 'assistant', content: msg.content || '' });
+    }
+
+    if (toolCalls.length === 0) {
+      // No tools requested → finish loop
+      finalAssistantContent = msg.content || '';
+      done = true;
+      break;
+    }
+
+    // Run multiple tool calls in parallel with timeout
+    if (stream) {
+      res.write(`data: ${JSON.stringify({ type: 'tool_calls_start', iteration: iter, count: toolCalls.length })}\n\n`);
+    }
+
+    const results = await Promise.allSettled(
+      toolCalls.map(call => runToolWithTimeout(call, req.user_id, iter, stream ? res : null))
+    );
+
+    // Append tool messages to history in the same order
+    results.forEach((settled, idx) => {
+      const call = toolCalls[idx];
+      let content = '';
+      if (settled.status === 'fulfilled') {
+        content = settled.value?.content ?? '';
+      } else {
+        content = JSON.stringify({ error: settled.reason?.message || 'tool_failed' });
       }
-
-      const toolResult = await handleTool(call, req.user_id);
-
-      if (stream) {
-        res.write(`data: ${JSON.stringify({
-          type: 'tool_call_complete',
-          name: call.function.name,
-          result: toolResult.substring(0, 200) + (toolResult.length > 200 ? '...' : ''),
-          message: `${call.function.name} fullført`
-        })}\n\n`);
-      }
-
-      toolMessages.push({
+      convo.push({
         role: 'tool',
         tool_call_id: call.id,
-        name: call.function.name,
-        content: toolResult
+        name: call?.function?.name,
+        content
       });
-    }
+    });
 
-    // Add tool results to conversation and get GPT's response
-    const messagesWithToolResult = [
-      ...fullMessages,
-      {
-        role: 'assistant',
-        content: choice.content,
-        tool_calls: choice.tool_calls
-      },
-      ...toolMessages
-    ];
+    // Iteration continues; model will see tool results next turn
+  }
 
-    // Second call: Let GPT formulate a user-friendly response with error handling
-    // Skip the "generating_response" status message - go directly to streaming
+  // If we exited due to cap/timeout without final content, synthesize brief note
+  if (!done && finalAssistantContent == null) {
+    finalAssistantContent = 'Beklager, jeg måtte stoppe før jeg ble ferdig. Prøv igjen.';
+  }
 
-    let assistantMessage = '';
-    try {
-      if (stream) {
-        // Use streaming for the final response
-        if (!openai) {
-          return res.status(503).json({ error: 'OpenAI not configured' });
-        }
-        const streamCompletion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: messagesWithToolResult,
-          tools: chatTools,
-          tool_choice: 'none',
-          stream: true
-        });
-
-        // Send start of text streaming
-        res.write(`data: ${JSON.stringify({
-          type: 'text_stream_start'
-        })}\n\n`);
-
-        for await (const chunk of streamCompletion) {
-          const content = chunk.choices[0]?.delta?.content;
-          if (content) {
-            assistantMessage += content;
-            // Send each chunk of text
-            res.write(`data: ${JSON.stringify({
-              type: 'text_chunk',
-              content: content
-            })}\n\n`);
-          }
-        }
-
-        // Send end of text streaming
-        res.write(`data: ${JSON.stringify({
-          type: 'text_stream_end'
-        })}\n\n`);
-
-        // Get updated shift list for streaming
-        const { data: shifts } = await supabase
-          .from('user_shifts')
-          .select('*')
-          .eq('user_id', req.user_id)
-          .order('shift_date');
-
-        // Send shifts update
-        res.write(`data: ${JSON.stringify({
-          type: 'shifts_update',
-          shifts: shifts || []
-        })}\n\n`);
-      } else {
-        // Non-streaming version
-        if (!openai) {
-          return res.status(503).json({ error: 'OpenAI not configured' });
-        }
-        const secondCompletion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: messagesWithToolResult,
-          tools: chatTools,
-          tool_choice: 'none'
-        });
-        assistantMessage = secondCompletion.choices[0].message.content;
-      }
-    } catch (error) {
-      console.error('Second GPT call failed:', error);
-      // Fallback message based on tool results
-      const hasSuccess = toolMessages.some(msg => msg.content.startsWith('OK:'));
-      const hasError = toolMessages.some(msg => msg.content.startsWith('ERROR:'));
-
-      if (hasError) {
-        assistantMessage = 'Det oppstod en feil med en av operasjonene. Prøv igjen.';
-      } else if (hasSuccess) {
-        assistantMessage = 'Operasjonene er utført! 👍';
-      } else {
-        assistantMessage = 'Operasjonene er utført.';
-      }
-    }
-
-    // Get updated shift list
-    const { data: shifts } = await supabase
-      .from('user_shifts')
-      .select('*')
-      .eq('user_id', req.user_id)
-      .order('shift_date');
-
+  // Final assistant response: stream tokens as today using a separate call with tool_choice='none'
+  let assistantMessage = '';
+  try {
     if (stream) {
-      res.write(`data: ${JSON.stringify({
-        type: 'complete',
-        assistant: assistantMessage,
-        shifts: shifts || []
-      })}\n\n`);
-      res.write('data: [DONE]\n\n');
-      res.end();
-    } else {
-      res.json({
-        assistant: assistantMessage,
-        shifts: shifts || []
+      const sanitizedConvoFinal = (function sanitizeMessagesForOpenAI(msgs) {
+        try {
+          return msgs.map(m => {
+            if (m && m.role === 'assistant') {
+              if (Array.isArray(m.tool_calls)) {
+                if (m.tool_calls.length === 0) {
+                  const { tool_calls, ...rest } = m;
+                  return rest;
+                }
+                return { ...m, content: m.content ?? null };
+              }
+            }
+            return m;
+          });
+        } catch (_) {
+          return msgs;
+        }
+      })(convo);
+      const streamCompletion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: sanitizedConvoFinal,
+        tools: chatTools,
+        tool_choice: 'none',
+        stream: true
       });
+
+      res.write(`data: ${JSON.stringify({ type: 'text_stream_start' })}\n\n`);
+      for await (const chunk of streamCompletion) {
+        const content = chunk.choices?.[0]?.delta?.content;
+        if (content) {
+          assistantMessage += content;
+          res.write(`data: ${JSON.stringify({ type: 'text_chunk', content })}\n\n`);
+        }
+      }
+      res.write(`data: ${JSON.stringify({ type: 'text_stream_end' })}\n\n`);
+    } else {
+      const sanitizedConvoFinal = (function sanitizeMessagesForOpenAI(msgs) {
+        try {
+          return msgs.map(m => {
+            if (m && m.role === 'assistant') {
+              if (Array.isArray(m.tool_calls)) {
+                if (m.tool_calls.length === 0) {
+                  const { tool_calls, ...rest } = m;
+                  return rest;
+                }
+                return { ...m, content: m.content ?? null };
+              }
+            }
+            return m;
+          });
+        } catch (_) {
+          return msgs;
+        }
+      })(convo);
+      const secondCompletion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: sanitizedConvoFinal,
+        tools: chatTools,
+        tool_choice: 'none'
+      });
+      assistantMessage = secondCompletion.choices?.[0]?.message?.content || finalAssistantContent || '';
     }
+  } catch (error) {
+    console.error('Final GPT call failed:', error);
+    assistantMessage = finalAssistantContent || 'Det oppstod en feil. Prøv igjen litt senere.';
+  }
+
+  // Append a fresh view of shifts for UI convenience (unchanged contract)
+  const { data: shifts } = await supabase
+    .from('user_shifts')
+    .select('*')
+    .eq('user_id', req.user_id)
+    .order('shift_date');
+
+  if (stream) {
+    res.write(`data: ${JSON.stringify({ type: 'shifts_update', shifts: shifts || [] })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'complete', assistant: assistantMessage, shifts: shifts || [] })}\n\n`);
+    res.write('data: [DONE]\n\n');
+    res.end();
   } else {
-    // No tool call - just return GPT's direct response
-    const assistantMessage = choice.content || "Jeg forstod ikke kommandoen.";
-
-    const { data: shifts } = await supabase
-      .from('user_shifts')
-      .select('*')
-      .eq('user_id', req.user_id)
-      .order('shift_date');
-
-    if (stream) {
-      res.write(`data: ${JSON.stringify({
-        type: 'complete',
-        assistant: assistantMessage,
-        shifts: shifts || []
-      })}\n\n`);
-      res.write('data: [DONE]\n\n');
-      res.end();
-    } else {
-      res.json({
-        assistant: assistantMessage,
-        shifts: shifts || []
-      });
-    }
+    res.json({ assistant: assistantMessage, shifts: shifts || [] });
   }
 });
 
@@ -5848,12 +5884,16 @@ async function handleTool(call, user_id) {
         };
       });
 
-      // Format shifts for tool content with earnings info (no employee context)
-      const formattedShifts = detailedShifts.map(shift => (
-        `ID:${shift.id} ${shift.date} ${shift.startTime}-${shift.endTime} (${shift.paidHours}t, ${shift.totalEarnings}kr)`
-      )).join(', ');
-
-          toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours.toFixed(1)} timer, ${totalEarnings.toFixed(0)}kr totalt). Skift: ${formattedShifts}`;
+          // Return structured data including totals for reliable tool consumption
+          toolResult = JSON.stringify({
+            period: criteriaDescription,
+            shifts: detailedShifts,
+            summary: {
+              totalShifts: shifts.length,
+              totalHours: parseFloat(totalHours.toFixed(2)),
+              totalEarnings: parseFloat(totalEarnings.toFixed(2))
+            }
+          });
         }
       }
     }
