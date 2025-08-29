@@ -51,6 +51,7 @@ const ALLOW_ORIGINS = [
    /^http:\/\/127\.0\.0\.1:\d+$/,
    /^https?:\/\/.*kkarlsen\.(dev|art)$/
  ];
+
  const corsOptions = {
    origin: (origin, cb) => {
      if (!origin) return cb(null, true); // curl/same-origin
@@ -3586,7 +3587,7 @@ app.get('/settings', async (req, res) => {
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const { data, error } = await supabase
       .from('user_settings')
-      .select('hourly_rate, profile_picture_url')
+      .select('custom_wage, profile_picture_url')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -3605,12 +3606,12 @@ app.get('/settings', async (req, res) => {
     }
 
     return res.json({
-      hourly_rate: data?.hourly_rate ?? 0,
+      custom_wage: data?.custom_wage ?? 0,
       profile_picture_url: data?.profile_picture_url ?? null
     });
   } catch (e) {
     console.error('GET /settings error:', e?.message || e, e?.stack || '');
-    return res.status(200).json({ hourly_rate: 0, profile_picture_url: null, error: e?.message || String(e), stack: e?.stack || null });
+    return res.status(200).json({ custom_wage: 0, profile_picture_url: null, error: e?.message || String(e), stack: e?.stack || null });
   }
 });
 
@@ -3628,10 +3629,10 @@ app.put('/settings', async (req, res) => {
       return res.status(403).json({ error: 'Agent writes are not allowed' });
     }
 
-    const { hourly_rate, profile_picture_url } = req.body || {};
+    const { custom_wage, profile_picture_url } = req.body || {};
 
-    if (hourly_rate !== undefined && hourly_rate !== null && (typeof hourly_rate !== 'number' || Number.isNaN(hourly_rate))) {
-      return res.status(400).json({ error: 'hourly_rate must be a number' });
+    if (custom_wage !== undefined && custom_wage !== null && (typeof custom_wage !== 'number' || Number.isNaN(custom_wage))) {
+      return res.status(400).json({ error: 'custom_wage must be a number' });
     }
     if (profile_picture_url !== undefined && profile_picture_url !== null && typeof profile_picture_url !== 'string') {
       return res.status(400).json({ error: 'profile_picture_url must be a string or null' });
@@ -3640,7 +3641,7 @@ app.put('/settings', async (req, res) => {
     const userId = req?.auth?.userId || req?.user_id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const payload = { user_id: userId };
-    if (hourly_rate !== undefined) payload.hourly_rate = hourly_rate;
+    if (custom_wage !== undefined) payload.custom_wage = custom_wage;
     if (profile_picture_url !== undefined) payload.profile_picture_url = profile_picture_url;
 
     let data = null; let error = null;
@@ -3648,7 +3649,7 @@ app.put('/settings', async (req, res) => {
       const upsert = await supabase
         .from('user_settings')
         .upsert(payload, { onConflict: 'user_id' })
-        .select('hourly_rate, profile_picture_url')
+        .select('custom_wage, profile_picture_url')
         .single();
       data = upsert.data; error = upsert.error;
     } catch (e) {
@@ -3661,20 +3662,20 @@ app.put('/settings', async (req, res) => {
       if (isMissingColumn) {
         // Retry without profile_picture_url when column missing
         const retryPayload = { user_id: userId };
-        if (hourly_rate !== undefined) retryPayload.hourly_rate = hourly_rate;
+        if (custom_wage !== undefined) retryPayload.custom_wage = custom_wage;
         const retry = await supabase
           .from('user_settings')
           .upsert(retryPayload, { onConflict: 'user_id' })
-          .select('hourly_rate')
+          .select('custom_wage')
           .single();
-        return res.json({ hourly_rate: retry.data?.hourly_rate ?? 0, profile_picture_url: null });
+        return res.json({ custom_wage: retry.data?.custom_wage ?? 0, profile_picture_url: null });
       }
       console.error('PUT /settings error:', msg, error?.stack || '');
       return res.status(500).json({ error: msg, code: error?.code || null, stack: error?.stack || null });
     }
 
     return res.json({
-      hourly_rate: data?.hourly_rate ?? 0,
+      custom_wage: data?.custom_wage ?? 0,
       profile_picture_url: data?.profile_picture_url ?? null
     });
   } catch (e) {
@@ -3787,18 +3788,15 @@ Verktøy og bruk:
 - Lønnsdata: getWageDataByWeek | getWageDataByMonth | getWageDataByDateRange.
 - Endringer: addShift | addSeries | editShift | deleteShift | deleteSeries | copyShift.
 
-Begrensninger (viktig):
-- Du skal kun opprette og endre brukerens egne vakter (user_shifts).
-- Du har ikke lov til å opprette, endre eller slette employee_shifts (autoritative ansatt-vakter), eller å endre koblinger til ansatte.
-
 Policy for verktøy:
-- Hvis brukeren ber om flere handlinger i samme melding, planlegg og utfør ALLE nødvendige tool calls i én respons.
 - Unngå identiske/overflødige kall med samme parametere.
 - Ikke gjett ved uklarheter; still maks ett kort oppfølgingsspørsmål ved reell tvetydighet. Ikke spør om bekreftelse når intensjonen er tydelig.
 
 Svarformat til bruker:
-- Datoformat: dd.mm.yyyy. Bruk korte avsnitt; bruk fet skrift for dato/klokkeslett. Unngå punktlister og nummerering.
-- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider).`
+- Datoformat: dd.mm.yyyy. Bruk korte avsnitt; bruk fet skrift for dato/klokkeslett.
+- Viktig: Når du svarer med flere skift, skriv hvert skift på én egen linje og separer hvert skift med et linjeskift (line break).
+- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider). Ikke inkluder oppfordringer til endringer ved rene oppslag.
+- Hvis du får informasjon om lønn for flere skift, gjengi informasjonen til brukeren.`
   };
 
   // Tool allowlist based on ai_agent claim
@@ -3810,7 +3808,7 @@ Svarformat til bruker:
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.write(`data: ${JSON.stringify({ type: 'status', message: 'Starter GPT-forespørsel' })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'status', message: 'Tenker' })}\n\n`);
   }
 
   // Maintain a single messages array for the agent loop
@@ -3846,7 +3844,7 @@ Svarformat til bruker:
     })(convo);
     // One model turn
     const turn = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5',
       messages: sanitizedConvo,
       tools: chatTools,
       tool_choice: 'auto'
@@ -3938,7 +3936,7 @@ Svarformat til bruker:
         }
       })(convo);
       const streamCompletion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5',
         messages: sanitizedConvoFinal,
         tools: chatTools,
         tool_choice: 'none',
@@ -3974,7 +3972,7 @@ Svarformat til bruker:
         }
       })(convo);
       const secondCompletion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5',
         messages: sanitizedConvoFinal,
         tools: chatTools,
         tool_choice: 'none'
@@ -6361,7 +6359,7 @@ app.get('/api/settings', async (req, res) => {
 
     const { data, error } = await supabase
       .from('user_settings')
-      .select('hourly_rate, profile_picture_url')
+      .select('custom_wage, profile_picture_url')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -6383,7 +6381,7 @@ app.get('/api/settings', async (req, res) => {
     }
 
     return res.json({
-      hourly_rate: data?.hourly_rate ?? 0,
+      custom_wage: data?.custom_wage ?? 0,
       profile_picture_url: data?.profile_picture_url ?? null
     });
   } catch (e) {

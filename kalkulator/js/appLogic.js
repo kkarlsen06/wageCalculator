@@ -333,8 +333,8 @@ export const app = {
         // Initialize employee state from URL params and localStorage
         this.initializeEmployeeState();
 
-        // Load employees for shift forms
-        this.loadEmployeesForShiftForms();
+        // Defer loading employees until truly needed (employees tab, CSV export, etc.)
+        // Avoids unnecessary /employees calls on page load.
 
         // Show UI elements
         this.populateTimeSelects();
@@ -5329,17 +5329,18 @@ export const app = {
                     </div>
                 `;
 
+                // Mark populated and remove any remaining skeleton before proceeding
+                nextShiftContent.dataset.populated = '1';
+                const skelLast = nextShiftContent.querySelector('.skeleton');
+                if (skelLast) skelLast.remove();
+
                 this.stopNextShiftTimer(); // Stop timer when showing last shift
                 this.checkDashboardCardsLoaded(); // Check if both cards are loaded
             }
         } else {
-            // Show next shift details
-            nextShiftContent.style.display = 'flex';
-            nextShiftEmpty.style.display = 'none';
-            // Hide skeleton and mark as populated
-            const skel = nextShiftContent.querySelector('.skeleton');
-            if (skel) skel.style.display = 'none';
-            nextShiftContent.dataset.populated = '1';
+        // Show next shift details
+        nextShiftContent.style.display = 'flex';
+        nextShiftEmpty.style.display = 'none';
 
             const nextShift = upcomingShifts[0];
             const calculation = this.calculateShift(nextShift);
@@ -5426,6 +5427,7 @@ export const app = {
             const isTomorrow = shiftDate.toDateString() === tomorrow.toDateString();
             const activeClass = (isToday || isTomorrow) ? ' active' : '';
 
+            // Inject content first to avoid any blank gap, then mark as populated
             nextShiftContent.innerHTML = `
                 <div class="shift-item ${typeClass}${activeClass}" data-shift-id="${nextShift.id}" style="cursor: pointer; position: relative;">
                     <div class="next-shift-badge">Neste</div>
@@ -5454,6 +5456,14 @@ export const app = {
                     </div>
                 </div>
             `;
+
+            // Now that content is in place, mark as populated and hide/remove skeleton if present
+            nextShiftContent.dataset.populated = '1';
+            const skel = nextShiftContent.querySelector('.skeleton');
+            if (skel) {
+                // Removing entirely ensures readiness checks don't see a hidden skeleton
+                skel.remove();
+            }
 
             // Click handler is handled by global event delegation in app.js
             // No need for direct event listener here
@@ -5577,6 +5587,10 @@ export const app = {
                 </div>
             </div>
         `;
+        // Mark populated and remove any remaining skeleton overlay for current shift case
+        nextShiftContent.dataset.populated = '1';
+        const skelCur = nextShiftContent.querySelector('.skeleton');
+        if (skelCur) skelCur.remove();
 
                 // Click handler is handled by global event delegation in app.js
         // No need for direct event listener here
@@ -5810,6 +5824,11 @@ export const app = {
                 </div>
             </div>
         `;
+
+        // Mark populated and remove skeletons to reflect readiness for best shift case
+        nextShiftContent.dataset.populated = '1';
+        const skelB = nextShiftContent.querySelector('.skeleton');
+        if (skelB) skelB.remove();
     },
 
     updateNextPayrollCard() {
@@ -5948,11 +5967,7 @@ export const app = {
         nextPayrollContent.style.display = 'flex';
         nextPayrollEmpty.style.display = 'none';
 
-        // Hide skeleton and mark populated before injecting content
-        const skelP = nextPayrollContent.querySelector('.skeleton');
-        if (skelP) skelP.style.display = 'none';
-        nextPayrollContent.dataset.populated = '1';
-
+        // Inject content first to avoid a brief blank period, then mark as populated
         nextPayrollContent.innerHTML = `
             <div class="payroll-item${activeClass}" style="cursor: pointer; position: relative;">
                 <div class="next-payroll-badge">Lønn</div>
@@ -5981,6 +5996,13 @@ export const app = {
                 </div>
             </div>
         `;
+
+        // Mark as populated and ensure any leftover skeleton is removed
+        nextPayrollContent.dataset.populated = '1';
+        const skelP = nextPayrollContent.querySelector('.skeleton');
+        if (skelP) {
+            skelP.remove();
+        }
 
         // Add click event listener to open settings and navigate to paydate setting
         const payrollItem = nextPayrollContent.querySelector('.payroll-item');
@@ -10182,16 +10204,11 @@ export const app = {
         const userName = userNickname ? userNickname.textContent : 'Bruker';
 
         // Create the greeting message text
-        const greetingText = `Hei ${userName}! 👋
+        const greetingText = `Hei ${userName}! :)
 
-Jeg er LønnAI, din personlige assistent for vaktregistrering. Jeg kan hjelpe deg med å:
-
-• Registrere enkelvakter
-• Opprette vaktserier
-• Svare på spørsmål om lønn og tillegg
-• Gi tips om effektiv vaktplanlegging
-
-Hva kan jeg hjelpe deg med i dag?`;
+Jeg er LønnAI, din assistent for vakter og lønn. 
+Jeg kan registrere vakter, opprette serier, svare på lønnsspørsmål og gi planleggingstips.
+Hva trenger du hjelp med i dag?`;
 
         // Use the modern appendMessage function with streaming animation
         // Check if the modern chatbox system is available

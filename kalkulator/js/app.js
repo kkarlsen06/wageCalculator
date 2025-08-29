@@ -2053,7 +2053,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Current backend emits { type: 'tool_result', iteration, name, ok, duration_ms }
         if (event.name) {
           const mark = event.ok ? '✓' : '✗';
-          updateSpinnerText(spinnerElement, `Ferdig: ${event.name} ${mark}`);
+          updateSpinnerText(spinnerElement, `${event.name} ${mark}`);
         } else {
           updateSpinnerText(spinnerElement, event.ok ? 'Verktøy fullført ✓' : 'Verktøy feilet ✗');
         }
