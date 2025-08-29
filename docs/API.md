@@ -45,6 +45,14 @@ Full schema: see `docs/OPENAPI.yaml`.
 - Requires `OPENAI_API_KEY` server-side.
 - Client example (streaming): see `kalkulator/js/app.js`.
 
+Tool naming consistency (assistant-side):
+- addShift: `shift_date`, `start_time`, `end_time` (YYYY-MM-DD, HH:mm)
+- addSeries: `from_date`, `to_date`, `days`, `start`, `end` (YYYY-MM-DD, HH:mm)
+- getShifts (date range): `from_date`, `to_date`
+- editShift updates: `new_shift_date`, `new_start_time`, `new_end_time`, `new_shift_type`
+
+Dates use `YYYY-MM-DD` and times use `HH:mm`.
+
 SSE event protocol (when `stream=true`):
 - `text_stream_start` — start of text streaming
 - `text_chunk` — incremental content chunks (`content` field)

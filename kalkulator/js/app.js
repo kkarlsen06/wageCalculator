@@ -1230,9 +1230,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 (function() {
   'use strict';
 
-  let chatMessages = [
-    { role: 'system', content: 'Du er en chatbot som hjelper brukeren å registrere skift via addShift eller addSeries. Svar alltid på norsk.' }
-  ];
+  // Keep conversation history; server injects the authoritative system prompt.
+  let chatMessages = [];
 
   let chatElements = {};
   let isExpanded = false;
@@ -1437,9 +1436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (chatElements.log) {
       chatElements.log.innerHTML = '';
     }
-    chatMessages = [
-      { role: 'system', content: 'Du er en chatbot som hjelper brukeren å registrere skift via addShift eller addSeries. Svar alltid på norsk.' }
-    ];
+    chatMessages = [];
   }
 
   function autoResizeTextarea() {
@@ -1862,9 +1859,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               if (parsed.type === 'complete') {
                 finalData = parsed;
               } else if (parsed.type === 'text_stream_end') {
-                // For text streaming, we don't need to wait for 'complete'
-                // The text is already displayed, just need to handle shifts update
-                finalData = { assistant: 'streamed', shifts: [] };
+                // For text streaming, the message is already rendered.
+                // Defer to subsequent shifts_update events; do not overwrite UI.
+                finalData = { assistant: null, shifts: [] };
               }
             } catch (e) {
               console.warn('Failed to parse streaming data:', data);
@@ -1888,12 +1885,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         ?? (data.error && `⚠️ ${data.error}`)
         ?? '⚠️ Ukjent svar fra serveren.';
 
-      // Replace spinner content with response text in the same bubble
+      // Replace spinner content only if not streamed already
       // Use Markdown rendering for assistant messages
-      if (data.assistant) {
+      if (data.assistant && spinner && spinner.parentNode) {
         const html = DOMPurify.sanitize(marked.parse(txt));
         spinner.innerHTML = html;
-      } else {
+      } else if (!data.assistant && txt && spinner && spinner.parentNode) {
         spinner.textContent = txt;
       }
       if (data.assistant) {
@@ -2111,9 +2108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (chatElements.log) {
       chatElements.log.innerHTML = '';
     }
-    chatMessages = [
-      { role: 'system', content: 'Du er en chatbot som hjelper brukeren å registrere skift via addShift eller addSeries. Svar alltid på norsk.' }
-    ];
+    chatMessages = [];
 
     // Reset all states
     hasFirstMessage = false;

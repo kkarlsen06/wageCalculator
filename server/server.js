@@ -2021,10 +2021,9 @@ const addShiftSchema = {
   parameters: {
     type: 'object',
     properties: {
-      shift_date: { type: 'string', description: 'YYYY-MM-DD' },
-      start_time: { type: 'string', description: 'HH:mm' },
-      end_time:   { type: 'string', description: 'HH:mm' },
-      employee_id: { type: 'string', description: 'Optional employee ID to assign shift to' }
+      shift_date: { type: 'string', description: 'YYYY-MM-DD', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      start_time: { type: 'string', description: 'HH:mm', pattern: '^\\d{2}:\\d{2}$' },
+      end_time:   { type: 'string', description: 'HH:mm', pattern: '^\\d{2}:\\d{2}$' }
     },
     required: ['shift_date', 'start_time', 'end_time']
   }
@@ -2036,15 +2035,15 @@ const addSeriesSchema = {
   parameters: {
     type: 'object',
     properties: {
-      from:  { type: 'string', description: 'First day YYYY-MM-DD' },
-      to:    { type: 'string', description: 'Last day YYYY-MM-DD (inclusive)' },
+      from_date:  { type: 'string', description: 'First day YYYY-MM-DD', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      to_date:    { type: 'string', description: 'Last day YYYY-MM-DD (inclusive)', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
       days:  { type: 'array',  items: { type: 'integer' }, description: 'Weekdays 0-6' },
-      start: { type: 'string', description: 'Shift start HH:mm' },
-      end:   { type: 'string', description: 'Shift end   HH:mm' },
+      start: { type: 'string', description: 'Shift start HH:mm', pattern: '^\\d{2}:\\d{2}$' },
+      end:   { type: 'string', description: 'Shift end   HH:mm', pattern: '^\\d{2}:\\d{2}$' },
       interval_weeks: { type: 'integer', description: 'Interval in weeks (1=every week, 2=every other week, etc.)', default: 1 },
       offset_start: { type: 'integer', description: 'Week offset from start date (0=no offset)', default: 0 }
     },
-    required: ['from', 'to', 'days', 'start', 'end']
+    required: ['from_date', 'to_date', 'days', 'start', 'end']
   }
 };
 
@@ -2055,14 +2054,15 @@ const editShiftSchema = {
     type: 'object',
     properties: {
       shift_id: { type: 'integer', description: 'ID of shift to edit (optional if other identifiers provided)' },
-      shift_date: { type: 'string', description: 'Specific date of shift to edit YYYY-MM-DD (optional)' },
-      start_time: { type: 'string', description: 'Start time of shift to edit HH:mm (optional, used with shift_date)' },
+      shift_date: { type: 'string', description: 'Specific date of shift to edit YYYY-MM-DD (optional)', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      start_time: { type: 'string', description: 'Start time of shift to edit HH:mm (optional, used with shift_date)', pattern: '^\\d{2}:\\d{2}$' },
       date_reference: { type: 'string', description: 'Natural language date reference like "tomorrow", "Monday", "next Tuesday", "today" (optional)' },
       time_reference: { type: 'string', description: 'Time reference like "morning shift", "evening shift", or specific time "09:00" (optional)' },
-      new_start_time: { type: 'string', description: 'New start time HH:mm (optional)' },
-      new_end_time: { type: 'string', description: 'New end time HH:mm (optional)' },
-      end_time: { type: 'string', description: 'New end time HH:mm (optional, legacy)' },
-      employee_id: { type: 'string', description: 'Optional employee ID to assign shift to' }
+      new_start_time: { type: 'string', description: 'New start time HH:mm (optional)', pattern: '^\\d{2}:\\d{2}$' },
+      new_end_time: { type: 'string', description: 'New end time HH:mm (optional)', pattern: '^\\d{2}:\\d{2}$' },
+      end_time: { type: 'string', description: 'New end time HH:mm (optional, legacy alias of new_end_time)', pattern: '^\\d{2}:\\d{2}$' },
+      new_shift_date: { type: 'string', description: 'New date YYYY-MM-DD (optional)', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      new_shift_type: { type: 'integer', description: 'New shift type (integer) (optional)' }
     },
     required: []
   }
@@ -2075,8 +2075,8 @@ const deleteShiftSchema = {
     type: 'object',
     properties: {
       shift_id: { type: 'integer', description: 'ID of shift to delete (optional if other identifiers provided)' },
-      shift_date: { type: 'string', description: 'Specific date of shift to delete YYYY-MM-DD (optional)' },
-      start_time: { type: 'string', description: 'Start time of shift to delete HH:mm (optional, used with shift_date)' },
+      shift_date: { type: 'string', description: 'Specific date of shift to delete YYYY-MM-DD (optional)', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      start_time: { type: 'string', description: 'Start time of shift to delete HH:mm (optional, used with shift_date)', pattern: '^\\d{2}:\\d{2}$' },
       date_reference: { type: 'string', description: 'Natural language date reference like "tomorrow", "Monday", "next Tuesday", "today" (optional)' },
       time_reference: { type: 'string', description: 'Time reference like "morning shift", "evening shift", or specific time "09:00" (optional)' }
     },
@@ -2098,8 +2098,8 @@ const deleteSeriesSchema = {
       },
       week_number: { type: 'integer', description: 'Week number (1-53) when criteria_type=week. Optional - if not provided, deletes next week.' },
       year: { type: 'integer', description: 'Year for week deletion. Optional - if not provided, deletes next week.' },
-      from_date: { type: 'string', description: 'Start date YYYY-MM-DD when criteria_type=date_range' },
-      to_date: { type: 'string', description: 'End date YYYY-MM-DD when criteria_type=date_range' },
+      from_date: { type: 'string', description: 'Start date YYYY-MM-DD when criteria_type=date_range', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      to_date: { type: 'string', description: 'End date YYYY-MM-DD when criteria_type=date_range', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
       series_id: { type: 'string', description: 'Series ID when criteria_type=series_id' }
     },
     required: []
@@ -2115,13 +2115,14 @@ const getShiftsSchema = {
       criteria_type: {
         type: 'string',
         enum: ['week', 'date_range', 'next', 'all'],
-        description: 'Type of query criteria. Use "week" for current week or "next" for next week.'
+        description: 'Type of query criteria. Use "week" for current week or "next" for next week.',
+        default: 'week'
       },
       week_number: { type: 'integer', description: 'Week number (1-53) when criteria_type=week. Optional - if not provided, gets current week.' },
       year: { type: 'integer', description: 'Year for week query. Optional - if not provided, gets current week.' },
-      from_date: { type: 'string', description: 'Start date YYYY-MM-DD when criteria_type=date_range' },
-      to_date: { type: 'string', description: 'End date YYYY-MM-DD when criteria_type=date_range' },
-      num_weeks: { type: 'integer', description: 'Number of weeks to get when criteria_type=next (default 1)' }
+      from_date: { type: 'string', description: 'Start date YYYY-MM-DD when criteria_type=date_range', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      to_date: { type: 'string', description: 'End date YYYY-MM-DD when criteria_type=date_range', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      num_weeks: { type: 'integer', description: 'Number of weeks to get when criteria_type=next (default 1)', default: 1 }
     },
     required: ['criteria_type']
   }
@@ -2149,7 +2150,7 @@ const getWageDataByWeekSchema = {
   parameters: {
     type: 'object',
     properties: {
-      week_number: { type: 'integer', description: 'Week number (1-53). Optional - if not provided, gets current week.' },
+      week_number: { type: 'integer', description: 'Week number (1-53). Optional - if not provided, gets current week.', minimum: 1, maximum: 53 },
       year: { type: 'integer', description: 'Year for week query. Optional - if not provided, gets current week.' }
     },
     required: []
@@ -2162,7 +2163,7 @@ const getWageDataByMonthSchema = {
   parameters: {
     type: 'object',
     properties: {
-      month: { type: 'integer', description: 'Month number (1-12). Optional - if not provided, uses current viewing month.' },
+      month: { type: 'integer', description: 'Month number (1-12). Optional - if not provided, uses current viewing month.', minimum: 1, maximum: 12 },
       year: { type: 'integer', description: 'Year. Optional - if not provided, uses current viewing year.' }
     },
     required: []
@@ -2175,8 +2176,8 @@ const getWageDataByDateRangeSchema = {
   parameters: {
     type: 'object',
     properties: {
-      from_date: { type: 'string', description: 'Start date YYYY-MM-DD' },
-      to_date: { type: 'string', description: 'End date YYYY-MM-DD' }
+      from_date: { type: 'string', description: 'Start date YYYY-MM-DD', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      to_date: { type: 'string', description: 'End date YYYY-MM-DD', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }
     },
     required: ['from_date', 'to_date']
   }
@@ -3695,80 +3696,44 @@ app.post('/chat', authenticateUser, async (req, res) => {
   const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
   const viewingMonthName = monthNames[viewingMonth - 1];
 
-  // Create a more specific system prompt based on the user message
-  let systemContent = `For konteksten: "i dag" = ${today}, "i morgen" = ${tomorrow}. Brukerens navn er ${userName}.
-
-VIKTIG KONTEKST: Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet.
-Når brukeren sier "denne måneden" eller "inneværende måned", mener de ${viewingMonthName} ${viewingYear}.
-Når brukeren sier "forrige måned", mener de måneden før ${viewingMonthName} ${viewingYear}.
-Når brukeren sier "neste måned", mener de måneden etter ${viewingMonthName} ${viewingYear}.
-
-ABSOLUTT KRITISK - MULTIPLE TOOL CALLS REGEL:
-Når brukeren ber om flere operasjoner i SAMME melding, MÅ du utføre ALLE operasjonene i SAMME respons med flere tool_calls. Dette er OBLIGATORISK, ikke valgfritt!`;
-
-  // Add specific instructions for common patterns
-  if (userMessage.includes('vis') && userMessage.includes('endre')) {
-    systemContent += `
-
-SPESIFIKK INSTRUKSJON for din forespørsel:
-Du skal gjøre NØYAKTIG disse to tool calls i denne rekkefølgen:
-1. getShifts({"criteria_type": "week"}) - for å hente vaktene
-2. editShift({"date_reference": "Friday", "new_start_time": "15:00"}) - for å endre fredagsvakten
-
-IKKE gjør getShifts to ganger! IKKE spør om bekreftelse! Gjør begge operasjonene nå!`;
-  } else if (userMessage.includes('måneden') || userMessage.includes('august') || userMessage.includes('måned')) {
-    // Use the viewing context month instead of current month
-    const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
-    const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
-
-    systemContent += `
-
-SPESIFIKK INSTRUKSJON for månedlig spørring:
-Bruk getWageDataByMonth() for å hente detaljerte lønnsdata for ${viewingMonthName} ${viewingYear}, eller
-getShifts({"criteria_type": "date_range", "from_date": "${firstDay}", "to_date": "${lastDay}"}) for enklere vaktliste.
-Du KAN absolutt hente vakter for hele måneder - ikke si at det ikke er mulig!
-
-TILGJENGELIGE FUNKSJONER for lønnsdata:
-- getWageDataByWeek() - detaljerte lønnsdata for en uke
-- getWageDataByMonth() - detaljerte lønnsdata for en måned
-- getWageDataByDateRange(from_date, to_date) - detaljerte lønnsdata for egendefinert periode
-- getShifts() - enklere vaktliste uten lønnsberegninger`;
-  }
-
+  // Concise, task-focused system prompt (server is the single source of instruction)
+  const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
+  const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
   const systemContextHint = {
     role: 'system',
-    content: `Du er en vaktplanleggingsassistent. I dag er ${today}, i morgen er ${tomorrow}. Brukerens navn er ${userName}.
+    content:
+`Du er en norsk vaktplanleggingsassistent for én bruker. Svar alltid på norsk, kort og tydelig.
 
-VIKTIG KONTEKST: Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet.
-- "denne måneden"/"inneværende måned" = ${viewingMonthName} ${viewingYear}
-- "forrige måned" = måneden før ${viewingMonthName} ${viewingYear}
-- "neste måned" = måneden etter ${viewingMonthName} ${viewingYear}
+Kontekst for tid:
+- "i dag" = ${today} (Europe/Oslo)
+- "i morgen" = ${tomorrow} (Europe/Oslo)
+- Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet:
+  "denne måneden"/"inneværende måned" = ${viewingMonthName} ${viewingYear}
+  "forrige måned" = måneden før ${viewingMonthName} ${viewingYear}
+  "neste måned" = måneden etter ${viewingMonthName} ${viewingYear}
 
-LØNNSDATA FUNKSJONER:
-- getWageDataByWeek() - detaljerte lønnsdata for uke (timer, grunnlønn, tillegg, totalt)
-- getWageDataByMonth() - detaljerte lønnsdata for måned (bruker viewing context hvis ikke spesifisert)
-- getWageDataByDateRange(from_date, to_date) - detaljerte lønnsdata for periode
-- getShifts() - enklere vaktliste med grunnleggende lønnsinfo
+Verktøy og bruk:
+- Oversikt/lister: getShifts(criteria_type=[week|next|date_range|all]). For måned, bruk date_range: from_date=${firstDay}, to_date=${lastDay}.
+- Lønnsdata: getWageDataByWeek | getWageDataByMonth | getWageDataByDateRange.
+- Endringer: addShift | addSeries | editShift | deleteShift | deleteSeries | copyShift.
 
-${systemContent}
+Begrensninger (viktig):
+- Du skal kun opprette og endre brukerens egne vakter (user_shifts).
+- Du har ikke lov til å opprette, endre eller slette employee_shifts (autoritative ansatt-vakter), eller å endre koblinger til ansatte.
 
-TOOL USAGE:
-- getShifts:
-  * criteria_type="week" for denne uka
-  * criteria_type="next" for neste uke
-  * criteria_type="date_range" med from_date og to_date for måneder/perioder (f.eks. "denne måneden", "august", "siste 30 dager")
-  * criteria_type="all" for alle vakter
-- editShift: bruk date_reference="Friday" for fredagsvakter, eller shift_date + start_time
-- Vis datoer som dd.mm.yyyy til brukeren
+Policy for verktøy:
+- Hvis brukeren ber om flere handlinger i samme melding, planlegg og utfør ALLE nødvendige tool calls i én respons.
+- Unngå identiske/overflødige kall med samme parametere.
+- Ikke gjett ved uklarheter; still maks ett kort oppfølgingsspørsmål ved reell tvetydighet. Ikke spør om bekreftelse når intensjonen er tydelig.
 
-MÅNEDLIGE SPØRRINGER: For "denne måneden", "august", "hvor mange vakter har jeg denne måneden" osv., bruk getShifts med criteria_type="date_range" og sett from_date til første dag i måneden og to_date til siste dag.
+Svarformat til bruker:
+- Datoformat: dd.mm.yyyy. Bruk korte avsnitt; bruk fet skrift for dato/klokkeslett. Unngå punktlister og nummerering.
+- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider).
 
-FORMATERING: IKKE bruk bullet points (•) eller nummererte lister (1., 2., 3.). I stedet, bruk linjeskift og fet tekst for å lage lister. Eksempel:
-**04.08.2025** fra kl. 17:00 til 23:15
-**05.08.2025** fra kl. 16:00 til 23:15
-**08.08.2025** fra kl. 16:00 til 23:15
-
-ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE tools for FORSKJELLIGE operasjoner!`
+Eksempler på verktøybruk (illustrasjon):
+- "i morgen 09-17" → addShift({ shift_date: <YYYY-MM-DD for i morgen>, start_time: "09:00", end_time: "17:00" })
+- "flytt fredagens vakt til 18:00" → editShift({ date_reference: "Friday", new_start_time: "18:00" })
+- "legg til hverdager i denne måneden 08-16" → addSeries({ from_date: "${firstDay}", to_date: "${lastDay}", days: [1,2,3,4,5], start: "08:00", end: "16:00" })`
   };
   const fullMessages = [systemContextHint, ...messages];
 
@@ -3885,7 +3850,7 @@ ALDRI gjør samme tool call to ganger med samme parametere! Bruk FORSKJELLIGE to
           return res.status(503).json({ error: 'OpenAI not configured' });
         }
         const streamCompletion = await openai.chat.completions.create({
-          model: 'gpt-4.1',
+          model: 'gpt-4o',
           messages: messagesWithToolResult,
           tools: chatTools,
           tool_choice: 'none',
@@ -5178,21 +5143,6 @@ async function handleTool(call, user_id) {
         return toolResult;
       }
 
-      // Validate employee_id if provided
-      if (args.employee_id) {
-        const validation = await validateEmployeeOwnership(user_id, args.employee_id);
-        if (!validation.valid) {
-          toolResult = JSON.stringify({
-            status: 'error',
-            inserted: [],
-            updated: [],
-            deleted: [],
-            shift_summary: validation.error
-          });
-          return toolResult;
-        }
-      }
-
       // Check for duplicate shift before inserting
       const { data: dupCheck } = await supabase
         .from('user_shifts')
@@ -5219,8 +5169,7 @@ async function handleTool(call, user_id) {
             shift_date:  args.shift_date,
             start_time:  args.start_time,
             end_time:    args.end_time,
-            shift_type:  0,
-            employee_id: args.employee_id || null
+            shift_type:  0
           })
           .select('id, shift_date, start_time, end_time')
           .single();
@@ -5247,7 +5196,8 @@ async function handleTool(call, user_id) {
     }
 
     if (fnName === 'addSeries') {
-      const dates = generateSeriesDates(args.from, args.to, args.days, args.interval_weeks, args.offset_start);
+      // Require from_date/to_date for consistency
+      const dates = generateSeriesDates(args.from_date, args.to_date, args.days, args.interval_weeks, args.offset_start);
       if (!dates.length) {
         toolResult = JSON.stringify({
           status: 'error',
@@ -5257,12 +5207,14 @@ async function handleTool(call, user_id) {
           shift_summary: 'Ingen matchende datoer funnet'
         });
       } else {
+        const seriesId = randomUUID();
         const rows = dates.map(d => ({
           user_id:    user_id,
           shift_date: d.toISOString().slice(0, 10),
           start_time: args.start,
           end_time:   args.end,
-          shift_type: 0
+          shift_type: 0,
+          series_id: seriesId
         }));
 
         // Filter out duplicates before inserting
@@ -5283,7 +5235,7 @@ async function handleTool(call, user_id) {
           const { data: insertedShifts, error } = await supabase
             .from('user_shifts')
             .insert(newRows)
-            .select('id, shift_date, start_time, end_time');
+            .select('id, shift_date, start_time, end_time, series_id');
 
           if (error) {
             toolResult = JSON.stringify({
@@ -5309,7 +5261,8 @@ async function handleTool(call, user_id) {
               inserted: insertedShifts || [],
               updated: [],
               deleted: [],
-              shift_summary: summary
+              shift_summary: summary,
+              series_id: seriesId
             });
           }
         } else {
@@ -5432,9 +5385,16 @@ async function handleTool(call, user_id) {
         // Handle new field names with fallback to legacy names
         const newStartTime = args.new_start_time || args.start_time;
         const newEndTime = args.new_end_time || args.end_time;
+        const newDate = args.new_shift_date || null;
+        const newType = (args.new_shift_type !== undefined && args.new_shift_type !== null)
+          ? parseInt(args.new_shift_type)
+          : undefined;
 
-        // Only update shift_date if it's different from current (and not used for finding)
-        if (args.shift_date && args.shift_date !== existingShift.shift_date) {
+        // Only update shift_date if provided and different
+        if (newDate && newDate !== existingShift.shift_date) {
+          updateData.shift_date = newDate;
+        } else if (args.shift_date && args.shift_date !== existingShift.shift_date) {
+          // Back-compat: allow updating to shift_date field name
           updateData.shift_date = args.shift_date;
         }
         if (newStartTime && newStartTime !== existingShift.start_time) {
@@ -5443,9 +5403,10 @@ async function handleTool(call, user_id) {
         if (newEndTime && newEndTime !== existingShift.end_time) {
           updateData.end_time = newEndTime;
         }
-        if (args.employee_id !== undefined) {
-          updateData.employee_id = args.employee_id;
+        if (newType !== undefined && !Number.isNaN(newType)) {
+          updateData.shift_type = newType;
         }
+        // Intentionally do not allow changing employee linkage via the agent
 
         // Check for collision with other shifts (excluding current shift)
         if (Object.keys(updateData).length > 0) {
@@ -5863,61 +5824,41 @@ async function handleTool(call, user_id) {
           // Get user settings for wage calculations
           const userSettings = await getUserSettings(user_id);
 
-          // Get employee context for shifts that have employee_id
-          const employeeIds = [...new Set(shifts.filter(s => s.employee_id).map(s => s.employee_id))];
-          let employeeMap = {};
+      // Calculate detailed wage data for each shift
+      let totalHours = 0;
+      let totalEarnings = 0;
 
-          if (employeeIds.length > 0) {
-            const { data: employees, error: empError } = await supabase
-              .from('employees')
-              .select('id, name, display_color')
-              .eq('manager_id', user_id)
-              .in('id', employeeIds)
-              .is('archived_at', null);
+      const detailedShifts = shifts.map(shift => {
+        const calc = calculateShiftEarnings(shift, userSettings);
+        totalHours += calc.hours;
+        totalEarnings += calc.total;
 
-            if (!empError && employees) {
-              employeeMap = employees.reduce((acc, emp) => {
-                acc[emp.id] = { id: emp.id, name: normalizeEmployeeName(emp.name), display_color: emp.display_color };
-                return acc;
-              }, {});
-            }
-          }
+        return {
+          id: shift.id,
+          date: shift.shift_date,
+          startTime: shift.start_time,
+          endTime: shift.end_time,
+          type: shift.shift_type,
+          duration: calc.totalHours,
+          paidHours: calc.hours,
+          baseWage: calc.baseWage,
+          bonus: calc.bonus,
+          totalEarnings: calc.total,
+          pauseDeducted: calc.pauseDeducted
+        };
+      });
 
-          // Calculate detailed wage data for each shift
-          let totalHours = 0;
-          let totalEarnings = 0;
-
-          const detailedShifts = shifts.map(shift => {
-            const calc = calculateShiftEarnings(shift, userSettings);
-            totalHours += calc.hours;
-            totalEarnings += calc.total;
-
-            return {
-              id: shift.id,
-              date: shift.shift_date,
-              startTime: shift.start_time,
-              endTime: shift.end_time,
-              type: shift.shift_type,
-              duration: calc.totalHours,
-              paidHours: calc.hours,
-              baseWage: calc.baseWage,
-              bonus: calc.bonus,
-              totalEarnings: calc.total,
-              pauseDeducted: calc.pauseDeducted,
-              employee: shift.employee_id ? employeeMap[shift.employee_id] || null : null
-            };
-          });
-
-          // Format shifts for tool content with earnings info
-          const formattedShifts = detailedShifts.map(shift => {
-            const employeeInfo = shift.employee ? ` [${shift.employee.name}]` : '';
-            return `ID:${shift.id} ${shift.date} ${shift.startTime}-${shift.endTime}${employeeInfo} (${shift.paidHours}t, ${shift.totalEarnings}kr)`;
-          }).join(', ');
+      // Format shifts for tool content with earnings info (no employee context)
+      const formattedShifts = detailedShifts.map(shift => (
+        `ID:${shift.id} ${shift.date} ${shift.startTime}-${shift.endTime} (${shift.paidHours}t, ${shift.totalEarnings}kr)`
+      )).join(', ');
 
           toolResult = `OK: ${shifts.length} skift funnet for ${criteriaDescription} (${totalHours.toFixed(1)} timer, ${totalEarnings.toFixed(0)}kr totalt). Skift: ${formattedShifts}`;
         }
       }
     }
+
+    // No employee lookup tools are exposed to the agent by design
 
     if (fnName === 'copyShift') {
       // Find the source shift using natural language reference
