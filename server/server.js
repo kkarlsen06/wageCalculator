@@ -3822,7 +3822,8 @@ Svarformat til bruker:
     
     // Immediate flush and prime stream
     if (res.flushHeaders) res.flushHeaders();
-    res.write(':\n\n'); // SSE comment frame to prime stream
+    // send ~2KB padding so intermediate proxies open the stream immediately
+    res.write(':' + ' '.repeat(2048) + '\n\n'); // padded SSE primer
     
     // Setup heartbeat every 10s
     heartbeat = setInterval(() => {
