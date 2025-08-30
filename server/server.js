@@ -3815,20 +3815,27 @@ Svarformat til bruker:
   };
 
   if (stream) {
-    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.setHeader('Content-Encoding', 'identity');
+    res.setHeader('Keep-Alive', 'timeout=120');
     
-    // Immediate flush and prime stream
+    if (req.socket?.setKeepAlive) req.socket.setKeepAlive(true);
     if (res.flushHeaders) res.flushHeaders();
-    // send ~2KB padding so intermediate proxies open the stream immediately
-    res.write(':' + ' '.repeat(2048) + '\n\n'); // padded SSE primer
+    
+    // ~8KB primer to force intermediaries to open the pipe
+    res.write(':' + ' '.repeat(8192) + '\n\n');
+    
+    // Let client know we're live before heavy work
+    res.write('event: ready\n');
+    res.write('data: {"ok": true}\n\n');
     
     // Setup heartbeat every 10s
-    heartbeat = setInterval(() => {
-      res.write(':\n\n'); // SSE heartbeat comment
-    }, 10000);
+    heartbeat = setInterval(() => res.write(':\n\n'), 10000);
+    req.on('close', () => { clearInterval(heartbeat); });
     
     res.write(`data: ${JSON.stringify({ type: 'status', message: 'Tenker' })}\n\n`);
   }
