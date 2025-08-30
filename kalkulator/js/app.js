@@ -1861,23 +1861,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
 
-      // Use streaming for better user experience
-      const response = await fetch(`${STREAM_API_BASE}/chat`, {
+      // Start a session to enable GET-based streaming through CDNs
+      const startResp = await fetch(`${STREAM_API_BASE}/chat/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           messages: chatMessages,
-          stream: true,
-          // Pass current viewing context from the interface
           currentMonth: window.app?.currentMonth || new Date().getMonth() + 1,
           currentYear: window.app?.currentYear || new Date().getFullYear()
         })
       });
 
-      if (!response.ok) {
+      if (!startResp.ok) {
+        throw new Error(`HTTP ${startResp.status}: ${startResp.statusText}`);
+      }
+      const { sid } = await startResp.json();
+      if (!sid) throw new Error('Missing session id');
+
+      // Stream over GET (SSE-friendly across proxies)
+      const response = await fetch(`${STREAM_API_BASE}/chat/stream?sid=${encodeURIComponent(sid)}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/event-stream',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok || !response.body) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
@@ -1982,6 +1996,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
       console.error('Chat error:', error);
 
+      // Skip secondary streaming retry — GET approach should be stable
+
       // Fallback to non-streaming request if streaming fails
       try {
         console.log('Streaming failed, falling back to regular request...');
@@ -1989,6 +2005,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({

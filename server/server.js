@@ -3755,7 +3755,253 @@ app.get('/health/employees', (req, res) => {
   res.status(200).json({ ok: true, note: 'use /health for liveness, /health/deep for db ping' });
 });
 
-// ---------- /chat ----------
+// Ephemeral chat sessions for GET-based streaming
+const CHAT_SESSIONS = new Map(); // sid -> { user_id, messages, currentMonth, currentYear, createdAt }
+const CHAT_SESSION_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function gcChatSessions() {
+  const now = Date.now();
+  for (const [sid, sess] of CHAT_SESSIONS.entries()) {
+    if (!sess || (now - (sess.createdAt || 0)) > CHAT_SESSION_TTL_MS) {
+      CHAT_SESSIONS.delete(sid);
+    }
+  }
+}
+
+setInterval(gcChatSessions, 60 * 1000).unref?.();
+
+// Preflight for chat session endpoints
+app.options('/api/chat/start', cors(corsOptions));
+app.options('/chat/start', cors(corsOptions));
+app.options('/api/chat/stream', cors(corsOptions));
+app.options('/chat/stream', cors(corsOptions));
+
+// Start a chat session (POST) — stores messages so GET can stream reliably through CDNs
+app.post('/chat/start', authenticateUser, async (req, res) => {
+  try {
+    const { messages, currentMonth, currentYear } = req.body || {};
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'messages required' });
+    }
+    const sid = randomUUID();
+    CHAT_SESSIONS.set(sid, {
+      user_id: req.user_id,
+      messages,
+      currentMonth: Number(currentMonth) || undefined,
+      currentYear: Number(currentYear) || undefined,
+      createdAt: Date.now()
+    });
+    res.json({ sid, ttl_ms: CHAT_SESSION_TTL_MS });
+  } catch (e) {
+    res.status(500).json({ error: 'failed_to_start_session' });
+  }
+});
+
+// Stream a chat session (GET) — uses stored messages; responds with SSE
+app.get('/chat/stream', authenticateUser, async (req, res) => {
+  const sid = String(req.query.sid || '');
+  const sess = CHAT_SESSIONS.get(sid);
+  if (!sid || !sess) {
+    return res.status(404).json({ error: 'session_not_found' });
+  }
+  if (sess.user_id !== req.user_id) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+
+  // From here, behave like /chat with stream=true, but use sess payload
+  const messages = sess.messages;
+  const stream = true;
+  const currentMonth = sess.currentMonth;
+  const currentYear = sess.currentYear;
+
+  // Remove session to avoid reuse
+  CHAT_SESSIONS.delete(sid);
+  
+  // The rest mirrors the SSE setup and agent loop from /chat
+  const user = req.user;
+  let userName = 'bruker';
+  if (user) {
+    userName = user.user_metadata?.first_name || user.email?.split('@')[0] || 'bruker';
+  }
+
+  const today = new Date().toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
+  const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
+  const viewingMonth = currentMonth || new Date().getMonth() + 1;
+  const viewingYear = currentYear || new Date().getFullYear();
+  const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+  const viewingMonthName = monthNames[viewingMonth - 1];
+  const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
+  const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
+
+  const systemContextHint = {
+    role: 'system',
+    content:
+`Du er en norsk vaktplanleggingsassistent for én bruker. Svar alltid på norsk, kort og tydelig.
+
+Kontekst for tid:
+- "i dag" = ${today} (Europe/Oslo)
+- "i morgen" = ${tomorrow} (Europe/Oslo)
+- Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet:
+  "denne måneden"/"inneværende måned" = ${viewingMonthName} ${viewingYear}
+  "forrige måned" = måneden før ${viewingMonthName} ${viewingYear}
+  "neste måned" = måneden etter ${viewingMonthName} ${viewingYear}
+
+Verktøy og bruk:
+- Oversikt/lister: getShifts(criteria_type=[week|next|date_range|all]). For måned, bruk date_range: from_date=${firstDay}, to_date=${lastDay}.
+- Lønnsdata: getWageDataByWeek | getWageDataByMonth | getWageDataByDateRange.
+- Endringer: addShift | addSeries | editShift | deleteShift | deleteSeries | copyShift.
+
+Policy for verktøy:
+- Unngå identiske/overflødige kall med samme parametere.
+- Ikke gjett ved uklarheter; still maks ett kort oppfølgingsspørsmål ved reell tvetydighet. Ikke spør om bekreftelse når intensjonen er tydelig.
+
+Svarformat til bruker:
+- Datoformat: dd.mm.yyyy. Bruk korte avsnitt; bruk fet skrift for dato/klokkeslett.
+- Viktig: Når du svarer med flere skift, skriv hvert skift på én egen linje og separer hvert skift med et linjeskift (line break).
+- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider). Ikke inkluder oppfordringer til endringer ved rene oppslag.
+- Hvis du får informasjon om lønn for flere skift, gjengi informasjonen til brukeren.`
+  };
+
+  const chatTools = getToolsForRequest(req);
+
+  let heartbeat = null;
+  const endStream = () => { if (heartbeat) clearInterval(heartbeat); res.end(); };
+
+  // SSE headers (same as POST /chat)
+  const origin = req.headers.origin || '*';
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.setHeader('Content-Encoding', 'identity');
+  res.setHeader('Keep-Alive', 'timeout=120');
+  if (req.socket?.setKeepAlive) req.socket.setKeepAlive(true);
+  if (req.socket?.setNoDelay) req.socket.setNoDelay(true);
+  if (res.flushHeaders) res.flushHeaders();
+  res.write(':' + ' '.repeat(8192) + '\n\n');
+  res.write('event: ready\n');
+  res.write('data: {"ok": true}\n\n');
+  heartbeat = setInterval(() => res.write(':\n\n'), 10000);
+  req.on('close', () => { clearInterval(heartbeat); });
+  res.write(`data: ${JSON.stringify({ type: 'status', message: 'Tenker' })}\n\n`);
+
+  const convo = [systemContextHint, ...messages];
+  const startedAt = Date.now();
+  let finalAssistantContent = null;
+  let iter = 0;
+  let done = false;
+
+  try {
+    while (!done && iter < MAX_ITERATIONS && (Date.now() - startedAt) < WALL_CLOCK_CAP_MS) {
+      iter += 1;
+      const t0 = Date.now();
+      const sanitizedConvo = (function sanitizeMessagesForOpenAI(msgs) {
+        try {
+          return msgs.map(m => {
+            if (m && m.role === 'assistant') {
+              if (Array.isArray(m.tool_calls)) {
+                if (m.tool_calls.length === 0) {
+                  const { tool_calls, ...rest } = m; return rest;
+                }
+                return { ...m, content: m.content ?? null };
+              }
+            }
+            return m;
+          });
+        } catch (_) { return msgs; }
+      })(convo);
+      const turn = await openai.chat.completions.create({
+        model: 'gpt-5',
+        messages: sanitizedConvo,
+        tools: chatTools,
+        tool_choice: 'auto'
+      });
+
+      const msg = turn.choices?.[0]?.message || {};
+      const toolCalls = msg.tool_calls || [];
+      try { console.log(JSON.stringify({ phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 })); } catch (_) {}
+      res.write(`data: ${JSON.stringify({ type: 'gpt_response', iteration: iter, content: msg.content || null, tool_calls: toolCalls.map(c => ({ name: c.function?.name })) })}\n\n`);
+
+      if (toolCalls.length > 0) {
+        convo.push({ role: 'assistant', content: null, tool_calls: toolCalls });
+      } else {
+        convo.push({ role: 'assistant', content: msg.content || '' });
+      }
+
+      if (toolCalls.length === 0) {
+        finalAssistantContent = msg.content || '';
+        done = true;
+        break;
+      }
+
+      res.write(`data: ${JSON.stringify({ type: 'tool_calls_start', iteration: iter, count: toolCalls.length })}\n\n`);
+      const results = await Promise.allSettled(toolCalls.map(call => runToolWithTimeout(call, req.user_id, iter, res)));
+      results.forEach((settled, idx) => {
+        const call = toolCalls[idx];
+        let content = '';
+        if (settled.status === 'fulfilled') { content = settled.value?.content ?? ''; }
+        else { content = JSON.stringify({ error: settled.reason?.message || 'tool_failed' }); }
+        convo.push({ role: 'tool', tool_call_id: call.id, name: call?.function?.name, content });
+      });
+    }
+
+    if (!done && finalAssistantContent == null) {
+      finalAssistantContent = 'Beklager, jeg måtte stoppe før jeg ble ferdig. Prøv igjen.';
+    }
+
+    // Final text streaming
+    const sanitizedConvoFinal = (function sanitizeMessagesForOpenAI(msgs) {
+      try {
+        return msgs.map(m => {
+          if (m && m.role === 'assistant') {
+            if (Array.isArray(m.tool_calls)) {
+              if (m.tool_calls.length === 0) { const { tool_calls, ...rest } = m; return rest; }
+              return { ...m, content: m.content ?? null };
+            }
+          }
+          return m;
+        });
+      } catch (_) { return msgs; }
+    })(convo);
+    const streamCompletion = await openai.chat.completions.create({
+      model: 'gpt-5',
+      messages: sanitizedConvoFinal,
+      tools: chatTools,
+      tool_choice: 'none',
+      stream: true
+    });
+    res.write(`data: ${JSON.stringify({ type: 'text_stream_start' })}\n\n`);
+    let assistantMessage = '';
+    for await (const chunk of streamCompletion) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) {
+        assistantMessage += content;
+        res.write(`data: ${JSON.stringify({ type: 'text_chunk', content })}\n\n`);
+      }
+    }
+
+    // Append shifts snapshot
+    const { data: shifts } = await supabase
+      .from('user_shifts')
+      .select('*')
+      .eq('user_id', req.user_id)
+      .order('shift_date');
+
+    res.write(`data: ${JSON.stringify({ type: 'text_stream_end' })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'shifts_update', shifts: shifts || [] })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'complete', assistant: assistantMessage, shifts: shifts || [] })}\n\n`);
+    res.write('data: [DONE]\n\n');
+    endStream();
+  } catch (e) {
+    try { res.write(`data: ${JSON.stringify({ type: 'error', message: 'stream_failed' })}\n\n`); } catch (_) {}
+    endStream();
+  }
+});
+
+// ---------- /chat (POST streaming or JSON) ----------
 app.post('/chat', authenticateUser, async (req, res) => {
   const { messages, stream = false, currentMonth, currentYear } = req.body;
 
