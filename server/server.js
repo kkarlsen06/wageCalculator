@@ -3408,8 +3408,13 @@ function getJwtPayloadFromAuthHeader(req) {
     const token = auth.slice(7);
     const parts = token.split('.');
     if (parts.length < 2) return null;
+    const headerJson = Buffer.from(parts[0], 'base64url').toString('utf8');
+    const header = JSON.parse(headerJson);
+    if (header?.alg && header.alg !== 'HS256') {
+      console.warn(`[auth] Unexpected JWT alg: ${header.alg} (kid=${header.kid || 'none'})`);
+      return null; // force 401 upstream; don’t accept ID tokens
+    }
     const payloadJson = Buffer.from(parts[1], 'base64url').toString('utf8');
-
     return JSON.parse(payloadJson);
   } catch (_) {
     return null;
@@ -3802,12 +3807,28 @@ Svarformat til bruker:
   // Tool allowlist based on ai_agent claim
   const chatTools = getToolsForRequest(req);
 
-  // SSE setup
+  // SSE setup with keepalive
+  let heartbeat = null;
+  const endStream = () => {
+    if (heartbeat) clearInterval(heartbeat);
+    res.end();
+  };
+
   if (stream) {
     res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // Immediate flush and prime stream
+    if (res.flushHeaders) res.flushHeaders();
+    res.write(':\n\n'); // SSE comment frame to prime stream
+    
+    // Setup heartbeat every 10s
+    heartbeat = setInterval(() => {
+      res.write(':\n\n'); // SSE heartbeat comment
+    }, 10000);
+    
     res.write(`data: ${JSON.stringify({ type: 'status', message: 'Tenker' })}\n\n`);
   }
 
@@ -3995,7 +4016,7 @@ Svarformat til bruker:
     res.write(`data: ${JSON.stringify({ type: 'shifts_update', shifts: shifts || [] })}\n\n`);
     res.write(`data: ${JSON.stringify({ type: 'complete', assistant: assistantMessage, shifts: shifts || [] })}\n\n`);
     res.write('data: [DONE]\n\n');
-    res.end();
+    endStream();
   } else {
     res.json({ assistant: assistantMessage, shifts: shifts || [] });
   }
