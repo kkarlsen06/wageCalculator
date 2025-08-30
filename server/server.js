@@ -3820,15 +3820,21 @@ Svarformat til bruker:
   };
 
   if (stream) {
+    const origin = req.headers.origin || '*';
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Echo Origin for credentialed requests (Authorization header); avoid wildcard for Safari
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
+    // Hint to proxies/CDNs to avoid buffering
     res.setHeader('X-Accel-Buffering', 'no');
     res.setHeader('Content-Encoding', 'identity');
     res.setHeader('Keep-Alive', 'timeout=120');
     
     if (req.socket?.setKeepAlive) req.socket.setKeepAlive(true);
+    if (req.socket?.setNoDelay) req.socket.setNoDelay(true);
     if (res.flushHeaders) res.flushHeaders();
     
     // ~8KB primer to force intermediaries to open the pipe

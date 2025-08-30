@@ -1,7 +1,11 @@
 // API Base URL configuration
 const API_BASE = window.CONFIG?.apiBase || '/api';
 // Optional separate base for streaming to bypass proxies/CDNs that buffer POST responses
-const STREAM_API_BASE = window.CONFIG?.apiStreamBase || API_BASE;
+// If not provided via config, auto-select Azure origin in production domain.
+const STREAM_API_BASE = window.CONFIG?.apiStreamBase
+  || ((typeof window !== 'undefined' && /kkarlsen\.dev$/i.test(window.location.hostname))
+      ? 'https://server.kkarlsen.dev'
+      : API_BASE);
 
 // Remove global animation kill-switch. Initial app load animations are handled by
 // app-ready/animations-complete logic below.
@@ -1981,7 +1985,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Fallback to non-streaming request if streaming fails
       try {
         console.log('Streaming failed, falling back to regular request...');
-        const fallbackResponse = await fetch(`${API_BASE}/chat`, {
+        const fallbackResponse = await fetch(`${STREAM_API_BASE}/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
