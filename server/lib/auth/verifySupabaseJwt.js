@@ -18,9 +18,9 @@ export async function verifySupabaseJWT(token) {
     audience: "authenticated", // Supabase client tokens default
   });
 
-  // sanity check
-  if (protectedHeader.alg && protectedHeader.alg !== "RS256") {
-    console.warn("Unexpected JWT alg:", protectedHeader.alg);
+  // Sanity check: Accept modern asymmetric algs; warn only on other values
+  if (protectedHeader.alg && !["RS256", "ES256"].includes(protectedHeader.alg)) {
+    console.warn("[auth] Unrecognized JWT alg:", protectedHeader.alg);
   }
 
   return payload; // contains sub, role, email, etc.

@@ -1,5 +1,7 @@
 // API Base URL configuration
 const API_BASE = window.CONFIG?.apiBase || '/api';
+// Optional separate base for streaming to bypass proxies/CDNs that buffer POST responses
+const STREAM_API_BASE = window.CONFIG?.apiStreamBase || API_BASE;
 
 // Remove global animation kill-switch. Initial app load animations are handled by
 // app-ready/animations-complete logic below.
@@ -1856,7 +1858,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
 
       // Use streaming for better user experience
-      const response = await fetch(`${API_BASE}/chat`, {
+      const response = await fetch(`${STREAM_API_BASE}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

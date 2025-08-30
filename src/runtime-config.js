@@ -5,6 +5,7 @@
 const viteSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const viteSupabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const viteApiBase = import.meta.env.VITE_API_BASE;
+const viteApiStreamBase = import.meta.env.VITE_API_STREAM_BASE;
 const isProd = Boolean(import.meta.env && import.meta.env.PROD);
 const isLocalHost = (u) => /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?/i.test(String(u || ''));
 
@@ -27,6 +28,11 @@ const resolvedConfig = {
   apiBase: (typeof viteApiBase === 'string' && viteApiBase.trim() !== '' && !(isProd && isLocalHost(viteApiBase)))
     ? viteApiBase
     : (isProd ? '/api' : defaultConfig.apiBase),
+  // Streaming base can be a fully qualified API origin to bypass proxies when needed.
+  // Falls back to apiBase when not provided.
+  apiStreamBase: (typeof viteApiStreamBase === 'string' && viteApiStreamBase.trim() !== '' && !(isProd && isLocalHost(viteApiStreamBase)))
+    ? viteApiStreamBase
+    : undefined,
   debug: defaultConfig.debug,
   version: defaultConfig.version,
 };
@@ -42,5 +48,4 @@ if (typeof window !== "undefined") {
     );
   }
 }
-
 

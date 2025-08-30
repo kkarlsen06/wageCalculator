@@ -86,6 +86,10 @@ app.options('/checkout', cors(corsOptions));
 // Explicit preflight for DELETE shifts endpoint
 app.options('/shifts/outside-month/:month', cors(corsOptions));
 
+// Explicit preflight for chat endpoint (both with and without /api prefix for proxy variants)
+app.options('/api/chat', cors(corsOptions));
+app.options('/chat', cors(corsOptions));
+
 
 // Do NOT apply to /api/stripe-webhook (keep express.raw)
 app.use((req, res, next) => {
@@ -3410,9 +3414,10 @@ function getJwtPayloadFromAuthHeader(req) {
     if (parts.length < 2) return null;
     const headerJson = Buffer.from(parts[0], 'base64url').toString('utf8');
     const header = JSON.parse(headerJson);
-    if (header?.alg && header.alg !== 'HS256') {
-      console.warn(`[auth] Unexpected JWT alg: ${header.alg} (kid=${header.kid || 'none'})`);
-      return null; // force 401 upstream; don’t accept ID tokens
+    // Only warn+ignore HS256 (ID tokens); allow RS256/ES256 silently for best-effort read
+    if (header?.alg === 'HS256') {
+      console.warn(`[auth] Rejecting HS256 token for unauthenticated payload read (kid=${header.kid || 'none'})`);
+      return null; // do not read unsigned claims from HS256 tokens
     }
     const payloadJson = Buffer.from(parts[1], 'base64url').toString('utf8');
     return JSON.parse(payloadJson);
