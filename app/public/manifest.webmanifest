@@ -1,12 +1,14 @@
 {
-    "name": "kkarlsen.dev",
-    "short_name": "Min lønn",
-    "start_url": "/index.html",
-    "scope": "/",
-    "display": "standalone",
-    "background_color": "#121212",
-    "theme_color": "#4AC8FF",
-    "icons": [
-      { "src": "/assets/kkarlsen_ikon_clean.png", "sizes": "712x717", "type": "image/png" }
-    ]
-  }
+  "name": "Lønnskalkulator",
+  "short_name": "Lønn",
+  "start_url": "/index.html",
+  "scope": "/",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/favicon.ico", "sizes": "48x48 64x64 96x96 128x128 256x256", "type": "image/x-icon" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ],
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#4AC8FF"
+}
