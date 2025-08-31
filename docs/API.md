@@ -1,13 +1,11 @@
 ## API Overview
 
 Base URL:
-- Production (via Netlify proxy): `/api`
-- Local: `http://localhost:3000` (set `VITE_API_BASE` accordingly)
+- Production (app): set `VITE_API_BASE` to the API origin (e.g., `https://server.kkarlsen.dev`).
+- Local: `http://localhost:3000` (set `VITE_API_BASE` accordingly). In dev, `app/vite.config.js` can proxy `/api` to your backend.
 
 Notes on prefixes and proxies:
-- In production, Netlify proxies `/api/*` to the Azure backend and strips the `/api` prefix (`/api/chat` → Azure `/chat`).
-- Locally, set `VITE_API_BASE=http://localhost:3000` so the client calls the backend directly without an `/api` prefix (e.g. `http://localhost:3000/chat`).
-- The backend exposes some endpoints both with and without the `/api` prefix (e.g. `GET /api/employees` and `GET /employees`), but most newer endpoints are defined without `/api`. Prefer calling under your configured base URL.
+- The backend exposes some endpoints both with and without the `/api` prefix to support proxies in dev. In production, prefer calling the absolute `VITE_API_BASE` without relying on a proxy.
 
 Full schema: see `docs/OPENAPI.yaml`.
 
@@ -43,7 +41,7 @@ Full schema: see `docs/OPENAPI.yaml`.
 ### Chat Assistant
 - `POST /chat` supports both streaming (SSE) and non-streaming responses.
 - Requires `OPENAI_API_KEY` server-side.
-- Client example (streaming): see `kalkulator/js/app.js`.
+- Client example (streaming): see `app/js/app.js`.
 
 Tool naming consistency and outputs (assistant-side):
 - addShift: `shift_date`, `start_time`, `end_time` (YYYY-MM-DD, HH:mm)

@@ -2,16 +2,9 @@
 
 ### Frontend (Netlify)
 
-- Build settings are defined in `netlify.toml`:
-  - Build command: `npm run build`
-  - Publish directory: `dist`
-  - Environment: Node 22
-  - Redirects:
-    - `/api/*` → `https://wageapp-prod.azurewebsites.net/:splat`
-    - SPA fallbacks for `/kalkulator/*` and root `/*`
-  - The proxy forwards `Authorization` headers. Ensure no intermediary strips them.
-- Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Netlify environment.
-- Do not set server-only secrets in Netlify.
+- Marketing site: root `netlify.toml` builds `marketing/` and publishes `marketing/dist`. Includes SPA fallback and a redirect from `/kalkulator/*` to the app domain.
+- App site: configure a separate site with base directory `app/`. Use `app/public/_redirects` or a site-level `netlify.toml` for SPA fallback. Set `VITE_*` envs in the app site.
+- Do not set server-only secrets in either site; only `VITE_*` belong in frontend envs.
 
 ### Backend (Azure Web App)
 
@@ -37,11 +30,10 @@ Run backend locally on port 3000 and point the frontend to it:
 
 ```bash
 cd server && npm start
-# in another shell
-VITE_API_BASE=http://localhost:3000 npm run dev
+# in another shell (app)
+cd app && VITE_API_BASE=http://localhost:3000 npm run dev
 ```
 
 If you run the frontend against production while testing server locally, ensure your browser is calling the intended base (avoid mixed content/CORS).
-
 
 

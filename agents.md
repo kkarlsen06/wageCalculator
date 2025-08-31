@@ -3,18 +3,18 @@
 This guide explains the codebase from a developer’s perspective so agents can plan features, implement changes, and fix bugs effectively. It covers structure, where logic lives, conventions, and how subsystems interact. Ops details are intentionally minimized.
 
 ### Overview
-- Frontend: Vite (multi-page) at repo root. Entries: `index.html`, `kalkulator/index.html`, `kalkulator/login.html`.
+- Frontend split into two Vite apps: `marketing/` (landing) and `app/` (kalkulator).
 - Backend: Node/Express in `server/` (ESM, Node 22+). Supabase Postgres for data (with RLS) and Supabase Storage for avatars.
-- Hosting: Frontend on Netlify; backend on Azure Web App. Netlify proxies `/api/*` to the backend.
+- Hosting: Marketing and App on separate domains (Netlify); backend on Azure Web App. In prod, the app calls the API directly (no Netlify proxy). In dev, Vite proxies `/api`.
 
 ### Codebase structure (what lives where)
-- Root pages: `index.html`, `kalkulator/index.html`, `kalkulator/login.html`
-- Frontend source: `src/`
-  - `src/main.js` (landing), `src/kalkulator.js` (app bootstrap)
-  - `src/runtime-config.js` — bridges `VITE_*` envs to legacy code via `window.CONFIG`
-  - `src/supabase-client.js` — publishable Supabase client
-  - `src/js/` — shared utilities (loading, errors, redirects, animations)
-- Legacy app UI: `kalkulator/js/`, `kalkulator/css/` — main interactive app code and styles
+- Marketing: `marketing/index.html`, `marketing/src/*`
+- App: `app/index.html`, `app/login.html`, `app/onboarding.html`
+- App source: `app/src/`
+  - `app/src/kalkulator.js` (app bootstrap), `app/src/runtime-config.js` (bridges `VITE_*` to `window.CONFIG`)
+  - `app/src/supabase-client.js` — publishable Supabase client
+  - `app/src/js/` — shared utilities (loading, errors, redirects, animations)
+- Legacy app UI: `app/js/`, `app/css/` — main interactive app code and styles
 - Backend: `server/`
   - `server/server.js` — all routes and orchestration
   - `server/middleware/auth.js` — bearer auth middleware (JWKS verified)
@@ -27,7 +27,7 @@ This guide explains the codebase from a developer’s perspective so agents can 
 - Validation and ownership checks live in the route handlers; Supabase RLS enforces data-level security.
 - Pure calculation in `server/payroll/calc.js` — side-effect free and easily testable.
 - Frontend uses a light abstraction: `window.CONFIG.apiBase` for API base, `supabase` client for auth/user.
-- Legacy DOM manipulation in `kalkulator/js/app.js` and related modules; prefer small, focused functions.
+- Legacy DOM manipulation in `app/js/app.js` and related modules; prefer small, focused functions.
 - Logging: structured console logs; avoid logging secrets; audit payloads are redacted and size-capped.
 
 ### Where to implement new features
@@ -37,7 +37,7 @@ This guide explains the codebase from a developer’s perspective so agents can 
   - RLS compatibility: ensure filters include the authenticated user/manager
   - Errors: return consistent JSON shapes with helpful messages
 - Payroll changes: modify `server/payroll/calc.js`; keep functions pure and deterministic. Update docs (`docs/DATABASE.md`).
-- Frontend UI flows: `kalkulator/js/*` and `kalkulator/index.html`. Keep DOM changes minimal and resilient to mobile viewport issues.
+- Frontend UI flows: `app/js/*` and `app/index.html`. Keep DOM changes minimal and resilient to mobile viewport issues.
 - Shared client utilities or auth helpers: under `src/js/` or `src/lib/`.
 
 ### Security model (what to keep in mind when coding)
@@ -72,7 +72,7 @@ This guide explains the codebase from a developer’s perspective so agents can 
   - Rounding to 2 decimals at the end
 
 ### API calling patterns (for feature code)
-- Use `window.CONFIG.apiBase` on the client; do not hardcode hosts.
+- Use `window.CONFIG.apiBase` on the client; do not hardcode hosts. In production builds of the app, set `VITE_API_BASE` to the API origin (e.g., `https://server.kkarlsen.dev`). Dev uses Vite proxy.
 - Include `Authorization: Bearer <token>` for protected routes (get from `supabase.auth.getSession()`).
 - Prefer JSON responses with stable shapes; keep new fields backward-compatible.
 
@@ -103,9 +103,9 @@ This guide explains the codebase from a developer’s perspective so agents can 
 - Backend entry: `server/server.js`
 - Auth: `server/middleware/auth.js`, `server/lib/auth/verifySupabaseJwt.js`
 - Payroll: `server/payroll/calc.js`
-- Client Supabase: `src/supabase-client.js`
-- Runtime config bridge: `src/runtime-config.js`
+- Client Supabase: `app/src/supabase-client.js`
+- Runtime config bridge: `app/src/runtime-config.js`
 - CI/CD: `.github/workflows/azure-webapp.yml`
-- Frontend proxy and build entries: `vite.config.js`, `netlify.toml`
+- Frontend configs: `marketing/vite.config.mjs`, `app/vite.config.js`, root `netlify.toml` (marketing)
 
 For more detail, see the docs under `docs/`: architecture, setup, environment, API, deployment, operations, database, and troubleshooting.

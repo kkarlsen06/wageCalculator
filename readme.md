@@ -4,10 +4,10 @@ A modern, production-grade web app for calculating wages based on shifts, hourly
 
 ### Live
 
-- Landing page: `https://kkarlsen.dev`
-- App: `https://kkarlsen.dev/kalkulator`
+- Marketing: https://www.kkarlsen.dev
+- App: https://kalkulator.kkarlsen.dev
 
-Note: In production, the frontend is built with Vite and hosted on Netlify. API requests are proxied to an Azure Web App (`/api -> https://wageapp-prod.azurewebsites.net`).
+Note: The marketing site and the app are deployed as separate sites/domains. The app calls the API directly (no Netlify proxy). In development, Vite proxies `/api` to the backend.
 
 ## Features
 
@@ -23,36 +23,41 @@ Note: In production, the frontend is built with Vite and hosted on Netlify. API 
 
 ## Tech Stack
 
-- **Frontend**: Vite (multi-page), HTML5, CSS, vanilla JavaScript (ESM). Entries: `index.html` and `kalkulator/index.html` with `src/main.js` and `src/kalkulator.js`.
-- **Backend**: Node.js 22+, Express, Supabase JS client, optional OpenAI.
-- **Database**: Supabase Postgres with RLS. See `docs/rls_policies.sql`.
-- **Hosting**: Netlify (frontend) with `_redirects`/`netlify.toml` proxying API to Azure Web App.
+- Frontend: Vite apps in `marketing/` (landing) and `app/` (kalkulator). Vanilla JS + HTML/CSS.
+- Backend: Node.js 22+, Express, Supabase JS client, optional OpenAI.
+- Database: Supabase Postgres with RLS. See `docs/rls_policies.sql`.
+- Hosting: Netlify (marketing + app) and Azure Web App (API).
 
 ## Project Structure
 
 ```
 wageCalculator/
-├── index.html                     # Landing page (Vite entry -> src/main.js)
-├── kalkulator/                    # App UI (Vite entry -> src/kalkulator.js)
+├── marketing/                     # Marketing site (Vite)
+│   ├── index.html
+│   ├── src/
+│   └── vite.config.mjs
+├── app/                           # Kalkulator app (Vite)
 │   ├── index.html
 │   ├── login.html
+│   ├── onboarding.html
+│   ├── js/                        # legacy UI modules
 │   ├── css/
-│   ├── js/
-│   └── manifest.json              # PWA metadata (no service worker)
-├── src/
-│   ├── main.js
-│   ├── kalkulator.js              # Boots legacy JS via ESM, loads runtime config
-│   └── runtime-config.js          # Exposes VITE_* as window.CONFIG for legacy code
+│   ├── public/                    # PWA manifest, icons, redirects
+│   └── src/                       # ESM bootstrap + helpers
+│       ├── kalkulator.js
+│       ├── runtime-config.js
+│       └── supabase-client.js
 ├── server/                        # Express API (Azure Web App)
 │   ├── server.js
-│   └── payroll/calc.js            # Core shift/payroll calculations
+│   ├── middleware/
+│   ├── lib/
+│   └── payroll/calc.js
 ├── docs/
-│   ├── OPENAPI.yaml               # API schema (served under /api)
+│   ├── OPENAPI.yaml
 │   ├── ARCHITECTURE_AND_SNAPSHOTS.md
 │   └── rls_policies.sql
-├── vite.config.js                 # Multi-entry build + dev proxy (/api)
-├── netlify.toml                   # Build + /api proxy in production
-└── _redirects                     # Netlify redirects/proxy
+├── netlify.toml                   # Marketing build + redirects
+└── package.json                   # Workspaces (marketing, app, server)
 ```
 
 ## Getting Started
@@ -70,15 +75,21 @@ cd wageCalculator
 
 ### 2) Frontend (Vite)
 
+Monorepo workspaces:
+
 ```bash
 npm install
-npm run dev
-# http://localhost:5173
+
+# Marketing (5174)
+npm run dev:marketing
+
+# App (5173)
+npm run dev:app
 ```
 
-Dev server behavior:
-- By default, `vite.config.js` proxies `/api` to the Azure backend `https://wageapp-prod.azurewebsites.net`.
-- To use a local backend, set `VITE_API_BASE=http://localhost:3000` in a `.env.local` and restart Vite.
+Dev server behavior (app):
+- `app/vite.config.js` proxies `/api` to your server in dev (defaults to `https://server.kkarlsen.dev`).
+- Override with `app/.env.local`: `VITE_API_BASE=http://localhost:3000`.
 
 ### 3) Backend (Express)
 
@@ -100,9 +111,9 @@ curl -i http://localhost:3000/auth/debug -H "Authorization: Bearer <access_token
 ## Environment
 
 ### Frontend (Vite at build time)
-- `VITE_SUPABASE_URL` (optional; default set in `src/runtime-config.js`)
-- `VITE_SUPABASE_PUBLISHABLE_KEY` (optional; default set in `src/runtime-config.js`)
-- `VITE_API_BASE` (optional; default `/api`) — set to `http://localhost:3000` for local backend
+- `VITE_SUPABASE_URL` (app): Supabase project URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` (app): Publishable anon key
+- `VITE_API_BASE` (app): API origin in production (e.g., `https://server.kkarlsen.dev`); in dev, Vite proxy handles `/api`.
 
 ### Backend (server/.env)
 - `SUPABASE_URL` — required (PostgREST URL)
@@ -162,8 +173,9 @@ Details and diagram: `docs/ARCHITECTURE_AND_SNAPSHOTS.md`
 
 ## Deployment
 
-- **Frontend (Netlify)**: `netlify.toml` builds Vite and proxies `/api` to Azure; `_redirects` mirrors the proxy.
-- **Backend (Azure Web App)**: Deploy `server/` as Node.js 22 app with the environment variables listed above.
+- Marketing (Netlify): root `netlify.toml` builds `marketing/` and applies simple redirects and security headers.
+- App (Netlify): configure site with base directory `app/`. Use `app/public/_redirects` or a `netlify.toml` in site settings for SPA fallback. Set `VITE_*` env vars.
+- Backend (Azure Web App): Deploy `server/` as Node.js 22 app with required env. See `.github/workflows/azure-webapp.yml`.
 
 ## Contributing
 

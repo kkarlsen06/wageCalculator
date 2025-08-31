@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "run-p dev:*",
     "dev:app": "npm --workspace app run dev || echo 'app: no dev script'",
-    "dev:server": "npm --workspace server run start || echo 'server: no dev script'",
+    "dev:server": "npm --workspace server run dev:server || echo 'server: no dev script'",
     "dev:marketing": "npm --workspace marketing run dev",
     "build": "run-p build:*",
     "build:marketing": "npm --workspace marketing run build || echo 'marketing: no build needed'",

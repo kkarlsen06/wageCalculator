@@ -11,17 +11,16 @@ This document describes the implementation of legal requirements for the Wage Ca
 - `docs/TERMS_AND_CONDITIONS.md` - Terms and conditions of service
 
 ### 2. Legal Modal Component
-- `src/js/legal-modal.js` - JavaScript class for the legal modal
-- `src/css/legal-modal.css` - Styles for the legal modal
+- `marketing/src/js/legal-modal.js` - JavaScript class for the legal modal
+- `marketing/src/css/legal-modal.css` - Styles for the legal modal
 
 ### 3. Login Page Integration
-- `kalkulator/js/legal-handler.js` - Terms acceptance handler for login
-- Updated `kalkulator/login.html` - Added terms acceptance checkbox
-- Updated `kalkulator/css/style.css` - Added checkbox and link button styles
+- App login: `app/login.html` includes legal acceptance UI
+- Any additional handlers live under `app/js/`
 
 ### 4. Landing Page Integration
-- Updated `src/main.js` - Added shield icon to footer
-- Updated `src/css/style.css` - Added footer privacy link styles
+- Updated `marketing/src/main.js` - Added shield icon to footer and modal wiring
+- Updated `marketing/src/css/style.css` - Footer privacy link styles
 
 ## Features Implemented
 

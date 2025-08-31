@@ -1,17 +1,16 @@
 ## Architecture
 
 ### High-level
-- Vite frontend (multi-page) serves the landing page and the calculator app under `/kalkulator/`
+- Two Vite frontends: `marketing/` (landing) and `app/` (kalkulator)
 - Node/Express backend under `server/` exposes REST API used by the app
 - Supabase Postgres used for data storage with RLS; Supabase Storage used for avatars
-- Netlify hosts the frontend; Netlify proxies `/api/*` to the Azure Web App backend
+- Netlify hosts marketing and app on separate domains; the app calls the API directly in prod (no proxy). Vite dev uses a proxy.
 
 ### Frontend
-- Entry points:
-  - `index.html` → `src/main.js` (landing)
-  - `kalkulator/index.html` and `kalkulator/login.html` → `src/kalkulator.js` and legacy JS under `kalkulator/js/`
-- `src/runtime-config.js` bridges Vite envs to legacy code as `window.CONFIG`
-- `src/supabase-client.js` creates a publishable Supabase client using `VITE_*` vars
+- Marketing: `marketing/index.html` → `marketing/src/main.js`
+- App: `app/index.html`, `app/login.html`, `app/onboarding.html` → `app/src/kalkulator.js` and legacy JS under `app/js/`
+- `app/src/runtime-config.js` bridges Vite envs to legacy code as `window.CONFIG`
+- `app/src/supabase-client.js` creates a publishable Supabase client using `VITE_*` vars
 
 ### Backend
 - `server/server.js` is a single Express app with route groups:
@@ -29,7 +28,8 @@
 - Payroll calculation: `server/payroll/calc.js` computes `durationHours`, `paidHours`, `gross` with policy `break_policy`
 
 Prefix behavior:
-- Some duplicates exist under `/api/*` (e.g., `/api/employees`, `/api/settings`) to support proxying. Prefer calling without `/api` when addressing the backend directly; use `/api` when going through the Netlify proxy.
+- Dev: the app uses Vite proxy for `/api`.
+- Prod: the app calls the API origin set via `VITE_API_BASE` (e.g., `https://server.kkarlsen.dev`).
 
 ### Runtime Data Flow
 1. Browser authenticates with Supabase Auth
@@ -45,6 +45,5 @@ Prefix behavior:
 - Server derives:
   - `duration_hours`, `paid_hours`, `gross`
 - This yields immutable and auditable shift history independent of later tariff or wage changes
-
 
 

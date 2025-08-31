@@ -1,42 +1,23 @@
+############################################################
+# Netlify config for MARKETING site (monorepo root)
+# - App lives on its own domain/subsite (no /kalkulator path)
+# - Keep simple SPA fallback and redirect legacy /kalkulator to app domain
+############################################################
+
 [build]
-  command = "npm run build"
-  publish = "dist"
+  command = "npm --workspace marketing run build"
+  publish = "marketing/dist"
 
 [build.environment]
   NODE_VERSION = "22"
   NPM_CONFIG_PRODUCTION = "false"
-  # Vite envs used by src/runtime-config.js
-  # Set these in Netlify UI or via netlify.toml for non-sensitive client config
-  # DO NOT add server-only secrets here
-  VITE_SUPABASE_URL = "https://id.kkarlsen.dev"
-  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_z9EoG7GZZMS3RL4hmilh5A_xI0va5Nb"
-  # Optional: override API base (defaults to "/api")
-  # VITE_API_BASE = "/api"
 
 [[redirects]]
-  # Proxy API requests to Azure backend
-  from = "/api/*"
-  to = "https://server.kkarlsen.dev/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  # Serve onboarding as an actual file (avoid SPA fallback)
-  from = "/kalkulator/onboarding.html"
-  to = "/kalkulator/onboarding.html"
-  status = 200
-
-[[redirects]]
-  # Serve login page as-is (avoid SPA fallback)
-  from = "/kalkulator/login.html"
-  to = "/kalkulator/login.html"
-  status = 200
-
-[[redirects]]
-  # Kalkulator SPA fallback
+  # Redirect any old /kalkulator paths to the dedicated app domain
   from = "/kalkulator/*"
-  to = "/kalkulator/index.html"
-  status = 200
+  to = "https://kalkulator.kkarlsen.dev/:splat"
+  status = 301
+  force = true
 
 [[redirects]]
   # Root SPA fallback (landing page)
@@ -44,30 +25,12 @@
   to = "/index.html"
   status = 200
 
-[[redirects]]
-  # Old auth routes
-  from = "/auth.html"
-  to = "/kalkulator/index.html"
-  status = 301
-
-[[redirects]]
-  from = "/kalkulator/auth.html"
-  to = "/kalkulator/index.html"
-  status = 301
-
-# Security headers
 [[headers]]
-  # Apply to all routes (static files, SPA routes, and proxied API)
+  # Security headers for marketing
   for = "/*"
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://id.kkarlsen.dev https://*.supabase.co https://lh3.googleusercontent.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; connect-src 'self' https://id.kkarlsen.dev wss://id.kkarlsen.dev https://server.kkarlsen.dev;"
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; connect-src 'self';"
     X-Frame-Options = "DENY"
-
-[[headers]]
-  # Loosen CSP *only* for onboarding so inline handlers work
-  for = "/kalkulator/onboarding.html"
-  [headers.values]
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://id.kkarlsen.dev https://*.supabase.co https://lh3.googleusercontent.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; connect-src 'self' https://id.kkarlsen.dev wss://id.kkarlsen.dev https://server.kkarlsen.dev;"
