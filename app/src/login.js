@@ -1,20 +1,20 @@
-import '/kalkulator/css/style.css';
+import '/css/style.css';
 import '/src/css/legal-modal.css';
 
 // Third-party globals
 // Removed duplicate Supabase CDN import; using ESM client from /src/supabase-client.js
 
 // Utilities (attach to window)
-import './js/loading-helpers.js';
-import './js/error-handling.js';
+import '../../marketing/src/js/loading-helpers.js';
+import '../../marketing/src/js/error-handling.js';
 
 // Config and auth logic
 // Ensure window.CONFIG is initialized from Vite envs before auth logic runs
 import '/src/runtime-config.js';
-import '/kalkulator/js/auth.js';
+import '/js/auth.js';
 
 // Legal handler for terms acceptance
-import LegalHandler from '/kalkulator/js/legal-handler.js';
+import LegalHandler from '/js/legal-handler.js';
 
 // Initialize legal handler
 document.addEventListener('DOMContentLoaded', () => {

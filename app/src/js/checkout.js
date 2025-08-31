@@ -1,4 +1,4 @@
-import { supabase } from '../supabase-client.js'
+import { supabase } from '../../../app/src/supabase-client.js'
 import { API_BASE } from './apiBase.js'
 
 /**

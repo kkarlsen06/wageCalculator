@@ -33,13 +33,13 @@ if (typeof window !== 'undefined' && !window.uuidv4) {
 }
 
 // Load feature flags (reads window.CONFIG.apiBase)
-import '/kalkulator/js/featureFlags.js';
+import '/js/featureFlags.js';
 
 // App bootstrap (was loaded via <script type="module" src="js/app.js">)
-import '/kalkulator/js/app.js';
+import '/js/app.js';
 
 // Theme management system
-import '/kalkulator/js/themeIntegration.js';
+import '/js/themeIntegration.js';
 
 // If app.js uses ESM default export or side effects, ensure DOMContentLoaded init remains intact.
 // Expose inline handlers compatibility by attaching window.app if the module exported it.
@@ -49,7 +49,7 @@ import '/kalkulator/js/themeIntegration.js';
 import '/src/js/checkout.js';
 
 // Checkout/Portal status toast on app page
-import { refreshSubscriptionState } from '/kalkulator/js/subscriptionState.js';
+import { refreshSubscriptionState } from '/js/subscriptionState.js';
 import { getUserId } from '/src/lib/auth/getUserId.js';
 
 if (typeof window !== 'undefined') {

@@ -85,7 +85,7 @@ curl -X POST \
   - `mode` (string, optional): `'subscription'` (default) or `'payment'`
   - `quantity` (integer, optional): defaults to `1` (range `1..999`)
 - Response: `{ url: string }` — the Stripe-hosted Checkout URL
-- Redirects: user is sent back to `/kalkulator/index.html?checkout=success` or `?checkout=cancel`
+- Redirects: user is sent back to `index.html?checkout=success` or `?checkout=cancel`
 - Notes:
   - `metadata.user_id` and `client_reference_id` are set to the authenticated Supabase `user_id`.
   - The server uses `APP_BASE_URL` (if set) or derives origin from `X-Forwarded-*` headers to build success/cancel URLs.

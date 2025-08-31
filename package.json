@@ -8,13 +8,13 @@
   ],
   "scripts": {
     "dev": "run-p dev:*",
-    "dev:marketing": "npm --workspace marketing run dev || echo 'marketing: no dev script'",
     "dev:app": "npm --workspace app run dev || echo 'app: no dev script'",
-    "dev:server": "npm --workspace server run dev || echo 'server: no dev script'",
+    "dev:server": "npm --workspace server run start || echo 'server: no dev script'",
+    "dev:marketing": "npm --workspace marketing run dev",
     "build": "run-p build:*",
     "build:marketing": "npm --workspace marketing run build || echo 'marketing: no build needed'",
     "build:app": "npm --workspace app run build || echo 'app: no build script'",
-    "build:server": "npm --workspace server run build || echo 'server: no build script'"
+    "clean": "rm -rf dist"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"

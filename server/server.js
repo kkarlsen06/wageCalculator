@@ -674,8 +674,8 @@ app.post('/api/billing/start', async (req, res) => {
       }
 
     // Create Checkout Session with secure UID references
-    const success_url = `${BASE_URL}/kalkulator/index.html?checkout=success`;
-    const cancel_url = `${BASE_URL}/kalkulator/index.html?checkout=cancel`;
+    const success_url = `${BASE_URL}/index.html?checkout=success`;
+    const cancel_url = `${BASE_URL}/index.html?checkout=cancel`;
     
     const sessionPayload = new URLSearchParams({
       'mode': mode,
@@ -760,9 +760,9 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
     }
 
     // Hardcoded base URL for production (as requested)
-    const success_url = `${BASE_URL}/kalkulator/index.html?checkout=success`;
-    const cancel_url = `${BASE_URL}/kalkulator/index.html?checkout=cancel`;
-    console.log('[stripe urls]', { success_url, cancel_url, return_url: `${BASE_URL}/kalkulator/index.html` });
+    const success_url = `${BASE_URL}/index.html?checkout=success`;
+    const cancel_url = `${BASE_URL}/index.html?checkout=cancel`;
+    console.log('[stripe urls]', { success_url, cancel_url, return_url: `${BASE_URL}/index.html` });
 
 
 	    // Extract Supabase user ID from verified JWT for consistent metadata
@@ -913,8 +913,8 @@ app.post('/checkout', authenticateUser, async (req, res) => {
       quantity = q;
     }
 
-    const success_url = `${BASE_URL}/kalkulator/index.html?checkout=success`;
-    const cancel_url = `${BASE_URL}/kalkulator/index.html?checkout=cancel`;
+    const success_url = `${BASE_URL}/index.html?checkout=success`;
+    const cancel_url = `${BASE_URL}/index.html?checkout=cancel`;
 
     const userId = req.user_id;
 
@@ -1041,7 +1041,7 @@ app.post('/api/portal', authenticateUser, async (req, res) => {
     }
 
     // Hardcoded return URL for production (as requested)
-    const return_url = `${BASE_URL}/kalkulator/index.html`;
+    const return_url = `${BASE_URL}/index.html`;
     console.log('[stripe urls]', { return_url });
 
     // Create portal session via Stripe REST API
@@ -1150,7 +1150,7 @@ app.post('/api/stripe/create-portal-session', authenticateUser, async (req, res)
     }
 
     const base = process.env.PUBLIC_APP_BASE_URL || BASE_URL;
-    const returnUrl = `${base}/kalkulator/index.html?portal=done`;
+    const returnUrl = `${base}/index.html?portal=done`;
 
     // Create via Stripe SDK
     const session = await stripe.billingPortal.sessions.create({
@@ -1224,7 +1224,7 @@ app.post('/stripe/create-portal-session', authenticateUser, async (req, res) => 
     if (!customerId) return res.status(404).json({ error: 'No Stripe customer found for user' });
 
     const base = process.env.PUBLIC_APP_BASE_URL || BASE_URL;
-    const returnUrl = `${base}/kalkulator/index.html?portal=done`;
+    const returnUrl = `${base}/index.html?portal=done`;
 
     const session = await stripe.billingPortal.sessions.create({ customer: customerId, return_url: returnUrl });
     return res.json({ url: session?.url });
@@ -1342,7 +1342,7 @@ app.post('/api/portal/upgrade', authenticateUser, async (req, res) => {
     }
 
     // Build portal session with flow_data=subscription_update
-    const return_url = `${(process.env.PUBLIC_APP_BASE_URL || BASE_URL)}/kalkulator/index.html?portal=done`;
+    const return_url = `${(process.env.PUBLIC_APP_BASE_URL || BASE_URL)}/index.html?portal=done`;
     const form = new URLSearchParams();
     form.set('customer', customerId);
     form.set('return_url', return_url);
@@ -1431,7 +1431,7 @@ app.post('/portal/upgrade', authenticateUser, async (req, res) => {
 
     if (!subscriptionId) return res.status(400).json({ error: 'no-active-subscription' });
 
-    const return_url = `${(process.env.PUBLIC_APP_BASE_URL || BASE_URL)}/kalkulator/index.html?portal=done`;
+    const return_url = `${(process.env.PUBLIC_APP_BASE_URL || BASE_URL)}/index.html?portal=done`;
     const form = new URLSearchParams();
     form.set('customer', customerId);
     form.set('return_url', return_url);
@@ -1524,7 +1524,7 @@ app.post('/portal', authenticateUser, async (req, res) => {
     if (!customerId) return res.status(404).json({ error: 'No Stripe customer found for user' });
 
     // Hardcoded return URL for production (as requested)
-    const return_url = `${BASE_URL}/kalkulator/index.html`;
+    const return_url = `${BASE_URL}/index.html`;
     console.log('[stripe urls]', { return_url });
 
     const form = new URLSearchParams();

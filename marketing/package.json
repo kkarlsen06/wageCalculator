@@ -1,0 +1,12 @@
+{
+    "name": "marketing",
+    "private": true,
+    "scripts": {
+      "dev": "vite --port 5174",
+      "build": "vite build",
+      "preview": "vite preview --port 5174"
+    },
+    "devDependencies": {
+      "vite": "^5.4.0"
+    }
+  }
