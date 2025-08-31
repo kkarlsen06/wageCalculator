@@ -23,7 +23,7 @@ export default defineConfig({
     rollupOptions: {
       // SINGLE ENTRY for SPA (remove old kalkulator multi-page inputs)
       input: {
-        main: resolve('index.html'),
+        main: resolve('kalkulator/index.html'),
       },
       output: {
         entryFileNames: '[name]-[hash].js',

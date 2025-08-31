@@ -3,6 +3,6 @@ node_modules
 .augment
 # Local Netlify folder
 .netlify
-/dist
+**/dist/
 .env.local
 .DS_Store
