@@ -7,8 +7,17 @@ if (!projectUrl) {
 
 // Strip trailing slashes
 const base = projectUrl.replace(/\/+$/, "");
-// Supabase issuer claim
-const issuer = `https://iuwjdacxbirhmsglcbxp.supabase.co/auth/v1`;
+// Allow explicit override when SUPABASE_URL uses a custom alias domain
+const explicitIssuer = (process.env.SUPABASE_JWT_ISSUER || '').replace(/\/+$/, '');
+
+// Compute issuer:
+// - Prefer SUPABASE_JWT_ISSUER when provided
+// - Else if SUPABASE_URL points to the canonical *.supabase.co host, derive from it
+// - Else require explicit issuer (avoid trusting arbitrary alias domains)
+let issuer = explicitIssuer || (base.endsWith('.supabase.co') ? `${base}/auth/v1` : '');
+if (!issuer) {
+  throw new Error("SUPABASE_JWT_ISSUER is required when SUPABASE_URL is not a '*.supabase.co' project URL.");
+}
 // Supabase JWKS endpoint
 const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
 

@@ -18,11 +18,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      input: {
-        main: resolve('index.html'),
-        login: resolve('login.html'),
-        onboarding: resolve('onboarding.html')
-      }
+      input: resolve('index.html')
     }
   }
 });

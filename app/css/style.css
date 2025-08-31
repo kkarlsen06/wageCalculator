@@ -9409,7 +9409,6 @@ input:checked + .slider:before {
 
 /* Auth specific footers */
 .footer-auth {
-  width: 100%;
   background: var(--bg-secondary);
   color: var(--text-secondary);
   text-align: center;
@@ -9417,13 +9416,16 @@ input:checked + .slider:before {
   font-size: 14px;
   border-top: 1px solid var(--border);
   border-radius: 24px 24px 0 0;
-  max-width: 600px;
-  margin: 0 auto;
   position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  top: auto !important;
+  margin: 0 auto;
+  width: calc(100% - 32px);
+  max-width: 600px;
+  transform: none;
+  z-index: 10001;
 }
 
 .app-footer {

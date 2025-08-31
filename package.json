@@ -14,7 +14,8 @@
     "build": "run-p build:*",
     "build:marketing": "npm --workspace marketing run build || echo 'marketing: no build needed'",
     "build:app": "npm --workspace app run build || echo 'app: no build script'",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "smoke": "node scripts/smoke-spa.mjs"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"

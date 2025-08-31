@@ -218,8 +218,8 @@ class LegalModal {
     open() {
         console.log('open() called');
         
-        // For login page, don't scroll to top
-        const isLoginPage = window.location.pathname.includes('login.html');
+        // For login route, don't scroll to top
+        const isLoginPage = window.location.pathname === '/login';
         
         if (!isLoginPage) {
             // Scroll to top before opening modal (only for landing page)

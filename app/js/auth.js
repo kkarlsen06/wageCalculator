@@ -1,5 +1,8 @@
-// API Base URL configuration
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// API Base URL configuration (unified)
+import { API_BASE as RESOLVED_API_BASE } from '/src/js/apiBase.js';
+const API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiBase)
+  ? window.CONFIG.apiBase
+  : (RESOLVED_API_BASE || '/api');
 
 // Initialize Supabase client when DOM is loaded
 
@@ -37,7 +40,7 @@ async function initAuth() {
           headers: { Authorization: `Bearer ${session.access_token}` }
         });
         if (ok.status === 200) {          // token accepted by backend
-          window.location.replace('index.html');
+          window.location.replace('/index.html');
           return;
         }
       } catch (_) { /* ignore network errors */ }
@@ -417,7 +420,7 @@ async function checkAndShowProfileCompletion() {
       
       // Small delay to ensure auth state is properly set
       setTimeout(() => {
-        window.location.replace("index.html");
+        window.location.replace('index.html');
       }, 150);
       
     } catch (err) {
@@ -427,7 +430,7 @@ async function checkAndShowProfileCompletion() {
       if (!isRedirecting) {
         isRedirecting = true;
         setTimeout(() => {
-          window.location.replace("index.html");
+          window.location.replace('index.html');
         }, 100);
       }
     }
@@ -473,7 +476,7 @@ async function completeProfile() {
       return;
     }
 
-    window.location.href = "index.html";
+    window.location.href = 'index.html';
   } catch (err) {
     console.error("Error completing profile:", err);
     window.authElements.completeProfileMsg.textContent = "Kunne ikke oppdatere profil";
@@ -482,7 +485,7 @@ async function completeProfile() {
 
 async function skipProfileCompletion() {
   // Just redirect to app without requiring profile completion
-  window.location.href = "index.html";
+  window.location.href = 'index.html';
 }
 
 // Reset form handlers
@@ -602,7 +605,7 @@ async function sendMagicLink(email) {
   try {
     // Use the current domain to ensure consistency
     const currentDomain = window.location.origin;
-    const redirectUrl = `${currentDomain}/login.html`; // Redirect to kalkulator login after magic link login
+    const redirectUrl = `${currentDomain}/index.html`; // Keep existing redirect; router handles /index.html
     
     
     const { error } = await supa.auth.signInWithOtp({
@@ -705,8 +708,5 @@ function setupAuthStateHandling() {
     }
   })();
 }
-
-
-
 
 

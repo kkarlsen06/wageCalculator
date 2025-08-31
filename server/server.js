@@ -96,9 +96,7 @@ app.options('/checkout', cors(corsOptions));
 // Explicit preflight for DELETE shifts endpoint
 app.options('/shifts/outside-month/:month', cors(corsOptions));
 
-// Explicit preflight for chat endpoint (both with and without /api prefix for proxy variants)
-app.options('/api/chat', cors(corsOptions));
-app.options('/chat', cors(corsOptions));
+// Chat endpoints rely on global OPTIONS handler with CORS; no explicit mapping needed
 
 
 // Do NOT apply to /api/stripe-webhook (keep express.raw)
@@ -6555,8 +6553,7 @@ if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_STATIC === 'true
   app.use('/js', express.static(path.join(staticRoot, 'js')));
   app.use('/assets', express.static(path.join(staticRoot, 'assets')));
 
-  // Kalkulator app and its assets
-  app.use('/kalkulator', express.static(path.join(staticRoot, 'kalkulator')));
+  // Legacy kalkulator static serving removed after split into app/ + marketing/
 
   // Common root files
   app.get('/favicon.ico', (req, res) =>
@@ -6574,10 +6571,7 @@ if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_STATIC === 'true
     res.sendFile(path.join(staticRoot, 'index.html'));
   });
 
-  // Kalkulator entry (explicit in case directory index is disabled)
-  app.get('/kalkulator', (req, res) => {
-    res.sendFile(path.join(staticRoot, 'kalkulator', 'index.html'));
-  });
+  // No dedicated /kalkulator mount; marketing handles redirect to app domain
 }
 
 // ---------- API Routes with /api prefix ----------

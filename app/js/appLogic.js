@@ -3580,8 +3580,8 @@ export const app = {
             // Close profile modal
             this.closeProfile();
 
-            // Redirect to onboarding page
-            window.location.href = '/onboarding.html';
+            // Redirect to onboarding page (SPA)
+            if (window.__navigate) window.__navigate('/onboarding'); else window.location.href = '/onboarding';
 
         } catch (error) {
             console.error('Error restarting onboarding:', error);

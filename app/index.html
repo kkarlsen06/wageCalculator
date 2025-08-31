@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/themes.css?v=1">
   <link rel="stylesheet" href="css/style.css?v=1">
+  <link rel="stylesheet" href="/src/css/onboarding.css">
+  <link rel="stylesheet" href="/src/css/legal-modal.css">
   <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
   <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="/icons/favicon.ico" type="image/x-icon">
@@ -32,6 +34,9 @@
 <body>
     <!-- Skip links for accessibility -->
     <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
+
+    <!-- SPA auth pages mount here; hidden while in main app route -->
+    <div id="spa-root" style="display:none"></div>
 
     <!-- Hoved-appen skjules til bruker er innlogget -->
     <div id="app" style="display:none">

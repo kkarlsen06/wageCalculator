@@ -1,9 +1,14 @@
-// API Base URL configuration
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// API Base URL configuration (unified)
+import { API_BASE as RESOLVED_API_BASE } from '/src/js/apiBase.js';
+const API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiBase)
+  ? window.CONFIG.apiBase
+  : (RESOLVED_API_BASE || '/api');
+
 // Optional separate base for streaming to bypass proxies/CDNs that buffer POST responses
-// If not provided via config, auto-select Azure origin in production domain.
-const STREAM_API_BASE = window.CONFIG?.apiStreamBase
-  || ((typeof window !== 'undefined' && /kkarlsen\.dev$/i.test(window.location.hostname))
+// If not provided via config, auto-select Azure origin when running on kkarlsen.dev domains.
+const STREAM_API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiStreamBase)
+  ? window.CONFIG.apiStreamBase
+  : ((typeof window !== 'undefined' && /kkarlsen\.dev$/i.test(window.location.hostname))
       ? 'https://server.kkarlsen.dev'
       : API_BASE);
 
@@ -827,7 +832,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         console.log(`App.html: No session after ${maxRetries} attempts, redirecting to login`);
         console.log('[login] no session – redirecting to login page');
-        window.location.href = 'login.html';
+        if (window.__navigate) window.__navigate('/login'); else window.location.href = '/login';
         return;
       }
     } else {
@@ -840,12 +845,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = session.user;
 
     // Check if user has finished onboarding
-    const isOnOnboarding = location.pathname.endsWith('/onboarding.html');
-    if (!user.user_metadata?.finishedOnboarding && !isOnOnboarding) {
-      console.log('→ redirect to onboarding (finishedOnboarding=false)');
-      location.replace('/onboarding.html?from=' + encodeURIComponent(location.pathname));
-      return;
-    }
+  const isOnOnboarding = location.pathname === '/onboarding';
+  if (!user.user_metadata?.finishedOnboarding && !isOnOnboarding) {
+    console.log('→ redirect to onboarding (finishedOnboarding=false)');
+    if (window.__navigate) window.__navigate('/onboarding'); else location.replace('/onboarding');
+    return;
+  }
   }
 
   // Expose logout function
@@ -873,7 +878,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         sessionStorage.removeItem('supabase_recovery_flow');
       }
     } catch (_) {}
-    window.location.href = 'login.html';
+    if (window.__navigate) window.__navigate('/login'); else window.location.href = '/login';
   };
 
   // After ensuring session, show welcome, init app, and display
@@ -930,6 +935,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Mark app as initialized even on error to prevent hanging
     appInitialized = true;
     checkAndRemoveSkeletons();
+  }
+
+  // If we're on an auth route, don't show the main app container
+  if (location.pathname === '/login' || location.pathname === '/onboarding') {
+    const appAuthEl = document.getElementById('app');
+    if (appAuthEl) appAuthEl.style.setProperty('display', 'none', 'important');
+    return;
   }
 
   // Display the app container immediately with no animations

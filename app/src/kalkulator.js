@@ -51,8 +51,14 @@ import '/src/js/checkout.js';
 // Checkout/Portal status toast on app page
 import { refreshSubscriptionState } from '/js/subscriptionState.js';
 import { getUserId } from '/src/lib/auth/getUserId.js';
+import { render as renderSpa } from './router.js';
 
 if (typeof window !== 'undefined') {
+  // Render SPA route on load (supports /, /login, /onboarding)
+  window.addEventListener('DOMContentLoaded', () => {
+    try { renderSpa(); } catch (e) { console.warn('SPA render failed', e); }
+  });
+
   window.addEventListener('DOMContentLoaded', () => {
     try {
       const params = new URLSearchParams(window.location.search);
