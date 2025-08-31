@@ -14,7 +14,12 @@
     "build": "run-p build:*",
     "build:marketing": "npm --workspace marketing run build || echo 'marketing: no build needed'",
     "build:app": "npm --workspace app run build || echo 'app: no build script'",
-    "clean": "rm -rf dist",
+    "clean": "node scripts/clean-dists.mjs",
+    "clean:all": "node scripts/clean-dists.mjs",
+    "preview": "run-s clean build preview:start",
+    "preview:start": "run-p preview:marketing preview:app dev:server",
+    "preview:marketing": "npm --workspace marketing run preview",
+    "preview:app": "npm --workspace app run preview",
     "smoke": "node scripts/smoke-spa.mjs"
   },
   "devDependencies": {
