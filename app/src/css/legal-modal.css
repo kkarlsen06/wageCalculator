@@ -35,13 +35,11 @@ body {
     z-index: 10000 !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     /* Ensure proper positioning */
-    display: flex !important;
+    display: none !important; /* hidden by default */
     align-items: center !important;
     justify-content: center !important;
-    /* Force modal to be visible */
-    pointer-events: auto !important;
-    /* Ensure modal is hidden by default */
-    visibility: hidden;
+    pointer-events: none !important; /* do not block clicks when hidden */
+    visibility: hidden !important;
 }
 
 .legal-modal-overlay {

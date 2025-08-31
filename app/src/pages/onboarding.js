@@ -1,4 +1,6 @@
 // Onboarding page: renders markup from former app/onboarding.html and wires logic
+// Load onboarding styles only when this route is used
+import '/src/css/onboarding.css';
 
 export function renderOnboarding() {
   return `

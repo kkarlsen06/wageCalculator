@@ -7341,6 +7341,17 @@ export const app = {
 
     async openCropperWithFile(file) {
         try {
+            // Ensure Cropper CSS is present (lazy-load)
+            try {
+                if (!document.querySelector('link[data-cropper-css]')) {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = 'https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css';
+                    link.setAttribute('data-cropper-css', '1');
+                    document.head.appendChild(link);
+                }
+            } catch (_) {}
+
             const modal = document.getElementById('cropModal');
             const img = document.getElementById('cropImage');
             if (!modal || !img) return;
@@ -10758,9 +10769,16 @@ Hva trenger du hjelp med i dag?`;
         this.downloadFile(jsonContent, 'vaktdata.json', 'application/json');
     },
 
-    exportAsPDF(data) {
+    async exportAsPDF(data) {
         try {
-            // Check if jsPDF is available and correctly exposed by the UMD build
+            // Ensure jsPDF is loaded; lazy-load UMD build if needed
+            if (typeof window.jspdf?.jsPDF !== 'function') {
+                try {
+                    await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+                } catch (e) {
+                    console.warn('jsPDF dynamic import failed', e);
+                }
+            }
             if (typeof window.jspdf?.jsPDF !== 'function') {
                 alert('PDF-biblioteket (jsPDF) ble ikke funnet. Prøv å laste siden på nytt.');
                 return;
@@ -11309,7 +11327,7 @@ Hva trenger du hjelp med i dag?`;
     },
 
     // Export data with period selection
-    exportDataWithPeriod(format) {
+    async exportDataWithPeriod(format) {
         try {
             // Get selected period
             const periodRadio = document.querySelector('input[name="exportPeriod"]:checked');
@@ -11387,7 +11405,7 @@ Hva trenger du hjelp med i dag?`;
             if (format === 'csv') {
                 this.exportAsCSV(data);
             } else if (format === 'pdf') {
-                this.exportAsPDF(data);
+                await this.exportAsPDF(data);
             } else {
                 // Default to JSON
                 this.exportAsJSON(data);

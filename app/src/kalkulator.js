@@ -35,7 +35,7 @@ if (typeof window !== 'undefined' && !window.uuidv4) {
 // Load feature flags (reads window.CONFIG.apiBase)
 import '/js/featureFlags.js';
 
-// App bootstrap (was loaded via <script type="module" src="js/app.js">)
+// App bootstrap: import immediately so DOMContentLoaded handlers inside app.js bind correctly
 import '/js/app.js';
 
 // Theme management system

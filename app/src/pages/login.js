@@ -1,4 +1,6 @@
 // Login page: renders markup from former app/login.html and wires existing auth logic
+// Include legal modal styles only for login route
+import '/src/css/legal-modal.css';
 
 export function renderLogin() {
   // Compute marketing home based on environment (dev vs prod)

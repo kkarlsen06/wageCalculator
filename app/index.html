@@ -7,19 +7,21 @@
   <!-- Google Fonts - Inter for modern, professional typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Preconnect to Supabase and API for faster auth/API handshakes -->
+  <link rel="preconnect" href="https://id.kkarlsen.dev" crossorigin>
+  <link rel="dns-prefetch" href="https://server.kkarlsen.dev">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/themes.css?v=1">
   <link rel="stylesheet" href="css/style.css?v=1">
-  <link rel="stylesheet" href="/src/css/onboarding.css">
-  <link rel="stylesheet" href="/src/css/legal-modal.css">
-  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
+  <!-- Route/feature CSS is now code-split and loaded on demand -->
   <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="/icons/favicon.ico" type="image/x-icon">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="alternate" hreflang="nb" href="https://www.kkarlsen.dev/" />
   <link rel="apple-touch-icon" sizes="921x921" href="/icons/apple-touch-icon.png">
-  <script type="module" src="./js/bootstrap-supa.js"></script>
+  <!-- Preload kalkulator entry module graph without blocking render -->
+  <link rel="modulepreload" href="/src/kalkulator.js">
   <meta name="theme-color" content="#000000">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#000000">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
@@ -1235,11 +1237,6 @@
 
 
 
-    <!-- Required third-party libraries (global) -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.1/dist/purify.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
     <!-- Vite kalkulator entry -->
     <script type="module" src="/src/kalkulator.js"></script>
 </body>

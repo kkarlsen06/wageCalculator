@@ -16,12 +16,33 @@ const STREAM_API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiStre
 // app-ready/animations-complete logic below.
 
 import { supabase } from '/src/supabase-client.js'
-// then just use supabase directly
+// Create a local alias for consistency with other modules and expose globally later
+const supa = supabase;
 
 // DEBUG: check client
 supabase.auth.getSession().then(({ data, error }) => {
   console.log("[debug] supabase session", data?.session, error)
 })
+
+// Lazy-load markdown + sanitizer libs only when chat is used
+async function preloadChatMarkdownLibs() {
+  try {
+    if (typeof window.marked === 'undefined') {
+      await import('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
+      // Configure marked defaults if available
+      try { window.marked?.setOptions?.({ gfm: true, breaks: true }); } catch (_) {}
+    }
+  } catch (e) {
+    console.warn('[perf] failed to preload marked', e);
+  }
+  try {
+    if (typeof window.DOMPurify === 'undefined') {
+      await import('https://cdn.jsdelivr.net/npm/dompurify@3.1.1/dist/purify.min.js');
+    }
+  } catch (e) {
+    console.warn('[perf] failed to preload DOMPurify', e);
+  }
+}
 
 function setAppHeight() {
   // Skip dynamic height calculations in chatbox-view mode to prevent viewport instability
@@ -1417,6 +1438,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Apply chatbox view similar to stats view
     applyChatboxView();
 
+    // Preload markdown rendering libs to ensure smooth first render
+    // Fire-and-forget to avoid blocking the UI; rendering will happen shortly after
+    preloadChatMarkdownLibs();
+
     chatElements.pill.classList.add('expanded');
     chatElements.expandedContent.style.display = 'block';
     chatElements.close.style.display = 'flex';
@@ -1853,6 +1878,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Show thinking indicator - only dots, no hardcoded text
     const spinner = appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
+
+    // Ensure markdown/sanitizer libs are available before any assistant rendering/streaming
+    await preloadChatMarkdownLibs();
 
     // Get JWT token from Supabase session (declare outside try block)
     let token;
