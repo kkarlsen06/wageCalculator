@@ -45,12 +45,21 @@ const app = express();
 const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 app.use(morgan(logFormat));
 
-// CORS: allow dev frontend and production domain; skip Stripe webhook (must stay raw)
+// CORS: allow dev frontend and production domains; skip Stripe webhook (must stay raw)
 const ALLOW_ORIGINS = [
-   /^http:\/\/localhost:(4173|5173|3000)$/,
-   /^http:\/\/127\.0\.0\.1:\d+$/,
-   /^https?:\/\/.*kkarlsen\.(dev|art)$/
- ];
+  // Local dev
+  /^http:\/\/localhost:(4173|5173|3000)$/, // Vite + dev server
+  /^http:\/\/127\.0\.0\.1:\d+$/,           // loopback
+
+  // Production marketing site
+  /^https:\/\/(www\.)?kkarlsen\.dev$/,
+
+  // Production app
+  /^https:\/\/kalkulator\.kkarlsen\.dev$/,
+
+  // Optional: if you still serve anything from .art
+  /^https:\/\/(www\.)?kkarlsen\.art$/
+];
 
  const corsOptions = {
    origin: (origin, cb) => {
