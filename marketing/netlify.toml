@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "/kalkulator/*"
+  to = "https://kalkulator.kkarlsen.dev/:splat"
+  status = 301
+  force = true

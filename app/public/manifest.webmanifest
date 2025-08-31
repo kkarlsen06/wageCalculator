@@ -1,0 +1,12 @@
+{
+    "name": "kkarlsen.dev",
+    "short_name": "Min lønn",
+    "start_url": "/index.html",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#121212",
+    "theme_color": "#4AC8FF",
+    "icons": [
+      { "src": "/assets/kkarlsen_ikon_clean.png", "sizes": "712x717", "type": "image/png" }
+    ]
+  }

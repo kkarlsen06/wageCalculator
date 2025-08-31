@@ -1,0 +1,18 @@
+name: deploy-app
+on:
+  push:
+    paths: ["app/**", "packages/**"]
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: npm --workspace app run build
+      - uses: netlify/actions/cli@master
+      - run: netlify deploy --dir=app/dist --prod --site=$NETLIFY_SITE_ID_APP
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+

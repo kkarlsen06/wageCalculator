@@ -1,19 +1,61 @@
-## Security Overview
+# Security Policy
 
-See also the repository root `SECURITY.md` for the policy and guidance.
+## JWT Authentication
 
-### Authentication
-- Bearer JWTs from Supabase Auth
-- Server-side verification via JWKS using `jose`
-- Middleware: `server/middleware/auth.js` sets `req.auth`, `req.user_id`, `req.user`
+This application uses **JWKS-based JWT verification** for secure authentication:
 
-### Authorization
-- RLS in Supabase restricts rows to the authenticated user/manager
-- Server additionally blocks AI-agent writes and can optionally block reads (`AGENT_BLOCK_READS`)
+- **JWT Issuer**: `${SUPABASE_URL}/auth/v1`
+- **Verification Method**: Asymmetric cryptography using Supabase's JWKS endpoint
+- **Algorithm**: ES256/RS256 (asymmetric keys only)
+- **Key Rotation**: Supabase keys should be rotated quarterly for security
 
-### Secrets Hygiene
-- Client uses only `VITE_*` variables; server-only secrets are never exposed
-- CI checks for leaked service-role keys in client code
+### Server-Side Verification
 
+The server verifies JWTs using the `jose` library by:
+1. Fetching public keys from `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`
+2. Validating JWT signatures cryptographically
+3. Verifying issuer and standard claims
 
+**No JWT secrets are stored on the server** - verification uses public keys only.
 
+## Environment Variables
+
+### Client-Side (Safe for Browser)
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` - Public anon key (safe for client exposure)
+
+### Server-Side (Never expose to client)
+- `SUPABASE_URL` - Same as client, but for server operations
+- `SUPABASE_SERVICE_ROLE_KEY` - Secret service role key with elevated permissions
+
+## Security Guidelines
+
+### 🔒 Key Management
+- **NEVER** ship service role keys to the browser
+- **ALWAYS** use publishable/anon keys on the client side
+- **ROTATE** Supabase keys quarterly via dashboard
+- **REVOKE** compromised keys immediately
+
+### 🛡️ CI/CD Security
+The build pipeline includes guardrails to prevent accidental secret exposure:
+- Scans client code for service role key patterns
+- Fails builds if sensitive keys detected in `src/` directory
+
+### 🔍 Monitoring
+- Server logs JWT verification failures
+- Client code includes defensive checks to remove server-only keys
+- Access patterns are logged for audit purposes
+
+## Reporting Security Issues
+
+If you discover a security vulnerability, please:
+1. **DO NOT** create a public issue
+2. Email security concerns privately
+3. Include steps to reproduce if possible
+4. Allow time for patching before disclosure
+
+## Security Updates
+
+- JWT migration completed: Asymmetric key verification implemented
+- Legacy symmetric JWT secrets removed
+- JWKS-based verification active since last key rotation

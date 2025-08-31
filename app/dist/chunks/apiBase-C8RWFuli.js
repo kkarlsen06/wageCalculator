@@ -1,0 +1,1 @@
+const e={},o=e?.VITE_API_BASE?.trim(),t=!0,s=n=>/^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?/i.test(String(n||"")),i=o&&!(t&&s(o))?o:t?"":typeof window<"u"&&window.location.hostname==="localhost"?"http://localhost:3000":"";typeof window<"u"&&console.log("[api] base =",i,"prod=",t);export{i as A};
