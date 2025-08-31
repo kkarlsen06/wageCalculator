@@ -1500,6 +1500,15 @@ export const app = {
         return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     },
 
+    // Helper to get ISO week-year (can differ from calendar year near boundaries)
+    getISOWeekYear(date) {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        // Move to Thursday to ensure correct ISO week-year
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        return d.getUTCFullYear();
+    },
+
     // Helper function to get the start and end dates for a specific ISO week
     getWeekDateRange(weekNumber, year) {
         // Create a date for January 4th of the given year (always in week 1)
@@ -1523,6 +1532,28 @@ export const app = {
         const endDate = new Date(sundayOfTargetWeek.getUTCFullYear(), sundayOfTargetWeek.getUTCMonth(), sundayOfTargetWeek.getUTCDate());
 
         return { startDate, endDate };
+    },
+
+    // Determine the ISO week-year for a given week number in the current month view
+    getWeekYearForWeekNumberInCurrentMonth(weekNumber) {
+        const monthIndex = this.currentMonth - 1;
+        const daysInMonth = new Date(this.currentYear, this.currentMonth, 0).getDate();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dt = new Date(this.currentYear, monthIndex, day);
+            if (this.getISOWeekNumber(dt) === weekNumber) {
+                return this.getISOWeekYear(dt);
+            }
+        }
+        // Fallback heuristics for edge cases
+        if (weekNumber >= 52 && monthIndex === 0) return this.currentYear - 1; // January with week 52/53
+        if (weekNumber <= 2 && monthIndex === 11) return this.currentYear + 1; // December with week 1/2
+        return this.currentYear;
+    },
+
+    // Convenience: week date range for selected month/year context
+    getWeekDateRangeForCurrentView(weekNumber) {
+        const isoWeekYear = this.getWeekYearForWeekNumberInCurrentMonth(weekNumber);
+        return this.getWeekDateRange(weekNumber, isoWeekYear);
     },
 
     // Drill-down state management functions
@@ -1660,8 +1691,8 @@ export const app = {
 
     // Get all shifts for a specific week (including shifts from adjacent months)
     getShiftsForWeek(weekNumber) {
-        // Get the date range for this week
-        const { startDate, endDate } = this.getWeekDateRange(weekNumber, this.currentYear);
+        // Get the date range for this week (respect ISO week-year for current view)
+        const { startDate, endDate } = this.getWeekDateRangeForCurrentView(weekNumber);
 
         // Get all shifts that fall within this week's date range
         const weekShifts = this.shifts.filter(shift => {
@@ -4688,8 +4719,8 @@ export const app = {
         const today = new Date();
         const isCurrentMonth = this.currentMonth === (today.getMonth() + 1) && this.currentYear === today.getFullYear();
 
-        // Get the date range for the selected week to properly calculate day dates
-        const { startDate, endDate } = this.getWeekDateRange(this.selectedWeek, this.currentYear);
+        // Get the date range for the selected week (using ISO week-year in current view)
+        const { startDate, endDate } = this.getWeekDateRangeForCurrentView(this.selectedWeek);
 
         // Day abbreviations (Sunday to Saturday)
         const dayAbbreviations = ['S', 'M', 'T', 'O', 'T', 'F', 'L'];
@@ -4953,19 +4984,27 @@ export const app = {
         // Sort shifts by date (earliest first)
         const sortedShifts = monthShifts.sort((a, b) => a.date - b.date);
 
-        // Group shifts by week
+        // Group shifts by week (ISO week number), then order groups by the earliest
+        // date within each group to preserve true chronological order across year boundaries.
+        // This prevents end-of-December days that belong to ISO week 1 from appearing first.
         const weekGroups = {};
         sortedShifts.forEach(shift => {
             const weekNumber = this.getISOWeekNumber(shift.date);
-            if (!weekGroups[weekNumber]) {
-                weekGroups[weekNumber] = [];
-            }
+            if (!weekGroups[weekNumber]) weekGroups[weekNumber] = [];
             weekGroups[weekNumber].push(shift);
         });
 
+        // Build ordered entries by earliest contained date
+        const weekEntries = Object.entries(weekGroups)
+            .map(([weekNumber, shifts]) => ({
+                weekNumber: String(weekNumber),
+                firstTime: Math.min(...shifts.map(s => s.date.getTime())),
+                shifts,
+            }))
+            .sort((a, b) => a.firstTime - b.firstTime);
+
         // Create HTML with week separators and current date indicator
         const shiftsHtml = [];
-        const weekNumbers = Object.keys(weekGroups).sort((a, b) => a - b); // Sort weeks ascending (earliest first)
         
         // Get current date for comparison
         const today = new Date();
@@ -4984,8 +5023,7 @@ export const app = {
             `;
         };
 
-        weekNumbers.forEach((weekNumber) => {
-            const weekShifts = weekGroups[weekNumber];
+        weekEntries.forEach(({ weekNumber, shifts: weekShifts }) => {
 
             // Calculate weekly wage total
             let weeklyTotal = 0;
@@ -5133,19 +5171,11 @@ export const app = {
         });
 
         // Handle case where today is in a week with no shifts
-        if (todayInCurrentMonth && !weekNumbers.includes(todayWeekNumber.toString())) {
-            // Find where to insert this week in the chronological order
-            const todayWeekNum = parseInt(todayWeekNumber);
-            let insertIndex = 0;
-            
-            for (let i = 0; i < weekNumbers.length; i++) {
-                if (parseInt(weekNumbers[i]) > todayWeekNum) {
-                    insertIndex = i;
-                    break;
-                } else if (i === weekNumbers.length - 1) {
-                    insertIndex = weekNumbers.length;
-                }
-            }
+        if (todayInCurrentMonth && !weekEntries.some(e => parseInt(e.weekNumber) === todayWeekNumber)) {
+            // Compute insertion point by chronological order vs groups' first dates
+            const todayTime = today.getTime();
+            let insertIndex = weekEntries.findIndex(e => todayTime < e.firstTime);
+            if (insertIndex === -1) insertIndex = weekEntries.length;
 
             const separatorHtml = `
                 <div class="week-separator">
@@ -5169,9 +5199,16 @@ export const app = {
                 ${createCurrentDateSeparator()}
             `;
 
-            // Insert the week with current date separator at the correct position
-            const insertPosition = insertIndex * 2; // Account for existing week separators and shifts
-            shiftsHtml.splice(insertPosition, 0, separatorHtml);
+            // Insert the separator at the calculated position among week sections
+            let weekSectionCount = 0;
+            let insertionPoint = shiftsHtml.length;
+            for (let i = 0; i < shiftsHtml.length; i++) {
+                if (shiftsHtml[i].includes('class="week-separator"')) {
+                    if (weekSectionCount === insertIndex) { insertionPoint = i; break; }
+                    weekSectionCount++;
+                }
+            }
+            shiftsHtml.splice(insertionPoint, 0, separatorHtml);
         }
 
         shiftList.innerHTML = shiftsHtml.join('');
@@ -5368,7 +5405,7 @@ export const app = {
                 // Check if the shift is in the current week
                 const currentWeekNumber = this.getISOWeekNumber(now);
                 const shiftWeekNumber = this.getISOWeekNumber(shiftDate);
-                const isCurrentWeek = currentWeekNumber === shiftWeekNumber && shiftDate.getFullYear() === now.getFullYear();
+                const isCurrentWeek = currentWeekNumber === shiftWeekNumber && this.getISOWeekYear(shiftDate) === this.getISOWeekYear(now);
 
                 // Determine date display format with Norwegian day indicators
                 let dateDisplay;
@@ -5472,7 +5509,7 @@ export const app = {
             // Check if the shift is in the current week
             const currentWeekNumber = this.getISOWeekNumber(now);
             const shiftWeekNumber = this.getISOWeekNumber(shiftDate);
-            const isCurrentWeek = currentWeekNumber === shiftWeekNumber && shiftDate.getFullYear() === now.getFullYear();
+            const isCurrentWeek = currentWeekNumber === shiftWeekNumber && this.getISOWeekYear(shiftDate) === this.getISOWeekYear(now);
 
             // Determine date display format with Norwegian day indicators
             let dateDisplay;
@@ -5603,7 +5640,7 @@ export const app = {
         // Check if the shift is in the current week
         const currentWeekNumber = this.getISOWeekNumber(now);
         const shiftWeekNumber = this.getISOWeekNumber(shiftDate);
-        const isCurrentWeek = currentWeekNumber === shiftWeekNumber && shiftDate.getFullYear() === now.getFullYear();
+        const isCurrentWeek = currentWeekNumber === shiftWeekNumber && this.getISOWeekYear(shiftDate) === this.getISOWeekYear(now);
 
         // Determine date display format with Norwegian day indicators
         let dateDisplay;
@@ -5863,7 +5900,7 @@ export const app = {
         const now = new Date();
         const currentWeekNumber = this.getISOWeekNumber(now);
         const shiftWeekNumber = this.getISOWeekNumber(shiftDate);
-        const isCurrentWeek = currentWeekNumber === shiftWeekNumber && shiftDate.getFullYear() === now.getFullYear();
+        const isCurrentWeek = currentWeekNumber === shiftWeekNumber && this.getISOWeekYear(shiftDate) === this.getISOWeekYear(now);
 
         // Determine date display format with Norwegian day indicators
         let dateDisplay;
