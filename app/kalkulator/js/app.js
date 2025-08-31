@@ -1,5 +1,5 @@
 // API Base URL configuration
-const API_BASE = window.CONFIG?.apiBase || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 // Optional separate base for streaming to bypass proxies/CDNs that buffer POST responses
 // If not provided via config, auto-select Azure origin in production domain.
 const STREAM_API_BASE = window.CONFIG?.apiStreamBase

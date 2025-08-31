@@ -25,7 +25,7 @@ class FeatureFlags {
         }
 
         try {
-            const API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiBase) || '/api';
+            const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
             // Use browser fetch only; node-fetch is not bundled in browser builds
             const response = await fetch(`${API_BASE}/config`, {
