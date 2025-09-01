@@ -16,6 +16,17 @@ export default defineConfig({
       }
     }
   },
+  preview: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'https://server.kkarlsen.dev',
+        changeOrigin: true,
+        secure: true,
+        rewrite: p => p.replace(/^\/api/, '')
+      }
+    }
+  },
   build: {
     rollupOptions: {
       input: resolve('index.html')

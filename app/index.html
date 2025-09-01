@@ -395,22 +395,66 @@
       <!-- Settings Modal -->
       <div id="settingsModal" class="modal">
           <div class="modal-content">
+              <div class="modal-header">
+                  <h2 class="modal-title">Innstillinger</h2>
+                  <button type="button" class="modal-close" onclick="app.closeSettings()" aria-label="Lukk">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                  </button>
+              </div>
                 <div class="tab-nav">
-                    <button class="tab-btn active" data-tab="wage" onclick="app.switchSettingsTabSync('wage')">Lønn</button>
-                    <button class="tab-btn" data-tab="interface" onclick="app.switchSettingsTabSync('interface')">Visning</button>
-                    <button class="tab-btn" data-tab="org" onclick="app.switchSettingsTabSync('org')">Bedrift</button>
-                    <button class="tab-btn" data-tab="data" onclick="app.switchSettingsTabSync('data')">Data</button>
+                    <button class="tab-btn active" data-tab="wage" onclick="app.switchSettingsTabSync('wage')">
+                        <svg class="icon-sm tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        Min lønn
+                    </button>
+                    <button class="tab-btn" data-tab="interface" onclick="app.switchSettingsTabSync('interface')">
+                        <svg class="icon-sm tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        Utseende
+                    </button>
+                    <button class="tab-btn" data-tab="org" onclick="app.switchSettingsTabSync('org')">
+                        <svg class="icon-sm tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 21h18"></path>
+                            <path d="M5 21V7l8-4v18"></path>
+                            <path d="M19 21V11l-6-4"></path>
+                        </svg>
+                        Bedrift
+                    </button>
+                    <button class="tab-btn" data-tab="data" onclick="app.switchSettingsTabSync('data')">
+                        <svg class="icon-sm tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Data
+                    </button>
                 </div>
 
               <div class="tab-content-wrapper">
                   <div id="wageTab" class="tab-content active">
+                      <div class="settings-section-header">
+                          <h3>Lønnsberegning</h3>
+                          <p class="section-description">Sett opp hvordan lønnen din skal beregnes</p>
+                      </div>
+
                   <div class="form-group">
                       <div class="flex justify-between align-center mb-10">
-                          <label>Lønn</label>
+                          <label>Lønnsmodell</label>
                           <span id="presetBadge" class="preset-badge" style="display: none;">Virke-tariff</span>
                       </div>
                       <div class="switch-group">
-                          <span>Bruk tariff (Virke)</span>
+                          <div>
+                              <span class="text-secondary">Bruk Virke-tariff</span>
+                              <small class="form-hint">Automatisk beregning basert på offisiell lønnsavtale</small>
+                          </div>
                           <label class="switch">
                               <input type="checkbox" id="usePresetToggle" checked onchange="app.togglePreset()">
                               <span class="slider"></span>
@@ -420,24 +464,26 @@
 
                   <div id="presetWageSection" class="settings-subsection">
                       <div class="form-group settings-level-2">
-                          <label>Lønnstrinn (Virke 2025)</label>
+                          <label>Velg ditt lønnstrinn</label>
                           <select class="form-control" id="wageSelect" onchange="app.updateWageLevel(this.value)">
-                              <option value="-1">Unge arbeidstakere under 16 år (129,91 kr/t)</option>
-                              <option value="-2">Unge arbeidstakere under 18 år (132,90 kr/t)</option>
-                              <option value="1" selected>Trinn 1 (184,54 kr/t)</option>
-                              <option value="2">Trinn 2 (185,38 kr/t)</option>
-                              <option value="3">Trinn 3 (187,46 kr/t)</option>
-                              <option value="4">Trinn 4 (193,05 kr/t)</option>
-                              <option value="5">Trinn 5 (210,81 kr/t)</option>
-                              <option value="6">Trinn 6 (256,14 kr/t)</option>
+                              <option value="-1">Under 16 år - 129,91 kr/time</option>
+                              <option value="-2">Under 18 år - 132,90 kr/time</option>
+                              <option value="1" selected>Trinn 1 - 184,54 kr/time</option>
+                              <option value="2">Trinn 2 - 185,38 kr/time</option>
+                              <option value="3">Trinn 3 - 187,46 kr/time</option>
+                              <option value="4">Trinn 4 - 193,05 kr/time</option>
+                              <option value="5">Trinn 5 - 210,81 kr/time</option>
+                              <option value="6">Trinn 6 - 256,14 kr/time</option>
                           </select>
+                          <small class="form-hint">Basert på Virke-tariff 2025. Velg trinnet som passer din erfaring.</small>
                       </div>
                   </div>
 
                   <div id="customWageSection" class="settings-subsection" style="display: none;">
                       <div class="form-group settings-level-2">
-                          <label>Egen timelønn (kr)</label>
+                          <label>Din timelønn</label>
                           <input type="number" class="form-control" id="customWageInput" placeholder="200" step="0.01" onchange="app.updateCustomWage(this.value)">
+                          <small class="form-hint">Skriv inn din timelønn i kroner</small>
                       </div>
 
                       <!-- Collapsible bonus settings -->
@@ -446,7 +492,7 @@
                               <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="6 9 12 15 18 9"></polyline>
                               </svg>
-                              <span>Tillegg</span>
+                              <span>Tillegg for ulike tider</span>
                           </button>
                           
                           <div class="settings-collapsible-content" id="bonusWageSettings" style="display: none;">
@@ -479,13 +525,15 @@
 
                   <!-- Break Deduction Settings Section -->
                   <div class="form-group form-group-with-hint">
-                      <label>Pausetrekk</label>
+                      <div class="settings-section-divider">
+                          <h4>Pauser og trekk</h4>
+                      </div>
 
                       <!-- Enable/Disable Break Deduction -->
                       <div class="switch-group">
                         <div>
-                          <span class="text-secondary">Trekk for pause</span>
-                          <small class="form-hint">Trekk fra betalt pause for lange vakter</small>
+                          <span class="text-secondary">Trekk pause fra lønnen</span>
+                          <small class="form-hint">Automatisk trekk for ubetalt pause på lange vakter</small>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="pauseDeductionEnabledToggle" checked>
@@ -551,20 +599,23 @@
                   </div>
 
                   <div class="form-group form-group-with-hint">
-                      <label for="monthlyGoalInput">Månedsmål</label>
+                      <div class="settings-section-divider">
+                          <h4>Mål og oversikt</h4>
+                      </div>
+                      <label for="monthlyGoalInput">Månedlig inntektsmål</label>
                       <div class="switch-group">
                           <input type="number" id="monthlyGoalInput" class="form-control" min="0" step="100" style="max-width:140px;display:inline-block;" placeholder="20000">
                           <button class="btn btn-secondary" id="saveMonthlyGoalBtn" style="margin-left:8px;">Lagre</button>
                       </div>
-                      <small class="form-hint">Brukes i oversikt og rapporter</small>
+                      <small class="form-hint">Hvor mye ønsker du å tjene per måned? Vises som fremdrift i oversikten.</small>
                   </div>
 
                   <div class="form-group form-group-with-hint">
-                      <label>Skatt</label>
+                      <label>Skatteberegning</label>
                       <div class="switch-group">
                         <div>
-                          <span class="text-secondary">Vis netto lønn</span>
-                          <small class="form-hint">Vis netto lønn etter skatt</small>
+                          <span class="text-secondary">Vis lønn etter skatt</span>
+                          <small class="form-hint">Se hvor mye du får utbetalt etter skattetrekk</small>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="taxDeductionToggle" onchange="app.toggleTaxDeduction()">
@@ -574,12 +625,12 @@
                       
                       <!-- Tax percentage sub-setting -->
                       <div class="form-group settings-level-2" id="taxPercentageSection" style="display: none;">
-                          <label for="taxPercentageInput">Skatteprosent</label>
+                          <label for="taxPercentageInput">Din skatteprosent</label>
                           <div class="switch-group">
                               <input type="number" id="taxPercentageInput" class="form-control" min="0" max="100" step="0.1" style="max-width:140px;display:inline-block;" placeholder="25.0" onchange="app.updateTaxPercentage(this.value)">
                               <span class="text-secondary" style="margin-left:8px;">%</span>
                           </div>
-                          <small class="form-hint">Skriv inn skatteprosenten som skal trekkes fra bruttolønnen</small>
+                          <small class="form-hint">Vanligvis mellom 20-35%. Sjekk skattekortet ditt for eksakt prosent.</small>
                       </div>
                   </div>
 
@@ -588,59 +639,86 @@
                       <div class="switch-group">
                           <input type="number" id="payrollDayInput" class="form-control" min="1" max="31" step="1" style="max-width:140px;display:inline-block;" placeholder="15" onchange="app.updatePayrollDay(this.value)">
                       </div>
-                      <small class="form-hint">Velg hvilken dag i måneden du får utbetalt lønn (1-31)</small>
+                      <small class="form-hint">Hvilken dag får du utbetalt lønn? Brukes for å vise neste lønningsdag.</small>
                   </div>
               </div>
 
                   <div id="orgTab" class="tab-content">
-                      <div class="form-group form-group-with-hint">
-                          <label>Bedrift</label>
-                          <small class="form-hint">Gjelder alle ansatte</small>
-                      </div>
-                      
-                      <!-- Policy Settings -->
-                      <div class="form-group settings-level-2">
-                          <label for="breakPolicySelect">Pausetrekk</label>
-                          <select id="breakPolicySelect" class="form-control">
-                              <option value="proportional_across_periods">Proporsjonal (anbefalt)</option>
-                              <option value="from_base_rate">Kun grunnlønn</option>
-                              <option value="fixed_0_5_over_5_5h">Slutt av vakt (legacy)</option>
-                              <option value="none">Ingen trekk (betalt pause)</option>
-                          </select>
-                          <small class="form-hint">Endringen påvirker rapporter/oversikter for ansattes vakter.</small>
+                      <!-- Enterprise content (visible when user has Enterprise subscription) -->
+                      <div id="orgEnterpriseContent" style="display:none;">
+                          <div class="settings-section-header">
+                              <h3>Bedriftsinnstillinger</h3>
+                              <p class="section-description">Innstillinger som påvirker alle ansatte i bedriften</p>
+                          </div>
+
+                          <!-- Policy Settings -->
+                          <div class="form-group settings-level-2">
+                              <label for="breakPolicySelect">Pausepolicy for ansatte</label>
+                              <select id="breakPolicySelect" class="form-control">
+                                  <option value="proportional_across_periods">Proporsjonal trekk (anbefalt)</option>
+                                  <option value="from_base_rate">Trekk kun fra grunnlønn</option>
+                                  <option value="fixed_0_5_over_5_5h">Trekk på slutten av vakt</option>
+                                  <option value="none">Ingen trekk - betalt pause</option>
+                              </select>
+                              <small class="form-hint">Hvordan skal pause trekkes fra lønnen for alle ansatte? Påvirker rapporter og oversikter.</small>
+                          </div>
+
+                          <!-- Data Management -->
+                          <div class="form-group form-group-with-hint" style="margin-top: 32px;">
+                              <div class="settings-section-divider">
+                                  <h4>Rapporter og eksport</h4>
+                              </div>
+                          </div>
+
+                          <div class="form-group settings-level-2">
+                              <label>Lønnsrapporter</label>
+                              <div style="margin-top: 10px;">
+                                  <button type="button" class="btn btn-primary" onclick="app.openCsvExportModal()">
+                                      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                          <polyline points="7 10 12 15 17 10"></polyline>
+                                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                                      </svg>
+                                      Eksporter lønnsrapport
+                                  </button>
+                              </div>
+                              <small class="form-hint">Last ned detaljert lønnsrapport for alle ansatte som CSV-fil</small>
+                          </div>
                       </div>
 
-                      <!-- Data Management -->
-                      <div class="form-group form-group-with-hint" style="margin-top: 24px;">
-                          <label>Data</label>
-                          <small class="form-hint">Eksporter og administrer data</small>
-                      </div>
-                      
-                      <div class="form-group settings-level-2">
-                          <label>Rapporter</label>
-                          <div style="margin-top: 10px;">
-                              <button type="button" class="btn btn-primary" onclick="app.openCsvExportModal()">
-                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                      <polyline points="7 10 12 15 17 10"></polyline>
-                                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                      <!-- Upsell content (visible when user does NOT have Enterprise subscription) -->
+                      <div id="orgUpsellContent">
+                          <div class="settings-section-header">
+                              <h3>Bedrift</h3>
+                              <p class="section-description">Lås opp bedriftsfunksjoner med Enterprise</p>
+                          </div>
+
+                          <div class="form-group settings-level-2" style="text-align: left;">
+                              <p style="margin: 0 0 12px 0;">
+                                  Bedriftsinnstillinger som felles pausepolicy, avanserte rapporter og administrasjon er tilgjengelig i Enterprise.
+                              </p>
+                              <small class="form-hint">Oppgrader for å konfigurere bedriftspolicy og få flere eksportmuligheter.</small>
+                          </div>
+
+                          <div class="form-group" style="margin-top: 16px;">
+                              <button type="button" class="btn btn-primary" onclick="app.openSubscription()">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                      <path d="M20 6L9 17l-5-5"></path>
                                   </svg>
-                                  Eksporter CSV
+                                  Oppgrader til Enterprise
                               </button>
                           </div>
-                          <small class="form-hint">Last ned lønnsrapport for alle ansatte som CSV</small>
                       </div>
                   </div>
 
               <div id="interfaceTab" class="tab-content">
-                  <!-- Visual Settings -->
-                  <div class="form-group form-group-with-hint">
-                      <label>Utseende</label>
-                      <small class="form-hint">Tilpass appens stil</small>
+                  <div class="settings-section-header">
+                      <h3>Utseende og oppførsel</h3>
+                      <p class="section-description">Tilpass appen etter dine preferanser</p>
                   </div>
                   
                   <div class="form-group settings-level-2">
-                      <label>Tema</label>
+                      <label>Fargetema</label>
                       <div class="theme-selector">
                           <div class="theme-options">
                               <label class="theme-option">
@@ -649,7 +727,7 @@
                                       <div class="theme-preview-header"></div>
                                       <div class="theme-preview-content"></div>
                                   </div>
-                                  <span>Lyst</span>
+                                  <span>Lys</span>
                               </label>
                               <label class="theme-option">
                                   <input type="radio" name="theme" value="dark" id="themeDark">
@@ -657,7 +735,7 @@
                                       <div class="theme-preview-header"></div>
                                       <div class="theme-preview-content"></div>
                                   </div>
-                                  <span>Mørkt</span>
+                                  <span>Mørk</span>
                               </label>
                               <label class="theme-option">
                                   <input type="radio" name="theme" value="system" id="themeSystem" checked>
@@ -665,19 +743,19 @@
                                       <div class="theme-preview-header"></div>
                                       <div class="theme-preview-content"></div>
                                   </div>
-                                  <span>System</span>
+                                  <span>Automatisk</span>
                               </label>
                           </div>
                       </div>
-                      <small class="form-hint">Velg mellom lyst, mørkt tema eller følg systeminnstillinger</small>
+                      <small class="form-hint">Velg lyst eller mørkt tema, eller la appen følge systeminnstillingene</small>
                   </div>
 
                   <div class="form-group settings-level-2">
-                      <label>Standardvisning</label>
+                      <label>Vaktvisning</label>
                       <div class="switch-group">
                         <div>
-                          <span class="text-secondary">Bruk kalender som standard</span>
-                          <small class="form-hint">Visning som åpnes først</small>
+                          <span class="text-secondary">Åpne kalender først</span>
+                          <small class="form-hint">Vis kalender i stedet for liste når du åpner vaktene</small>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="defaultShiftsViewToggle">
@@ -687,17 +765,18 @@
                   </div>
 
                   <!-- Input & Formatting Settings -->
-                  <div class="form-group form-group-with-hint" style="margin-top: 24px;">
-                      <label>Inndata og format</label>
-                      <small class="form-hint">Tilpass registrering og visning</small>
+                  <div class="form-group form-group-with-hint" style="margin-top: 32px;">
+                      <div class="settings-section-divider">
+                          <h4>Registrering og format</h4>
+                      </div>
                   </div>
 
                   <div class="form-group settings-level-2">
-                      <label>Tidsinnskriving</label>
+                      <label>Tidsregistrering</label>
                       <div class="switch-group">
                         <div>
-                          <span class="text-secondary">Skriv inn tid direkte i stedet for dropdown-menyer</span>
-                          <small class="form-hint">Raskere registrering av vakter for erfarne brukere</small>
+                          <span class="text-secondary">Skriv tid direkte</span>
+                          <small class="form-hint">Raskere registrering uten dropdown-menyer (for erfarne brukere)</small>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="directTimeInputToggle">
@@ -712,16 +791,16 @@
                                   <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                       <polyline points="6 9 12 15 18 9"></polyline>
                                   </svg>
-                                  <span>Tidsformat</span>
+                                  <span>Avanserte tidsinnstillinger</span>
                               </button>
                               
                               <div class="settings-collapsible-content" id="timeFormatSettings" style="display: none;">
                                   <div class="form-group settings-level-4">
-                                      <label>Minuttformat</label>
+                                      <label>Minutt-presisjon</label>
                                       <div class="switch-group">
                                         <div>
-                                          <span class="text-secondary">Vis hvert minutt (ikke 15-min.)</span>
-                                          <small class="form-hint">Mer presist, men lengre lister</small>
+                                          <span class="text-secondary">Vis alle minutter</span>
+                                          <small class="form-hint">Vis hvert minutt i stedet for 15-minutters intervaller</small>
                                         </div>
                                         <label class="switch">
                                             <input type="checkbox" id="fullMinuteRangeToggle">
@@ -735,12 +814,12 @@
                   </div>
 
                   <div class="form-group settings-level-2">
-                      <label>Valuta</label>
+                      <label>Valutaformat</label>
                       <div class="switch-group">
                         <div>
-                          <span class="text-secondary">Vis NOK i stedet for kr</span>
-                          <small class="form-hint">Mer formelt i eksport og rapporter</small>
-                  </div>
+                          <span class="text-secondary">Bruk "NOK" i stedet for "kr"</span>
+                          <small class="form-hint">Mer formell fremstilling i rapporter og eksport</small>
+                        </div>
                         <label class="switch">
                             <input type="checkbox" id="currencyFormatToggle">
                             <span class="slider"></span>
@@ -752,38 +831,37 @@
 
 
               <div id="dataTab" class="tab-content">
-                  <!-- Export Section -->
-                  <div class="form-group form-group-with-hint">
-                      <label class="export-section-header">Eksporter</label>
-                      <small class="form-hint">Last ned vaktdata for regnskap eller backup</small>
+                  <div class="settings-section-header">
+                      <h3>Data og backup</h3>
+                      <p class="section-description">Eksporter data for regnskap eller sikkerhetskopi</p>
                   </div>
                   
                   <div id="exportOptionsSection" class="settings-level-2">
                       <div class="form-group">
-                          <label>Velg tidsperiode</label>
+                          <label>Velg periode å eksportere</label>
                           <div class="export-period-options">
                               <label class="radio-option">
                                   <input type="radio" name="exportPeriod" value="current">
-                                  <span id="currentMonthLabel">Inneværende måned</span>
+                                  <span id="currentMonthLabel">Denne måneden</span>
                               </label>
                               <label class="radio-option">
                                   <input type="radio" name="exportPeriod" value="year">
-                                  <span>Hele året</span>
+                                  <span>Hele året (alle 12 måneder)</span>
                               </label>
                               <label class="radio-option">
                                   <input type="radio" name="exportPeriod" value="all">
-                                  <span>Alle data</span>
+                                  <span>Alle vakter jeg har registrert</span>
                               </label>
                               <label class="radio-option">
                                   <input type="radio" name="exportPeriod" value="custom">
-                                  <span>Egendefinert periode</span>
+                                  <span>Velg datoer selv</span>
                               </label>
                           </div>
                       </div>
 
                       <div id="customPeriodSection" class="form-group settings-level-3" style="display: none;">
-                          <label class="custom-period-header">Egendefinert periode</label>
-                          <small class="form-hint">Velg start og slutt</small>
+                          <label class="custom-period-header">Velg datoer</label>
+                          <small class="form-hint">Fra hvilken dato til hvilken dato?</small>
                           <div class="form-row">
                               <input type="date" id="exportStartDate" class="form-control" style="margin-right: 8px;" placeholder="Fra dato">
                               <input type="date" id="exportEndDate" class="form-control" placeholder="Til dato">
@@ -791,16 +869,16 @@
                       </div>
 
                       <div class="form-group">
-                          <label>Eksportformat</label>
+                          <label>Last ned som:</label>
                           <div class="export-buttons-container">
-                              <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('csv')">
+                              <button class="btn btn-primary" onclick="app.exportDataWithPeriod('csv')">
                                   <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                       <polyline points="14 2 14 8 20 8"></polyline>
                                       <line x1="16" y1="13" x2="8" y2="13"></line>
                                       <line x1="16" y1="17" x2="8" y2="17"></line>
                                   </svg>
-                                  Eksporter CSV
+                                  CSV (Excel)
                               </button>
                               <button class="btn btn-secondary" onclick="app.exportDataWithPeriod('pdf')">
                                   <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -809,32 +887,35 @@
                                       <line x1="16" y1="13" x2="8" y2="13"></line>
                                       <line x1="16" y1="17" x2="8" y2="17"></line>
                                   </svg>
-                                  Eksporter PDF
+                                  PDF-rapport
                               </button>
                           </div>
+                          <small class="form-hint">CSV kan åpnes i Excel. PDF er ferdig formatert rapport.</small>
                       </div>
                   </div>
 
                   <!-- Import Section -->
-                  <div class="form-group form-group-with-hint" style="margin-top: 24px;">
-                      <label>Importer</label>
-                      <small class="form-hint">Last opp vaktdata fra andre systemer</small>
+                  <div class="form-group form-group-with-hint" style="margin-top: 32px;">
+                      <div class="settings-section-divider">
+                          <h4>Importer vakter</h4>
+                      </div>
+                      <small class="form-hint">Last opp vaktdata fra andre systemer eller sikkerhetskopier</small>
                   </div>
                   
                   <div class="form-group settings-level-2">
-                      <label>Velg fil</label>
+                      <label>Velg fil å importere</label>
                       <div class="form-row">
                           <input type="file" id="importFileData" class="form-control" accept=".csv,.json" style="margin-right: 8px;">
                           <button class="btn btn-secondary" onclick="app.importDataFromDataTab()">
                               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                  <polyline points="7 10 12 15 17 10"></polyline>
-                                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                                  <polyline points="17 10 12 5 7 10"></polyline>
+                                  <line x1="12" y1="15" x2="12" y2="5"></line>
                               </svg>
-                              Importer
+                              Last opp
                           </button>
                       </div>
-                      <small class="form-hint">Støttede formater: CSV og JSON</small>
+                      <small class="form-hint">Støtter CSV- og JSON-filer. Vakter blir lagt til de du allerede har.</small>
                   </div>
               </div>
               </div>

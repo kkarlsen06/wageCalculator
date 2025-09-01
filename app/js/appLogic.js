@@ -2580,37 +2580,32 @@ export const app = {
             setTimeout(() => this.setupExportPeriodOptions(), 100);
         }
         if (tab === 'org') {
-            const sel = document.getElementById('breakPolicySelect');
-            if (sel && this.orgSettings?.break_policy) sel.value = this.orgSettings.break_policy;
-            // Save immediately when the policy changes
-            if (sel && !sel._immediateSaveBound) {
-                sel.addEventListener('change', async () => {
-                    await this.saveOrgSettings();
-                });
-                sel._immediateSaveBound = true;
-            }
+            const hasEnterprise = await hasEnterpriseSubscription();
+            const upsell = document.getElementById('orgUpsellContent');
+            const ent = document.getElementById('orgEnterpriseContent');
+            if (upsell) upsell.style.display = hasEnterprise ? 'none' : '';
+            if (ent) ent.style.display = hasEnterprise ? '' : 'none';
 
-            // Initialize wage caregiver toggle and UI state
-            const orgToggle = document.getElementById('orgIsWageCaregiverToggle');
-            if (orgToggle) {
-                hasEnterpriseSubscription().then(hasEnterprise => {
-                    orgToggle.checked = hasEnterprise;
-                    orgToggle.disabled = true; // Read-only, controlled by subscription
-                });
-                orgToggle.onchange = () => this.onOrgWageCaregiverToggle();
-
-                const slider = document.querySelector('#orgIsWageCaregiverToggle + .toggle-slider');
-                if (slider) {
-                    slider.style.cursor = 'pointer';
-                    slider.onclick = (e) => {
-                        e.preventDefault();
-                        orgToggle.checked = !orgToggle.checked;
-                        this.onOrgWageCaregiverToggle();
-                    };
+            if (hasEnterprise) {
+                const sel = document.getElementById('breakPolicySelect');
+                if (sel && this.orgSettings?.break_policy) sel.value = this.orgSettings.break_policy;
+                // Save immediately when the policy changes
+                if (sel && !sel._immediateSaveBound) {
+                    sel.addEventListener('change', async () => {
+                        await this.saveOrgSettings();
+                    });
+                    sel._immediateSaveBound = true;
                 }
-            }
 
-            await this.updateOrgSettingsUI();
+                // Initialize wage caregiver toggle and UI state (read-only via subscription)
+                const orgToggle = document.getElementById('orgIsWageCaregiverToggle');
+                if (orgToggle) {
+                    orgToggle.checked = true;
+                    orgToggle.disabled = true;
+                }
+
+                await this.updateOrgSettingsUI();
+            }
         }
     },
 
@@ -6242,23 +6237,28 @@ export const app = {
         });
         container.appendChild(header);
 
-        const monthShifts = this.shifts.filter(s =>
-            s.date.getMonth() === monthIdx &&
-            s.date.getFullYear() === year
-        );
-
-        const shiftsByDate = {};
-        monthShifts.forEach(shift => {
-            const key = shift.date.getDate();
-            if (!shiftsByDate[key]) shiftsByDate[key] = [];
-            shiftsByDate[key].push(shift);
-        });
-
         // Calculate how many weeks we need to show
         // Start from the first day of the month and go to the last day
         const endDate = new Date(lastDay);
         const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         const totalWeeks = Math.ceil(totalDays / 7);
+
+        // Calculate the actual end date of the calendar grid (including out-of-month cells)
+        const calendarEndDate = new Date(startDate);
+        calendarEndDate.setDate(startDate.getDate() + (totalWeeks * 7) - 1);
+
+        // Get all shifts that fall within the calendar date range (including adjacent months)
+        const calendarShifts = this.shifts.filter(s => {
+            const shiftDate = new Date(s.date);
+            return shiftDate >= startDate && shiftDate <= calendarEndDate;
+        });
+
+        const shiftsByDate = {};
+        calendarShifts.forEach(shift => {
+            const key = `${shift.date.getFullYear()}-${shift.date.getMonth()}-${shift.date.getDate()}`;
+            if (!shiftsByDate[key]) shiftsByDate[key] = [];
+            shiftsByDate[key].push(shift);
+        });
 
         for (let week = 0; week < totalWeeks; week++) {
             // Create week separator with week number
@@ -6315,17 +6315,17 @@ export const app = {
                 dayNumber.textContent = cellDate.getDate();
                 content.appendChild(dayNumber);
 
-                const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
+                const cellDateKey = `${cellDate.getFullYear()}-${cellDate.getMonth()}-${cellDate.getDate()}`;
+                const shiftsForDay = shiftsByDate[cellDateKey] || [];
                 let base = 0;
                 let bonus = 0;
                 let totalHours = 0;
                 shiftsForDay.forEach(shift => {
-                    if (cellDate.getMonth() === monthIdx) {
-                        const calc = this.calculateShift(shift);
-                        base += calc.baseWage;
-                        bonus += calc.bonus;
-                        totalHours += calc.totalHours;
-                    }
+                    // Calculate shifts for both current month and out-of-month cells
+                    const calc = this.calculateShift(shift);
+                    base += calc.baseWage;
+                    bonus += calc.bonus;
+                    totalHours += calc.totalHours;
                 });
 
                 if ((this.calendarDisplayMode === 'money' && base + bonus > 0) ||
@@ -6486,16 +6486,36 @@ export const app = {
         const monthIdx = this.currentMonth - 1;
         const year = this.currentYear;
 
-        // Filter shifts for current month only (consistent with renderShiftCalendar)
-        const monthShifts = this.shifts.filter(s =>
-            s.date.getMonth() === monthIdx &&
-            s.date.getFullYear() === year
-        );
+        // Get the full date range for the calendar grid (like renderShiftCalendar)
+        const firstDay = new Date(year, monthIdx, 1);
+        const startDate = new Date(firstDay);
+        const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+        startDate.setDate(startDate.getDate() - offset);
 
-        // Create shifts by date lookup for current month
+        // Calculate calendar end date by examining existing cells
+        const lastCell = cells[cells.length - 1];
+        let calendarEndDate = new Date();
+        if (lastCell && lastCell.getAttribute('data-date')) {
+            calendarEndDate = new Date(lastCell.getAttribute('data-date'));
+        } else {
+            // Fallback calculation if no cells exist
+            const lastDay = new Date(year, monthIdx + 1, 0);
+            const totalDays = Math.ceil((lastDay.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+            const totalWeeks = Math.ceil(totalDays / 7);
+            calendarEndDate = new Date(startDate);
+            calendarEndDate.setDate(startDate.getDate() + (totalWeeks * 7) - 1);
+        }
+
+        // Get all shifts that fall within the calendar date range (including adjacent months)
+        const calendarShifts = this.shifts.filter(s => {
+            const shiftDate = new Date(s.date);
+            return shiftDate >= startDate && shiftDate <= calendarEndDate;
+        });
+
+        // Create shifts by date lookup using full date keys
         const shiftsByDate = {};
-        monthShifts.forEach(shift => {
-            const key = shift.date.getDate();
+        calendarShifts.forEach(shift => {
+            const key = `${shift.date.getFullYear()}-${shift.date.getMonth()}-${shift.date.getDate()}`;
             if (!shiftsByDate[key]) shiftsByDate[key] = [];
             shiftsByDate[key].push(shift);
         });
@@ -6513,12 +6533,13 @@ export const app = {
 
             cell.classList.remove('has-shifts', 'empty-date');
 
-            // Get shifts for this specific day (only from current month)
-            const shiftsForDay = shiftsByDate[cellDate.getDate()] || [];
+            // Get shifts for this specific day (including out-of-month shifts)
+            const cellDateKey = `${cellDate.getFullYear()}-${cellDate.getMonth()}-${cellDate.getDate()}`;
+            const shiftsForDay = shiftsByDate[cellDateKey] || [];
 
-            // For other-month cells, only show shifts if they're in the current month
+            // Show all shifts (including out-of-month shifts with darker styling)
             const isCurrentMonth = cellDate.getMonth() === monthIdx;
-            const shiftsToDisplay = isCurrentMonth ? shiftsForDay : [];
+            const shiftsToDisplay = shiftsForDay;
 
             // Toggle hours-mode class
             if (this.calendarDisplayMode === 'hours') {

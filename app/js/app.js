@@ -44,6 +44,24 @@ async function preloadChatMarkdownLibs() {
   }
 }
 
+// Map technical tool names to user-friendly Norwegian text
+function getToolCallDisplayName(toolName) {
+  const toolDisplayNames = {
+    'getShifts': 'Ser på vaktene dine',
+    'addShift': 'Legger til vakt',
+    'addSeries': 'Legger til vaktserie',
+    'editShift': 'Redigerer vakt', 
+    'deleteShift': 'Sletter vakt',
+    'deleteSeries': 'Sletter vaktserie',
+    'copyShift': 'Kopierer vakt',
+    'getWageDataByWeek': 'Henter lønnsinformasjon for uken',
+    'getWageDataByMonth': 'Henter lønnsinformasjon for måneden',
+    'getWageDataByDateRange': 'Henter lønnsinformasjon for perioden'
+  };
+  
+  return toolDisplayNames[toolName] || `Kjører: ${toolName}`;
+}
+
 function setAppHeight() {
   // Skip dynamic height calculations in chatbox-view mode to prevent viewport instability
   if (document.body.classList.contains('chatbox-view')) {
@@ -2124,7 +2142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         break;
       case 'gpt_response':
         if (event.tool_calls && event.tool_calls.length > 0) {
-          const toolCallsText = event.tool_calls.map(call => call.name).join(', ');
+          const toolCallsText = event.tool_calls.map(call => getToolCallDisplayName(call.name)).join(', ');
           updateSpinnerText(spinnerElement, `GPT planlegger: ${toolCallsText}`);
         } else {
           // No tools -> model will respond directly
@@ -2151,7 +2169,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       case 'tool_call':
         // Current backend emits { type: 'tool_call', iteration, name, argsSummary }
         if (event.name) {
-          updateSpinnerText(spinnerElement, `Kjører: ${event.name}`);
+          const friendlyName = getToolCallDisplayName(event.name);
+          updateSpinnerText(spinnerElement, friendlyName);
         } else {
           updateSpinnerText(spinnerElement, 'Kjører verktøy');
         }
@@ -2160,7 +2179,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Current backend emits { type: 'tool_result', iteration, name, ok, duration_ms }
         if (event.name) {
           const mark = event.ok ? '✓' : '✗';
-          updateSpinnerText(spinnerElement, `${event.name} ${mark}`);
+          const friendlyName = getToolCallDisplayName(event.name);
+          updateSpinnerText(spinnerElement, `${friendlyName.replace('Ser på', 'Så på').replace('Legger til', 'Lagt til').replace('Redigerer', 'Redigert').replace('Sletter', 'Slettet').replace('Kopierer', 'Kopiert').replace('Henter', 'Hentet')} ${mark}`);
         } else {
           updateSpinnerText(spinnerElement, event.ok ? 'Verktøy fullført ✓' : 'Verktøy feilet ✗');
         }
