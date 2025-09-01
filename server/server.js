@@ -52,14 +52,9 @@ const ALLOW_ORIGINS = [
   /^http:\/\/localhost:(4173|5173|3000)$/, // Vite + dev server
   /^http:\/\/127\.0\.0\.1:\d+$/,           // loopback
 
-  // Production marketing site
-  /^https:\/\/(www\.)?kkarlsen\.dev$/,
-
-  // Production app
-  /^https:\/\/kalkulator\.kkarlsen\.dev$/,
-
-  // Optional: if you still serve anything from .art
-  /^https:\/\/(www\.)?kkarlsen\.art$/
+  // Any subdomain (and bare) on your prod domains
+  /^https:\/\/([a-z0-9-]+\.)?kkarlsen\.dev$/,
+  /^https:\/\/([a-z0-9-]+\.)?kkarlsen\.art$/,
 ];
 
  const corsOptions = {
