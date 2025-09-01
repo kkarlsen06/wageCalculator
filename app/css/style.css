@@ -4841,12 +4841,12 @@ input[type="time"].form-control[value=""]:focus {
   z-index: 1300;
   max-width: 520px;
   width: 92vw;
-  height: 85vh;
-  max-height: 700px;
-  min-height: 500px;
+  height: 80vh; /* tighter height */
+  max-height: 640px; /* slightly reduced */
+  min-height: 420px;
   overflow: hidden;
-  border-radius: 24px;
-  border: 2px solid var(--border);
+  border-radius: 20px; /* slightly tighter radius */
+  border: 1px solid var(--border); /* thinner border */
 }
 
 @media (max-width: 600px) {
@@ -4860,7 +4860,7 @@ input[type="time"].form-control[value=""]:focus {
 
   /* Medium screen settings modal footer */
   #settingsModal .modal-fixed-footer {
-    padding: 14px 20px;
+    padding: 10px 16px; /* tighter footer */
   }
 }
 
@@ -4875,7 +4875,7 @@ input[type="time"].form-control[value=""]:focus {
 
   /* Mobile specific settings modal footer */
   #settingsModal .modal-fixed-footer {
-    padding: 12px 16px;
+    padding: 10px 14px;
   }
 }
 
@@ -4890,7 +4890,7 @@ input[type="time"].form-control[value=""]:focus {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding-bottom: 80px; /* Add space for fixed footer */
+  padding-bottom: 64px; /* reduced to match tighter footer */
 }
 
 /* Settings modal specific fixed footer positioning */
@@ -4899,20 +4899,64 @@ input[type="time"].form-control[value=""]:focus {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 16px 24px;
+  padding: 12px 16px; /* tighter */
   background: var(--bg-card);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 20; /* Higher than general modal content */
   border-top: 1px solid var(--border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 /* Tab content with consistent, hierarchical padding */
 #settingsModal .tab-content {
-  padding: 24px 20px 20px 20px; /* Generous top padding, consistent sides */
+  padding: 12px 14px 10px 14px; /* tighter internal padding */
+}
+
+/* Settings modal compact spacing overrides */
+#settingsModal .tab-nav {
+  padding: 2px;
+  gap: 4px;
+}
+
+#settingsModal .tab-btn {
+  padding: 8px 10px;
+  font-size: var(--text-xs);
+  border-radius: 12px;
+}
+
+#settingsModal .form-group {
+  margin-bottom: 12px;
+}
+
+#settingsModal .form-group label {
+  font-size: var(--text-sm);
+  margin-bottom: 6px;
+}
+
+#settingsModal .switch-group {
+  gap: 12px;
+}
+
+#settingsModal .settings-subsection {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+#settingsModal .settings-collapse-toggle {
+  padding: 6px 0;
+  gap: 6px;
+}
+
+#settingsModal .settings-collapsible-content {
+  margin-top: 8px;
+}
+
+#settingsModal .preset-badge {
+  padding: 2px 8px;
+  font-size: 11px;
 }
 
 /* Hide scrollbars in modals while keeping scroll functionality */

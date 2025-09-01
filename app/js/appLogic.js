@@ -2151,8 +2151,9 @@ export const app = {
 
         const pauseDeductionMethodSelect = document.getElementById('pauseDeductionMethodSelect');
         if (pauseDeductionMethodSelect) {
-            // Always show the user's personal setting, not org policy override
-            pauseDeductionMethodSelect.value = this.pauseDeductionMethod;
+            // Map legacy 'none' (no deduction) to a valid display value; toggle controls enabling
+            const methodForDisplay = this.pauseDeductionMethod === 'none' ? 'proportional' : this.pauseDeductionMethod;
+            pauseDeductionMethodSelect.value = methodForDisplay;
         }
 
         const pauseThresholdInput = document.getElementById('pauseThresholdInput');
@@ -8307,6 +8308,12 @@ export const app = {
         if (enableToggle) {
             enableToggle.addEventListener('change', (e) => {
                 this.pauseDeductionEnabled = e.target.checked;
+                // If enabling while legacy method was 'none', default to a valid method
+                if (this.pauseDeductionEnabled && this.pauseDeductionMethod === 'none') {
+                    this.pauseDeductionMethod = 'proportional';
+                    const sel = document.getElementById('pauseDeductionMethodSelect');
+                    if (sel) sel.value = this.pauseDeductionMethod;
+                }
                 this.toggleBreakDeductionSections();
                 this.updateDisplay();
                 this.saveSettingsToSupabase();
