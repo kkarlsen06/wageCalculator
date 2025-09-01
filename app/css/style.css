@@ -16575,6 +16575,60 @@ body.chatbox-view .chatbox-container {
   color: white;
 }
 
+/* Connection status indicator for WebSocket */
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: 12px;
+}
+
+.connection-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background-color var(--speed-normal) ease;
+}
+
+/* Connection states */
+.connection-status.disconnected .connection-indicator {
+  background-color: #6b7280; /* Gray */
+}
+
+.connection-status.connecting .connection-indicator {
+  background-color: #f59e0b; /* Amber */
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.connection-status.connected .connection-indicator {
+  background-color: #10b981; /* Green */
+}
+
+.connection-status.authenticated .connection-indicator {
+  background-color: #3b82f6; /* Blue */
+}
+
+.connection-status.error .connection-indicator {
+  background-color: #ef4444; /* Red */
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Hide connection status when chat is not expanded */
+.chatbox-pill:not(.expanded) .connection-status {
+  display: none;
+}
+
 /* Responsive border radius for chatbox icon badge */
 @media (max-width: 480px) {
   .chatbox-icon-badge {

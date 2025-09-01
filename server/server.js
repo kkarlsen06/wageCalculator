@@ -30,6 +30,8 @@ import { randomUUID } from 'node:crypto';
 import { verifySupabaseJWT, getUidFromAuthHeader } from './lib/auth/verifySupabaseJwt.js';
 import { authMiddleware } from './middleware/auth.js';
 import Stripe from 'stripe';
+import { WebSocketServer } from 'ws';
+import { createServer } from 'http';
 // Node 22+ has global fetch; use Stripe REST API to avoid extra deps
 
 // ---------- path helpers ----------
@@ -4006,7 +4008,7 @@ Svarformat til bruker:
 
 // ---------- /chat (POST streaming or JSON) ----------
 app.post('/chat', authenticateUser, async (req, res) => {
-  const { messages, stream = false, currentMonth, currentYear } = req.body;
+  const { stream = false } = req.body;
 
   if (!openai) {
     return res.status(503).json({ error: 'OpenAI not configured' });
@@ -6680,6 +6682,379 @@ app.get('/api/settings', async (req, res) => {
 });
 
 
+// ---------- WebSocket connection management ----------
+const wsConnections = new Map(); // Map<connectionId, { ws, userId, lastPing }>
+
+function handleWebSocketConnection(ws, req) {
+  const connectionId = randomUUID();
+  let isAuthenticated = false;
+  let userId = null;
+  
+  console.log(`[WS] New connection: ${connectionId}`);
+  
+  // Set connection timeout for authentication
+  const authTimeout = setTimeout(() => {
+    if (!isAuthenticated) {
+      console.log(`[WS] Authentication timeout for ${connectionId}`);
+      ws.close(4001, 'Authentication timeout');
+    }
+  }, 30000); // 30 second auth timeout
+  
+  ws.on('message', async (data) => {
+    try {
+      const message = JSON.parse(data.toString());
+      
+      if (!isAuthenticated && message.type === 'auth') {
+        // Handle authentication
+        const token = message.token;
+        if (!token) {
+          ws.close(4001, 'Missing authentication token');
+          return;
+        }
+        
+        try {
+          const authResult = await verifySupabaseJWT(token);
+          if (authResult?.user?.id) {
+            userId = authResult.user.id;
+            isAuthenticated = true;
+            clearTimeout(authTimeout);
+            
+            // Store connection
+            wsConnections.set(connectionId, {
+              ws,
+              userId,
+              lastPing: Date.now()
+            });
+            
+            ws.send(JSON.stringify({ 
+              type: 'auth_success', 
+              connectionId,
+              message: 'WebSocket authenticated successfully' 
+            }));
+            
+            console.log(`[WS] Authenticated user ${userId} on connection ${connectionId}`);
+          } else {
+            ws.close(4001, 'Invalid authentication token');
+            return;
+          }
+        } catch (error) {
+          console.error(`[WS] Auth error:`, error);
+          ws.close(4001, 'Authentication failed');
+          return;
+        }
+      } else if (!isAuthenticated) {
+        ws.close(4001, 'Not authenticated');
+        return;
+      } else if (message.type === 'ping') {
+        // Handle ping for keepalive
+        const connection = wsConnections.get(connectionId);
+        if (connection) {
+          connection.lastPing = Date.now();
+          ws.send(JSON.stringify({ type: 'pong' }));
+        }
+      } else if (message.type === 'chat') {
+        // Handle chat message - delegate to chat handler
+        handleWebSocketChat(ws, userId, message, connectionId);
+      }
+    } catch (error) {
+      console.error(`[WS] Message parsing error:`, error);
+      ws.close(4002, 'Invalid message format');
+    }
+  });
+  
+  ws.on('close', (code, reason) => {
+    console.log(`[WS] Connection closed: ${connectionId}, code: ${code}, reason: ${reason}`);
+    clearTimeout(authTimeout);
+    wsConnections.delete(connectionId);
+  });
+  
+  ws.on('error', (error) => {
+    console.error(`[WS] Connection error for ${connectionId}:`, error);
+    wsConnections.delete(connectionId);
+  });
+}
+
+// Shared chat request handler for both SSE and WebSocket
+async function handleChatRequest(req, res, chatTools) {
+  const { messages, currentMonth, currentYear } = req.body;
+
+  // User info for light personalization
+  const user = req.user;
+
+  // Time/context hints
+  const today = new Date().toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
+  const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
+  const viewingMonth = currentMonth || new Date().getMonth() + 1;
+  const viewingYear = currentYear || new Date().getFullYear();
+  const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+  const viewingMonthName = monthNames[viewingMonth - 1];
+  const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
+  const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
+
+  const systemContextHint = {
+    role: 'system',
+    content:
+`Du er en norsk vaktplanleggingsassistent for én bruker. Svar alltid på norsk, kort og tydelig.
+
+Kontekst for tid:
+- "i dag" = ${today} (Europe/Oslo)
+- "i morgen" = ${tomorrow} (Europe/Oslo)
+- Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet:
+  "denne måneden"/"inneværende måned" = ${viewingMonthName} ${viewingYear}
+  "forrige måned" = måneden før ${viewingMonthName} ${viewingYear}
+  "neste måned" = måneden etter ${viewingMonthName} ${viewingYear}
+
+Verktøy og bruk:
+- Oversikt/lister: getShifts(criteria_type=[week|next|date_range|all]). For måned, bruk date_range: from_date=${firstDay}, to_date=${lastDay}.
+- Lønnsdata: getWageDataByWeek | getWageDataByMonth | getWageDataByDateRange.
+- Endringer: addShift | addSeries | editShift | deleteShift | deleteSeries | copyShift.
+
+Policy for verktøy:
+- Unngå identiske/overflødige kall med samme parametere.
+- Ikke gjett ved uklarheter; still maks ett kort oppfølgingsspørsmål ved reell tvetydighet. Ikke spør om bekreftelse når intensjonen er tydelig.
+
+Svarformat til bruker:
+- Datoformat: dd.mm.yyyy. Bruk korte avsnitt; bruk fet skrift for dato/klokkeslett.
+- Viktig: Når du svarer med flere skift, skriv hvert skift på én egen linje og separer hvert skift med et linjeskift (line break).
+- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider). Ikke inkluder oppfordringer til endringer ved rene oppslag.
+- Hvis du får informasjon om lønn for flere skift, gjengi informasjonen til brukeren.`
+  };
+
+  // Maintain a single messages array for the agent loop
+  const convo = [systemContextHint, ...messages];
+  const startedAt = Date.now();
+
+  let finalAssistantContent = null;
+  let iter = 0;
+  let done = false;
+
+  res.write(`data: ${JSON.stringify({ type: 'status', message: 'Tenker' })}\n\n`);
+
+  while (!done && iter < MAX_ITERATIONS && (Date.now() - startedAt) < WALL_CLOCK_CAP_MS) {
+    iter += 1;
+    const t0 = Date.now();
+    // Sanitize conversation to avoid sending assistant messages with tool_calls: []
+    const sanitizedConvo = (function sanitizeMessagesForOpenAI(msgs) {
+      try {
+        return msgs.map(m => {
+          if (m && m.role === 'assistant') {
+            if (Array.isArray(m.tool_calls)) {
+              if (m.tool_calls.length === 0) {
+                const { tool_calls, ...rest } = m;
+                return rest;
+              }
+              // Ensure content is null when tool_calls exist
+              return { ...m, content: m.content ?? null };
+            }
+          }
+          return m;
+        });
+      } catch (_) {
+        return msgs;
+      }
+    })(convo);
+    // One model turn
+    const turn = await openai.chat.completions.create({
+      model: 'gpt-5',
+      messages: sanitizedConvo,
+      tools: chatTools,
+      tool_choice: 'auto'
+    });
+
+    const msg = turn.choices?.[0]?.message || {};
+    const toolCalls = msg.tool_calls || [];
+
+    // Structured loop log
+    try {
+      console.log(JSON.stringify({ phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 }));
+    } catch (_) {}
+
+    // Reflect assistant decision on stream (no payloads)
+    res.write(`data: ${JSON.stringify({ type: 'gpt_response', iteration: iter, content: msg.content || null, tool_calls: toolCalls.map(c => ({ name: c.function?.name })) })}\n\n`);
+
+    // Append assistant turn to history
+    if (toolCalls.length > 0) {
+      // Assistant decided to call tools: include tool_calls and set content to null
+      convo.push({ role: 'assistant', content: null, tool_calls: toolCalls });
+    } else {
+      // No tools: push a plain assistant message without tool_calls
+      convo.push({ role: 'assistant', content: msg.content || '' });
+    }
+
+    if (toolCalls.length === 0) {
+      // No tools requested → finish loop
+      finalAssistantContent = msg.content || '';
+      done = true;
+      break;
+    }
+
+    // Run multiple tool calls in parallel with timeout
+    res.write(`data: ${JSON.stringify({ type: 'tool_calls_start', iteration: iter, count: toolCalls.length })}\n\n`);
+
+    const results = await Promise.allSettled(
+      toolCalls.map(call => runToolWithTimeout(call, req.user_id, iter, res))
+    );
+
+    // Append tool messages to history in the same order
+    results.forEach((settled, idx) => {
+      const call = toolCalls[idx];
+      let content = '';
+      if (settled.status === 'fulfilled') {
+        content = settled.value?.content ?? '';
+      } else {
+        content = JSON.stringify({ error: settled.reason?.message || 'tool_failed' });
+      }
+      convo.push({
+        role: 'tool',
+        tool_call_id: call.id,
+        name: call?.function?.name,
+        content
+      });
+    });
+
+    // Iteration continues; model will see tool results next turn
+  }
+
+  // If we exited due to cap/timeout without final content, synthesize brief note
+  if (!done && finalAssistantContent == null) {
+    finalAssistantContent = 'Beklager, jeg måtte stoppe før jeg ble ferdig. Prøv igjen.';
+  }
+
+  // Final assistant response: stream tokens as today using a separate call with tool_choice='none'
+  let assistantMessage = '';
+  try {
+    const sanitizedConvoFinal = (function sanitizeMessagesForOpenAI(msgs) {
+      try {
+        return msgs.map(m => {
+          if (m && m.role === 'assistant') {
+            if (Array.isArray(m.tool_calls)) {
+              if (m.tool_calls.length === 0) {
+                const { tool_calls, ...rest } = m;
+                return rest;
+              }
+              return { ...m, content: m.content ?? null };
+            }
+          }
+          return m;
+        });
+      } catch (_) {
+        return msgs;
+      }
+    })(convo);
+    const streamCompletion = await openai.chat.completions.create({
+      model: 'gpt-5',
+      messages: sanitizedConvoFinal,
+      tools: chatTools,
+      tool_choice: 'none',
+      stream: true
+    });
+
+    res.write(`data: ${JSON.stringify({ type: 'text_stream_start' })}\n\n`);
+    for await (const chunk of streamCompletion) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) {
+        assistantMessage += content;
+        res.write(`data: ${JSON.stringify({ type: 'text_chunk', content })}\n\n`);
+      }
+    }
+    res.write(`data: ${JSON.stringify({ type: 'text_stream_end' })}\n\n`);
+  } catch (error) {
+    console.error('Final GPT call failed:', error);
+    assistantMessage = finalAssistantContent || 'Det oppstod en feil. Prøv igjen litt senere.';
+  }
+
+  // Append a fresh view of shifts for UI convenience (unchanged contract)
+  const { data: shifts } = await supabase
+    .from('user_shifts')
+    .select('*')
+    .eq('user_id', req.user_id)
+    .order('shift_date');
+
+  res.write(`data: ${JSON.stringify({ type: 'shifts_update', shifts: shifts || [] })}\n\n`);
+  res.write(`data: ${JSON.stringify({ type: 'complete', assistant: assistantMessage, shifts: shifts || [] })}\n\n`);
+  res.write('data: [DONE]\n\n');
+}
+
+// WebSocket chat message handler
+async function handleWebSocketChat(ws, userId, message) {
+  try {
+    const { messages, currentMonth, currentYear } = message;
+    
+    if (!openai) {
+      ws.send(JSON.stringify({ type: 'error', message: 'OpenAI not configured' }));
+      return;
+    }
+    
+    if (!Array.isArray(messages) || messages.length === 0) {
+      ws.send(JSON.stringify({ type: 'error', message: 'Messages required' }));
+      return;
+    }
+    
+    // Create a WebSocket response writer that matches SSE format
+    const wsResponse = {
+      write: (data) => {
+        if (ws.readyState === ws.OPEN) {
+          // Parse SSE data format and convert to WebSocket message
+          const lines = data.toString().split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ') && line.length > 6) {
+              const jsonData = line.substring(6);
+              if (jsonData !== '[DONE]') {
+                try {
+                  ws.send(jsonData); // Send parsed JSON directly
+                } catch (e) {
+                  console.error(`[WS] Failed to send message:`, e);
+                }
+              }
+            }
+          }
+        }
+      },
+      end: () => {
+        if (ws.readyState === ws.OPEN) {
+          ws.send(JSON.stringify({ type: 'complete' }));
+        }
+      }
+    };
+    
+    // Create mock request object for existing chat handler
+    const mockReq = {
+      user_id: userId,
+      body: { messages, stream: true, currentMonth, currentYear },
+      user: null // Could be populated from Supabase if needed
+    };
+    
+    // Get tools for the user
+    const chatTools = getToolsForRequest(mockReq);
+    
+    // Run the chat logic with WebSocket output
+    await handleChatRequest(mockReq, wsResponse, chatTools);
+    
+  } catch (error) {
+    console.error(`[WS] Chat handling error:`, error);
+    if (ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify({ 
+        type: 'error', 
+        message: 'Chat processing failed' 
+      }));
+    }
+  }
+}
+
+// Cleanup inactive WebSocket connections
+setInterval(() => {
+  const now = Date.now();
+  const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+  
+  for (const [connectionId, connection] of wsConnections.entries()) {
+    if (now - connection.lastPing > TIMEOUT_MS) {
+      console.log(`[WS] Cleaning up inactive connection: ${connectionId}`);
+      connection.ws.close(4003, 'Connection timeout');
+      wsConnections.delete(connectionId);
+    }
+  }
+}, 60000); // Check every minute
+
 // Start server (kun når filen kjøres direkte)
 const isRunDirectly = (() => {
   try {
@@ -6692,8 +7067,22 @@ const isRunDirectly = (() => {
 
 if (isRunDirectly) {
   const PORT = process.env.PORT || 3000;
-  const server = app.listen(PORT, () => {
+  
+  // Create HTTP server with Express app
+  const server = createServer(app);
+  
+  // Create WebSocket server on the same HTTP server
+  const wss = new WebSocketServer({ 
+    server,
+    path: '/ws/chat'
+  });
+
+  // WebSocket connection handler
+  wss.on('connection', handleWebSocketConnection);
+
+  server.listen(PORT, () => {
     console.log(`✔ Server running → http://localhost:${PORT}`);
+    console.log(`✔ WebSocket server running → ws://localhost:${PORT}/ws/chat`);
   });
 
   // Graceful shutdown to reduce dropped requests during restarts

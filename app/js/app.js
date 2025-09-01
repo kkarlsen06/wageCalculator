@@ -16,6 +16,7 @@ const STREAM_API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiStre
 // app-ready/animations-complete logic below.
 
 import { supabase } from '/src/supabase-client.js'
+import wsManager from '/src/js/websocketManager.js';
 // Create a local alias for consistency with other modules and expose globally later
 const supa = supabase;
 
@@ -1917,10 +1918,124 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    try {
+    // Try WebSocket first, then fall back to SSE
+    let useWebSocket = false;
+    if (wsManager.isReady() || await tryConnectWebSocket(token)) {
+      useWebSocket = true;
+    }
 
-      // Start a session to enable GET-based streaming through CDNs
-      const startResp = await fetch(`${STREAM_API_BASE}/chat/start`, {
+    try {
+      if (useWebSocket) {
+        await sendMessageViaWebSocket(messageText, spinner, token);
+      } else {
+        await sendMessageViaSSE(messageText, spinner, token);
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      
+      // If WebSocket failed, try SSE as fallback
+      if (useWebSocket) {
+        console.log('WebSocket failed, falling back to SSE...');
+        try {
+          await sendMessageViaSSE(messageText, spinner, token);
+        } catch (fallbackError) {
+          console.error('SSE fallback also failed:', fallbackError);
+          handleChatError(spinner, fallbackError);
+        }
+      } else {
+        handleChatError(spinner, error);
+      }
+    } finally {
+      // Re-enable send button
+      if (chatElements.send) {
+        chatElements.send.disabled = false;
+      }
+    }
+  }
+
+  async function tryConnectWebSocket(token) {
+    try {
+      console.log('[WS] Attempting to connect...');
+      const connected = await wsManager.connect(token);
+      
+      if (connected) {
+        // Setup WebSocket event handlers
+        wsManager.onMessage = handleWebSocketMessage;
+        wsManager.onError = (error) => {
+          console.error('[WS] Connection error:', error);
+        };
+        wsManager.onConnectionChange = (newState, oldState) => {
+          console.log(`[WS] Connection state: ${oldState} -> ${newState}`);
+          // Update connection indicator if available
+          updateConnectionStatus(newState);
+        };
+      }
+      
+      return connected;
+    } catch (error) {
+      console.error('[WS] Connection attempt failed:', error);
+      return false;
+    }
+  }
+
+  async function sendMessageViaWebSocket(messageText, spinner, token) {
+    console.log('[WS] Sending message via WebSocket');
+    
+    return new Promise((resolve, reject) => {
+      let isResolved = false;
+      let finalData = null;
+      
+      const originalOnMessage = wsManager.onMessage;
+      wsManager.onMessage = (message) => {
+        try {
+          // Handle message types
+          if (message.type === 'complete') {
+            finalData = message;
+            isResolved = true;
+            wsManager.onMessage = originalOnMessage; // Restore original handler
+            handleChatSuccess(finalData, spinner);
+            resolve();
+          } else {
+            // Handle streaming events
+            handleStreamEvent(message, spinner);
+            
+            if (message.type === 'text_stream_end') {
+              finalData = { assistant: null, shifts: [] };
+            }
+          }
+        } catch (error) {
+          console.error('[WS] Message handling error:', error);
+          if (!isResolved) {
+            isResolved = true;
+            wsManager.onMessage = originalOnMessage;
+            reject(error);
+          }
+        }
+      };
+      
+      // Set timeout for WebSocket response
+      setTimeout(() => {
+        if (!isResolved) {
+          isResolved = true;
+          wsManager.onMessage = originalOnMessage;
+          reject(new Error('WebSocket request timeout'));
+        }
+      }, 120000); // 2 minutes timeout
+      
+      // Send the message
+      wsManager.sendChatMessage(
+        chatMessages,
+        window.app?.currentMonth || new Date().getMonth() + 1,
+        window.app?.currentYear || new Date().getFullYear()
+      );
+    });
+  }
+
+  async function sendMessageViaSSE(messageText, spinner, token) {
+    console.log('[SSE] Sending message via Server-Sent Events');
+
+    // Start a session to enable GET-based streaming through CDNs
+    const startResp = await fetch(`${STREAM_API_BASE}/chat/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1992,144 +2107,139 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
-      const data = finalData;
-
-      // Handle response - check if we have valid data
-      if (!data) {
+      if (finalData) {
+        handleChatSuccess(finalData, spinner);
+      } else {
         throw new Error('No data received from streaming response');
       }
+  }
 
-      // Log raw JSON response for debugging
-      console.debug('[/chat response]', data);
+  // Helper functions for chat handling
+  function handleChatSuccess(data, spinner) {
+    // Log raw JSON response for debugging
+    console.debug('[/chat response]', data);
 
-      // Handle response - now only GPT-generated assistant messages
-      const txt = data.assistant
-        ?? (data.error && `⚠️ ${data.error}`)
-        ?? '⚠️ Ukjent svar fra serveren.';
+    // Handle response - now only GPT-generated assistant messages
+    const txt = data.assistant
+      ?? (data.error && `⚠️ ${data.error}`)
+      ?? '⚠️ Ukjent svar fra serveren.';
 
-      // Replace spinner content only if not streamed already
-      // Use Markdown rendering for assistant messages
-      if (data.assistant && spinner && spinner.parentNode) {
-        const html = DOMPurify.sanitize(marked.parse(txt));
-        spinner.innerHTML = html;
-      } else if (!data.assistant && txt && spinner && spinner.parentNode) {
-        spinner.textContent = txt;
-      }
-      if (data.assistant) {
-        chatMessages.push({ role: 'assistant', content: data.assistant });
-      }
+    // Replace spinner content only if not streamed already
+    // Use Markdown rendering for assistant messages
+    if (data.assistant && spinner && spinner.parentNode) {
+      const html = DOMPurify.sanitize(marked.parse(txt));
+      spinner.innerHTML = html;
+    } else if (!data.assistant && txt && spinner && spinner.parentNode) {
+      spinner.textContent = txt;
+    }
+    if (data.assistant) {
+      chatMessages.push({ role: 'assistant', content: data.assistant });
+    }
 
-      // Always update shifts table - dedupe and render
-      const shifts = data.shifts || [];
-      const uniq = [];
-      const seen = new Set();
-      for (const s of shifts) {
-        const k = `${s.shift_date}|${s.start_time}|${s.end_time}`;
-        if (!seen.has(k)) {
-          seen.add(k);
-          uniq.push(s);
-        }
-      }
-
-      // Always call refreshUI to update all components
-      if (window.app && window.app.refreshUI) {
-        // Convert shifts data to app format if needed
-        const newShifts = uniq.map(shift => ({
-          id: shift.id || Date.now() + Math.random(),
-          date: new Date(shift.date || shift.shift_date),
-          startTime: shift.startTime || shift.start_time,
-          endTime: shift.endTime || shift.end_time,
-          type: shift.type !== undefined ? shift.type : shift.shift_type,
-          seriesId: shift.seriesId || shift.series_id || null
-        }));
-
-        // Update app shifts and refresh all UI components
-        if (window.app.shifts && window.app.userShifts) {
-          window.app.shifts = [...newShifts];
-          window.app.userShifts = [...newShifts];
-        }
-        window.app.refreshUI(newShifts);
-      }
-
-    } catch (error) {
-      console.error('Chat error:', error);
-
-      // Skip secondary streaming retry — GET approach should be stable
-
-      // Fallback to non-streaming request if streaming fails
-      try {
-        console.log('Streaming failed, falling back to regular request...');
-        const fallbackResponse = await fetch(`${STREAM_API_BASE}/chat`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            messages: chatMessages,
-            stream: false
-          })
-        });
-
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json();
-
-          const txt = fallbackData.assistant
-            ?? (fallbackData.error && `⚠️ ${fallbackData.error}`)
-            ?? '⚠️ Ukjent svar fra serveren.';
-
-          if (fallbackData.assistant) {
-            const html = DOMPurify.sanitize(marked.parse(txt));
-            spinner.innerHTML = html;
-          } else {
-            spinner.textContent = txt;
-          }
-
-          if (fallbackData.assistant) {
-            chatMessages.push({ role: 'assistant', content: fallbackData.assistant });
-          }
-
-          // Update shifts
-          const shifts = fallbackData.shifts || [];
-          const uniq = [];
-          const seen = new Set();
-          for (const s of shifts) {
-            const k = `${s.shift_date}|${s.start_time}|${s.end_time}`;
-            if (!seen.has(k)) {
-              seen.add(k);
-              uniq.push(s);
-            }
-          }
-
-          if (window.app && window.app.refreshUI) {
-            const newShifts = uniq.map(shift => ({
-              id: shift.id || Date.now() + Math.random(),
-              date: new Date(shift.date || shift.shift_date),
-              startTime: shift.startTime || shift.start_time,
-              endTime: shift.endTime || shift.end_time,
-              type: shift.type !== undefined ? shift.type : shift.shift_type,
-              seriesId: shift.seriesId || shift.series_id || null
-            }));
-
-            if (window.app.shifts && window.app.userShifts) {
-              window.app.shifts = [...newShifts];
-              window.app.userShifts = [...newShifts];
-            }
-            window.app.refreshUI(newShifts);
-          }
-        } else {
-          throw new Error('Fallback request also failed');
-        }
-      } catch (fallbackError) {
-        console.error('Fallback error:', fallbackError);
-        spinner.textContent = '⚠️ Kunne ikke koble til serveren.';
-      }
-    } finally {
-      if (chatElements.send) {
-        chatElements.send.disabled = false;
+    // Always update shifts table - dedupe and render
+    const shifts = data.shifts || [];
+    const uniq = [];
+    const seen = new Set();
+    for (const s of shifts) {
+      const k = `${s.shift_date}|${s.start_time}|${s.end_time}`;
+      if (!seen.has(k)) {
+        seen.add(k);
+        uniq.push(s);
       }
     }
+
+    // Always call refreshUI to update all components
+    if (window.app && window.app.refreshUI) {
+      // Convert shifts data to app format if needed
+      const newShifts = uniq.map(shift => ({
+        id: shift.id || Date.now() + Math.random(),
+        date: new Date(shift.date || shift.shift_date),
+        startTime: shift.startTime || shift.start_time,
+        endTime: shift.endTime || shift.end_time,
+        type: shift.type !== undefined ? shift.type : shift.shift_type,
+        seriesId: shift.seriesId || shift.series_id || null
+      }));
+
+      // Update app shifts and refresh all UI components
+      if (window.app.shifts && window.app.userShifts) {
+        window.app.shifts = [...newShifts];
+        window.app.userShifts = [...newShifts];
+      }
+      window.app.refreshUI(newShifts);
+    }
+  }
+
+  function handleChatError(spinner, error) {
+    console.error('Chat error:', error);
+    
+    // Try fallback to non-streaming request
+    if (spinner && spinner.parentNode) {
+      spinner.textContent = `⚠️ ${error.message || 'Kunne ikke sende meldingen. Prøv igjen.'}`;
+    }
+  }
+
+  function handleWebSocketMessage(message) {
+    // Default handler - will be overridden during active chat sessions
+    console.log('[WS] Received message:', message);
+  }
+
+  function updateConnectionStatus(state) {
+    console.log('[WS] Connection status:', state);
+    
+    const statusElement = document.getElementById('connectionStatus');
+    const indicatorElement = document.getElementById('connectionIndicator');
+    const textElement = document.getElementById('connectionText');
+    
+    if (!statusElement || !indicatorElement || !textElement) {
+      return; // Elements not found
+    }
+    
+    // Remove all state classes
+    statusElement.className = 'connection-status';
+    
+    let statusText = '';
+    switch (state) {
+      case wsManager.STATES.CONNECTING:
+        statusElement.classList.add('connecting');
+        statusText = 'Connecting...';
+        statusElement.style.display = 'flex';
+        break;
+      case wsManager.STATES.CONNECTED:
+        statusElement.classList.add('connected');
+        statusText = 'Connected';
+        statusElement.style.display = 'flex';
+        break;
+      case wsManager.STATES.AUTHENTICATED:
+        statusElement.classList.add('authenticated');
+        statusText = 'WebSocket Ready';
+        statusElement.style.display = 'flex';
+        // Hide after 2 seconds when authenticated
+        setTimeout(() => {
+          if (statusElement.classList.contains('authenticated')) {
+            statusElement.style.display = 'none';
+          }
+        }, 2000);
+        break;
+      case wsManager.STATES.ERROR:
+        statusElement.classList.add('error');
+        statusText = 'Connection Error';
+        statusElement.style.display = 'flex';
+        // Hide after 5 seconds
+        setTimeout(() => {
+          if (statusElement.classList.contains('error')) {
+            statusElement.style.display = 'none';
+          }
+        }, 5000);
+        break;
+      case wsManager.STATES.DISCONNECTED:
+      default:
+        statusElement.classList.add('disconnected');
+        statusText = 'Using HTTP';
+        statusElement.style.display = 'none'; // Hide when disconnected
+        break;
+    }
+    
+    textElement.textContent = statusText;
   }
 
   // Handle streaming events from server
