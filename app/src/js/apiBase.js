@@ -11,7 +11,7 @@ export const API_BASE =
   (V && !(PROD && isLocalHost(V)))
     ? V
     : (PROD
-        ? (IS_KKARLSEN ? 'https://server.kkarlsen.dev' : '') // prod default: direct API origin on kkarlsen.dev; else same-origin
+        ? (IS_KKARLSEN ? 'https://server.kkarlsen.dev' : '/api') // prod default: direct API origin on kkarlsen.dev; else use /api proxy
         : (typeof window !== 'undefined' && window.location.hostname === 'localhost'
             ? 'http://localhost:3000' // dev
             : ''));
