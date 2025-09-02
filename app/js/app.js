@@ -2526,6 +2526,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Only render tool entries when parameters exist
         const key = `${event.iteration}|${event.name}`;
         const argsSummary = (_toolArgsByKey.get(key) || '').trim();
+        _toolArgsByKey.delete(key); // Clear the args to prevent reuse
         if (argsSummary.length > 0) {
           const el = createToolMessage({
             name: event.name,
