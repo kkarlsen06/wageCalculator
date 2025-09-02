@@ -1,0 +1,28 @@
+.chat-message.tool,
+.chat-message.tool_summary,
+.chatbox-message.tool,
+.chatbox-message.tool_summary {
+  /* Remove bubble visuals */
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  display: block !important;
+  max-width: 100% !important;
+
+  /* Plain monospace with connector */
+  margin-left: 1rem;
+  padding: 0 !important;
+  padding-left: 0.5rem !important;
+  border-left: 2px solid var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.85em;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: chatFadeIn 200ms ease-out forwards;
+}
+
+@keyframes chatFadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}

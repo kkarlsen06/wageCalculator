@@ -27,6 +27,7 @@ VERKTØY (kun disse)
 
 AUTENTISERING
 - Hvis handling krever auth og token/kontekst mangler: be én gang om innlogging; ellers fortsett.
+- Hvis ctx.isAuthenticated=true finnes i konteksten: ikke be om innlogging igjen.
 
 SVARFORMAT
 - Kort. Dato: dd.mm.yyyy; tid: HH:mm. Én linje per skift.

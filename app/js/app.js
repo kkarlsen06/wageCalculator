@@ -25,6 +25,30 @@ supabase.auth.getSession().then(({ data, error }) => {
   console.log("[debug] supabase session", data?.session, error)
 })
 
+// Tool/progress render helpers
+function formatMs(ms) {
+  const n = Number(ms) || 0;
+  return n < 1000 ? `${n}ms` : `${(n / 1000).toFixed(2)}s`;
+}
+
+function renderToolEvent(evt) {
+  const name = evt?.name || 'unknown';
+  const ok = evt?.ok === false ? 'failed' : 'ok';
+  const dur = evt?.duration_ms != null ? formatMs(evt.duration_ms) : '';
+  const iter = evt?.iter != null ? `#${evt.iter}` : '';
+  const parts = [`Tool: ${getToolCallDisplayName(name)} (${ok})`];
+  if (dur) parts.push(`– ${dur}`);
+  if (iter) parts.push(`– ${iter}`);
+  return parts.join(' ');
+}
+
+function renderToolSummary(s) {
+  const iters = s?.total_iters ?? 0;
+  const tools = s?.total_tools ?? 0;
+  const dur = s?.duration_ms != null ? formatMs(s.duration_ms) : '';
+  return `Summary: ${iters} loops, ${tools} tools in ${dur}`;
+}
+
 // Lazy-load markdown + sanitizer libs only when chat is used
 async function preloadChatMarkdownLibs() {
   try {
@@ -1290,6 +1314,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Keep conversation history; server injects the authoritative system prompt.
   let chatMessages = [];
+  // UI timeline with strict chronological ordering (includes tool/progress)
+  let chatTimeline = [];
+  let _timelineSeq = 0;
 
   let chatElements = {};
   let isExpanded = false;
@@ -1463,6 +1490,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       chatElements.log.innerHTML = '';
     }
     chatMessages = [];
+    chatTimeline = [];
+    _timelineSeq = 0;
   }
 
   function startNewChat() {
@@ -1471,6 +1500,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (chatElements.log) {
       chatElements.log.innerHTML = '';
     }
+    chatTimeline = [];
+    _timelineSeq = 0;
     
     // Reset chat state
     hasFirstMessage = false;
@@ -1604,6 +1635,86 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // Create message element without inserting
+  function createMessageElement(role, text, options = {}) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chatbox-message ${role}`;
+    if (typeof text === 'string' && text.includes('<span class="dots">')) {
+      messageDiv.innerHTML = text;
+    } else if (role === 'assistant') {
+      if (options.streaming) {
+        messageDiv.innerHTML = '';
+      } else {
+        const html = DOMPurify.sanitize(marked.parse(text));
+        messageDiv.innerHTML = html;
+      }
+    } else {
+      messageDiv.textContent = text;
+    }
+    return messageDiv;
+  }
+
+  // Ensure the current streaming anchor sits immediately below the latest tool message
+  function moveAnchorBelowLatestTool() {
+    try {
+      const anchor = window._streamAnchorEl;
+      if (!anchor || !anchor.parentNode) return;
+      const parent = anchor.parentNode;
+      const tools = Array.from(parent.querySelectorAll('.chatbox-message.tool, .chatbox-message.tool_summary'));
+      const lastTool = tools.length ? tools[tools.length - 1] : null;
+      if (lastTool && lastTool !== anchor) {
+        parent.insertBefore(anchor, lastTool.nextSibling);
+      }
+    } catch (_) {}
+  }
+
+  function insertIntoTimeline(el, ts, role) {
+    const entry = { ts: Number(ts) || Date.now(), seq: (++_timelineSeq), el };
+    let idx = chatTimeline.findIndex(e => e.ts > entry.ts || (e.ts === entry.ts && e.seq > entry.seq));
+    if (idx === -1) idx = chatTimeline.length;
+    chatTimeline.splice(idx, 0, entry);
+    const container = chatElements.log;
+    if (!container) return;
+    if (idx >= container.children.length) container.appendChild(el);
+    else container.insertBefore(el, container.children[idx]);
+    
+    // After inserting a tool/progress, ensure the stream anchor stays below
+    // the latest tool block for correct visual grouping in the timeline.
+    try {
+      if (role === 'tool' || role === 'tool_summary') moveAnchorBelowLatestTool();
+    } catch (_) {}
+    
+    // If inserting a tool/progress while a stream anchor exists, ensure the
+    // tool entry appears above the anchor, and move the anchor to be
+    // immediately after the tool entry.
+    try {
+      const anchor = window._streamAnchorEl;
+      if (anchor && (role === 'tool' || role === 'tool_summary') && anchor.parentNode === container) {
+        // Place tool before anchor, then anchor right after tool
+        if (el !== anchor) {
+          container.insertBefore(el, anchor);
+          if (el.nextSibling !== anchor) {
+            container.insertBefore(anchor, el.nextSibling);
+          }
+          // Update timeline order to reflect DOM change: move anchor after 'el'
+          const ai = chatTimeline.findIndex(e => e.el === anchor);
+          const ti = chatTimeline.findIndex(e => e.el === el);
+          if (ai !== -1 && ti !== -1 && ai < ti) {
+            const [a] = chatTimeline.splice(ai, 1);
+            const newIndex = chatTimeline.findIndex((e, idx) => idx > ti ? true : false);
+            const insertIndex = newIndex === -1 ? ti + 1 : ti + 1;
+            chatTimeline.splice(insertIndex, 0, a);
+          } else if (ai !== -1 && ti !== -1 && ai !== ti + 1) {
+            const [a] = chatTimeline.splice(ai, 1);
+            chatTimeline.splice(ti + 1, 0, a);
+          }
+        }
+      }
+    } catch (_) {}
+    
+    container.scrollTop = container.scrollHeight;
+  }
+
   function appendMessage(role, text, options = {}) {
     // Ensure expanded view is shown after first message
     if (!hasFirstMessage && !isExpanded) {
@@ -1611,37 +1722,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       expandChatbox();
     }
 
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `chatbox-message ${role}`;
-
-    // Check if text contains HTML (for dots animation)
-    if (text.includes('<span class="dots">')) {
-      messageDiv.innerHTML = text;
-    } else if (role === 'assistant') {
-      // Check if streaming animation is requested
-      if (options.streaming) {
-        // Start with empty content for streaming
-        messageDiv.innerHTML = '';
-        chatElements.log.appendChild(messageDiv);
-        chatElements.log.scrollTop = chatElements.log.scrollHeight;
-
-        // Start streaming animation
-        streamText(messageDiv, text, options.streamSpeed || 75);
-        return messageDiv;
-      } else {
-        // Render Markdown for assistant messages
-        const html = DOMPurify.sanitize(marked.parse(text));
-        messageDiv.innerHTML = html;
-      }
-    } else {
-      // Plain text for user messages
-      messageDiv.textContent = text;
+    const messageDiv = createMessageElement(role, text, options);
+    insertIntoTimeline(messageDiv, Date.now(), role);
+    if (role === 'assistant' && options.streaming) {
+      // Start streaming animation after insertion
+      streamText(messageDiv, text, options.streamSpeed || 75);
     }
-
-    chatElements.log.appendChild(messageDiv);
-    chatElements.log.scrollTop = chatElements.log.scrollHeight;
-
-    // Return the message element so it can be removed if needed
     return messageDiv;
   }
 
@@ -1844,6 +1930,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Show thinking indicator - only dots, no hardcoded text
     const spinner = appendMessage('assistant', '<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
+    // Treat the spinner as the active streaming anchor so it stays
+    // immediately under any tool/progress messages that arrive before
+    // text_stream_start replaces it. This keeps chronology correct.
+    try {
+      window._streamAnchorEl = spinner;
+      // If there are already tool/progress entries, ensure the spinner
+      // sits right after the latest one.
+      if (typeof moveAnchorBelowLatestTool === 'function') {
+        moveAnchorBelowLatestTool();
+      }
+    } catch (_) {}
 
     // Ensure markdown/sanitizer libs are available before any assistant rendering/streaming
     await preloadChatMarkdownLibs();
@@ -1935,6 +2032,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       const originalOnMessage = wsManager.onMessage;
       wsManager.onMessage = (message) => {
         try {
+          // Render progress events inline in chat with strict ordering by ts
+          if (message && message.type === 'progress') {
+            if (message.phase === 'tool') {
+              const el = createMessageElement('tool', renderToolEvent(message));
+              insertIntoTimeline(el, message.ts || Date.now(), 'tool');
+            }
+            return; // Do not alter spinner
+          }
+          if (message && message.type === 'progress_summary') {
+            const el = createMessageElement('tool_summary', renderToolSummary(message));
+            insertIntoTimeline(el, message.ts || Date.now(), 'tool_summary');
+            return;
+          }
           // Handle message types
           if (message.type === 'complete') {
             finalData = message;
@@ -2250,6 +2360,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         streamingTextElement.isStreaming = true;
         streamingTextElement.streamingActive = false; // Track if streaming animation is active
         spinnerElement.parentNode.replaceChild(streamingTextElement, spinnerElement);
+        // Keep timeline entry in place and update element reference
+        try {
+          for (const entry of chatTimeline) {
+            if (entry.el === spinnerElement) {
+              entry.el = streamingTextElement;
+              break;
+            }
+          }
+        } catch (_) {}
+        // Set anchor to the current streaming element and ensure it sits
+        // just after the last tool/progress message if any
+        try {
+          window._streamAnchorEl = streamingTextElement;
+          // Ensure anchor is positioned immediately after latest tool
+          moveAnchorBelowLatestTool();
+          const container = chatElements.log;
+          if (container && container.contains(streamingTextElement)) {
+            const children = Array.from(container.children);
+            let lastTool = null;
+            for (const child of children) {
+              if (child.classList && (child.classList.contains('tool') || child.classList.contains('tool_summary'))) {
+                lastTool = child;
+              }
+            }
+            if (lastTool && lastTool.nextSibling !== streamingTextElement) {
+              container.insertBefore(streamingTextElement, lastTool.nextSibling);
+            }
+          }
+        } catch (_) {}
         break;
       case 'text_chunk':
         // Accumulate text chunks and stream them smoothly
@@ -2273,6 +2412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           chatMessages.push({ role: 'assistant', content: finalText });
           streamingTextElement = null;
         }
+        try { window._streamAnchorEl = null; } catch (_) {}
         break;
       case 'shifts_update':
         // Update shifts in the UI
@@ -2321,6 +2461,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       chatElements.log.innerHTML = '';
     }
     chatMessages = [];
+    chatTimeline = [];
+    _timelineSeq = 0;
 
     // Reset all states
     hasFirstMessage = false;

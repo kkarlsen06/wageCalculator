@@ -6,6 +6,7 @@
  */
 
 import { API_BASE } from './apiBase.js';
+import { supabase } from '../supabase-client.js';
 
 class WebSocketManager {
   constructor() {
@@ -21,6 +22,8 @@ class WebSocketManager {
     this.messageQueue = [];
     this.pingInterval = null;
     this.token = null;
+    this._lastToken = null;
+    this._authSubscription = null;
     
     // Event handlers
     this.onMessage = null;
@@ -37,20 +40,42 @@ class WebSocketManager {
     };
     
     this.state = this.STATES.DISCONNECTED;
+
+    // Listen for Supabase auth state changes to refresh JWT automatically
+    try {
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        const newToken = session?.access_token || null;
+        if (newToken && newToken !== this._lastToken) {
+          this._lastToken = newToken;
+          this._reconnectWithToken(newToken);
+        }
+      });
+      this._authSubscription = data?.subscription || null;
+    } catch (_) {
+      // Ignore listener setup errors in non-browser or early boot
+    }
   }
   
   /**
    * Initialize WebSocket connection
    */
-  async connect(token) {
+  async connect() {
     if (this.isDestroyed || this.isConnecting) {
       return false;
     }
-    
+
+    // Always fetch latest token from Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+
     this.token = token;
+    this._lastToken = token;
     this.isConnecting = true;
     this.setState(this.STATES.CONNECTING);
-    
+
     try {
       const wsUrl = this.getWebSocketUrl();
       console.log('[WS] Connecting to:', wsUrl);
@@ -85,6 +110,26 @@ class WebSocketManager {
       console.error('[WS] Connection error:', error);
       this.handleConnectionFailure();
       return false;
+    }
+  }
+
+  /**
+   * Reconnect WebSocket with a refreshed token
+   */
+  async _reconnectWithToken(token) {
+    try {
+      if (this.ws) {
+        try {
+          this.ws.close(4001, 'token_refresh');
+        } catch (_) { /* ignore */ }
+        this.ws = null;
+      }
+      this.token = token;
+      this.resetReconnection();
+      await this.connect();
+    } catch (err) {
+      // Surface error, but do not throw to avoid loops
+      console.error('[WS] Failed to reconnect with refreshed token:', err);
     }
   }
   
@@ -350,6 +395,10 @@ class WebSocketManager {
     this.isDestroyed = true;
     this.messageQueue = [];
     this.stopPing();
+    if (this._authSubscription) {
+      try { this._authSubscription.unsubscribe(); } catch (_) {}
+      this._authSubscription = null;
+    }
     
     if (this.ws) {
       this.ws.close(1000, 'Client disconnect');

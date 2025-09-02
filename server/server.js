@@ -220,7 +220,20 @@ function withTimeoutPromise(p, ms) {
   ]);
 }
 
-async function runToolWithTimeout(call, user_id, iter, res) {
+// Emit lightweight progress event over WebSocket and console, and trace per-connection
+function emitProgress(ws, obj) {
+  const msg = { type: 'progress', ...obj, ts: Date.now() };
+  try { if (ws && ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg)); } catch {}
+  try { console.log(JSON.stringify(obj)); } catch {}
+  try {
+    if (ws && Array.isArray(ws._trace)) {
+      ws._trace_idx = (ws._trace_idx || 0) + 1;
+      ws._trace.push({ idx: ws._trace_idx, ...obj, ts: msg.ts });
+    }
+  } catch {}
+}
+
+async function runToolWithTimeout(call, user_id, iter, res, ws) {
   const start = Date.now();
   const name = call?.function?.name || 'unknown';
   let ok = true;
@@ -244,10 +257,8 @@ async function runToolWithTimeout(call, user_id, iter, res) {
   }
   const duration_ms = Date.now() - start;
   const { content, size_bytes } = truncateToolOutput(rawOutput);
-  // Structured tool log
-  try {
-    console.log(JSON.stringify({ phase: 'tool', iter, name, ok, duration_ms, out_len: size_bytes }));
-  } catch (_) {}
+  // Structured tool log + WS progress
+  emitProgress(ws, { phase: 'tool', iter, name, ok, duration_ms, out_len: size_bytes });
   // Emit SSE tool_result summary
   if (res) {
     res.write(`data: ${JSON.stringify({ type: 'tool_result', iteration: iter, name, ok, duration_ms, size_bytes })}\n\n`);
@@ -3816,7 +3827,13 @@ app.get('/chat/stream', authenticateUser, async (req, res) => {
   }
 
   // From here, behave like /chat with stream=true, but use sess payload
-  const messages = sess.messages;
+  const messages = Array.isArray(sess.messages) ? [...sess.messages] : [];
+  // Inject auth context to suppress redundant re-auth prompts
+  try {
+    if (req && req.user_id) {
+      messages.unshift({ role: 'system', content: 'ctx.isAuthenticated=true userId=' + req.user_id });
+    }
+  } catch (_) {}
   const stream = true;
 
   // Remove session to avoid reuse
@@ -3887,7 +3904,7 @@ app.get('/chat/stream', authenticateUser, async (req, res) => {
 
       const msg = turn.choices?.[0]?.message || {};
       const toolCalls = msg.tool_calls || [];
-      try { console.log(JSON.stringify({ phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 })); } catch (_) {}
+      emitProgress(undefined, { phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 });
       res.write(`data: ${JSON.stringify({ type: 'gpt_response', iteration: iter, content: msg.content || null, tool_calls: toolCalls.map(c => ({ name: c.function?.name })) })}\n\n`);
 
       if (toolCalls.length > 0) {
@@ -3981,6 +3998,15 @@ app.post('/chat', authenticateUser, async (req, res) => {
   // Tool allowlist based on ai_agent claim
   const chatTools = getToolsForRequest(req);
 
+  // Extract and inject auth context into model input
+  const rawMessages = Array.isArray(req.body?.messages) ? [...req.body.messages] : [];
+  try {
+    if (req && req.user_id) {
+      rawMessages.unshift({ role: 'system', content: 'ctx.isAuthenticated=true userId=' + req.user_id });
+    }
+  } catch (_) {}
+  const messages = rawMessages;
+
   // SSE setup with keepalive
   let heartbeat = null;
   const endStream = () => {
@@ -4062,10 +4088,8 @@ app.post('/chat', authenticateUser, async (req, res) => {
     const msg = turn.choices?.[0]?.message || {};
     const toolCalls = msg.tool_calls || [];
 
-    // Structured loop log
-    try {
-      console.log(JSON.stringify({ phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 }));
-    } catch (_) {}
+    // Structured loop log + WS progress
+    emitProgress(req?._ws_for_progress, { phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 });
 
     // Reflect assistant decision on stream (no payloads)
     if (stream) {
@@ -4085,6 +4109,29 @@ app.post('/chat', authenticateUser, async (req, res) => {
       // No tools requested → finish loop
       finalAssistantContent = msg.content || '';
       done = true;
+      // If running over WebSocket, emit a summary of this turn
+      try {
+        if (req && req._ws_for_progress && Array.isArray(req._ws_for_progress._trace)) {
+          const ws = req._ws_for_progress;
+          const total_iters = iter;
+          const total_tools = ws._trace.filter(e => e.phase === 'tool').length;
+          const duration_ms = Date.now() - startedAt;
+          const tools = ws._trace
+            .filter(e => e.phase === 'tool')
+            .map(({ name, duration_ms }) => ({ name, duration_ms }));
+          ws.send(JSON.stringify({
+            type: 'progress_summary',
+            ts: Date.now(),
+            total_iters,
+            total_tools,
+            duration_ms,
+            tools
+          }));
+          // Clear trace to avoid growth across turns
+          ws._trace = [];
+          ws._trace_idx = 0;
+        }
+      } catch (_) {}
       break;
     }
 
@@ -6613,6 +6660,8 @@ function handleWebSocketConnection(ws, req) {
   let userId = null;
   
   console.log(`[WS] New connection: ${connectionId}`);
+  // Initialize per-connection progress trace
+  try { ws._trace = []; ws._trace_idx = 0; } catch (_) {}
   try {
     console.log('[WS] Connection header sec-websocket-protocol:', req?.headers?.['sec-websocket-protocol'] || '(none)', 'selected=', ws.protocol || '(none)');
   } catch (_) {}
@@ -6646,6 +6695,7 @@ function handleWebSocketConnection(ws, req) {
                 isAuthenticated = true;
                 clearTimeout(authTimeout);
                 wsConnections.set(connectionId, { ws, userId, lastPing: Date.now() });
+                try { ws._isAuthenticated = true; ws._userId = userId; } catch (_) {}
                 ws.send(JSON.stringify({ type: 'auth_success', connectionId, message: 'WebSocket authenticated successfully' }));
                 console.log(`[WS] Authenticated (protocol) user ${userId} on connection ${connectionId}`);
               } else {
@@ -6689,6 +6739,7 @@ function handleWebSocketConnection(ws, req) {
               userId,
               lastPing: Date.now()
             });
+            try { ws._isAuthenticated = true; ws._userId = userId; } catch (_) {}
             
             ws.send(JSON.stringify({ 
               type: 'auth_success', 
@@ -6739,8 +6790,15 @@ function handleWebSocketConnection(ws, req) {
 }
 
 // Shared chat request handler for both SSE and WebSocket
-async function handleChatRequest(req, res, chatTools) {
-  const { messages } = req.body;
+async function handleChatRequest(req, res, chatTools, _wsForProgress = null) {
+  const { messages: rawMessages } = req.body;
+  const messages = Array.isArray(rawMessages) ? [...rawMessages] : [];
+  // Inject auth context for model if WS is authenticated
+  try {
+    if (_wsForProgress && _wsForProgress._isAuthenticated) {
+      messages.unshift({ role: 'system', content: 'ctx.isAuthenticated=true userId=' + (_wsForProgress._userId || '') });
+    }
+  } catch (_) {}
   // Removed inline time/month prompt context; SYSTEM_PROMPT is static now.
 
   const systemContextHint = { role: 'system', content: SYSTEM_PROMPT };
@@ -6790,9 +6848,7 @@ async function handleChatRequest(req, res, chatTools) {
     const toolCalls = msg.tool_calls || [];
 
     // Structured loop log
-    try {
-      console.log(JSON.stringify({ phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 }));
-    } catch (_) {}
+    emitProgress(undefined, { phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 });
 
     // Reflect assistant decision on stream (no payloads)
     res.write(`data: ${JSON.stringify({ type: 'gpt_response', iteration: iter, content: msg.content || null, tool_calls: toolCalls.map(c => ({ name: c.function?.name })) })}\n\n`);
@@ -6817,7 +6873,7 @@ async function handleChatRequest(req, res, chatTools) {
     res.write(`data: ${JSON.stringify({ type: 'tool_calls_start', iteration: iter, count: toolCalls.length })}\n\n`);
 
     const results = await Promise.allSettled(
-      toolCalls.map(call => runToolWithTimeout(call, req.user_id, iter, res))
+      toolCalls.map(call => runToolWithTimeout(call, req.user_id, iter, res, req?._ws_for_progress))
     );
 
     // Append tool messages to history in the same order
@@ -6916,7 +6972,7 @@ async function handleWebSocketChat(ws, userId, message) {
     }
     
     // Create a WebSocket response writer that matches SSE format
-    const wsResponse = {
+  const wsResponse = {
       write: (data) => {
         if (ws.readyState === ws.OPEN) {
           // Parse SSE data format and convert to WebSocket message
@@ -6940,20 +6996,21 @@ async function handleWebSocketChat(ws, userId, message) {
           ws.send(JSON.stringify({ type: 'complete' }));
         }
       }
-    };
-    
-    // Create mock request object for existing chat handler
-    const mockReq = {
-      user_id: userId,
-      body: { messages, stream: true, currentMonth, currentYear },
-      user: null // Could be populated from Supabase if needed
-    };
+  };
+  
+  // Create mock request object for existing chat handler
+  const mockReq = {
+    user_id: userId,
+    body: { messages, stream: true, currentMonth, currentYear },
+    user: null, // Could be populated from Supabase if needed
+    _ws_for_progress: ws
+  };
     
     // Get tools for the user
     const chatTools = getToolsForRequest(mockReq);
     
     // Run the chat logic with WebSocket output
-    await handleChatRequest(mockReq, wsResponse, chatTools);
+    await handleChatRequest(mockReq, wsResponse, chatTools, ws);
     
   } catch (error) {
     console.error(`[WS] Chat handling error:`, error);
