@@ -206,7 +206,12 @@ class WebSocketManager {
         this.connectionId = message.connectionId;
         this.setState(this.STATES.AUTHENTICATED);
         this.startPing();
-        this.processMessageQueue();
+        // Use requestIdleCallback for non-critical queue processing
+        if (window.requestIdleCallback) {
+          requestIdleCallback(() => this.processMessageQueue());
+        } else {
+          setTimeout(() => this.processMessageQueue(), 0);
+        }
         break;
         
       case 'pong':
@@ -221,7 +226,7 @@ class WebSocketManager {
         break;
         
       default:
-        // Forward chat messages to handler
+        // Forward chat messages to handler with minimal delay
         if (this.onMessage) {
           this.onMessage(message);
         }
@@ -296,7 +301,7 @@ class WebSocketManager {
     this.stopPing(); // Clear any existing interval
     
     this.pingInterval = setInterval(() => {
-      if (this.isAuthenticated) {
+      if (this.isAuthenticated && this.ws?.readyState === WebSocket.OPEN) {
         this.send({ type: 'ping' });
       }
     }, 30000); // Ping every 30 seconds

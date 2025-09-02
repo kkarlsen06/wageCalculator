@@ -22,3 +22,30 @@
   from { opacity: 0; transform: translateY(2px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Performance optimizations for chat messages */
+.chatbox-message {
+  will-change: auto;
+  contain: layout;
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
+.chatbox-message.streaming-text {
+  will-change: contents;
+}
+
+.typing-cursor {
+  will-change: opacity;
+  backface-visibility: hidden;
+}
+
+/* Optimize scrolling performance */
+.chat-log {
+  will-change: scroll-position;
+  contain: style layout;
+}
+
+/* Reduce paint on hover states */
+.chatbox-message:hover {
+  contain: layout style;
+}

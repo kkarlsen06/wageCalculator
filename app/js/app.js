@@ -1501,8 +1501,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Remove class from body
     document.body.classList.remove('chatbox-expanded-active');
 
-    // Clear chat log
+    // Clear chat log and return elements to pool
     if (chatElements.log) {
+      const children = Array.from(chatElements.log.children);
+      children.forEach(child => {
+        if (child.classList.contains('chatbox-message')) {
+          returnMessageElementToPool(child);
+        }
+      });
       chatElements.log.innerHTML = '';
     }
     chatMessages = [];
@@ -1514,6 +1520,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Clear current chat messages and history
     chatMessages = [];
     if (chatElements.log) {
+      const children = Array.from(chatElements.log.children);
+      children.forEach(child => {
+        if (child.classList.contains('chatbox-message')) {
+          returnMessageElementToPool(child);
+        }
+      });
       chatElements.log.innerHTML = '';
     }
     chatTimeline = [];
@@ -1652,14 +1664,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Create message element without inserting
+  // Optimized message creation with element pooling for better performance
+  const messageElementPool = [];
+  
   function createMessageElement(role, text, options = {}) {
-    const messageDiv = document.createElement('div');
+    // Reuse elements from pool to reduce GC pressure
+    let messageDiv = messageElementPool.pop();
+    if (!messageDiv) {
+      messageDiv = document.createElement('div');
+    }
+    
     messageDiv.className = `chatbox-message ${role}`;
+    
     if (typeof text === 'string' && text.includes('<span class="dots">')) {
       messageDiv.innerHTML = text;
     } else if (role === 'assistant') {
       if (options.streaming) {
         messageDiv.innerHTML = '';
+        messageDiv.classList.add('streaming-text');
       } else {
         const html = DOMPurify.sanitize(marked.parse(text));
         messageDiv.innerHTML = html;
@@ -1667,7 +1689,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       messageDiv.textContent = text;
     }
+    
     return messageDiv;
+  }
+  
+  // Return elements to pool when clearing chat
+  function returnMessageElementToPool(element) {
+    if (messageElementPool.length < 20) { // Limit pool size
+      element.className = '';
+      element.innerHTML = '';
+      element.textContent = '';
+      messageElementPool.push(element);
+    }
   }
 
   // Track args for tools between tool_call and tool_result (SSE path)
@@ -1752,13 +1785,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function insertIntoTimeline(el, ts, role) {
     const entry = { ts: Number(ts) || Date.now(), seq: (++_timelineSeq), el };
-    let idx = chatTimeline.findIndex(e => e.ts > entry.ts || (e.ts === entry.ts && e.seq > entry.seq));
-    if (idx === -1) idx = chatTimeline.length;
+    
+    // Use binary search for better performance with large timelines
+    let idx = chatTimeline.length;
+    if (chatTimeline.length > 0) {
+      let left = 0, right = chatTimeline.length;
+      while (left < right) {
+        const mid = Math.floor((left + right) / 2);
+        const midEntry = chatTimeline[mid];
+        if (midEntry.ts > entry.ts || (midEntry.ts === entry.ts && midEntry.seq > entry.seq)) {
+          right = mid;
+        } else {
+          left = mid + 1;
+        }
+      }
+      idx = left;
+    }
+    
     chatTimeline.splice(idx, 0, entry);
     const container = chatElements.log;
     if (!container) return;
-    if (idx >= container.children.length) container.appendChild(el);
-    else container.insertBefore(el, container.children[idx]);
+    
+    // Batch DOM operations
+    const fragment = document.createDocumentFragment();
+    fragment.appendChild(el);
+    
+    if (idx >= container.children.length) {
+      container.appendChild(fragment);
+    } else {
+      container.insertBefore(fragment, container.children[idx]);
+    }
     
     // After inserting a tool/progress, ensure the stream anchor stays below
     // the latest tool block for correct visual grouping in the timeline.
@@ -1766,35 +1822,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (role === 'tool' || role === 'tool_summary') moveAnchorBelowLatestTool();
     } catch (_) {}
     
-    // If inserting a tool/progress while a stream anchor exists, ensure the
-    // tool entry appears above the anchor, and move the anchor to be
-    // immediately after the tool entry.
+    // Simplified anchor handling to reduce DOM operations
     try {
       const anchor = window._streamAnchorEl;
-      if (anchor && (role === 'tool' || role === 'tool_summary') && anchor.parentNode === container) {
-        // Place tool before anchor, then anchor right after tool
-        if (el !== anchor) {
-          container.insertBefore(el, anchor);
-          if (el.nextSibling !== anchor) {
-            container.insertBefore(anchor, el.nextSibling);
-          }
-          // Update timeline order to reflect DOM change: move anchor after 'el'
+      if (anchor && (role === 'tool' || role === 'tool_summary') && 
+          anchor.parentNode === container && el !== anchor) {
+        // Only move if necessary to reduce DOM thrashing
+        if (anchor.previousElementSibling !== el) {
+          container.insertBefore(anchor, el.nextSibling);
+          // Update timeline efficiently
           const ai = chatTimeline.findIndex(e => e.el === anchor);
           const ti = chatTimeline.findIndex(e => e.el === el);
-          if (ai !== -1 && ti !== -1 && ai < ti) {
+          if (ai !== -1 && ti !== -1 && ai !== ti + 1) {
             const [a] = chatTimeline.splice(ai, 1);
-            const newIndex = chatTimeline.findIndex((e, idx) => idx > ti ? true : false);
-            const insertIndex = newIndex === -1 ? ti + 1 : ti + 1;
-            chatTimeline.splice(insertIndex, 0, a);
-          } else if (ai !== -1 && ti !== -1 && ai !== ti + 1) {
-            const [a] = chatTimeline.splice(ai, 1);
-            chatTimeline.splice(ti + 1, 0, a);
+            chatTimeline.splice(ai < ti ? ti : ti + 1, 0, a);
           }
         }
       }
     } catch (_) {}
     
-    container.scrollTop = container.scrollHeight;
+    // Use requestAnimationFrame for smoother scrolling
+    requestAnimationFrame(() => {
+      container.scrollTop = container.scrollHeight;
+    });
   }
 
   function appendMessage(role, text, options = {}) {
@@ -1813,77 +1863,96 @@ document.addEventListener('DOMContentLoaded', async () => {
     return messageDiv;
   }
 
-  // Stream text in token-like chunks with realistic typing animation
+  // Optimized stream text with batched DOM updates and requestAnimationFrame
   function streamText(element, text, speed = 25) {
-    // Split text into tokens (word fragments, punctuation, spaces)
     const tokens = tokenizeText(text);
     let currentTokenIndex = 0;
     let currentText = '';
+    let animationFrameId;
 
-    // Add a subtle cursor during typing (no blinking to avoid visual artifacts)
+    // Create cursor once and reuse
     const cursor = document.createElement('span');
     cursor.className = 'typing-cursor';
     cursor.textContent = '▊';
     cursor.style.opacity = '0.7';
+
+    // Batch DOM updates to reduce layout thrashing
+    let pendingUpdate = false;
+    const updateBatch = [];
+
+    function applyUpdate() {
+      if (updateBatch.length === 0) return;
+      
+      const latestText = updateBatch[updateBatch.length - 1];
+      updateBatch.length = 0; // Clear batch
+      
+      // Use template for faster DOM updates
+      const template = document.createElement('template');
+      template.innerHTML = DOMPurify.sanitize(marked.parse(latestText));
+      
+      // Add cursor efficiently
+      const lastElement = template.content.lastElementChild || template.content;
+      if (lastElement.tagName === 'P') {
+        lastElement.appendChild(cursor.cloneNode(true));
+      } else {
+        template.content.appendChild(cursor.cloneNode(true));
+      }
+
+      element.innerHTML = '';
+      element.appendChild(template.content);
+      
+      // Throttled scrolling
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(() => {
+        chatElements.log.scrollTop = chatElements.log.scrollHeight;
+      });
+      
+      pendingUpdate = false;
+    }
 
     function streamNextToken() {
       if (currentTokenIndex < tokens.length) {
         currentText += tokens[currentTokenIndex];
         currentTokenIndex++;
 
-        // Create content with cursor inline to avoid line breaks
-        const html = DOMPurify.sanitize(marked.parse(currentText));
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-
-        // Add cursor to the last element or create a span for it
-        const lastElement = tempDiv.lastElementChild || tempDiv;
-        if (lastElement.tagName === 'P') {
-          // Add cursor inside the paragraph to keep it inline
-          lastElement.appendChild(cursor.cloneNode(true));
-        } else {
-          // For other elements, add cursor after
-          tempDiv.appendChild(cursor.cloneNode(true));
+        // Add to batch instead of immediate update
+        updateBatch.push(currentText);
+        
+        if (!pendingUpdate) {
+          pendingUpdate = true;
+          requestAnimationFrame(applyUpdate);
         }
 
-        // Update element content
-        element.innerHTML = tempDiv.innerHTML;
-
-        // Auto-scroll to bottom
-        chatElements.log.scrollTop = chatElements.log.scrollHeight;
-
-        // Continue streaming with variable speed based on token type
+        // Dynamic speed adjustment with reduced calculations
         const currentToken = tokens[currentTokenIndex - 1];
         let nextDelay = speed;
 
-        // Adjust speed based on token characteristics
         if (currentToken === ' ') {
-          nextDelay = speed * 0.5; // Faster for spaces
+          nextDelay *= 0.5;
         } else if (currentToken.match(/[.!?]/)) {
-          nextDelay = speed * 2; // Slower after punctuation
+          nextDelay *= 2;
         } else if (currentToken.length > 3) {
-          nextDelay = speed * 1.2; // Slightly slower for longer tokens
+          nextDelay *= 1.2;
         }
 
-        // Add slight randomness for natural feel
-        nextDelay += Math.random() * 10;
+        // Reduced randomness calculation
+        nextDelay += Math.random() * 5;
 
         setTimeout(streamNextToken, nextDelay);
       } else {
-        // Remove cursor when done
-        cursor.remove();
-
-        // Final render to ensure proper markdown formatting
+        // Final render without cursor
         const finalHtml = DOMPurify.sanitize(marked.parse(text));
         element.innerHTML = finalHtml;
 
-        // Final scroll
-        chatElements.log.scrollTop = chatElements.log.scrollHeight;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        requestAnimationFrame(() => {
+          chatElements.log.scrollTop = chatElements.log.scrollHeight;
+        });
       }
     }
 
-    // Start streaming after a brief delay
-    setTimeout(streamNextToken, 100);
+    // Start streaming with minimal delay
+    setTimeout(streamNextToken, 50);
   }
 
   // Tokenize text into realistic chunks (similar to how LLMs generate tokens)
@@ -1936,50 +2005,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     return tokens;
   }
 
-  // Stream text in real-time as chunks arrive from server
+  // Optimized real-time streaming with throttled updates
   function streamTextRealtime(element) {
     let displayedLength = 0;
-    const speed = 25; // Optimized speed within user preferences (15-30ms intervals)
+    const speed = 25;
+    let animationFrameId;
+    let lastUpdateTime = 0;
+    const minUpdateInterval = 16; // ~60fps
+
+    // Pre-create cursor element
+    const cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    cursor.textContent = '▊';
+    cursor.style.opacity = '0.7';
 
     function streamNextChunk() {
+      const now = performance.now();
+      
       if (!element.isStreaming && displayedLength >= element.fullText.length) {
         // Streaming complete - render final markdown
         element.streamingActive = false;
         const finalHtml = DOMPurify.sanitize(marked.parse(element.fullText));
         element.innerHTML = finalHtml;
         element.classList.remove('streaming-text');
-        chatElements.log.scrollTop = chatElements.log.scrollHeight;
+        
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        requestAnimationFrame(() => {
+          chatElements.log.scrollTop = chatElements.log.scrollHeight;
+        });
         return;
       }
 
       const targetText = element.fullText;
       if (displayedLength < targetText.length) {
-        // Use word-based streaming (2-5 characters at a time) - optimized for smooth rendering
-        const chunkSize = Math.min(Math.floor(Math.random() * 3) + 2, targetText.length - displayedLength);
+        // Adaptive chunk size for better performance
+        const remainingLength = targetText.length - displayedLength;
+        const chunkSize = Math.min(
+          Math.floor(Math.random() * 3) + 2, 
+          remainingLength,
+          50 // Cap chunk size to prevent long processing times
+        );
         displayedLength += chunkSize;
 
-        const displayText = targetText.substring(0, displayedLength);
+        // Throttle DOM updates for better performance
+        if (now - lastUpdateTime >= minUpdateInterval) {
+          const displayText = targetText.substring(0, displayedLength);
 
-        // Add typing cursor during streaming
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = DOMPurify.sanitize(marked.parse(displayText));
+          // Use template for efficient DOM manipulation
+          const template = document.createElement('template');
+          template.innerHTML = DOMPurify.sanitize(marked.parse(displayText));
+          template.content.appendChild(cursor.cloneNode(true));
 
-        // Add cursor
-        const cursor = document.createElement('span');
-        cursor.className = 'typing-cursor';
-        cursor.textContent = '▊';
-        cursor.style.opacity = '0.7';
-        tempDiv.appendChild(cursor);
+          element.innerHTML = '';
+          element.appendChild(template.content);
 
-        element.innerHTML = tempDiv.innerHTML;
-        chatElements.log.scrollTop = chatElements.log.scrollHeight;
+          if (animationFrameId) cancelAnimationFrame(animationFrameId);
+          animationFrameId = requestAnimationFrame(() => {
+            chatElements.log.scrollTop = chatElements.log.scrollHeight;
+          });
 
-        // Continue streaming with variable speed
-        const nextDelay = speed + Math.random() * 10; // Add slight randomness
+          lastUpdateTime = now;
+        }
+
+        // Dynamic timing with less randomness
+        const nextDelay = speed + Math.random() * 5;
         setTimeout(streamNextChunk, nextDelay);
       } else {
-        // Wait for more chunks or completion
-        setTimeout(streamNextChunk, 50);
+        // Wait for more chunks or completion with longer interval
+        setTimeout(streamNextChunk, 100);
       }
     }
 
@@ -2563,6 +2656,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Clear chat log function (for sign-out)
   function clearChatLog() {
     if (chatElements.log) {
+      const children = Array.from(chatElements.log.children);
+      children.forEach(child => {
+        if (child.classList.contains('chatbox-message')) {
+          returnMessageElementToPool(child);
+        }
+      });
       chatElements.log.innerHTML = '';
     }
     chatMessages = [];
