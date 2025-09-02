@@ -17,7 +17,11 @@ Tables referenced in code:
   - Personal planner shifts for the logged-in manager (used by `/shifts`)
 
 - `user_settings`
-  - Per-user preferences such as `hourly_rate`, `profile_picture_url`
+  - Per-user preferences such as `custom_wage`, `profile_picture_url`, and UI options
+  - Fields of note:
+    - `custom_wage` (number): optional override of computed/preset wage
+    - `profile_picture_url` (text, nullable): user avatar
+    - `show_employee_tab` (boolean): Enterprise-only UI preference to show/hide the “Ansatte” tab; defaults to true
 
 - `audit_log`
   - Recent audit events; includes redaction and payload truncation
@@ -48,6 +52,5 @@ Row-Level Security policies should ensure:
 - AI-agent users (if any) cannot perform writes
 
 Refer to `docs/rls_policies.sql` for a starting point.
-
 
 

@@ -32,6 +32,7 @@ function formatMs(ms) {
 }
 
 function renderToolEvent(evt) {
+  // Deprecated in UI: kept for fallback logging
   const name = evt?.name || 'unknown';
   const ok = evt?.ok === false ? 'failed' : 'ok';
   const dur = evt?.duration_ms != null ? formatMs(evt.duration_ms) : '';
@@ -85,6 +86,21 @@ function getToolCallDisplayName(toolName) {
   };
   
   return toolDisplayNames[toolName] || `Kjører: ${toolName}`;
+}
+
+// Convert a present-tense friendly tool label to a concise past-tense one.
+function toPastTenseFriendly(label) {
+  try {
+    return String(label)
+      .replace('Ser på', 'Så på')
+      .replace('Legger til', 'Lagt til')
+      .replace('Redigerer', 'Redigert')
+      .replace('Sletter', 'Slettet')
+      .replace('Kopierer', 'Kopiert')
+      .replace('Henter', 'Hentet');
+  } catch (_) {
+    return label;
+  }
 }
 
 function setAppHeight() {
@@ -1654,6 +1670,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     return messageDiv;
   }
 
+  // Track args for tools between tool_call and tool_result (SSE path)
+  const _toolArgsByKey = new Map(); // key: `${iter}|${name}` -> argsSummary
+
+  // Create a simplified, clickable tool message that can reveal details
+  function createToolMessage({ name, argsSummary = '', ok = true, duration_ms = null, iter = null }) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chatbox-message tool';
+    wrapper.setAttribute('role', 'button');
+    wrapper.setAttribute('tabindex', '0');
+
+    // Main line (concise)
+    const friendly = getToolCallDisplayName(name || '');
+    const concise = toPastTenseFriendly(friendly);
+    const main = document.createElement('div');
+    main.className = 'tool-main';
+    main.textContent = concise + (ok === false ? ' ✗' : ' ✓');
+    wrapper.appendChild(main);
+
+    // Details (hidden by default)
+    const details = document.createElement('div');
+    details.className = 'tool-meta';
+    const metaLines = [];
+    if (name) metaLines.push(`Verktøy: ${name}`);
+    if (duration_ms != null) metaLines.push(`Varighet: ${formatMs(duration_ms)}`);
+    if (iter != null) metaLines.push(`Runde: #${iter}`);
+    if (argsSummary) {
+      metaLines.push('Parametre:');
+      // Render argsSummary in a code block-like style without unsafe HTML
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      code.textContent = argsSummary;
+      pre.appendChild(code);
+      const info = document.createElement('div');
+      info.className = 'tool-args-container';
+      for (const line of metaLines) {
+        const p = document.createElement('div');
+        p.textContent = line;
+        details.appendChild(p);
+      }
+      details.appendChild(pre);
+    } else {
+      for (const line of metaLines) {
+        const p = document.createElement('div');
+        p.textContent = line;
+        details.appendChild(p);
+      }
+      const p = document.createElement('div');
+      p.textContent = 'Parametre: (ikke tilgjengelig)';
+      details.appendChild(p);
+    }
+    wrapper.appendChild(details);
+
+    // Toggle details on click/keyboard
+    function toggle() {
+      wrapper.classList.toggle('open');
+    }
+    wrapper.addEventListener('click', toggle);
+    wrapper.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault(); toggle();
+      }
+    });
+
+    return wrapper;
+  }
+
   // Ensure the current streaming anchor sits immediately below the latest tool message
   function moveAnchorBelowLatestTool() {
     try {
@@ -2035,8 +2117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           // Render progress events inline in chat with strict ordering by ts
           if (message && message.type === 'progress') {
             if (message.phase === 'tool') {
-              const el = createMessageElement('tool', renderToolEvent(message));
-              insertIntoTimeline(el, message.ts || Date.now(), 'tool');
+              // Skip rendering if no params (WS has no args); keep spinner updates only
             }
             return; // Do not alter spinner
           }
@@ -2333,8 +2414,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       case 'tool_call_complete':
         updateSpinnerText(spinnerElement, (event.message || 'Verktøy ferdig') + ' ✓');
         break;
-      case 'tool_call':
-        // Current backend emits { type: 'tool_call', iteration, name, argsSummary }
+      case 'tool_call': {
+        // Store args for later use when result arrives
+        try {
+          const key = `${event.iteration}|${event.name}`;
+          if (event.argsSummary) _toolArgsByKey.set(key, String(event.argsSummary));
+        } catch (_) {}
+        // Keep spinner updated but avoid inserting a separate element yet
         if (event.name) {
           const friendlyName = getToolCallDisplayName(event.name);
           updateSpinnerText(spinnerElement, friendlyName);
@@ -2342,20 +2428,39 @@ document.addEventListener('DOMContentLoaded', async () => {
           updateSpinnerText(spinnerElement, 'Kjører verktøy');
         }
         break;
-      case 'tool_result':
-        // Current backend emits { type: 'tool_result', iteration, name, ok, duration_ms }
+      }
+      case 'tool_result': {
+        // Only render tool entries when parameters exist
+        const key = `${event.iteration}|${event.name}`;
+        const argsSummary = (_toolArgsByKey.get(key) || '').trim();
+        if (argsSummary.length > 0) {
+          const el = createToolMessage({
+            name: event.name,
+            argsSummary,
+            ok: event.ok,
+            duration_ms: event.duration_ms,
+            iter: event.iteration
+          });
+          insertIntoTimeline(el, Date.now(), 'tool');
+          window._turnHasRenderableTools = true;
+        }
+        // Keep spinner text in sync (optional)
         if (event.name) {
           const mark = event.ok ? '✓' : '✗';
-          const friendlyName = getToolCallDisplayName(event.name);
-          updateSpinnerText(spinnerElement, `${friendlyName.replace('Ser på', 'Så på').replace('Legger til', 'Lagt til').replace('Redigerer', 'Redigert').replace('Sletter', 'Slettet').replace('Kopierer', 'Kopiert').replace('Henter', 'Hentet')} ${mark}`);
+          const friendlyName = toPastTenseFriendly(getToolCallDisplayName(event.name));
+          updateSpinnerText(spinnerElement, `${friendlyName} ${mark}`);
         } else {
           updateSpinnerText(spinnerElement, event.ok ? 'Verktøy fullført ✓' : 'Verktøy feilet ✗');
         }
         break;
+      }
       case 'text_stream_start':
         // Replace spinner with empty text element for streaming
         streamingTextElement = document.createElement('div');
-        streamingTextElement.className = 'streaming-text';
+        streamingTextElement.className = 'chatbox-message assistant streaming-text';
+        if (!window._turnHasRenderableTools) {
+          streamingTextElement.classList.add('no-connector');
+        }
         streamingTextElement.fullText = ''; // Store the full text being built
         streamingTextElement.isStreaming = true;
         streamingTextElement.streamingActive = false; // Track if streaming animation is active
@@ -2508,6 +2613,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initChatbox);
   } else {
+    // Reset per-turn flags
+    window._turnHasRenderableTools = false;
     initChatbox();
   }
 

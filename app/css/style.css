@@ -16247,6 +16247,8 @@ body.chatbox-view .chatbox-container {
   align-self: flex-start; /* Align to left using flexbox */
   border: 1px solid var(--border);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle inner shadow for consistency */
+  position: relative; /* For connector line */
+  margin-left: var(--rail-margin-left); /* Align with tool rail */
 }
 
 /* Typing cursor for streaming messages - inline and subtle */
@@ -16274,6 +16276,90 @@ body.chatbox-view .chatbox-container {
   font-style: italic;
   border: 1px solid var(--border);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle inner shadow for consistency */
+}
+
+/* Tool call items: simplified, no bubble, toned-down, with connectors */
+.chatbox-message.tool,
+.chatbox-message.tool_summary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  box-shadow: none;
+  padding: 4px 0 4px 16px; /* Match chat bubble left padding for text alignment */
+  max-width: 100%;
+  display: block;
+  position: relative; /* for connector lines */
+  margin-left: var(--rail-margin-left); /* Align with assistant bubble */
+  line-height: 1.4; /* Ensure consistent line height for dot alignment */
+}
+
+/* Vertical connector line shared across tool steps and assistant answer */
+.chatbox-log {
+  /* Rail configuration */
+  --rail-margin-left: 28px;         /* indent for rail participants */
+  --rail-line-inset: 12px;          /* distance from content edge to rail line */
+  --rail-line-x: calc(-1 * (var(--rail-margin-left) - var(--rail-line-inset)));
+  --connector-gap: 8px;             /* equals .chatbox-log gap */
+  --connector-thickness: 2px;
+  --connector-dot-size: 8px;
+}
+
+.chatbox-message.tool::before,
+.chatbox-message.assistant::before {
+  content: '';
+  position: absolute;
+  left: var(--rail-line-x);
+  top: calc(var(--connector-gap) * -0.5);
+  bottom: calc(var(--connector-gap) * -0.5);
+  width: var(--connector-thickness);
+  background: var(--border);
+  opacity: 0.6; /* toned down */
+}
+
+/* Dot marker for tool entries */
+.chatbox-message.tool::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--rail-line-x) - (var(--connector-dot-size) / 2) + (var(--connector-thickness) / 2));
+  top: calc(4px + 0.5em); /* Center dot on text line */
+  width: var(--connector-dot-size);
+  height: var(--connector-dot-size);
+  border-radius: 50%;
+  background: var(--border);
+  opacity: 0.9;
+}
+
+/* Hide connector when not needed */
+.chatbox-message.assistant.no-connector::before {
+  display: none;
+}
+
+/* Tool message content */
+.chatbox-message.tool .tool-main {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Hidden details shown on click */
+.chatbox-message.tool .tool-meta {
+  display: none;
+  margin-top: 6px;
+  color: var(--text-secondary);
+  border-left: 2px dashed var(--border);
+  padding-left: 10px;
+  opacity: 0.85;
+}
+
+.chatbox-message.tool.open .tool-meta {
+  display: block;
+}
+
+/* Make code within tool details small and readable */
+.chatbox-message.tool .tool-meta pre {
+  margin: 6px 0 0;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
 }
 
 /* Enhanced markdown styling within chat messages */

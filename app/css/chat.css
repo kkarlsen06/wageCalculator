@@ -10,11 +10,7 @@
   display: block !important;
   max-width: 100% !important;
 
-  /* Plain monospace with connector */
-  margin-left: 1rem;
-  padding: 0 !important;
-  padding-left: 0.5rem !important;
-  border-left: 2px solid var(--accent);
+  /* Ensure timeline elements don't interfere with positioning */
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.85em;
   color: var(--text-muted);

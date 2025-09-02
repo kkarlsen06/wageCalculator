@@ -3615,14 +3615,14 @@ app.get('/settings', async (req, res) => {
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const { data, error } = await supabase
       .from('user_settings')
-      .select('custom_wage, profile_picture_url')
+      .select('custom_wage, profile_picture_url, show_employee_tab')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       // If column missing, degrade gracefully
       const msg = (error?.message || '').toString();
-      const isMissingColumn = msg.includes('profile_picture_url') || (error?.code === '42703');
+      const isMissingColumn = msg.includes('profile_picture_url') || msg.includes('show_employee_tab') || (error?.code === '42703');
       const isMissingTable = (error?.code === '42P01') || msg.includes('relation') && msg.includes('does not exist');
       if (!isMissingColumn && !isMissingTable) {
         console.error('GET /settings db error:', msg, error?.stack || '');
@@ -3635,7 +3635,8 @@ app.get('/settings', async (req, res) => {
 
     return res.json({
       custom_wage: data?.custom_wage ?? 0,
-      profile_picture_url: data?.profile_picture_url ?? null
+      profile_picture_url: data?.profile_picture_url ?? null,
+      show_employee_tab: data?.show_employee_tab ?? true
     });
   } catch (e) {
     console.error('GET /settings error:', e?.message || e, e?.stack || '');
@@ -3657,7 +3658,7 @@ app.put('/settings', async (req, res) => {
       return res.status(403).json({ error: 'Agent writes are not allowed' });
     }
 
-    const { custom_wage, profile_picture_url } = req.body || {};
+    const { custom_wage, profile_picture_url, show_employee_tab } = req.body || {};
 
     if (custom_wage !== undefined && custom_wage !== null && (typeof custom_wage !== 'number' || Number.isNaN(custom_wage))) {
       return res.status(400).json({ error: 'custom_wage must be a number' });
@@ -3665,19 +3666,23 @@ app.put('/settings', async (req, res) => {
     if (profile_picture_url !== undefined && profile_picture_url !== null && typeof profile_picture_url !== 'string') {
       return res.status(400).json({ error: 'profile_picture_url must be a string or null' });
     }
+    if (show_employee_tab !== undefined && typeof show_employee_tab !== 'boolean') {
+      return res.status(400).json({ error: 'show_employee_tab must be a boolean' });
+    }
 
     const userId = req?.auth?.userId || req?.user_id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const payload = { user_id: userId };
     if (custom_wage !== undefined) payload.custom_wage = custom_wage;
     if (profile_picture_url !== undefined) payload.profile_picture_url = profile_picture_url;
+    if (show_employee_tab !== undefined) payload.show_employee_tab = show_employee_tab;
 
     let data = null; let error = null;
     try {
       const upsert = await supabase
         .from('user_settings')
         .upsert(payload, { onConflict: 'user_id' })
-        .select('custom_wage, profile_picture_url')
+        .select('custom_wage, profile_picture_url, show_employee_tab')
         .single();
       data = upsert.data; error = upsert.error;
     } catch (e) {
@@ -3686,17 +3691,18 @@ app.put('/settings', async (req, res) => {
 
     if (error) {
       const msg = (error?.message || '').toString();
-      const isMissingColumn = msg.includes('profile_picture_url') || (error?.code === '42703');
+      const isMissingColumn = msg.includes('profile_picture_url') || msg.includes('show_employee_tab') || (error?.code === '42703');
       if (isMissingColumn) {
         // Retry without profile_picture_url when column missing
         const retryPayload = { user_id: userId };
         if (custom_wage !== undefined) retryPayload.custom_wage = custom_wage;
+        // Intentionally skip show_employee_tab if column missing
         const retry = await supabase
           .from('user_settings')
           .upsert(retryPayload, { onConflict: 'user_id' })
           .select('custom_wage')
           .single();
-        return res.json({ custom_wage: retry.data?.custom_wage ?? 0, profile_picture_url: null });
+        return res.json({ custom_wage: retry.data?.custom_wage ?? 0, profile_picture_url: null, show_employee_tab: true });
       }
       console.error('PUT /settings error:', msg, error?.stack || '');
       return res.status(500).json({ error: msg, code: error?.code || null, stack: error?.stack || null });
@@ -3704,7 +3710,8 @@ app.put('/settings', async (req, res) => {
 
     return res.json({
       custom_wage: data?.custom_wage ?? 0,
-      profile_picture_url: data?.profile_picture_url ?? null
+      profile_picture_url: data?.profile_picture_url ?? null,
+      show_employee_tab: data?.show_employee_tab ?? true
     });
   } catch (e) {
     console.error('PUT /settings exception:', e?.message || e, e?.stack || '');
@@ -6611,14 +6618,14 @@ app.get('/api/settings', async (req, res) => {
 
     const { data, error } = await supabase
       .from('user_settings')
-      .select('custom_wage, profile_picture_url')
+      .select('custom_wage, profile_picture_url, show_employee_tab')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       // If column missing, degrade gracefully
       const msg = (error?.message || '').toString();
-      const isMissingColumn = msg.includes('profile_picture_url') || (error?.code === '42703');
+      const isMissingColumn = msg.includes('profile_picture_url') || msg.includes('show_employee_tab') || (error?.code === '42703');
       const isMissingTable = (error?.code === '42P01') || msg.includes('relation') && msg.includes('does not exist');
       if (!isMissingColumn && !isMissingTable) {
         console.error("[/api/settings] DB error:", error.message, error.stack);
@@ -6634,7 +6641,8 @@ app.get('/api/settings', async (req, res) => {
 
     return res.json({
       custom_wage: data?.custom_wage ?? 0,
-      profile_picture_url: data?.profile_picture_url ?? null
+      profile_picture_url: data?.profile_picture_url ?? null,
+      show_employee_tab: data?.show_employee_tab ?? true
     });
   } catch (e) {
     console.error("[/api/settings] Exception:", e.message, e.stack);

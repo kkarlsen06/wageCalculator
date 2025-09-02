@@ -157,3 +157,34 @@ async function startCheckout(priceId, { mode = 'subscription', quantity = 1 } = 
 <button id="buyPro">Subscribe to Pro</button>
 <button id="buyMax">Subscribe to Max</button>
 ```
+
+### Settings
+
+- Routes: `GET /settings`, `PUT /settings` (also `GET /api/settings`)
+- Auth: Bearer JWT required
+
+- GET response shape:
+
+```json
+{
+  "custom_wage": 200,
+  "profile_picture_url": "https://.../avatar.jpg",
+  "show_employee_tab": true
+}
+```
+
+- PUT request body (all fields optional; validated types):
+
+```json
+{
+  "custom_wage": 200,
+  "profile_picture_url": null,
+  "show_employee_tab": true
+}
+```
+
+- Notes:
+  - `show_employee_tab` controls visibility of the “Ansatte” tab in the app’s tab bar.
+  - It only takes effect for users with an active Enterprise (max) subscription; for others the tab remains hidden regardless.
+  - When absent, the server returns `show_employee_tab: true` as a default.
+  - The server degrades gracefully if legacy schemas don’t yet include this column.

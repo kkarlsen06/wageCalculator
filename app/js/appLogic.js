@@ -2057,10 +2057,12 @@ export const app = {
             this.monthlyGoal = settings.monthly_goal || 20000;
                 this.currencyFormat = settings.currency_format || false;
 
-                this.defaultShiftsView = settings.default_shifts_view || 'list';
-                this.taxDeductionEnabled = settings.tax_deduction_enabled === true;
-                this.taxPercentage = parseFloat(settings.tax_percentage) || 0.0;
-                this.payrollDay = parseInt(settings.payroll_day) || 15;
+            this.defaultShiftsView = settings.default_shifts_view || 'list';
+            // Enterprise-only preference: default to true when not set
+            this.showEmployeeTab = settings.show_employee_tab !== false;
+            this.taxDeductionEnabled = settings.tax_deduction_enabled === true;
+            this.taxPercentage = parseFloat(settings.tax_percentage) || 0.0;
+            this.payrollDay = parseInt(settings.payroll_day) || 15;
 
 
 
@@ -2108,6 +2110,7 @@ export const app = {
         this.currencyFormat = false; // Default to "kr" instead of "NOK"
 
         this.defaultShiftsView = 'list'; // Default to list view for shifts
+        this.showEmployeeTab = true; // Default to showing employees tab if subscribed
     },
 
     // Helper function to test custom bonuses
@@ -2214,6 +2217,18 @@ export const app = {
             defaultShiftsViewToggle.checked = this.defaultShiftsView === 'calendar';
         }
 
+        // Enterprise-only: Employees tab visibility toggle
+        const employeeTabVisibilityGroup = document.getElementById('employeeTabVisibilityGroup');
+        const showEmployeeTabToggle = document.getElementById('showEmployeeTabToggle');
+        if (employeeTabVisibilityGroup && showEmployeeTabToggle) {
+            hasEnterpriseSubscription().then(hasEnterprise => {
+                employeeTabVisibilityGroup.style.display = hasEnterprise ? '' : 'none';
+                // If not enterprise, keep toggle disabled
+                showEmployeeTabToggle.disabled = !hasEnterprise;
+                showEmployeeTabToggle.checked = (this.showEmployeeTab !== false);
+            });
+        }
+
         // Update wage caregiver toggle based on subscription
         const isWageCaregiverToggle = document.getElementById('isWageCaregiverToggle');
         if (isWageCaregiverToggle) {
@@ -2304,6 +2319,7 @@ export const app = {
                 if ('currency_format' in existingSettings) settingsData.currency_format = this.currencyFormat;
 
                 if ('default_shifts_view' in existingSettings) settingsData.default_shifts_view = this.defaultShiftsView;
+                if ('show_employee_tab' in existingSettings) settingsData.show_employee_tab = (this.showEmployeeTab !== false);
                 if ('custom_bonuses' in existingSettings) {
                     settingsData.custom_bonuses = this.customBonuses || {};
                 }
@@ -2350,6 +2366,7 @@ export const app = {
                 settingsData.currency_format = this.currencyFormat;
 
                 settingsData.default_shifts_view = this.defaultShiftsView;
+                settingsData.show_employee_tab = (this.showEmployeeTab !== false);
                 settingsData.custom_bonuses = this.customBonuses || {};
                 settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 settingsData.tax_percentage = this.taxPercentage;
@@ -10403,10 +10420,11 @@ export const app = {
         // Store current view for cleanup purposes
         this.currentView = 'employees';
 
-        // Check for enterprise subscription
+        // Check for enterprise subscription and user preference
         const hasEnterprise = await hasEnterpriseSubscription();
+        const shouldShow = hasEnterprise && (this.showEmployeeTab !== false);
         
-        if (hasEnterprise) {
+        if (shouldShow) {
             // Show normal employee interface
             this.showEmployeesPlaceholder();
 
@@ -10427,8 +10445,12 @@ export const app = {
                 this.employeeCarousel.preloadAvatars?.();
             }
         } else {
-            // Non-Enterprise: hide/deny employees view and redirect to dashboard
-            if (window.showToast) { window.showToast('Ansatte krever Enterprise-abonnement', 'info'); }
+            // Not visible: either missing Enterprise or user disabled the tab
+            if (!hasEnterprise) {
+                if (window.showToast) { window.showToast('Ansatte krever Enterprise-abonnement', 'info'); }
+            } else if (this.showEmployeeTab === false) {
+                if (window.showToast) { window.showToast('Ansatte-fanen er deaktivert i innstillinger', 'info'); }
+            }
             this.switchToView('dashboard');
         }
     },
@@ -10630,11 +10652,12 @@ export const app = {
         if (!ansatteTab) return;
 
         const hasEnterprise = await hasEnterpriseSubscription();
-        // Only show the Ansatte tab for Enterprise (max) subscribers
-        ansatteTab.style.display = hasEnterprise ? 'flex' : 'none';
+        const shouldShow = hasEnterprise && (this.showEmployeeTab !== false);
+        // Only show the Ansatte tab for Enterprise (max) subscribers who opt-in
+        ansatteTab.style.display = shouldShow ? 'flex' : 'none';
 
-        // If user somehow is on employees view without Enterprise, redirect to dashboard
-        if (!hasEnterprise && this.currentView === 'employees') {
+        // If user is on employees view without visibility, redirect to dashboard
+        if (!shouldShow && this.currentView === 'employees') {
             this.switchToView('dashboard');
         }
     },
@@ -11244,6 +11267,25 @@ export const app = {
                 e.preventDefault();
                 isWageCaregiverToggle.checked = !isWageCaregiverToggle.checked;
                 this.toggleWageCaregiver();
+            });
+        }
+
+        // Employees tab visibility toggle (Enterprise-only)
+        const showEmployeeTabToggle = document.getElementById('showEmployeeTabToggle');
+        if (showEmployeeTabToggle) {
+            showEmployeeTabToggle.addEventListener('change', async () => {
+                const hasEnterprise = await hasEnterpriseSubscription();
+                if (!hasEnterprise) {
+                    // Guard: should be hidden, but revert to previous state if shown
+                    showEmployeeTabToggle.checked = (this.showEmployeeTab !== false);
+                    if (window.showToast) {
+                        window.showToast('Krever Enterprise-abonnement', 'info');
+                    }
+                    return;
+                }
+                this.showEmployeeTab = !!showEmployeeTabToggle.checked;
+                await this.saveSettingsToSupabase();
+                await this.updateTabBarVisibility();
             });
         }
 
