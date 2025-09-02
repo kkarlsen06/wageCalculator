@@ -1396,58 +1396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Note: Click outside handler removed since we no longer use input mode
   }
 
-  // Add personalized greeting message
-  async function addGreetingMessage() {
-    try {
-      // Get current time for appropriate greeting
-      const now = new Date();
-      const hour = now.getHours();
-      let timeGreeting;
-
-      if (hour >= 5 && hour < 12) {
-        timeGreeting = 'God morgen';
-      } else if (hour >= 12 && hour < 17) {
-        timeGreeting = 'God dag';
-      } else if (hour >= 17 && hour < 22) {
-        timeGreeting = 'God kveld';
-      } else {
-        timeGreeting = 'God natt';
-      }
-
-      // Get user name for personalization
-      let userName = 'Bruker';
-      try {
-        if (window.supa && window.supa.auth) {
-          const { data: { user } } = await window.supa.auth.getUser();
-          if (user) {
-            userName = user.user_metadata?.first_name ||
-                      user.email?.split('@')[0] ||
-                      'Bruker';
-          }
-        }
-      } catch (err) {
-        console.log('Could not get user info for greeting:', err);
-      }
-
-      // Create engaging greeting message
-      const greetingMessages = [
-        `${timeGreeting}, ${userName}! 👋 Jeg er her for å hjelpe deg med å registrere skift og holde oversikt over arbeidstiden din. Hva kan jeg hjelpe deg med i dag?`,
-        `${timeGreeting}! 🌟 Klar for å gjøre arbeidsdagen din enklere? Jeg kan hjelpe deg registrere skift, legge til serier, eller svare på spørsmål om appen.`,
-        `Hei ${userName}! ${timeGreeting} ✨ Jeg er din personlige assistent for skiftregistrering. Spør meg om hva som helst - fra å legge til nye skift til å forstå statistikkene dine!`
-      ];
-
-      // Select a random greeting
-      const randomGreeting = greetingMessages[Math.floor(Math.random() * greetingMessages.length)];
-
-      // Add the greeting message with streaming animation
-      appendMessage('assistant', randomGreeting, { streaming: true, streamSpeed: 25 });
-
-    } catch (err) {
-      console.error('Error creating greeting message:', err);
-      // Fallback greeting with streaming animation
-      appendMessage('assistant', 'Hei! 👋 Jeg er her for å hjelpe deg med å registrere skift og holde oversikt over arbeidstiden din. Hva kan jeg hjelpe deg med?', { streaming: true, streamSpeed: 25 });
-    }
-  }
+  // Removed: initial greeting message; chat starts empty
 
   // Note: enterInputMode and exitInputMode functions removed since we now expand directly
 
@@ -1471,8 +1420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Add class to body for CSS targeting (fallback for browsers without :has() support)
     document.body.classList.add('chatbox-expanded-active');
 
-    // Note: Greeting message is now handled by the tab view system in appLogic.js
-    // to avoid duplicate greetings
+    // No auto-greeting; chat log remains empty until user writes
 
     // Focus input after animation - prevent any page movement
     setTimeout(() => {
@@ -1527,8 +1475,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Reset chat state
     hasFirstMessage = false;
     
-    // Add a new greeting message
-    addGreetingMessage();
+    // Do not add a greeting; leave chat empty until user writes
     
     // Focus the input field
     setTimeout(() => {

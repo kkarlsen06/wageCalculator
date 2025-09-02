@@ -55,7 +55,8 @@ class WebSocketManager {
       const wsUrl = this.getWebSocketUrl();
       console.log('[WS] Connecting to:', wsUrl);
       
-      this.ws = new WebSocket(wsUrl);
+      // Use subprotocols to pass JWT: ["jwt", token]
+      this.ws = new WebSocket(wsUrl, ['jwt', this.token]);
       this.setupEventHandlers();
       
       // Wait for connection or timeout

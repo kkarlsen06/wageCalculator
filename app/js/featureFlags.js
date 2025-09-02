@@ -1,6 +1,8 @@
 // Feature flags utility for client-side feature toggles
 // Provides a hook-like interface for fetching and caching feature flags
 
+import { API_BASE as RESOLVED_API_BASE } from '/src/js/apiBase.js';
+
 class FeatureFlags {
     constructor() {
         this.cache = new Map();
@@ -26,7 +28,6 @@ class FeatureFlags {
 
         try {
             const fallbackBase = (typeof window !== 'undefined' && window.CONFIG?.apiBase) || '';
-            const { API_BASE: RESOLVED_API_BASE } = await import('/src/js/apiBase.js');
             const API_BASE = fallbackBase || RESOLVED_API_BASE || '/api';
 
             // Use browser fetch only; node-fetch is not bundled in browser builds

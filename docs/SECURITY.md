@@ -6,17 +6,16 @@ This application uses **JWKS-based JWT verification** for secure authentication:
 
 - **JWT Issuer**: `${SUPABASE_URL}/auth/v1`
 - **Verification Method**: Asymmetric cryptography using Supabase's JWKS endpoint
-- **Algorithm**: ES256/RS256 (asymmetric keys only)
+- **Algorithm**: ES256 (asymmetric keys only)
 - **Key Rotation**: Supabase keys should be rotated quarterly for security
 
 ### Server-Side Verification
 
 The server verifies JWTs using the `jose` library by:
-1. Fetching public keys from `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`
-2. Validating JWT signatures cryptographically
-3. Verifying issuer and standard claims
+1. Fetching public keys from `${SUPABASE_JWKS_URL}` (default `https://id.kkarlsen.dev/auth/v1/.well-known/jwks.json`)
+2. Validating JWT signatures cryptographically using ES256
 
-**No JWT secrets are stored on the server** - verification uses public keys only.
+**No JWT secrets are stored on the server** — verification uses public keys (remote JWKS) only.
 
 ## Environment Variables
 

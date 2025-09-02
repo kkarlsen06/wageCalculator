@@ -28,10 +28,10 @@ These are loaded at build time by Vite, and surfaced to legacy code via `src/run
 - `PORT` (optional, default `3000`)
 - `ENABLE_STATIC` / `STATIC_DIR` (optional): Serve extra static assets in dev
 
-Server-side JWT verification uses `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` with `jose`. No symmetric secrets are stored.
+Server-side JWT verification uses `jose` with a remote JWKS URL:
+- `SUPABASE_JWKS_URL` (optional): JWKS endpoint. Defaults to `https://id.kkarlsen.dev/auth/v1/.well-known/jwks.json`.
+- Algorithm restricted to ES256. No symmetric secrets are stored.
 
 ### Security Notes
 - Never place backend secrets (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`) in Netlify (frontend) environment.
-- The server verifies JWTs using JWKS from `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`.
-
-
+- The server verifies JWTs using JWKS from `${SUPABASE_JWKS_URL}` (default `https://id.kkarlsen.dev/auth/v1/.well-known/jwks.json`).

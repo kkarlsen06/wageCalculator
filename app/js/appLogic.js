@@ -10364,10 +10364,7 @@ export const app = {
                 chatboxClose.style.display = 'block';
             }
 
-            // Add greeting message if chat log is empty
-            if (chatboxLog && chatboxLog.children.length === 0) {
-                this.addChatGreetingMessage();
-            }
+            // Keep chat log empty until the user sends a message
 
             // Focus on the input field for immediate interaction
             const chatboxInput = document.getElementById('chatboxInput');
@@ -10379,52 +10376,7 @@ export const app = {
         }
     },
 
-    addChatGreetingMessage() {
-        const chatboxLog = document.getElementById('chatboxLog');
-        if (!chatboxLog) return;
-
-        // Get user's first name for personalized greeting
-        const userNickname = document.getElementById('userNickname');
-        const userName = userNickname ? userNickname.textContent : 'Bruker';
-
-        // Create the greeting message text
-        const greetingText = `Hei ${userName}! :)
-
-Jeg er LønnAI, din assistent for vakter og lønn. 
-Jeg kan registrere vakter, opprette serier, svare på lønnsspørsmål og gi planleggingstips.
-Hva trenger du hjelp med i dag?`;
-
-        // Use the modern appendMessage function with streaming animation
-        // Check if the modern chatbox system is available
-        if (window.chatbox && window.chatbox.appendMessage) {
-            window.chatbox.appendMessage('assistant', greetingText, { streaming: true, streamSpeed: 25 });
-        } else {
-            // Fallback to creating message element directly with proper bubble styling
-            const greetingMessage = document.createElement('div');
-            greetingMessage.className = 'chatbox-message assistant'; // Use modern assistant class
-
-            // Use the streaming function if available
-            if (typeof streamText === 'function') {
-                greetingMessage.innerHTML = '';
-                chatboxLog.appendChild(greetingMessage);
-                streamText(greetingMessage, greetingText, 25);
-            } else {
-                // Final fallback - direct HTML with proper markdown rendering
-                if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
-                    const html = DOMPurify.sanitize(marked.parse(greetingText));
-                    greetingMessage.innerHTML = html;
-                } else {
-                    greetingMessage.textContent = greetingText;
-                }
-                chatboxLog.appendChild(greetingMessage);
-            }
-
-            // Scroll to bottom
-            setTimeout(() => {
-                chatboxLog.scrollTop = chatboxLog.scrollHeight;
-            }, 50);
-        }
-    },
+    // Removed: addChatGreetingMessage (no initial assistant message)
 
     async showEmployeesView() {
         const body = document.body;

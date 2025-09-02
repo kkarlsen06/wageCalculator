@@ -11,7 +11,7 @@ Full schema: see `docs/OPENAPI.yaml`.
 
 ### Auth
 - JWT Bearer tokens from Supabase Auth are required for protected routes.
-- The server validates with JWKS from `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`.
+- The server validates with `jose` using JWKS from `${SUPABASE_JWKS_URL}` (default `https://id.kkarlsen.dev/auth/v1/.well-known/jwks.json`) and restricts algorithms to `ES256`.
 
 ### Notable Endpoints
 

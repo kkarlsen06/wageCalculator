@@ -16122,6 +16122,14 @@ body.chatbox-view .chatbox-container {
   align-items: center;
 }
 
+/* Keep pill placeholder on one line and let it truncate if needed */
+.chatbox-pill-text {
+  min-width: 0;            /* Allow flex item to shrink */
+  overflow: hidden;        /* Hide overflowed text */
+  text-overflow: ellipsis; /* Show ellipsis when truncated */
+  white-space: nowrap;     /* Keep on a single line */
+}
+
 .chatbox-close,
 .chatbox-new-chat {
   background: none;
@@ -16583,6 +16591,9 @@ body.chatbox-view .chatbox-container {
   font-size: 12px;
   color: var(--text-secondary);
   margin-left: 12px;
+  /* Keep status text on a single line and prevent shrinking */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .connection-indicator {

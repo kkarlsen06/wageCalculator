@@ -170,6 +170,7 @@ Details and diagram: `docs/ARCHITECTURE_AND_SNAPSHOTS.md`
 - Supabase RLS policies enforce per-manager access and block AI-agent writes. See `docs/rls_policies.sql`.
 - Server never exposes service-role keys to the client. Frontend uses only `VITE_*` env vars.
 - Audit log sanitizes sensitive keys and caps payload size. Metrics exposed for monitoring.
+- JWT verification uses `jose` with a remote JWKS (ES256 only). Configure `SUPABASE_JWKS_URL` or it defaults to `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`.
 
 ## Deployment
 

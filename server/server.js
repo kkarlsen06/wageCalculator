@@ -31,7 +31,9 @@ import { verifySupabaseJWT, getUidFromAuthHeader } from './lib/auth/verifySupaba
 import { authMiddleware } from './middleware/auth.js';
 import Stripe from 'stripe';
 import { WebSocketServer } from 'ws';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { createServer } from 'http';
+import { SYSTEM_PROMPT } from './lib/agentPrompt.js';
 // Node 22+ has global fetch; use Stripe REST API to avoid extra deps
 
 // ---------- path helpers ----------
@@ -3816,56 +3818,14 @@ app.get('/chat/stream', authenticateUser, async (req, res) => {
   // From here, behave like /chat with stream=true, but use sess payload
   const messages = sess.messages;
   const stream = true;
-  const currentMonth = sess.currentMonth;
-  const currentYear = sess.currentYear;
 
   // Remove session to avoid reuse
   CHAT_SESSIONS.delete(sid);
   
   // The rest mirrors the SSE setup and agent loop from /chat
-  const user = req.user;
-  let userName = 'bruker';
-  if (user) {
-    userName = user.user_metadata?.first_name || user.email?.split('@')[0] || 'bruker';
-  }
+  // Removed inline time/month prompt context; SYSTEM_PROMPT is static now.
 
-  const today = new Date().toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
-  const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
-  const viewingMonth = currentMonth || new Date().getMonth() + 1;
-  const viewingYear = currentYear || new Date().getFullYear();
-  const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
-  const viewingMonthName = monthNames[viewingMonth - 1];
-  const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
-  const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
-
-  const systemContextHint = {
-    role: 'system',
-    content:
-`Du er en norsk vaktplanleggingsassistent for én bruker. Svar alltid på norsk, kort og tydelig.
-
-Kontekst for tid:
-- "i dag" = ${today} (Europe/Oslo)
-- "i morgen" = ${tomorrow} (Europe/Oslo)
-- Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet:
-  "denne måneden"/"inneværende måned" = ${viewingMonthName} ${viewingYear}
-  "forrige måned" = måneden før ${viewingMonthName} ${viewingYear}
-  "neste måned" = måneden etter ${viewingMonthName} ${viewingYear}
-
-Verktøy og bruk:
-- Oversikt/lister: getShifts(criteria_type=[week|next|date_range|all]). For måned, bruk date_range: from_date=${firstDay}, to_date=${lastDay}.
-- Lønnsdata: getWageDataByWeek | getWageDataByMonth | getWageDataByDateRange.
-- Endringer: addShift | addSeries | editShift | deleteShift | deleteSeries | copyShift.
-
-Policy for verktøy:
-- Unngå identiske/overflødige kall med samme parametere.
-- Ikke gjett ved uklarheter; still maks ett kort oppfølgingsspørsmål ved reell tvetydighet. Ikke spør om bekreftelse når intensjonen er tydelig.
-
-Svarformat til bruker:
-- Datoformat: dd.mm.yyyy. Bruk korte avsnitt; bruk fet skrift for dato/klokkeslett.
-- Viktig: Når du svarer med flere skift, skriv hvert skift på én egen linje og separer hvert skift med et linjeskift (line break).
-- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider). Ikke inkluder oppfordringer til endringer ved rene oppslag.
-- Hvis du får informasjon om lønn for flere skift, gjengi informasjonen til brukeren.`
-  };
+  const systemContextHint = { role: 'system', content: SYSTEM_PROMPT };
 
   const chatTools = getToolsForRequest(req);
 
@@ -4014,51 +3974,9 @@ app.post('/chat', authenticateUser, async (req, res) => {
     return res.status(503).json({ error: 'OpenAI not configured' });
   }
 
-  // User info for light personalization
-  const user = req.user;
-  let userName = 'bruker';
-  if (user) {
-    userName = user.user_metadata?.first_name || user.email?.split('@')[0] || 'bruker';
-  }
+  // Removed inline time/month prompt context; SYSTEM_PROMPT is static now.
 
-  // Time/context hints
-  const today = new Date().toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
-  const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
-  const viewingMonth = currentMonth || new Date().getMonth() + 1;
-  const viewingYear = currentYear || new Date().getFullYear();
-  const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
-  const viewingMonthName = monthNames[viewingMonth - 1];
-  const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
-  const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
-
-  const systemContextHint = {
-    role: 'system',
-    content:
-`Du er en norsk vaktplanleggingsassistent for én bruker. Svar alltid på norsk, kort og tydelig.
-
-Kontekst for tid:
-- "i dag" = ${today} (Europe/Oslo)
-- "i morgen" = ${tomorrow} (Europe/Oslo)
-- Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet:
-  "denne måneden"/"inneværende måned" = ${viewingMonthName} ${viewingYear}
-  "forrige måned" = måneden før ${viewingMonthName} ${viewingYear}
-  "neste måned" = måneden etter ${viewingMonthName} ${viewingYear}
-
-Verktøy og bruk:
-- Oversikt/lister: getShifts(criteria_type=[week|next|date_range|all]). For måned, bruk date_range: from_date=${firstDay}, to_date=${lastDay}.
-- Lønnsdata: getWageDataByWeek | getWageDataByMonth | getWageDataByDateRange.
-- Endringer: addShift | addSeries | editShift | deleteShift | deleteSeries | copyShift.
-
-Policy for verktøy:
-- Unngå identiske/overflødige kall med samme parametere.
-- Ikke gjett ved uklarheter; still maks ett kort oppfølgingsspørsmål ved reell tvetydighet. Ikke spør om bekreftelse når intensjonen er tydelig.
-
-Svarformat til bruker:
-- Datoformat: dd.mm.yyyy. Bruk korte avsnitt; bruk fet skrift for dato/klokkeslett.
-- Viktig: Når du svarer med flere skift, skriv hvert skift på én egen linje og separer hvert skift med et linjeskift (line break).
-- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider). Ikke inkluder oppfordringer til endringer ved rene oppslag.
-- Hvis du får informasjon om lønn for flere skift, gjengi informasjonen til brukeren.`
-  };
+  const systemContextHint = { role: 'system', content: SYSTEM_PROMPT };
 
   // Tool allowlist based on ai_agent claim
   const chatTools = getToolsForRequest(req);
@@ -6685,12 +6603,25 @@ app.get('/api/settings', async (req, res) => {
 // ---------- WebSocket connection management ----------
 const wsConnections = new Map(); // Map<connectionId, { ws, userId, lastPing }>
 
+// Use Supabase remote JWKS for WebSocket auth (ES256)
+const SUPABASE_JWKS_URL = process.env.SUPABASE_JWKS_URL || 'https://id.kkarlsen.dev/auth/v1/.well-known/jwks.json';
+const WS_JWKS = createRemoteJWKSet(new URL(SUPABASE_JWKS_URL));
+
 function handleWebSocketConnection(ws, req) {
   const connectionId = randomUUID();
   let isAuthenticated = false;
   let userId = null;
   
   console.log(`[WS] New connection: ${connectionId}`);
+  try {
+    console.log('[WS] Connection header sec-websocket-protocol:', req?.headers?.['sec-websocket-protocol'] || '(none)', 'selected=', ws.protocol || '(none)');
+  } catch (_) {}
+
+  // Enforce selected subprotocol
+  if (ws.protocol !== 'jwt') {
+    try { ws.close(4001, 'Missing jwt subprotocol'); } catch (_) {}
+    return;
+  }
   
   // Set connection timeout for authentication
   const authTimeout = setTimeout(() => {
@@ -6699,6 +6630,38 @@ function handleWebSocketConnection(ws, req) {
       ws.close(4001, 'Authentication timeout');
     }
   }, 30000); // 30 second auth timeout
+
+  // Attempt auth via WebSocket subprotocols: ["jwt", token]
+  try {
+    const protoHeader = req.headers['sec-websocket-protocol'];
+    if (protoHeader) {
+      const parts = String(protoHeader).split(',').map(s => s.trim());
+      if (parts.length >= 2 && parts[0] === 'jwt') {
+        const token = parts[1];
+        if (token) {
+          jwtVerify(token, WS_JWKS, { algorithms: ['ES256'] })
+            .then(({ payload }) => {
+              if (payload?.sub) {
+                userId = payload.sub;
+                isAuthenticated = true;
+                clearTimeout(authTimeout);
+                wsConnections.set(connectionId, { ws, userId, lastPing: Date.now() });
+                ws.send(JSON.stringify({ type: 'auth_success', connectionId, message: 'WebSocket authenticated successfully' }));
+                console.log(`[WS] Authenticated (protocol) user ${userId} on connection ${connectionId}`);
+              } else {
+                ws.close(4001, 'Invalid authentication token');
+              }
+            })
+            .catch((err) => {
+              console.error('[WS] Protocol auth error:', err?.message || err);
+              try { ws.close(4001, 'Authentication failed'); } catch (_) {}
+            });
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[WS] Failed to parse subprotocol auth:', err?.message || err);
+  }
   
   ws.on('message', async (data) => {
     try {
@@ -6713,9 +6676,10 @@ function handleWebSocketConnection(ws, req) {
         }
         
         try {
-          const authResult = await verifySupabaseJWT(token);
-          if (authResult?.user?.id) {
-            userId = authResult.user.id;
+          // Verify JWT using remote JWKS (ES256)
+          const { payload } = await jwtVerify(token, WS_JWKS, { algorithms: ['ES256'] });
+          if (payload?.sub) {
+            userId = payload.sub;
             isAuthenticated = true;
             clearTimeout(authTimeout);
             
@@ -6776,49 +6740,10 @@ function handleWebSocketConnection(ws, req) {
 
 // Shared chat request handler for both SSE and WebSocket
 async function handleChatRequest(req, res, chatTools) {
-  const { messages, currentMonth, currentYear } = req.body;
+  const { messages } = req.body;
+  // Removed inline time/month prompt context; SYSTEM_PROMPT is static now.
 
-  // User info for light personalization
-  const user = req.user;
-
-  // Time/context hints
-  const today = new Date().toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
-  const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('no-NO', { timeZone: 'Europe/Oslo' });
-  const viewingMonth = currentMonth || new Date().getMonth() + 1;
-  const viewingYear = currentYear || new Date().getFullYear();
-  const monthNames = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
-  const viewingMonthName = monthNames[viewingMonth - 1];
-  const firstDay = new Date(viewingYear, viewingMonth - 1, 1).toISOString().slice(0, 10);
-  const lastDay = new Date(viewingYear, viewingMonth, 0).toISOString().slice(0, 10);
-
-  const systemContextHint = {
-    role: 'system',
-    content:
-`Du er en norsk vaktplanleggingsassistent for én bruker. Svar alltid på norsk, kort og tydelig.
-
-Kontekst for tid:
-- "i dag" = ${today} (Europe/Oslo)
-- "i morgen" = ${tomorrow} (Europe/Oslo)
-- Brukeren ser på ${viewingMonthName} ${viewingYear} i grensesnittet:
-  "denne måneden"/"inneværende måned" = ${viewingMonthName} ${viewingYear}
-  "forrige måned" = måneden før ${viewingMonthName} ${viewingYear}
-  "neste måned" = måneden etter ${viewingMonthName} ${viewingYear}
-
-Verktøy og bruk:
-- Oversikt/lister: getShifts(criteria_type=[week|next|date_range|all]). For måned, bruk date_range: from_date=${firstDay}, to_date=${lastDay}.
-- Lønnsdata: getWageDataByWeek | getWageDataByMonth | getWageDataByDateRange.
-- Endringer: addShift | addSeries | editShift | deleteShift | deleteSeries | copyShift.
-
-Policy for verktøy:
-- Unngå identiske/overflødige kall med samme parametere.
-- Ikke gjett ved uklarheter; still maks ett kort oppfølgingsspørsmål ved reell tvetydighet. Ikke spør om bekreftelse når intensjonen er tydelig.
-
-Svarformat til bruker:
-- Datoformat: dd.mm.yyyy. Bruk korte avsnitt; bruk fet skrift for dato/klokkeslett.
-- Viktig: Når du svarer med flere skift, skriv hvert skift på én egen linje og separer hvert skift med et linjeskift (line break).
-- Etter endringer: oppsummer hva som ble gjort (antall skift, datoer, tider). Ikke inkluder oppfordringer til endringer ved rene oppslag.
-- Hvis du får informasjon om lønn for flere skift, gjengi informasjonen til brukeren.`
-  };
+  const systemContextHint = { role: 'system', content: SYSTEM_PROMPT };
 
   // Maintain a single messages array for the agent loop
   const convo = [systemContextHint, ...messages];
@@ -7071,10 +6996,20 @@ if (isRunDirectly) {
   // Create HTTP server with Express app
   const server = createServer(app);
   
-  // Create WebSocket server on the same HTTP server
-  const wss = new WebSocketServer({ 
+  // Create WebSocket server on the same HTTP server with strict subprotocol negotiation
+  const wss = new WebSocketServer({
     server,
-    path: '/ws/chat'
+    path: '/ws/chat',
+    handleProtocols: (protocols, request) => {
+      try {
+        const offered = Array.isArray(protocols) ? protocols : Array.from(protocols || []);
+        console.log('[WS] Offered subprotocols:', offered, 'raw=', request?.headers?.['sec-websocket-protocol'] || '');
+        if (offered.includes('jwt')) return 'jwt';
+      } catch (e) {
+        console.warn('[WS] handleProtocols error:', e?.message || e);
+      }
+      return false; // reject if 'jwt' not offered
+    }
   });
 
   // WebSocket connection handler
