@@ -247,7 +247,7 @@ async function runToolWithTimeout(call, user_id, iter, res, ws) {
           return String(a).slice(0, 240);
         } catch { return ''; }
       })();
-      res.write(`data: ${JSON.stringify({ type: 'tool_call', iteration: iter, name, argsSummary })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'tool_call', iteration: iter, name, argsSummary, id: call.id })}\n\n`);
     }
 
     rawOutput = await withTimeoutPromise(handleTool(call, user_id), PER_TOOL_TIMEOUT_MS);
@@ -261,7 +261,7 @@ async function runToolWithTimeout(call, user_id, iter, res, ws) {
   emitProgress(ws, { phase: 'tool', iter, name, ok, duration_ms, out_len: size_bytes });
   // Emit SSE tool_result summary
   if (res) {
-    res.write(`data: ${JSON.stringify({ type: 'tool_result', iteration: iter, name, ok, duration_ms, size_bytes })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'tool_result', iteration: iter, name, ok, duration_ms, size_bytes, id: call.id })}\n\n`);
   }
   return { content, size_bytes, ok };
 }
@@ -3075,19 +3075,7 @@ function calculateShiftEarnings(shift, userSettings) {
     bonus = adjustedWages.bonus;
     paidHours = adjustedWages.totalHours;
 
-    // Debug logging for wage period calculations
-    if (durationHours > 5.5) {
-      console.log('Break deduction calculation (server):', {
-        shiftId: shift.id,
-        method: breakResult.method,
-        originalHours: durationHours,
-        paidHours: paidHours,
-        baseWage: baseWage,
-        bonus: bonus,
-        total: baseWage + bonus,
-        wagePeriods: breakResult.auditTrail?.wagePeriods
-      });
-    }
+    // Debug logging removed
   } else {
     // For end_of_shift and none methods, use traditional calculation
     if (breakResult.shouldDeduct) {
@@ -3955,29 +3943,40 @@ app.get('/chat/stream', authenticateUser, async (req, res) => {
         });
       } catch (_) { return msgs; }
     })(convo);
+    // Start shifts query early to reduce end latency
+    const shiftsPromise = supabase
+      .from('user_shifts')
+      .select('*')
+      .eq('user_id', req.user_id)
+      .order('shift_date');
+
     const streamCompletion = await openai.chat.completions.create({
       model: 'gpt-5',
       messages: sanitizedConvoFinal,
       tools: chatTools,
       tool_choice: 'none',
-      stream: true
+      stream: true,
+      // Optimize for faster first token
+      temperature: 0.7,
+      max_tokens: 4096
     });
+    
     res.write(`data: ${JSON.stringify({ type: 'text_stream_start' })}\n\n`);
     let assistantMessage = '';
+    
     for await (const chunk of streamCompletion) {
       const content = chunk.choices?.[0]?.delta?.content;
       if (content) {
         assistantMessage += content;
+        // Write immediately without buffering
         res.write(`data: ${JSON.stringify({ type: 'text_chunk', content })}\n\n`);
+        // Force flush for minimal latency
+        if (res.flush) res.flush();
       }
     }
 
-    // Append shifts snapshot
-    const { data: shifts } = await supabase
-      .from('user_shifts')
-      .select('*')
-      .eq('user_id', req.user_id)
-      .order('shift_date');
+    // Wait for shifts query that was started earlier
+    const { data: shifts } = await shiftsPromise;
 
     res.write(`data: ${JSON.stringify({ type: 'text_stream_end' })}\n\n`);
     res.write(`data: ${JSON.stringify({ type: 'shifts_update', shifts: shifts || [] })}\n\n`);
@@ -4084,16 +4083,90 @@ app.post('/chat', authenticateUser, async (req, res) => {
         return msgs;
       }
     })(convo);
-    // One model turn
-    const turn = await openai.chat.completions.create({
-      model: 'gpt-5',
-      messages: sanitizedConvo,
-      tools: chatTools,
-      tool_choice: 'auto'
-    });
+    
+    // One model turn - with streaming for reasoning phase
+    let msg, toolCalls;
+    if (stream) {
+      // Stream the reasoning phase for better UX
+      const streamedTurn = await openai.chat.completions.create({
+        model: 'gpt-5',
+        messages: sanitizedConvo,
+        tools: chatTools,
+        tool_choice: 'auto',
+        stream: true
+      });
 
-    const msg = turn.choices?.[0]?.message || {};
-    const toolCalls = msg.tool_calls || [];
+      // Send reasoning stream start event
+      const reasoningStartTime = Date.now();
+      res.write(`data: ${JSON.stringify({ type: 'reasoning_start', iteration: iter, timestamp: reasoningStartTime })}\n\n`);
+
+      let accumulatedContent = '';
+      let accumulatedToolCalls = [];
+      
+      for await (const chunk of streamedTurn) {
+        const delta = chunk.choices?.[0]?.delta;
+        if (!delta) continue;
+
+        // Stream reasoning content if present
+        if (delta.content) {
+            accumulatedContent += delta.content;
+          res.write(`data: ${JSON.stringify({ type: 'reasoning_chunk', content: delta.content, iteration: iter })}\n\n`);
+        }
+
+        // Collect tool calls with proper index handling
+        if (delta.tool_calls && Array.isArray(delta.tool_calls)) {
+          delta.tool_calls.forEach((toolCall) => {
+            const toolIndex = toolCall.index;
+            if (toolIndex === undefined) return;
+            
+            // Initialize tool call object if it doesn't exist
+            if (!accumulatedToolCalls[toolIndex]) {
+              accumulatedToolCalls[toolIndex] = { 
+                id: '', 
+                type: 'function', 
+                function: { name: '', arguments: '' } 
+              };
+            }
+            
+            // Update tool call properties
+            if (toolCall.id) accumulatedToolCalls[toolIndex].id = toolCall.id;
+            if (toolCall.type) accumulatedToolCalls[toolIndex].type = toolCall.type;
+            if (toolCall.function?.name) {
+              accumulatedToolCalls[toolIndex].function.name = toolCall.function.name;
+            }
+            if (toolCall.function?.arguments) {
+              accumulatedToolCalls[toolIndex].function.arguments += toolCall.function.arguments;
+            }
+          });
+        }
+      }
+      
+
+      // Send reasoning end event
+      if (accumulatedContent) {
+        res.write(`data: ${JSON.stringify({ type: 'reasoning_end', iteration: iter, timestamp: Date.now() })}\n\n`);
+      }
+
+      // Filter out empty tool calls and ensure they have valid IDs
+      const validToolCalls = accumulatedToolCalls.filter(call => call && call.id && call.function?.name);
+      
+      msg = { 
+        content: accumulatedContent || null, 
+        tool_calls: validToolCalls.length > 0 ? validToolCalls : undefined 
+      };
+      toolCalls = msg.tool_calls || [];
+    } else {
+      // Non-streaming fallback
+      const turn = await openai.chat.completions.create({
+        model: 'gpt-5',
+        messages: sanitizedConvo,
+        tools: chatTools,
+        tool_choice: 'auto'
+      });
+
+      msg = turn.choices?.[0]?.message || {};
+      toolCalls = msg.tool_calls || [];
+    }
 
     // Structured loop log + WS progress
     emitProgress(req?._ws_for_progress, { phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 });
@@ -6844,16 +6917,77 @@ async function handleChatRequest(req, res, chatTools, _wsForProgress = null) {
         return msgs;
       }
     })(convo);
-    // One model turn
-    const turn = await openai.chat.completions.create({
+    
+    // One model turn - with streaming for reasoning phase
+    let msg, toolCalls;
+    // Always stream for better UX (both WebSocket and SSE)
+    const streamedTurn = await openai.chat.completions.create({
       model: 'gpt-5',
       messages: sanitizedConvo,
       tools: chatTools,
-      tool_choice: 'auto'
+      tool_choice: 'auto',
+      stream: true
     });
 
-    const msg = turn.choices?.[0]?.message || {};
-    const toolCalls = msg.tool_calls || [];
+    // Send reasoning stream start event
+    const reasoningStartTime = Date.now();
+    res.write(`data: ${JSON.stringify({ type: 'reasoning_start', iteration: iter, timestamp: reasoningStartTime })}\n\n`);
+
+    let accumulatedContent = '';
+    let accumulatedToolCalls = [];
+    
+    for await (const chunk of streamedTurn) {
+      const delta = chunk.choices?.[0]?.delta;
+      if (!delta) continue;
+
+      // Stream reasoning content if present
+      if (delta.content) {
+        accumulatedContent += delta.content;
+        res.write(`data: ${JSON.stringify({ type: 'reasoning_chunk', content: delta.content, iteration: iter, timestamp: Date.now() })}\n\n`);
+      }
+
+      // Collect tool calls with proper index handling
+      if (delta.tool_calls && Array.isArray(delta.tool_calls)) {
+        delta.tool_calls.forEach((toolCall) => {
+          const toolIndex = toolCall.index;
+          if (toolIndex === undefined) return;
+          
+          // Initialize tool call object if it doesn't exist
+          if (!accumulatedToolCalls[toolIndex]) {
+            accumulatedToolCalls[toolIndex] = { 
+              id: '', 
+              type: 'function', 
+              function: { name: '', arguments: '' } 
+            };
+          }
+          
+          // Update tool call properties
+          if (toolCall.id) accumulatedToolCalls[toolIndex].id = toolCall.id;
+          if (toolCall.type) accumulatedToolCalls[toolIndex].type = toolCall.type;
+          if (toolCall.function?.name) {
+            accumulatedToolCalls[toolIndex].function.name = toolCall.function.name;
+          }
+          if (toolCall.function?.arguments) {
+            accumulatedToolCalls[toolIndex].function.arguments += toolCall.function.arguments;
+          }
+        });
+      }
+    }
+    
+
+    // Send reasoning end event
+    if (accumulatedContent) {
+      res.write(`data: ${JSON.stringify({ type: 'reasoning_end', iteration: iter, timestamp: Date.now() })}\n\n`);
+    }
+
+    // Filter out empty tool calls and ensure they have valid IDs
+    const validToolCalls = accumulatedToolCalls.filter(call => call && call.id && call.function?.name);
+    
+    msg = { 
+      content: accumulatedContent || null, 
+      tool_calls: validToolCalls.length > 0 ? validToolCalls : undefined 
+    };
+    toolCalls = msg.tool_calls || [];
 
     // Structured loop log
     emitProgress(undefined, { phase: 'loop', iter, tool_calls: toolCalls.length || 0, latency_ms: Date.now() - t0, done: toolCalls.length === 0 });

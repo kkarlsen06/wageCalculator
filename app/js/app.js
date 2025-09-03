@@ -1531,6 +1531,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatTimeline = [];
     _timelineSeq = 0;
     
+    // Clear reasoning element reference and remove from DOM
+    try { 
+      if (window._reasoningElement && window._reasoningElement.parentNode) {
+        window._reasoningElement.parentNode.removeChild(window._reasoningElement);
+      }
+      window._reasoningElement = null; 
+    } catch (_) {}
+    
     // Reset chat state
     hasFirstMessage = false;
     
@@ -2005,13 +2013,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     return tokens;
   }
 
-  // Optimized real-time streaming with throttled updates
+  // Optimized real-time streaming with minimal latency
   function streamTextRealtime(element) {
-    let displayedLength = 0;
-    const speed = 25;
+    let displayedLength = element.displayedLength || 0;
+    const speed = 35; // Faster streaming for better real-time feel
     let animationFrameId;
     let lastUpdateTime = 0;
-    const minUpdateInterval = 16; // ~60fps
+    const minUpdateInterval = 12; // ~83fps for smoother updates
 
     // Pre-create cursor element
     const cursor = document.createElement('span');
@@ -2051,20 +2059,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (now - lastUpdateTime >= minUpdateInterval) {
           const displayText = targetText.substring(0, displayedLength);
 
-          // Use template for efficient DOM manipulation
+          // Use efficient DOM manipulation with minimal parsing
           const template = document.createElement('template');
           template.innerHTML = DOMPurify.sanitize(marked.parse(displayText));
-          template.content.appendChild(cursor.cloneNode(true));
-
+          
+          // Batch DOM operations
+          element.style.display = 'none';
           element.innerHTML = '';
           element.appendChild(template.content);
+          element.appendChild(cursor.cloneNode(true));
+          element.style.display = '';
 
+          // Optimize scrolling with passive updates
           if (animationFrameId) cancelAnimationFrame(animationFrameId);
           animationFrameId = requestAnimationFrame(() => {
-            chatElements.log.scrollTop = chatElements.log.scrollHeight;
+            if (chatElements.log.scrollTop + chatElements.log.clientHeight >= chatElements.log.scrollHeight - 100) {
+              chatElements.log.scrollTop = chatElements.log.scrollHeight;
+            }
           });
 
           lastUpdateTime = now;
+          element.displayedLength = displayedLength; // Store progress
         }
 
         // Dynamic timing with less randomness
@@ -2074,6 +2089,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Wait for more chunks or completion with longer interval
         setTimeout(streamNextChunk, 100);
       }
+    }
+
+    streamNextChunk();
+  }
+
+  // Custom streaming function for reasoning content
+  function streamReasoningText(element, contentDiv) {
+    let displayedLength = 0;
+    const speed = 35; // Slightly faster for reasoning
+    let animationFrameId;
+    let lastUpdateTime = 0;
+    const minUpdateInterval = 20; // ~50fps
+
+    function streamNextChunk() {
+      const now = performance.now();
+      const targetText = element.fullText || '';
+      
+      if (!element.isStreaming || displayedLength >= targetText.length) {
+        // Streaming complete or stopped
+        contentDiv.textContent = targetText;
+        return;
+      }
+
+      const chunkSize = Math.max(1, Math.floor(
+        (now - lastUpdateTime) / speed + Math.random() * 2
+      ));
+      displayedLength = Math.min(displayedLength + chunkSize, targetText.length);
+
+      // Throttle DOM updates
+      if (now - lastUpdateTime >= minUpdateInterval) {
+        const displayText = targetText.substring(0, displayedLength);
+        contentDiv.textContent = displayText;
+        lastUpdateTime = now;
+
+        // Auto-scroll
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        animationFrameId = requestAnimationFrame(() => {
+          if (chatElements.log) {
+            chatElements.log.scrollTop = chatElements.log.scrollHeight;
+          }
+        });
+      }
+
+      requestAnimationFrame(streamNextChunk);
     }
 
     streamNextChunk();
@@ -2510,7 +2569,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       case 'tool_call': {
         // Store args for later use when result arrives
         try {
-          const key = `${event.iteration}|${event.name}`;
+          // Use tool call ID for unique identification, fallback to iteration|name
+          const key = event.id ? `${event.iteration}|${event.id}` : `${event.iteration}|${event.name}`;
           if (event.argsSummary) _toolArgsByKey.set(key, String(event.argsSummary));
         } catch (_) {}
         // Keep spinner updated but avoid inserting a separate element yet
@@ -2524,7 +2584,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       case 'tool_result': {
         // Only render tool entries when parameters exist
-        const key = `${event.iteration}|${event.name}`;
+        const key = event.id ? `${event.iteration}|${event.id}` : `${event.iteration}|${event.name}`;
         const argsSummary = (_toolArgsByKey.get(key) || '').trim();
         _toolArgsByKey.delete(key); // Clear the args to prevent reuse
         if (argsSummary.length > 0) {
@@ -2589,14 +2649,125 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         } catch (_) {}
         break;
+      case 'reasoning_start':
+        // Create reasoning element using tool message structure for consistent styling
+        if (!window._reasoningElement) {
+          window._reasoningElement = document.createElement('div');
+          window._reasoningElement.className = 'chatbox-message tool';
+          window._reasoningElement.setAttribute('role', 'button');
+          window._reasoningElement.setAttribute('tabindex', '0');
+          window._reasoningElement.fullText = '';
+          window._reasoningElement.isStreaming = true;
+          window._reasoningElement.streamingActive = false;
+          window._reasoningElement.hasContent = false;
+          window._reasoningElement.isExpanded = false;
+          
+          // Create main line (like tool messages)
+          const main = document.createElement('div');
+          main.className = 'tool-main';
+          main.textContent = 'tenker';
+          window._reasoningElement.appendChild(main);
+          
+          // Create details section (like tool messages)
+          const details = document.createElement('div');
+          details.className = 'tool-meta';
+          details.style.display = 'none';
+          
+          const content = document.createElement('div');
+          content.className = 'reasoning-content';
+          content.style.fontStyle = 'italic';
+          content.style.color = 'var(--text-secondary)';
+          content.style.lineHeight = '1.4';
+          content.style.marginTop = '8px';
+          details.appendChild(content);
+          
+          window._reasoningElement.appendChild(details);
+          
+          // Store toggle function directly on DOM element to persist after cleanup
+          window._reasoningElement._toggleExpansion = function() {
+            if (this.hasContent && !this.isStreaming) {
+              this.isExpanded = !this.isExpanded;
+              const detailsEl = this.querySelector('.tool-meta');
+              const mainEl = this.querySelector('.tool-main');
+              
+              if (this.isExpanded) {
+                if (detailsEl) detailsEl.style.display = 'block';
+                if (mainEl) mainEl.textContent = 'tenker (utvidet)';
+              } else {
+                if (detailsEl) detailsEl.style.display = 'none';
+                if (mainEl) mainEl.textContent = 'tenker ✓';
+              }
+            }
+          };
+          
+          window._reasoningElement.addEventListener('click', window._reasoningElement._toggleExpansion);
+          window._reasoningElement.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              if (this._toggleExpansion) {
+                this._toggleExpansion();
+              }
+            }
+          });
+          
+          // Insert into timeline chronologically using server timestamp
+          insertIntoTimeline(window._reasoningElement, event.timestamp || Date.now(), 'reasoning');
+        }
+        break;
+      case 'reasoning_chunk':
+        // Stream reasoning content
+        if (window._reasoningElement && event.content) {
+          window._reasoningElement.fullText += event.content;
+          window._reasoningElement.hasContent = true;
+          const contentDiv = window._reasoningElement.querySelector('.reasoning-content');
+          const mainEl = window._reasoningElement.querySelector('.tool-main');
+          
+          if (contentDiv) {
+            // Start streaming animation if not active
+            if (!window._reasoningElement.streamingActive) {
+              window._reasoningElement.streamingActive = true;
+              // Update main text to show streaming state
+              if (mainEl) {
+                mainEl.textContent = 'tenker...';
+                mainEl.style.opacity = '0.7';
+              }
+              // Stream content into the hidden details
+              streamReasoningText(window._reasoningElement, contentDiv);
+            }
+          }
+        }
+        break;
+      case 'reasoning_end':
+        // Mark reasoning phase complete
+        if (window._reasoningElement) {
+          window._reasoningElement.isStreaming = false;
+          const mainEl = window._reasoningElement.querySelector('.tool-main');
+          
+          if (mainEl) {
+            // Remove streaming opacity
+            mainEl.style.opacity = '1';
+            
+            if (window._reasoningElement.hasContent) {
+              // Show completed state - clickable to expand
+              mainEl.textContent = 'tenker ✓';
+              window._reasoningElement.style.cursor = 'pointer';
+            } else {
+              // If no content was streamed, hide the reasoning element
+              window._reasoningElement.style.display = 'none';
+            }
+          }
+        }
+        break;
       case 'text_chunk':
-        // Accumulate text chunks and stream them smoothly
+        // Accumulate text chunks and stream them directly for minimal latency
         if (streamingTextElement && streamingTextElement.isStreaming) {
           streamingTextElement.fullText += event.content;
 
-          // If not already streaming, start the streaming animation
+          // Update display immediately for real-time feel
           if (!streamingTextElement.streamingActive) {
             streamingTextElement.streamingActive = true;
+            // Start with immediate display, then smooth streaming
+            streamingTextElement.displayedLength = 0;
             streamTextRealtime(streamingTextElement);
           }
         }
@@ -2612,6 +2783,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           streamingTextElement = null;
         }
         try { window._streamAnchorEl = null; } catch (_) {}
+        try { 
+          if (window._reasoningElement && window._reasoningElement.parentNode) {
+            window._reasoningElement.parentNode.removeChild(window._reasoningElement);
+          }
+          window._reasoningElement = null; 
+        } catch (_) {}
         break;
       case 'shifts_update':
         // Update shifts in the UI
