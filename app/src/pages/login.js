@@ -143,10 +143,10 @@ export async function afterMountLogin() {
 
   // Initialize legal modal and auth logic
   const [{ default: LegalHandler }] = await Promise.all([
-    import('/js/legal-handler.js')
+    import('/src/js/legal-handler.js')
   ]);
   new LegalHandler();
 
   // Load existing auth logic which wires all listeners and redirects
-  await import('/js/auth.js');
+  await import('/src/js/auth.js');
 }

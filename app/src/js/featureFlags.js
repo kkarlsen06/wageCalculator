@@ -1,7 +1,7 @@
 // Feature flags utility for client-side feature toggles
 // Provides a hook-like interface for fetching and caching feature flags
 
-import { API_BASE as RESOLVED_API_BASE } from '/src/js/apiBase.js';
+import { API_BASE as RESOLVED_API_BASE } from '/src/lib/net/apiBase.js';
 
 class FeatureFlags {
     constructor() {

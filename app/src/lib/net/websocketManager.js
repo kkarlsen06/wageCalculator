@@ -6,7 +6,7 @@
  */
 
 import { API_BASE } from './apiBase.js';
-import { supabase } from '../supabase-client.js';
+import { supabase } from '../../supabase-client.js';
 
 class WebSocketManager {
   constructor() {

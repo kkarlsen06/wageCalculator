@@ -4,7 +4,7 @@
  * Following PLACEHOLDER_EMPLOYEES_V1 ruleset
  */
 
-import { API_BASE } from '/src/js/apiBase.js';
+import { API_BASE } from '/src/lib/net/apiBase.js';
 
 export class EmployeeService {
     constructor(apiBase = (window.CONFIG?.apiBase || API_BASE || '/api')) {

@@ -1,5 +1,5 @@
 // API Base URL configuration (unified)
-import { API_BASE as RESOLVED_API_BASE } from '/src/js/apiBase.js';
+import { API_BASE as RESOLVED_API_BASE } from '/src/lib/net/apiBase.js';
 const API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiBase)
   ? window.CONFIG.apiBase
   : (RESOLVED_API_BASE || '/api');

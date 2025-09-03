@@ -1,7 +1,7 @@
 // Initialize runtime config before any kalkulator scripts
 import '/src/runtime-config.js';
-import '/src/js/apiBase.js'; // logs [api] base on boot
-import '/src/js/error-handling.js';
+import '/src/lib/net/apiBase.js'; // logs [api] base on boot
+import '/src/lib/error-handling.js';
 
 // CSS is linked via kalkulator/index.html to avoid duplication
 
@@ -33,13 +33,13 @@ if (typeof window !== 'undefined' && !window.uuidv4) {
 }
 
 // Load feature flags (reads window.CONFIG.apiBase)
-import '/js/featureFlags.js';
+import '/src/js/featureFlags.js';
 
 // App bootstrap: import immediately so DOMContentLoaded handlers inside app.js bind correctly
-import '/js/app.js';
+import '/src/js/app.js';
 
 // Theme management system
-import '/js/themeIntegration.js';
+import '/src/js/themeIntegration.js';
 
 // If app.js uses ESM default export or side effects, ensure DOMContentLoaded init remains intact.
 // Expose inline handlers compatibility by attaching window.app if the module exported it.
@@ -49,7 +49,7 @@ import '/js/themeIntegration.js';
 import '/src/js/checkout.js';
 
 // Checkout/Portal status toast on app page
-import { refreshSubscriptionState } from '/js/subscriptionState.js';
+import { refreshSubscriptionState } from '/src/js/subscriptionState.js';
 import { getUserId } from '/src/lib/auth/getUserId.js';
 import { render as renderSpa } from './router.js';
 

@@ -1,5 +1,5 @@
-import { supabase } from '../../../app/src/supabase-client.js'
-import { API_BASE } from './apiBase.js'
+import { supabase } from '../supabase-client.js'
+import { API_BASE } from '../lib/net/apiBase.js'
 
 /**
  * Start a Stripe Checkout flow for a given price.

@@ -1,5 +1,5 @@
 // API Base URL configuration (unified)
-import { API_BASE as RESOLVED_API_BASE } from '/src/js/apiBase.js';
+import { API_BASE as RESOLVED_API_BASE } from '/src/lib/net/apiBase.js';
 const API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiBase)
   ? window.CONFIG.apiBase
   : (RESOLVED_API_BASE || '/api');
@@ -16,7 +16,7 @@ const STREAM_API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiStre
 // app-ready/animations-complete logic below.
 
 import { supabase } from '/src/supabase-client.js'
-import wsManager from '/src/js/websocketManager.js';
+import wsManager from '/src/lib/net/websocketManager.js';
 // Create a local alias for consistency with other modules and expose globally later
 const supa = supabase;
 
