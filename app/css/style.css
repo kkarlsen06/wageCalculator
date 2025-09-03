@@ -241,15 +241,6 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Ensure full viewport width usage for PWA */
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  width: 100vw;
-  min-height: 100vh;
-  min-height: 100dvh;
-  overflow-x: hidden;
-  position: relative;
 }
 
 /* Apply max-width only to specific elements that need it */
@@ -264,25 +255,24 @@ img, video, iframe, embed, object {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Specific PWA viewport fixes for iOS */
-@supports (padding: max(0px)) {
-  /* iOS specific fixes for PWA */
-  #spa-root, #app {
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden;
-  }
-  
-  /* Ensure no horizontal overflow on any container */
-  .container, .app-container, .auth-center, .login-card {
-    max-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right));
-  }
+/* Fix for mobile webapp white bar issue - ensure full width */
+html, body {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+#app, #spa-root, .snap-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
 }
 
 html {
   overflow: hidden; /* Completely prevent all scrolling */
   width: 100%;
-  width: 100vw;
   height: 100%;
   box-sizing: border-box;
   /* Theme-aware color scheme now handled in themes.css */
@@ -292,11 +282,6 @@ html {
   /* Ensure full viewport usage including behind system navbar */
   height: 100vh;
   height: 100dvh;
-  /* PWA safe area support for iOS Dynamic Island */
-  padding-top: env(safe-area-inset-top);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Allow scrolling when auth forms are visible */
@@ -1258,8 +1243,8 @@ body {
 }
 
 .app-container {
-  padding-left: max(20px, env(safe-area-inset-left));
-  padding-right: max(20px, env(safe-area-inset-right));
+  padding-left: 20px;
+  padding-right: 20px;
   max-width: 640px;
   width: 100%;
   margin: 0 auto;
@@ -1269,8 +1254,8 @@ body {
 /* Mobile adjustments for app-container */
 @media (max-width: 480px) {
   .app-container {
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: 10px;
+    padding-right: 10px;
     max-width: 100%;
   }
 }
@@ -1922,15 +1907,6 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Ensure full viewport width usage for PWA */
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  width: 100vw;
-  min-height: 100vh;
-  min-height: 100dvh;
-  overflow-x: hidden;
-  position: relative;
 }
 
 /* Apply max-width only to specific elements that need it */
@@ -1945,25 +1921,24 @@ img, video, iframe, embed, object {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Specific PWA viewport fixes for iOS */
-@supports (padding: max(0px)) {
-  /* iOS specific fixes for PWA */
-  #spa-root, #app {
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden;
-  }
-  
-  /* Ensure no horizontal overflow on any container */
-  .container, .app-container, .auth-center, .login-card {
-    max-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right));
-  }
+/* Fix for mobile webapp white bar issue - ensure full width */
+html, body {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+#app, #spa-root, .snap-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
 }
 
 html {
   overflow: hidden; /* Completely prevent all scrolling */
   width: 100%;
-  width: 100vw;
   height: 100%;
   box-sizing: border-box;
   /* Theme-aware color scheme now handled in themes.css */
@@ -1973,11 +1948,6 @@ html {
   /* Ensure full viewport usage including behind system navbar */
   height: 100vh;
   height: 100dvh;
-  /* PWA safe area support for iOS Dynamic Island */
-  padding-top: env(safe-area-inset-top);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Allow scrolling when auth forms are visible */
@@ -2831,8 +2801,8 @@ body {
 }
 
 .app-container {
-  padding-left: max(20px, env(safe-area-inset-left));
-  padding-right: max(20px, env(safe-area-inset-right));
+  padding-left: 20px;
+  padding-right: 20px;
   max-width: 640px;
   width: 100%;
   margin: 0 auto;
@@ -2842,8 +2812,8 @@ body {
 /* Mobile adjustments for app-container */
 @media (max-width: 480px) {
   .app-container {
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: 10px;
+    padding-right: 10px;
     max-width: 100%;
   }
 }
@@ -6856,20 +6826,19 @@ input:checked + .slider:before {
 /* Center for auth modals - fixed positioning for laptops */
 .auth-center {
   position: fixed;
-  top: env(safe-area-inset-top);
-  left: env(safe-area-inset-left);
-  right: env(safe-area-inset-right);
-  bottom: env(safe-area-inset-bottom);
-  width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right));
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
   max-width: 400px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  padding: max(20px, env(safe-area-inset-left)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom));
-  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  padding: 20px;
+  min-height: 100vh;
   box-sizing: border-box;
   /* Ensure form stays within viewport bounds */
   overflow-y: auto;
@@ -6878,13 +6847,13 @@ input:checked + .slider:before {
 /* Responsive adjustments for smaller screens */
 @media (max-height: 600px) {
   .auth-center {
-    padding: max(15px, env(safe-area-inset-left)) max(15px, env(safe-area-inset-right)) max(15px, env(safe-area-inset-bottom));
+    padding: 15px;
   }
 }
 
 @media (max-height: 500px) {
   .auth-center {
-    padding: max(10px, env(safe-area-inset-left)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom));
+    padding: 10px;
   }
 }
 

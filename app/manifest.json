@@ -2,7 +2,7 @@
   "name": "Vaktberegner",
   "short_name": "Vaktberegner",
   "description": "Automatisk kalkulator for vakter, tillegg og kompensasjon",
-  "start_url": "./app.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
