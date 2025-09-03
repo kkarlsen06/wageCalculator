@@ -4737,7 +4737,7 @@ input[type="time"].form-control[value=""]:focus {
   /* Respect iOS PWA safe areas so content doesn't tuck under system bars */
   padding: max(10px, env(safe-area-inset-top, 0px))
            max(10px, env(safe-area-inset-right, 0px))
-           max(10px, env(safe-area-inset-bottom, 0px))
+           10px
            max(10px, env(safe-area-inset-left, 0px));
 }
 
@@ -4754,7 +4754,7 @@ input[type="time"].form-control[value=""]:focus {
   #addShiftModal.active {
     padding: max(10px, env(safe-area-inset-top, 0px))
              max(10px, env(safe-area-inset-right, 0px))
-             max(10px, env(safe-area-inset-bottom, 0px))
+             10px
              max(10px, env(safe-area-inset-left, 0px)) !important;
     align-items: center !important;
     justify-content: center !important;
@@ -4813,7 +4813,7 @@ input[type="time"].form-control[value=""]:focus {
     width: 90vw;
     height: auto;
     /* On desktop, cap modal height within viewport, accounting for safe areas where present */
-    max-height: calc(90vh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
+    max-height: 90vh;
     margin: 0;
     border-radius: 24px;
   }
@@ -4825,12 +4825,12 @@ input[type="time"].form-control[value=""]:focus {
   height: auto !important;
   width: min(90vw, 600px) !important;
   max-width: 600px !important;
-  margin: 20px auto env(safe-area-inset-bottom, 0px) auto !important;
+  margin: 20px auto 0 auto !important;
   overflow: visible !important;
   display: flex !important;
   flex-direction: column !important;
   /* Constrain height to viewport to ensure scrollability */
-  max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+  max-height: calc(100dvh - 40px) !important;
 }
 
 #addShiftModal .modal-body {
@@ -4850,7 +4850,7 @@ input[type="time"].form-control[value=""]:focus {
     max-width: 600px !important;
     margin: 0 auto !important;
     /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    max-height: calc(100dvh - 40px) !important;
   }
 }
 
@@ -5195,7 +5195,7 @@ input[type="time"].form-control[value=""]:focus {
 #subscriptionModal .modal-footer {
   flex-shrink: 0;
   padding: 16px 24px 20px;
-  padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  padding-bottom: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   background: rgba(0, 0, 0, 0.02);
 }
@@ -5960,7 +5960,7 @@ input[type="time"].form-control[value=""]:focus {
   
   #subscriptionModal .modal-footer {
     padding: 12px 20px 16px;
-    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
   }
   
   .plans-grid {
@@ -5999,7 +5999,7 @@ input[type="time"].form-control[value=""]:focus {
   
   #subscriptionModal .modal-footer {
     padding: 8px 16px 12px;
-    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
   }
   
   .status-header {
@@ -9236,7 +9236,7 @@ input:checked + .slider:before {
   display: flex !important;
   flex-direction: column !important;
   /* Constrain height to viewport to ensure scrollability */
-  max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+  max-height: calc(100dvh - 40px) !important;
 }
 
 #editShiftModal .modal-body {
@@ -9265,7 +9265,7 @@ input:checked + .slider:before {
     display: flex !important;
     flex-direction: column !important;
     /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    max-height: calc(100dvh - 40px) !important;
   }
 }
 
@@ -9275,7 +9275,7 @@ input:checked + .slider:before {
     width: 100vw !important;
     margin: 0 !important;
     /* Constrain height to viewport to ensure scrollability and safe areas */
-    max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    max-height: calc(100dvh - 20px) !important;
     overflow: visible !important;
     display: flex !important;
     flex-direction: column !important;
@@ -9966,7 +9966,7 @@ body.chatbox-view .dashboard-content {
   right: 0;
   width: 100vw;
   /* Height includes safe area to cover iOS system navbar */
-  height: calc(160px + env(safe-area-inset-bottom, 0px));
+  height: 160px;
   background: linear-gradient(to top,
     rgba(18, 18, 18, 0.3) 0%,
     rgba(18, 18, 18, 0.2) 40%,
@@ -10119,7 +10119,7 @@ body.chatbox-view .dashboard-content {
     width: min(85%, 500px); /* Slightly wider on mobile */
     max-width: calc(100% - 24px); /* Ensure padding from edges */
     /* iOS 26 support - position above system navbar on mobile */
-    bottom: max(10px, calc(10px + env(safe-area-inset-bottom)));
+    bottom: 10px;
     padding: 10px 12px;
     gap: 8px;
   }
@@ -10184,7 +10184,7 @@ body.chatbox-view .dashboard-content {
   /* Adjust backdrop height for mobile - iOS 26 compatible */
   .floating-action-bar-backdrop {
     /* iOS 26 support - include safe area in backdrop height */
-    height: calc(130px + env(safe-area-inset-bottom, 0px));
+    height: 130px;
   }
 }
 
@@ -10194,7 +10194,7 @@ body.chatbox-view .dashboard-content {
     width: min(90%, 400px); /* Even wider on very small screens */
     max-width: calc(100% - 20px); /* Minimal padding from edges */
     /* iOS 26 support - position above system navbar on extra small screens */
-    bottom: max(10px, calc(10px + env(safe-area-inset-bottom)));
+    bottom: 10px;
     gap: 6px;
     padding: 8px 10px;
   }
@@ -13183,7 +13183,7 @@ input[type="file"].form-control:focus {
   width: 100%;
   display: none; /* Hidden by default */
   padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  padding-bottom: 0;
 }
 
 .employees-header {
@@ -15187,7 +15187,7 @@ body.chatbox-view .chatbox-container {
     width: 100vw;
     /* Avoid fixed 100vh on iOS PWA; use dynamic viewport and safe areas */
     height: auto;
-    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    max-height: 100dvh;
     max-width: none;
     border-radius: 0;
     margin: 0;
@@ -15197,7 +15197,7 @@ body.chatbox-view .chatbox-container {
     transform: none;
     /* Keep content clear of status bar and home indicator */
     padding-top: max(12px, env(safe-area-inset-top, 0px));
-    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
   }
 
   .employee-modal-content .modal-header {
@@ -17156,7 +17156,7 @@ body.chatbox-view .chatbox-container {
   /* Ensure proper spacing for input container in keyboard mode */
   body.keyboard-visible .chatbox-input-container {
     margin-bottom: env(keyboard-inset-height, 0px); /* Use keyboard height if available */
-    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
   }
 
   /* Ensure chatbox content doesn't get hidden behind fixed input */
