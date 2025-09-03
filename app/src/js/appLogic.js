@@ -5112,7 +5112,6 @@ export const app = {
                 const day = shift.date.getDate();
                 const weekday = this.WEEKDAYS[shift.date.getDay()];
                 const typeClass = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-                const seriesBadge = shift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
                 // Check if this shift has overlaps
                 const hasOverlaps = this.shiftHasOverlaps(shift);
@@ -5146,7 +5145,7 @@ export const app = {
                             <div class="shift-date">
                                 <span class="shift-date-number">${day}. ${this.MONTHS[shift.date.getMonth()]}</span>
                                 <span class="shift-date-separator"></span>
-                                <span class="shift-date-weekday">${weekday}${seriesBadge}${warningIndicator}</span>
+                                <span class="shift-date-weekday">${weekday}${warningIndicator}</span>
                             </div>
                             <div class="shift-details">
                                 <div class="shift-time-with-hours">
@@ -5417,7 +5416,6 @@ export const app = {
                 const weekday = this.WEEKDAYS[shiftDate.getDay()];
                 const day = shiftDate.getDate();
                 const month = this.MONTHS[shiftDate.getMonth()];
-                const seriesBadge = lastShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
                 // Check if the shift is in the current week
                 const currentWeekNumber = this.getISOWeekNumber(now);
@@ -5428,7 +5426,7 @@ export const app = {
                 let dateDisplay;
                 if (shiftDate.toDateString() === now.toDateString()) {
                     // Show "I dag" for today's shifts
-                    dateDisplay = `I dag${seriesBadge}`;
+                    dateDisplay = `I dag`;
                 } else {
                     // Calculate tomorrow for comparison
                     const tomorrow = new Date(now);
@@ -5436,14 +5434,14 @@ export const app = {
 
                     if (shiftDate.toDateString() === tomorrow.toDateString()) {
                         // Show "I morgen" for tomorrow's shifts
-                        dateDisplay = `I morgen${seriesBadge}`;
+                        dateDisplay = `I morgen`;
                     } else if (isCurrentWeek) {
                         // Show capitalized weekday name for shifts in current week
                         const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-                        dateDisplay = `${capitalizedWeekday}${seriesBadge}`;
+                        dateDisplay = `${capitalizedWeekday}`;
                     } else {
                         // Show full date without weekday for shifts outside current week
-                        dateDisplay = `${day}. ${month}${seriesBadge}`;
+                        dateDisplay = `${day}. ${month}`;
                     }
                 }
 
@@ -5521,7 +5519,6 @@ export const app = {
 
             // Create the shift item using the exact same structure as in the shift list
             const typeClass = nextShift.type === 0 ? 'weekday' : (nextShift.type === 1 ? 'saturday' : 'sunday');
-            const seriesBadge = nextShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
             // Check if the shift is in the current week
             const currentWeekNumber = this.getISOWeekNumber(now);
@@ -5532,17 +5529,17 @@ export const app = {
             let dateDisplay;
             if (shiftDate.toDateString() === today.toDateString()) {
                 // Show "I dag" for today's shifts
-                dateDisplay = `I dag${seriesBadge}`;
+                dateDisplay = `I dag`;
             } else if (shiftDate.toDateString() === tomorrow.toDateString()) {
                 // Show "I morgen" for tomorrow's shifts
-                dateDisplay = `I morgen${seriesBadge}`;
+                dateDisplay = `I morgen`;
             } else if (isCurrentWeek) {
                 // Show capitalized weekday name for shifts in current week
                 const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-                dateDisplay = `${capitalizedWeekday}${seriesBadge}`;
+                dateDisplay = `${capitalizedWeekday}`;
             } else {
                 // Show full date without weekday for shifts outside current week
-                dateDisplay = `${day}. ${month}${seriesBadge}`;
+                dateDisplay = `${day}. ${month}`;
             }
 
             // Add time remaining for today's shifts
@@ -5707,7 +5704,6 @@ export const app = {
         }
 
         const typeClass = currentShift.type === 0 ? 'weekday' : (currentShift.type === 1 ? 'saturday' : 'sunday');
-        const seriesBadge = currentShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
         // Check if this shift has overlaps
         const hasOverlaps = this.shiftHasOverlaps(currentShift);
@@ -5726,7 +5722,7 @@ export const app = {
                 <div class="next-shift-badge">NÅ</div>
                 <div class="shift-info">
                     <div class="shift-date">
-                        <span class="shift-date-weekday">${dateDisplay}${seriesBadge}${warningIndicator}</span>
+                        <span class="shift-date-weekday">${dateDisplay}${warningIndicator}</span>
                         <span class="shift-countdown-timer">  ${timeRemainingText}</span>
                     </div>
                     <div class="shift-details">
@@ -5944,7 +5940,6 @@ export const app = {
 
         // Create the shift item using the exact same structure as other shift cards
         const typeClass = bestShift.type === 0 ? 'weekday' : (bestShift.type === 1 ? 'saturday' : 'sunday');
-        const seriesBadge = bestShift.seriesId ? '<span class="series-badge">Serie</span>' : '';
 
         // Check if this shift has overlaps
         const hasOverlaps = this.shiftHasOverlaps(bestShift);
@@ -5964,7 +5959,7 @@ export const app = {
                 <div class="next-shift-badge">Beste</div>
                 <div class="shift-info">
                     <div class="shift-date">
-                        <span class="shift-date-weekday">${dateDisplay}${seriesBadge}${warningIndicator}</span>
+                        <span class="shift-date-weekday">${dateDisplay}${warningIndicator}</span>
                     </div>
                     <div class="shift-details">
                         <div class="shift-time-with-hours">
