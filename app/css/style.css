@@ -9965,8 +9965,8 @@ body.chatbox-view .dashboard-content {
   left: 0;
   right: 0;
   width: 100vw;
-  /* Height includes safe area to cover iOS system navbar */
-  height: 160px;
+  /* Reduced height - no need to cover system navbar area that creates white space */
+  height: 120px;
   background: linear-gradient(to top,
     rgba(18, 18, 18, 0.3) 0%,
     rgba(18, 18, 18, 0.2) 40%,
@@ -10181,10 +10181,10 @@ body.chatbox-view .dashboard-content {
     min-width: 70px;
   }
 
-  /* Adjust backdrop height for mobile - iOS 26 compatible */
+  /* Adjust backdrop height for mobile - reduced to prevent white space */
   .floating-action-bar-backdrop {
-    /* iOS 26 support - include safe area in backdrop height */
-    height: 130px;
+    /* Reduced height to prevent bottom white space */
+    height: 100px;
   }
 }
 

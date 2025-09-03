@@ -3,11 +3,16 @@
   "short_name": "Vaktberegner",
   "description": "Automatisk kalkulator for vakter, tillegg og kompensasjon",
   "start_url": "./index.html",
-  "display": "standalone",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait-primary",
   "scope": "./",
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
   "icons": [
     {
       "src": "../assets/kkarlsen_ikon_clean.png",
