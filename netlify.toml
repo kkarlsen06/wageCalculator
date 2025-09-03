@@ -4,13 +4,6 @@
 # - Keep simple SPA fallback and redirect legacy /kalkulator to app domain
 ############################################################
 
-[build]
-  command = "npm --workspace marketing run build"
-  publish = "marketing/dist"
-
-[build.environment]
-  NODE_VERSION = "22"
-  NPM_CONFIG_PRODUCTION = "false"
 
 [[redirects]]
   # Redirect any old /kalkulator paths to the dedicated app domain
