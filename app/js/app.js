@@ -2455,7 +2455,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.app.shifts = [...newShifts];
         window.app.userShifts = [...newShifts];
       }
-      window.app.refreshUI(newShifts);
+      window.app.refreshUI(newShifts, false); // Don't show loading overlay to prevent flash
     }
   }
 
@@ -2817,7 +2817,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.app.shifts = [...newShifts];
             window.app.userShifts = [...newShifts];
           }
-          window.app.refreshUI(newShifts);
+          window.app.refreshUI(newShifts, false); // Don't show loading overlay to prevent flash
         }
         break;
     }

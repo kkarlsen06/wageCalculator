@@ -7199,6 +7199,7 @@ if (isRunDirectly) {
   const wss = new WebSocketServer({
     server,
     path: '/ws/chat',
+    perMessageDeflate: false,
     handleProtocols: (protocols, request) => {
       try {
         const offered = Array.isArray(protocols) ? protocols : Array.from(protocols || []);

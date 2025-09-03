@@ -1265,7 +1265,7 @@ export const app = {
             }
 
             this.shifts = [...this.userShifts];
-            this.refreshUI(this.shifts);
+            this.refreshUI(this.shifts, true); // Show loading for user-initiated actions
             this.closeAddShiftModal();
 
             // Show success animation instead of alert
@@ -1459,7 +1459,7 @@ export const app = {
                 await this.fetchAndDisplayEmployeeShifts?.();
             } else {
                 this.shifts = [...this.userShifts];
-                this.refreshUI(this.shifts);
+                this.refreshUI(this.shifts, true); // Show loading for user-initiated actions
             }
 
             document.getElementById('shiftForm').reset();
@@ -3713,13 +3713,15 @@ export const app = {
         }
     },
     // Master refresh function for global UI updates after /chat responses
-    refreshUI(shifts) {
+    refreshUI(shifts, showLoading = false) {
         console.log('Refreshing all UI components after shift changes');
 
-        // Show loading state briefly to indicate refresh
-        this.showUIRefreshLoading();
+        if (showLoading) {
+            // Show loading state briefly to indicate refresh
+            this.showUIRefreshLoading();
+        }
 
-        // Use setTimeout to allow loading state to show before heavy calculations
+        // Use setTimeout to allow loading state to show before heavy calculations (or skip delay if no loading)
         setTimeout(() => {
             try {
                 // Update all components that depend on shift data
@@ -3738,10 +3740,12 @@ export const app = {
             } catch (error) {
                 console.error('Error during UI refresh:', error);
             } finally {
-                // Hide loading state
-                this.hideUIRefreshLoading();
+                if (showLoading) {
+                    // Hide loading state
+                    this.hideUIRefreshLoading();
+                }
             }
-        }, 50); // Brief delay to show loading state
+        }, showLoading ? 50 : 0); // Brief delay only if showing loading state
     },
 
     updateDisplay(shouldAnimate = false) {
@@ -8738,7 +8742,7 @@ export const app = {
         });
 
         // Refresh UI to show the overlapping shifts with warning indicators
-        this.refreshUI();
+        this.refreshUI(this.shifts, true); // Show loading for user-initiated test action
 
         console.log('Test overlapping shifts added. Check the shift list for warning indicators.');
     },
@@ -9330,7 +9334,7 @@ export const app = {
                 this.userShifts.splice(userIndex, 1);
             }
 
-            this.refreshUI(this.shifts);
+            this.refreshUI(this.shifts, true); // Show loading for user-initiated delete action
             return true;
         } catch (e) {
             console.error('Error in deleteShift:', e);
@@ -10034,7 +10038,7 @@ export const app = {
             this.shifts = [...this.userShifts];
 
             // Update display
-            this.refreshUI(this.shifts);
+            this.refreshUI(this.shifts, true); // Show loading for user-initiated edit action
 
             // Close edit modal and confirm
             this.closeEditShift();
