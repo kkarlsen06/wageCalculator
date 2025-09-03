@@ -1773,16 +1773,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     return wrapper;
   }
 
-  // Ensure the current streaming anchor sits immediately below the latest tool message
-  function moveAnchorBelowLatestTool() {
+  // Ensure the current streaming anchor sits immediately below the latest message
+  function moveAnchorBelowLatestMessage() {
     try {
       const anchor = window._streamAnchorEl;
       if (!anchor || !anchor.parentNode) return;
       const parent = anchor.parentNode;
-      const tools = Array.from(parent.querySelectorAll('.chatbox-message.tool, .chatbox-message.tool_summary'));
-      const lastTool = tools.length ? tools[tools.length - 1] : null;
-      if (lastTool && lastTool !== anchor) {
-        parent.insertBefore(anchor, lastTool.nextSibling);
+      // Look for all message types, not just tool messages
+      const allMessages = Array.from(parent.querySelectorAll('.chatbox-message'));
+      // Filter out the anchor itself to avoid positioning issues
+      const messagesExceptAnchor = allMessages.filter(msg => msg !== anchor);
+      const lastMessage = messagesExceptAnchor.length ? messagesExceptAnchor[messagesExceptAnchor.length - 1] : null;
+      if (lastMessage && lastMessage !== anchor) {
+        parent.insertBefore(anchor, lastMessage.nextSibling);
       }
     } catch (_) {}
   }
@@ -1821,9 +1824,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // After inserting a tool/progress, ensure the stream anchor stays below
-    // the latest tool block for correct visual grouping in the timeline.
+    // the latest message for correct visual grouping in the timeline.
     try {
-      if (role === 'tool' || role === 'tool_summary') moveAnchorBelowLatestTool();
+      if (role === 'tool' || role === 'tool_summary') moveAnchorBelowLatestMessage();
     } catch (_) {}
     
     // Simplified anchor handling to reduce DOM operations
@@ -2165,10 +2168,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // text_stream_start replaces it. This keeps chronology correct.
     try {
       window._streamAnchorEl = spinner;
-      // If there are already tool/progress entries, ensure the spinner
+      // If there are already messages, ensure the spinner
       // sits right after the latest one.
-      if (typeof moveAnchorBelowLatestTool === 'function') {
-        moveAnchorBelowLatestTool();
+      if (typeof moveAnchorBelowLatestMessage === 'function') {
+        moveAnchorBelowLatestMessage();
       }
     } catch (_) {}
 
@@ -2628,8 +2631,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // just after the last tool/progress message if any
         try {
           window._streamAnchorEl = streamingTextElement;
-          // Ensure anchor is positioned immediately after latest tool
-          moveAnchorBelowLatestTool();
+          // Ensure anchor is positioned immediately after latest message
+          moveAnchorBelowLatestMessage();
           const container = chatElements.log;
           if (container && container.contains(streamingTextElement)) {
             const children = Array.from(container.children);
