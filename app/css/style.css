@@ -270,6 +270,49 @@ html, body {
   margin: 0 !important;
 }
 
+/* PWA vs Browser mode handling */
+/* Default: Allow content behind browser nav bar */
+html {
+  height: 100vh !important;
+  height: 100dvh !important;
+}
+
+/* PWA mode detection - when display-mode is standalone, remove bottom safe area */
+@media (display-mode: standalone) {
+  html, body {
+    height: calc(100vh - env(safe-area-inset-top)) !important;
+    height: calc(100dvh - env(safe-area-inset-top)) !important;
+    /* Remove bottom safe area in PWA mode since there's no browser nav bar */
+    padding-bottom: 0 !important;
+  }
+  
+  .snap-container {
+    height: calc(100vh - env(safe-area-inset-top)) !important;
+    height: calc(100dvh - env(safe-area-inset-top)) !important;
+    /* Only keep top safe area in PWA mode */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: 0 !important;
+  }
+}
+
+/* Regular browser mode - allow content to extend behind browser nav */
+@media not (display-mode: standalone) {
+  html, body {
+    height: 100vh !important;
+    height: 100dvh !important;
+    /* Allow content to extend behind browser nav bar */
+    padding-bottom: 0 !important;
+  }
+  
+  .snap-container {
+    height: 100vh !important;
+    height: 100dvh !important;
+    /* No safe areas needed - content goes behind browser nav */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+}
+
 html {
   overflow: hidden; /* Completely prevent all scrolling */
   width: 100%;
@@ -1934,6 +1977,49 @@ html, body {
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
+}
+
+/* PWA vs Browser mode handling */
+/* Default: Allow content behind browser nav bar */
+html {
+  height: 100vh !important;
+  height: 100dvh !important;
+}
+
+/* PWA mode detection - when display-mode is standalone, remove bottom safe area */
+@media (display-mode: standalone) {
+  html, body {
+    height: calc(100vh - env(safe-area-inset-top)) !important;
+    height: calc(100dvh - env(safe-area-inset-top)) !important;
+    /* Remove bottom safe area in PWA mode since there's no browser nav bar */
+    padding-bottom: 0 !important;
+  }
+  
+  .snap-container {
+    height: calc(100vh - env(safe-area-inset-top)) !important;
+    height: calc(100dvh - env(safe-area-inset-top)) !important;
+    /* Only keep top safe area in PWA mode */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: 0 !important;
+  }
+}
+
+/* Regular browser mode - allow content to extend behind browser nav */
+@media not (display-mode: standalone) {
+  html, body {
+    height: 100vh !important;
+    height: 100dvh !important;
+    /* Allow content to extend behind browser nav bar */
+    padding-bottom: 0 !important;
+  }
+  
+  .snap-container {
+    height: 100vh !important;
+    height: 100dvh !important;
+    /* No safe areas needed - content goes behind browser nav */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
 }
 
 html {
@@ -9922,8 +10008,6 @@ body.chatbox-view .dashboard-content {
 /* Floating action bar for shift controls - iOS 26 compatible */
 .floating-action-bar {
   position: fixed;
-  /* iOS 26 support - position above system navbar using safe-area-inset-bottom */
-  bottom: max(20px, calc(20px + env(safe-area-inset-bottom)));
   left: 0;
   right: 0;
   margin: 0 auto;
@@ -9937,8 +10021,8 @@ body.chatbox-view .dashboard-content {
   align-items: center;
   justify-content: space-between; /* Distribute space evenly */
   gap: 12px;
-  /* Ensure navbar is above everything including iOS system UI */
-  z-index: 9999;
+  /* Ensure navbar is above everything including browser nav bars */
+  z-index: 10000;
   width: min(70%, 600px); /* Responsive width with max limit */
   max-width: calc(100% - 32px); /* Ensure padding from viewport edges */
   box-shadow:
@@ -9946,6 +10030,21 @@ body.chatbox-view .dashboard-content {
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: opacity 0.3s ease-out;
   box-sizing: border-box;
+}
+
+/* PWA mode: Position with safe area considerations */
+@media (display-mode: standalone) {
+  .floating-action-bar {
+    bottom: max(20px, calc(20px + env(safe-area-inset-bottom)));
+  }
+}
+
+/* Regular browser mode: Position above browser nav bar */
+@media not (display-mode: standalone) {
+  .floating-action-bar {
+    bottom: 20px;
+    /* In browser mode, the nav will be above browser nav bar */
+  }
 }
 
 /* Backdrop blur box behind floating action bar - iOS 26 compatible */
