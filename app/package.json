@@ -27,10 +27,10 @@
   "homepage": "https://github.com/kkarlsen06/wageCalculator#readme",
   "type": "module",
   "devDependencies": {
-    "rimraf": "^6.0.1",
-    "vite": "^7.1.4"
+    "rimraf": "^6.0.1"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.55.0"
+    "@supabase/supabase-js": "2.55.0",
+    "vite": "^7.1.4"
   }
 }
