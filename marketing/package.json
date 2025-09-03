@@ -6,6 +6,9 @@
         "build": "vite build",
         "preview": "vite preview"
     },
+    "dependencies": {
+        "vite": "^7.1.4"
+    },
     "devDependencies": {
         "vite": "^5.4.19"
     }
