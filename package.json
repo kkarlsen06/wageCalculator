@@ -20,7 +20,10 @@
     "preview:start": "run-p preview:marketing preview:app dev:server",
     "preview:marketing": "npm --workspace marketing run preview",
     "preview:app": "npm --workspace app run preview",
-    "smoke": "node scripts/smoke-spa.mjs"
+    "smoke": "node scripts/smoke-spa.mjs",
+    "test": "npm --workspace server run test",
+    "test:auth": "npm --workspace server run test:auth",
+    "test:payroll": "npm --workspace server run test:payroll"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"

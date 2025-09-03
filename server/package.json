@@ -9,7 +9,10 @@
   },
   "scripts": {
     "start": "node server.js",
-    "dev:server": "NODE_ENV=development nodemon server.js"
+    "dev:server": "NODE_ENV=development nodemon server.js",
+    "test": "node tests/auth.test.js && node tests/payroll.test.js",
+    "test:auth": "node tests/auth.test.js",
+    "test:payroll": "node tests/payroll.test.js"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.0",

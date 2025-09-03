@@ -20,10 +20,6 @@ import wsManager from '/src/js/websocketManager.js';
 // Create a local alias for consistency with other modules and expose globally later
 const supa = supabase;
 
-// DEBUG: check client
-supabase.auth.getSession().then(({ data, error }) => {
-  console.log("[debug] supabase session", data?.session, error)
-})
 
 // Tool/progress render helpers
 function formatMs(ms) {
