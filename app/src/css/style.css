@@ -4470,6 +4470,16 @@ input[type="time"].form-control[value=""]:focus {
   transition: none !important;
   animation: none !important;
   opacity: 1 !important;
+  /* Stabilize text metrics to avoid post-font-load shifts */
+  line-height: 1;
+  /* Ensure the grid item fills the row height so content can truly center */
+  align-self: stretch;
+  height: 100%;
+  /* Keep numeric glyph metrics stable across fonts */
+  font-variant-numeric: tabular-nums;
+  /* Create a stable compositing layer to avoid subpixel re-rasterization shifts */
+  will-change: transform;
+  transform: rotate(180deg) translateZ(0);
 }
 
 .date-cell {
@@ -9075,11 +9085,20 @@ input:checked + .slider:before {
   margin-bottom: 8px;
 }
 
+/* In modals, prefer fixed-height date cells to avoid fractional aspect-ratio rounding jitter */
+#addShiftModal .date-grid .date-cell,
+#editShiftModal .date-grid .date-cell {
+  aspect-ratio: auto !important;
+  height: clamp(44px, 6.5vw, 56px) !important;
+}
+
 /* Standard modal body padding for add shift modal */
 #addShiftModal .modal-body {
   padding: 20px !important;
   overflow-y: auto !important; /* Force scrolling on modal body only when needed */
   flex: 1 !important; /* Allow body to grow */
+  /* Reserve space for the scrollbar to prevent width-driven layout shifts */
+  scrollbar-gutter: stable both-edges;
 }
 
 /* Add shift modal close button in form actions */
@@ -9243,6 +9262,8 @@ input:checked + .slider:before {
   flex: 1 !important;
   overflow-y: auto !important;
   padding: 20px !important;
+  /* Reserve space for the scrollbar to prevent width-driven layout shifts */
+  scrollbar-gutter: stable both-edges;
   /* Allow natural content sizing */
   max-height: none !important;
 }

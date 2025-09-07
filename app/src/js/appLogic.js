@@ -1187,7 +1187,7 @@ export const app = {
                 return;
             }
             console.debug("[auth] using userId:", userId);
-
+            let createdCount = 0;
             for (const d of dates) {
                 const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
 
@@ -1205,6 +1205,7 @@ export const app = {
                         })
                     });
                     if (!resp.ok) { const e = await resp.json().catch(() => ({})); console.error('Gjentakende API-feil:', e); continue; }
+                    createdCount++;
                 } else {
                     // Regular user shift with series - validate subscription first
                     const { validateShiftCreation } = await import('./subscriptionValidator.js');
@@ -1261,12 +1262,19 @@ export const app = {
                         type: weekday === 0 ? 2 : (weekday === 6 ? 1 : 0),
                         seriesId
                     });
+                    createdCount++;
                 }
             }
 
             this.shifts = [...this.userShifts];
             this.refreshUI(this.shifts, true); // Show loading for user-initiated actions
             this.closeAddShiftModal();
+
+            // Show success toast
+            if (createdCount > 0 && window.ErrorHelper) {
+                const msg = createdCount === 1 ? 'Vakt lagt til' : `${createdCount} vakter lagt til`;
+                window.ErrorHelper.showSuccess(msg, { duration: 3500 });
+            }
 
             // Show success animation instead of alert
             const addButton = document.querySelector('.add-btn');
@@ -1354,6 +1362,7 @@ export const app = {
 
             // Process each selected date
             const createdShifts = [];
+            let createdCount = 0;
             for (const selectedDate of this.selectedDates) {
                 const dayOfWeek = selectedDate.getDay();
                 const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
@@ -1389,6 +1398,7 @@ export const app = {
                         alert(`Kunne ikke lagre vakt for ${finalDateStr}: ${e.error || resp.statusText}`);
                         continue;
                     }
+                    createdCount++;
                 } else {
                     // Regular user shift - validate subscription first
                     const { validateShiftCreation } = await import('./subscriptionValidator.js');
@@ -1445,6 +1455,7 @@ export const app = {
                     // Add to userShifts array only for regular shifts
                     this.userShifts.push(newShift);
                     createdShifts.push(newShift);
+                    createdCount++;
                 }
 
                 // For UI: keep local representation
@@ -1470,6 +1481,12 @@ export const app = {
 
             this.updateSelectedDatesInfo(); // Update the info display
             this.clearFormState();
+
+            // Show success toast
+            if (createdCount > 0 && window.ErrorHelper) {
+                const msg = createdCount === 1 ? 'Vakt lagt til' : `${createdCount} vakter lagt til`;
+                window.ErrorHelper.showSuccess(msg, { duration: 3500 });
+            }
 
             // Show success animation instead of alert
             if (createdShifts.length > 0) {
