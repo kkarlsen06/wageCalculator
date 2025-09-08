@@ -6,6 +6,7 @@
 import { renderLogin, afterMountLogin } from './pages/login.js';
 import { renderOnboarding, afterMountOnboarding } from './pages/onboarding.js';
 import { renderSettings, afterMountSettings } from './pages/settings.js';
+import renderAbonnementPage, { afterMountAbonnement } from './pages/abonnement.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
 function normalizePath(pathname) {
@@ -39,11 +40,13 @@ export const routes = [
         try { appEl.style.setProperty('display', 'block', 'important'); } catch (_) { appEl.style.display = 'block'; }
       }
       
-      // Clean up any floating settings elements and portal
+      // Clean up any floating settings and abonnement elements and portals
       try {
-        document.querySelectorAll('.floating-settings-bar, .floating-settings-backdrop').forEach(el => el.remove());
-        const portal = document.getElementById('settings-floating-portal');
-        if (portal) portal.remove();
+        document.querySelectorAll('.floating-settings-bar, .floating-settings-backdrop, .floating-nav-btn').forEach(el => el.remove());
+        const settingsPortal = document.getElementById('settings-floating-portal');
+        if (settingsPortal) settingsPortal.remove();
+        const abonnementPortal = document.getElementById('abonnement-floating-portal');
+        if (abonnementPortal) abonnementPortal.remove();
       } catch (_) {}
       
       // Reinitialize app content if needed
@@ -56,6 +59,7 @@ export const routes = [
   },
   { path: '/login', render: renderLogin, afterMount: afterMountLogin },
   { path: '/onboarding', render: renderOnboarding, afterMount: afterMountOnboarding },
+  { path: '/abonnement', render: renderAbonnementPage, afterMount: afterMountAbonnement },
   { path: '/settings', render: renderSettings, afterMount: afterMountSettings },
   // Account settings detail (primary path)
   { path: '/settings/account', render: renderSettings, afterMount: afterMountSettings },
@@ -151,4 +155,5 @@ document.addEventListener('click', (e) => {
 // Expose navigate for non-module scripts to avoid circular deps
 if (typeof window !== 'undefined') {
   window.__navigate = navigate;
+  window.navigateToRoute = navigate;
 }

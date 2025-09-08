@@ -9,10 +9,45 @@
   margin: 0 auto;
 }
 
+/* Abonnement page specific styling */
+#abonnementPage {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#abonnementPage .detail-title h1 {
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+#abonnementPage .detail-subtitle {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
 .settings-title {
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 12px;
+}
+
+/* Center the settings home actions vertically for easier thumb reach */
+.settings-home .settings-content {
+  display: flex;
+  flex-direction: column;
+  /* Keep title at the top; only list gets centered */
+  justify-content: flex-start;
+  /* Account for floating bar/backdrop height so centering feels natural */
+  min-height: calc(100svh - 160px - env(safe-area-inset-bottom, 0px));
+}
+
+/* Vertically center only the settings list between title and bottom */
+.settings-home .settings-list {
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .settings-list {
@@ -259,16 +294,92 @@
   isolation: auto !important;
 }
 
+/* Single floating nav button (no background container) */
+.floating-nav-btn {
+  position: fixed !important;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 10000 !important;
+}
+
+.floating-nav-btn.back-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 16px;
+  padding: 12px 16px;
+  min-height: 44px;
+  color: white;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all var(--speed-normal) var(--ease-default);
+  white-space: nowrap;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.floating-nav-btn.btn.btn-secondary {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 16px;
+  min-height: 44px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.floating-nav-btn.btn.btn-secondary:hover {
+  background-color: var(--bg-hover);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.floating-nav-btn.back-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
 /* Map former #settingsModal scoped styles to route containers */
 .settings-detail .tab-content { padding: 0; }
 .settings-detail .form-group { margin-bottom: var(--space-3); }
 .settings-detail .form-group label { font-size: var(--text-sm); margin-bottom: var(--space-1); line-height: 1.4; }
-.settings-detail .switch-group { gap: var(--space-2); align-items: flex-start; }
+.settings-detail .switch-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: nowrap;
+  /* Remove inherited bottom margin to avoid double spacing with flex gap */
+  margin-bottom: 0;
+}
+/* Make the text side take remaining space and allow natural wrapping when needed */
+.settings-detail .switch-group span,
+.settings-detail .switch-group .switch-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* Keep the toggle pinned to the right */
+.settings-detail .switch-group .switch {
+  margin-left: auto;
+}
 .settings-detail .settings-subsection { margin-top: var(--space-2); margin-bottom: var(--space-2); }
 .settings-detail .settings-collapse-toggle { padding: var(--space-2) var(--space-1); gap: var(--space-1); min-height: 44px; border-radius: var(--border-radius); }
 .settings-detail .settings-collapsible-content { margin-top: var(--space-2); padding-top: var(--space-1); }
 .settings-detail .preset-badge { padding: 4px 10px; font-size: 12px; }
 .settings-detail .export-period-options { max-width: none; width: 100%; }
+
+/* Tighter spacing for compact cards so hint text sits close to the control */
+.settings-detail .setting-card.is-compact .setting-body { gap: 8px; }
 
 /* Basic utilities for route to avoid inline styles */
 .hidden { display: none; }
@@ -285,14 +396,25 @@
 .text-warning { color: #FBBF24; font-size: 12px; }
 .input-inline { display: inline-block; max-width: 140px; }
 
+/* Center action button rows for better thumb reach on settings pages */
+.settings-detail .setting-actions,
+.settings-section .setting-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 /* Supplements long card */
 .supplement-group { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-2); }
-.supplement-group .group-title { font-weight: 600; color: var(--text-primary); }
+.supplement-group .group-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
 .supplement-list { display: flex; flex-direction: column; gap: var(--space-2); }
 .supplement-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: var(--space-2);
   background: var(--bg-primary);
   border: 1px solid var(--border);
@@ -300,7 +422,16 @@
   padding: var(--space-2);
 }
 .supplement-meta { color: var(--text-primary); font-size: 14px; }
-.supplement-actions { display: flex; gap: var(--space-1); }
+.supplement-actions { 
+  display: flex; 
+  gap: var(--space-1); 
+}
+.supplement-actions .btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  min-height: 36px;
+  min-width: auto;
+}
 .inline-error { color: var(--danger); font-size: 12px; margin-top: 6px; }
 .has-error { border-color: rgba(255, 99, 99, 0.6) !important; }
 
@@ -366,9 +497,200 @@
   .form-actions { margin-top: var(--space-4); }
 }
 
+/* Abonnement-specific components */
+.subscription-status-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-icon {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.status-text {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 32px; /* Align with status text */
+}
+
+.period-info, .plan-info {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.appreciation-message, 
+.early-user-message, 
+.early-user-subscribed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-success);
+  border: 1px solid var(--border-success);
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
+.early-user-message svg,
+.early-user-subscribed svg,
+.appreciation-message svg {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.early-user-content,
+.early-user-subscribed-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.early-user-content h4,
+.early-user-subscribed-content h4 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.early-user-content p,
+.early-user-subscribed-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.plans-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.plan-card {
+  border: 2px solid var(--border);
+  transition: border-color 0.2s ease;
+}
+
+.plan-card.pro-plan {
+  border-color: var(--accent);
+}
+
+.plan-card.max-plan {
+  border-color: var(--primary);
+}
+
+.plan-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.plan-header h5 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.plan-price {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.plan-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feature {
+  position: relative;
+  padding-left: 24px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.feature::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.feature.feature-limitation::before {
+  content: "−";
+  color: var(--warning);
+}
+
+.modal-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loading-spinner svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Responsive design for plans */
+@media (min-width: 768px) {
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  
+  #abonnementPage {
+    max-width: 800px;
+  }
+}
+
 @media (max-width: 480px) {
   .settings-detail .tab-content { padding: var(--space-3) var(--space-2) var(--space-2) var(--space-2); }
-  .settings-detail .switch-group { gap: var(--space-2); flex-direction: column; align-items: stretch; }
+  /* Keep toggles inline on small screens; allow text to wrap if needed */
+  .settings-detail .switch-group {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+  /* Slightly tighter spacing for compact cards so hints sit close to toggles */
+  .settings-detail .setting-card.is-compact .setting-body { gap: 6px; }
   .settings-detail .form-group { margin-bottom: var(--space-3); }
   .settings-detail .settings-collapse-toggle { padding: var(--space-2) var(--space-1); min-height: 48px; font-size: 15px; }
   .settings-detail .settings-section-header h3 { font-size: 17px; }

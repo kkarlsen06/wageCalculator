@@ -6714,6 +6714,11 @@ if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_STATIC === 'true
     res.sendFile(path.join(staticRoot, 'index.html'));
   });
 
+  // SPA routes that should serve the main app
+  app.get('/abonnement', (req, res) => {
+    res.sendFile(path.join(staticRoot, 'index.html'));
+  });
+
   // No dedicated /kalkulator mount; marketing handles redirect to app domain
 }
 

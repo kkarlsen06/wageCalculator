@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "run-p dev:*",
+    "dev": "kill -9 $(lsof -t -i:3000) || run-p dev:*",
     "dev:app": "npm --workspace app run dev || echo 'app: no dev script'",
     "dev:server": "npm --workspace server run dev:server || echo 'server: no dev script'",
     "dev:marketing": "npm --workspace marketing run dev",
@@ -16,7 +16,7 @@
     "build:app": "npm --workspace app run build || echo 'app: no build script'",
     "clean": "node scripts/clean-dists.mjs",
     "clean:all": "node scripts/clean-dists.mjs",
-    "preview": "run-s clean build preview:start",
+    "preview": "kill -9 $(lsof -t -i:3000) || run-s clean build preview:start",
     "preview:start": "run-p preview:marketing preview:app dev:server",
     "preview:marketing": "npm --workspace marketing run preview",
     "preview:app": "npm --workspace app run preview",

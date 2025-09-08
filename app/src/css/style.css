@@ -8175,6 +8175,122 @@ input:checked + .slider:before {
   border-bottom: none;
 }
 
+/* Bonus breakdown styling */
+.bonus-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.bonus-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  gap: 12px;
+}
+
+.bonus-period {
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.bonus-details {
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: right;
+  flex: 1;
+}
+
+.bonus-total {
+  padding: 8px 12px;
+  margin-top: 4px;
+  background: rgba(var(--accent3-rgb), 0.1);
+  border-radius: 8px;
+  text-align: right;
+}
+
+.bonus-total strong {
+  color: var(--accent3);
+}
+
+/* Bonus slot management UI styling */
+.bonus-slot {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.bonus-slot:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent3);
+}
+
+.bonus-slot-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 16px;
+}
+
+.bonus-time-range {
+  flex: 1;
+}
+
+.bonus-time-text {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.bonus-rate-display {
+  flex-shrink: 0;
+}
+
+.bonus-rate-text {
+  background: var(--accent3);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.bonus-slot-inputs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.bonus-slot-inputs .form-control {
+  flex: 1;
+}
+
+.bonus-slot-inputs .form-control[type="number"] {
+  max-width: 100px;
+}
+
+.bonus-slot-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.bonus-slot-buttons .btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
 /* Delete button section styling */
 .detail-section.delete-section {
   padding-top: 6px;
@@ -8297,6 +8413,63 @@ input:checked + .slider:before {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+  }
+
+  .bonus-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 8px 12px;
+  }
+
+  .bonus-period {
+    min-width: auto;
+  }
+
+  .bonus-details {
+    text-align: left;
+    font-size: 12px;
+  }
+
+  .bonus-slot {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+
+  .bonus-slot-display {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .bonus-time-text {
+    font-size: 14px;
+  }
+
+  .bonus-rate-text {
+    font-size: 12px;
+  }
+
+  .bonus-slot-inputs {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bonus-slot-inputs .form-control[type="number"] {
+    max-width: none;
+  }
+
+  .bonus-slot-buttons {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .bonus-slot-buttons .btn {
+    font-size: 11px;
+    padding: 5px 10px;
+    flex: 1;
+    min-width: 60px;
   }
 
   .detail-section.delete-section {
@@ -17902,11 +18075,14 @@ body.chatbox-view .chatbox-container {
 }
 
 .setting-card {
-  background: var(--bg-tertiary);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: var(--space-2);
 }
+
+/* Nested cards can reuse the same overlay tone for consistency */
+/* (No extra lighten to keep hierarchy: page < section (mid) < card (light)) */
 
 .setting-card.is-compact { padding: var(--space-2); }
 .setting-card.is-standard { padding: var(--space-3); }
@@ -17919,8 +18095,5 @@ body.chatbox-view .chatbox-container {
 /* Collapsible helpers */
 .settings-collapse-toggle { display: inline-flex; align-items: center; }
 
-/* Ensure innermost cards are darkest in dark theme */
-html.theme-dark .setting-card {
-  background: var(--bg-primary);
-}
+/* No dark-theme override: section remains the middle tone between page and cards */
 .settings-collapsible-content.hidden { display: none; }

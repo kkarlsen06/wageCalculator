@@ -96,14 +96,8 @@ function getAccountDetail() {
   <div class="settings-detail">
     <div class="settings-content">
       <h2 class="detail-title">Konto</h2>
-      <div class="detail-body">
-        <!-- Section Box: Konto -->
-        <section class="settings-section" aria-labelledby="account-section-title">
-          <header class="settings-section-header">
-            <h3 id="account-section-title">Konto</h3>
-            <p class="section-description">Profil, sikkerhet og tilgang</p>
-          </header>
-          <div class="settings-section-body">
+        <!-- Konto content without section box -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
             <!-- Card: Profilinformasjon -->
             <div class="setting-card is-standard" id="accountProfileInfoCard">
               <div class="setting-header">
@@ -140,7 +134,7 @@ function getAccountDetail() {
                     </div>
                   </div>
                   <div class="avatar-upload-controls">
-                    <div class="row-inline">
+                    <div class="setting-actions">
                       <button id="accountAvatarChooseBtn" type="button" class="btn btn-secondary">Velg bilde</button>
                       <button id="accountAvatarRemoveBtn" type="button" class="btn btn-secondary">Fjern</button>
                     </div>
@@ -160,9 +154,25 @@ function getAccountDetail() {
                 <span>Tilkoblinger</span>
               </div>
               <div class="setting-body">
-                <div class="row-inline">
-                  <button id="btn-link-google" type="button" class="btn btn-secondary">Koble til Google</button>
-                  <button id="btn-unlink-google" type="button" class="btn btn-secondary hidden">Fjern Google-konto</button>
+                <div class="setting-actions">
+                  <button id="btn-link-google" type="button" class="btn btn-secondary">
+                    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 48 48" style="background:transparent">
+                      <path d="M44.5 20H24v8.5h11.8C34.6 33.9 29.9 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 12.4 2 3 11.4 3 23s9.4 21 21 21 20-9.4 20-21c0-1.2-.1-2.1-.3-3z" fill="#FFC107"/>
+                      <path d="M6.3 14.7l7 5.1C14.7 16.3 18.9 13 24 13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 15.5 2 8.2 6.7 6.3 14.7z" fill="#FF3D00"/>
+                      <path d="M24 44c5.7 0 10.6-1.9 14.1-5.2l-6.5-5.4c-2 1.4-4.6 2.2-7.6 2.2-5.9 0-10.8-3.9-12.6-9.3l-7.1 5.5C7.2 38.8 15 44 24 44z" fill="#4CAF50"/>
+                      <path d="M44.5 20H24v8.5h11.8c-1 2.9-3 5.2-5.6 6.9l6.5 5.4C39.8 42.5 45 38 45 23c0-1.2-.2-2.1-.5-3z" fill="#1976D2"/>
+                    </svg>
+                    <span class="btn-label">Koble til Google</span>
+                  </button>
+                  <button id="btn-unlink-google" type="button" class="btn btn-secondary hidden">
+                    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 48 48" style="background:transparent">
+                      <path d="M44.5 20H24v8.5h11.8C34.6 33.9 29.9 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 12.4 2 3 11.4 3 23s9.4 21 21 21 20-9.4 20-21c0-1.2-.1-2.1-.3-3z" fill="#FFC107"/>
+                      <path d="M6.3 14.7l7 5.1C14.7 16.3 18.9 13 24 13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 15.5 2 8.2 6.7 6.3 14.7z" fill="#FF3D00"/>
+                      <path d="M24 44c5.7 0 10.6-1.9 14.1-5.2l-6.5-5.4c-2 1.4-4.6 2.2-7.6 2.2-5.9 0-10.8-3.9-12.6-9.3l-7.1 5.5C7.2 38.8 15 44 24 44z" fill="#4CAF50"/>
+                      <path d="M44.5 20H24v8.5h11.8c-1 2.9-3 5.2-5.6 6.9l6.5 5.4C39.8 42.5 45 38 45 23c0-1.2-.2-2.1-.5-3z" fill="#1976D2"/>
+                    </svg>
+                    <span class="btn-label">Fjern Google-konto</span>
+                  </button>
                   <span id="google-unlink-warning" class="text-warning hidden">Legg til en annen påloggingsmetode før du fjerner Google.</span>
                 </div>
               </div>
@@ -177,15 +187,15 @@ function getAccountDetail() {
                 <button type="button" class="btn btn-secondary" onclick="app.restartOnboarding && app.restartOnboarding()">Start onboarding på nytt</button>
               </div>
             </div>
-          </div>
-        </section>
+        </div>
 
         <!-- Section Box: Farlige handlinger (collapsible) -->
+        <div style="margin-top: var(--space-2);">
         <section class="settings-section" aria-labelledby="danger-section-title">
           <header class="settings-section-header">
-            <button type="button" class="settings-collapse-toggle btn btn-secondary" data-toggle-section="dangerousActions" aria-expanded="false" aria-controls="dangerousActions">
+            <button type="button" class="settings-collapse-toggle btn btn-secondary" data-toggle-section="dangerousActions" aria-expanded="false" aria-controls="dangerousActions" onclick="console.log('Button clicked directly'); if(window.app && window.app.toggleSettingsSection) window.app.toggleSettingsSection('dangerousActions', this);">
               Farlige handlinger
-              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; width:16px; height:16px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; width:16px; height:16px; pointer-events: none;"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </header>
           <div id="dangerousActions" class="settings-section-body settings-collapsible-content hidden">
@@ -199,6 +209,7 @@ function getAccountDetail() {
             </div>
           </div>
         </section>
+        </div>
 
         <!-- Avatar Crop Modal -->
         <div id="cropModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle" style="display:none;">
@@ -218,10 +229,8 @@ function getAccountDetail() {
             </div>
           </div>
         </div>
-      </div>
     </div>
     <div class="settings-bottom-bar">
-      <button type="button" class="btn btn-secondary" data-spa data-href="/">Lukk</button>
       <button type="button" class="btn btn-secondary" data-spa data-href="/settings?from=detail">Tilbake</button>
     </div>
   </div>`;
@@ -232,7 +241,6 @@ function getWageDetail() {
   <div class="settings-detail">
     <div class="settings-content">
       <h2 class="detail-title">Lønn</h2>
-      <div class="detail-body">
         <!-- Section Box: Lønnsmodell -->
         <section class="settings-section" aria-labelledby="wage-model-title">
           <header class="settings-section-header">
@@ -245,8 +253,11 @@ function getWageDetail() {
               <div class="setting-header">Bruk Virke-tariff</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="usePresetToggle">Virke-tariff</label>
-                  <input id="usePresetToggle" type="checkbox" onchange="app.togglePreset && app.togglePreset()" />
+                  <label for="usePresetToggle" class="switch-text">Virke-tariff</label>
+                  <label class="switch">
+                    <input id="usePresetToggle" aria-label="Virke-tariff" type="checkbox" onchange="app.togglePreset && app.togglePreset()" />
+                    <span class="slider"></span>
+                  </label>
                 </div>
                 <div class="form-hint">Bytt mellom tariff og egendefinert lønn.</div>
               </div>
@@ -313,10 +324,8 @@ function getWageDetail() {
             </div>
           </div>
         </section>
-      </div>
     </div>
     <div class="settings-bottom-bar">
-      <button type="button" class="btn btn-secondary" data-spa data-href="/">Lukk</button>
       <button type="button" class="btn btn-secondary" data-spa data-href="/settings?from=detail">Tilbake</button>
     </div>
   </div>`;
@@ -327,7 +336,6 @@ function getWageAdvancedDetail() {
   <div class="settings-detail">
     <div class="settings-content">
       <h2 class="detail-title">Avansert lønn</h2>
-      <div class="detail-body">
         <!-- Section Box: Pausetrekk -->
         <section class="settings-section" aria-labelledby="break-deduction-title">
           <header class="settings-section-header">
@@ -340,14 +348,17 @@ function getWageAdvancedDetail() {
               <div class="setting-header">Aktiver pausetrekk</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="pauseDeductionEnabledToggle">Pausetrekk</label>
-                  <input id="pauseDeductionEnabledToggle" type="checkbox" />
+                  <label for="pauseDeductionEnabledToggle" class="switch-text">Pausetrekk</label>
+                  <label class="switch">
+                    <input id="pauseDeductionEnabledToggle" aria-label="Pausetrekk" type="checkbox" />
+                    <span class="slider"></span>
+                  </label>
                 </div>
                 <div class="form-hint">Skjul/vis avanserte pausetrekk-innstillinger.</div>
               </div>
             </div>
 
-            <div id="breakDeductionSubsection">
+            <div id="breakDeductionSubsection" class="settings-section-body">
               <!-- Card: Metode / Bedriftspolicy (conditional by subscription) -->
               <div class="setting-card is-standard">
                 <div class="setting-header">Metode</div>
@@ -414,8 +425,11 @@ function getWageAdvancedDetail() {
               <div class="setting-header">Skattetrekk</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="taxDeductionToggle">Skattetrekk</label>
-                  <input id="taxDeductionToggle" type="checkbox" onchange="app.toggleTaxDeduction && app.toggleTaxDeduction(this.checked)" />
+                  <label for="taxDeductionToggle" class="switch-text">Skattetrekk</label>
+                  <label class="switch">
+                    <input id="taxDeductionToggle" aria-label="Skattetrekk" type="checkbox" onchange="app.toggleTaxDeduction && app.toggleTaxDeduction(this.checked)" />
+                    <span class="slider"></span>
+                  </label>
                 </div>
                 <div class="form-hint">Vis netto beløp ved å trekke skatt.</div>
               </div>
@@ -471,10 +485,8 @@ function getWageAdvancedDetail() {
             </div>
           </div>
         </section>
-      </div>
     </div>
     <div class="settings-bottom-bar">
-      <button type="button" class="btn btn-secondary" data-spa data-href="/">Lukk</button>
       <button type="button" class="btn btn-secondary" data-spa data-href="/settings?from=detail">Tilbake</button>
     </div>
   </div>`;
@@ -485,7 +497,6 @@ function getInterfaceDetail() {
   <div class="settings-detail">
     <div class="settings-content">
       <h2 class="detail-title">Utseende</h2>
-      <div class="detail-body">
         <!-- Section Box: Tema -->
         <section class="settings-section" aria-labelledby="theme-section-title">
           <header class="settings-section-header">
@@ -540,8 +551,11 @@ function getInterfaceDetail() {
               </div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="defaultShiftsViewToggle">Åpne kalender som standard</label>
-                  <input id="defaultShiftsViewToggle" type="checkbox" />
+                  <label for="defaultShiftsViewToggle" class="switch-text">Åpne kalender som standard</label>
+                  <label class="switch">
+                    <input id="defaultShiftsViewToggle" aria-label="Åpne kalender som standard" type="checkbox" />
+                    <span class="slider"></span>
+                  </label>
                 </div>
                 <div class="form-hint">Når aktivert, åpnes kalenderen i stedet for liste.</div>
               </div>
@@ -566,8 +580,11 @@ function getInterfaceDetail() {
               </div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="showEmployeeTabToggle">Vis «Ansatte»-fanen</label>
-                  <input id="showEmployeeTabToggle" type="checkbox" />
+                  <label for="showEmployeeTabToggle" class="switch-text">Vis «Ansatte»-fanen</label>
+                  <label class="switch">
+                    <input id="showEmployeeTabToggle" aria-label="Vis «Ansatte»-fanen" type="checkbox" />
+                    <span class="slider"></span>
+                  </label>
                 </div>
                 <div class="form-hint">Krever Enterprise. Viser fanen «Ansatte» i bunnmenyen.</div>
               </div>
@@ -594,8 +611,11 @@ function getInterfaceDetail() {
               <div class="setting-header">Direkte tidsinput</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="directTimeInputToggle">Skriv tid direkte</label>
-                  <input id="directTimeInputToggle" type="checkbox" />
+                  <label for="directTimeInputToggle" class="switch-text">Skriv tid direkte</label>
+                  <label class="switch">
+                    <input id="directTimeInputToggle" aria-label="Skriv tid direkte" type="checkbox" />
+                    <span class="slider"></span>
+                  </label>
                 </div>
                 <div class="form-hint">Raskere registrering uten nedtrekksmenyer.</div>
               </div>
@@ -606,8 +626,11 @@ function getInterfaceDetail() {
               <div class="setting-header">Minuttintervall</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="fullMinuteRangeToggle">Vis alle minutter</label>
-                  <input id="fullMinuteRangeToggle" type="checkbox" />
+                  <label for="fullMinuteRangeToggle" class="switch-text">Vis alle minutter</label>
+                  <label class="switch">
+                    <input id="fullMinuteRangeToggle" aria-label="Vis alle minutter" type="checkbox" />
+                    <span class="slider"></span>
+                  </label>
                 </div>
                 <div class="form-hint">Vis hvert minutt i stedet for 15-minutters intervaller.</div>
               </div>
@@ -618,18 +641,19 @@ function getInterfaceDetail() {
               <div class="setting-header">Valutavisning</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="currencyFormatToggle">Bruk «NOK» i stedet for «kr»</label>
-                  <input id="currencyFormatToggle" type="checkbox" />
+                  <label for="currencyFormatToggle" class="switch-text">Bruk «NOK» i stedet for «kr»</label>
+                  <label class="switch">
+                    <input id="currencyFormatToggle" aria-label="Bruk «NOK» i stedet for «kr»" type="checkbox" />
+                    <span class="slider"></span>
+                  </label>
                 </div>
                 <div class="form-hint">Mer formell visning i rapporter og eksport.</div>
               </div>
             </div>
           </div>
         </section>
-      </div>
     </div>
     <div class="settings-bottom-bar">
-      <button type="button" class="btn btn-secondary" data-spa data-href="/">Lukk</button>
       <button type="button" class="btn btn-secondary" data-spa data-href="/settings?from=detail">Tilbake</button>
     </div>
   </div>`;
@@ -640,7 +664,6 @@ function getDataDetail() {
   <div class="settings-detail">
     <div class="settings-content">
       <h2 class="detail-title">Data</h2>
-      <div class="detail-body">
         <!-- Section Box: Eksport -->
         <section class="settings-section" aria-labelledby="export-section-title">
           <header class="settings-section-header">
@@ -742,10 +765,8 @@ function getDataDetail() {
             </div>
           </div>
         </section>
-      </div>
     </div>
     <div class="settings-bottom-bar">
-      <button type="button" class="btn btn-secondary" data-spa data-href="/">Lukk</button>
       <button type="button" class="btn btn-secondary" data-spa data-href="/settings?from=detail">Tilbake</button>
     </div>
   </div>`;
@@ -806,7 +827,7 @@ export function afterMountSettings() {
     });
 
     // Clean up any existing floating elements globally
-    document.querySelectorAll('.floating-settings-backdrop, .floating-settings-bar').forEach(el => el.remove());
+    document.querySelectorAll('.floating-settings-backdrop, .floating-settings-bar, .floating-nav-btn').forEach(el => el.remove());
 
     // Create a dedicated portal container that's guaranteed to be outside all transforms/contains
     let portal = document.getElementById('settings-floating-portal');
@@ -831,33 +852,25 @@ export function afterMountSettings() {
       document.documentElement.appendChild(portal);
     }
 
-    // Create backdrop
-    const backdrop = document.createElement('div');
-    backdrop.className = 'floating-settings-backdrop';
-    backdrop.style.pointerEvents = 'none';
-    portal.appendChild(backdrop);
-
-    // Create floating bar
-    const bar = document.createElement('div');
-    bar.className = 'floating-settings-bar';
-    // Ensure the bar itself can receive pointer events (auto is sufficient for HTML elements)
-    bar.style.pointerEvents = 'auto';
     const isDetail = !!section;
-    
-    // Render contents: Close button (left) and Back button (right when detail)
-    bar.innerHTML = `
-      <button type="button" class="btn btn-secondary" data-spa data-href="/">Lukk</button>
-      ${isDetail ? `
-        <button type="button" class="back-btn" data-spa data-href="/settings?from=detail" aria-label="Tilbake">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          <span>Tilbake</span>
-        </button>
-      ` : '<span></span>'}
-    `;
-    
-    portal.appendChild(bar);
+    // Create a single floating nav button (no wrapping bar)
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = isDetail ? 'floating-nav-btn back-btn' : 'floating-nav-btn btn btn-secondary';
+    btn.setAttribute('data-spa', '');
+    btn.style.pointerEvents = 'auto';
+    if (isDetail) {
+      btn.setAttribute('data-href', '/settings?from=detail');
+      btn.setAttribute('aria-label', 'Tilbake');
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span>Tilbake</span>
+      `;
+    } else {
+      btn.setAttribute('data-href', '/');
+      btn.textContent = 'Lukk';
+    }
+    portal.appendChild(btn);
 
     // Hard-bind navigation for the floating bar buttons to avoid any bubbling/portal edge cases
     try {
@@ -870,15 +883,15 @@ export function afterMountSettings() {
           document.documentElement.classList.remove('spa-route');
           document.body.classList.remove('spa-route');
           // Clean up floating UI remnants
-          document.querySelectorAll('.floating-settings-bar, .floating-settings-backdrop').forEach(el => el.remove());
+          document.querySelectorAll('.floating-settings-bar, .floating-settings-backdrop, .floating-nav-btn').forEach(el => el.remove());
           const p = document.getElementById('settings-floating-portal');
           if (p) p.remove();
         } catch (_) {}
       };
 
-      const closeBtn = bar.querySelector('button.btn.btn-secondary[data-href="/"]');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', (e) => {
+      const isClose = !isDetail;
+      if (isClose) {
+        btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           // Prefer SPA navigation
@@ -890,13 +903,12 @@ export function afterMountSettings() {
         });
       }
 
-      const backBtn = bar.querySelector('button.back-btn[data-href]');
-      if (backBtn) {
-        backBtn.addEventListener('click', (e) => {
+      if (isDetail) {
+        btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           try {
-            const href = backBtn.getAttribute('data-href') || '/settings';
+            const href = btn.getAttribute('data-href') || '/settings';
             if (window.__navigate) window.__navigate(href); else window.location.href = href;
           } catch (_) { window.location.href = '/settings'; }
         });
@@ -906,11 +918,10 @@ export function afterMountSettings() {
     // Ensure the settings page has enough bottom padding to scroll content above the floating bar/backdrop
     try {
       const page = document.getElementById('settingsPage');
-      const backdropHeight = 120; // matches .floating-settings-backdrop height
-      // Measure the actual bar height (includes padding)
-      const barHeight = bar.getBoundingClientRect().height || 64;
+      // Measure the actual button height (includes padding)
+      const barHeight = btn.getBoundingClientRect().height || 56;
       // Add a comfortable buffer so the last element can clear the gradient
-      const desiredPadding = Math.max(160, Math.ceil(barHeight + backdropHeight));
+      const desiredPadding = Math.max(120, Math.ceil(barHeight + 40));
       if (page) {
         page.style.paddingBottom = `calc(${desiredPadding}px + env(safe-area-inset-bottom, 0px))`;
       }
@@ -1236,28 +1247,44 @@ export function afterMountSettings() {
         }
 
         // Wire break policy change to server org-settings
-        const breakPolicySelect = document.getElementById('breakPolicySelect');
+        const pageScope = document.getElementById('settingsPage') || document;
+        const breakPolicySelect = pageScope.querySelector('#breakPolicySelect');
         if (breakPolicySelect) {
           breakPolicySelect.addEventListener('change', () => window.app.saveOrgSettings?.());
         }
 
         // Show/hide subsection on toggle
-        const toggle = document.getElementById('pauseDeductionEnabledToggle');
-        const subsection = document.getElementById('breakDeductionSubsection');
+        const toggle = pageScope.querySelector('#pauseDeductionEnabledToggle');
+        const subsection = pageScope.querySelector('#breakDeductionSubsection');
         if (toggle && subsection) {
+          // Ensure the route-scoped toggle reflects current state
+          if (window.app && typeof window.app.pauseDeductionEnabled !== 'undefined') {
+            toggle.checked = !!window.app.pauseDeductionEnabled;
+          }
           const setVis = () => { subsection.style.display = toggle.checked ? '' : 'none'; };
           toggle.addEventListener('change', setVis);
           setVis();
         }
 
         // Inline validation for threshold and minutes
-        const thresholdInput = document.getElementById('pauseThresholdInput');
-        const thresholdError = document.getElementById('pauseThresholdError');
-        const minutesInput = document.getElementById('pauseDeductionMinutesInput');
-        const minutesError = document.getElementById('pauseMinutesError');
+        const thresholdInput = pageScope.querySelector('#pauseThresholdInput');
+        const thresholdError = pageScope.querySelector('#pauseThresholdError');
+        const minutesInput = pageScope.querySelector('#pauseDeductionMinutesInput');
+        const minutesError = pageScope.querySelector('#pauseMinutesError');
+
+        // Ensure current values are reflected in the route-scoped inputs (avoid duplicate-ID conflicts)
+        if (thresholdInput && window.app && typeof window.app.pauseThresholdHours !== 'undefined') {
+          thresholdInput.value = window.app.pauseThresholdHours;
+        }
+        if (minutesInput && window.app && typeof window.app.pauseDeductionMinutes !== 'undefined') {
+          minutesInput.value = window.app.pauseDeductionMinutes;
+        }
 
         const validateThreshold = () => {
           if (!thresholdInput) return true;
+          // Don't show errors when disabled or empty on load
+          if (toggle && !toggle.checked) { if (thresholdError) thresholdError.style.display = 'none'; thresholdInput.setAttribute('aria-invalid', 'false'); return true; }
+          if (thresholdInput.value === '' || thresholdInput.value == null) { if (thresholdError) thresholdError.style.display = 'none'; thresholdInput.setAttribute('aria-invalid', 'false'); return true; }
           const v = parseFloat(thresholdInput.value);
           const invalid = Number.isNaN(v) || v < 0 || v > 24;
           if (thresholdError) thresholdError.style.display = invalid ? 'block' : 'none';
@@ -1266,6 +1293,9 @@ export function afterMountSettings() {
         };
         const validateMinutes = () => {
           if (!minutesInput) return true;
+          // Don't show errors when disabled or empty on load
+          if (toggle && !toggle.checked) { if (minutesError) minutesError.style.display = 'none'; minutesInput.setAttribute('aria-invalid', 'false'); return true; }
+          if (minutesInput.value === '' || minutesInput.value == null) { if (minutesError) minutesError.style.display = 'none'; minutesInput.setAttribute('aria-invalid', 'false'); return true; }
           const v = parseInt(minutesInput.value, 10);
           const invalid = Number.isNaN(v) || v < 0 || v > 120;
           if (minutesError) minutesError.style.display = invalid ? 'block' : 'none';
@@ -1274,20 +1304,25 @@ export function afterMountSettings() {
         };
         thresholdInput?.addEventListener('input', validateThreshold);
         minutesInput?.addEventListener('input', validateMinutes);
-        // Initialize validation state on load
+        // Initialize validation state on load (after values ensured)
         validateThreshold();
         validateMinutes();
 
         // Initialize Skatt (tax) UI state and validations
         try {
           // Sync current tax settings into the UI and visibility
+          // Update legacy UI first, then ensure route-scoped inputs reflect state
           window.app.updateTaxDeductionUI?.();
 
           // Inline validation for tax percentage
-          const taxInput = document.getElementById('taxPercentageInput');
-          const taxError = document.getElementById('taxPercentageError');
+          const taxInput = pageScope.querySelector('#taxPercentageInput');
+          const taxError = pageScope.querySelector('#taxPercentageError');
+          const taxSection = pageScope.querySelector('#taxPercentageSection');
+          if (taxInput && window.app) taxInput.value = window.app.taxPercentage ?? '';
+          if (taxSection && window.app) taxSection.style.display = window.app.taxDeductionEnabled ? '' : 'none';
           const validateTax = () => {
             if (!taxInput) return true;
+            if (taxInput.value === '' || taxInput.value == null) { if (taxError) taxError.style.display = 'none'; taxInput.setAttribute('aria-invalid', 'false'); return true; }
             const v = parseFloat(taxInput.value);
             const invalid = Number.isNaN(v) || v < 0 || v > 100;
             if (taxError) taxError.style.display = invalid ? 'block' : 'none';
@@ -1303,11 +1338,12 @@ export function afterMountSettings() {
           validateTax();
 
           // Ensure toggle updates section visibility consistently
-          const taxToggle = document.getElementById('taxDeductionToggle');
+          const taxToggle = pageScope.querySelector('#taxDeductionToggle');
           if (taxToggle && !taxToggle._boundChange) {
             taxToggle.addEventListener('change', () => {
               window.app.toggleTaxDeduction?.(taxToggle.checked);
               window.app.updateTaxDeductionUI?.();
+              if (taxSection) taxSection.style.display = taxToggle.checked ? '' : 'none';
             });
             taxToggle._boundChange = true;
           }

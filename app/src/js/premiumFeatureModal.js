@@ -1,11 +1,10 @@
-import { SubscriptionModal } from './subscriptionModal.js';
 import { deleteShiftsOutsideMonth } from './subscriptionValidator.js';
 import { ConfirmationDialog } from './confirmationDialog.js';
+import { getUserId } from '/src/lib/auth/getUserId.js';
 
 export class PremiumFeatureModal {
   constructor() {
     this.modal = null;
-    this.subscriptionModal = null;
     this.confirmationDialog = null;
     this.currentResolve = null;
     this.isVisible = false;
@@ -224,6 +223,222 @@ export class PremiumFeatureModal {
     this.resolve('upgrade');
   }
 
+  async showSubscriptionModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = `
+      <div class="modal-content subscription-modal-content">
+        <div class="modal-header">
+          <div class="modal-header-content">
+            <h2 class="modal-title">Abonnementsadministrasjon</h2>
+            <p class="modal-subtitle">Administrer ditt profesjonelle abonnement</p>
+          </div>
+          <button type="button" class="modal-close-btn" aria-label="Lukk">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="modal-loading" id="modalLoading">
+          <div class="loading-content">
+            <div class="loading-spinner">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+              </svg>
+            </div>
+            <p class="loading-text">Henter abonnementsinformasjon...</p>
+          </div>
+        </div>
+        
+        <div class="modal-body" id="modalContent" style="display: none;">
+          <div class="subscription-status-card">
+            <div class="status-header">
+              <svg class="status-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9 12l2 2 4-4"></path>
+              </svg>
+              <div id="subscriptionStatus" class="status-text"></div>
+            </div>
+            <div class="status-details">
+              <div id="subscriptionPeriod" class="period-info"></div>
+              <div id="subscriptionPlan" class="plan-info"></div>
+            </div>
+          </div>
+          
+          <div class="subscription-plans" id="subscriptionPlans">
+            <h4>Tilgjengelige planer</h4>
+            <div class="plans-grid">
+              <div class="plan-card free-plan">
+                <div class="plan-header">
+                  <h5>Gratis</h5>
+                  <div class="plan-price">Alltid gratis</div>
+                </div>
+                <div class="plan-features">
+                  <span class="feature">Lagre vakter i én måned</span>
+                  <span class="feature">Grunnleggende rapporter</span>
+                  <span class="feature">Enkel vaktplanlegging</span>
+                  <span class="feature feature-limitation">Kun én måned med vakter om gangen</span>
+                </div>
+              </div>
+              
+              <div class="plan-card pro-plan">
+                <div class="plan-header">
+                  <h5>Professional</h5>
+                  <div class="plan-price">Pro-nivå</div>
+                </div>
+                <div class="plan-features">
+                  <span class="feature">Ubegrenset vakter</span>
+                  <span class="feature">Alle måneder tilgjengelig</span>
+                  <span class="feature">Avanserte rapporter</span>
+                  <span class="feature">Prioritert støtte</span>
+                </div>
+              </div>
+              
+              <div class="plan-card max-plan">
+                <div class="plan-header">
+                  <h5>Enterprise</h5>
+                  <div class="plan-price">For bedrifter</div>
+                </div>
+                <div class="plan-features">
+                  <span class="feature">Alle Pro-funksjoner</span>
+                  <span class="feature">Ansattadministrasjon</span>
+                  <span class="feature">Lønnsberegning for ansatte</span>
+                  <span class="feature">Avansert rapportering</span>
+                  <span class="feature">Dedikert støtte</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer" id="modalFooter" style="display: none;">
+          <div class="modal-footer-buttons">
+            <button type="button" class="btn btn-secondary" id="upgradeProBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+              </svg>
+              Oppgrader til Professional
+            </button>
+            <button type="button" class="btn btn-primary" id="upgradeMaxBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+              </svg>
+              Oppgrader til Enterprise
+            </button>
+            <button type="button" class="btn btn-outline" id="manageSubBtn" style="display:none;">
+              Administrer abonnement
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close handlers
+    const closeBtn = modal.querySelector('.modal-close-btn');
+    closeBtn?.addEventListener('click', () => {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+      modal.remove();
+    });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+        modal.remove();
+      }
+    });
+
+    // Button handlers
+    const proBtn = modal.querySelector('#upgradeProBtn');
+    const maxBtn = modal.querySelector('#upgradeMaxBtn');
+    const manageBtn = modal.querySelector('#manageSubBtn');
+
+    proBtn?.addEventListener('click', async () => {
+      if (!window.startCheckout) return;
+      try {
+        await window.startCheckout('price_1RzQ85Qiotkj8G58AO6st4fh', { mode: 'subscription' });
+      } catch (e) {
+        console.error('Checkout error:', e);
+      }
+    });
+
+    maxBtn?.addEventListener('click', async () => {
+      try {
+        if (window.startCheckout) {
+          await window.startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO', { mode: 'subscription' });
+        }
+      } catch (e) {
+        console.error('Checkout error:', e);
+      }
+    });
+
+    manageBtn?.addEventListener('click', async () => {
+      try {
+        if (window.startBillingPortal) {
+          await window.startBillingPortal({ redirect: true });
+        }
+      } catch (e) {
+        console.error('Billing portal error:', e);
+      }
+    });
+
+    // Show modal
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+
+    // Load subscription data
+    try {
+      const userId = await getUserId();
+      if (userId && window.supa) {
+        const { data } = await window.supa
+          .from('subscription_tiers')
+          .select('status,tier,is_active,current_period_end')
+          .eq('user_id', userId);
+
+        const loadingEl = modal.querySelector('#modalLoading');
+        const contentEl = modal.querySelector('#modalContent');
+        const footerEl = modal.querySelector('#modalFooter');
+
+        // Hide loading, show content
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (contentEl) contentEl.style.display = 'block';
+        if (footerEl) footerEl.style.display = 'block';
+
+        const row = Array.isArray(data) && data.length ? data[0] : null;
+        const statusEl = modal.querySelector('#subscriptionStatus');
+        const periodEl = modal.querySelector('#subscriptionPeriod');
+        const planEl = modal.querySelector('#subscriptionPlan');
+
+        if (row) {
+          const status = row.status || 'ukjent';
+          const tier = String(row.tier || '').toLowerCase();
+          const plan = tier === 'max' ? 'Enterprise' : (tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null);
+          
+          if (statusEl) statusEl.textContent = `${status.charAt(0).toUpperCase()}${status.slice(1)}${plan ? ` - ${plan}` : ''}`;
+          if (periodEl && row.current_period_end) {
+            const date = new Date(typeof row.current_period_end === 'number' ? row.current_period_end * 1000 : row.current_period_end);
+            if (!isNaN(date)) {
+              periodEl.textContent = `Neste fornyelse: ${date.toLocaleDateString('no-NO')}`;
+            }
+          }
+          if (planEl) planEl.textContent = plan ? 'Takk for abonnementet!' : '';
+        } else {
+          if (statusEl) statusEl.textContent = 'Gratis plan';
+          if (periodEl) periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';
+          if (planEl) planEl.textContent = 'Se abonnementene nedenfor. Abonner for tilgang til flere funksjoner!';
+        }
+      }
+    } catch (e) {
+      console.error('Error loading subscription:', e);
+    }
+  }
+
   async reloadUserShifts() {
     try {
       // Get fresh authentication token
@@ -314,10 +529,7 @@ export class PremiumFeatureModal {
     switch (choice) {
       case 'upgrade':
         // Open subscription modal
-        if (!modal.subscriptionModal) {
-          modal.subscriptionModal = new SubscriptionModal();
-        }
-        await modal.subscriptionModal.show();
+        await modal.showSubscriptionModal();
         return false; // User chose to upgrade, shift creation should wait
 
       case 'delete_completed':

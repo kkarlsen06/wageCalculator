@@ -2102,6 +2102,15 @@ export const app = {
             this.updateSettingsUI();
             // Update tab bar visibility based on settings
             await this.updateTabBarVisibility();
+            
+            // Populate custom bonus slots if not using preset (fixes reload issue)
+            if (!this.usePreset) {
+                // Use setTimeout to ensure DOM elements are ready
+                setTimeout(() => {
+                    this.populateCustomBonusSlots();
+                }, 100);
+            }
+            
             // Don't call updateDisplay here - it will be called with animation in init()
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
@@ -2904,40 +2913,122 @@ export const app = {
                 const slot = document.createElement('div');
                 slot.className = 'bonus-slot';
                 slot.innerHTML = `
-                    <input type="time" class="form-control" value="${bonus.from}">
-                    <input type="time" class="form-control" value="${bonus.to}">
-                    <input type="number" class="form-control" placeholder="kr/t" value="${bonus.rate}">
-                    <button class="btn btn-icon btn-danger remove-bonus" title="Fjern dette tillegget">×</button>
+                    <div class="bonus-slot-display">
+                        <div class="bonus-time-range">
+                            <span class="bonus-time-text">${bonus.from} - ${bonus.to}</span>
+                        </div>
+                        <div class="bonus-rate-display">
+                            <span class="bonus-rate-text">${bonus.rate} kr/t</span>
+                        </div>
+                    </div>
+                    <div class="bonus-slot-inputs" style="display: none;">
+                        <input type="time" class="form-control" value="${bonus.from}">
+                        <input type="time" class="form-control" value="${bonus.to}">
+                        <input type="number" class="form-control" placeholder="kr/t" value="${bonus.rate}">
+                    </div>
+                    <div class="bonus-slot-buttons">
+                        <button class="btn btn-sm btn-secondary edit-bonus" title="Rediger dette tillegget">Rediger</button>
+                        <button class="btn btn-sm btn-danger remove-bonus" title="Fjern dette tillegget">Fjern</button>
+                        <button class="btn btn-sm btn-primary save-bonus" title="Lagre endringer" style="display: none;">Lagre</button>
+                        <button class="btn btn-sm btn-secondary cancel-bonus" title="Avbryt endringer" style="display: none;">Avbryt</button>
+                    </div>
                 `;
 
-                // Add auto-save event listeners to the inputs (only on change, not blur)
+                // Add event listeners for the new button-based interface
+                const editBtn = slot.querySelector('.edit-bonus');
+                const saveBtn = slot.querySelector('.save-bonus');
+                const cancelBtn = slot.querySelector('.cancel-bonus');
+                const removeBtn = slot.querySelector('.remove-bonus');
+                const displayDiv = slot.querySelector('.bonus-slot-display');
+                const inputsDiv = slot.querySelector('.bonus-slot-inputs');
                 const inputs = slot.querySelectorAll('input');
+                
+                // Store original values for cancel functionality
+                let originalValues = {
+                    from: bonus.from,
+                    to: bonus.to,
+                    rate: bonus.rate
+                };
+
+                // Edit button - switch to edit mode
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    displayDiv.style.display = 'none';
+                    inputsDiv.style.display = 'block';
+                    editBtn.style.display = 'none';
+                    removeBtn.style.display = 'none';
+                    saveBtn.style.display = 'inline-block';
+                    cancelBtn.style.display = 'inline-block';
+                });
+
+                // Save button - save changes and switch back to display mode
+                saveBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const timeInputs = inputsDiv.querySelectorAll('input[type="time"]');
+                    const rateInput = inputsDiv.querySelector('input[type="number"]');
+                    
+                    // Format time inputs
+                    timeInputs.forEach(input => this.formatTimeInput(input));
+                    
+                    // Update display
+                    const timeText = slot.querySelector('.bonus-time-text');
+                    const rateText = slot.querySelector('.bonus-rate-text');
+                    timeText.textContent = `${timeInputs[0].value} - ${timeInputs[1].value}`;
+                    rateText.textContent = `${rateInput.value} kr/t`;
+                    
+                    // Update original values
+                    originalValues = {
+                        from: timeInputs[0].value,
+                        to: timeInputs[1].value,
+                        rate: rateInput.value
+                    };
+                    
+                    // Switch back to display mode
+                    displayDiv.style.display = 'block';
+                    inputsDiv.style.display = 'none';
+                    editBtn.style.display = 'inline-block';
+                    removeBtn.style.display = 'inline-block';
+                    saveBtn.style.display = 'none';
+                    cancelBtn.style.display = 'none';
+                    
+                    // Save to database
+                    this.autoSaveCustomBonuses();
+                });
+
+                // Cancel button - revert changes and switch back to display mode
+                cancelBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const timeInputs = inputsDiv.querySelectorAll('input[type="time"]');
+                    const rateInput = inputsDiv.querySelector('input[type="number"]');
+                    
+                    // Revert to original values
+                    timeInputs[0].value = originalValues.from;
+                    timeInputs[1].value = originalValues.to;
+                    rateInput.value = originalValues.rate;
+                    
+                    // Switch back to display mode
+                    displayDiv.style.display = 'block';
+                    inputsDiv.style.display = 'none';
+                    editBtn.style.display = 'inline-block';
+                    removeBtn.style.display = 'inline-block';
+                    saveBtn.style.display = 'none';
+                    cancelBtn.style.display = 'none';
+                });
+
+                // Remove button - remove the bonus slot
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.removeBonusSlot(removeBtn);
+                });
+
+                // Add time formatting for inputs
                 inputs.forEach(input => {
-                    // Add time formatting for time inputs
                     if (input.type === 'time') {
                         input.addEventListener('blur', () => {
                             this.formatTimeInput(input);
                         });
                     }
-                    
-                    input.addEventListener('change', () => {
-                        // Format time inputs on change as well
-                        if (input.type === 'time') {
-                            this.formatTimeInput(input);
-                        }
-                        this.autoSaveCustomBonuses();
-                    });
-                    // Removed blur event to reduce frequent saving (except for time formatting)
                 });
-
-                // Add click event listener to the remove button
-                const removeBtn = slot.querySelector('.remove-bonus');
-                if (removeBtn) {
-                    removeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.removeBonusSlot(removeBtn);
-                    });
-                }
 
                 container.appendChild(slot);
             });
@@ -3659,7 +3750,7 @@ export const app = {
         }
     },
 
-    // Subscription modal
+    // Subscription navigation - now routes to /abonnement page
     async openSubscription() {
         // Close dropdown first
         this.closeProfileDropdown();
@@ -3668,13 +3759,15 @@ export const app = {
         this.closeProfile();
 
         try {
-            const { SubscriptionModal } = await import('./subscriptionModal.js');
-            if (!this._subscriptionModal) {
-                this._subscriptionModal = new SubscriptionModal();
+            // Navigate to the abonnement route instead of opening modal
+            if (window.navigateToRoute) {
+                window.navigateToRoute('/abonnement');
+            } else {
+                // Fallback to direct navigation
+                window.location.href = '/abonnement';
             }
-            await this._subscriptionModal.show();
         } catch (e) {
-            console.error('Error opening subscription modal:', e);
+            console.error('Error navigating to abonnement route:', e);
             if (window.ErrorHelper && window.ErrorHelper.showError) {
                 window.ErrorHelper.showError('Kunne ikke åpne abonnement.');
             }
@@ -6925,6 +7018,51 @@ export const app = {
         // Determine wage rate for this shift (uses snapshot if present)
         const shiftWageRate = this.getWageRateForShift(shift);
 
+        // Calculate detailed bonus breakdown
+        let bonusBreakdownHtml = '';
+        if (calc.bonus > 0) {
+            const bonuses = this.getCurrentBonuses();
+            const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
+            const bonusSegments = bonuses[bonusType] || [];
+            
+            // Calculate the same adjusted end time as in calculateShift for consistency
+            const startMinutes = this.timeToMinutes(shift.startTime);
+            let endMinutes = this.timeToMinutes(shift.endTime);
+            if (endMinutes < startMinutes) {
+                endMinutes += 24 * 60;
+            }
+            
+            // For break deduction calculations - use the same logic as calculateShift
+            const breakResult = this.calculateLegalBreakDeduction(shift, shiftWageRate, bonuses, startMinutes, endMinutes);
+            let adjustedEndTime = shift.endTime;
+            
+            if (breakResult.shouldDeduct && breakResult.method === 'end_of_shift') {
+                const adjustedEndMinutes = breakResult.adjustedEndMinutes;
+                const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
+                adjustedEndTime = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
+            }
+            
+            const bonusBreakdown = this.calculateBonusBreakdown(shift.startTime, adjustedEndTime, bonusSegments);
+            
+            if (bonusBreakdown.breakdown.length > 0) {
+                bonusBreakdownHtml = `
+                <div class="detail-section">
+                    <div class="detail-label">Tillegg</div>
+                    <div class="bonus-breakdown">
+                        ${bonusBreakdown.breakdown.map(item => `
+                            <div class="bonus-item">
+                                <span class="bonus-period">${item.period}</span>
+                                <span class="bonus-details">${item.hours.toFixed(2)}t × ${this.formatCurrency(item.rate)} = ${this.formatCurrency(item.amount)}</span>
+                            </div>
+                        `).join('')}
+                        <div class="bonus-total">
+                            <strong>Totalt tillegg: ${this.formatCurrency(bonusBreakdown.total)}</strong>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        }
+
         contentContainer.innerHTML = `
             <div class="detail-section">
                 <div class="detail-label">Dato</div>
@@ -6946,12 +7084,7 @@ export const app = {
                 <div class="detail-value accent">${this.formatCurrency(calc.baseWage)}</div>
             </div>
 
-            ${calc.bonus > 0 ? `
-            <div class="detail-section">
-                <div class="detail-label">Tillegg</div>
-                <div class="detail-value accent">${this.formatCurrency(calc.bonus)}</div>
-            </div>
-            ` : ''}
+            ${bonusBreakdownHtml}
 
             <div class="detail-section total">
                 <div class="detail-label">Total</div>
@@ -7524,8 +7657,9 @@ export const app = {
             linkBtn._bound = true;
             linkBtn.addEventListener('click', async () => {
                 linkBtn.disabled = true;
-                const originalText = linkBtn.textContent;
-                linkBtn.textContent = 'Åpner Google...';
+                const labelEl = linkBtn.querySelector('.btn-label');
+                const originalText = labelEl ? labelEl.textContent : linkBtn.textContent;
+                if (labelEl) labelEl.textContent = 'Åpner Google...'; else linkBtn.textContent = 'Åpner Google...';
                 try {
                     await linkGoogleIdentity();
                 } catch (e) {
@@ -7533,7 +7667,7 @@ export const app = {
                     alert('Klarte ikke å koble Google-kontoen.');
                 } finally {
                     linkBtn.disabled = false;
-                    linkBtn.textContent = originalText;
+                    if (labelEl) labelEl.textContent = originalText; else linkBtn.textContent = originalText;
                     await renderGoogleControls();
                 }
             });
@@ -8711,6 +8845,51 @@ export const app = {
             totalBonus += (overlap / 60) * segment.rate;
         }
         return totalBonus;
+    },
+
+    // Calculate detailed bonus breakdown for display in shift details
+    calculateBonusBreakdown(startTime, endTime, bonusSegments) {
+        const startMinutes = this.timeToMinutes(startTime);
+        let endMinutes = this.timeToMinutes(endTime);
+        
+        // Handle shifts that cross midnight
+        if (endMinutes <= startMinutes) {
+            endMinutes += 24 * 60;
+        }
+        
+        const breakdown = [];
+        let totalBonus = 0;
+        
+        for (const segment of bonusSegments) {
+            const segStart = this.timeToMinutes(segment.from);
+            let segEnd = this.timeToMinutes(segment.to);
+            if (segEnd <= segStart) {
+                segEnd += 24 * 60;
+            }
+            
+            const overlap = this.calculateOverlap(startMinutes, endMinutes, segStart, segEnd);
+            if (overlap > 0) {
+                const hours = overlap / 60;
+                const amount = hours * segment.rate;
+                totalBonus += amount;
+                
+                // Format the time period display
+                const displayFrom = segment.from;
+                const displayTo = segment.to === '23:59' ? '24:00' : segment.to;
+                
+                breakdown.push({
+                    period: `${displayFrom} - ${displayTo}`,
+                    rate: segment.rate,
+                    hours: hours,
+                    amount: amount
+                });
+            }
+        }
+        
+        return {
+            breakdown: breakdown,
+            total: totalBonus
+        };
     },
 
     // New function for second-precise bonus calculations
