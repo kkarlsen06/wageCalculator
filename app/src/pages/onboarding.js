@@ -414,8 +414,21 @@ export async function afterMountOnboarding() {
     document.querySelectorAll('.form-error.show').forEach(el => el.classList.remove('show'));
     switch (currentStep) {
       case 1: {
-        const firstName = document.getElementById('firstName').value.trim();
-        if (!firstName) { showFieldError('firstName', 'firstNameError'); return false; }
+        const firstNameEl = document.getElementById('firstName');
+        const firstName = (firstNameEl?.value || '').trim();
+        if (!firstName) {
+          // Fallback to metadata if input hasn't populated yet but user has a saved name
+          const metaName = (user && user.user_metadata && typeof user.user_metadata.first_name === 'string')
+            ? user.user_metadata.first_name.trim()
+            : '';
+          if (metaName) {
+            if (firstNameEl) firstNameEl.value = metaName;
+            // Allow progression; saveCurrentStepData will pick up the value
+            break;
+          }
+          showFieldError('firstName', 'firstNameError');
+          return false;
+        }
         break; }
       case 2: {
         const selectedWageType = document.querySelector('.wage-option.selected');

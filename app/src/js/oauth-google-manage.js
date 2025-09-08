@@ -3,10 +3,19 @@ import { supabase } from '/src/supabase-client.js';
 export async function getAuthSnapshot() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) throw error;
-  const identities = user?.identities || [];
-  const hasGoogle = identities.some(i => i.provider === 'google');
-  const hasEmail = identities.some(i => i.provider === 'email');
-  const otherProviders = identities.filter(i => i.provider !== 'google');
+  const identities = Array.isArray(user?.identities) ? user.identities : [];
+
+  // Derive providers from both identities and app_metadata for robustness
+  const idProviders = identities.map(i => i.provider).filter(Boolean);
+  const metaProviders = Array.isArray(user?.app_metadata?.providers)
+    ? user.app_metadata.providers
+    : (user?.app_metadata?.provider ? [user.app_metadata.provider] : []);
+  const providerSet = new Set([...idProviders, ...metaProviders]);
+
+  const hasGoogle = providerSet.has('google');
+  const hasEmail = providerSet.has('email');
+  const otherProviders = [...providerSet].filter(p => p !== 'google');
+
   return { user, identities, hasGoogle, hasEmail, otherProviders };
 }
 
@@ -23,4 +32,3 @@ export async function unlinkGoogleIdentity() {
   if (error) throw error;
   return { ok: true };
 }
-

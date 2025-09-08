@@ -3603,14 +3603,26 @@ app.get('/settings', async (req, res) => {
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const { data, error } = await supabase
       .from('user_settings')
-      .select('custom_wage, profile_picture_url, show_employee_tab')
+      .select('custom_wage, profile_picture_url, show_employee_tab, pause_deduction_enabled, pause_deduction_method, pause_threshold_hours, pause_deduction_minutes, tax_deduction_enabled, tax_percentage, theme, default_shifts_view')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       // If column missing, degrade gracefully
       const msg = (error?.message || '').toString();
-      const isMissingColumn = msg.includes('profile_picture_url') || msg.includes('show_employee_tab') || (error?.code === '42703');
+      const isMissingColumn = (
+        msg.includes('profile_picture_url') ||
+        msg.includes('show_employee_tab') ||
+        msg.includes('pause_deduction_enabled') ||
+        msg.includes('pause_deduction_method') ||
+        msg.includes('pause_threshold_hours') ||
+        msg.includes('pause_deduction_minutes') ||
+        msg.includes('tax_deduction_enabled') ||
+        msg.includes('tax_percentage') ||
+        msg.includes('theme') ||
+        msg.includes('default_shifts_view') ||
+        (error?.code === '42703')
+      );
       const isMissingTable = (error?.code === '42P01') || msg.includes('relation') && msg.includes('does not exist');
       if (!isMissingColumn && !isMissingTable) {
         console.error('GET /settings db error:', msg, error?.stack || '');
@@ -3624,7 +3636,15 @@ app.get('/settings', async (req, res) => {
     return res.json({
       custom_wage: data?.custom_wage ?? 0,
       profile_picture_url: data?.profile_picture_url ?? null,
-      show_employee_tab: data?.show_employee_tab ?? true
+      show_employee_tab: data?.show_employee_tab ?? true,
+      pause_deduction_enabled: data?.pause_deduction_enabled ?? null,
+      pause_deduction_method: data?.pause_deduction_method ?? null,
+      pause_threshold_hours: data?.pause_threshold_hours ?? null,
+      pause_deduction_minutes: data?.pause_deduction_minutes ?? null,
+      tax_deduction_enabled: data?.tax_deduction_enabled ?? null,
+      tax_percentage: data?.tax_percentage ?? null,
+      theme: data?.theme ?? null,
+      default_shifts_view: data?.default_shifts_view ?? null
     });
   } catch (e) {
     console.error('GET /settings error:', e?.message || e, e?.stack || '');
@@ -3646,7 +3666,9 @@ app.put('/settings', async (req, res) => {
       return res.status(403).json({ error: 'Agent writes are not allowed' });
     }
 
-    const { custom_wage, profile_picture_url, show_employee_tab } = req.body || {};
+    const { custom_wage, profile_picture_url, show_employee_tab,
+      pause_deduction_enabled, pause_deduction_method, pause_threshold_hours, pause_deduction_minutes,
+      tax_deduction_enabled, tax_percentage, theme, default_shifts_view } = req.body || {};
 
     if (custom_wage !== undefined && custom_wage !== null && (typeof custom_wage !== 'number' || Number.isNaN(custom_wage))) {
       return res.status(400).json({ error: 'custom_wage must be a number' });
@@ -3657,6 +3679,57 @@ app.put('/settings', async (req, res) => {
     if (show_employee_tab !== undefined && typeof show_employee_tab !== 'boolean') {
       return res.status(400).json({ error: 'show_employee_tab must be a boolean' });
     }
+    if (pause_deduction_enabled !== undefined && typeof pause_deduction_enabled !== 'boolean') {
+      return res.status(400).json({ error: 'pause_deduction_enabled must be a boolean' });
+    }
+    if (pause_deduction_method !== undefined) {
+      const allowed = ['proportional','base_only','end_of_shift','none'];
+      if (typeof pause_deduction_method !== 'string' || !allowed.includes(pause_deduction_method)) {
+        return res.status(400).json({ error: 'pause_deduction_method invalid' });
+      }
+    }
+    if (pause_threshold_hours !== undefined) {
+      const v = Number(pause_threshold_hours);
+      if (Number.isNaN(v) || v < 0 || v > 24) {
+        return res.status(400).json({ error: 'pause_threshold_hours must be between 0 and 24' });
+      }
+    }
+    if (pause_deduction_minutes !== undefined) {
+      const v = Number(pause_deduction_minutes);
+      if (!Number.isInteger(v) || v < 0 || v > 120) {
+        return res.status(400).json({ error: 'pause_deduction_minutes must be an integer between 0 and 120' });
+      }
+    }
+
+    if (tax_deduction_enabled !== undefined && typeof tax_deduction_enabled !== 'boolean') {
+      return res.status(400).json({ error: 'tax_deduction_enabled must be a boolean' });
+    }
+    if (tax_percentage !== undefined) {
+      const v = Number(tax_percentage);
+      if (Number.isNaN(v) || v < 0 || v > 100) {
+        return res.status(400).json({ error: 'tax_percentage must be between 0 and 100' });
+      }
+    }
+
+    // Optional: validate theme and default_shifts_view when provided
+    if (theme !== undefined) {
+      const allowed = ['light', 'dark', 'system'];
+      if (theme !== null && typeof theme !== 'string') {
+        return res.status(400).json({ error: 'theme must be a string' });
+      }
+      if (theme && !allowed.includes(theme)) {
+        return res.status(400).json({ error: 'theme must be one of light|dark|system' });
+      }
+    }
+    if (default_shifts_view !== undefined) {
+      const allowedViews = ['list', 'calendar'];
+      if (default_shifts_view !== null && typeof default_shifts_view !== 'string') {
+        return res.status(400).json({ error: 'default_shifts_view must be a string' });
+      }
+      if (default_shifts_view && !allowedViews.includes(default_shifts_view)) {
+        return res.status(400).json({ error: 'default_shifts_view must be one of list|calendar' });
+      }
+    }
 
     const userId = req?.auth?.userId || req?.user_id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
@@ -3664,13 +3737,21 @@ app.put('/settings', async (req, res) => {
     if (custom_wage !== undefined) payload.custom_wage = custom_wage;
     if (profile_picture_url !== undefined) payload.profile_picture_url = profile_picture_url;
     if (show_employee_tab !== undefined) payload.show_employee_tab = show_employee_tab;
+    if (pause_deduction_enabled !== undefined) payload.pause_deduction_enabled = pause_deduction_enabled;
+    if (pause_deduction_method !== undefined) payload.pause_deduction_method = pause_deduction_method;
+    if (pause_threshold_hours !== undefined) payload.pause_threshold_hours = pause_threshold_hours;
+    if (pause_deduction_minutes !== undefined) payload.pause_deduction_minutes = pause_deduction_minutes;
+    if (tax_deduction_enabled !== undefined) payload.tax_deduction_enabled = tax_deduction_enabled;
+    if (tax_percentage !== undefined) payload.tax_percentage = tax_percentage;
+    if (theme !== undefined) payload.theme = theme;
+    if (default_shifts_view !== undefined) payload.default_shifts_view = default_shifts_view;
 
     let data = null; let error = null;
     try {
       const upsert = await supabase
         .from('user_settings')
         .upsert(payload, { onConflict: 'user_id' })
-        .select('custom_wage, profile_picture_url, show_employee_tab')
+        .select('custom_wage, profile_picture_url, show_employee_tab, theme, default_shifts_view')
         .single();
       data = upsert.data; error = upsert.error;
     } catch (e) {
@@ -3679,12 +3760,24 @@ app.put('/settings', async (req, res) => {
 
     if (error) {
       const msg = (error?.message || '').toString();
-      const isMissingColumn = msg.includes('profile_picture_url') || msg.includes('show_employee_tab') || (error?.code === '42703');
+      const isMissingColumn = (
+        msg.includes('profile_picture_url') ||
+        msg.includes('show_employee_tab') ||
+        msg.includes('pause_deduction_enabled') ||
+        msg.includes('pause_deduction_method') ||
+        msg.includes('pause_threshold_hours') ||
+        msg.includes('pause_deduction_minutes') ||
+        msg.includes('tax_deduction_enabled') ||
+        msg.includes('tax_percentage') ||
+        msg.includes('theme') ||
+        msg.includes('default_shifts_view') ||
+        (error?.code === '42703')
+      );
       if (isMissingColumn) {
         // Retry without profile_picture_url when column missing
         const retryPayload = { user_id: userId };
         if (custom_wage !== undefined) retryPayload.custom_wage = custom_wage;
-        // Intentionally skip show_employee_tab if column missing
+        // Intentionally skip other optional fields if columns are missing
         const retry = await supabase
           .from('user_settings')
           .upsert(retryPayload, { onConflict: 'user_id' })
@@ -3699,7 +3792,15 @@ app.put('/settings', async (req, res) => {
     return res.json({
       custom_wage: data?.custom_wage ?? 0,
       profile_picture_url: data?.profile_picture_url ?? null,
-      show_employee_tab: data?.show_employee_tab ?? true
+      show_employee_tab: data?.show_employee_tab ?? true,
+      pause_deduction_enabled: data?.pause_deduction_enabled ?? null,
+      pause_deduction_method: data?.pause_deduction_method ?? null,
+      pause_threshold_hours: data?.pause_threshold_hours ?? null,
+      pause_deduction_minutes: data?.pause_deduction_minutes ?? null,
+      tax_deduction_enabled: data?.tax_deduction_enabled ?? null,
+      tax_percentage: data?.tax_percentage ?? null,
+      theme: data?.theme ?? null,
+      default_shifts_view: data?.default_shifts_view ?? null
     });
   } catch (e) {
     console.error('PUT /settings exception:', e?.message || e, e?.stack || '');
@@ -6691,14 +6792,22 @@ app.get('/api/settings', async (req, res) => {
 
     const { data, error } = await supabase
       .from('user_settings')
-      .select('custom_wage, profile_picture_url, show_employee_tab')
+      .select('custom_wage, profile_picture_url, show_employee_tab, pause_deduction_enabled, pause_deduction_method, pause_threshold_hours, pause_deduction_minutes')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       // If column missing, degrade gracefully
       const msg = (error?.message || '').toString();
-      const isMissingColumn = msg.includes('profile_picture_url') || msg.includes('show_employee_tab') || (error?.code === '42703');
+      const isMissingColumn = (
+        msg.includes('profile_picture_url') ||
+        msg.includes('show_employee_tab') ||
+        msg.includes('pause_deduction_enabled') ||
+        msg.includes('pause_deduction_method') ||
+        msg.includes('pause_threshold_hours') ||
+        msg.includes('pause_deduction_minutes') ||
+        (error?.code === '42703')
+      );
       const isMissingTable = (error?.code === '42P01') || msg.includes('relation') && msg.includes('does not exist');
       if (!isMissingColumn && !isMissingTable) {
         console.error("[/api/settings] DB error:", error.message, error.stack);
@@ -6715,7 +6824,11 @@ app.get('/api/settings', async (req, res) => {
     return res.json({
       custom_wage: data?.custom_wage ?? 0,
       profile_picture_url: data?.profile_picture_url ?? null,
-      show_employee_tab: data?.show_employee_tab ?? true
+      show_employee_tab: data?.show_employee_tab ?? true,
+      pause_deduction_enabled: data?.pause_deduction_enabled ?? null,
+      pause_deduction_method: data?.pause_deduction_method ?? null,
+      pause_threshold_hours: data?.pause_threshold_hours ?? null,
+      pause_deduction_minutes: data?.pause_deduction_minutes ?? null
     });
   } catch (e) {
     console.error("[/api/settings] Exception:", e.message, e.stack);

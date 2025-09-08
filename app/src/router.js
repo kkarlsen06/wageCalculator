@@ -34,7 +34,10 @@ export const routes = [
       // Show main app and hide SPA outlet
       const { appEl, spaEl } = getOutlets();
       if (spaEl) spaEl.style.display = 'none';
-      if (appEl) appEl.style.display = 'block';
+      if (appEl) {
+        // Ensure app is visible even if prior CSS had !important rules
+        try { appEl.style.setProperty('display', 'block', 'important'); } catch (_) { appEl.style.display = 'block'; }
+      }
       
       // Clean up any floating settings elements and portal
       try {
@@ -54,8 +57,12 @@ export const routes = [
   { path: '/login', render: renderLogin, afterMount: afterMountLogin },
   { path: '/onboarding', render: renderOnboarding, afterMount: afterMountOnboarding },
   { path: '/settings', render: renderSettings, afterMount: afterMountSettings },
+  // Account settings detail (primary path)
+  { path: '/settings/account', render: renderSettings, afterMount: afterMountSettings },
+  // Legacy alias maintained for backward compatibility
   { path: '/settings/profile', render: renderSettings, afterMount: afterMountSettings },
   { path: '/settings/wage', render: renderSettings, afterMount: afterMountSettings },
+  { path: '/settings/wage-advanced', render: renderSettings, afterMount: afterMountSettings },
   { path: '/settings/interface', render: renderSettings, afterMount: afterMountSettings },
   { path: '/settings/org', render: renderSettings, afterMount: afterMountSettings },
   { path: '/settings/data', render: renderSettings, afterMount: afterMountSettings },

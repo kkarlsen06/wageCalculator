@@ -58,15 +58,25 @@ async function setMonthlyGoal(goal) {
 function setupMonthlyGoalInput() {
     // Use cached element or query if not cached
     const monthlyGoalInput = domCache.monthlyGoalInput || document.getElementById('monthlyGoalInput');
-    if (monthlyGoalInput) {
-        monthlyGoalInput.value = getMonthlyGoal();
-        monthlyGoalInput.addEventListener('input', (e) => {
-            const goal = parseInt(e.target.value, 10);
-            if (!isNaN(goal) && goal > 0) {
-                setMonthlyGoal(goal);
-            }
-        });
+    if (!monthlyGoalInput) return;
+
+    // Always reflect current value
+    monthlyGoalInput.value = getMonthlyGoal();
+
+    // In settings view, we show an explicit save button and avoid auto-save on input
+    const hasExplicitSave = !!document.getElementById('saveMonthlyGoalBtn');
+    if (hasExplicitSave) {
+        // Leave actual save wiring to the settings page initializer
+        return;
     }
+
+    // Elsewhere (e.g., dashboard), auto-save on input for smoother UX
+    monthlyGoalInput.addEventListener('input', (e) => {
+        const goal = parseInt(e.target.value, 10);
+        if (!isNaN(goal) && goal > 0) {
+            setMonthlyGoal(goal);
+        }
+    });
 }
 
 // Global initialization for monthly goal
@@ -2207,6 +2217,12 @@ export const app = {
             payrollDayInput.value = this.payrollDay;
         }
 
+        // Monthly goal input (settings page)
+        const monthlyGoalInput = document.getElementById('monthlyGoalInput');
+        if (monthlyGoalInput) {
+            monthlyGoalInput.value = this.monthlyGoal || getMonthlyGoal();
+        }
+
         // Show/hide tax percentage section based on toggle state
         this.toggleTaxPercentageSection();
 
@@ -2237,12 +2253,19 @@ export const app = {
         // Enterprise-only: Employees tab visibility toggle
         const employeeTabVisibilityGroup = document.getElementById('employeeTabVisibilityGroup');
         const showEmployeeTabToggle = document.getElementById('showEmployeeTabToggle');
+        const enterpriseUpsellGroup = document.getElementById('enterpriseUpsellGroup');
         if (employeeTabVisibilityGroup && showEmployeeTabToggle) {
             hasEnterpriseSubscription().then(hasEnterprise => {
                 employeeTabVisibilityGroup.style.display = hasEnterprise ? '' : 'none';
+                if (enterpriseUpsellGroup) enterpriseUpsellGroup.style.display = hasEnterprise ? 'none' : '';
                 // If not enterprise, keep toggle disabled
                 showEmployeeTabToggle.disabled = !hasEnterprise;
                 showEmployeeTabToggle.checked = (this.showEmployeeTab !== false);
+            }).catch(() => {
+                // If subscription check fails, be safe and show upsell, hide enterprise-only
+                if (enterpriseUpsellGroup) enterpriseUpsellGroup.style.display = '';
+                employeeTabVisibilityGroup.style.display = 'none';
+                if (showEmployeeTabToggle) showEmployeeTabToggle.disabled = true;
             });
         }
 
@@ -2413,6 +2436,29 @@ export const app = {
             }
         } catch (e) {
             console.error('Error in saveSettingsToSupabase:', e);
+        }
+    },
+    async saveBreakSettingsToServer() {
+        try {
+            const { data: { session } } = await window.supa.auth.getSession();
+            const token = session?.access_token;
+            if (!token) return;
+            const payload = {
+                pause_deduction_enabled: this.pauseDeductionEnabled,
+                pause_deduction_method: this.pauseDeductionMethod,
+                pause_threshold_hours: this.pauseThresholdHours,
+                pause_deduction_minutes: this.pauseDeductionMinutes,
+            };
+            await fetch(`${window.CONFIG.apiBase}/settings`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            }).catch(() => {});
+        } catch (_) {
+            // Ignore; Supabase save remains the primary persistence path
         }
     },
     async loadFromLocalStorage() {
@@ -2661,7 +2707,9 @@ export const app = {
         }
 
         this.togglePresetSections();
+        // Persist both to Supabase (if authed) and localStorage as fallback
         this.saveSettingsToSupabase();
+        this.saveToLocalStorage();
         this.updateDisplay();
     },
 
@@ -2953,10 +3001,54 @@ export const app = {
 
     },
     removeBonusSlot(button) {
-        button.closest('.bonus-slot').remove();
+        // Ask confirmation before removing a supplement slot
+        if (!confirm('Er du sikker på at du vil fjerne dette tillegget?')) return;
+        const el = button.closest('.bonus-slot');
+        if (el) el.remove();
         // Auto-save when removing bonus slots if in custom mode (silently)
         if (!this.usePreset) {
             this.saveCustomBonusesSilent().catch(console.error);
+        }
+    },
+
+    // Insert or update a single bonus slot and persist
+    async upsertBonusSlot(type, indexOrNull, slot) {
+        try {
+            const timeToMinutes = (t) => {
+                if (!t || typeof t !== 'string') return null;
+                const m = t.match(/^(\d{1,2}):(\d{2})$/);
+                if (!m) return null;
+                const hh = parseInt(m[1], 10), mm = parseInt(m[2], 10);
+                if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+                return hh * 60 + mm;
+            };
+            const fromMin = timeToMinutes(slot?.from);
+            const toMin = timeToMinutes(slot?.to);
+            const rateOk = typeof slot?.rate === 'number' && !Number.isNaN(slot.rate) && slot.rate > 0;
+            if (fromMin === null || toMin === null || !(fromMin < toMin) || !rateOk) return false;
+
+            const next = { weekday: [], saturday: [], sunday: [], ...(this.customBonuses || {}) };
+            const list = Array.isArray(next[type]) ? next[type].slice() : [];
+            if (indexOrNull === null) list.push({ from: slot.from, to: slot.to, rate: slot.rate });
+            else list[indexOrNull] = { from: slot.from, to: slot.to, rate: slot.rate };
+
+            // Overlap validation within this group
+            const ranges = list
+              .map(x => ({ a: timeToMinutes(x.from), b: timeToMinutes(x.to) }))
+              .filter(r => r.a !== null && r.b !== null && r.a < r.b)
+              .sort((r1, r2) => r1.a - r2.a);
+            let overlaps = false;
+            for (let i = 1; i < ranges.length; i++) { if (ranges[i].a < ranges[i-1].b) { overlaps = true; break; } }
+            if (overlaps) return false;
+
+            next[type] = list;
+            this.customBonuses = next;
+            await this.saveSettingsToSupabase();
+            this.saveToLocalStorage?.();
+            return true;
+        } catch (e) {
+            console.error('upsertBonusSlot failed:', e);
+            return false;
         }
     },
 
@@ -3165,10 +3257,12 @@ export const app = {
         if (isExpanded) {
             // Collapse
             section.style.display = 'none';
+            section.classList.add('hidden');
             buttonElement.setAttribute('aria-expanded', 'false');
             console.log(`Collapsed section: ${sectionId}`);
         } else {
             // Expand
+            section.classList.remove('hidden');
             section.style.display = 'block';
             buttonElement.setAttribute('aria-expanded', 'true');
             console.log(`Expanded section: ${sectionId}`);
@@ -7245,6 +7339,116 @@ export const app = {
         }
     },
 
+    // ===== Account detail wrappers (Settings /settings/account) =====
+    async loadAccountData() {
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+
+            // Populate account name/email
+            const nameField = document.getElementById('accountName');
+            const emailField = document.getElementById('accountEmail');
+            if (nameField) nameField.value = user.user_metadata?.first_name || '';
+            if (emailField) emailField.value = user.email || '';
+
+            // Load avatar url: prefer server settings.profile_picture_url, fallback to user settings/metadata
+            let avatarUrl = '';
+            try {
+                const { data: { session } } = await window.supa.auth.getSession();
+                const token = session?.access_token;
+                if (token) {
+                    const resp = await fetch(`${window.CONFIG.apiBase}/settings`, { headers: { Authorization: `Bearer ${token}` } });
+                    if (resp.ok) {
+                        const json = await resp.json();
+                        avatarUrl = json?.profile_picture_url || '';
+                    }
+                }
+            } catch (_) { /* ignore */ }
+            if (!avatarUrl) {
+                try {
+                    const userId = await getUserId();
+                    if (userId) {
+                        const { data: row } = await window.supa
+                            .from('user_settings')
+                            .select('profile_picture_url')
+                            .eq('user_id', userId)
+                            .maybeSingle();
+                        avatarUrl = row?.profile_picture_url || '';
+                    }
+                } catch (_) { /* ignore */ }
+            }
+            if (!avatarUrl) avatarUrl = user.user_metadata?.avatar_url || '';
+
+            const imgEl = document.getElementById('accountAvatarImage');
+            const placeholder = document.getElementById('accountAvatarPlaceholder');
+            const topbarImg = document.getElementById('userAvatarImg');
+            if (avatarUrl && imgEl) {
+                imgEl.src = avatarUrl;
+                imgEl.onload = () => { imgEl.style.display = 'block'; placeholder && (placeholder.style.display = 'none'); };
+                if (topbarImg) {
+                    topbarImg.src = avatarUrl;
+                    topbarImg.style.display = 'block';
+                }
+            } else {
+                if (imgEl) imgEl.style.display = 'none';
+                if (placeholder) placeholder.style.display = '';
+                if (topbarImg) topbarImg.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('Error loading account data:', err);
+        }
+    },
+
+    async updateAccount() {
+        try {
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (!user) return;
+            const nameField = document.getElementById('accountName');
+            const firstName = nameField?.value || '';
+            if (!firstName.trim()) {
+                return;
+            }
+            const { error } = await window.supa.auth.updateUser({
+                data: { first_name: firstName.trim() }
+            });
+            if (error) {
+                console.error('Error updating account:', error);
+                return;
+            }
+            // Immediate UI feedback
+            const nicknameElement = document.getElementById('userNickname');
+            if (nicknameElement && firstName.trim()) {
+                nicknameElement.textContent = firstName.trim();
+            }
+            if (window.chatbox && window.chatbox.updatePlaceholder) {
+                window.chatbox.updatePlaceholder();
+            }
+            this.loadUserNickname?.();
+        } catch (e) {
+            console.error('updateAccount error', e);
+        }
+    },
+
+    initAccountAvatarControls() {
+        const chooseBtn = document.getElementById('accountAvatarChooseBtn');
+        const removeBtn = document.getElementById('accountAvatarRemoveBtn');
+        const inputEl = document.getElementById('accountAvatarInput');
+        if (chooseBtn && inputEl) {
+            chooseBtn.onclick = () => inputEl.click();
+        }
+        if (inputEl) {
+            inputEl.onchange = async (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                await this.openCropperWithFile(file);
+                inputEl.value = '';
+            };
+        }
+        if (removeBtn) {
+            removeBtn.onclick = () => this.removeProfileAvatar();
+        }
+    },
+
     async initGoogleLinkButton() {
         const linkBtn = document.getElementById('btn-link-google');
         const unlinkBtn = document.getElementById('btn-unlink-google');
@@ -7263,30 +7467,52 @@ export const app = {
                 const hasAlternative = hasEmail || (otherProviders && otherProviders.length > 0);
 
                 if (hasGoogle) {
-                    if (linkBtn) linkBtn.style.display = 'none';
-                    if (unlinkBtn) unlinkBtn.style.display = 'inline-flex';
+                    if (linkBtn) {
+                        linkBtn.classList.add('hidden');
+                        linkBtn.style.display = 'none';
+                    }
+                    if (unlinkBtn) {
+                        unlinkBtn.classList.remove('hidden');
+                        unlinkBtn.style.display = 'inline-flex';
+                    }
 
+                    // Show warning only when no alternative sign-in is available
+                    if (warnSpan) {
+                        if (!hasAlternative) {
+                            warnSpan.classList.remove('hidden');
+                            warnSpan.style.display = 'inline';
+                        } else {
+                            warnSpan.classList.add('hidden');
+                            warnSpan.style.display = 'none';
+                        }
+                    }
+                    // If no alternative available, prevent unlinking to avoid lockout
                     if (!hasAlternative) {
-                        if (warnSpan) warnSpan.style.display = 'inline';
                         if (unlinkBtn) {
                             unlinkBtn.disabled = true;
                             unlinkBtn.classList.add('disabled');
                             unlinkBtn.style.opacity = '0.6';
                             unlinkBtn.style.cursor = 'not-allowed';
                         }
-                    } else {
-                        if (warnSpan) warnSpan.style.display = 'none';
-                        if (unlinkBtn) {
-                            unlinkBtn.disabled = false;
-                            unlinkBtn.classList.remove('disabled');
-                            unlinkBtn.style.opacity = '';
-                            unlinkBtn.style.cursor = '';
-                        }
+                    } else if (unlinkBtn) {
+                        unlinkBtn.disabled = false;
+                        unlinkBtn.classList.remove('disabled');
+                        unlinkBtn.style.opacity = '';
+                        unlinkBtn.style.cursor = '';
                     }
                 } else {
-                    if (linkBtn) linkBtn.style.display = 'flex';
-                    if (unlinkBtn) unlinkBtn.style.display = 'none';
-                    if (warnSpan) warnSpan.style.display = 'none';
+                    if (linkBtn) {
+                        linkBtn.classList.remove('hidden');
+                        linkBtn.style.display = 'flex';
+                    }
+                    if (unlinkBtn) {
+                        unlinkBtn.classList.add('hidden');
+                        unlinkBtn.style.display = 'none';
+                    }
+                    if (warnSpan) {
+                        warnSpan.classList.add('hidden');
+                        warnSpan.style.display = 'none';
+                    }
                 }
             } catch (e) {
                 console.error('[oauth] render controls failed', e);
@@ -7316,6 +7542,9 @@ export const app = {
         if (unlinkBtn && !unlinkBtn._bound) {
             unlinkBtn._bound = true;
             unlinkBtn.addEventListener('click', async () => {
+                // Confirm before unlinking to avoid surprises
+                const confirmed = window.confirm('Er du sikker på at du vil fjerne Google-kontoen?');
+                if (!confirmed) return;
                 unlinkBtn.disabled = true;
                 try {
                     const res = await unlinkGoogleIdentity();
@@ -7483,13 +7712,21 @@ export const app = {
             // Update UI
             const imgEl = document.getElementById('profileAvatarImage');
             const placeholder = document.getElementById('profileAvatarPlaceholder');
+            const accImg = document.getElementById('accountAvatarImage');
+            const accPlaceholder = document.getElementById('accountAvatarPlaceholder');
             const topbarImg = document.getElementById('userAvatarImg');
             if (imgEl) {
                 imgEl.onload = () => { imgEl.style.display = 'block'; };
                 imgEl.onerror = () => { imgEl.style.display = 'none'; };
                 imgEl.src = url;
             }
+            if (accImg) {
+                accImg.onload = () => { accImg.style.display = 'block'; };
+                accImg.onerror = () => { accImg.style.display = 'none'; };
+                accImg.src = url;
+            }
             if (placeholder) placeholder.style.display = 'none';
+            if (accPlaceholder) accPlaceholder.style.display = 'none';
             if (topbarImg) {
                 topbarImg.onload = () => { topbarImg.style.display = 'block'; };
                 topbarImg.onerror = () => { topbarImg.style.display = 'none'; };
@@ -7629,9 +7866,13 @@ export const app = {
             await window.supa.auth.updateUser({ data: { avatar_url: null } });
             const imgEl = document.getElementById('profileAvatarImage');
             const placeholder = document.getElementById('profileAvatarPlaceholder');
+            const accImg = document.getElementById('accountAvatarImage');
+            const accPlaceholder = document.getElementById('accountAvatarPlaceholder');
             const topbarImg = document.getElementById('userAvatarImg');
             if (imgEl) imgEl.style.display = 'none';
             if (placeholder) placeholder.style.display = '';
+            if (accImg) accImg.style.display = 'none';
+            if (accPlaceholder) accPlaceholder.style.display = '';
             if (topbarImg) topbarImg.style.display = 'none';
             const profileIcon = document.querySelector('.profile-icon');
             if (profileIcon) profileIcon.style.display = '';
@@ -7664,15 +7905,19 @@ export const app = {
     // Profile picture remove flow removed
 
     showProfilePictureProgress(show) {
-        const progressElement = document.getElementById('profilePictureProgress');
+        // Prefer profile* elements; fallback to account* if profile not present
+        const progressElement = document.getElementById('profilePictureProgress')
+            || document.getElementById('accountPictureProgress');
         if (progressElement) {
             progressElement.style.display = show ? 'flex' : 'none';
         }
     },
 
     updateProfilePictureProgress(percentage, text) {
-        const fillElement = document.getElementById('profilePictureProgressFill');
-        const textElement = document.getElementById('profilePictureProgressText');
+        const fillElement = document.getElementById('profilePictureProgressFill')
+            || document.getElementById('accountPictureProgressFill');
+        const textElement = document.getElementById('profilePictureProgressText')
+            || document.getElementById('accountPictureProgressText');
 
         if (fillElement) {
             fillElement.style.width = percentage + '%';
@@ -8317,6 +8562,7 @@ export const app = {
                 this.toggleBreakDeductionSections();
                 this.updateDisplay();
                 this.saveSettingsToSupabase();
+                this.saveBreakSettingsToServer?.();
             });
         } else {
             console.warn('pauseDeductionEnabledToggle element not found');
@@ -8330,6 +8576,7 @@ export const app = {
                 this.updateMethodExplanation();
                 this.updateDisplay();
                 this.saveSettingsToSupabase();
+                this.saveBreakSettingsToServer?.();
             });
         } else {
             console.warn('pauseDeductionMethodSelect element not found');
@@ -8339,9 +8586,16 @@ export const app = {
         const thresholdInput = document.getElementById('pauseThresholdInput');
         if (thresholdInput) {
             thresholdInput.addEventListener('change', (e) => {
-                this.pauseThresholdHours = parseFloat(e.target.value) || 5.5;
+                let v = parseFloat(e.target.value);
+                if (Number.isNaN(v)) v = 5.5;
+                if (v < 0) v = 0; if (v > 24) v = 24;
+                // Snap to 0.5 steps
+                v = Math.round(v / 0.5) * 0.5;
+                e.target.value = String(v);
+                this.pauseThresholdHours = v;
                 this.updateDisplay();
                 this.saveSettingsToSupabase();
+                this.saveBreakSettingsToServer?.();
             });
         }
 
@@ -8349,9 +8603,16 @@ export const app = {
         const minutesInput = document.getElementById('pauseDeductionMinutesInput');
         if (minutesInput) {
             minutesInput.addEventListener('change', (e) => {
-                this.pauseDeductionMinutes = parseInt(e.target.value) || 30;
+                let v = parseInt(e.target.value, 10);
+                if (Number.isNaN(v)) v = 30;
+                if (v < 0) v = 0; if (v > 120) v = 120;
+                // Snap to 15-minute steps
+                v = Math.round(v / 15) * 15;
+                e.target.value = String(v);
+                this.pauseDeductionMinutes = v;
                 this.updateDisplay();
                 this.saveSettingsToSupabase();
+                this.saveBreakSettingsToServer?.();
             });
         }
 
@@ -8371,6 +8632,9 @@ export const app = {
                     settingsContainer.classList.add('break-settings-disabled');
                 }
             }
+            // Explicitly show/hide subsection when present
+            const subsection = document.getElementById('breakDeductionSubsection');
+            if (subsection) subsection.style.display = this.pauseDeductionEnabled ? '' : 'none';
         }
     },
 
@@ -9121,13 +9385,28 @@ export const app = {
         // Convert to integer (handles both positive and negative values)
         this.currentWageLevel = parseInt(level);
         this.updateDisplay();
+        // Persist both to Supabase (if authed) and localStorage as fallback
         this.saveSettingsToSupabase();
+        this.saveToLocalStorage();
     },
 
     updateCustomWage(wage) {
-        this.customWage = parseFloat(wage) || 200;
+        // Validate numeric input > 0; if invalid, show inline error and do not persist
+        const n = parseFloat(wage);
+        const input = document.getElementById('customWageInput');
+        const errorEl = document.getElementById('customWageError');
+        if (Number.isNaN(n) || n <= 0) {
+            if (input) input.setAttribute('aria-invalid', 'true');
+            if (errorEl) errorEl.style.display = 'block';
+            return;
+        }
+        this.customWage = n;
+        if (input) input.setAttribute('aria-invalid', 'false');
+        if (errorEl) errorEl.style.display = 'none';
         this.updateDisplay();
+        // Persist both to Supabase (if authed) and localStorage as fallback
         this.saveSettingsToSupabase();
+        this.saveToLocalStorage();
     },
 
     // Capture custom bonuses from UI form elements
@@ -11321,45 +11600,112 @@ export const app = {
             }
             const period = periodRadio.value;
 
-            // Filter shifts based on selected period
-            let filteredShifts = [...this.shifts];
-
+            // Compute date range from selection
+            const toISODate = (d) => d.toISOString().split('T')[0];
+            let range = { from: null, to: null }; // nulls mean "all"
             if (period === 'current') {
-                // Current month (from month picker)
+                const first = new Date(this.currentYear, this.currentMonth - 1, 1);
+                const last = new Date(this.currentYear, this.currentMonth, 0);
+                range = { from: toISODate(first), to: toISODate(last) };
+            } else if (period === 'year') {
+                const first = new Date(this.currentYear, 0, 1);
+                const last = new Date(this.currentYear, 11, 31);
+                range = { from: toISODate(first), to: toISODate(last) };
+            } else if (period === 'custom') {
+                const startDate = document.getElementById('exportStartDate')?.value;
+                const endDate = document.getElementById('exportEndDate')?.value;
+                if (!startDate || !endDate) {
+                    // Inline validation should catch this, but guard anyway
+                    const err = document.getElementById('exportDateError');
+                    if (err) { err.textContent = 'Velg både start- og sluttdato.'; err.style.display = 'block'; }
+                    return;
+                }
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                if (start > end) {
+                    const err = document.getElementById('exportDateError');
+                    if (err) { err.textContent = 'Startdato må være før eller lik sluttdato.'; err.style.display = 'block'; }
+                    return;
+                }
+                range = { from: startDate, to: endDate };
+            }
+
+            // If CSV: prefer server-side export endpoint with auth
+            if (format === 'csv') {
+                try {
+                    // Construct URL
+                    const params = new URLSearchParams();
+                    if (range.from) params.append('from', range.from);
+                    if (range.to) params.append('to', range.to);
+                    const baseUrl = window.CONFIG?.apiBase || window.location.origin;
+                    const url = `${baseUrl}/reports/wages${params.toString() ? `?${params.toString()}` : ''}`;
+
+                    // Auth header from Supabase
+                    const { data: { session } } = await window.supa.auth.getSession();
+                    const token = session?.access_token;
+                    if (!token) {
+                        alert('Du må være innlogget for å eksportere data');
+                        return;
+                    }
+
+                    const response = await fetch(url, { method: 'GET', headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!response.ok) {
+                        throw new Error(`Export failed: ${response.statusText}`);
+                    }
+
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = downloadUrl;
+
+                    // Build filename
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    let periodStr = period;
+                    if (range.from && range.to) periodStr = `${range.from}_til_${range.to}`;
+                    a.download = `lønnsrapport_${periodStr}_${dateStr}.csv`;
+
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(downloadUrl);
+                    document.body.removeChild(a);
+
+                    // Optional toast
+                    this.showNotification?.('CSV-rapport lastet ned', 'success');
+                    return; // done
+                } catch (e) {
+                    console.warn('Server CSV export failed, falling back to client CSV', e);
+                    // Continue to client-side CSV generation using filtered shifts
+                }
+            }
+
+            // Build client-side filtered dataset for PDF or fallback CSV/JSON
+            let filteredShifts = [...this.shifts];
+            if (period === 'current') {
                 filteredShifts = this.shifts.filter(shift =>
                     shift.date.getMonth() === this.currentMonth - 1 &&
                     shift.date.getFullYear() === this.currentYear
                 );
             } else if (period === 'custom') {
-                // Custom period
-                const startDate = document.getElementById('exportStartDate').value;
-                const endDate = document.getElementById('exportEndDate').value;
-
-                if (!startDate || !endDate) {
-                    alert('Vennligst fyll ut både start- og sluttdato for egendefinert periode.');
-                    return;
-                }
-
+                const startDate = range.from;
+                const endDate = range.to;
                 const start = new Date(startDate);
                 const end = new Date(endDate);
-
-                if (start > end) {
-                    alert('Startdato må være før sluttdato.');
-                    return;
-                }
-
                 filteredShifts = this.shifts.filter(shift => {
-                    const shiftDate = new Date(shift.date);
-                    return shiftDate >= start && shiftDate <= end;
+                    const d = new Date(shift.date);
+                    return d >= start && d <= end;
                 });
-            }
+            } else if (period === 'year') {
+                filteredShifts = this.shifts.filter(shift =>
+                    shift.date.getFullYear() === this.currentYear
+                );
+            } // 'all' keeps all shifts
 
             if (filteredShifts.length === 0) {
                 alert('Ingen vakter funnet for den valgte perioden.');
                 return;
             }
 
-            // Create export data with filtered shifts
             const data = {
                 shifts: filteredShifts.map(shift => ({
                     id: shift.id,
@@ -11391,7 +11737,6 @@ export const app = {
             } else if (format === 'pdf') {
                 await this.exportAsPDF(data);
             } else {
-                // Default to JSON
                 this.exportAsJSON(data);
             }
         } catch (error) {
@@ -11400,19 +11745,57 @@ export const app = {
         }
     },
 
-    // Import data from data tab
+    // Import data from data tab (enhanced with validation + optional progress UI)
     async importDataFromDataTab() {
         const fileInput = document.getElementById('importFileData');
-        const file = fileInput.files[0];
+        const file = fileInput?.files?.[0];
 
+        const statusEl = document.getElementById('importStatus');
+        const progress = document.getElementById('importProgress');
+        const fill = document.getElementById('importProgressFill');
+        const resultEl = document.getElementById('importResult');
+
+        const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+        const setFill = (pct) => { if (fill) fill.style.width = `${Math.max(0, Math.min(100, pct))}%`; };
+        const showProg = (show) => { if (progress) progress.style.display = show ? '' : 'none'; };
+
+        const MAX_MB = 10;
         if (!file) {
+            setStatus('Velg en fil å importere.');
             alert('Velg en fil å importere');
             return;
         }
+        const nameOk = /\.(csv|json)$/i.test(file.name);
+        const sizeOk = file.size <= MAX_MB * 1024 * 1024;
+        if (!nameOk) {
+            setStatus('Ugyldig filtype. Velg CSV eller JSON.');
+            alert('Ikke støttet filformat. Bruk JSON eller CSV.');
+            return;
+        }
+        if (!sizeOk) {
+            const mb = (file.size / (1024*1024)).toFixed(2);
+            setStatus(`Filen er for stor (${mb} MB). Maks ${MAX_MB} MB.`);
+            alert(`Filen er for stor (${mb} MB). Maks ${MAX_MB} MB.`);
+            return;
+        }
+
+        // Reset UI and show progress if available
+        if (resultEl) resultEl.textContent = '';
+        if (statusEl) statusEl.textContent = 'Leser fil…';
+        showProg(true);
+        setFill(5);
 
         const reader = new FileReader();
+        reader.onprogress = (evt) => {
+            if (evt.lengthComputable) {
+                const pct = Math.round((evt.loaded / evt.total) * 60); // cap reading to 60%
+                setFill(pct);
+            }
+        };
         reader.onload = async (e) => {
             try {
+                setStatus('Prosesserer…');
+                setFill(75);
                 const content = e.target.result;
 
                 if (file.name.endsWith('.json')) {
@@ -11421,22 +11804,41 @@ export const app = {
                 } else if (file.name.endsWith('.csv')) {
                     await this.importFromCSV(content);
                 } else {
+                    setStatus('Ikke støttet filformat. Bruk JSON eller CSV.');
                     alert('Ikke støttet filformat. Bruk JSON eller CSV.');
+                    showProg(false);
+                    setFill(0);
                     return;
                 }
 
-                alert('Data importert successfully!');
+                setFill(100);
+                setStatus('Ferdig – oppdaterer visning…');
                 this.updateDisplay();
+                if (resultEl) resultEl.textContent = 'Import fullført.';
 
                 // Clear file input
-                fileInput.value = '';
+                if (fileInput) fileInput.value = '';
+                setTimeout(() => showProg(false), 400);
+
+                alert('Data importert successfully!');
             } catch (error) {
                 console.error('Error importing data:', error);
+                setStatus('Kunne ikke importere data. Sjekk filformatet.');
+                showProg(false);
+                setFill(0);
                 alert('Kunne ikke importere data. Sjekk filformatet.');
             }
         };
 
-        reader.readAsText(file);
+        try {
+            reader.readAsText(file);
+        } catch (e) {
+            console.error('File read error:', e);
+            setStatus('Kunne ikke lese fil.');
+            showProg(false);
+            setFill(0);
+            alert('Kunne ikke lese fil.');
+        }
     },
 
     // New function to open add shift modal with pre-selected date
