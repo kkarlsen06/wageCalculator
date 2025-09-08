@@ -128,15 +128,13 @@
   .settings-bottom-bar { width: 100%; }
 }
 
-/* Floating settings bar - truly fixed positioning */
+/* Floating settings bar - absolutely fixed positioning with portal approach */
 .floating-settings-bar {
   position: fixed !important;
   bottom: 20px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
   border-radius: 24px;
   padding: 12px 16px;
@@ -150,12 +148,19 @@
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  transition: opacity 0.3s ease-out, transform 0.2s ease-out;
+  transition: opacity 0.3s ease-out;
   box-sizing: border-box;
   /* Ensure it's never affected by parent containers */
   margin: 0 !important;
   float: none !important;
   clear: none !important;
+  /* Remove properties that can create containing blocks */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  will-change: auto !important;
+  contain: none !important;
+  isolation: auto !important;
 }
 
 /* Back button styled like the add shift primary button */
@@ -223,8 +228,7 @@
     rgba(18, 18, 18, 0.1) 70%,
     transparent 100%
   );
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* Remove backdrop-filter that can create containing blocks */
   mask: linear-gradient(to top,
     rgba(0, 0, 0, 1) 0%,
     rgba(0, 0, 0, 0.8) 30%,
@@ -245,6 +249,13 @@
   margin: 0 !important;
   float: none !important;
   clear: none !important;
+  /* Remove properties that can create containing blocks */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  will-change: auto !important;
+  contain: none !important;
+  isolation: auto !important;
 }
 
 /* Map former #settingsModal scoped styles to route containers */

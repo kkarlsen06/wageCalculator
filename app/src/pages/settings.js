@@ -796,24 +796,48 @@ export function afterMountSettings() {
     }
   } catch (_) {}
 
-  // Create floating settings bar - clean implementation
+  // Create floating settings bar - portal approach to avoid containing block issues
   try {
     // Hide any inline bottom bars in the content to prevent duplicates
     document.querySelectorAll('#settingsPage .settings-bottom-bar').forEach(el => {
       el.style.display = 'none';
     });
 
-    // Clean up any existing floating elements from document body
-    document.body.querySelectorAll('.floating-settings-backdrop, .floating-settings-bar').forEach(el => el.remove());
+    // Clean up any existing floating elements globally
+    document.querySelectorAll('.floating-settings-backdrop, .floating-settings-bar').forEach(el => el.remove());
 
-    // Create backdrop - append to body for true fixed positioning
+    // Create a dedicated portal container that's guaranteed to be outside all transforms/contains
+    let portal = document.getElementById('settings-floating-portal');
+    if (!portal) {
+      portal = document.createElement('div');
+      portal.id = 'settings-floating-portal';
+      portal.style.cssText = `
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        pointer-events: none !important;
+        z-index: 9999 !important;
+        transform: none !important;
+        will-change: auto !important;
+        contain: none !important;
+        isolation: auto !important;
+      `;
+      // Append to document.documentElement instead of body to avoid any body-level constraints
+      document.documentElement.appendChild(portal);
+    }
+
+    // Create backdrop
     const backdrop = document.createElement('div');
     backdrop.className = 'floating-settings-backdrop';
-    document.body.appendChild(backdrop);
+    backdrop.style.pointerEvents = 'none';
+    portal.appendChild(backdrop);
 
-    // Create floating bar - append to body for true fixed positioning
+    // Create floating bar
     const bar = document.createElement('div');
     bar.className = 'floating-settings-bar';
+    bar.style.pointerEvents = 'all'; // Re-enable pointer events for the bar itself
     const isDetail = !!section;
     
     // Render contents: Close button (left) and Back button (right when detail)
@@ -829,7 +853,7 @@ export function afterMountSettings() {
       ` : '<span></span>'}
     `;
     
-    document.body.appendChild(bar);
+    portal.appendChild(bar);
   } catch (e) {
     console.warn('[settings-route] floating settings bar init failed', e);
   }

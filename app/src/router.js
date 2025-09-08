@@ -36,9 +36,11 @@ export const routes = [
       if (spaEl) spaEl.style.display = 'none';
       if (appEl) appEl.style.display = 'block';
       
-      // Clean up any floating settings elements from body
+      // Clean up any floating settings elements and portal
       try {
-        document.body.querySelectorAll('.floating-settings-bar, .floating-settings-backdrop').forEach(el => el.remove());
+        document.querySelectorAll('.floating-settings-bar, .floating-settings-backdrop').forEach(el => el.remove());
+        const portal = document.getElementById('settings-floating-portal');
+        if (portal) portal.remove();
       } catch (_) {}
       
       // Reinitialize app content if needed
