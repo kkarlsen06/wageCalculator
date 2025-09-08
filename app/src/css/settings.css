@@ -284,6 +284,21 @@
 .text-warning { color: #FBBF24; font-size: 12px; }
 .input-inline { display: inline-block; max-width: 140px; }
 
+/* Disabled switch state for business toggle */
+.switch input:disabled + .slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch input:disabled + .slider:before {
+  background: var(--text-secondary);
+}
+
+#businessToggleSwitch.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* Avatar upload/profile styles */
 .avatar-preview { width: 96px; height: 96px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
 .avatar-image { width: 100%; height: 100%; object-fit: cover; display: none; }

@@ -291,6 +291,12 @@ html {
   height: 100dvh;
 }
 
+/* Allow scrolling for SPA routes (login, onboarding, settings, etc.) */
+html.spa-route,
+body.spa-route {
+  overflow: auto !important;
+}
+
 /* Allow scrolling when auth forms are visible */
 html:has(.auth-center),
 html.auth-mode {
@@ -639,7 +645,7 @@ button {
 }
 
 /* If skeletons are active, show the app immediately so placeholders are visible */
-body.skeleton-active #app {
+body.skeleton-active:not(.spa-route) #app {
   display: block !important;
 }
 
@@ -2312,7 +2318,7 @@ button {
 }
 
 /* If skeletons are active, show the app immediately so placeholders are visible */
-body.skeleton-active #app {
+body.skeleton-active:not(.spa-route) #app {
   display: block !important;
 }
 

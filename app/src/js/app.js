@@ -20,6 +20,16 @@ import wsManager from '/src/lib/net/websocketManager.js';
 // Create a local alias for consistency with other modules and expose globally later
 const supa = supabase;
 
+// Mark SPA route class early to prevent flash of main app on non-root routes (e.g., /settings, /login)
+try {
+  const p = (typeof location !== 'undefined' && location.pathname) ? location.pathname : '/';
+  const isSpa = p !== '/' && p !== '/index.html';
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.toggle('spa-route', isSpa);
+    document.body.classList.toggle('spa-route', isSpa);
+  }
+} catch (_) { /* non-fatal */ }
+
 
 // Tool/progress render helpers
 function formatMs(ms) {
@@ -530,9 +540,12 @@ if (window.innerWidth <= 768) {
 document.addEventListener('DOMContentLoaded', async () => {
   // Enable global skeletons until profile + app data are ready
   document.body.classList.add('skeleton-active');
-  // Show app container immediately so skeletons are visible
+  // Only show the main app container early on the root route.
+  // On SPA routes like /login, /onboarding, /settings/* we keep it hidden to avoid layering under SPA UI.
   const earlyAppEl = document.getElementById('app');
-  if (earlyAppEl) {
+  const pathAtLoad = (typeof location !== 'undefined' && location.pathname) ? location.pathname : '/';
+  const isRootRoute = pathAtLoad === '/' || pathAtLoad === '/index.html';
+  if (earlyAppEl && isRootRoute) {
     earlyAppEl.style.setProperty('display', 'block', 'important');
     // Do NOT add 'app-ready' yet; that would hide content containers and suppress skeletons
   }
@@ -1013,14 +1026,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkAndRemoveSkeletons();
   }
 
-  // If we're on an auth route, don't show the main app container
-  if (location.pathname === '/login' || location.pathname === '/onboarding') {
-    const appAuthEl = document.getElementById('app');
-    if (appAuthEl) appAuthEl.style.setProperty('display', 'none', 'important');
-    return;
+  // If we're on a SPA route, don't show the main app container
+  // Covers auth (/login, /onboarding) and settings pages (/settings, /settings/*)
+  {
+    const p = (typeof location !== 'undefined' && location.pathname) ? location.pathname : '/';
+    const isSpaRoute = p !== '/' && p !== '/index.html';
+    if (isSpaRoute) {
+      const appAuthEl = document.getElementById('app');
+      if (appAuthEl) appAuthEl.style.setProperty('display', 'none', 'important');
+      return;
+    }
   }
 
-  // Display the app container immediately with no animations
+  // Display the app container immediately with no animations (root route only)
   const appEl = document.getElementById('app');
   if (appEl) {
     // Show the app immediately

@@ -2569,12 +2569,11 @@ export const app = {
     },
 
     async switchSettingsTab(tab) {
-        // Within settings modal only
-        const settingsModal = document.getElementById('settingsModal');
-        if (!settingsModal) return;
+        // Settings route or legacy modal
+        const root = document.getElementById('settingsPage') || document.getElementById('settingsModal') || document;
 
-        // Determine current active tab for autosave behavior
-        const currentActiveBtn = settingsModal.querySelector('.tab-nav .tab-btn.active');
+        // Determine current active tab for autosave behavior (only if tab bar exists)
+        const currentActiveBtn = root.querySelector?.('.tab-nav .tab-btn.active');
         const currentTab = currentActiveBtn?.dataset?.tab
           || (currentActiveBtn?.textContent?.trim() === 'Lønn' ? 'wage'
               : currentActiveBtn?.textContent?.trim() === 'UI' ? 'interface'
@@ -2588,16 +2587,18 @@ export const app = {
         }
 
         // Toggle buttons by data-tab
-        const btns = settingsModal.querySelectorAll('.tab-nav .tab-btn');
-        btns.forEach(btn => {
-            const btnTab = btn.dataset?.tab
-              || (btn.textContent?.trim() === 'Lønn' ? 'wage'
-                  : btn.textContent?.trim() === 'UI' ? 'interface'
-                  : btn.textContent?.trim() === 'Bedrift' ? 'org'
-                  : btn.textContent?.trim() === 'Data' ? 'data'
-                  : '');
-            btn.classList.toggle('active', btnTab === tab);
-        });
+        const btns = root.querySelectorAll?.('.tab-nav .tab-btn') || [];
+        if (btns && btns.length) {
+            btns.forEach(btn => {
+                const btnTab = btn.dataset?.tab
+                  || (btn.textContent?.trim() === 'Lønn' ? 'wage'
+                      : btn.textContent?.trim() === 'UI' ? 'interface'
+                      : btn.textContent?.trim() === 'Bedrift' ? 'org'
+                      : btn.textContent?.trim() === 'Data' ? 'data'
+                      : '');
+                btn.classList.toggle('active', btnTab === tab);
+            });
+        }
 
         // Toggle tab contents
         const contentIds = ['wageTab','interfaceTab','orgTab','dataTab'];
@@ -3040,103 +3041,48 @@ export const app = {
     },
 
     async openSettings() {
-        // Close any existing expanded views, dropdowns, and modals
-        this.closeShiftDetails();
-        this.closeProfileDropdown();
-        this.closeProfile();
+        // Prefer SPA route
+        try {
+            this.closeShiftDetails();
+            this.closeProfileDropdown();
+            this.closeProfile();
+        } catch (_) {}
+        if (window.__navigate) { window.__navigate('/settings'); return; }
 
-        // Hide floating action bar when modal opens to prevent z-index conflicts
-        const floatingBar = document.querySelector('.floating-action-bar');
-        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
-        if (floatingBar) {
-            floatingBar.style.display = 'none';
-        }
-        if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = 'none';
-        }
-
+        // Fallback to modal (legacy)
         const modal = document.getElementById('settingsModal');
         if (modal) {
-            // Update UI to match current state
             this.updateSettingsUI();
-
-            // Set active tab to wage (most important settings first)
             this.switchSettingsTabSync('wage');
-
-            // Ensure tax deduction UI is properly updated after modal is shown
-            setTimeout(() => {
-                this.updateTaxDeductionUI();
-            }, 50);
-
-            // Show the modal
+            setTimeout(() => { this.updateTaxDeductionUI(); }, 50);
             modal.style.display = 'flex';
-
-            // Set up event delegation for collapsible toggle buttons
             this.setupCollapsibleEventListeners();
-
-            // Ensure custom bonus slots are populated if custom mode is active
-            if (!this.usePreset) {
-                setTimeout(() => {
-                    this.populateCustomBonusSlots();
-                }, 100);
-            }
+            if (!this.usePreset) { setTimeout(() => { this.populateCustomBonusSlots(); }, 100); }
         }
     },
 
     async openPaydateSettings() {
-        // Close any existing expanded views, dropdowns, and modals
-        this.closeShiftDetails();
-        this.closeProfileDropdown();
-        this.closeProfile();
+        // Prefer SPA route to wage section with focus on payroll day
+        try {
+            this.closeShiftDetails();
+            this.closeProfileDropdown();
+            this.closeProfile();
+        } catch (_) {}
+        if (window.__navigate) { window.__navigate('/settings/wage?focus=payrollDay'); return; }
 
-        // Hide floating action bar when modal opens to prevent z-index conflicts
-        const floatingBar = document.querySelector('.floating-action-bar');
-        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
-        if (floatingBar) {
-            floatingBar.style.display = 'none';
-        }
-        if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = 'none';
-        }
-
+        // Fallback to modal (legacy)
         const modal = document.getElementById('settingsModal');
         if (modal) {
-            // Update UI to match current state
             this.updateSettingsUI();
-
-            // Set active tab to wage where paydate setting is located
             this.switchSettingsTabSync('wage');
-
-            // Ensure tax deduction UI is properly updated after modal is shown
-            setTimeout(() => {
-                this.updateTaxDeductionUI();
-            }, 50);
-
-            // Show the modal
+            setTimeout(() => { this.updateTaxDeductionUI(); }, 50);
             modal.style.display = 'flex';
-
-            // Ensure custom bonus slots are populated if custom mode is active
-            if (!this.usePreset) {
-                setTimeout(() => {
-                    this.populateCustomBonusSlots();
-                }, 100);
-            }
-
-            // Scroll to and highlight the payroll day input field
+            if (!this.usePreset) { setTimeout(() => { this.populateCustomBonusSlots(); }, 100); }
             setTimeout(() => {
                 const payrollDayInput = document.getElementById('payrollDayInput');
                 if (payrollDayInput) {
-                    // Scroll the input into view
-                    payrollDayInput.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-
-                    // Focus and select the input after scrolling
-                    setTimeout(() => {
-                        payrollDayInput.focus();
-                        payrollDayInput.select();
-                    }, 300);
+                    payrollDayInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => { payrollDayInput.focus(); payrollDayInput.select?.(); }, 300);
                 }
             }, 150);
         }
@@ -3176,11 +3122,11 @@ export const app = {
 
     // Set up event delegation for collapsible toggle buttons
     setupCollapsibleEventListeners() {
-        const modal = document.getElementById('settingsModal');
-        if (!modal) return;
+        const root = document.getElementById('settingsPage') || document.getElementById('settingsModal');
+        if (!root) return;
         
         // Remove any existing listeners to prevent duplicates
-        modal.removeEventListener('click', this.handleCollapsibleToggle);
+        root.removeEventListener('click', this.handleCollapsibleToggle);
         
         // Add single delegated event listener
         this.handleCollapsibleToggle = (event) => {
@@ -3194,7 +3140,7 @@ export const app = {
             this.toggleSettingsSection(sectionId, button);
         };
         
-        modal.addEventListener('click', this.handleCollapsibleToggle);
+        root.addEventListener('click', this.handleCollapsibleToggle);
         console.log('Collapsible event listeners set up');
     },
 
@@ -8434,7 +8380,7 @@ export const app = {
         descriptions.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
-                element.style.display = 'none';
+                element.classList.add('hidden');
             }
         });
 
@@ -8456,7 +8402,7 @@ export const app = {
 
         const activeElement = document.getElementById(activeId);
         if (activeElement) {
-            activeElement.style.display = 'block';
+            activeElement.classList.remove('hidden');
         }
     },
 

@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="src/css/themes.css?v=1">
   <link rel="stylesheet" href="src/css/style.css?v=1">
   <link rel="stylesheet" href="src/css/chat.css">
+  <link rel="stylesheet" href="src/css/settings.css">
   <!-- Route/feature CSS is now code-split and loaded on demand -->
   <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
   <link rel="shortcut icon" href="/icons/favicon.ico" type="image/x-icon">
@@ -71,10 +72,7 @@
                                          <div class="skeleton-line w-40"></div>
                                      </div>
                                     <div class="profile-dropdown" id="profileDropdown" style="display: none;">
-                                        <div class="dropdown-item" onclick="app.openProfile()">
-                                            <span>Profil</span>
-                                        </div>
-                                        <div class="dropdown-item" onclick="app.openSettings()">
+                                        <div class="dropdown-item" data-spa data-href="/settings">
                                             <span>Innstillinger</span>
                                         </div>
                                         <div class="dropdown-item" onclick="app.openSubscription()">
@@ -396,8 +394,8 @@
       </div>
 
       <!-- Settings Modal -->
-      <div id="settingsModal" class="modal">
-          <div class="modal-content">
+      <div id="settingsModalLegacy" class="modal" style="display:none">
+          <div class="modal-content"><!-- legacy settings modal content moved to /settings route -->
               <div class="modal-header">
                   <h2 class="modal-title">Innstillinger</h2>
                   <button type="button" class="modal-close" onclick="app.closeSettings()" aria-label="Lukk">
@@ -442,7 +440,7 @@
                 </div>
 
               <div class="tab-content-wrapper">
-                  <div id="wageTab" class="tab-content active">
+                  <div id="wageTabLegacy" class="tab-content active">
                       <div class="settings-section-header">
                           <h3>Lønnsberegning</h3>
                           <p class="section-description">Sett opp hvordan lønnen din skal beregnes</p>
@@ -646,7 +644,7 @@
                   </div>
               </div>
 
-                  <div id="orgTab" class="tab-content">
+                  <div id="orgTabLegacy" class="tab-content">
                       <!-- Enterprise content (visible when user has Enterprise subscription) -->
                       <div id="orgEnterpriseContent" style="display:none;">
                           <div class="settings-section-header">
@@ -714,7 +712,7 @@
                       </div>
                   </div>
 
-              <div id="interfaceTab" class="tab-content">
+              <div id="interfaceTabLegacy" class="tab-content">
                   <div class="settings-section-header">
                       <h3>Utseende og oppførsel</h3>
                       <p class="section-description">Tilpass appen etter dine preferanser</p>
@@ -848,7 +846,7 @@
 
 
 
-              <div id="dataTab" class="tab-content">
+              <div id="dataTabLegacy" class="tab-content">
                   <div class="settings-section-header">
                       <h3>Data og backup</h3>
                       <p class="section-description">Eksporter data for regnskap eller sikkerhetskopi</p>
@@ -947,26 +945,26 @@
                       </svg>
                   </button>
               </div>
-          </div>
+          --></div>
       </div>
 
       <!-- Profile Modal -->
-      <div id="profileModal" class="modal">
+      <div id="profileModalLegacy" class="modal" style="display:none">
           <div class="modal-content">
               <div class="modal-header">
                   <h2 class="modal-title">Min profil</h2>
               </div>
               <div class="modal-body">
-                  <form id="profile-form" novalidate>
+                  <form id="profile-form-legacy" novalidate>
                       <div class="form-group form-group-with-hint">
-                          <label for="profileName">Fornavn</label>
-                          <input type="text" id="profileName" name="given-name" class="form-control" placeholder="Fornavn" autocomplete="given-name">
+                          <label for="profileNameLegacy">Fornavn</label>
+                          <input type="text" id="profileNameLegacy" name="given-name" class="form-control" placeholder="Fornavn" autocomplete="given-name">
                           <small class="form-hint">Vises i velkomstskjermen og rapporter</small>
                       </div>
 
                       <div class="form-group form-group-with-hint">
-                          <label for="profileEmail">E-post</label>
-                          <input type="email" id="profileEmail" name="email" class="form-control" placeholder="E-post" disabled autocomplete="email">
+                          <label for="profileEmailLegacy">E-post</label>
+                          <input type="email" id="profileEmailLegacy" name="email" class="form-control" placeholder="E-post" disabled autocomplete="email">
                           <small class="form-hint">E-postadressen kan ikke endres etter registrering</small>
                       </div>
 
@@ -974,9 +972,9 @@
                        <div class="form-group form-group-with-hint avatar-section">
                            <label>Profilbilde</label>
                            <div class="avatar-upload-container">
-                               <div class="avatar-preview" id="profileAvatarPreview" style="width: 96px; height: 96px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);">
-                                   <img id="profileAvatarImage" alt="Forhåndsvisning" style="width:100%; height:100%; object-fit: cover; display: none;" />
-                                   <div id="profileAvatarPlaceholder" class="avatar-placeholder" aria-hidden="true">
+                               <div class="avatar-preview" id="profileAvatarPreviewLegacy" style="width: 96px; height: 96px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);">
+                                   <img id="profileAvatarImageLegacy" alt="Forhåndsvisning" style="width:100%; height:100%; object-fit: cover; display: none;" />
+                                   <div id="profileAvatarPlaceholderLegacy" class="avatar-placeholder" aria-hidden="true">
                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                            <circle cx="12" cy="7" r="4"></circle>
@@ -984,20 +982,20 @@
                                    </div>
                                </div>
                                <div class="avatar-upload-controls" style="display:flex; gap: 8px; align-items: center;">
-                                   <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;" />
-                                   <button type="button" class="btn btn-secondary avatar-upload-btn" id="profileAvatarChooseBtn">Velg bilde</button>
-                                   <button type="button" class="btn btn-danger avatar-remove-btn" id="profileAvatarRemoveBtn">Fjern</button>
+                                   <input type="file" id="profileAvatarInputLegacy" accept="image/*" style="display:none;" />
+                                   <button type="button" class="btn btn-secondary avatar-upload-btn" id="profileAvatarChooseBtnLegacy">Velg bilde</button>
+                                   <button type="button" class="btn btn-danger avatar-remove-btn" id="profileAvatarRemoveBtnLegacy">Fjern</button>
                                </div>
-                               <div id="profilePictureProgress" style="display:none; width: 100%; max-width: 260px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
-                                   <div id="profilePictureProgressFill" style="height: 8px; width: 0%; background: var(--accent);"></div>
-                                   <div id="profilePictureProgressText" style="font-size: 12px; padding: 6px 8px; color: var(--text-secondary);">Laster opp...</div>
+                               <div id="profilePictureProgressLegacy" style="display:none; width: 100%; max-width: 260px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+                                   <div id="profilePictureProgressFillLegacy" style="height: 8px; width: 0%; background: var(--accent);"></div>
+                                   <div id="profilePictureProgressTextLegacy" style="font-size: 12px; padding: 6px 8px; color: var(--text-secondary);">Laster opp...</div>
                                </div>
                            </div>
                            <small class="form-hint">Last opp et kvadratisk bilde. Du kan beskjære før lagring.</small>
                        </div>
 
       <!-- Crop Modal for avatar -->
-      <div id="cropModal" class="modal" style="display: none;">
+      <div id="cropModalLegacy" class="modal" style="display: none;">
           <div class="modal-content" style="max-width: 420px; width: 92vw;">
               <div class="modal-header">
                   <h2 class="modal-title">Juster profilbilde</h2>
@@ -1027,12 +1025,12 @@
 
                   </form>
 
-                  <p id="profile-update-msg" style="color: var(--success); min-height: 24px; text-align: center; font-size: 14px;"></p>
+                  <p id="profile-update-msg-legacy" style="color: var(--success); min-height: 24px; text-align: center; font-size: 14px;"></p>
 
-                  <div class="form-group form-group-with-hint" style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                      <div class="form-group form-group-with-hint" style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
                       <label>Kontotilkoblinger</label>
-                      <div id="google-linking-row" class="form-row" style="margin-bottom: 16px; display:flex; align-items:center; gap:8px;">
-                          <button id="btn-link-google" type="button" class="btn btn-secondary" style="display: flex; align-items: center; gap: 8px;">
+                      <div id="google-linking-row-legacy" class="form-row" style="margin-bottom: 16px; display:flex; align-items:center; gap:8px;">
+                          <button id="btn-link-google-legacy" type="button" class="btn btn-secondary" style="display: flex; align-items: center; gap: 8px;">
                             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 48 48">
                               <path d="M44.5 20H24v8.5h11.8C34.6 33.9 29.9 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 12.4 2 3 11.4 3 23s9.4 21 21 21 20-9.4 20-21c0-1.2-.1-2.1-.3-3z" fill="#FFC107"/>
                               <path d="M6.3 14.7l7 5.1C14.7 16.3 18.9 13 24 13c3.1 0 5.9 1.1 8.1 3.1l6-6C34.6 4.3 29.6 2 24 2 15.5 2 8.2 6.7 6.3 14.7z" fill="#FF3D00"/>
@@ -1041,7 +1039,7 @@
                             </svg>
                             Koble til Google
                           </button>
-                          <button id="btn-unlink-google" type="button" class="btn btn-danger" style="display:none; align-items: center; gap: 8px;">
+                          <button id="btn-unlink-google-legacy" type="button" class="btn btn-danger" style="display:none; align-items: center; gap: 8px;">
                             Fjern Google-konto
                           </button>
                           <span id="google-unlink-warning" class="form-hint" style="display:none; color: #FBBF24; font-size: 12px;">

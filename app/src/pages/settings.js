@@ -512,8 +512,8 @@ function getInterfaceDetail() {
     <div class="detail-body">
       <div id="interfaceTab" class="tab-content active">
         <div class="settings-section-header">
-            <h3>Utseende og oppførsel</h3>
-            <p class="section-description">Tilpass appen etter dine preferanser</p>
+            <h3>Tema og visning</h3>
+            <p class="section-description">Tilpass utseendet og grunnleggende funksjoner</p>
         </div>
         
         <div class="form-group settings-level-2">
@@ -563,14 +563,21 @@ function getInterfaceDetail() {
             </div>
         </div>
 
-        <div class="form-group settings-level-2 hidden" id="employeeTabVisibilityGroup">
-            <label>Navigasjon</label>
+        <div class="form-group form-group-with-hint mt-32">
+            <div class="settings-section-divider">
+                <h4>Navigasjon og funksjoner</h4>
+            </div>
+        </div>
+
+        <div class="form-group settings-level-2" id="employeeTabVisibilityGroup">
+            <label>Bedriftsfunksjoner</label>
             <div class="switch-group">
               <div>
-                <span class="text-secondary">Vis \"Ansatte\"-fanen</span>
-                <small class="form-hint">Skjul Ansatte-fanen selv om du har Enterprise. Fint for de som vil støtte, men ikke bruker ansattfunksjonene.</small>
+                <span class="text-secondary" id="businessToggleLabel">Vis bedriftsfunksjoner</span>
+                <small class="form-hint" id="businessToggleHint">Vis "Ansatte"-fanen og relaterte funksjoner i appen</small>
+                <small class="form-hint text-warning hidden" id="businessUpgradeHint">Abonner til Enterprise for tilgang til bedriftsfunksjoner</small>
               </div>
-              <label class="switch">
+              <label class="switch" id="businessToggleSwitch">
                   <input type="checkbox" id="showEmployeeTabToggle">
                   <span class="slider"></span>
               </label>
@@ -895,7 +902,7 @@ export function afterMountSettings() {
 
     if (section === 'wage') {
       setTimeout(() => { try { window.app.updateTaxDeductionUI?.(); } catch (_) {} }, 50);
-      try { window.app.setupCollapsibleEventListeners?.(); } catch (_) {}
+      setTimeout(() => { try { window.app.setupCollapsibleEventListeners?.(); } catch (_) {} }, 100);
       if (window.app.usePreset === false) {
         setTimeout(() => { try { window.app.populateCustomBonusSlots?.(); } catch (_) {} }, 100);
       }
@@ -926,7 +933,10 @@ export function afterMountSettings() {
           
           if (shouldShowOrgContent) {
             if (upsell) upsell.style.display = 'none';
-            if (ent) ent.style.display = '';
+            if (ent) {
+              ent.style.display = '';
+              ent.classList.remove('hidden');
+            }
             
             const sel = document.getElementById('breakPolicySelect');
             if (sel && window.app.orgSettings?.break_policy) sel.value = window.app.orgSettings.break_policy;
@@ -947,22 +957,82 @@ export function afterMountSettings() {
                   <p class="mb-12">
                     Du har Enterprise, men har valgt å skjule "Ansatte"-fanen i utseendeinnstillingene.
                   </p>
-                  <small class="form-hint">Gå til Utseende → Navigasjon for å aktivere bedriftsfunksjoner igjen.</small>
+                  <small class="form-hint">Gå til Utseende → Bedriftsfunksjoner for å aktivere bedriftsfunksjoner igjen.</small>
                 </div>`;
               upsell.style.display = '';
             }
-            if (ent) ent.style.display = 'none';
+            if (ent) {
+              ent.style.display = 'none';
+              ent.classList.add('hidden');
+            }
           } else {
             // No enterprise - show upsell
             if (upsell) upsell.style.display = '';
-            if (ent) ent.style.display = 'none';
+            if (ent) {
+              ent.style.display = 'none';
+              ent.classList.add('hidden');
+            }
           }
         } catch (e) {
           console.warn('[settings-route] org init failed', e);
         }
       })();
     } else if (section === 'interface') {
-      // Nothing special; state-driven via updateSettingsUI
+      // Handle business features toggle state based on enterprise subscription
+      (async () => {
+        try {
+          const hasEnt = await (window.app?.hasEnterpriseSubscription ? window.app.hasEnterpriseSubscription() : (await import('../js/subscriptionUtils.js')).hasEnterpriseSubscription());
+          const showEmployeeTab = window.app?.showEmployeeTab !== false;
+          
+          const toggleSwitch = document.getElementById('businessToggleSwitch');
+          const toggleInput = document.getElementById('showEmployeeTabToggle');
+          const toggleLabel = document.getElementById('businessToggleLabel');
+          const toggleHint = document.getElementById('businessToggleHint');
+          const upgradeHint = document.getElementById('businessUpgradeHint');
+          
+          if (!hasEnt) {
+            // No enterprise subscription - disable toggle and show upgrade hint
+            if (toggleSwitch) toggleSwitch.style.opacity = '0.5';
+            if (toggleInput) {
+              toggleInput.disabled = true;
+              toggleInput.checked = false;
+            }
+            if (toggleLabel) toggleLabel.textContent = 'Bedriftsfunksjoner (krever Enterprise)';
+            if (toggleHint) toggleHint.classList.add('hidden');
+            if (upgradeHint) upgradeHint.classList.remove('hidden');
+          } else {
+            // Has enterprise subscription - enable toggle and set current state
+            if (toggleSwitch) toggleSwitch.style.opacity = '1';
+            if (toggleInput) {
+              toggleInput.disabled = false;
+              toggleInput.checked = showEmployeeTab;
+            }
+            if (toggleLabel) toggleLabel.textContent = 'Vis bedriftsfunksjoner';
+            if (toggleHint) toggleHint.classList.remove('hidden');
+            if (upgradeHint) upgradeHint.classList.add('hidden');
+            
+            // Add event listener for toggle changes
+            if (toggleInput && !toggleInput._businessToggleBound) {
+              toggleInput.addEventListener('change', async (e) => {
+                try {
+                  if (window.app) {
+                    window.app.showEmployeeTab = e.target.checked;
+                    await window.app.saveSettingsToSupabase();
+                    await window.app.updateTabBarVisibility();
+                  }
+                } catch (error) {
+                  console.warn('[settings] Failed to save business toggle setting:', error);
+                  // Revert toggle state on error
+                  e.target.checked = !e.target.checked;
+                }
+              });
+              toggleInput._businessToggleBound = true;
+            }
+          }
+        } catch (e) {
+          console.warn('[settings-route] interface business toggle init failed', e);
+        }
+      })();
     }
   } catch (e) {
     console.warn('[settings-route] settings detail init failed', e);
