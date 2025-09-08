@@ -5,6 +5,7 @@
 
 import { renderLogin, afterMountLogin } from './pages/login.js';
 import { renderOnboarding, afterMountOnboarding } from './pages/onboarding.js';
+import { renderSettings, afterMountSettings } from './pages/settings.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
 function normalizePath(pathname) {
@@ -34,10 +35,31 @@ export const routes = [
       const { appEl, spaEl } = getOutlets();
       if (spaEl) spaEl.style.display = 'none';
       if (appEl) appEl.style.display = 'block';
+      
+      // Clean up any floating settings elements
+      try {
+        const floatingBar = document.querySelector('.floating-settings-bar');
+        const floatingBackdrop = document.querySelector('.floating-settings-backdrop');
+        if (floatingBar) floatingBar.remove();
+        if (floatingBackdrop) floatingBackdrop.remove();
+      } catch (_) {}
+      
+      // Reinitialize app content if needed
+      try {
+        if (typeof window !== 'undefined' && window.app && window.app.refreshUI) {
+          setTimeout(() => window.app.refreshUI(), 50);
+        }
+      } catch (_) {}
     }
   },
   { path: '/login', render: renderLogin, afterMount: afterMountLogin },
   { path: '/onboarding', render: renderOnboarding, afterMount: afterMountOnboarding },
+  { path: '/settings', render: renderSettings, afterMount: afterMountSettings },
+  { path: '/settings/profile', render: renderSettings, afterMount: afterMountSettings },
+  { path: '/settings/wage', render: renderSettings, afterMount: afterMountSettings },
+  { path: '/settings/interface', render: renderSettings, afterMount: afterMountSettings },
+  { path: '/settings/org', render: renderSettings, afterMount: afterMountSettings },
+  { path: '/settings/data', render: renderSettings, afterMount: afterMountSettings },
 ];
 
 export function navigate(path) {
@@ -60,11 +82,18 @@ export async function render() {
       document.body.classList.remove('auth-mode');
       document.documentElement.classList.remove('onboarding-route');
       document.body.classList.remove('onboarding-route');
+      document.documentElement.classList.remove('spa-route');
+      document.body.classList.remove('spa-route');
     } catch (_) {}
     try { if (spaEl) spaEl.innerHTML = ''; } catch (_) {}
   } else {
     if (appEl) appEl.style.setProperty('display', 'none', 'important');
     if (spaEl) spaEl.style.display = 'block';
+    // Mark as SPA route to relax global overflow constraints
+    try {
+      document.documentElement.classList.add('spa-route');
+      document.body.classList.add('spa-route');
+    } catch (_) {}
   }
 
   // Tag body/html during onboarding for scoped CSS
@@ -86,10 +115,30 @@ window.addEventListener('popstate', render);
 
 // Intercept SPA-marked links
 document.addEventListener('click', (e) => {
-  const a = e.target && /** @type {HTMLElement} */(e.target).closest && /** @type {HTMLElement} */(e.target).closest('a');
-  if (a && a.origin === location.origin && a.getAttribute('data-spa') !== null) {
+  const el = e.target && /** @type {HTMLElement} */(e.target).closest && /** @type {HTMLElement} */(e.target).closest('[data-spa]');
+  if (!el) return;
+
+  // Anchor handling
+  if (el.tagName && el.tagName.toLowerCase() === 'a') {
+    const a = /** @type {HTMLAnchorElement} */(el);
+    if (a.origin === location.origin) {
+      e.preventDefault();
+      navigate(a.pathname + (a.search || ''));
+    }
+    return;
+  }
+
+  // Generic element with data-href
+  const href = el.getAttribute('data-href');
+  if (href) {
     e.preventDefault();
-    navigate(a.pathname + (a.search || ''));
+    try {
+      const url = new URL(href, location.origin);
+      navigate(url.pathname + (url.search || ''));
+    } catch (_) {
+      // Fallback: hard redirect
+      location.href = href;
+    }
   }
 });
 
