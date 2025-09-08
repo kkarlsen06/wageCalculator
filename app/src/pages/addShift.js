@@ -153,23 +153,46 @@ function switchAddShiftTab(tab) {
 
 // Add shift functionality for the route
 function addShiftFromRoute() {
-  if (window.app && window.app.addShift) {
-    // Call the existing addShift method with success callback to navigate back
-    const originalAddShift = window.app.addShift.bind(window.app);
-    
-    // Override the close modal behavior to navigate back to main app
+  if (!window.app || !window.app.addShift) {
+    console.error('App or addShift method not available');
+    return;
+  }
+  
+  try {
+    // Store original method for safe restoration
     const originalCloseAddShiftModal = window.app.closeAddShiftModal;
+    
+    // Create a route-aware version that navigates back instead of hiding modal
     window.app.closeAddShiftModal = function() {
-      // Navigate back to main app
-      if (window.navigateToRoute) {
-        window.navigateToRoute('/');
+      try {
+        if (window.navigateToRoute) {
+          window.navigateToRoute('/');
+        } else {
+          console.warn('Route navigation not available, using fallback');
+          if (originalCloseAddShiftModal) {
+            originalCloseAddShiftModal.call(window.app);
+          }
+        }
+      } catch (error) {
+        console.error('Error during route navigation:', error);
+        // Fallback to original behavior
+        if (originalCloseAddShiftModal) {
+          originalCloseAddShiftModal.call(window.app);
+        }
+      } finally {
+        // Always restore the original method
+        window.app.closeAddShiftModal = originalCloseAddShiftModal;
       }
-      // Restore original method
-      window.app.closeAddShiftModal = originalCloseAddShiftModal;
     };
     
     // Call the existing addShift method
-    originalAddShift();
+    window.app.addShift();
+  } catch (error) {
+    console.error('Error in addShiftFromRoute:', error);
+    // Show user-friendly error
+    if (window.ErrorHelper) {
+      window.ErrorHelper.showError('Det oppstod en feil ved lagring av vakten. Prøv igjen.');
+    }
   }
 }
 
@@ -177,17 +200,27 @@ function addShiftFromRoute() {
 export function afterMountAddShift() {
   // Initialize the add shift functionality
   if (window.app) {
-    // Check for pre-selected date from session storage
-    const preSelectedDate = sessionStorage.getItem('preSelectedShiftDate');
+    // Check for pre-selected date from session storage with expiry
+    let preSelectedDate = null;
     let targetMonth = null;
     let targetYear = null;
     
-    if (preSelectedDate) {
-      const date = new Date(preSelectedDate);
-      targetMonth = date.getMonth() + 1;
-      targetYear = date.getFullYear();
-      // Clear the session storage
+    const storedDate = sessionStorage.getItem('preSelectedShiftDate');
+    const storedExpiry = sessionStorage.getItem('preSelectedShiftDate_expiry');
+    
+    if (storedDate && storedExpiry) {
+      const expiry = parseInt(storedExpiry, 10);
+      if (Date.now() < expiry) {
+        preSelectedDate = storedDate;
+        const date = new Date(preSelectedDate);
+        if (!isNaN(date.getTime())) {
+          targetMonth = date.getMonth() + 1;
+          targetYear = date.getFullYear();
+        }
+      }
+      // Clean up session storage (whether expired or used)
       sessionStorage.removeItem('preSelectedShiftDate');
+      sessionStorage.removeItem('preSelectedShiftDate_expiry');
     }
     
     // Initialize the date grid and form elements
@@ -233,9 +266,32 @@ export function afterMountAddShift() {
     switchAddShiftTab('simple');
   }
 
-  // Make functions globally available
+  // Make functions globally available with cleanup tracking
+  if (!window._addShiftRouteCleanup) {
+    window._addShiftRouteCleanup = [];
+  }
+  
+  // Store original values for cleanup
+  const originalSwitchTab = window.switchAddShiftTab;
+  const originalAddShiftRoute = window.addShiftFromRoute;
+  
   window.switchAddShiftTab = switchAddShiftTab;
   window.addShiftFromRoute = addShiftFromRoute;
+  
+  // Track cleanup functions
+  window._addShiftRouteCleanup.push(() => {
+    if (originalSwitchTab) {
+      window.switchAddShiftTab = originalSwitchTab;
+    } else {
+      delete window.switchAddShiftTab;
+    }
+    
+    if (originalAddShiftRoute) {
+      window.addShiftFromRoute = originalAddShiftRoute;
+    } else {
+      delete window.addShiftFromRoute;
+    }
+  });
 }
 
 // Export the render function

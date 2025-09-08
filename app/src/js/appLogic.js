@@ -980,11 +980,16 @@ export const app = {
     openAddShiftModal(targetMonth = null, targetYear = null) {
         // Navigate to add shift route instead of opening modal
         if (window.navigateToRoute) {
-            window.navigateToRoute('/add-shift');
-            return;
+            try {
+                window.navigateToRoute('/add-shift');
+                return;
+            } catch (error) {
+                console.error('Route navigation failed, falling back to modal:', error);
+                // Continue to modal fallback
+            }
         }
         
-        // Fallback to modal if route navigation fails
+        // Fallback to modal if route navigation fails or is unavailable
         // Close any existing expanded views, dropdowns, and modals first
         this.closeShiftDetails();
         this.closeSettings(false); // Don't save settings when closing as cleanup
@@ -12031,12 +12036,24 @@ export const app = {
     openAddShiftModalWithDate(date) {
         // Navigate to add shift route and store date for pre-selection
         if (window.navigateToRoute) {
-            // Store the date for pre-selection when the route loads
-            if (date) {
-                sessionStorage.setItem('preSelectedShiftDate', new Date(date).toISOString());
+            try {
+                // Store the date for pre-selection when the route loads
+                if (date) {
+                    const dateString = new Date(date).toISOString();
+                    sessionStorage.setItem('preSelectedShiftDate', dateString);
+                    // Add expiration timestamp (1 hour)
+                    const expiry = Date.now() + (60 * 60 * 1000);
+                    sessionStorage.setItem('preSelectedShiftDate_expiry', expiry.toString());
+                }
+                window.navigateToRoute('/add-shift');
+                return;
+            } catch (error) {
+                console.error('Route navigation with date failed, falling back to modal:', error);
+                // Clear potentially corrupted session data
+                sessionStorage.removeItem('preSelectedShiftDate');
+                sessionStorage.removeItem('preSelectedShiftDate_expiry');
+                // Continue to modal fallback
             }
-            window.navigateToRoute('/add-shift');
-            return;
         }
         
         // Fallback to modal behavior

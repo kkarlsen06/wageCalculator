@@ -41,7 +41,7 @@ export const routes = [
         try { appEl.style.setProperty('display', 'block', 'important'); } catch (_) { appEl.style.display = 'block'; }
       }
       
-      // Clean up any floating settings and abonnement elements and portals
+      // Clean up any floating elements, portals, and route-specific globals
       try {
         document.querySelectorAll('.floating-settings-bar, .floating-settings-backdrop, .floating-nav-btn').forEach(el => el.remove());
         const settingsPortal = document.getElementById('settings-floating-portal');
@@ -50,6 +50,14 @@ export const routes = [
         if (abonnementPortal) abonnementPortal.remove();
         const addShiftPortal = document.getElementById('add-shift-floating-portal');
         if (addShiftPortal) addShiftPortal.remove();
+        
+        // Clean up add shift route globals
+        if (window._addShiftRouteCleanup) {
+          window._addShiftRouteCleanup.forEach(cleanup => {
+            try { cleanup(); } catch (e) { console.warn('Cleanup error:', e); }
+          });
+          window._addShiftRouteCleanup = [];
+        }
       } catch (_) {}
       
       // Reinitialize app content if needed
