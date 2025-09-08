@@ -803,16 +803,15 @@ export function afterMountSettings() {
       el.style.display = 'none';
     });
 
-    // Clean up any existing floating elements
-    const spaRoot = document.getElementById('spa-root') || document.body;
-    spaRoot.querySelectorAll('.floating-settings-backdrop, .floating-settings-bar').forEach(el => el.remove());
+    // Clean up any existing floating elements from document body
+    document.body.querySelectorAll('.floating-settings-backdrop, .floating-settings-bar').forEach(el => el.remove());
 
-    // Create backdrop
+    // Create backdrop - append to body for true fixed positioning
     const backdrop = document.createElement('div');
     backdrop.className = 'floating-settings-backdrop';
-    spaRoot.appendChild(backdrop);
+    document.body.appendChild(backdrop);
 
-    // Create floating bar
+    // Create floating bar - append to body for true fixed positioning
     const bar = document.createElement('div');
     bar.className = 'floating-settings-bar';
     const isDetail = !!section;
@@ -830,7 +829,7 @@ export function afterMountSettings() {
       ` : '<span></span>'}
     `;
     
-    spaRoot.appendChild(bar);
+    document.body.appendChild(bar);
   } catch (e) {
     console.warn('[settings-route] floating settings bar init failed', e);
   }

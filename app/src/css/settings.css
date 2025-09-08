@@ -128,23 +128,23 @@
   .settings-bottom-bar { width: 100%; }
 }
 
-/* Floating settings bar - consistent positioning */
+/* Floating settings bar - truly fixed positioning */
 .floating-settings-bar {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
   background: var(--bg-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
   border-radius: 24px;
   padding: 12px 16px;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  z-index: 10000;
+  z-index: 10000 !important;
   width: min(70%, 600px);
   max-width: calc(100% - 32px);
   box-shadow:
@@ -152,6 +152,10 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: opacity 0.3s ease-out, transform 0.2s ease-out;
   box-sizing: border-box;
+  /* Ensure it's never affected by parent containers */
+  margin: 0 !important;
+  float: none !important;
+  clear: none !important;
 }
 
 /* Back button styled like the add shift primary button */
@@ -207,10 +211,10 @@
 }
 
 .floating-settings-backdrop {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   width: 100vw;
   height: 120px;
   background: linear-gradient(to top,
@@ -233,10 +237,14 @@
     rgba(0, 0, 0, 0.4) 60%,
     rgba(0, 0, 0, 0) 100%
   );
-  z-index: 9998;
+  z-index: 9998 !important;
   pointer-events: none;
   opacity: 1;
   transition: opacity 0.3s ease-out;
+  /* Ensure it's never affected by parent containers */
+  margin: 0 !important;
+  float: none !important;
+  clear: none !important;
 }
 
 /* Map former #settingsModal scoped styles to route containers */

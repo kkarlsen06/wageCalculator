@@ -36,12 +36,9 @@ export const routes = [
       if (spaEl) spaEl.style.display = 'none';
       if (appEl) appEl.style.display = 'block';
       
-      // Clean up any floating settings elements
+      // Clean up any floating settings elements from body
       try {
-        const floatingBar = document.querySelector('.floating-settings-bar');
-        const floatingBackdrop = document.querySelector('.floating-settings-backdrop');
-        if (floatingBar) floatingBar.remove();
-        if (floatingBackdrop) floatingBackdrop.remove();
+        document.body.querySelectorAll('.floating-settings-bar, .floating-settings-backdrop').forEach(el => el.remove());
       } catch (_) {}
       
       // Reinitialize app content if needed
