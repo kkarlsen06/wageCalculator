@@ -978,6 +978,13 @@ export const app = {
     },
 
     openAddShiftModal(targetMonth = null, targetYear = null) {
+        // Navigate to add shift route instead of opening modal
+        if (window.navigateToRoute) {
+            window.navigateToRoute('/add-shift');
+            return;
+        }
+        
+        // Fallback to modal if route navigation fails
         // Close any existing expanded views, dropdowns, and modals first
         this.closeShiftDetails();
         this.closeSettings(false); // Don't save settings when closing as cleanup
@@ -12022,6 +12029,17 @@ export const app = {
 
     // New function to open add shift modal with pre-selected date
     openAddShiftModalWithDate(date) {
+        // Navigate to add shift route and store date for pre-selection
+        if (window.navigateToRoute) {
+            // Store the date for pre-selection when the route loads
+            if (date) {
+                sessionStorage.setItem('preSelectedShiftDate', new Date(date).toISOString());
+            }
+            window.navigateToRoute('/add-shift');
+            return;
+        }
+        
+        // Fallback to modal behavior
         if (!date) {
             this.openAddShiftModal();
             return;

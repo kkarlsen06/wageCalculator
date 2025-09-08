@@ -7,6 +7,7 @@ import { renderLogin, afterMountLogin } from './pages/login.js';
 import { renderOnboarding, afterMountOnboarding } from './pages/onboarding.js';
 import { renderSettings, afterMountSettings } from './pages/settings.js';
 import renderAbonnementPage, { afterMountAbonnement } from './pages/abonnement.js';
+import { renderAddShift, afterMountAddShift } from './pages/addShift.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
 function normalizePath(pathname) {
@@ -47,6 +48,8 @@ export const routes = [
         if (settingsPortal) settingsPortal.remove();
         const abonnementPortal = document.getElementById('abonnement-floating-portal');
         if (abonnementPortal) abonnementPortal.remove();
+        const addShiftPortal = document.getElementById('add-shift-floating-portal');
+        if (addShiftPortal) addShiftPortal.remove();
       } catch (_) {}
       
       // Reinitialize app content if needed
@@ -60,6 +63,7 @@ export const routes = [
   { path: '/login', render: renderLogin, afterMount: afterMountLogin },
   { path: '/onboarding', render: renderOnboarding, afterMount: afterMountOnboarding },
   { path: '/abonnement', render: renderAbonnementPage, afterMount: afterMountAbonnement },
+  { path: '/add-shift', render: renderAddShift, afterMount: afterMountAddShift },
   { path: '/settings', render: renderSettings, afterMount: afterMountSettings },
   // Account settings detail (primary path)
   { path: '/settings/account', render: renderSettings, afterMount: afterMountSettings },
