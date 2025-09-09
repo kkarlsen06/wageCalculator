@@ -349,6 +349,38 @@
   height: 18px;
 }
 
+/* Add-shift floating navigation container */
+.add-shift-floating-nav {
+  position: fixed !important;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 10000 !important;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 14px 18px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  width: min(70%, 480px);
+  max-width: calc(100% - 32px);
+}
+
+/* Override floating-nav-btn positioning when inside container */
+.add-shift-floating-nav .floating-nav-btn {
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+}
+
 /* Map former #settingsModal scoped styles to route containers */
 .settings-detail .tab-content { padding: 0; }
 .settings-detail .form-group { margin-bottom: var(--space-3); }
@@ -475,6 +507,44 @@
     max-width: 600px;
     margin: 0 auto;
   }
+  
+  /* Constrain add-shift route to same max width as other content */
+  #addShiftPage {
+    max-width: 600px;
+    margin: 0 auto;
+    /* Add bottom padding to prevent content being covered by floating nav */
+    padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+    min-height: 100svh;
+  }
+}
+
+/* Hide employee dropdowns initially in add-shift page to prevent flash */
+#addShiftPage #employeeSelect,
+#addShiftPage #recurringEmployeeSelect {
+  display: none !important;
+}
+
+#addShiftPage #employeeSelect + .form-group,
+#addShiftPage #recurringEmployeeSelect + .form-group,
+#addShiftPage .form-group:has(#employeeSelect),
+#addShiftPage .form-group:has(#recurringEmployeeSelect) {
+  display: none !important;
+}
+
+/* Date grid skeleton for smooth loading */
+.date-grid-skeleton {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  padding: 16px;
+}
+
+.skeleton-date-cell {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  opacity: 0.6;
+}
   
   .detail-body {
     padding: var(--space-4);

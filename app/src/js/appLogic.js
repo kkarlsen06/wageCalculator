@@ -1051,14 +1051,15 @@ export const app = {
     // Update the selected dates info display
     updateSelectedDatesInfo() {
         const infoElement = document.getElementById('selectedDatesInfo');
-        const countElement = document.getElementById('selectedDatesCount');
+        const textElement = document.getElementById('selectedDatesText');
 
-        if (!infoElement || !countElement) return;
+        if (!infoElement || !textElement) return;
 
         const count = this.selectedDates ? this.selectedDates.length : 0;
 
         if (count > 0) {
-            countElement.textContent = count;
+            const dateWord = count === 1 ? 'dato' : 'datoer';
+            textElement.textContent = `${count} ${dateWord} valgt`;
             infoElement.style.display = 'block';
         } else {
             infoElement.style.display = 'none';

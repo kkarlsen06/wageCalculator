@@ -4306,6 +4306,39 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
   margin-bottom: 0; /* No extra spacing - handled by form-group */
 }
 
+/* Time form rows with colon separator */
+.time-section .form-row {
+  grid-template-columns: 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Time section container */
+.time-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Separator line between from and to time inputs */
+.time-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 0 8px;
+  border-radius: 1px;
+}
+
+/* Time colon separator between hour and minute */
+.time-colon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 20px;
+}
+
 .form-control {
   background: var(--bg-tertiary);
   backdrop-filter: blur(10px);
@@ -15454,6 +15487,13 @@ body.chatbox-view .chatbox-container {
   .form-row {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+  
+  /* Keep time inputs side-by-side even on mobile with colon */
+  .time-section .form-row {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: center;
   }
   
   .date-selector-group {

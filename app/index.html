@@ -7,12 +7,12 @@
   <!-- Google Fonts - Inter for modern, professional typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Preconnect to Supabase and API for faster auth/API handshakes -->
+  <!-- External preconnects disabled for local development
   <link rel="preconnect" href="https://id.kkarlsen.dev" crossorigin>
-  <link rel="dns-prefetch" href="https://server.kkarlsen.dev">
+  <link rel="dns-prefetch" href="https://server.kkarlsen.dev"> -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="src/css/themes.css?v=1">
-  <link rel="stylesheet" href="src/css/style.css?v=1">
+  <link rel="stylesheet" href="src/css/themes.css">
+  <link rel="stylesheet" href="src/css/style.css">
   <link rel="stylesheet" href="src/css/chat.css">
   <link rel="stylesheet" href="src/css/settings.css">
   <!-- Route/feature CSS is now code-split and loaded on demand -->
@@ -1167,7 +1167,7 @@
                           <div class="form-group">
                               <div class="date-grid" id="dateGrid"></div>
                               <div class="selected-dates-info" id="selectedDatesInfo" style="display: none;">
-                                  <span id="selectedDatesCount">0</span> datoer valgt
+                                  <span id="selectedDatesText"></span>
                               </div>
                           </div>
 
