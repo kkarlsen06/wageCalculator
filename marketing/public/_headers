@@ -1,5 +1,7 @@
 /
   Cache-Control: public, max-age=0, must-revalidate
+  Content-Security-Policy: script-src 'self' 'nonce-abc123' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com;
 
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
+  Content-Security-Policy: script-src 'self' 'nonce-abc123' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com;
