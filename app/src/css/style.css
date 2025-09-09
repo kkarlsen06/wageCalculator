@@ -5616,10 +5616,11 @@ input[type="time"].form-control[value=""]:focus {
 .current-date-separator-line {
   position: absolute;
   left: 64px; /* Start line after the date number (18px + ~46px for number width + padding) */
-  right: 0;
+  right: 20px; /* End where week total text ends */
   height: 2px;
   background: linear-gradient(90deg, 
-    var(--current-date) 0%, 
+    transparent 0%,
+    var(--current-date) 10%, 
     var(--current-date) 90%, 
     transparent 100%);
   border-radius: 2px;
@@ -5636,7 +5637,8 @@ input[type="time"].form-control[value=""]:focus {
   right: 0;
   bottom: -6px;
   background: linear-gradient(90deg, 
-    var(--current-date-glow) 0%, 
+    transparent 0%,
+    var(--current-date-glow) 10%, 
     var(--current-date-glow) 90%, 
     transparent 100%);
   filter: blur(8px);
@@ -7504,9 +7506,9 @@ input:checked + .slider:before {
 .week-separator::after {
   content: '';
   position: absolute;
-  left: 68px; /* Position after the week number */
+  left: 80px; /* More space after the week number */
   top: 50%;
-  right: 20px; /* Extend to right edge with padding */
+  right: 80px; /* More space before the week total */
   height: 1px;
   background: linear-gradient(90deg, 
     var(--border) 0%, 
@@ -7813,8 +7815,8 @@ input:checked + .slider:before {
   }
 
   .week-separator::after {
-    left: 58px; /* Adjust for smaller week number on mobile */
-    right: 10px; /* Smaller right padding on mobile */
+    left: 75px; /* More space after week number on mobile */
+    right: 75px; /* More space before week total on mobile */
   }
 
   .shift-calendar .calendar-header,
@@ -7823,8 +7825,8 @@ input:checked + .slider:before {
   }
 
   .week-separator::before {
-    left: 70px;
-    right: 10px;
+    left: 85px;
+    right: 85px;
     background: linear-gradient(
       to right,
       var(--border) 0%,
@@ -7904,8 +7906,8 @@ input:checked + .slider:before {
   }
 
   .week-separator::before {
-    left: 65px;
-    right: 10px;
+    left: 80px;
+    right: 80px;
     background: linear-gradient(
       to right,
       var(--border) 0%,
@@ -7979,8 +7981,8 @@ input:checked + .slider:before {
   }
 
   .week-separator::before {
-    left: 60px;
-    right: 10px;
+    left: 75px;
+    right: 75px;
     background: linear-gradient(
       to right,
       var(--border) 0%,
@@ -18318,6 +18320,18 @@ html, body {
   min-height: 100dvh !important;
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
+}
+
+/* Fix week separator line length - make it narrower with symmetrical feathered ends */
+#shiftList > div::after {
+  left: 110px !important;
+  right: 110px !important;
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    var(--border) 20%, 
+    var(--border) 80%, 
+    transparent 100%
+  ) !important;
 }
 
 
