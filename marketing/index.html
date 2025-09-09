@@ -30,6 +30,25 @@
   <meta name="twitter:title" content="Lønnskalkulator for Norge – riktig lønn hver måned" />
   <meta name="twitter:description" content="Beregn lønn, overtid, tillegg og pauser på sekunder. Gratis å starte. Ingen Excel. Riktig fasit hver måned." />
   <meta name="twitter:image" content="https://www.kkarlsen.dev/og/landing.png" />
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "kkarlsen.DEV",
+    "url": "https://www.kkarlsen.dev/",
+    "email": "kkarlsen06@kkarlsen.dev",
+    "logo": "https://kalkulator.kkarlsen.dev/icons/kkarlsen_ikon_clean.png",
+    "sameAs": ["https://github.com/kkarlsen06"]
+  }</script>
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Lønnskalkulator",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": "https://kalkulator.kkarlsen.dev/",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "NOK" },
+    "description": "Beregn lønn, overtid, tillegg og pauser på sekunder. Gratis å starte. Ingen Excel. Riktig fasit hver måned."
+  }</script>
   <style>
   /* Enhanced FAQ design with modern UI principles */
   #faq { 
@@ -246,13 +265,7 @@
     }
   }
   </style>
-  <script type="application/ld+json">{
-    "@context":"https://schema.org",
-    "@type":"WebSite",
-    "name":"Lønnskalkulator",
-    "url":"https://www.kkarlsen.dev/",
-    "inLanguage":"nb-NO"
-  }</script>
+  
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -587,69 +600,18 @@
     <h2>Se hvor enkelt det er</h2>
     <img src="/assets/demo.gif" alt="Demo av lønnskalkulatoren" loading="lazy" />
   </section>
-
+ 
   <script type="application/ld+json">{
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Hvordan håndteres pauser og pausetrekk?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Vi regner ut lønna di smart! Hvis du jobber over 5,5 timer, trekker vi automatisk 30 minutter for pause, akkurat som de fleste arbeidsgivere gjør. Du kan også legge inn dine egne pauser manuelt. Jobber du nattskift eller lange vakter? Ingen problem! Kalkulatoren takler alt fra vanlige arbeidsdager til skift som går over midnatt. Du kan også justere pausereglene i innstillingene hvis arbeidsplassen din har andre regler."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Hvordan fungerer overtid og tillegg?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Du forteller oss hvilke tillegg du har rett på, så regner vi ut alt automatisk! Har du kveldstillegg fra 18:00? Helgetillegg på lørdager og søndager? Bare sett opp reglene én gang i innstillingene. Når du registrerer en vakt, ser kalkulatoren på tidspunktet og dagen, og legger til riktige tillegg oppå grunnlønna di. Enkelt og greit – ingen Excel-formler å tenke på!"
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Hvor lagres dataene mine?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Trygt og smart! Alle innstillingene dine (som timelønn og pauseregler) lagres lokalt på telefonen eller PC-en din, så appen starter lynraskt hver gang. Når du logger inn, synkroniserer vi også vaktene og innstillingene dine til skyen. Da kan du bytte mellom telefon og PC, og alt er tilgjengelig overalt. Ingen data forsvinner!"
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Kan jeg laste ned lønnsrapporter?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Absolutt! Du kan laste ned alle vaktene dine som en Excel-fil (CSV) når som helst. Perfekt når du skal levere timelistene til arbeidsgiveren eller bare vil ha oversikt over måneden. Rapporten viser alle detaljene: arbeidstimer, pauser, tillegg og totallønn for hver vakt. Med gratisversjonen kan du ha vakter for én måned – sletter du gamle måneder, kan du fortsette gratis så lenge du vil!"
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Hva koster det? Er det gratis?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ja, det er helt gratis å starte! Du kan bruke kalkulatoren så mye du vil, men du har kun plass til vakter for én måned om gangen. Det holder for de fleste. Trenger du mer? Vi har Pro-abonnementet som gir deg ubegrenset antall måneder. I tillegg har vi et Enterprise-abonnement for bedrifter som vil administrere flere ansatte og få avanserte rapporter. Du kan oppgradere direkte fra appen når du trenger det."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Kan jeg bruke den på mobil som en app?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ja! Du kan installere kalkulatoren som en ekte app på telefonen din. Bare besøk nettsiden i Safari eller Chrome, så får du tilbud om å \"legge til på hjemskjerm\". Den fungerer som en vanlig app da – med eget ikon og alt. Du trenger internett for å synke data, men de fleste funksjonene virker selv om nettet er tregt."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Er dataene mine trygge?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Selvfølgelig! Vi er supernøye med personvern. Dataene dine (som vakter og timelønn) sendes bare til serveren når du velger å logge inn – aldri ellers. Alt er kryptert og beskyttet, akkurat som nettbank. Vi lagrer bare det som trengs for at kalkulatoren skal virke: vaktene dine, innstillingene og profilbildet. Ingenting mer!"
-        }
-      }
+    "@type": "HowTo",
+    "name": "Se hvor enkelt det er",
+    "step": [
+      { "@type": "HowToStep", "name": "Se demo (30 sek)" },
+      { "@type": "HowToStep", "name": "Se hvor enkelt det er" },
+      { "@type": "HowToStep", "name": "Demo av lønnskalkulatoren" }
     ]
   }</script>
+
 
   <section id="faq" aria-labelledby="faq-heading">
     <div class="faq-wrap">
@@ -726,6 +688,69 @@
   </section>
 
   
+
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Hvordan håndteres pauser og pausetrekk?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Vi regner ut lønna di smart! Hvis du jobber over 5,5 timer, trekker vi automatisk 30 minutter for pause, akkurat som de fleste arbeidsgivere gjør. Du kan også legge inn dine egne pauser manuelt. Jobber du nattskift eller lange vakter? Ingen problem! Kalkulatoren takler alt fra vanlige arbeidsdager til skift som går over midnatt. Du kan også justere pausereglene i innstillingene hvis arbeidsplassen din har andre regler."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Hvordan fungerer overtid og tillegg?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Du forteller oss hvilke tillegg du har rett på, så regner vi ut alt automatisk! Har du kveldstillegg fra 18:00? Helgetillegg på lørdager og søndager? Bare sett opp reglene én gang i innstillingene. Når du registrerer en vakt, ser kalkulatoren på tidspunktet og dagen, og legger til riktige tillegg oppå grunnlønna di. Enkelt og greit – ingen Excel-formler å tenke på!"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Hvor lagres dataene mine?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Trygt og smart! Alle innstillingene dine (som timelønn og pauseregler) lagres lokalt på telefonen eller PC-en din, så appen starter lynraskt hver gang. Når du logger inn, synkroniserer vi også vaktene og innstillingene dine til skyen. Da kan du bytte mellom telefon og PC, og alt er tilgjengelig overalt. Ingen data forsvinner!"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kan jeg laste ned lønnsrapporter?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Absolutt! Du kan laste ned alle vaktene dine som en Excel-fil (CSV) når som helst. Perfekt når du skal levere timelistene til arbeidsgiveren eller bare vil ha oversikt over måneden. Rapporten viser alle detaljene: arbeidstimer, pauser, tillegg og totallønn for hver vakt. Med gratisversjonen kan du ha vakter for én måned – sletter du gamle måneder, kan du fortsette gratis så lenge du vil!"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Hva koster det? Er det gratis?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, det er helt gratis å starte! Du kan bruke kalkulatoren så mye du vil, men du har kun plass til vakter for én måned om gangen. Det holder for de fleste. Trenger du mer? Vi har Pro-abonnementet som gir deg ubegrenset antall måneder. I tillegg har vi et Enterprise-abonnement for bedrifter som vil administrere flere ansatte og få avanserte rapporter. Du kan oppgradere direkte fra appen når du trenger det."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kan jeg bruke den på mobil som en app?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja! Du kan installere kalkulatoren som en ekte app på telefonen din. Bare besøk nettsiden i Safari eller Chrome, så får du tilbud om å \"legge til på hjemskjerm\". Den fungerer som en vanlig app da – med eget ikon og alt. Du trenger internett for å synke data, men de fleste funksjonene virker selv om nettet er tregt."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Er dataene mine trygge?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Selvfølgelig! Vi er supernøye med personvern. Dataene dine (som vakter og timelønn) sendes bare til serveren når du velger å logge inn – aldri ellers. Alt er kryptert og beskyttet, akkurat som nettbank. Vi lagrer bare det som trengs for at kalkulatoren skal virke: vaktene dine, innstillingene og profilbildet. Ingenting mer!"
+        }
+      }
+    ]
+  }</script>
 
   <footer class="footer">
     <div class="footer-content">
