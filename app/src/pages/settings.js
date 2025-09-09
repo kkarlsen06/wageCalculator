@@ -1008,7 +1008,6 @@ export function afterMountSettings() {
       window.app.setupCollapsibleEventListeners?.();
     } else if (section === 'wage-advanced' && window.app) {
       // Initialize Tillegg UI: render rows, wire add/edit/remove, validation and auto-save
-      const TYPE_LABELS = { weekday: 'Ukedag', saturday: 'Lørdag', sunday: 'Søndag' };
 
       const timeToMinutes = (t) => {
         if (!t || typeof t !== 'string') return null;
@@ -1125,7 +1124,6 @@ export function afterMountSettings() {
             const slot = readSlot();
             const fromMin = timeToMinutes(slot.from);
             const toMin = timeToMinutes(slot.to);
-            const rateOk = typeof slot.rate === 'number' && !Number.isNaN(slot.rate) && slot.rate > 0;
             let errorMsg = '';
             if (slot.from && slot.to && (fromMin === null || toMin === null || fromMin >= toMin)) errorMsg = 'Ugyldig tidsrom';
             if (slot.from && slot.to && !errorMsg) {

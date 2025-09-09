@@ -545,18 +545,17 @@
   background: var(--bg-secondary);
   opacity: 0.6;
 }
-  
-  .detail-body {
-    padding: var(--space-4);
-  }
-  
-  .settings-detail .form-group {
-    margin-bottom: var(--space-4);
-  }
-  
-  .settings-detail .switch-group {
-    gap: var(--space-3);
-  }
+
+.detail-body {
+  padding: var(--space-4);
+}
+
+.settings-detail .form-group {
+  margin-bottom: var(--space-4);
+}
+
+.settings-detail .switch-group {
+  gap: var(--space-3);
 }
 
 @media (max-width: 600px) {
