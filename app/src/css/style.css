@@ -5614,19 +5614,17 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .current-date-separator-line {
-  flex: 1;
+  position: absolute;
+  left: 64px; /* Start line after the date number (18px + ~46px for number width + padding) */
+  right: 0;
   height: 2px;
   background: linear-gradient(90deg, 
-    transparent 0%, 
-    var(--current-date) 10%, 
-    var(--current-date) 35%, 
-    transparent 45%, 
-    transparent 55%, 
-    var(--current-date) 65%, 
+    var(--current-date) 0%, 
     var(--current-date) 90%, 
     transparent 100%);
   border-radius: 2px;
-  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
   overflow: hidden;
 }
 
@@ -5638,12 +5636,7 @@ input[type="time"].form-control[value=""]:focus {
   right: 0;
   bottom: -6px;
   background: linear-gradient(90deg, 
-    transparent 0%, 
-    var(--current-date-glow) 10%, 
-    var(--current-date-glow) 25%, 
-    transparent 40%, 
-    transparent 60%, 
-    var(--current-date-glow) 75%, 
+    var(--current-date-glow) 0%, 
     var(--current-date-glow) 90%, 
     transparent 100%);
   filter: blur(8px);
@@ -5667,9 +5660,9 @@ input[type="time"].form-control[value=""]:focus {
 
 .current-date-separator-date {
   position: absolute;
-  left: 50%;
+  left: 18px; /* Align with shift card date numbers: match shift card padding */
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
   background: var(--background);
   padding: 2px 12px;
   font-size: 14px;

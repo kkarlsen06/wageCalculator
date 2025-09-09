@@ -5219,6 +5219,9 @@ export const app = {
             `;
         };
 
+        // Track if current date separator has been added to prevent duplicates
+        let currentDateSeparatorAdded = false;
+
         weekEntries.forEach(({ weekNumber, shifts: weekShifts }) => {
 
             // Calculate weekly wage total
@@ -5251,7 +5254,7 @@ export const app = {
             `);
 
             // Check if current date separator should be shown at the top of this week
-            if (todayInCurrentMonth && parseInt(weekNumber) === todayWeekNumber && !weekShifts.some(shift => 
+            if (todayInCurrentMonth && parseInt(weekNumber) === todayWeekNumber && !currentDateSeparatorAdded && !weekShifts.some(shift => 
                 shift.date.getDate() === today.getDate() && 
                 shift.date.getMonth() === today.getMonth() && 
                 shift.date.getFullYear() === today.getFullYear()
@@ -5260,6 +5263,7 @@ export const app = {
                 const weekShiftDates = weekShifts.map(shift => shift.date.getTime()).sort((a, b) => a - b);
                 if (today.getTime() < weekShiftDates[0]) {
                     shiftsHtml.push(createCurrentDateSeparator());
+                    currentDateSeparatorAdded = true;
                 }
             }
 
@@ -5269,7 +5273,7 @@ export const app = {
             // Add shifts for this week, checking for current date separator placement
             sortedWeekShifts.forEach((shift, shiftIndex) => {
                 // Check if current date separator should be inserted before this shift
-                if (todayInCurrentMonth && parseInt(weekNumber) === todayWeekNumber) {
+                if (todayInCurrentMonth && parseInt(weekNumber) === todayWeekNumber && !currentDateSeparatorAdded) {
                     const nextShift = sortedWeekShifts[shiftIndex];
                     const prevShift = sortedWeekShifts[shiftIndex - 1];
                     
@@ -5284,6 +5288,7 @@ export const app = {
                                                    s.date.getMonth() === today.getMonth() && 
                                                    s.date.getFullYear() === today.getFullYear())) {
                         shiftsHtml.push(createCurrentDateSeparator());
+                        currentDateSeparatorAdded = true;
                     }
                 }
 
@@ -5350,7 +5355,7 @@ export const app = {
             });
 
             // Check if current date separator should be shown at the end of this week
-            if (todayInCurrentMonth && parseInt(weekNumber) === todayWeekNumber) {
+            if (todayInCurrentMonth && parseInt(weekNumber) === todayWeekNumber && !currentDateSeparatorAdded) {
                 const lastShiftTime = Math.max(...sortedWeekShifts.map(shift => shift.date.getTime()));
                 const todayTime = today.getTime();
                 
@@ -5361,12 +5366,13 @@ export const app = {
                     shift.date.getFullYear() === today.getFullYear()
                 )) {
                     shiftsHtml.push(createCurrentDateSeparator());
+                    currentDateSeparatorAdded = true;
                 }
             }
         });
 
         // Handle case where today is in a week with no shifts
-        if (todayInCurrentMonth && !weekEntries.some(e => parseInt(e.weekNumber) === todayWeekNumber)) {
+        if (todayInCurrentMonth && !currentDateSeparatorAdded && !weekEntries.some(e => parseInt(e.weekNumber) === todayWeekNumber)) {
             // Compute insertion point by chronological order vs groups' first dates
             const todayTime = today.getTime();
             let insertIndex = weekEntries.findIndex(e => todayTime < e.firstTime);
@@ -5404,6 +5410,7 @@ export const app = {
                 }
             }
             shiftsHtml.splice(insertionPoint, 0, separatorHtml);
+            currentDateSeparatorAdded = true;
         }
 
         shiftList.innerHTML = shiftsHtml.join('');
