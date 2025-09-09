@@ -28,6 +28,7 @@ export default defineConfig({
     }
   },
   build: {
+    sourcemap: false, // Disable source maps in production to prevent 403 errors
     rollupOptions: {
       input: resolve('index.html')
     }
