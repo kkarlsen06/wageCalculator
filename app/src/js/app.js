@@ -16,7 +16,7 @@ const STREAM_API_BASE = (typeof window !== 'undefined' && window.CONFIG?.apiStre
 // app-ready/animations-complete logic below.
 
 import { supabase } from '/src/supabase-client.js'
-import wsManager from '/src/lib/net/websocketManager.js';
+import { realtimeClient, useRealtimeChannel } from '/src/realtime/client.js';
 // Create a local alias for consistency with other modules and expose globally later
 const supa = supabase;
 
@@ -1501,6 +1501,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     isExpanded = false;
     hasFirstMessage = false;
 
+    // Cleanup WebSocket subscription when chat is collapsed
+    cleanupChatSubscription();
+
     // Restore normal dashboard view
     restoreNormalDashboardView();
 
@@ -2215,7 +2218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Try WebSocket first, then fall back to SSE
     let useWebSocket = false;
-    if (wsManager.isReady() || await tryConnectWebSocket(token)) {
+    if (realtimeClient.isReady() || await realtimeClient.connect()) {
       useWebSocket = true;
     }
 
@@ -2248,40 +2251,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  async function tryConnectWebSocket(token) {
-    try {
-      console.log('[WS] Attempting to connect...');
-      const connected = await wsManager.connect(token);
-      
-      if (connected) {
-        // Setup WebSocket event handlers
-        wsManager.onMessage = handleWebSocketMessage;
-        wsManager.onError = (error) => {
-          console.error('[WS] Connection error:', error);
-        };
-        wsManager.onConnectionChange = (newState, oldState) => {
-          console.log(`[WS] Connection state: ${oldState} -> ${newState}`);
-          // Update connection indicator if available
-          updateConnectionStatus(newState);
-        };
-      }
-      
-      return connected;
-    } catch (error) {
-      console.error('[WS] Connection attempt failed:', error);
-      return false;
+  // Subscribe to chat channel when needed
+  let chatUnsubscribe = null;
+  
+  function ensureChatSubscription() {
+    if (!chatUnsubscribe) {
+      console.log('[LazyWS] Subscribing to chat channel');
+      chatUnsubscribe = useRealtimeChannel('chat', {}, handleWebSocketMessage);
+    }
+  }
+  
+  function cleanupChatSubscription() {
+    if (chatUnsubscribe) {
+      console.log('[LazyWS] Unsubscribing from chat channel');
+      chatUnsubscribe();
+      chatUnsubscribe = null;
     }
   }
 
   async function sendMessageViaWebSocket(messageText, spinner, token) {
-    console.log('[WS] Sending message via WebSocket');
+    console.log('[LazyWS] Sending message via WebSocket');
+    
+    // Ensure we're subscribed to the chat channel
+    ensureChatSubscription();
     
     return new Promise((resolve, reject) => {
       let isResolved = false;
       let finalData = null;
       
-      const originalOnMessage = wsManager.onMessage;
-      wsManager.onMessage = (message) => {
+      // Create a temporary message handler for this request
+      const tempMessageHandler = (message) => {
         try {
           // Render progress events inline in chat with strict ordering by ts
           if (message && message.type === 'progress') {
@@ -2299,7 +2298,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (message.type === 'complete') {
             finalData = message;
             isResolved = true;
-            wsManager.onMessage = originalOnMessage; // Restore original handler
             handleChatSuccess(finalData, spinner);
             resolve();
           } else {
@@ -2311,30 +2309,50 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
           }
         } catch (error) {
-          console.error('[WS] Message handling error:', error);
+          console.error('[LazyWS] Message handling error:', error);
           if (!isResolved) {
             isResolved = true;
-            wsManager.onMessage = originalOnMessage;
             reject(error);
           }
         }
       };
       
+      // Subscribe to messages temporarily for this request
+      const tempUnsubscribe = useRealtimeChannel('chat', {}, tempMessageHandler);
+      
       // Set timeout for WebSocket response
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         if (!isResolved) {
           isResolved = true;
-          wsManager.onMessage = originalOnMessage;
+          tempUnsubscribe();
           reject(new Error('WebSocket request timeout'));
         }
       }, 120000); // 2 minutes timeout
       
+      // Clean up when resolved
+      const cleanup = () => {
+        clearTimeout(timeoutId);
+        tempUnsubscribe();
+      };
+      
       // Send the message
-      wsManager.sendChatMessage(
-        chatMessages,
-        window.app?.currentMonth || new Date().getMonth() + 1,
-        window.app?.currentYear || new Date().getFullYear()
-      );
+      try {
+        realtimeClient.send('chat', {
+          type: 'chat',
+          messages: chatMessages,
+          currentMonth: window.app?.currentMonth || new Date().getMonth() + 1,
+          currentYear: window.app?.currentYear || new Date().getFullYear()
+        });
+      } catch (error) {
+        cleanup();
+        reject(error);
+      }
+      
+      // Ensure cleanup happens
+      const originalResolve = resolve;
+      const originalReject = reject;
+      resolve = (...args) => { cleanup(); originalResolve(...args); };
+      reject = (...args) => { cleanup(); originalReject(...args); };
     });
   }
 
@@ -2506,17 +2524,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     let statusText = '';
     switch (state) {
-      case wsManager.STATES.CONNECTING:
+      case 'connecting':
         statusElement.classList.add('connecting');
         statusText = 'Connecting...';
         statusElement.style.display = 'flex';
         break;
-      case wsManager.STATES.CONNECTED:
+      case 'connected':
         statusElement.classList.add('connected');
         statusText = 'Connected';
         statusElement.style.display = 'flex';
         break;
-      case wsManager.STATES.AUTHENTICATED:
+      case 'authenticated':
         statusElement.classList.add('authenticated');
         statusText = 'WebSocket Ready';
         statusElement.style.display = 'flex';
@@ -2527,7 +2545,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }, 2000);
         break;
-      case wsManager.STATES.ERROR:
+      case 'error':
         statusElement.classList.add('error');
         statusText = 'Connection Error';
         statusElement.style.display = 'flex';
@@ -2538,7 +2556,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }, 5000);
         break;
-      case wsManager.STATES.DISCONNECTED:
+      case 'disconnected':
       default:
         statusElement.classList.add('disconnected');
         statusText = 'Using HTTP';
