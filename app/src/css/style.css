@@ -18297,24 +18297,25 @@ body.chatbox-view .chatbox-container {
 
 /* Override global body padding reset for iOS safe area support */
 body {
-  padding-top: max(0px, env(safe-area-inset-top, 0)) !important;
-  padding-left: max(0px, env(safe-area-inset-left, 0)) !important;
-  padding-right: max(0px, env(safe-area-inset-right, 0)) !important;
-  padding-bottom: max(0px, env(safe-area-inset-bottom, 0)) !important;
+  padding-top: env(safe-area-inset-top, 0) !important;
+  padding-left: env(safe-area-inset-left, 0) !important;
+  padding-right: env(safe-area-inset-right, 0) !important;
+  padding-bottom: env(safe-area-inset-bottom, 0) !important;
 }
 
-/* App container - respect safe areas */
+/* App container - no additional safe area since body handles it */
 #app {
-  /* Additional safe area handling for content */
-  min-height: calc(100vh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
-  min-height: calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+  /* Body already handles safe areas, so just ensure proper height */
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-/* Main content sections should respect top safe area */
+/* Header sections - no additional safe area padding needed since body handles it */
 .header, 
 .header-top,
 .app-container > .header {
-  padding-top: max(20px, env(safe-area-inset-top, 0));
+  /* Original padding without safe area - body already provides safe area spacing */
+  padding-top: 20px;
 }
 
 /* Navigation and buttons should respect bottom safe area */
@@ -18357,40 +18358,35 @@ body {
 
 /* Media query for devices with safe areas (notch/dynamic island) */
 @supports (padding: max(0px, env(safe-area-inset-top))) {
-  /* Additional safe area optimizations for supported devices */
+  /* Safe area optimizations - body handles the main safe area spacing */
   
-  /* Snap container - ensure it respects safe areas */
+  /* Snap container - standard height since body provides safe area spacing */
   .snap-container {
     height: 100vh !important;
     height: 100dvh !important;
-    /* Allow content to flow under system UI, but ensure child elements respect safe areas */
   }
   
-  /* Dashboard section - ensure content doesn't hide behind status bar */
-  .dashboard-section {
-    padding-top: max(20px, calc(20px + env(safe-area-inset-top, 0)));
-  }
-  
-  /* Statistics and shift sections */
+  /* Sections use standard padding since body provides safe area spacing */
+  .dashboard-section,
   .statistics-section,
   .shift-section {
-    padding-top: max(20px, env(safe-area-inset-top, 0));
+    padding-top: 20px;
   }
 }
 
 /* Special handling for landscape orientation */
 @media screen and (orientation: landscape) and (max-height: 500px) {
-  /* In landscape, side safe areas become more important */
+  /* In landscape, body handles safe areas, so we just adjust regular spacing */
   .app-container,
   .content {
-    padding-left: max(20px, env(safe-area-inset-left, 0));
-    padding-right: max(20px, env(safe-area-inset-right, 0));
+    padding-left: 20px;
+    padding-right: 20px;
   }
   
   /* Reduce top padding in landscape to maximize content area */
   .header,
   .dashboard-section {
-    padding-top: max(10px, env(safe-area-inset-top, 0));
+    padding-top: 10px;
   }
 }
 
