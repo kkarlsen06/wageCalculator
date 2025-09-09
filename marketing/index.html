@@ -28,6 +28,222 @@
   <meta name="twitter:title" content="Lønnskalkulator for Norge – riktig lønn hver måned" />
   <meta name="twitter:description" content="Beregn lønn, overtid, tillegg og pauser på sekunder. Gratis å starte. Ingen Excel. Riktig fasit hver måned." />
   <meta name="twitter:image" content="https://www.kkarlsen.dev/og/landing.png" />
+  <style>
+  /* Enhanced FAQ design with modern UI principles */
+  #faq { 
+    margin: 6rem 0 4rem; 
+    padding: clamp(32px, 8vh, 64px) clamp(16px, 5vw, 24px); 
+    background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008));
+    border-radius: 24px;
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Subtle gradient overlay for depth */
+  #faq::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+  
+  #faq .faq-wrap { 
+    max-width: 880px; 
+    margin: 0 auto; 
+    position: relative; 
+    z-index: 1; 
+  }
+  
+  #faq h2 { 
+    margin: 0 0 3rem; 
+    line-height: 1.2;
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    letter-spacing: -0.02em;
+  }
+  
+  #faq h2::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 2px;
+    margin: 16px auto 0;
+    border-radius: 4px;
+    background: var(--gradient-primary);
+    opacity: 0.6;
+  }
+  
+  #faq details { 
+    margin-bottom: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    backdrop-filter: blur(10px);
+  }
+  
+  #faq details:hover {
+    border-color: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  
+  #faq details[open] {
+    border-color: var(--primary);
+    background: rgba(255,255,255,0.06);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.15);
+  }
+  
+  #faq summary { 
+    cursor: pointer; 
+    font-weight: 600;
+    padding: 24px 28px;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  #faq summary:hover {
+    color: var(--primary);
+  }
+  
+  #faq summary::-webkit-details-marker { 
+    display: none; 
+  }
+  
+  /* Custom chevron icon */
+  #faq summary::after {
+    content: '';
+    width: 24px;
+    height: 24px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    opacity: 0.7;
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+  
+  #faq details[open] summary::after {
+    transform: rotate(180deg);
+    opacity: 1;
+  }
+  
+  #faq details > div { 
+    padding: 0 28px 28px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Final CTA styling */
+  #faq p:last-of-type {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+  }
+  
+  #faq p:last-of-type a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  
+  #faq p:last-of-type a:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+  }
+  
+  /* Dark mode enhancements */
+  @media (prefers-color-scheme: dark) { 
+    #faq details { 
+      background: rgba(255,255,255,0.02);
+      border-color: rgba(255,255,255,0.06); 
+    }
+    
+    #faq details:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.1);
+    }
+    
+    #faq details[open] {
+      background: rgba(255,255,255,0.05);
+    }
+  }
+  
+  /* Mobile responsive design */
+  @media (max-width: 768px) {
+    #faq {
+      margin: 4rem 0 2rem;
+      padding: clamp(24px, 6vh, 48px) clamp(16px, 4vw, 20px);
+      border-radius: 20px;
+    }
+    
+    #faq h2 {
+      margin-bottom: 2rem;
+      font-size: clamp(1.5rem, 5vw, 2rem);
+    }
+    
+    #faq details {
+      margin-bottom: 12px;
+      border-radius: 12px;
+    }
+    
+    #faq summary {
+      padding: 20px 22px;
+      font-size: 1rem;
+    }
+    
+    #faq summary::after {
+      width: 20px;
+      height: 20px;
+      margin-left: 12px;
+    }
+    
+    #faq details > div {
+      padding: 0 22px 22px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    
+    #faq p:last-of-type {
+      margin-top: 2rem;
+      padding: 20px;
+      font-size: 1rem;
+    }
+  }
+  </style>
   <script type="application/ld+json">{
     "@context":"https://schema.org",
     "@type":"WebSite",
@@ -369,6 +585,145 @@
     <h2>Se hvor enkelt det er</h2>
     <img src="/assets/demo.gif" alt="Demo av lønnskalkulatoren" loading="lazy" />
   </section>
+
+  <section id="faq" aria-labelledby="faq-heading">
+    <div class="faq-wrap">
+      <h2 id="faq-heading">Vanlige spørsmål</h2>
+
+      <details>
+        <summary>Hvordan håndteres pauser og pausetrekk?</summary>
+        <div>
+          Vi regner ut lønna di smart! Hvis du jobber over 5,5 timer, trekker vi automatisk 30 minutter for pause, akkurat som de fleste arbeidsgivere gjør. Du kan også legge inn dine egne pauser manuelt. 
+          
+          Jobber du nattskift eller lange vakter? Ingen problem! Kalkulatoren takler alt fra vanlige arbeidsdager til skift som går over midnatt. Du kan også justere pausereglene i innstillingene hvis arbeidsplassen din har andre regler.
+        </div>
+      </details>
+
+      <details>
+        <summary>Hvordan fungerer overtid og tillegg?</summary>
+        <div>
+          Du forteller oss hvilke tillegg du har rett på, så regner vi ut alt automatisk! Har du kveldstillegg fra 18:00? Helgetillegg på lørdager og søndager? Bare sett opp reglene én gang i innstillingene.
+          
+          Når du registrerer en vakt, ser kalkulatoren på tidspunktet og dagen, og legger til riktige tillegg oppå grunnlønna di. Enkelt og greit – ingen Excel-formler å tenke på!
+        </div>
+      </details>
+
+      <details>
+        <summary>Hvor lagres dataene mine?</summary>
+        <div>
+          Trygt og smart! Alle innstillingene dine (som timelønn og pauseregler) lagres lokalt på telefonen eller PC-en din, så appen starter lynraskt hver gang.
+          
+          Når du logger inn, synkroniserer vi også vaktene og innstillingene dine til skyen. Da kan du bytte mellom telefon og PC, og alt er tilgjengelig overalt. Ingen data forsvinner!
+        </div>
+      </details>
+
+      <details>
+        <summary>Kan jeg laste ned lønnsrapporter?</summary>
+        <div>
+          Absolutt! Du kan laste ned alle vaktene dine som en Excel-fil (CSV) når som helst. Perfekt når du skal levere timelistene til arbeidsgiveren eller bare vil ha oversikt over måneden.
+          
+          Rapporten viser alle detaljene: arbeidstimer, pauser, tillegg og totallønn for hver vakt. Med gratisversjonen kan du ha vakter for én måned – sletter du gamle måneder, kan du fortsette gratis så lenge du vil!
+        </div>
+      </details>
+
+      <details>
+        <summary>Hva koster det? Er det gratis?</summary>
+        <div>
+          Ja, det er helt gratis å starte! Du kan bruke kalkulatoren så mye du vil, men du har kun plass til vakter for én måned om gangen. Det holder for de fleste.
+          
+          Trenger du mer? Vi har Pro-abonnementet som gir deg ubegrenset antall måneder. I tillegg har vi et Enterprise-abonnement for bedrifter som vil administrere flere ansatte og få avanserte rapporter. Du kan oppgradere direkte fra appen når du trenger det.
+        </div>
+      </details>
+
+      <details>
+        <summary>Kan jeg bruke den på mobil som en app?</summary>
+        <div>
+          Ja! Du kan installere kalkulatoren som en ekte app på telefonen din. Bare besøk nettsiden i Safari eller Chrome, så får du tilbud om å "legge til på hjemskjerm".
+          
+          Den fungerer som en vanlig app da – med eget ikon og alt. Du trenger internett for å synke data, men de fleste funksjonene virker selv om nettet er tregt.
+        </div>
+      </details>
+
+      <details>
+        <summary>Er dataene mine trygge?</summary>
+        <div>
+          Selvfølgelig! Vi er supernøye med personvern. Dataene dine (som vakter og timelønn) sendes bare til serveren når du velger å logge inn – aldri ellers.
+          
+          Alt er kryptert og beskyttet, akkurat som nettbank. Vi lagrer bare det som trengs for at kalkulatoren skal virke: vaktene dine, innstillingene og profilbildet. Ingenting mer!
+        </div>
+      </details>
+
+      <p>
+        Klar til å ta kontroll over lønna di? <br>
+        <a href="https://kalkulator.kkarlsen.dev">Start gratis nå!</a>
+      </p>
+    </div>
+  </section>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Hvordan håndteres pauser og pausetrekk?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Vi regner ut lønna di smart! Hvis du jobber over 5,5 timer, trekker vi automatisk 30 minutter for pause – akkurat som de fleste arbeidsgivere gjør. Kalkulatoren takler alt fra vanlige arbeidsdager til skift som går over midnatt."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Hvordan fungerer overtid og tillegg?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Du forteller oss hvilke tillegg du har rett på, så regner vi ut alt automatisk! Har du kveldstillegg fra 18:00? Helgetillegg på lørdager og søndager? Bare sett opp reglene én gang i innstillingene."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Hvor lagres dataene mine?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Trygt og smart! Alle innstillingene dine lagres lokalt på telefonen eller PC-en din, så appen starter lynraskt. Når du logger inn, synkroniserer vi også vaktene til skyen så alt er tilgjengelig overalt."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kan jeg laste ned lønnsrapporter?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Absolutt! Du kan laste ned alle vaktene dine som en Excel-fil når som helst. Rapporten viser alle detaljene: arbeidstimer, pauser, tillegg og totallønn for hver vakt."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Hva koster det? Er det gratis?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, det er helt gratis å starte! Du kan bruke kalkulatoren så mye du vil, men har plass til vakter for én måned om gangen. Vi har også et Enterprise-abonnement for bedrifter."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kan jeg bruke den på mobil som en app?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja! Du kan installere kalkulatoren som en ekte app på telefonen din. Bare besøk nettsiden i Safari eller Chrome, så får du tilbud om å legge til på hjemskjerm."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Er dataene mine trygge?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Selvfølgelig! Vi er supernøye med personvern. Dataene dine sendes bare til serveren når du velger å logge inn. Alt er kryptert og beskyttet, akkurat som nettbank."
+        }
+      }
+    ]
+  }
+  </script>
 
   <footer class="footer">
     <div class="footer-content">
