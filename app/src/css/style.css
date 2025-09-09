@@ -18290,19 +18290,11 @@ body.chatbox-view .chatbox-container {
 .date-grid.warning-shimmer .date-cell:nth-child(32)::after,
 .date-grid.warning-shimmer .date-cell:nth-child(40)::after { animation-delay: 0.36s; }
 
-/* iOS Safe Area Support - Only for top unsafe area */
+/* iOS Safe Area Support - Only for route containers, not main app */
 @supports (padding: max(0px, env(safe-area-inset-top))) {
-  /* Main app headers */
-  .header,
-  .header-top,
-  .app-container > .header {
-    padding-top: max(20px, calc(20px + env(safe-area-inset-top, 0)));
-  }
-  
-  /* Settings and route pages that appear at top of screen */
-  .settings-page,
-  .settings-detail {
-    padding-top: max(var(--space-2), calc(var(--space-2) + env(safe-area-inset-top, 0)));
+  /* Only SPA routes that mount in #spa-root need safe area handling */
+  #spa-root {
+    padding-top: env(safe-area-inset-top, 0);
   }
 }
 
