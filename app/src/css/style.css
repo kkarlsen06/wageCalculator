@@ -18298,4 +18298,26 @@ body.chatbox-view .chatbox-container {
   }
 }
 
+/* Fix white bar at bottom - ensure content extends to screen edge */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+  background: var(--bg-primary, #121212) !important;
+}
+
+#app, #spa-root {
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  background: var(--bg-primary, #121212) !important;
+}
+
+/* Remove any bottom safe area padding that might cause white space */
+.snap-container {
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 
