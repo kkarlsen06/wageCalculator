@@ -193,7 +193,7 @@ function getAccountDetail() {
         <div style="margin-top: var(--space-2);">
         <section class="settings-section" aria-labelledby="danger-section-title">
           <header class="settings-section-header">
-            <button type="button" class="settings-collapse-toggle btn btn-secondary" data-toggle-section="dangerousActions" aria-expanded="false" aria-controls="dangerousActions" onclick="console.log('Button clicked directly'); if(window.app && window.app.toggleSettingsSection) window.app.toggleSettingsSection('dangerousActions', this);">
+            <button type="button" class="settings-collapse-toggle btn btn-secondary" data-toggle-section="dangerousActions" aria-expanded="false" aria-controls="dangerousActions">
               Farlige handlinger
               <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; width:16px; height:16px; pointer-events: none;"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
