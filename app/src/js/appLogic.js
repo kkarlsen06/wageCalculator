@@ -10781,15 +10781,15 @@ export const app = {
         // Restore user's own shifts (not filtered by employee)
         this.shifts = [...this.userShifts];
 
-        // Ensure month navigation remains visible in stats view
-        // Use requestAnimationFrame to prevent layout jumping on mobile
-        requestAnimationFrame(() => {
-            this.ensureMonthPickerVisibility();
-        });
-
         // Use existing stats view functionality
         this.dashboardView = 'stats';
         this.applyDashboardView();
+
+        // After moving the stats card into place, reveal the month picker
+        // Delay to the next frame to avoid layout flash at the top
+        requestAnimationFrame(() => {
+            this.ensureMonthPickerVisibility();
+        });
 
         // Update the display with user's own data
         this.updateDisplay();
