@@ -18290,3 +18290,107 @@ body.chatbox-view .chatbox-container {
 .date-grid.warning-shimmer .date-cell:nth-child(32)::after,
 .date-grid.warning-shimmer .date-cell:nth-child(40)::after { animation-delay: 0.36s; }
 
+/* ==========================================================================
+   iOS SAFE AREA SUPPORT
+   Ensure content never flows into unsafe areas (notch, dynamic island, home indicator)
+   ========================================================================== */
+
+/* Override global body padding reset for iOS safe area support */
+body {
+  padding-top: max(0px, env(safe-area-inset-top, 0)) !important;
+  padding-left: max(0px, env(safe-area-inset-left, 0)) !important;
+  padding-right: max(0px, env(safe-area-inset-right, 0)) !important;
+  padding-bottom: max(0px, env(safe-area-inset-bottom, 0)) !important;
+}
+
+/* App container - respect safe areas */
+#app {
+  /* Additional safe area handling for content */
+  min-height: calc(100vh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+  min-height: calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+}
+
+/* Main content sections should respect top safe area */
+.header, 
+.header-top,
+.app-container > .header {
+  padding-top: max(20px, env(safe-area-inset-top, 0));
+}
+
+/* Navigation and buttons should respect bottom safe area */
+.tab-bar-container,
+.floating-action-bar,
+.modal-fixed-footer {
+  padding-bottom: max(10px, env(safe-area-inset-bottom, 0));
+}
+
+/* Side safe areas for horizontal content */
+.app-container,
+.content,
+.modal-content {
+  padding-left: max(16px, env(safe-area-inset-left, 0));
+  padding-right: max(16px, env(safe-area-inset-right, 0));
+}
+
+/* Special handling for full-width elements that should extend to edges */
+.floating-action-bar-backdrop,
+.settings-bottom-bar,
+.floating-settings-backdrop {
+  left: 0;
+  right: 0;
+  /* These should extend full width but respect safe areas for content */
+}
+
+/* Ensure modals respect safe areas */
+.modal {
+  padding: max(20px, env(safe-area-inset-top, 0)) 
+           max(20px, env(safe-area-inset-right, 0)) 
+           max(20px, env(safe-area-inset-bottom, 0)) 
+           max(20px, env(safe-area-inset-left, 0));
+}
+
+/* Skip link should be above safe area */
+.skip-link {
+  top: env(safe-area-inset-top, 10px);
+  left: env(safe-area-inset-left, 10px);
+}
+
+/* Media query for devices with safe areas (notch/dynamic island) */
+@supports (padding: max(0px, env(safe-area-inset-top))) {
+  /* Additional safe area optimizations for supported devices */
+  
+  /* Snap container - ensure it respects safe areas */
+  .snap-container {
+    height: 100vh !important;
+    height: 100dvh !important;
+    /* Allow content to flow under system UI, but ensure child elements respect safe areas */
+  }
+  
+  /* Dashboard section - ensure content doesn't hide behind status bar */
+  .dashboard-section {
+    padding-top: max(20px, calc(20px + env(safe-area-inset-top, 0)));
+  }
+  
+  /* Statistics and shift sections */
+  .statistics-section,
+  .shift-section {
+    padding-top: max(20px, env(safe-area-inset-top, 0));
+  }
+}
+
+/* Special handling for landscape orientation */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  /* In landscape, side safe areas become more important */
+  .app-container,
+  .content {
+    padding-left: max(20px, env(safe-area-inset-left, 0));
+    padding-right: max(20px, env(safe-area-inset-right, 0));
+  }
+  
+  /* Reduce top padding in landscape to maximize content area */
+  .header,
+  .dashboard-section {
+    padding-top: max(10px, env(safe-area-inset-top, 0));
+  }
+}
+
