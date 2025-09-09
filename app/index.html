@@ -2,8 +2,13 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>kkarlsen DEV - Lønnskalkulator</title>
+  <title>Lønnskalkulator – beregn lønn, overtid og pauser | kalkulator.kkarlsen.dev</title>
+  <meta name="description" content="Interaktiv lønnskalkulator for Norge. Regn ut lønn måned for måned, overtid og pauser.">
+  <link rel="canonical" href="https://kalkulator.kkarlsen.dev/" />
+  <meta name="robots" content="index,follow" />
+  <meta http-equiv="content-language" content="nb-NO" />
+  <link rel="alternate" hreflang="nb-NO" href="https://kalkulator.kkarlsen.dev/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- Google Fonts - Inter for modern, professional typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,21 +21,40 @@
   <link rel="stylesheet" href="src/css/chat.css">
   <link rel="stylesheet" href="src/css/settings.css">
   <!-- Route/feature CSS is now code-split and loaded on demand -->
-  <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
-  <link rel="shortcut icon" href="/icons/favicon.ico" type="image/x-icon">
-  <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="alternate" hreflang="nb" href="https://www.kkarlsen.dev/" />
-  <link rel="apple-touch-icon" sizes="921x921" href="/icons/apple-touch-icon.png">
-  <meta name="theme-color" content="#000000">
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#000000">
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
+  <!-- Favicons for THIS host (must live on kalkulator.* origin too) -->
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="/favicon-48x48.png" sizes="48x48" />
+  <link rel="icon" type="image/png" href="/favicon-192x192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#111111" />
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#111111">
+  <!-- Open Graph / Twitter (app) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Lønnskalkulator – beregn lønn, overtid og pauser" />
+  <meta property="og:description" content="Interaktiv lønnskalkulator for Norge. Regn ut lønn måned for måned, overtid og pauser." />
+  <meta property="og:url" content="https://kalkulator.kkarlsen.dev/" />
+  <meta property="og:image" content="https://kalkulator.kkarlsen.dev/og/kalkulator.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Lønnskalkulator – beregn lønn, overtid og pauser" />
+  <meta name="twitter:description" content="Interaktiv lønnskalkulator for Norge." />
+  <meta name="twitter:image" content="https://kalkulator.kkarlsen.dev/og/kalkulator.png" />
+  <script type="application/ld+json">{
+    "@context":"https://schema.org",
+    "@type":"SoftwareApplication",
+    "name":"Lønnskalkulator",
+    "applicationCategory":"BusinessApplication",
+    "operatingSystem":"Web",
+    "offers":{"@type":"Offer","price":"0","priceCurrency":"NOK"},
+    "url":"https://kalkulator.kkarlsen.dev/"
+  }</script>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Vaktberegner">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="msapplication-navbutton-color" content="#000000">
-  <meta name="msapplication-TileColor" content="#000000">
+  <meta name="msapplication-navbutton-color" content="#111111">
+  <meta name="msapplication-TileColor" content="#111111">
   <!-- Web app manifest for PWA installation and iOS safe area handling -->
 </head>
 <body>
