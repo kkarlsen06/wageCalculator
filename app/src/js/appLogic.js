@@ -6316,7 +6316,6 @@ export const app = {
 
         // Determine if this is a past or future payroll
         const isPastPayroll = payrollDate < now;
-        const activeClass = !isPastPayroll && isCurrentMonth && Math.ceil((payrollDate - now) / (1000 * 60 * 60 * 24)) <= 7 ? ' active' : '';
 
         // Show payroll details
         nextPayrollContent.style.display = 'flex';
@@ -6324,7 +6323,7 @@ export const app = {
 
         // Inject content first to avoid a brief blank period, then mark as populated
         nextPayrollContent.innerHTML = `
-            <div class="payroll-item${activeClass}" style="cursor: pointer; position: relative;">
+            <div class="payroll-item" style="cursor: pointer; position: relative;">
                 <div class="next-payroll-badge">Lønn</div>
                 <div class="shift-info">
                     <div class="shift-date">
