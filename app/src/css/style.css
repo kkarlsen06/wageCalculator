@@ -4527,6 +4527,7 @@ input[type="time"].form-control[value=""]:focus {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  position: relative; /* Required for pseudo-element positioning in shimmer */
   /* Use same background as main calendar cells */
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -7506,7 +7507,23 @@ input:checked + .slider:before {
   z-index: 2;
 }
 
-
+/* Separator line extending from week number to end of row */
+.week-separator::after {
+  content: '';
+  position: absolute;
+  left: 68px; /* Position after the week number */
+  top: 50%;
+  right: 20px; /* Extend to right edge with padding */
+  height: 1px;
+  background: linear-gradient(90deg, 
+    var(--border) 0%, 
+    var(--border) 70%, 
+    transparent 100%
+  );
+  opacity: 0.4;
+  transform: translateY(-50%);
+  z-index: 1;
+}
 
 .calendar-total {
   font-size: clamp(10px, 2.8vw, 13px);
@@ -7800,6 +7817,11 @@ input:checked + .slider:before {
 
   .week-separator {
     margin: 20px 0 16px 0;
+  }
+
+  .week-separator::after {
+    left: 58px; /* Adjust for smaller week number on mobile */
+    right: 10px; /* Smaller right padding on mobile */
   }
 
   .shift-calendar .calendar-header,
@@ -18137,3 +18159,141 @@ body.chatbox-view .chatbox-container {
 
 /* No dark-theme override: section remains the middle tone between page and cards */
 .settings-collapsible-content.hidden { display: none; }
+
+/* Orange warning shimmer animation for validation errors */
+@keyframes warningShimmer {
+  0% {
+    box-shadow: inset -3px 0 0 rgba(255, 157, 77, 0);
+  }
+  50% {
+    box-shadow: inset 0 0 0 2px rgba(255, 157, 77, 0.8);
+  }
+  100% {
+    box-shadow: inset 3px 0 0 rgba(255, 157, 77, 0);
+  }
+}
+
+@keyframes calendarShimmerWave {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes calendarShimmerWaveDisabled {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1.67; /* 1 / 0.6 = 1.67 to compensate for parent's 0.6 opacity */
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Warning shimmer for form controls */
+.form-control.warning-shimmer {
+  animation: warningShimmer 1.5s ease-in-out;
+}
+
+/* Date grid warning shimmer - uses pseudo-element to avoid interfering with existing cell animations */
+.date-grid.warning-shimmer .date-cell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid rgba(255, 157, 77, 0.8);
+  border-radius: 16px;
+  pointer-events: none;
+  animation: calendarShimmerWave 0.3s ease-out;
+  z-index: 10;
+  opacity: 0; /* Start hidden, animation will show it */
+}
+
+/* Disabled cells need stronger opacity animation to compensate for parent's 0.6 opacity */
+.date-grid.warning-shimmer .date-cell.disabled::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid rgba(255, 157, 77, 0.8);
+  border-radius: 16px;
+  pointer-events: none;
+  animation: calendarShimmerWaveDisabled 0.3s ease-out;
+  z-index: 10;
+  opacity: 0; /* Start hidden, animation will show it */
+}
+
+/* Stagger the animation across calendar cells from left to right */
+/* All rows shimmer simultaneously, delays are based on column position only */
+/* Grid structure: week-number + 7 date cells per row */
+
+/* Bottom row (row 6): positions 42-48 - explicitly set each cell */
+.date-grid.warning-shimmer .date-cell:nth-child(42)::after { animation-delay: 0s !important; }
+.date-grid.warning-shimmer .date-cell:nth-child(43)::after { animation-delay: 0.06s !important; }
+.date-grid.warning-shimmer .date-cell:nth-child(44)::after { animation-delay: 0.12s !important; }
+.date-grid.warning-shimmer .date-cell:nth-child(45)::after { animation-delay: 0.18s !important; }
+.date-grid.warning-shimmer .date-cell:nth-child(46)::after { animation-delay: 0.24s !important; }
+.date-grid.warning-shimmer .date-cell:nth-child(47)::after { animation-delay: 0.3s !important; }
+.date-grid.warning-shimmer .date-cell:nth-child(48)::after { animation-delay: 0.36s !important; }
+
+/* All other rows - column-based delays */
+/* Column 1 (leftmost): positions 2, 10, 18, 26, 34 */
+.date-grid.warning-shimmer .date-cell:nth-child(2)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(10)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(18)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(26)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(34)::after { animation-delay: 0s; }
+
+/* Column 2: positions 3, 11, 19, 27, 35 */
+.date-grid.warning-shimmer .date-cell:nth-child(3)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(11)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(19)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(27)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(35)::after { animation-delay: 0.06s; }
+
+/* Column 3: positions 4, 12, 20, 28, 36 */
+.date-grid.warning-shimmer .date-cell:nth-child(4)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(12)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(20)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(28)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(36)::after { animation-delay: 0.12s; }
+
+/* Column 4: positions 5, 13, 21, 29, 37 */
+.date-grid.warning-shimmer .date-cell:nth-child(5)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(13)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(21)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(29)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(37)::after { animation-delay: 0.18s; }
+
+/* Column 5: positions 6, 14, 22, 30, 38 */
+.date-grid.warning-shimmer .date-cell:nth-child(6)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(14)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(22)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(30)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(38)::after { animation-delay: 0.24s; }
+
+/* Column 6: positions 7, 15, 23, 31, 39 */
+.date-grid.warning-shimmer .date-cell:nth-child(7)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(15)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(23)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(31)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(39)::after { animation-delay: 0.3s; }
+
+/* Column 7 (rightmost): positions 8, 16, 24, 32, 40 */
+.date-grid.warning-shimmer .date-cell:nth-child(8)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(16)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(24)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(32)::after,
+.date-grid.warning-shimmer .date-cell:nth-child(40)::after { animation-delay: 0.36s; }
+

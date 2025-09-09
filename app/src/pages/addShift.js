@@ -30,9 +30,6 @@ function getAddShiftView() {
               <div class="skeleton skeleton-date-cell"></div>
             </div>
           </div>
-          <div class="selected-dates-info" id="selectedDatesInfo" style="display: none;">
-            <span id="selectedDatesText"></span>
-          </div>
         </div>
 
         <div class="form-group">
@@ -43,7 +40,6 @@ function getAddShiftView() {
         </div>
 
         <div class="form-group">
-          <label>Arbeidstid</label>
           <div class="time-section">
             <div class="form-row">
               <select class="form-control" id="startHour">
@@ -89,7 +85,6 @@ function getAddShiftView() {
           </select>
         </div>
         <div class="form-group" style="margin-bottom: var(--space-4);">
-          <label>Arbeidstid</label>
           <div class="time-section">
             <div class="form-row">
               <select class="form-control" id="recurringStartHour">
@@ -118,6 +113,10 @@ function getAddShiftView() {
         </div>
       </div>
     </form>
+    
+    <div class="selected-dates-info" id="selectedDatesInfo" style="display: none;">
+      <span id="selectedDatesText"></span>
+    </div>
     
     <div class="add-shift-floating-nav">
       <button type="button" class="floating-nav-btn back-btn" onclick="addShiftFromRoute()">
@@ -160,6 +159,17 @@ function switchAddShiftTab(tab) {
     } else {
       simpleFields.classList.remove('active');
       recurringFields.classList.add('active');
+    }
+  }
+
+  // Hide selected dates info when on recurring tab (it's only relevant for simple tab)
+  const selectedDatesInfo = document.getElementById('selectedDatesInfo');
+  if (selectedDatesInfo) {
+    if (tab === 'recurring') {
+      selectedDatesInfo.style.display = 'none';
+    } else {
+      // Show it only if there are selected dates
+      selectedDatesInfo.style.display = window.app && window.app.selectedDates && window.app.selectedDates.length > 0 ? 'block' : 'none';
     }
   }
 

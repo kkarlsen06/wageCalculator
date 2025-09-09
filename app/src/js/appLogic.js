@@ -1130,15 +1130,21 @@ export const app = {
             const employeeId = this.selectedEmployeeId;
 
             if (!startDateStr || !freq || !duration || !startHour || !endHour) {
-                // Show validation alert message
-                if (window.ErrorHelper) {
-                    window.ErrorHelper.showError('Vennligst fyll ut alle påkrevde felt for å opprette en vaktserie.', {
-                        type: 'warning',
-                        duration: 4000
-                    });
-                } else {
-                    alert('Vennligst fyll ut alle påkrevde felt for å opprette en vaktserie.');
-                }
+                // Add warning shimmer to empty dropdown fields
+                const fieldsToCheck = [
+                    { element: document.getElementById('recurringStartDate'), hasValue: !!startDateStr },
+                    { element: document.getElementById('recurringStartHour'), hasValue: !!startHour },
+                    { element: document.getElementById('recurringEndHour'), hasValue: !!endHour }
+                ];
+                
+                fieldsToCheck.forEach(({ element, hasValue }) => {
+                    if (element && !hasValue) {
+                        element.classList.add('warning-shimmer');
+                        setTimeout(() => {
+                            element.classList.remove('warning-shimmer');
+                        }, 1500);
+                    }
+                });
 
                 // Show validation error with button animation
                 const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
@@ -1314,14 +1320,13 @@ export const app = {
         }
         try {
             if (!this.selectedDates || this.selectedDates.length === 0) {
-                // Show validation alert message
-                if (window.ErrorHelper) {
-                    window.ErrorHelper.showError('Vennligst velg en dato før du lagrer vakten.', {
-                        type: 'warning',
-                        duration: 4000
-                    });
-                } else {
-                    alert('Vennligst velg en dato før du lagrer vakten.');
+                // Add warning shimmer to calendar when no dates selected
+                const dateGrid = document.getElementById('dateGrid');
+                if (dateGrid) {
+                    dateGrid.classList.add('warning-shimmer');
+                    setTimeout(() => {
+                        dateGrid.classList.remove('warning-shimmer');
+                    }, 1000); // Total wave duration: 0.36s delay + 0.3s animation + buffer
                 }
 
                 // Show validation error with button animation
@@ -1345,15 +1350,20 @@ export const app = {
             const employeeId = this.selectedEmployeeId;
 
             if (!startHour || !endHour) {
-                // Show validation alert message
-                if (window.ErrorHelper) {
-                    window.ErrorHelper.showError('Vennligst fyll ut arbeidstid (start- og sluttidspunkt).', {
-                        type: 'warning',
-                        duration: 4000
-                    });
-                } else {
-                    alert('Vennligst fyll ut arbeidstid (start- og sluttidspunkt).');
-                }
+                // Add warning shimmer to empty time dropdown fields
+                const timeFieldsToCheck = [
+                    { element: document.getElementById('startHour'), hasValue: !!startHour },
+                    { element: document.getElementById('endHour'), hasValue: !!endHour }
+                ];
+                
+                timeFieldsToCheck.forEach(({ element, hasValue }) => {
+                    if (element && !hasValue) {
+                        element.classList.add('warning-shimmer');
+                        setTimeout(() => {
+                            element.classList.remove('warning-shimmer');
+                        }, 1500);
+                    }
+                });
 
                 // Show validation error with button animation
                 const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
@@ -1854,8 +1864,14 @@ export const app = {
             dateGrid.appendChild(hdr);
         });
 
+        // Calculate the minimum number of cells needed
+        // Most months need 35 cells (5 weeks), but some need 42 cells (6 weeks)
+        const daysInMonth = lastDay.getDate();
+        const weeksNeeded = Math.ceil((offset + daysInMonth) / 7);
+        const totalCells = weeksNeeded * 7;
+        
         // Add week numbers and date cells
-        for (let i=0;i<42;i++){
+        for (let i=0;i<totalCells;i++){
             // Add week number at the start of each row (every 7 cells)
             if (i % 7 === 0) {
                 const weekDate = new Date(startDate);

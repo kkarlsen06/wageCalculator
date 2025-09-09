@@ -618,8 +618,7 @@ function setupFloatingNavigation() {
         // Trigger main app initialization if it hasn't been done yet
         // This is needed because if we started on /abonnement, the main app never initialized
         if (!window.app || !window.app.initialized) {
-          console.log('[abonnement] Main app not initialized, reloading page to fix');
-          window.location.reload();
+          console.log('[abonnement] Main app not initialized, but avoiding page reload');
           return;
         }
         
