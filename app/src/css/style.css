@@ -982,7 +982,7 @@ body.skeleton-active .tab-bar-container {
   /* Match real tab bar padding on desktop */
   padding: 4px;
   /* Match the pill corner radius of the real tab bar */
-  border-radius: 20px;
+  border-radius: 40px;
   overflow: hidden;
   /* Show only the shimmer line; no container outline */
   background: transparent;
@@ -995,7 +995,7 @@ body.skeleton-active .tab-bar-container {
 .tab-bar-skeleton .skeleton-block {
   height: 44px;
   /* Match the pill corner radius */
-  border-radius: 20px;
+  border-radius: 40px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -1075,7 +1075,7 @@ body.skeleton-active .floating-action-bar-backdrop { display: none !important; }
   transform: translateY(-50%);
   height: 28px; /* thinner shimmer line */
   /* Match the pill corner radius */
-  border-radius: 20px;
+  border-radius: 40px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -1146,7 +1146,7 @@ body.skeleton-active .total-card .total-label {
 .total-card .total-skeleton .skeleton-line:nth-child(2) {
   height: 62px; /* ~ 3.5rem * 1.1 line-height */
   width: min(70%, 420px); /* slightly wider for balance */
-  border-radius: 20px;
+  border-radius: 40px;
   margin-bottom: 18px; /* amount bottom (8) + secondary top (10) */
 }
 /* Line 3: Secondary info (shorter) */
@@ -1262,6 +1262,13 @@ body {
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
+  /* Convert to flexbox with consistent gap spacing */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 15px;
+  padding-top: 20px;
 }
 
 /* Mobile adjustments for app-container */
@@ -1270,6 +1277,8 @@ body {
     padding-left: 10px;
     padding-right: 10px;
     max-width: 100%;
+    gap: 12px; /* Smaller gap for mobile */
+    padding-top: 15px; /* Smaller top padding for mobile */
   }
 }
 
@@ -1278,19 +1287,20 @@ body {
   background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  padding: 20px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   border-bottom: 1px solid var(--border); /* More transparent border */
-  border-radius: 0 0 24px 24px;
+  border-radius: 32px;
+  margin: 0; /* Remove margins - spacing handled by parent gap */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
   overflow: visible;
-  min-height: 80px; /* Fixed minimum height to prevent layout shift */
+  min-height: 64px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
   /* iOS PWA safe area handling for header */
-  padding-top: max(20px, calc(20px + env(safe-area-inset-top)));
-  padding-left: max(20px, calc(20px + env(safe-area-inset-left)));
-  padding-right: max(20px, calc(20px + env(safe-area-inset-right)));
+  padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
+  padding-left: max(32px, calc(16px + env(safe-area-inset-left) + 16px)); /* Logo positioning: base padding + 16px for curvature */
+  padding-right: max(16px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
   /* Ensure header and profile elements are immediately visible */
   opacity: 1 !important;
   visibility: visible !important;
@@ -1562,7 +1572,7 @@ body.chatbox-view .header {
 
   @container (max-width: 768px) {
     .chatbox-pill {
-      padding: 12px;
+      padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     }
   }
 }
@@ -2579,7 +2589,7 @@ body.skeleton-active .tab-bar-container {
   /* Match real tab bar padding on desktop */
   padding: 4px;
   /* Match the pill corner radius of the real tab bar */
-  border-radius: 20px;
+  border-radius: 40px;
   overflow: hidden;
   /* Show only the shimmer line; no container outline */
   background: transparent;
@@ -2592,7 +2602,7 @@ body.skeleton-active .tab-bar-container {
 .tab-bar-skeleton .skeleton-block {
   height: 44px;
   /* Match the pill corner radius */
-  border-radius: 20px;
+  border-radius: 40px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -2661,7 +2671,7 @@ body.skeleton-active .floating-action-bar-backdrop { display: none !important; }
   transform: translateY(-50%);
   height: 28px; /* thinner shimmer line */
   /* Match the pill corner radius */
-  border-radius: 20px;
+  border-radius: 40px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -2711,7 +2721,7 @@ body.skeleton-active .total-card .total-label {
 .total-card .total-skeleton .skeleton-line:nth-child(2) {
   height: 62px; /* ~ 3.5rem * 1.1 line-height */
   width: min(70%, 420px); /* slightly wider for balance */
-  border-radius: 20px;
+  border-radius: 40px;
   margin-bottom: 18px; /* amount bottom (8) + secondary top (10) */
 }
 /* Line 3: Secondary info (shorter) */
@@ -2827,6 +2837,13 @@ body {
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
+  /* Convert to flexbox with consistent gap spacing */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 15px;
+  padding-top: 20px;
 }
 
 /* Mobile adjustments for app-container */
@@ -2835,6 +2852,8 @@ body {
     padding-left: 10px;
     padding-right: 10px;
     max-width: 100%;
+    gap: 12px; /* Smaller gap for mobile */
+    padding-top: 15px; /* Smaller top padding for mobile */
   }
 }
 
@@ -2843,19 +2862,20 @@ body {
   background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  padding: 20px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   border-bottom: 1px solid var(--border); /* More transparent border */
-  border-radius: 0 0 24px 24px;
+  border-radius: 32px;
+  margin: 0; /* Remove margins - spacing handled by parent gap */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
   overflow: visible;
-  min-height: 80px; /* Fixed minimum height to prevent layout shift */
+  min-height: 64px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
   /* iOS PWA safe area handling for header */
-  padding-top: max(20px, calc(20px + env(safe-area-inset-top)));
-  padding-left: max(20px, calc(20px + env(safe-area-inset-left)));
-  padding-right: max(20px, calc(20px + env(safe-area-inset-right)));
+  padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
+  padding-left: max(32px, calc(16px + env(safe-area-inset-left) + 16px)); /* Logo positioning: base padding + 16px for curvature */
+  padding-right: max(16px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
   /* Ensure header and profile elements are immediately visible */
   opacity: 1 !important;
   visibility: visible !important;
@@ -3127,7 +3147,7 @@ body.chatbox-view .header {
 
   @container (max-width: 768px) {
     .chatbox-pill {
-      padding: 12px;
+      padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     }
   }
 }
@@ -3596,7 +3616,7 @@ body.skeleton-active .month-nav-btn {
   /* Reduce total-card dimensions significantly to fit small viewports */
   .total-card {
     padding: 14px 16px; /* Reduced from 30px to 14px vertical, 16px horizontal */
-    border-radius: 20px; /* Slightly smaller radius */
+    border-radius: 40px; /* Slightly smaller radius */
     margin-bottom: 0;
     /* Natural height based on content - removed fixed height for better spacing */
     /* Consistent spacing system for mobile - proportional to screen size */
@@ -3663,7 +3683,7 @@ body.skeleton-active .month-nav-btn {
   /* AGGRESSIVE NEXT SHIFT CARD HEIGHT REDUCTION */
   .next-shift-card .shift-item {
     padding: 12px 14px; /* Reduced from 18px */
-    border-radius: 20px; /* Slightly smaller radius */
+    border-radius: 40px; /* Slightly smaller radius */
     min-height: 65px; /* Reduced minimum height */
   }
 
@@ -4051,7 +4071,7 @@ body.skeleton-active .month-nav-btn {
 
 .dashboard-month-nav .month-navigation {
   border-radius: 16px;
-  padding: 12px 20px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   transition: all 0.3s ease;
   background: transparent; /* Remove background box */
   backdrop-filter: none; /* Remove backdrop filter */
@@ -4345,7 +4365,7 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   color: var(--text-primary);
   font-size: var(--text-base); /* Prevents zoom on iOS */
   /* Subtle 3D Bevel Effect - consistent with other interactive elements */
@@ -4951,7 +4971,7 @@ input[type="time"].form-control[value=""]:focus {
   max-height: 640px; /* slightly reduced */
   min-height: 420px;
   overflow: hidden;
-  border-radius: 20px; /* slightly tighter radius */
+  border-radius: 40px; /* slightly tighter radius */
   border: 1px solid var(--border); /* thinner border */
 }
 
@@ -5531,7 +5551,7 @@ input[type="time"].form-control[value=""]:focus {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   font-weight: 500;
   line-height: 1.4;
   transition: all var(--speed-normal) var(--ease-default);
@@ -5635,7 +5655,7 @@ input[type="time"].form-control[value=""]:focus {
 .premium-feature-content {
   max-width: 540px;
   width: 90vw;
-  border-radius: 20px;
+  border-radius: 40px;
 }
 
 .premium-feature-content .modal-header {
@@ -5976,7 +5996,7 @@ input[type="time"].form-control[value=""]:focus {
   }
   
   .plan-card {
-    padding: 12px;
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   }
 }
 
@@ -6220,7 +6240,7 @@ input[type="time"].form-control[value=""]:focus {
   bottom: 0;
   background-color: var(--border);
   transition: all var(--speed-normal) var(--ease-default);
-  border-radius: 20px;
+  border-radius: 40px;
 }
 
 .slider:hover {
@@ -6874,7 +6894,7 @@ input:checked + .slider:before {
   background: var(--accent3);
   color: var(--bg-primary);
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: 40px;
   font-size: 12px;
   margin-left: 10px;
 }
@@ -8101,7 +8121,7 @@ input:checked + .slider:before {
 .shift-detail-card {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 40px;
   animation: shiftDetailEnter 0.4s var(--ease-default) forwards;
 }
 
@@ -8423,7 +8443,7 @@ input:checked + .slider:before {
   }
 
   .bonus-slot {
-    padding: 12px;
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     margin-bottom: 8px;
   }
 
@@ -8621,10 +8641,14 @@ input:checked + .slider:before {
 @media (max-width: 768px) {
   .header {
     /* Significantly reduce header height on mobile */
-    padding: 12px 20px; /* Reduced from 20px to 12px vertical padding */
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     min-height: 60px; /* Reduced from 80px to 60px */
+    margin: 0; /* Remove margins - spacing handled by parent gap */
+    border-radius: 30px; /* Adjust radius for smaller height */
     /* Adjust safe area handling for reduced height */
     padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
+    padding-left: max(30px, calc(16px + env(safe-area-inset-left) + 14px)); /* Logo positioning: base padding + 14px for curvature */
+    padding-right: max(16px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
   }
 
   .header-info {
@@ -8863,7 +8887,7 @@ input:checked + .slider:before {
 /* Mobile responsiveness for profile picture upload */
 @media (max-width: 480px) {
   .profile-picture-upload-container {
-    padding: 12px;
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     gap: 12px;
   }
 
@@ -9340,7 +9364,7 @@ input:checked + .slider:before {
   justify-content: center;
   align-items: center;
   z-index: 10;
-  border-radius: 0 0 24px 24px;
+  border-radius: 40px;
 }
 
 /* Crop modal removed */
@@ -9854,7 +9878,7 @@ body.chatbox-view .dashboard-section .app-container {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding-top: 20px; /* Restored normal padding since tab-bar is now standalone */
+  padding-top: 0; /* Remove top padding - spacing handled by parent gap */
   padding-bottom: 20px;
   gap: 20px;
   position: relative;
@@ -10893,7 +10917,7 @@ body.chatbox-view .dashboard-content {
 .snap-section .header {
   position: relative;
   top: 0;
-  border-radius: 0 0 24px 24px;
+  border-radius: 40px;
 }
 
 
@@ -11065,7 +11089,7 @@ body.chatbox-view .dashboard-content {
   border: 2px solid var(--border);
   color: var(--text-primary);
   font-weight: 600;
-  padding: 12px 20px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -11531,7 +11555,7 @@ input[type="file"].form-control:focus {
   }
 
   #exportOptionsSection #customPeriodSection {
-    padding: 12px;
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     margin-left: -4px;
     margin-right: -4px;
   }
@@ -11548,7 +11572,7 @@ input[type="file"].form-control:focus {
 
   #exportOptionsSection,
   #dataTab .form-group:last-child {
-    padding: 12px;
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     margin-left: -8px;
     margin-right: -8px;
   }
@@ -11633,7 +11657,7 @@ input[type="file"].form-control:focus {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.1),
     inset 0 -1px 1px rgba(255, 255, 255, 0.05);
@@ -11669,7 +11693,7 @@ input[type="file"].form-control:focus {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.1),
     inset 0 -1px 1px rgba(255, 255, 255, 0.05);
@@ -11695,7 +11719,7 @@ input[type="file"].form-control:focus {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.1),
     inset 0 -1px 1px rgba(255, 255, 255, 0.05);
@@ -12400,7 +12424,7 @@ input[type="file"].form-control:focus {
 @media (max-width: 480px) {
   .weekly-hours-chart-card {
     padding: 14px;
-    border-radius: 20px;
+    border-radius: 40px;
     min-height: 220px;
   }
 
@@ -12512,7 +12536,7 @@ input[type="file"].form-control:focus {
 
 @media (max-width: 360px) {
   .weekly-hours-chart-card {
-    padding: 12px;
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     border-radius: 16px;
     min-height: 200px;
   }
@@ -12631,7 +12655,7 @@ input[type="file"].form-control:focus {
   }
 
   .chart-visualization-card {
-    padding: 12px;
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     border-radius: 14px;
   }
 
@@ -12642,7 +12666,7 @@ input[type="file"].form-control:focus {
 
   .chart-hours-value-card,
   .chart-shifts-count-card {
-    padding: 12px;
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     border-radius: 14px;
   }
 
@@ -13134,8 +13158,7 @@ input[type="file"].form-control:focus {
 
 .tab-bar-container {
   /* Standalone pill container with consistent dashboard spacing */
-  margin-top: 20px; /* Match dashboard content gap spacing */
-  margin-bottom: 0;
+  margin: 0; /* Remove margins - spacing handled by parent gap */
   width: 100%;
   position: relative;
   z-index: 90;
@@ -13153,7 +13176,7 @@ input[type="file"].form-control:focus {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border);
-  border-radius: 20px; /* Pill shape with proportional rounded corners */
+  border-radius: 40px; /* Pill shape with proportional rounded corners */
   overflow: hidden;
   transition: all 0.3s ease;
   /* Subtle shadow for depth without stacking effect */
@@ -13255,7 +13278,7 @@ input[type="file"].form-control:focus {
 @media (max-width: 768px) {
   .tab-bar-container {
     /* Consistent mobile spacing */
-    margin-top: 16px; /* Match mobile dashboard gap spacing */
+    margin: 0; /* Remove margins - spacing handled by parent gap */
   }
 
   .tab-bar {
@@ -13264,7 +13287,7 @@ input[type="file"].form-control:focus {
     gap: 1px;
     min-height: 44px; /* Reduced mobile height for pill appearance */
     /* Keep desktop pill radius on mobile for visual consistency */
-    border-radius: 20px;
+    border-radius: 40px;
   }
 
   /* Sync skeleton overlay spacing to real tab bar on mobile */
@@ -13309,14 +13332,18 @@ input[type="file"].form-control:focus {
 @media (max-width: 480px) {
   .header {
     /* Header for very small screens */
-    padding: 10px 16px; /* Further reduced padding */
+    padding: 10px max(15px, env(safe-area-inset-right)) 10px max(15px, env(safe-area-inset-left)); /* Match small mobile padding pattern */
     min-height: 50px; /* Even smaller minimum height */
+    margin: 0; /* Remove margins - spacing handled by parent gap */
+    border-radius: 25px; /* Adjust radius for smaller height */
     padding-top: max(10px, calc(10px + env(safe-area-inset-top)));
+    padding-left: max(25px, calc(15px + env(safe-area-inset-left) + 10px)); /* Logo positioning: base padding + 10px for curvature */
+    padding-right: max(15px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
   }
 
   .tab-bar-container {
     /* Consistent extra small mobile spacing */
-    margin-top: 12px; /* Match extra small mobile dashboard gap spacing */
+    margin: 0; /* Remove margins - spacing handled by parent gap */
   }
 
   .tab-bar {
@@ -13324,7 +13351,7 @@ input[type="file"].form-control:focus {
     /* Increase horizontal padding to match effective vertical spacing */
     padding: 2px 6px;
     /* Keep desktop pill radius even on very small screens */
-    border-radius: 20px;
+    border-radius: 40px;
   }
 
   /* Sync skeleton overlay spacing to real tab bar on extra small screens */
@@ -13428,7 +13455,7 @@ input[type="file"].form-control:focus {
 
 @media (max-width: 480px) {
   .statistics-section #currentUserWorkSummary .employee-work-summary {
-    border-radius: 20px;
+    border-radius: 40px;
   }
 }
 
@@ -14945,7 +14972,7 @@ body.chatbox-view .chatbox-container {
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  padding: 12px 20px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
 }
 
 .btn-ghost:hover {
@@ -15946,7 +15973,7 @@ body.chatbox-view .chatbox-container {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   border-radius: 8px;
   background: transparent;
   border: none;
@@ -16892,7 +16919,7 @@ body.chatbox-view .chatbox-container {
   background: var(--primary);
   border: none;
   border-radius: 24px; /* Match pill corner radius */
-  padding: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -17489,7 +17516,7 @@ body.chatbox-view .chatbox-container {
   gap: 6px;
   padding: 8px 12px;
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 40px;
   background: var(--bg-secondary);
   color: var(--text-secondary);
   font-size: var(--text-sm);
@@ -17996,7 +18023,7 @@ body.chatbox-view .chatbox-container {
 
 /* Method descriptions in advanced settings */
 .method-description {
-  padding: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
   border-radius: 8px;
   background: rgba(var(--bg-tertiary-rgb), 0.5);
   border: 1px solid rgba(var(--border-rgb), 0.5);
@@ -18028,7 +18055,7 @@ body.chatbox-view .chatbox-container {
   }
   
   .method-description {
-    padding: 12px;
+    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
     font-size: 14px;
     line-height: 1.4;
   }

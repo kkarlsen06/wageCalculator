@@ -2840,36 +2840,27 @@ export const app = {
     getNextPayrollDate() {
         const now = new Date();
         const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth(); // 0-based
-        const currentDay = now.getDate();
+        const currentMonth1Based = now.getMonth() + 1; // 1-based for helpers
 
-        // Start with this month's payroll date
-        let nextPayrollDate = new Date(currentYear, currentMonth, this.payrollDay);
+        // Normalize to start of today to avoid skipping "today" as payday
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        // If this month's payroll date has already passed, move to next month
-        if (nextPayrollDate <= now) {
-            nextPayrollDate = new Date(currentYear, currentMonth + 1, this.payrollDay);
+        // Compute adjusted payroll date for the current month (handles month length + weekends)
+        let thisMonthPayroll = this.getPayrollDateForMonth(currentMonth1Based, currentYear);
+
+        // If the adjusted payroll date is before today, use next month's adjusted payroll date
+        if (thisMonthPayroll < startOfToday) {
+            let nextMonth = currentMonth1Based + 1;
+            let nextYear = currentYear;
+            if (nextMonth > 12) {
+                nextMonth = 1;
+                nextYear += 1;
+            }
+            return this.getPayrollDateForMonth(nextMonth, nextYear);
         }
 
-        // Handle months with fewer days (e.g., February with 28/29 days)
-        // If the payroll day doesn't exist in the target month, use the last day of that month
-        const targetMonth = nextPayrollDate.getMonth();
-        const lastDayOfMonth = new Date(nextPayrollDate.getFullYear(), targetMonth + 1, 0).getDate();
-
-        if (this.payrollDay > lastDayOfMonth) {
-            nextPayrollDate.setDate(lastDayOfMonth);
-        }
-
-        // Adjust for weekends - move to preceding Friday if payroll falls on weekend
-        const dayOfWeek = nextPayrollDate.getDay(); // 0 = Sunday, 6 = Saturday
-
-        if (dayOfWeek === 0) { // Sunday
-            nextPayrollDate.setDate(nextPayrollDate.getDate() - 2); // Move to Friday
-        } else if (dayOfWeek === 6) { // Saturday
-            nextPayrollDate.setDate(nextPayrollDate.getDate() - 1); // Move to Friday
-        }
-
-        return nextPayrollDate;
+        // Otherwise, payday is today or later this month
+        return thisMonthPayroll;
     },
 
     getLastPayrollDate(nextPayrollDate) {
