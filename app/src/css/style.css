@@ -5605,88 +5605,6 @@ input[type="time"].form-control[value=""]:focus {
   transition: opacity 0.2s ease-in-out;
 }
 
-/* Current date separator line */
-.current-date-separator {
-  display: flex;
-  align-items: center;
-  margin: 16px 0;
-  position: relative;
-}
-
-.current-date-separator-line {
-  position: absolute;
-  left: 64px; /* Start line after the date number (18px + ~46px for number width + padding) */
-  right: 20px; /* End where week total text ends */
-  height: 2px;
-  background: linear-gradient(90deg, 
-    transparent 0%,
-    var(--current-date) 10%, 
-    var(--current-date) 90%, 
-    transparent 100%);
-  border-radius: 2px;
-  top: 50%;
-  transform: translateY(-50%);
-  overflow: hidden;
-}
-
-.current-date-separator-line::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: 0;
-  right: 0;
-  bottom: -6px;
-  background: linear-gradient(90deg, 
-    transparent 0%,
-    var(--current-date-glow) 10%, 
-    var(--current-date-glow) 90%, 
-    transparent 100%);
-  filter: blur(8px);
-  z-index: -1;
-  border-radius: 2px;
-}
-
-.current-date-separator-line::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255, 255, 255, 0.4) 50%, 
-    transparent 100%);
-  animation: currentDateShimmer 8s infinite;
-}
-
-.current-date-separator-date {
-  position: absolute;
-  left: 18px; /* Align with shift card date numbers: match shift card padding */
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--background);
-  padding: 2px 12px;
-  font-size: 14px;
-  font-weight: 900;
-  color: var(--current-date);
-  white-space: nowrap;
-  z-index: 2;
-  border-radius: 6px;
-  text-shadow: 0 0 4px var(--current-date-glow);
-}
-
-@keyframes currentDateShimmer {
-  0% {
-    left: -100%;
-  }
-  20% {
-    left: 100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
 
 #modalContent[style*="display: none"],
 #modalFooter[style*="display: none"] {
@@ -6696,6 +6614,40 @@ input:checked + .slider:before {
 /* Current date styling for shift items - border outline only for subtle emphasis */
 .shift-item.current-date {
   border: 2px solid var(--current-date-subtle) !important;
+}
+
+/* Current date separator styling - minimal shift card for current day marker */
+.shift-item.current-date-separator {
+  border: 2px solid var(--current-date) !important;
+  background: transparent !important; /* Transparent background */
+  backdrop-filter: none !important; /* Remove backdrop filter for transparency */
+  min-height: 60px; /* Reduced height for minimal card */
+}
+
+
+/* Hide shift details for current date separator since it only shows date */
+.shift-item.current-date-separator .shift-details {
+  display: none;
+}
+
+/* Style the dash in the amount section */
+.shift-item.current-date-separator .shift-total {
+  color: var(--current-date);
+  font-weight: var(--font-weight-bold);
+  text-shadow: 0 0 4px var(--current-date-glow);
+}
+
+/* Style the date text with blue color */
+.shift-item.current-date-separator .shift-date-number,
+.shift-item.current-date-separator .shift-date-weekday {
+  color: var(--current-date) !important;
+  text-shadow: 0 0 4px var(--current-date-glow);
+}
+
+/* Style the separator dot with blue color */
+.shift-item.current-date-separator .shift-date-separator::before {
+  color: var(--current-date) !important;
+  text-shadow: 0 0 4px var(--current-date-glow);
 }
 
 .shift-details {

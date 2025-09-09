@@ -5211,10 +5211,22 @@ export const app = {
         // Helper function to create current date separator HTML
         const createCurrentDateSeparator = () => {
             const dayNumber = today.getDate();
+            const monthName = this.MONTHS[today.getMonth()];
+            const weekday = this.WEEKDAYS[today.getDay()];
+            const currencySuffix = this.currencyFormat ? ' NOK' : ' kr';
+            
             return `
-                <div class="current-date-separator">
-                    <div class="current-date-separator-line"></div>
-                    <span class="current-date-separator-date">${dayNumber}.</span>
+                <div class="shift-item current-date-separator">
+                    <div class="shift-info">
+                        <div class="shift-date">
+                            <span class="shift-date-number">${dayNumber}. ${monthName}</span>
+                            <span class="shift-date-separator"></span>
+                            <span class="shift-date-weekday">${weekday}</span>
+                        </div>
+                    </div>
+                    <div class="shift-amount-wrapper">
+                        <div class="shift-total">——${currencySuffix}</div>
+                    </div>
                 </div>
             `;
         };
