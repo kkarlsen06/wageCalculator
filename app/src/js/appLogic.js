@@ -3960,6 +3960,7 @@ export const app = {
     showUIRefreshLoading() {
         // Add loading overlay to main content areas
         // Dashboard content container no longer exists - targeting individual elements instead
+        const mainContent = document.getElementById('main-content');
         const statsContent = document.querySelector('.statistics-content');
 
         if (mainContent && !mainContent.querySelector('.refresh-loading-overlay')) {
