@@ -1481,6 +1481,13 @@ body.chatbox-view .header {
 .stats-view .dashboard-month-nav {
   order: 10; /* Position after stats container (which has order: 1) */
   display: flex !important; /* Ensure visibility in stats view */
+  opacity: 0; /* Initially hidden to prevent flash */
+  transition: opacity 0.1s ease-out;
+}
+
+/* Show month picker after stats view is settled */
+.stats-view.stats-settled .dashboard-month-nav {
+  opacity: 1;
 }
 
 /* Move shifts section up in stats view */
@@ -3035,6 +3042,13 @@ body.chatbox-view .header {
 .stats-view .dashboard-month-nav {
   order: 10; /* Position after stats container (which has order: 1) */
   display: flex !important; /* Ensure visibility in stats view */
+  opacity: 0; /* Initially hidden to prevent flash */
+  transition: opacity 0.1s ease-out;
+}
+
+/* Show month picker after stats view is settled */
+.stats-view.stats-settled .dashboard-month-nav {
+  opacity: 1;
 }
 
 /* Move shifts section up in stats view */

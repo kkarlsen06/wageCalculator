@@ -10586,7 +10586,7 @@ export const app = {
         const body = document.body;
 
         // Remove all view classes
-        body.classList.remove('stats-view', 'chatbox-view', 'employees-view');
+        body.classList.remove('stats-view', 'stats-settled', 'chatbox-view', 'employees-view');
 
         // Clean up employee carousel performance resources
         if (this.employeeCarousel) {
@@ -10656,7 +10656,7 @@ export const app = {
         const body = document.body;
 
         // Remove all view classes
-        body.classList.remove('stats-view', 'chatbox-view', 'employees-view');
+        body.classList.remove('stats-view', 'stats-settled', 'chatbox-view', 'employees-view');
 
         // Update current view state
         this.currentView = 'dashboard';
@@ -10789,10 +10789,12 @@ export const app = {
         this.dashboardView = 'stats';
         this.applyDashboardView();
 
-        // After moving the stats card into place, reveal the month picker
-        // Delay to the next frame to avoid layout flash at the top
+        // Ensure month picker is visible immediately after layout changes
+        this.ensureMonthPickerVisibility();
+
+        // Add stats-settled class after layout to show month picker without flash
         requestAnimationFrame(() => {
-            this.ensureMonthPickerVisibility();
+            document.body.classList.add('stats-settled');
         });
 
         // Update the display with user's own data
