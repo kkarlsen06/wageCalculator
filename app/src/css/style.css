@@ -1303,8 +1303,8 @@ body {
   min-height: 64px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
-  /* Standard header padding - safe area only applied when needed */
-  padding-top: 12px;
+  /* Header padding with PWA safe area support for notch/status bar */
+  padding-top: max(12px, env(safe-area-inset-top));
   padding-left: 32px; /* Logo positioning: base padding + 16px for curvature */
   padding-right: 16px; /* Profile positioning: use base padding */
   /* Ensure header and profile elements are immediately visible */
@@ -2864,8 +2864,8 @@ body {
   min-height: 64px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
-  /* Standard header padding - safe area only applied when needed */
-  padding-top: 12px;
+  /* Header padding with PWA safe area support for notch/status bar */
+  padding-top: max(12px, env(safe-area-inset-top));
   padding-left: 32px; /* Logo positioning: base padding + 16px for curvature */
   padding-right: 16px; /* Profile positioning: use base padding */
   /* Ensure header and profile elements are immediately visible */
@@ -3732,7 +3732,7 @@ body.skeleton-active .month-nav-btn {
   /* STAT CARD STYLING */
   .total-card {
     padding: 12px 14px; /* Even more reduced padding */
-    border-radius: 18px; /* Smaller radius */
+    border-radius: 40px; /* Smaller radius */
     /* Natural height based on content - removed fixed height for better spacing */
     /* Consistent spacing system for very small mobile - proportional to screen size */
     --spacing-base: 5px;
@@ -3870,7 +3870,7 @@ body.skeleton-active .month-nav-btn {
   /* Landscape phones need even more aggressive space optimization */
   .total-card {
     padding: 10px 12px; /* Ultra-minimal padding for landscape */
-    border-radius: 16px;
+    border-radius: 40px;
     /* Natural height based on content - removed fixed height for better spacing */
     /* Consistent spacing system for landscape mobile - proportional to screen size */
     --spacing-base: 4px;
@@ -4322,7 +4322,7 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
 }
 
 .form-control {
-  background: var(--bg-tertiary);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
@@ -4536,7 +4536,7 @@ input[type="time"].form-control[value=""]:focus {
 
 .date-cell.disabled {
   /* Use same background as other-month cells in main calendar */
-  background: var(--bg-tertiary);
+  background: var(--bg-primary);
   opacity: 0.6;
   cursor: not-allowed;
   color: var(--text-tertiary);
@@ -5987,7 +5987,7 @@ input[type="time"].form-control[value=""]:focus {
 /* Tabs */
 .tab-nav {
   display: flex;
-  background: var(--bg-secondary);
+  background: var(--bg-card);
   border-radius: var(--border-radius) var(--border-radius);
   padding: 4px;
   gap: 4px;
@@ -6514,7 +6514,7 @@ input:checked + .slider:before {
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none; /* Remove border for consistent bevel effect */
-  border-radius: 24px;
+  border-radius: 36px;
   padding: 18px;
   display: flex;
   justify-content: space-between;
@@ -6927,7 +6927,7 @@ input:checked + .slider:before {
   background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 24px;
+  border-radius: 40px;
   padding: 30px;
   text-align: center;
   /* spacing now handled by parent gap */
@@ -7546,7 +7546,7 @@ input:checked + .slider:before {
   background: var(--bg-card); /* Same as next payroll card - semi-transparent background */
   backdrop-filter: blur(20px) saturate(180%); /* Same as next payroll card - enhanced blur with saturation */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 24px; /* Fully rounded edges */
+  border-radius: 30px; /* Fully rounded edges */
   padding: 18px;
   margin: 0;
   border: none;
@@ -7569,7 +7569,7 @@ input:checked + .slider:before {
   backdrop-filter: blur(20px) saturate(180%); /* Same as header - enhanced blur with saturation */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none; /* Remove border/outline */
-  border-radius: 24px; /* Fully rounded edges */
+  border-radius: 30px; /* Fully rounded edges */
   padding: 18px;
   margin: 0;
   /* Subtle 3D Bevel Effect - refined raised appearance matching total card, reduced intensity */
@@ -7644,7 +7644,7 @@ input:checked + .slider:before {
 
   .next-shift-card .shift-item {
     padding: 16px;
-    border-radius: 24px; /* Fully rounded edges */
+    border-radius: 30px; /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -7660,7 +7660,7 @@ input:checked + .slider:before {
 
   .next-payroll-card .payroll-item {
     padding: 16px;
-    border-radius: 24px; /* Fully rounded edges */
+    border-radius: 30px; /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -7686,7 +7686,7 @@ input:checked + .slider:before {
 
   .next-shift-card .shift-item {
     padding: 14px;
-    border-radius: 24px; /* Fully rounded edges */
+    border-radius: 30px; /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -7702,7 +7702,7 @@ input:checked + .slider:before {
 
   .next-payroll-card .payroll-item {
     padding: 14px;
-    border-radius: 24px; /* Fully rounded edges */
+    border-radius: 30px; /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -13126,7 +13126,9 @@ input[type="file"].form-control:focus {
   min-height: 48px; /* Reduced height for authentic pill appearance */
 }
 
-
+.tab-bar::after {
+  margin-bottom: 36px;
+}
 
 /* Individual tab button styling */
 .tab-btn {
