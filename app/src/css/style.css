@@ -4677,7 +4677,7 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
+  background: var(--bg-card-elevated);
   color: var(--text-primary);
   border: 1px solid var(--border);
   /* Subtle 3D Bevel Effect - consistent with other interactive elements */
@@ -6731,8 +6731,8 @@ input:checked + .slider:before {
 
 /* Login / Registration */
 .login-card {
-  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-  border-radius: 16px;
+  background: var(--bg-card);
+  border-radius: 40px;
   padding: 32px 28px 24px 28px;
   max-width: 350px;
   width: 100%;
@@ -6805,7 +6805,7 @@ input:checked + .slider:before {
 
 .login-card .btn-primary:hover,
 .login-card .btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: var(--bg-card-elevated);
   border-color: rgba(99, 102, 241, 0.4);
 }
 
@@ -9712,7 +9712,7 @@ input:checked + .slider:before {
 }
 
 .app-footer {
-  background: var(--bg-secondary);
+  background: var(--bg-card);
   border-top: 1px solid var(--border);
   padding: 20px;
   text-align: center;
@@ -11115,7 +11115,7 @@ body.chatbox-view .dashboard-content {
 
 /* Import file input - less attention-grabbing */
 input[type="file"].form-control {
-  background: var(--bg-tertiary);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-secondary);
   font-size: 14px;
@@ -13272,8 +13272,6 @@ input[type="file"].form-control:focus {
     min-height: 64px; /* Keep same as desktop for consistent appearance */
     margin: 0; /* Remove margins - spacing handled by parent gap */
     border-radius: 32px; /* Keep same radius as desktop */
-    /* Standard mobile padding without extra safe area spacing */
-    padding: 12px 16px;
   }
 
   .tab-bar-container {
@@ -15050,7 +15048,7 @@ body.chatbox-view .chatbox-container {
   padding: 12px 16px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--bg-tertiary);
+  background: var(--bg-card-elevated);
   color: var(--text-primary);
   font-size: 14px;
   transition: all var(--speed-normal) var(--ease-default);

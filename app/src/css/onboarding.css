@@ -43,7 +43,7 @@ body.onboarding-route {
 
 .form-group { margin-bottom: var(--space-4); }
 .form-label { display: block; font-size: var(--text-sm); font-weight: var(--font-weight-medium); color: var(--text-primary); margin-bottom: var(--space-1); }
-.form-control { width: 100%; padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--border-radius); background: var(--bg-secondary); color: var(--text-primary); font-size: var(--text-base); transition: all var(--speed-normal) var(--ease-default); }
+.form-control { width: 100%; padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--border-radius); background: var(--bg-card-elevated); color: var(--text-primary); font-size: var(--text-base); transition: all var(--speed-normal) var(--ease-default); }
 .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(74, 200, 255, 0.1); }
 .form-control.error { border-color: var(--error); background-color: rgba(239, 68, 68, 0.05); }
 .form-error { color: var(--error); font-size: var(--text-xs); margin-top: var(--space-1); display: none; }
@@ -92,7 +92,7 @@ input:checked + .slider:before { transform: translateX(26px); }
 .btn { padding: var(--space-3) var(--space-4); border: none; border-radius: var(--border-radius); font-size: var(--text-base); font-weight: var(--font-weight-medium); cursor: pointer; transition: all var(--speed-normal) var(--ease-default); display: flex; align-items: center; justify-content: center; gap: var(--space-1); min-height: 44px; min-width: 44px; }
 .btn-primary { background: var(--gradient-primary); color: white; }
 .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-.btn-secondary { background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-secondary { background: var(--bg-card-elevated); color: var(--text-secondary); border: 1px solid var(--border); }
 .btn-secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .skip-link { color: var(--text-tertiary); text-decoration: none; font-size: var(--text-sm); margin-left: auto; margin-right: var(--space-2); }
