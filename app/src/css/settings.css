@@ -447,6 +447,8 @@
   flex-wrap: nowrap;
   /* Remove inherited bottom margin to avoid double spacing with flex gap */
   margin-bottom: 0;
+  background: var(--bg-card-elevated);
+  border: 1px solid var(--border-profile);
 }
 /* Make the text side take remaining space and allow natural wrapping when needed */
 .settings-detail .switch-group span,

@@ -53,7 +53,7 @@ html.theme-dark {
   --primary-dark: #2A8FD6;
   --primary-light: #6AD4FF;
   --secondary: #00D4FF;
-  --accent: #00F5FF;
+  --accent: #2A8FD6;
 
   /* Semantic colors */
   --success: #00FF88;
@@ -62,11 +62,17 @@ html.theme-dark {
   --info: #3ABEF6;
 
   /* Background colors */
-  --bg-primary: #121212;
+  --bg-primary: #0e1014;
   --bg-secondary: rgba(26, 26, 26, 0.95);
   --bg-tertiary: rgba(30, 30, 30, 0.92);
-  --bg-card: rgba(30, 30, 30, 0.85);
+  --bg-card: rgba(19, 21, 26, 255);
   --bg-hover: rgba(42, 42, 42, 0.9);
+  --bg-card-elevated: rgba(24, 27, 34, 1.0);
+
+  /* Additional card variants for proper hierarchy */
+  --bg-card-elevated: rgba(24, 27, 34, 1.0);
+  --bg-card-secondary: rgba(20, 23, 28, 0.9);
+  --bg-card-subtle: rgba(16, 18, 22, 0.8);
 
   /* Text colors */
   --text-primary: #FFFFFF;
@@ -75,9 +81,10 @@ html.theme-dark {
   --text-muted: #808080;
 
   /* Border colors */
-  --border: #2a2a2f;
-  --border-light: #3a3a3f;
+  --border: #ffffff00;
+  --border-light: #3a3a3f00;
   --border-color: var(--border);
+  --border-profile: #181c23;
 
   /* Legacy support - map old colors to new system */
   --accent2: var(--primary);
@@ -110,6 +117,7 @@ html.theme-dark {
     rgba(58, 190, 246, 0.08) 100%);
   --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
   --gradient-neon: linear-gradient(135deg, #3ABEF6 0%, #00D4FF 100%);
+  --gradient-total-card: linear-gradient(135deg, #162f3a 0%, #13262f 25%, #13232b 50%, #121c25 75%, #10151d 100%);
 
   /* Skeleton loading colors - Dark theme */
   --skeleton-base: rgba(255, 255, 255, 0.06);
@@ -118,6 +126,12 @@ html.theme-dark {
     rgba(255, 255, 255, 0.06), 
     rgba(255, 255, 255, 0.16), 
     rgba(255, 255, 255, 0.06));
+}
+
+/* Dark theme specific: Apply custom gradient to total-card only */
+:root .total-card,
+html.theme-dark .total-card {
+  background: var(--gradient-total-card) !important;
 }
 
 /* Light Theme */
@@ -142,6 +156,11 @@ html.theme-light {
   --bg-card: rgba(255, 255, 255, 0.9);
   --bg-hover: rgba(241, 245, 249, 0.8);
 
+  /* Additional card variants for proper hierarchy */
+  --bg-card-elevated: rgba(255, 255, 255, 1.0);
+  --bg-card-secondary: rgba(248, 250, 252, 0.8);
+  --bg-card-subtle: rgba(248, 250, 252, 0.6);
+
   /* Text colors */
   --text-primary: #1F2937;
   --text-secondary: #4B5563;
@@ -152,6 +171,7 @@ html.theme-light {
   --border: #E5E7EB;
   --border-light: #D1D5DB;
   --border-color: var(--border);
+  --border-profile: #181c23;
 
   /* Legacy support - map old colors to new system */
   --accent2: var(--primary);
@@ -184,6 +204,10 @@ html.theme-light {
     rgba(37, 99, 235, 0.08) 100%);
   --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
   --gradient-neon: linear-gradient(135deg, #3B82F6 0%, #0EA5E9 100%);
+  --gradient-total-card: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 25%, #f8fafc 50%, #ffffff 75%, #f1f5f9 100%);
+
+  /* Light theme profile border */
+  --border-profile: #e2e8f0;
 
   /* Skeleton loading colors - Light theme */
   --skeleton-base: rgba(0, 0, 0, 0.08);
@@ -192,6 +216,51 @@ html.theme-light {
     rgba(0, 0, 0, 0.08), 
     rgba(0, 0, 0, 0.18), 
     rgba(0, 0, 0, 0.08));
+}
+
+/* Light theme specific: Apply custom gradient to total-card only */
+html.theme-light .total-card {
+  background: var(--gradient-total-card) !important;
+}
+
+/* Light theme specific: Better contrast for active tab buttons */
+html.theme-light .tab-btn.active {
+  box-shadow:
+    0 2px 8px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Light theme specific: Better contrast for profile button */
+html.theme-light .user-profile-btn {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: var(--text-primary) !important;
+}
+
+html.theme-light .user-profile-btn:hover {
+  background: #f1f5f9 !important;
+  border-color: #3B82F6 !important;
+  color: var(--text-primary) !important;
+}
+
+/* Settings modal card hierarchy for light theme */
+html.theme-light #settingsModal .modal-content {
+  background: var(--bg-card-elevated) !important;
+}
+
+html.theme-light #settingsModal .settings-section,
+html.theme-light #settingsModal .form-group {
+  background: var(--bg-card-secondary) !important;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+html.theme-light #settingsModal .settings-subsection {
+  background: var(--bg-card-subtle) !important;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
 }
 
 /* Theme transition animations */

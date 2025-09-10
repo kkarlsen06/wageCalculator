@@ -4180,9 +4180,6 @@ export const app = {
         // Calculate delta versus previous month for the total card label
         const deltaLabelEl = document.querySelector('.total-label');
         if (deltaLabelEl) {
-            // Update label to show if tax deduction is enabled
-            const baseLabel = this.taxDeductionEnabled ? 'Netto' : 'Brutto';
-
             const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
             const prevYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
             const prevShifts = this.shifts.filter(s =>
@@ -4204,9 +4201,9 @@ export const app = {
             if (Math.abs(deltaPercent) > 0.1) {
                 const arrow = deltaPercent >= 0 ? '▲' : '▼';
                 const prevMonthName = this.MONTHS[prevMonth - 1];
-                deltaLabelEl.textContent = `${baseLabel} ${arrow} ${Math.abs(deltaPercent).toFixed(1)}% vs. ${prevMonthName}`;
+                deltaLabelEl.textContent = `${arrow} ${Math.abs(deltaPercent).toFixed(1)}% vs. ${prevMonthName}`;
             } else {
-                deltaLabelEl.textContent = baseLabel;
+                deltaLabelEl.textContent = 'Denne måneden';
             }
         }
         // Oppdater fremdriftslinje for månedlig inntektsmål

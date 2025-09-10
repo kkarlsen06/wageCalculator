@@ -1268,7 +1268,7 @@ body {
   align-items: stretch;
   justify-content: flex-start;
   gap: 15px;
-  padding-top: 20px;
+  padding-top: 8px;
 }
 
 /* Mobile adjustments for app-container */
@@ -1278,7 +1278,7 @@ body {
     padding-right: 10px;
     max-width: 100%;
     gap: 12px; /* Smaller gap for mobile */
-    padding-top: 15px; /* Smaller top padding for mobile */
+    padding-top: 6px; /* Smaller top padding for mobile */
   }
 }
 
@@ -2843,7 +2843,7 @@ body {
   align-items: stretch;
   justify-content: flex-start;
   gap: 15px;
-  padding-top: 20px;
+  padding-top: 8px;
 }
 
 /* Mobile adjustments for app-container */
@@ -2853,7 +2853,7 @@ body {
     padding-right: 10px;
     max-width: 100%;
     gap: 12px; /* Smaller gap for mobile */
-    padding-top: 15px; /* Smaller top padding for mobile */
+    padding-top: 6px; /* Smaller top padding for mobile */
   }
 }
 
@@ -3295,7 +3295,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 }
 
 .user-profile-btn {
-  background: var(--bg-tertiary);
+  background: var(--border-profile);
   border: 1px solid var(--border);
   border-radius: 24px; /* Pill-like appearance to complement circular profile icon */
   color: var(--text-primary);
@@ -4176,7 +4176,7 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
 
 .month-nav-btn {
   /* Apply consistent button styling with circular shape - enlarged for better touch accessibility */
-  background: var(--bg-tertiary);
+  background: var(--bg-primary);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
@@ -13223,12 +13223,12 @@ input[type="file"].form-control:focus {
 
 /* Active tab button styling */
 .tab-btn.active {
-  background: rgba(0, 245, 255, 0.12);
+  background: var(--gradient-total-card);
   color: var(--text-primary);
   box-shadow:
-    0 2px 8px rgba(0, 245, 255, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    0 2px 8px rgba(22, 47, 58, 0.3),
+    inset 0 1px 0 rgba(19, 38, 47, 0.5),
+    inset 0 -1px 0 rgba(16, 21, 29, 0.8);
 }
 
 /* Ensure active buttons inside the tab bar do not gain borders from generic tab styles */
@@ -18082,7 +18082,7 @@ body.chatbox-view .chatbox-container {
 /* ===== Settings Section + Cards (minimal) ===== */
 .hidden { display: none !important; }
 .settings-section {
-  background: var(--bg-secondary);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--border-radius);
   padding: var(--space-2);
@@ -18100,7 +18100,7 @@ body.chatbox-view .chatbox-container {
 }
 
 .setting-card {
-  background: var(--bg-card);
+  background: var(--bg-card-elevated);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: var(--space-2);
