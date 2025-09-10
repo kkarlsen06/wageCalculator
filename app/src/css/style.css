@@ -6603,7 +6603,9 @@ input:checked + .slider:before {
   border: 2px solid var(--current-date) !important;
   background: transparent !important; /* Transparent background */
   backdrop-filter: none !important; /* Remove backdrop filter for transparency */
+  border-radius: 40px; /* Match shift card border radius */
   min-height: 60px; /* Reduced height for minimal card */
+  padding: 18px 24px; /* Add more generous insets for better corner clearance */
 }
 
 
@@ -6701,6 +6703,9 @@ input:checked + .slider:before {
   flex-direction: column;
   align-items: flex-end;
   gap: 8px; /* Increase gap to match shift-info for alignment */
+  padding-right: 12px; /* Add inset from right corner */
+  padding-top: 6px; /* Add inset from top corner */
+  padding-bottom: 6px; /* Add inset from bottom corner */
   margin-left: 16px;
   flex-shrink: 0;
 }
@@ -7546,7 +7551,7 @@ input:checked + .slider:before {
   background: var(--bg-card); /* Same as next payroll card - semi-transparent background */
   backdrop-filter: blur(20px) saturate(180%); /* Same as next payroll card - enhanced blur with saturation */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 30px; /* Fully rounded edges */
+  border-radius: 40px; /* Fully rounded edges */
   padding: 18px;
   margin: 0;
   border: none;
@@ -7569,7 +7574,7 @@ input:checked + .slider:before {
   backdrop-filter: blur(20px) saturate(180%); /* Same as header - enhanced blur with saturation */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none; /* Remove border/outline */
-  border-radius: 30px; /* Fully rounded edges */
+  border-radius: 40px; /* Fully rounded edges */
   padding: 18px;
   margin: 0;
   /* Subtle 3D Bevel Effect - refined raised appearance matching total card, reduced intensity */
@@ -7644,7 +7649,7 @@ input:checked + .slider:before {
 
   .next-shift-card .shift-item {
     padding: 16px;
-    border-radius: 30px; /* Fully rounded edges */
+    border-radius: 40px; /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -7660,7 +7665,7 @@ input:checked + .slider:before {
 
   .next-payroll-card .payroll-item {
     padding: 16px;
-    border-radius: 30px; /* Fully rounded edges */
+    border-radius: 40px; /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -7686,7 +7691,7 @@ input:checked + .slider:before {
 
   .next-shift-card .shift-item {
     padding: 14px;
-    border-radius: 30px; /* Fully rounded edges */
+    border-radius: 40px; /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -7702,7 +7707,7 @@ input:checked + .slider:before {
 
   .next-payroll-card .payroll-item {
     padding: 14px;
-    border-radius: 30px; /* Fully rounded edges */
+    border-radius: 40px; /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -11320,7 +11325,7 @@ input[type="file"].form-control:focus {
   justify-content: center;
 
   /* Create flat left edges, rounded right edge (reversed due to 180deg rotation) */
-  border-radius: 0 24px 24px 0;
+  border-radius: 0 40px 40px 0;
 
   /* Text rotation - bottom facing inward */
   writing-mode: vertical-rl;
@@ -11351,7 +11356,7 @@ input[type="file"].form-control:focus {
   justify-content: center;
 
   /* Create flat left edges, rounded right edge (reversed due to 180deg rotation) */
-  border-radius: 0 24px 24px 0;
+  border-radius: 0 40px 40px 0;
 
   /* Text rotation - bottom facing inward */
   writing-mode: vertical-rl;
@@ -11362,21 +11367,21 @@ input[type="file"].form-control:focus {
 /* Responsive border radius for neste badge to match card */
 @media (max-width: 480px) {
   .next-shift-badge {
-    border-radius: 0 20px 20px 0;
+    border-radius: 0 40px 40px 0;
   }
 
   .next-payroll-badge {
-    border-radius: 0 20px 20px 0;
+    border-radius: 0 40px 40px 0;
   }
 }
 
 @media (max-width: 360px) {
   .next-shift-badge {
-    border-radius: 0 16px 16px 0;
+    border-radius: 0 40px 40px 0;
   }
 
   .next-payroll-badge {
-    border-radius: 0 16px 16px 0;
+    border-radius: 0 40px 40px 0;
   }
 }
 
@@ -11529,11 +11534,17 @@ input[type="file"].form-control:focus {
 /* Adjust shift-info padding to make room for the badge */
 .next-shift-card .shift-item .shift-info {
   padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
+  padding-right: 12px; /* Add inset from right corner */
+  padding-top: 6px; /* Add inset from top corner */
+  padding-bottom: 6px; /* Add inset from bottom corner */
 }
 
 /* Adjust payroll-info padding to make room for the badge */
 .next-payroll-card .payroll-item .shift-info {
   padding-left: 32px; /* Add extra padding to prevent overlap with badge (32px width + 6px spacing) */
+  padding-right: 12px; /* Add inset from right corner */
+  padding-top: 6px; /* Add inset from top corner */
+  padding-bottom: 6px; /* Add inset from bottom corner */
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -11547,6 +11558,9 @@ input[type="file"].form-control:focus {
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
+  padding-right: 12px; /* Add inset from right corner */
+  padding-top: 6px; /* Add inset from top corner */
+  padding-bottom: 6px; /* Add inset from bottom corner */
   margin-left: 16px;
   flex-shrink: 0;
 }
