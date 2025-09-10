@@ -1272,13 +1272,19 @@ body {
 }
 
 /* Mobile adjustments for app-container */
+@media (max-width: 768px) {
+  .app-container {
+    padding-top: 8px; /* Keep consistent spacing at mobile breakpoint */
+  }
+}
+
 @media (max-width: 480px) {
   .app-container {
     padding-left: 10px;
     padding-right: 10px;
     max-width: 100%;
     gap: 15px; /* Keep same gap as desktop to maintain consistent spacing */
-    padding-top: 12px; /* Increased from 6px for better tab bar spacing */
+    padding-top: 8px; /* Keep consistent spacing for small mobile */
   }
 }
 
@@ -1287,7 +1293,7 @@ body {
   background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
+  padding: 12px 16px; /* Standard header padding */
   border-bottom: 1px solid var(--border); /* More transparent border */
   border-radius: 32px;
   margin: 0; /* Remove margins - spacing handled by parent gap */
@@ -1297,10 +1303,10 @@ body {
   min-height: 64px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
-  /* iOS PWA safe area handling for header */
-  padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
-  padding-left: max(32px, calc(16px + env(safe-area-inset-left) + 16px)); /* Logo positioning: base padding + 16px for curvature */
-  padding-right: max(16px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
+  /* Standard header padding - safe area only applied when needed */
+  padding-top: 12px;
+  padding-left: 32px; /* Logo positioning: base padding + 16px for curvature */
+  padding-right: 16px; /* Profile positioning: use base padding */
   /* Ensure header and profile elements are immediately visible */
   opacity: 1 !important;
   visibility: visible !important;
@@ -2820,13 +2826,19 @@ body {
 }
 
 /* Mobile adjustments for app-container */
+@media (max-width: 768px) {
+  .app-container {
+    padding-top: 8px; /* Keep consistent spacing at mobile breakpoint */
+  }
+}
+
 @media (max-width: 480px) {
   .app-container {
     padding-left: 10px;
     padding-right: 10px;
     max-width: 100%;
     gap: 15px; /* Keep same gap as desktop to maintain consistent spacing */
-    padding-top: 12px; /* Increased from 6px for better tab bar spacing */
+    padding-top: 8px; /* Keep consistent spacing for small mobile */
   }
 }
 
@@ -2835,7 +2847,7 @@ body {
   background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
+  padding: 12px 16px; /* Standard header padding */
   border-bottom: 1px solid var(--border); /* More transparent border */
   border-radius: 32px;
   margin: 0; /* Remove margins - spacing handled by parent gap */
@@ -2845,10 +2857,10 @@ body {
   min-height: 64px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
-  /* iOS PWA safe area handling for header */
-  padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
-  padding-left: max(32px, calc(16px + env(safe-area-inset-left) + 16px)); /* Logo positioning: base padding + 16px for curvature */
-  padding-right: max(16px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
+  /* Standard header padding - safe area only applied when needed */
+  padding-top: 12px;
+  padding-left: 32px; /* Logo positioning: base padding + 16px for curvature */
+  padding-right: 16px; /* Profile positioning: use base padding */
   /* Ensure header and profile elements are immediately visible */
   opacity: 1 !important;
   visibility: visible !important;
@@ -8574,10 +8586,8 @@ input:checked + .slider:before {
     min-height: 64px; /* Keep same as desktop for consistent appearance */
     margin: 0; /* Remove margins - spacing handled by parent gap */
     border-radius: 32px; /* Keep same radius as desktop */
-    /* Keep same padding as desktop for consistent spacing */
-    padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
-    padding-left: max(32px, calc(16px + env(safe-area-inset-left) + 16px)); /* Logo positioning: base padding + 16px for curvature */
-    padding-right: max(16px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
+    /* Keep logo positioning consistent - preserve left padding */
+    padding: 12px 16px 12px 32px;
   }
 
   .header-info {
@@ -10738,11 +10748,6 @@ body.chatbox-view .dashboard-content {
 
 /* Ensure proper layout on mobile */
 @media (max-width: 768px) {
-  .dashboard-content {
-    padding-top: 15px; /* Restored to original value after fixing tab-bar consistency */
-    padding-bottom: 15px;
-  }
-
   /* Remove extra padding for dashboard month navigation - spacing handled by gap system */
   .dashboard-content .month-navigation-container {
     padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
@@ -10782,12 +10787,6 @@ body.chatbox-view .dashboard-content {
 
 /* Large mobile devices and tablets - ensure month navigation remains visible */
 @media (min-width: 481px) and (max-width: 768px) {
-  .dashboard-content {
-    padding-top: 12px; /* Restored tablet padding since tab-bar is now standalone */
-    padding-bottom: 12px;
-    gap: 16px;
-  }
-
   .dashboard-content .month-navigation-container {
     padding-top: 0; /* Remove padding - spacing handled by dashboard gap system */
     padding-bottom: 0; /* Remove padding - spacing handled by dashboard gap system */
@@ -13263,10 +13262,8 @@ input[type="file"].form-control:focus {
     min-height: 64px; /* Keep same as desktop for consistent appearance */
     margin: 0; /* Remove margins - spacing handled by parent gap */
     border-radius: 32px; /* Keep same radius as desktop */
-    /* Keep same padding as desktop for consistent spacing */
-    padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
-    padding-left: max(32px, calc(16px + env(safe-area-inset-left) + 16px)); /* Logo positioning: base padding + 16px for curvature */
-    padding-right: max(16px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
+    /* Standard mobile padding without extra safe area spacing */
+    padding: 12px 16px;
   }
 
   .tab-bar-container {

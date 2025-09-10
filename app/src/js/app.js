@@ -115,8 +115,10 @@ function setAppHeight() {
     return;
   }
 
-  // Use visual viewport for better mobile browser UI handling
-  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  // Use static viewport height on mobile to prevent content pushdown when browser UI appears
+  // Only use visualViewport for desktop or when explicitly needed for keyboard handling
+  const isMobile = window.innerWidth <= 768;
+  const h = isMobile ? window.innerHeight : (window.visualViewport ? window.visualViewport.height : window.innerHeight);
   document.documentElement.style.setProperty('--app-height', h + 'px');
 
   // Also set dynamic viewport height for modern browsers
