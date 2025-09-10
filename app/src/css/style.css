@@ -12349,12 +12349,6 @@ input[type="file"].form-control:focus {
 
 /* Responsive adjustments for weekly hours chart */
 @media (max-width: 480px) {
-  .weekly-hours-chart-card {
-    padding: 14px;
-    border-radius: 40px;
-    min-height: 220px;
-  }
-
   .chart-cards-container {
     gap: 8px;
   }
