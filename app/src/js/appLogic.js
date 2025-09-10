@@ -3447,11 +3447,21 @@ export const app = {
 
                 // Move the chart to the dashboard
                 statsContainer.appendChild(weeklyHoursChart);
-                // Insert as first child after tab-bar
-                const tabBarContainer = appContainer.querySelector('.tab-bar-container');
-                if (tabBarContainer && tabBarContainer.nextSibling) {
-                    appContainer.insertBefore(statsContainer, tabBarContainer.nextSibling);
+                // Insert the stats container into the dashboard content, after the month picker
+                const dashboardContent = appContainer.querySelector('.dashboard-content');
+                const monthNav = dashboardContent ? dashboardContent.querySelector('.dashboard-month-nav') : null;
+                
+                if (monthNav && monthNav.nextSibling) {
+                    // Insert after the month picker within dashboard-content
+                    dashboardContent.insertBefore(statsContainer, monthNav.nextSibling);
+                } else if (monthNav) {
+                    // Append after the month picker within dashboard-content
+                    dashboardContent.appendChild(statsContainer);
+                } else if (dashboardContent) {
+                    // Fallback: append to dashboard content
+                    dashboardContent.appendChild(statsContainer);
                 } else {
+                    // Final fallback: append to app container
                     appContainer.appendChild(statsContainer);
                 }
             }
