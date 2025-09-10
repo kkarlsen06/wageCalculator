@@ -7100,6 +7100,8 @@ export const app = {
                 bonusBreakdownHtml = `
                 <div class="detail-section">
                     <div class="detail-label">Tillegg</div>
+                </div>
+                <div class="detail-section">
                     <div class="bonus-breakdown">
                         ${bonusBreakdown.breakdown.map(item => `
                             <div class="bonus-item">
@@ -7157,7 +7159,7 @@ export const app = {
             left: 0;
             right: 0;
             padding: 16px 24px;
-            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            background: var(--bg-card);
             border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-between;

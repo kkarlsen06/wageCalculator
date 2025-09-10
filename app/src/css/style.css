@@ -9253,7 +9253,7 @@ input:checked + .slider:before {
 .modal-bottom-actions .modal-close-bottom,
 .shift-actions .modal-close-bottom,
 .modal-fixed-footer .modal-close-bottom {
-  background: rgba(255, 102, 153, 0.15);
+  background: var(--bg-card);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 102, 153, 0.4);
