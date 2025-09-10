@@ -1277,8 +1277,8 @@ body {
     padding-left: 10px;
     padding-right: 10px;
     max-width: 100%;
-    gap: 12px; /* Smaller gap for mobile */
-    padding-top: 6px; /* Smaller top padding for mobile */
+    gap: 15px; /* Keep same gap as desktop to maintain consistent spacing */
+    padding-top: 12px; /* Increased from 6px for better tab bar spacing */
   }
 }
 
@@ -1365,12 +1365,7 @@ body {
   display: block;
 }
 
-/* Dashboard View Toggle Styles */
-.stats-view .dashboard-content {
-  /* In stats view, restructure dashboard to show only stats */
-  gap: 20px;
-  margin-bottom: 32px;
-}
+/* Dashboard View Toggle Styles - Remove dashboard-content container dependency */
 
 /* Hide statistics section by default - only show stats card when Stats button is pressed */
 .statistics-section {
@@ -1383,33 +1378,18 @@ body {
 }
 
 /* Hide all original dashboard cards in stats view with smooth transition */
-body.stats-view .dashboard-content .total-card,
-body.stats-view .dashboard-content .next-shift-card,
-body.stats-view .dashboard-content .next-payroll-card {
+body.stats-view .total-card,
+body.stats-view .next-shift-card,
+body.stats-view .next-payroll-card {
   display: none !important;
 }
 
-/* Chatbox View Toggle Styles - Proper spacing without bottom gaps */
-.chatbox-view .dashboard-content {
-  /* In chatbox view, proper spacing from header but no bottom gaps */
-  gap: 20px; /* Consistent gap with other views for proper month picker spacing */
-  margin: 0; /* No margins */
-  padding: 20px 0 0 0; /* Top padding for header spacing, no bottom padding */
-  /* Simple flexbox layout that fills available space */
-  display: flex;
-  flex-direction: column;
-  /* Fill available viewport height but don't create bottom space */
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100vh;
-  min-height: 100dvh;
-  box-sizing: border-box;
-}
+/* Chatbox View Toggle Styles - Remove dashboard-content container dependency */
 
 /* Hide all original dashboard cards in chatbox view with smooth transition */
-body.chatbox-view .dashboard-content .total-card,
-body.chatbox-view .dashboard-content .next-shift-card,
-body.chatbox-view .dashboard-content .next-payroll-card {
+body.chatbox-view .total-card,
+body.chatbox-view .next-shift-card,
+body.chatbox-view .next-payroll-card {
   display: none !important;
 }
 
@@ -1491,11 +1471,9 @@ body.chatbox-view .header {
   transition: none; /* Immediate hiding */
 }
 
-/* Position month picker prominently in stats view */
+/* Month picker positioning in stats view - place after stats container */
 .stats-view .dashboard-month-nav {
-  order: 2; /* Position after stats container */
-  margin-top: 20px;
-  margin-bottom: 20px;
+  order: 10; /* Position after stats container (which has order: 1) */
   display: flex !important; /* Ensure visibility in stats view */
 }
 
@@ -1627,12 +1605,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   padding: 16px; /* Essential padding for readability */
 }
 
-/* Ensure dashboard content uses flexbox ordering in both views */
-.stats-view .dashboard-content,
-.chatbox-view .dashboard-content {
-  display: flex;
-  flex-direction: column;
-}
+/* Dashboard flexbox ordering handled by app-container - no longer needed */
 
 /* Ensure proper spacing between dashboard and shifts in stats view */
 .stats-view .dashboard-section {
@@ -2852,8 +2825,8 @@ body {
     padding-left: 10px;
     padding-right: 10px;
     max-width: 100%;
-    gap: 12px; /* Smaller gap for mobile */
-    padding-top: 6px; /* Smaller top padding for mobile */
+    gap: 15px; /* Keep same gap as desktop to maintain consistent spacing */
+    padding-top: 12px; /* Increased from 6px for better tab bar spacing */
   }
 }
 
@@ -2940,12 +2913,7 @@ body {
   display: block;
 }
 
-/* Dashboard View Toggle Styles */
-.stats-view .dashboard-content {
-  /* In stats view, restructure dashboard to show only stats */
-  gap: 20px;
-  margin-bottom: 32px;
-}
+/* Dashboard View Toggle Styles - Remove dashboard-content container dependency */
 
 /* Hide statistics section by default - only show stats card when Stats button is pressed */
 .statistics-section {
@@ -2958,33 +2926,18 @@ body {
 }
 
 /* Hide all original dashboard cards in stats view with smooth transition */
-body.stats-view .dashboard-content .total-card,
-body.stats-view .dashboard-content .next-shift-card,
-body.stats-view .dashboard-content .next-payroll-card {
+body.stats-view .total-card,
+body.stats-view .next-shift-card,
+body.stats-view .next-payroll-card {
   display: none !important;
 }
 
-/* Chatbox View Toggle Styles - Proper spacing without bottom gaps */
-.chatbox-view .dashboard-content {
-  /* In chatbox view, proper spacing from header but no bottom gaps */
-  gap: 20px; /* Consistent gap with other views for proper month picker spacing */
-  margin: 0; /* No margins */
-  padding: 20px 0 0 0; /* Top padding for header spacing, no bottom padding */
-  /* Simple flexbox layout that fills available space */
-  display: flex;
-  flex-direction: column;
-  /* Fill available viewport height but don't create bottom space */
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100vh;
-  min-height: 100dvh;
-  box-sizing: border-box;
-}
+/* Chatbox View Toggle Styles - Remove dashboard-content container dependency */
 
 /* Hide all original dashboard cards in chatbox view with smooth transition */
-body.chatbox-view .dashboard-content .total-card,
-body.chatbox-view .dashboard-content .next-shift-card,
-body.chatbox-view .dashboard-content .next-payroll-card {
+body.chatbox-view .total-card,
+body.chatbox-view .next-shift-card,
+body.chatbox-view .next-payroll-card {
   display: none !important;
 }
 
@@ -3066,11 +3019,9 @@ body.chatbox-view .header {
   transition: none; /* Immediate hiding */
 }
 
-/* Position month picker prominently in stats view */
+/* Month picker positioning in stats view - place after stats container */
 .stats-view .dashboard-month-nav {
-  order: 2; /* Position after stats container */
-  margin-top: 20px;
-  margin-bottom: 20px;
+  order: 10; /* Position after stats container (which has order: 1) */
   display: flex !important; /* Ensure visibility in stats view */
 }
 
@@ -3202,12 +3153,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   padding: 16px; /* Essential padding for readability */
 }
 
-/* Ensure dashboard content uses flexbox ordering in both views */
-.stats-view .dashboard-content,
-.chatbox-view .dashboard-content {
-  display: flex;
-  flex-direction: column;
-}
+/* Dashboard flexbox ordering handled by app-container - no longer needed */
 
 /* Ensure proper spacing between dashboard and shifts in stats view */
 .stats-view .dashboard-section {
@@ -3481,15 +3427,9 @@ body.skeleton-active .month-nav-btn {
   transition: none; /* No transitions - immediate appearance */
 }
 
-/* Month navigation container when positioned in dashboard - UPDATED: Always visible across all views */
-.dashboard-content .month-navigation-container {
-  display: flex !important; /* Always show dashboard navigation across all views */
-}
+/* Month navigation handling moved to individual selectors - no longer needed */
 
 /* Ensure dashboard month navigation remains visible in all view states */
-.stats-view .dashboard-content .month-navigation-container,
-.chatbox-view .dashboard-content .month-navigation-container,
-.employees-view .dashboard-content .month-navigation-container,
 .stats-view .dashboard-month-nav,
 .chatbox-view .dashboard-month-nav,
 .employees-view .dashboard-month-nav {
@@ -3502,11 +3442,7 @@ body.skeleton-active .month-nav-btn {
   width: auto !important;
 }
 
-/* Remove pseudo-elements approach and use direct spacing */
-.dashboard-content .month-navigation-container::before,
-.dashboard-content .month-navigation-container::after {
-  display: none; /* Disable pseudo-element approach */
-}
+/* Pseudo-element approach no longer needed */
 
 /* Ensure the month navigation itself doesn't grow */
 .dashboard-content .month-navigation {
@@ -3668,7 +3604,7 @@ body.skeleton-active .month-nav-btn {
 
   /* Reduce dashboard content gaps and padding */
   .dashboard-content {
-    padding-top: 10px; /* Restored small mobile padding since tab-bar is now standalone */
+    padding-top: 15px; /* Restored to original value after fixing tab-bar consistency */
     padding-bottom: 10px;
     gap: 12px; /* Reduced from 20px */
   }
@@ -3814,7 +3750,7 @@ body.skeleton-active .month-nav-btn {
 
   /* Dashboard spacing */
   .dashboard-content {
-    padding-top: 8px;
+    padding-top: 12px; /* Increased from 8px for better spacing */
     padding-bottom: 8px;
     gap: 10px; /* Minimal gap */
   }
@@ -3948,7 +3884,7 @@ body.skeleton-active .month-nav-btn {
   }
 
   .dashboard-content {
-    padding-top: 6px; /* Restored landscape padding since tab-bar is now standalone */
+    padding-top: 10px; /* Increased from 6px for better spacing */
     padding-bottom: 6px;
     gap: 8px; /* Very tight spacing */
   }
@@ -6041,7 +5977,7 @@ input[type="time"].form-control[value=""]:focus {
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium); /* 500 - Moderate emphasis for tabs */
-  border-radius: 16px;
+  border-radius: 40px;
   transition: all var(--speed-normal) var(--ease-default);
   position: relative;
   letter-spacing: 0.01em; /* Slight positive tracking for tab readability */
@@ -6970,14 +6906,8 @@ input:checked + .slider:before {
   text-align: center;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  border: none; /* Remove border/outline */
+  border: var(--border-profile); /* Remove border/outline */
   /* Subtle 3D Bevel Effect - refined raised appearance with reduced intensity */
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Reduced top inner highlight (was 0.1) */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Reduced bottom inner shadow (was 0.2) */
-    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Reduced left inner highlight (was 0.05) */
-    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Reduced right inner shadow (was 0.1) */
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -8640,14 +8570,13 @@ input:checked + .slider:before {
 /* Mobile optimizations for header */
 @media (max-width: 768px) {
   .header {
-    /* Significantly reduce header height on mobile */
-    padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
-    min-height: 60px; /* Reduced from 80px to 60px */
+    /* Keep consistent header height on mobile to prevent gap issues */
+    min-height: 64px; /* Keep same as desktop for consistent appearance */
     margin: 0; /* Remove margins - spacing handled by parent gap */
-    border-radius: 30px; /* Adjust radius for smaller height */
-    /* Adjust safe area handling for reduced height */
+    border-radius: 32px; /* Keep same radius as desktop */
+    /* Keep same padding as desktop for consistent spacing */
     padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
-    padding-left: max(30px, calc(16px + env(safe-area-inset-left) + 14px)); /* Logo positioning: base padding + 14px for curvature */
+    padding-left: max(32px, calc(16px + env(safe-area-inset-left) + 16px)); /* Logo positioning: base padding + 16px for curvature */
     padding-right: max(16px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
   }
 
@@ -10810,7 +10739,7 @@ body.chatbox-view .dashboard-content {
 /* Ensure proper layout on mobile */
 @media (max-width: 768px) {
   .dashboard-content {
-    padding-top: 15px; /* Restored mobile padding since tab-bar is now standalone */
+    padding-top: 15px; /* Restored to original value after fixing tab-bar consistency */
     padding-bottom: 15px;
   }
 
@@ -11618,7 +11547,6 @@ input[type="file"].form-control:focus {
   border-radius: 24px;
   padding: 16px;
   border: 1px solid var(--border); /* More transparent border matching header */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   /* spacing now handled by parent gap */
   margin-top: 0;
   flex: 1;
@@ -13204,7 +13132,7 @@ input[type="file"].form-control:focus {
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  border-radius: 16px; /* Slightly smaller than container to show pill curves */
+  border-radius: 40px; /* Match the tab-bar pill shape */
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
@@ -13282,10 +13210,10 @@ input[type="file"].form-control:focus {
   }
 
   .tab-bar {
-    /* Increase horizontal padding to match effective vertical spacing */
-    padding: 3px 6px;
-    gap: 1px;
-    min-height: 44px; /* Reduced mobile height for pill appearance */
+    /* Keep consistent padding for uniform appearance */
+    padding: 4px;
+    gap: 2px;
+    min-height: 48px; /* Keep desktop height for consistent appearance */
     /* Keep desktop pill radius on mobile for visual consistency */
     border-radius: 40px;
   }
@@ -13301,15 +13229,15 @@ input[type="file"].form-control:focus {
   }
   /* Preserve layout height when real tab bar is hidden */
   body.skeleton-active .tab-bar-container {
-    min-height: 44px; /* Match mobile min-height of real tab bar */
+    min-height: 48px; /* Match desktop height for consistency */
   }
 
   .tab-btn {
     padding: 4px 8px; /* Reduced for mobile pill proportions */
     gap: 4px;
-    min-height: 32px; /* Reduced to fit mobile pill height */
+    min-height: 36px; /* Increased from 32px for better proportions */
     /* Match desktop button radius to align with container */
-    border-radius: 16px;
+    border-radius: 40px;
   }
 
   .tab-icon-badge {
@@ -13331,14 +13259,14 @@ input[type="file"].form-control:focus {
 /* Extra small mobile devices */
 @media (max-width: 480px) {
   .header {
-    /* Header for very small screens */
-    padding: 10px max(15px, env(safe-area-inset-right)) 10px max(15px, env(safe-area-inset-left)); /* Match small mobile padding pattern */
-    min-height: 50px; /* Even smaller minimum height */
+    /* Keep consistent header height and styling on all screen sizes */
+    min-height: 64px; /* Keep same as desktop for consistent appearance */
     margin: 0; /* Remove margins - spacing handled by parent gap */
-    border-radius: 25px; /* Adjust radius for smaller height */
-    padding-top: max(10px, calc(10px + env(safe-area-inset-top)));
-    padding-left: max(25px, calc(15px + env(safe-area-inset-left) + 10px)); /* Logo positioning: base padding + 10px for curvature */
-    padding-right: max(15px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
+    border-radius: 32px; /* Keep same radius as desktop */
+    /* Keep same padding as desktop for consistent spacing */
+    padding-top: max(12px, calc(12px + env(safe-area-inset-top)));
+    padding-left: max(32px, calc(16px + env(safe-area-inset-left) + 16px)); /* Logo positioning: base padding + 16px for curvature */
+    padding-right: max(16px, env(safe-area-inset-right)); /* Profile positioning: use base padding */
   }
 
   .tab-bar-container {
@@ -13347,9 +13275,9 @@ input[type="file"].form-control:focus {
   }
 
   .tab-bar {
-    min-height: 40px;
-    /* Increase horizontal padding to match effective vertical spacing */
-    padding: 2px 6px;
+    min-height: 48px; /* Keep desktop height for consistency */
+    /* Keep consistent padding for uniform appearance */
+    padding: 4px;
     /* Keep desktop pill radius even on very small screens */
     border-radius: 40px;
   }
@@ -13365,16 +13293,16 @@ input[type="file"].form-control:focus {
   }
   /* Preserve layout height when real tab bar is hidden */
   body.skeleton-active .tab-bar-container {
-    min-height: 40px; /* Match extra small min-height of real tab bar */
+    min-height: 48px; /* Match desktop height for consistency */
   }
 
   .tab-btn {
     padding: 3px 6px; /* Minimal padding for very small pill */
     gap: 3px;
     flex-direction: row; /* Changed from column to row for horizontal layout */
-    min-height: 28px; /* Reduced to fit very small pill height */
+    min-height: 32px; /* Increased from 28px for better touch targets */
     /* Match desktop button radius for consistency */
-    border-radius: 16px;
+    border-radius: 40px;
   }
 
   .tab-icon-badge {
@@ -13436,7 +13364,7 @@ input[type="file"].form-control:focus {
 
 /* Employee work summary table */
 .employee-work-summary {
-  background: var(--bg-tertiary);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 24px;
   overflow: hidden; /* Ensure inner table/borders respect rounded corners */

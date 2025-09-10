@@ -168,10 +168,10 @@ html.theme-light {
   --text-muted: #9CA3AF;
 
   /* Border colors */
-  --border: #E5E7EB;
-  --border-light: #D1D5DB;
+  --border: #e5e7eb18;
+  --border-light: #d1d5db1e;
   --border-color: var(--border);
-  --border-profile: #181c23;
+  --border-profile: #d1d5db;
 
   /* Legacy support - map old colors to new system */
   --accent2: var(--primary);
@@ -221,13 +221,19 @@ html.theme-light {
 /* Light theme specific: Apply custom gradient to total-card only */
 html.theme-light .total-card {
   background: var(--gradient-total-card) !important;
+  box-shadow: none !important;
+  border: 2px solid var(--border-profile) !important;
+}
+
+html.theme-light .total-card:hover {
+  box-shadow: none !important;
 }
 
 /* Light theme specific: Better contrast for active tab buttons */
 html.theme-light .tab-btn.active {
-  box-shadow:
-    0 2px 8px rgba(37, 99, 235, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+  border: 2px solid var(--border-profile) !important;
+  background: var(--bg-card-elevated) !important;
 }
 
 /* Light theme specific: Better contrast for profile button */
@@ -242,6 +248,46 @@ html.theme-light .user-profile-btn:hover {
   border-color: #3B82F6 !important;
   color: var(--text-primary) !important;
 }
+
+/* Light theme specific: Remove box shadows and add thicker borders for dashboard elements */
+html.theme-light .header {
+  box-shadow: none !important;
+  border: 2px solid var(--border-profile) !important;
+}
+
+html.theme-light .tab-bar {
+  box-shadow: none !important;
+  border: 2px solid var(--border-profile) !important;
+}
+
+html.theme-light .floating-action-bar {
+  box-shadow: none !important;
+  border: 2px solid var(--border-profile) !important;
+}
+
+html.theme-light .next-shift-card .shift-item.active {
+  box-shadow: none !important;
+  border: 2px solid var(--border-profile) !important;
+}
+
+html.theme-light .next-shift-card .shift-item {
+  border: 2px solid var(--border-profile) !important;
+}
+
+html.theme-light .progress-card {
+  box-shadow: none !important;
+  border: 2px solid var(--border-profile) !important;
+}
+
+html.theme-light .progress-card:hover {
+  box-shadow: none !important;
+}
+
+html.theme-light .next-payroll-card .payroll-item {
+  box-shadow: none !important;
+  border: 2px solid var(--border-profile) !important;
+}
+
 
 /* Settings modal card hierarchy for light theme */
 html.theme-light #settingsModal .modal-content {

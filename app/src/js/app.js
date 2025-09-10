@@ -372,7 +372,7 @@ function handleMobileKeyboard() {
 
     const chatboxInput = document.getElementById('chatboxInput');
     const chatboxLog = document.getElementById('chatboxLog');
-    const dashboardContent = document.querySelector('.chatbox-view .dashboard-content');
+    // Dashboard content container no longer exists - targeting individual elements instead
 
     if (!chatboxInput || !chatboxLog) return;
 
@@ -425,7 +425,7 @@ function handleMobileKeyboard() {
     if (!document.body.classList.contains('chatbox-view')) return;
 
     const chatboxLog = document.getElementById('chatboxLog');
-    const dashboardContent = document.querySelector('.chatbox-view .dashboard-content');
+    // Dashboard content container no longer exists - targeting individual elements instead
 
     if (!chatboxLog) return;
 
@@ -1598,7 +1598,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Apply chatbox view - similar to stats view functionality
   function applyChatboxView() {
     const body = document.body;
-    const dashboardContent = document.querySelector('.dashboard-content');
+    // Dashboard content container no longer exists - targeting individual elements instead
     const chatboxContainer = document.querySelector('.chatbox-container');
 
     if (!dashboardContent || !chatboxContainer) return;

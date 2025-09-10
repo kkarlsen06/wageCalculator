@@ -3409,7 +3409,7 @@ export const app = {
 
     applyDashboardView() {
         const body = document.body;
-        const dashboardContent = document.querySelector('.dashboard-content');
+        const appContainer = document.querySelector('.app-container');
         const statisticsSection = document.querySelector('.statistics-section');
         const weeklyHoursChart = document.getElementById('weeklyHoursChart');
 
@@ -3438,8 +3438,8 @@ export const app = {
                 console.log('Manually hid next payroll card');
             }
 
-            // Move the stats card to dashboard content if not already there
-            if (weeklyHoursChart && dashboardContent && !dashboardContent.contains(weeklyHoursChart)) {
+            // Move the stats card to app-container if not already there
+            if (weeklyHoursChart && appContainer && !appContainer.contains(weeklyHoursChart)) {
                 // Create a container for the stats card in dashboard
                 const statsContainer = document.createElement('div');
                 statsContainer.className = 'dashboard-stats-container';
@@ -3447,7 +3447,13 @@ export const app = {
 
                 // Move the chart to the dashboard
                 statsContainer.appendChild(weeklyHoursChart);
-                dashboardContent.appendChild(statsContainer);
+                // Insert as first child after tab-bar
+                const tabBarContainer = appContainer.querySelector('.tab-bar-container');
+                if (tabBarContainer && tabBarContainer.nextSibling) {
+                    appContainer.insertBefore(statsContainer, tabBarContainer.nextSibling);
+                } else {
+                    appContainer.appendChild(statsContainer);
+                }
             }
 
             console.log('Applied stats view - stats card replaces dashboard content');
@@ -3943,7 +3949,7 @@ export const app = {
     // Loading state management for UI refresh
     showUIRefreshLoading() {
         // Add loading overlay to main content areas
-        const mainContent = document.querySelector('.dashboard-content');
+        // Dashboard content container no longer exists - targeting individual elements instead
         const statsContent = document.querySelector('.statistics-content');
 
         if (mainContent && !mainContent.querySelector('.refresh-loading-overlay')) {
