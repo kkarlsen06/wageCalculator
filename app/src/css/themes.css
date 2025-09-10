@@ -41,8 +41,8 @@
   --speed-slow: 0.5s;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --border-radius: 12px;
-  --border-radius-large: 20px;
+  --border-radius: 40px;
+  --border-radius-large: 40px;
 }
 
 /* Dark Theme (default) */

@@ -3,7 +3,7 @@
   background: var(--bg-card);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-radius: 24px;
+  border-radius: var(--border-radius, 40px);
   padding: 0;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
@@ -14547,7 +14547,7 @@ body.chatbox-view .chatbox-container {
 .employee-info,
 .employee-stats,
 [class*="employee-"] {
-  border-radius: var(--border-radius, 12px) !important;
+  border-radius: var(--border-radius, 40px) !important;
 }
 
 /* Large elements use larger radius */

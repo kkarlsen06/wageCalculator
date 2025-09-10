@@ -60,7 +60,7 @@ body {
     max-width: 800px;
     max-height: 90vh;
     background: var(--bg-primary, #ffffff);
-    border-radius: 16px;
+    border-radius: var(--border-radius, 40px);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     animation: modalSlideIn 0.3s ease-out;
@@ -129,7 +129,7 @@ body {
     background: none;
     border: none;
     padding: 8px;
-    border-radius: 8px;
+    border-radius: var(--border-radius, 40px);
     cursor: pointer;
     color: var(--text-secondary, #6b7280);
     transition: all 0.2s ease;
@@ -209,7 +209,7 @@ body {
 
 .legal-content-scroll::-webkit-scrollbar-track {
     background: var(--bg-secondary, #f9fafb);
-    border-radius: 4px;
+    border-radius: var(--border-radius, 40px);
 }
 
 .legal-content-scroll::-webkit-scrollbar-thumb {
