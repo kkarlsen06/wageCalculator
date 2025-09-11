@@ -6514,7 +6514,7 @@ input:checked + .slider:before {
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none; /* Remove border for consistent bevel effect */
-  border-radius: 36px;
+  border-radius: 40px;
   padding: 18px;
   display: flex;
   justify-content: space-between;
@@ -9233,13 +9233,16 @@ input:checked + .slider:before {
   flex-direction: column !important;
 }
 
-#addShiftModal .date-grid {
+#addShiftModal .date-grid,
+#shiftAddPage .date-grid {
   margin-bottom: 8px;
 }
 
-/* In modals, prefer fixed-height date cells to avoid fractional aspect-ratio rounding jitter */
+/* In modals and routes, prefer fixed-height date cells to avoid fractional aspect-ratio rounding jitter */
 #addShiftModal .date-grid .date-cell,
-#editShiftModal .date-grid .date-cell {
+#editShiftModal .date-grid .date-cell,
+#shiftAddPage .date-grid .date-cell,
+#shiftEditPage .date-grid .date-cell {
   aspect-ratio: auto !important;
   height: clamp(44px, 6.5vw, 56px) !important;
 }
@@ -9422,7 +9425,8 @@ input:checked + .slider:before {
 
 /* Remove fixed footer styling - buttons are now inline */
 
-#editShiftModal .date-grid {
+#editShiftModal .date-grid,
+#shiftEditPage .date-grid {
   margin-bottom: 20px;
 }
 
