@@ -10080,21 +10080,21 @@ export const app = {
             const existing = document.getElementById('editSelectedEmployeePill');
             if (existing) existing.remove();
 
-            // Only show pill in employees view
+            // Check if in employees view
             const inEmployees = this.currentView === 'employees';
-            if (!inEmployees) return;
-
-            // Derive which employee to show: selectedEmployeeId takes precedence, else from the shift
-            const employeeId = this.selectedEmployeeId || shift?.employee_id || null;
-            const employee = employeeId ? (this.employees.find(e => e.id === employeeId) || null) : null;
-
-            // Hide the dropdown group in employees view
             const editSelect = modal.querySelector('#editEmployeeSelect');
             const group = editSelect?.closest('.form-group') || editSelect?.parentElement;
-            if (group) group.style.display = 'none';
 
-            // If we have an employee, render the pill
-            if (employee) {
+            if (inEmployees) {
+                // In employees view: hide dropdown and show pill
+                if (group) group.style.display = 'none';
+
+                // Derive which employee to show: selectedEmployeeId takes precedence, else from the shift
+                const employeeId = this.selectedEmployeeId || shift?.employee_id || null;
+                const employee = employeeId ? (this.employees.find(e => e.id === employeeId) || null) : null;
+
+                // If we have an employee, render the pill
+                if (employee) {
                 const pill = document.createElement('div');
                 pill.id = 'editSelectedEmployeePill';
                 pill.className = 'selected-employee-pill';
@@ -10135,6 +10135,15 @@ export const app = {
                         }
                     });
                     pill.dataset.boundEdit = '1';
+                }
+            }
+            } else {
+                // Not in employees view: show dropdown and populate it
+                if (group) group.style.display = 'block';
+                
+                // Set the current employee selection
+                if (editSelect && shift?.employee_id) {
+                    editSelect.value = shift.employee_id;
                 }
             }
         } catch (e) {
@@ -10466,6 +10475,13 @@ export const app = {
             const isAuthed = !!claims;
             if (!isAuthed) { alert('Feil ved autentisering'); return; }
 
+            const userId = await getUserId();
+            if (!userId) {
+                console.warn("[auth] Missing userId, skipping query");
+                return;
+            }
+            console.debug("[auth] using userId:", userId);
+
             const dayOfWeek = this.editSelectedDate.getDay();
             const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
 
@@ -10481,7 +10497,7 @@ export const app = {
                 .from('user_shifts')
                 .update(updatedShiftData)
                 .eq('id', this.editingShift.id)
-                .eq('user_id', user.id)
+                .eq('user_id', userId)
                 .select()
                 .single();
 
