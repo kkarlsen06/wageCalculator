@@ -1268,13 +1268,13 @@ body {
   align-items: stretch;
   justify-content: flex-start;
   gap: 15px;
-  padding-top: 8px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
 }
 
 /* Mobile adjustments for app-container */
 @media (max-width: 768px) {
   .app-container {
-    padding-top: 8px; /* Keep consistent spacing at mobile breakpoint */
+    padding-top: calc(8px + env(safe-area-inset-top, 0px)); /* Respect safe area */
   }
 }
 
@@ -1284,7 +1284,7 @@ body {
     padding-right: 10px;
     max-width: 100%;
     gap: 15px; /* Keep same gap as desktop to maintain consistent spacing */
-    padding-top: 8px; /* Keep consistent spacing for small mobile */
+    padding-top: calc(8px + env(safe-area-inset-top, 0px)); /* Respect safe area */
   }
 }
 
@@ -1303,8 +1303,8 @@ body {
   min-height: 64px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
-  /* Header padding with PWA safe area support for notch/status bar */
-  padding-top: max(12px, env(safe-area-inset-top));
+  /* Header internal spacing; safe area handled by container */
+  padding-top: 12px;
   padding-left: 32px; /* Logo positioning: base padding + 16px for curvature */
   padding-right: 16px; /* Profile positioning: use base padding */
   /* Ensure header and profile elements are immediately visible */
@@ -2832,13 +2832,13 @@ body {
   align-items: stretch;
   justify-content: flex-start;
   gap: 15px;
-  padding-top: 8px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
 }
 
 /* Mobile adjustments for app-container */
 @media (max-width: 768px) {
   .app-container {
-    padding-top: 8px; /* Keep consistent spacing at mobile breakpoint */
+    padding-top: calc(8px + env(safe-area-inset-top, 0px)); /* Respect safe area */
   }
 }
 
@@ -2848,7 +2848,7 @@ body {
     padding-right: 10px;
     max-width: 100%;
     gap: 15px; /* Keep same gap as desktop to maintain consistent spacing */
-    padding-top: 8px; /* Keep consistent spacing for small mobile */
+    padding-top: calc(8px + env(safe-area-inset-top, 0px)); /* Respect safe area */
   }
 }
 
@@ -2867,8 +2867,8 @@ body {
   min-height: 64px; /* Fixed minimum height to prevent layout shift */
   flex-shrink: 0;
   z-index: 10000; /* Ensure header is above dashboard content */
-  /* Header padding with PWA safe area support for notch/status bar */
-  padding-top: max(12px, env(safe-area-inset-top));
+  /* Header internal spacing; safe area handled by container */
+  padding-top: 12px;
   padding-left: 32px; /* Logo positioning: base padding + 16px for curvature */
   padding-right: 16px; /* Profile positioning: use base padding */
   /* Ensure header and profile elements are immediately visible */
