@@ -3644,7 +3644,7 @@ body.skeleton-active .month-nav-btn {
 
   /* AGGRESSIVE NEXT SHIFT CARD HEIGHT REDUCTION */
   .next-shift-card .shift-item {
-    padding: 12px 14px; /* Reduced from 18px */
+    padding: 12px 16px; /* Match horizontal inset ratio */
     border-radius: 40px; /* Slightly smaller radius */
     min-height: 65px; /* Reduced minimum height */
   }
@@ -3790,7 +3790,7 @@ body.skeleton-active .month-nav-btn {
 
   /* NEXT SHIFT CARD */
   .next-shift-card .shift-item {
-    padding: 10px 12px;
+    padding: 10px 14px;
     border-radius: 18px;
     min-height: 60px;
   }
@@ -3924,7 +3924,7 @@ body.skeleton-active .month-nav-btn {
 
   /* Landscape next shift card */
   .next-shift-card .shift-item {
-    padding: 8px 10px;
+    padding: 8px 12px;
     border-radius: 16px;
     min-height: 50px;
   }
@@ -6515,7 +6515,7 @@ input:checked + .slider:before {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: none; /* Remove border for consistent bevel effect */
   border-radius: 40px;
-  padding: 18px;
+  padding: 18px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -7552,7 +7552,7 @@ input:checked + .slider:before {
   backdrop-filter: blur(20px) saturate(180%); /* Same as next payroll card - enhanced blur with saturation */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 40px; /* Fully rounded edges */
-  padding: 18px;
+  padding: 18px 24px;
   margin: 0;
   border: none;
   /* Subtle 3D Bevel Effect - consistent with payroll card, reduced intensity */
@@ -7648,7 +7648,7 @@ input:checked + .slider:before {
   }
 
   .next-shift-card .shift-item {
-    padding: 16px;
+    padding: 16px 20px;
     border-radius: 40px; /* Fully rounded edges */
     min-height: 80px;
   }
@@ -7690,7 +7690,7 @@ input:checked + .slider:before {
   }
 
   .next-shift-card .shift-item {
-    padding: 14px;
+    padding: 14px 18px;
     border-radius: 40px; /* Fully rounded edges */
     min-height: 80px;
   }
@@ -10484,7 +10484,7 @@ body.chatbox-view .dashboard-content {
 @media (max-width: 480px) {
   /* Reduce overall card padding to give more space */
   .next-shift-card .shift-item {
-    padding: 14px 16px; /* Keep reasonable padding */
+    padding: 14px 18px; /* Keep reasonable padding with proper inset */
   }
 
   /* Constrain shift-info to prevent overflow */
@@ -10617,7 +10617,7 @@ body.chatbox-view .dashboard-content {
 @media (max-width: 360px) {
   /* More aggressive space optimization */
   .next-shift-card .shift-item {
-    padding: 12px 14px;
+    padding: 12px 16px;
   }
 
   .next-shift-card .shift-amount-wrapper {
@@ -10681,7 +10681,7 @@ body.chatbox-view .dashboard-content {
 @media (max-width: 320px) {
   /* Space optimization */
   .next-shift-card .shift-item {
-    padding: 10px 12px;
+    padding: 10px 14px;
     min-height: 65px;
   }
 
