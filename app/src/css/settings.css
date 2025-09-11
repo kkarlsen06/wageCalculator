@@ -360,7 +360,7 @@
 .floating-nav-btn.back-btn {
   background: var(--accent);
   border: none;
-  border-radius: 16px;
+  border-radius: 40px;
   padding: 12px 16px;
   min-height: 44px;
   color: white;
@@ -379,7 +379,7 @@
 .floating-nav-btn.btn.btn-secondary {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 40px;
   padding: 12px 16px;
   min-height: 44px;
   color: var(--text-primary);
@@ -418,7 +418,7 @@
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 40px;
   padding: 14px 18px;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.15),
