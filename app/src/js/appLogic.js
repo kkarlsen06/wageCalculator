@@ -981,7 +981,7 @@ export const app = {
         // Navigate to add shift route instead of opening modal
         if (window.navigateToRoute) {
             try {
-                window.navigateToRoute('/add-shift');
+                window.navigateToRoute('/shift-add');
                 return;
             } catch (error) {
                 console.error('Route navigation failed, falling back to modal:', error);
@@ -9913,30 +9913,31 @@ export const app = {
         }
     },
 
-    // Edit shift functionality
+    // Edit shift functionality - now navigates to unified route
     editShift(shiftId) {
         // Find the shift to edit
         const shift = this.shifts.find(s => s.id === shiftId);
         if (!shift) {
-            console.error('Shift not found:', shiftId);
+            console.error('Shift not found for editing:', shiftId);
+            alert('Fant ikke vakten som skal redigeres');
             return;
         }
-
-
-        // Store the shift being edited
-        this.editingShift = shift;
-
-        // Close shift details modal first and wait for it to complete
+        
+        // Close shift details modal first
         this.closeShiftDetails();
-
-
-        // Ensure employee selectors visibility follows current view
-        this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
-
-        // Reduced delay for smoother transition - just wait for backdrop animation
-        setTimeout(() => {
-            this.openEditModal(shift);
-        }, 200); // 200ms for smoother transition
+        
+        // Navigate to shift edit route
+        if (window.navigateToRoute) {
+            window.navigateToRoute(`/shift-edit?shiftId=${shiftId}`);
+        } else {
+            // Fallback to traditional modal approach if navigation not available
+            console.warn('Route navigation not available, falling back to modal');
+            this.editingShift = shift;
+            this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
+            setTimeout(() => {
+                this.openEditModal(shift);
+            }, 200);
+        }
     },
 
     // Separate method to open edit modal for better organization
@@ -10085,10 +10086,11 @@ export const app = {
             const editSelect = modal.querySelector('#editEmployeeSelect');
             const group = editSelect?.closest('.form-group') || editSelect?.parentElement;
 
-            if (inEmployees) {
-                // In employees view: hide dropdown and show pill
-                if (group) group.style.display = 'none';
+            // Never show selects; assignment is driven by carousel selection (same as add shift modal)
+            if (group) group.style.display = 'none';
 
+            if (inEmployees) {
+                // In employees view: show pill
                 // Derive which employee to show: selectedEmployeeId takes precedence, else from the shift
                 const employeeId = this.selectedEmployeeId || shift?.employee_id || null;
                 const employee = employeeId ? (this.employees.find(e => e.id === employeeId) || null) : null;
@@ -10136,14 +10138,6 @@ export const app = {
                     });
                     pill.dataset.boundEdit = '1';
                 }
-            }
-            } else {
-                // Not in employees view: show dropdown and populate it
-                if (group) group.style.display = 'block';
-                
-                // Set the current employee selection
-                if (editSelect && shift?.employee_id) {
-                    editSelect.value = shift.employee_id;
                 }
             }
         } catch (e) {
@@ -12105,7 +12099,7 @@ export const app = {
                     const expiry = Date.now() + (60 * 60 * 1000);
                     sessionStorage.setItem('preSelectedShiftDate_expiry', expiry.toString());
                 }
-                window.navigateToRoute('/add-shift');
+                window.navigateToRoute('/shift-add');
                 return;
             } catch (error) {
                 console.error('Route navigation with date failed, falling back to modal:', error);

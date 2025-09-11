@@ -982,6 +982,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const app = appModule?.app;
   window.app = app;
+  
+  // Make hasEnterpriseSubscription available globally for shift edit route
+  try {
+    const { hasEnterpriseSubscription } = await import('./subscriptionUtils.js');
+    window.hasEnterpriseSubscription = hasEnterpriseSubscription;
+  } catch (e) {
+    console.warn('Failed to load subscriptionUtils:', e);
+  }
 
 
   // React to subscription changes by toggling visibility of the Ansatte tab

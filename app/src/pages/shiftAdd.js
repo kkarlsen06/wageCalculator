@@ -3,7 +3,7 @@
 
 function getAddShiftView() {
   return `
-  <div id="addShiftPage" class="settings-page">
+  <div id="shiftAddPage" class="settings-page">
     <form id="shiftForm">
       <div class="tab-nav" style="margin-bottom: var(--space-4);">
         <button type="button" class="tab-btn active" onclick="switchAddShiftTab('simple')">Enkel</button>
@@ -118,7 +118,7 @@ function getAddShiftView() {
       <span id="selectedDatesText"></span>
     </div>
     
-    <div class="add-shift-floating-nav">
+    <div class="shift-add-floating-nav">
       <button type="button" class="floating-nav-btn back-btn" onclick="addShiftFromRoute()">
         <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -347,8 +347,8 @@ export function afterMountAddShift() {
   }
 
   // Make functions globally available with cleanup tracking
-  if (!window._addShiftRouteCleanup) {
-    window._addShiftRouteCleanup = [];
+  if (!window._shiftAddRouteCleanup) {
+    window._shiftAddRouteCleanup = [];
   }
   
   // Store original values for cleanup
@@ -359,7 +359,7 @@ export function afterMountAddShift() {
   window.addShiftFromRoute = addShiftFromRoute;
   
   // Track cleanup functions
-  window._addShiftRouteCleanup.push(() => {
+  window._shiftAddRouteCleanup.push(() => {
     if (originalSwitchTab) {
       window.switchAddShiftTab = originalSwitchTab;
     } else {

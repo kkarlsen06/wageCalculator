@@ -9,8 +9,8 @@
   margin: 0 auto;
 }
 
-/* Bottom-align content in add-shift page for easier thumb reach */
-#addShiftPage {
+/* Bottom-align content in shift-add page for easier thumb reach */
+#shiftAddPage {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -20,24 +20,24 @@
 }
 
 /* Keep tab nav at top */
-#addShiftPage .tab-nav {
+#shiftAddPage .tab-nav {
   flex-shrink: 0;
 }
 
 /* Push form content to bottom */
-#addShiftPage #shiftForm {
+#shiftAddPage #shiftForm {
   display: flex;
   flex-direction: column;
   flex: 1;
   position: relative;
 }
 
-#addShiftPage .tab-content {
+#shiftAddPage .tab-content {
   margin-top: auto;
 }
 
 /* Selected dates info - positioned in gap between form and floating nav */
-#addShiftPage .selected-dates-info {
+#shiftAddPage .selected-dates-info {
   position: absolute;
   bottom: calc(90px + env(safe-area-inset-bottom,px) + 10px);
   left: 50%;
@@ -58,7 +58,7 @@
 }
 
 /* Show selected dates info when it has content */
-#addShiftPage .selected-dates-info:not(:empty) {
+#shiftAddPage .selected-dates-info:not(:empty) {
   opacity: 1;
   visibility: visible;
 }
@@ -404,7 +404,7 @@
 }
 
 /* Add-shift floating navigation container */
-.add-shift-floating-nav {
+.shift-add-floating-nav {
   position: fixed !important;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
   left: 50% !important;
@@ -428,7 +428,7 @@
 }
 
 /* Override floating-nav-btn positioning when inside container */
-.add-shift-floating-nav .floating-nav-btn {
+.shift-add-floating-nav .floating-nav-btn {
   position: relative !important;
   bottom: auto !important;
   left: auto !important;
@@ -564,8 +564,9 @@
     margin: 0 auto;
   }
   
-  /* Constrain add-shift route to same max width as other content */
-  #addShiftPage {
+  /* Constrain shift-add route to same max width as other content */
+  #shiftAddPage,
+  #shiftEditPage {
     max-width: 600px;
     margin: 0 auto;
     /* Add bottom padding to prevent content being covered by floating nav */
@@ -574,16 +575,16 @@
   }
 }
 
-/* Hide employee dropdowns initially in add-shift page to prevent flash */
-#addShiftPage #employeeSelect,
-#addShiftPage #recurringEmployeeSelect {
+/* Hide employee dropdowns initially in shift-add page to prevent flash */
+#shiftAddPage #employeeSelect,
+#shiftAddPage #recurringEmployeeSelect {
   display: none !important;
 }
 
-#addShiftPage #employeeSelect + .form-group,
-#addShiftPage #recurringEmployeeSelect + .form-group,
-#addShiftPage .form-group:has(#employeeSelect),
-#addShiftPage .form-group:has(#recurringEmployeeSelect) {
+#shiftAddPage #employeeSelect + .form-group,
+#shiftAddPage #recurringEmployeeSelect + .form-group,
+#shiftAddPage .form-group:has(#employeeSelect),
+#shiftAddPage .form-group:has(#recurringEmployeeSelect) {
   display: none !important;
 }
 

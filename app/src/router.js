@@ -7,7 +7,8 @@ import { renderLogin, afterMountLogin } from './pages/login.js';
 import { renderOnboarding, afterMountOnboarding } from './pages/onboarding.js';
 import { renderSettings, afterMountSettings } from './pages/settings.js';
 import renderAbonnementPage, { afterMountAbonnement } from './pages/abonnement.js';
-import { renderAddShift, afterMountAddShift } from './pages/addShift.js';
+import { renderAddShift, afterMountAddShift } from './pages/shiftAdd.js';
+import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
 function normalizePath(pathname) {
@@ -48,15 +49,23 @@ export const routes = [
         if (settingsPortal) settingsPortal.remove();
         const abonnementPortal = document.getElementById('abonnement-floating-portal');
         if (abonnementPortal) abonnementPortal.remove();
-        const addShiftPortal = document.getElementById('add-shift-floating-portal');
+        const addShiftPortal = document.getElementById('shift-add-floating-portal');
         if (addShiftPortal) addShiftPortal.remove();
         
-        // Clean up add shift route globals
-        if (window._addShiftRouteCleanup) {
-          window._addShiftRouteCleanup.forEach(cleanup => {
+        // Clean up shift add route globals
+        if (window._shiftAddRouteCleanup) {
+          window._shiftAddRouteCleanup.forEach(cleanup => {
             try { cleanup(); } catch (e) { console.warn('Cleanup error:', e); }
           });
-          window._addShiftRouteCleanup = [];
+          window._shiftAddRouteCleanup = [];
+        }
+        
+        // Clean up shift edit route globals
+        if (window._shiftEditRouteCleanup) {
+          window._shiftEditRouteCleanup.forEach(cleanup => {
+            try { cleanup(); } catch (e) { console.warn('Cleanup error:', e); }
+          });
+          window._shiftEditRouteCleanup = [];
         }
       } catch (_) {}
       
@@ -71,7 +80,8 @@ export const routes = [
   { path: '/login', render: renderLogin, afterMount: afterMountLogin },
   { path: '/onboarding', render: renderOnboarding, afterMount: afterMountOnboarding },
   { path: '/abonnement', render: renderAbonnementPage, afterMount: afterMountAbonnement },
-  { path: '/add-shift', render: renderAddShift, afterMount: afterMountAddShift },
+  { path: '/shift-add', render: renderAddShift, afterMount: afterMountAddShift },
+  { path: '/shift-edit', render: renderShiftEdit, afterMount: afterMountShiftEdit },
   { path: '/settings', render: renderSettings, afterMount: afterMountSettings },
   // Account settings detail (primary path)
   { path: '/settings/account', render: renderSettings, afterMount: afterMountSettings },
