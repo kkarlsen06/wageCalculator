@@ -4,6 +4,10 @@
 function getAddShiftView() {
   return `
   <div id="shiftAddPage" class="settings-page">
+    <div class="page-header" style="margin-bottom: var(--space-4);">
+      <h2>Legg til vakt</h2>
+    </div>
+    
     <form id="shiftForm">
       <div class="tab-nav" style="margin-bottom: var(--space-4);">
         <button type="button" class="tab-btn active" onclick="switchAddShiftTab('simple')">Enkel</button>
