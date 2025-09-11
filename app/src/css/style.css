@@ -1633,10 +1633,13 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   width: 28px;
   height: 28px;
   filter: none;
+  display: block; /* remove baseline gap for precise vertical centering */
 }
 
 .header-logo-link {
-  display: inline-block;
+  display: flex; /* center image within its clickable area */
+  align-items: center;
+  height: 44px; /* match profile button height for aligned centers */
   text-decoration: none;
   transition: transform 0.2s ease;
 }
@@ -3194,10 +3197,13 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   width: 28px;
   height: 28px;
   filter: none;
+  display: block; /* remove baseline gap for precise vertical centering */
 }
 
 .header-logo-link {
-  display: inline-block;
+  display: flex; /* center image within its clickable area */
+  align-items: center;
+  height: 44px; /* match profile button height for aligned centers */
   text-decoration: none;
   transition: transform 0.2s ease;
 }
@@ -18262,5 +18268,3 @@ html, body {
     transparent 100%
   ) !important;
 }
-
-
