@@ -36,6 +36,18 @@
   margin-top: auto;
 }
 
+/* iOS PWA fix: avoid bottom-aligning the form so the floating action bar
+   doesn't overlap time dropdowns when running in standalone mode */
+html.ios-pwa #shiftAddPage {
+  justify-content: flex-start;
+  /* Let the page flow naturally; outer .settings-page padding handles spacing */
+  overflow-y: visible;
+}
+
+html.ios-pwa #shiftAddPage .tab-content {
+  margin-top: 0;
+}
+
 /* Selected dates info - positioned in gap between form and floating nav */
 #shiftAddPage .selected-dates-info {
   position: absolute;
