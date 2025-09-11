@@ -9717,7 +9717,7 @@ input:checked + .slider:before {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   top: auto !important;
   margin: 0 auto;
   width: calc(100% - 32px);
@@ -10115,7 +10115,7 @@ body.chatbox-view .dashboard-content {
 /* Floating action bar for shift controls - iOS 26 compatible */
 .floating-action-bar {
   position: fixed;
-  bottom: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
   margin: 0 auto;
@@ -10149,7 +10149,7 @@ body.chatbox-view .dashboard-content {
   right: 0;
   width: 100vw;
   /* Reduced height - no need to cover system navbar area that creates white space */
-  height: 120px;
+  height: calc(120px + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(to top,
     rgba(18, 18, 18, 0.3) 0%,
     rgba(18, 18, 18, 0.2) 40%,
@@ -10302,7 +10302,7 @@ body.chatbox-view .dashboard-content {
     width: min(85%, 500px); /* Slightly wider on mobile */
     max-width: calc(100% - 24px); /* Ensure padding from edges */
     /* iOS 26 support - position above system navbar on mobile */
-    bottom: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     padding: 10px 12px;
     gap: 8px;
   }
@@ -10367,7 +10367,7 @@ body.chatbox-view .dashboard-content {
   /* Adjust backdrop height for mobile - reduced to prevent white space */
   .floating-action-bar-backdrop {
     /* Reduced height to prevent bottom white space */
-    height: 100px;
+    height: calc(100px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -10377,7 +10377,7 @@ body.chatbox-view .dashboard-content {
     width: min(90%, 400px); /* Even wider on very small screens */
     max-width: calc(100% - 20px); /* Minimal padding from edges */
     /* iOS 26 support - position above system navbar on extra small screens */
-    bottom: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     gap: 6px;
     padding: 8px 10px;
   }
@@ -16024,7 +16024,7 @@ body.chatbox-view .chatbox-container {
     max-width: 320px;
     left: 16px !important;
     right: 16px;
-    bottom: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     top: auto !important;
     transform: none;
   }

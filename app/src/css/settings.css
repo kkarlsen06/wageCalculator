@@ -39,7 +39,7 @@
 /* Selected dates info - positioned in gap between form and floating nav */
 #shiftAddPage .selected-dates-info {
   position: absolute;
-  bottom: calc(90px + env(safe-area-inset-bottom,px) + 10px);
+  bottom: calc(90px + env(safe-area-inset-bottom, 0px) + 10px);
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
@@ -220,7 +220,7 @@
 /* Floating settings bar - absolutely fixed positioning with portal approach */
 .floating-settings-bar {
   position: fixed !important;
-  bottom: 20px !important;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   background: var(--bg-card);
@@ -311,7 +311,7 @@
   left: 0 !important;
   right: 0 !important;
   width: 100vw;
-  height: 120px;
+  height: calc(120px + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(to bottom,
     transparent 0%,
     rgba(18, 18, 18, 0.1) 30%,
