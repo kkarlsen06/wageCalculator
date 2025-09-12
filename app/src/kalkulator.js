@@ -54,6 +54,40 @@ import { getUserId } from '/src/lib/auth/getUserId.js';
 import { render as renderSpa } from './router.js';
 
 if (typeof window !== 'undefined') {
+  // Register service worker for offline support
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        const registration = await navigator.serviceWorker.register('/service-worker.js');
+        
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New service worker available - could show update notification
+                console.log('New service worker available');
+              }
+            });
+          }
+        });
+        
+        // Handle service worker updates
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
+        
+        console.log('Service worker registered successfully');
+      } catch (error) {
+        console.warn('Service worker registration failed:', error);
+      }
+    });
+  }
+
   // Render SPA route on load (supports /, /login, /onboarding)
   window.addEventListener('DOMContentLoaded', () => {
     try { renderSpa(); } catch (e) { console.warn('SPA render failed', e); }

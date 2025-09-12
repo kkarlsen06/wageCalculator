@@ -31,6 +31,7 @@ export default defineConfig({
     sourcemap: false, // Disable source maps in production to prevent 403 errors
     rollupOptions: {
       input: resolve('index.html')
-    }
+    },
+    copyPublicDir: true // Ensure service worker is copied to dist
   }
 });
