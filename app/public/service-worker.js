@@ -7,6 +7,33 @@
 */
 
 // Auto-incremented version - update when making changes to caching logic
+
+// Background sync for shift mutations
+self.addEventListener('sync', (event) => {
+  // Explicit tags so PWABuilder's static checks see Background Sync support
+  if (event.tag === 'pwa-detect') {
+    event.waitUntil(Promise.resolve());
+    return;
+  }
+  if (event.tag === 'shift-sync') {
+    console.log('[sw] Background sync triggered for shift-sync');
+    event.waitUntil(processShiftQueue());
+  }
+});
+
+// Periodic background sync for refreshing shifts
+self.addEventListener('periodicsync', (event) => {
+  // Explicit tags so PWABuilder's static checks see Periodic Background Sync support
+  if (event.tag === 'pwa-detect-periodic') {
+    event.waitUntil(Promise.resolve());
+    return;
+  }
+  if (event.tag === 'shifts-refresh') {
+    console.log('[sw] Periodic sync triggered for shifts-refresh');
+    event.waitUntil(refreshShiftsData());
+  }
+});
+
 const VERSION = 'v3';
 const STATIC_CACHE = `app-cache-${VERSION}`;
 const RUNTIME_CACHE = `runtime-cache-${VERSION}`;
@@ -236,38 +263,7 @@ self.addEventListener('fetch', (event) => {
   // You may add app-specific strategies here if needed
 });
 
-/*
-  Background Sync for Offline Shift Queue
-  - Processes queued shift mutations when connectivity returns
-  - Handles authentication and retry logic
-  - Maintains data consistency with de-duplication
-*/
 
-// Background sync for shift mutations
-self.addEventListener('sync', (event) => {
-  // Explicit tags so PWABuilder's static checks see Background Sync support
-  if (event.tag === 'pwa-detect') {
-    event.waitUntil(Promise.resolve());
-    return;
-  }
-  if (event.tag === 'shift-sync') {
-    console.log('[sw] Background sync triggered for shift-sync');
-    event.waitUntil(processShiftQueue());
-  }
-});
-
-// Periodic background sync for refreshing shifts
-self.addEventListener('periodicsync', (event) => {
-  // Explicit tags so PWABuilder's static checks see Periodic Background Sync support
-  if (event.tag === 'pwa-detect-periodic') {
-    event.waitUntil(Promise.resolve());
-    return;
-  }
-  if (event.tag === 'shifts-refresh') {
-    console.log('[sw] Periodic sync triggered for shifts-refresh');
-    event.waitUntil(refreshShiftsData());
-  }
-});
 
 // Process queued shift mutations
 async function processShiftQueue() {
