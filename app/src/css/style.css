@@ -1,4 +1,6 @@
-body { padding-bottom: env(safe-area-inset-bottom); }
+.snap-container {
+  padding-bottom: env(safe-area-inset-bottom);
+}
 
 /* Progress card - hele kortet er progressbaren */
 .progress-card {
@@ -18253,4 +18255,8 @@ body.chatbox-view .chatbox-container {
     var(--border) 80%, 
     transparent 100%
   ) !important;
+}
+
+.snap-container {
+  padding-bottom: env(safe-area-inset-bottom) !important;
 }
