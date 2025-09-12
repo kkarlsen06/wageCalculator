@@ -1,7 +1,7 @@
 For the group of classes under this text, search for every css rule for each class, and remove cascading issues and reunite seperated rules to one rule in in the same file (which they should be anyway). Dont do any more classes than these.
 
 **Employee Management:**
-- [ ] employee-form
+- [x] employee-form (2025-01-12)
 - [ ] employee-modal-content
 - [ ] employee-carousel
 - [ ] employee-actions-menu

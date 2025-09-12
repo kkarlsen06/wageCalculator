@@ -12599,12 +12599,142 @@ body.chatbox-view .chatbox-container {
   height: 16px;
 }
 
+/* ===== EMPLOYEE FORM - CONSOLIDATED STYLES ===== */
 .employee-form {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow: hidden;
   height: 100%;
+}
+
+.employee-form .form-section {
+  margin-bottom: 40px;
+}
+
+.employee-form .form-group {
+  margin-bottom: 32px;
+}
+
+.employee-form .form-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.employee-form .form-input {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  transition: all var(--speed-normal) var(--ease-default);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.employee-form .form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 
+    0 0 0 3px rgba(74, 200, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.15);
+  outline: none;
+}
+
+.employee-form .form-input:hover:not(:focus) {
+  border-color: rgba(74, 200, 255, 0.3);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.employee-form .form-hint {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin: 8px 0 0 0;
+  line-height: 1.4;
+}
+
+.employee-form .form-error {
+  font-size: var(--text-xs);
+  color: var(--error);
+  margin: 8px 0 0 0;
+  font-weight: var(--font-weight-medium);
+  display: none;
+}
+
+.employee-form .form-error:not(:empty) {
+  display: block;
+}
+
+.employee-form .quick-select {
+  min-width: 90px;
+  flex: 1;
+  max-width: 120px;
+}
+
+.employee-form .color-picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.employee-form .color-input {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.employee-form .color-input:hover {
+  border-color: var(--primary);
+  transform: scale(1.05);
+}
+
+.employee-form .color-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.employee-form .color-preset {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  position: relative;
+}
+
+.employee-form .color-preset:hover {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.employee-form .color-preset.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(74, 200, 255, 0.3);
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .employee-form {
+    padding: 16px;
+  }
+
+  .employee-form .form-section {
+    margin-bottom: 24px;
+  }
+
+  .employee-form .form-group {
+    margin-bottom: 20px;
+  }
 }
 
 /* Step Progress Indicators */
@@ -13037,9 +13167,6 @@ body.chatbox-view .chatbox-container {
 /* ===== IMPROVED EMPLOYEE MODAL STYLES ===== */
 
 /* Section headers for better organization */
-.employee-form .form-section {
-  margin-bottom: 40px;
-}
 
 .section-header {
   margin-bottom: 24px;
@@ -13116,20 +13243,8 @@ body.chatbox-view .chatbox-container {
 }
 
 /* Enhanced form groups */
-.employee-form .form-group {
-  margin-bottom: 32px;
-}
 
 /* Improved labels with clear required/optional indicators */
-.employee-form .form-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
-}
 
 .label-text {
   font-size: var(--text-sm);
@@ -13158,38 +13273,8 @@ body.chatbox-view .chatbox-container {
 }
 
 /* Enhanced form inputs */
-.employee-form .form-input {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  font-size: var(--text-base);
-  color: var(--text-primary);
-  transition: all var(--speed-normal) var(--ease-default);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.employee-form .form-input:focus {
-  border-color: var(--primary);
-  box-shadow: 
-    0 0 0 3px rgba(74, 200, 255, 0.1),
-    0 4px 12px rgba(0, 0, 0, 0.15);
-  outline: none;
-}
-
-.employee-form .form-input:hover:not(:focus) {
-  border-color: rgba(74, 200, 255, 0.3);
-  background: rgba(255, 255, 255, 0.02);
-}
 
 /* Form hints */
-.employee-form .form-hint {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  margin: 8px 0 0 0;
-  line-height: 1.4;
-}
 
 /* Tiny unobtrusive link-style button used for optional reveal actions */
 .link-btn {
@@ -13208,17 +13293,6 @@ body.chatbox-view .chatbox-container {
 }
 
 /* Form errors */
-.employee-form .form-error {
-  font-size: var(--text-xs);
-  color: var(--error);
-  margin: 8px 0 0 0;
-  font-weight: var(--font-weight-medium);
-  display: none;
-}
-
-.employee-form .form-error:not(:empty) {
-  display: block;
-}
 
 /* Rate preview card */
 .rate-preview-card {
@@ -13286,58 +13360,7 @@ body.chatbox-view .chatbox-container {
   flex-wrap: wrap;
 }
 
-.employee-form .quick-select {
-  min-width: 90px;
-  flex: 1;
-  max-width: 120px;
-}
-
 /* Color picker improvements */
-.employee-form .color-picker-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.employee-form .color-input {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  border: 2px solid var(--border);
-  cursor: pointer;
-  transition: all var(--speed-normal) var(--ease-default);
-}
-
-.employee-form .color-input:hover {
-  border-color: var(--primary);
-  transform: scale(1.05);
-}
-
-.employee-form .color-presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.employee-form .color-preset {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all var(--speed-normal) var(--ease-default);
-  position: relative;
-}
-
-.employee-form .color-preset:hover {
-  transform: scale(1.1);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.employee-form .color-preset.active {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(74, 200, 255, 0.3);
-}
 
 /* Enhanced modal footer */
 .employee-modal-content .modal-footer {
@@ -13986,18 +14009,6 @@ body.chatbox-view .chatbox-container {
 @media (max-width: 480px) {
   .employee-modal-content .modal-header {
     padding: 16px 16px 0;
-  }
-
-  .employee-form {
-    padding: 16px;
-  }
-
-  .employee-form .form-section {
-    margin-bottom: 24px;
-  }
-
-  .employee-form .form-group {
-    margin-bottom: 20px;
   }
 
   .form-sections {
