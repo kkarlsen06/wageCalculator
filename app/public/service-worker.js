@@ -189,6 +189,12 @@ self.addEventListener('activate', (event) => {
       }
       // Claim clients so the SW starts controlling open tabs
       await self.clients.claim();
+      // Enable navigation preload for faster navigations
+      try {
+        if (self.registration.navigationPreload) {
+          await self.registration.navigationPreload.enable();
+        }
+      } catch (_) {}
     })()
   );
 });
@@ -216,6 +222,12 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       (async () => {
+        // Use preloaded response if available (PWABuilder/Workbox pattern)
+        try {
+          const preloadResp = await event.preloadResponse;
+          if (preloadResp) return preloadResp;
+        } catch (_) {}
+
         const cache = await caches.open(STATIC_CACHE);
         const url = new URL(request.url);
 
