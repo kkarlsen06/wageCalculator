@@ -171,6 +171,21 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return; // only cache GETs
 
+  // Ensure offline SPA navigation: try network, fall back to cached app shell
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          return await fetch(request);
+        } catch (_) {
+          const cachedShell = await caches.match('/index.html');
+          return cachedShell || Response.error();
+        }
+      })()
+    );
+    return;
+  }
+
   const url = new URL(request.url);
 
   // Same-origin build assets: cache-first
