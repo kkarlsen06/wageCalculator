@@ -7,7 +7,7 @@
 */
 
 // Auto-incremented version - update when making changes to caching logic
-const VERSION = 'v2';
+const VERSION = 'v3';
 const STATIC_CACHE = `app-cache-${VERSION}`;
 const RUNTIME_CACHE = `runtime-cache-${VERSION}`;
 
@@ -220,4 +220,278 @@ self.addEventListener('fetch', (event) => {
   // Same-origin, non-build resources (e.g., dynamic endpoints) -> pass through
   // You may add app-specific strategies here if needed
 });
+
+/*
+  Background Sync for Offline Shift Queue
+  - Processes queued shift mutations when connectivity returns
+  - Handles authentication and retry logic
+  - Maintains data consistency with de-duplication
+*/
+
+// Background sync for shift mutations
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'shift-sync') {
+    console.log('[sw] Background sync triggered for shift-sync');
+    event.waitUntil(processShiftQueue());
+  }
+});
+
+// Periodic background sync for refreshing shifts
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'shifts-refresh') {
+    console.log('[sw] Periodic sync triggered for shifts-refresh');
+    event.waitUntil(refreshShiftsData());
+  }
+});
+
+// Process queued shift mutations
+async function processShiftQueue() {
+  try {
+    console.log('[sw] Processing shift queue...');
+    
+    // Open IndexedDB to get queued items
+    const db = await openOfflineDB();
+    const queuedItems = await getAllQueuedItems(db);
+    
+    if (queuedItems.length === 0) {
+      console.log('[sw] No queued items to process');
+      return;
+    }
+
+    console.log(`[sw] Processing ${queuedItems.length} queued shift items`);
+    
+    // Get authentication token
+    const authHeaders = await getAuthHeaders();
+    if (!authHeaders.Authorization) {
+      console.warn('[sw] No auth token available, re-registering sync');
+      await self.registration.sync.register('shift-sync');
+      return;
+    }
+
+    // Process each queued item
+    for (const item of queuedItems) {
+      try {
+        const success = await processQueuedItem(item, authHeaders);
+        if (success) {
+          await deleteFromQueue(db, item.id);
+        } else {
+          // If any item fails, stop and re-register sync
+          console.log('[sw] Item failed, re-registering sync');
+          await self.registration.sync.register('shift-sync');
+          break;
+        }
+      } catch (error) {
+        console.error('[sw] Error processing queued item:', error);
+        if (error.status === 401) {
+          console.log('[sw] Auth error, stopping queue processing');
+          await self.registration.sync.register('shift-sync');
+          break;
+        }
+      }
+    }
+
+    // Notify clients that sync completed
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => {
+      client.postMessage({ type: 'SHIFT_SYNC_COMPLETE' });
+    });
+
+  } catch (error) {
+    console.error('[sw] Failed to process shift queue:', error);
+    // Re-register sync for retry
+    if (self.registration.sync) {
+      await self.registration.sync.register('shift-sync');
+    }
+  }
+}
+
+// Process individual queued item
+async function processQueuedItem(item, authHeaders) {
+  try {
+    const { method, url, body, headersNeeded } = item;
+    const headers = {
+      ...JSON.parse(headersNeeded),
+      ...authHeaders
+    };
+
+    let requestBody = null;
+    if (body) {
+      const parsedBody = JSON.parse(body);
+      if (parsedBody.rawBody) {
+        requestBody = parsedBody.rawBody;
+      } else {
+        requestBody = JSON.stringify(parsedBody);
+      }
+    }
+
+    console.log('[sw] Sending queued request:', { method, url });
+    
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: requestBody
+    });
+
+    if (response.ok || response.status === 409) { // 409 = conflict, treat as resolved
+      console.log('[sw] Queued request succeeded:', response.status);
+      return true;
+    } else if (response.status === 401) {
+      console.log('[sw] Auth required');
+      const error = new Error('Authentication required');
+      error.status = 401;
+      throw error;
+    } else {
+      console.warn('[sw] Queued request failed:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.error('[sw] Error in processQueuedItem:', error);
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      // Network error, will retry
+      return false;
+    }
+    throw error;
+  }
+}
+
+// Periodic refresh of shifts data
+async function refreshShiftsData() {
+  try {
+    console.log('[sw] Refreshing shifts data...');
+    
+    const authHeaders = await getAuthHeaders();
+    if (!authHeaders.Authorization) {
+      console.log('[sw] No auth token for periodic refresh');
+      return;
+    }
+
+    // Try to fetch latest shifts
+    const apiBase = await getApiBase();
+    if (!apiBase) {
+      console.log('[sw] No API base URL configured');
+      return;
+    }
+
+    const response = await fetch(`${apiBase}/shifts`, {
+      headers: {
+        'Authorization': authHeaders.Authorization,
+        'Content-Type': 'application/json'
+      },
+      cache: 'no-store'
+    });
+
+    if (response.ok) {
+      console.log('[sw] Shifts data refreshed successfully');
+      
+      // Notify clients about the refresh
+      const clients = await self.clients.matchAll();
+      clients.forEach(client => {
+        client.postMessage({ type: 'SHIFTS_REFRESHED' });
+      });
+    } else {
+      console.log('[sw] Periodic refresh failed:', response.status);
+    }
+  } catch (error) {
+    console.log('[sw] Periodic refresh error (silent fail):', error);
+    // Fail silently for periodic refresh
+  }
+}
+
+// IndexedDB helpers
+async function openOfflineDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('wc-offline', 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+async function getAllQueuedItems(db) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['shiftQueue'], 'readonly');
+    const store = transaction.objectStore('shiftQueue');
+    const index = store.index('createdAt');
+    const request = index.getAll();
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+async function deleteFromQueue(db, id) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['shiftQueue'], 'readwrite');
+    const store = transaction.objectStore('shiftQueue');
+    const request = store.delete(id);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+}
+
+// Get auth headers from various sources
+async function getAuthHeaders() {
+  try {
+    // Try different methods to get auth token
+    const clients = await self.clients.matchAll();
+    
+    if (clients.length > 0) {
+      // Ask client for auth token
+      const authToken = await new Promise((resolve) => {
+        const messageChannel = new MessageChannel();
+        messageChannel.port1.onmessage = (event) => {
+          resolve(event.data.token);
+        };
+        
+        clients[0].postMessage(
+          { type: 'GET_AUTH_TOKEN' },
+          [messageChannel.port2]
+        );
+        
+        // Timeout after 1 second
+        setTimeout(() => resolve(null), 1000);
+      });
+      
+      if (authToken) {
+        return { Authorization: `Bearer ${authToken}` };
+      }
+    }
+    
+    return {};
+  } catch (error) {
+    console.warn('[sw] Failed to get auth headers:', error);
+    return {};
+  }
+}
+
+// Get API base URL
+async function getApiBase() {
+  try {
+    const clients = await self.clients.matchAll();
+    
+    if (clients.length > 0) {
+      const apiBase = await new Promise((resolve) => {
+        const messageChannel = new MessageChannel();
+        messageChannel.port1.onmessage = (event) => {
+          resolve(event.data.apiBase);
+        };
+        
+        clients[0].postMessage(
+          { type: 'GET_API_BASE' },
+          [messageChannel.port2]
+        );
+        
+        // Timeout after 1 second
+        setTimeout(() => resolve(null), 1000);
+      });
+      
+      return apiBase;
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('[sw] Failed to get API base:', error);
+    return null;
+  }
+}
 

@@ -41,6 +41,14 @@ import '/src/js/app.js';
 // Theme management system
 import '/src/js/themeIntegration.js';
 
+// Offline sync management for background sync and shift queue processing
+import '/src/js/offline-sync-manager.js';
+
+// Debug utilities for offline functionality (development only)
+if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+    import('/src/js/offline-debug-utils.js');
+}
+
 // If app.js uses ESM default export or side effects, ensure DOMContentLoaded init remains intact.
 // Expose inline handlers compatibility by attaching window.app if the module exported it.
 // window.app is attached by /js/app.js when it initializes
