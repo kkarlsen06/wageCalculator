@@ -67,6 +67,18 @@ if (typeof window !== 'undefined') {
     window.addEventListener('load', async () => {
       try {
         const registration = await navigator.serviceWorker.register('/service-worker.js');
+        // PWABuilder runtime detectors (no-ops, safe in prod)
+        try {
+          if ('SyncManager' in window && registration.sync) {
+            await registration.sync.register('pwa-detect');
+          }
+          if (registration.periodicSync && 'permissions' in navigator) {
+            const perm = await navigator.permissions.query({ name: 'periodic-background-sync' });
+            if (perm.state === 'granted') {
+              await registration.periodicSync.register('pwa-detect-periodic', { minInterval: 24 * 60 * 60 * 1000 });
+            }
+          }
+        } catch {}
         
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
