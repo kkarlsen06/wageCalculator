@@ -1259,7 +1259,8 @@ body {
   padding-right: 20px;
   max-width: 640px;
   width: 100%;
-  margin: 0 auto;
+  margin-top: env(safe-area-inset-top, auto);
+  margin-bottom: 0;
   box-sizing: border-box;
   /* Convert to flexbox with consistent gap spacing */
   display: flex;
