@@ -15,7 +15,7 @@ const RUNTIME_CACHE = `runtime-cache-${VERSION}`;
 const PUBLIC_HINTS = [
   '/',
   '/index.html',
-  '/site.webmanifest',
+  '/webmanifest.json',
   '/favicon.ico',
   '/apple-touch-icon.png',
   '/favicon-192x192.png',
@@ -66,7 +66,7 @@ function extractAssetsFromHtml(htmlText) {
 
 async function extractIconsFromWebmanifest() {
   try {
-    const res = await fetch('/site.webmanifest', { cache: 'no-store' });
+    const res = await fetch('/webmanifest.json', { cache: 'no-store' });
     if (!res.ok) return [];
     const data = await res.json();
     const icons = Array.isArray(data.icons) ? data.icons : [];
