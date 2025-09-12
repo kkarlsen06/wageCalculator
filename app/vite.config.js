@@ -1,8 +1,10 @@
 // app/vite.config.js
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
+  plugins: [tailwindcss()],
   root: '.',
   base: '/',
   server: {

@@ -13,11 +13,6 @@ html, body {
   min-height: 100vh;
 }
 
-/* Simple fix: Remove all safe area constraints and use full viewport */
-.snap-container {
-  height: 100vh !important;
-}
-
 /* Allow scrolling for SPA routes (login, onboarding, settings, etc.) */
 html.spa-route,
 body.spa-route {
@@ -8166,8 +8161,7 @@ input:checked + .slider:before {
 
 /* Container for sections - hidden scrollbar but scrolling works - iOS 26 compatible */
 .snap-container {
-  /* iOS 26 support - use full viewport height including behind system navbar */
-  height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
   position: relative;
   /* Hide scrollbar but keep functionality */
