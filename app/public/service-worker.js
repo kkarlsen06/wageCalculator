@@ -116,6 +116,20 @@ self.addEventListener('install', (event) => {
         // Always include known public hints
         const precache = new Set(PUBLIC_HINTS);
 
+        // Include start_url from the web manifest (handles cases like '/?source=pwa')
+        try {
+          const mfRes = await fetch('/webmanifest.json', { cache: 'no-store' });
+          if (mfRes.ok) {
+            const mf = await mfRes.json();
+            const su = mf && mf.start_url ? mf.start_url : null;
+            if (su) {
+              const suURL = new URL(su, self.location.origin);
+              precache.add(suURL.pathname + suURL.search);
+              precache.add(suURL.pathname); // normalized variant without query
+            }
+          }
+        } catch (_) {}
+
         // Discover build assets from index.html
         try {
           const indexRes = await fetch('/index.html', { cache: 'no-store' });
@@ -203,19 +217,31 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         const cache = await caches.open(STATIC_CACHE);
-        // 1) Try exact page from cache (SPA deep links may have been cached by runtime section)
-        const cachedPage = await caches.match(request);
-        if (cachedPage) return cachedPage;
-        // 2) Fallback to app shell (pre-cached /index.html)
+        const url = new URL(request.url);
+
+        // Try exact request first (may include query like `/?source=pwa`)
+        let cached = await caches.match(request);
+        if (cached) return cached;
+
+        // Try normalized variants commonly used as start_url
+        if (url.pathname === '/') {
+          cached = await caches.match('/');
+          if (cached) return cached;
+          cached = await caches.match('/index.html');
+          if (cached) return cached;
+        }
+
+        // Fallback to app shell
         const cachedShell = await caches.match('/index.html');
         if (cachedShell) {
-          // Kick off a background update for freshness (non-blocking)
+          // Background update (non-blocking)
           fetch(request).then((res) => {
             if (res && res.ok) cache.put(request, res.clone());
           }).catch(() => {});
           return cachedShell;
         }
-        // 3) As a last resort, hit the network
+
+        // Last resort, network
         return fetch(request);
       })()
     );
