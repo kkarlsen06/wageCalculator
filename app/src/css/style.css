@@ -8155,7 +8155,7 @@ input:checked + .slider:before {
 
 /* Container for sections - hidden scrollbar but scrolling works - iOS 26 compatible */
 .snap-container {
-  margin-top: env(safe-area-inset-top, 0);
+  padding-top: env(safe-area-inset-top, 0);
   margin-bottom: 0;
   height: 100dvh;
   overflow-y: auto;
