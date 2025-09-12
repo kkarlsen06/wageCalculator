@@ -2637,9 +2637,7 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
 
 
 /* Forms */
-.form-group {
-  margin-bottom: 24px; /* Major spacing between form sections */
-}
+/* Moved to consolidated .form-group definition at line ~13485 */
 
 /* Break deduction settings styling */
 .method-info {
@@ -7072,6 +7070,39 @@ input:checked + .slider:before {
   flex: 0 0 auto;
 }
 
+/* ===== .form-actions Media Query Consolidation ===== */
+/* Mobile screens - sticky positioning and enhanced styling */
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: row;
+    gap: 12px;
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 16px 20px 20px;
+    border-radius: 20px 20px 0 0;
+    border-top: 2px solid var(--border);
+    margin: 20px -20px -20px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+  }
+
+  .form-actions .btn {
+    flex: 1;
+    min-width: 0;
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/* Medium mobile screens - adjust margin-top only for non-sticky form actions */
+@media (max-width: 600px) and (min-width: 481px) {
+  .form-actions {
+    margin-top: 28px;
+  }
+}
+
 /* Modal Body Styling */
 .modal-body {
   padding: 20px;
@@ -7994,23 +8025,7 @@ input:checked + .slider:before {
 
 /* Make modal buttons more accessible on mobile */
 @media (max-width: 480px) {
-  .form-actions {
-    flex-direction: row;
-    gap: 12px;
-    position: sticky;
-    bottom: 0;
-    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-    padding: 16px 20px;
-    margin: 20px -20px -20px -20px;
-    border-top: 1px solid var(--border);
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .form-actions .btn {
-    flex: 1;
-    min-width: auto;
-  }
+  /* Moved to consolidated .form-actions section */
 }
 
 /* Shift actions styling for centered edit/delete buttons */
@@ -9699,9 +9714,7 @@ input[type="file"].form-control:focus {
     margin: 28px 0 16px 0;
   }
 
-  .form-actions {
-    margin-top: 28px;
-  }
+  /* Moved to consolidated .form-actions section */
 }
 
 @media (max-width: 480px) {
@@ -13486,6 +13499,7 @@ body.chatbox-view .chatbox-container {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 24px; /* Major spacing between form sections */
 }
 
 .form-label {
@@ -13557,6 +13571,26 @@ body.chatbox-view .chatbox-container {
 
 .form-group.has-success .form-input {
   border-color: #22c55e;
+}
+
+/* ===== .form-input Media Query Consolidation ===== */
+/* Mobile screens - prevent zoom on iOS and adjust padding */
+@media (max-width: 480px) {
+  .form-input {
+    padding: 10px 12px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+}
+
+/* High contrast mode - increase border visibility */
+@media (prefers-contrast: high) {
+  .form-input {
+    border-width: 2px;
+  }
+
+  .form-input:focus {
+    border-width: 3px;
+  }
 }
 
 /* Checkbox and Link Button Styles */
@@ -13994,10 +14028,7 @@ body.chatbox-view .chatbox-container {
     height: 24px;
   }
 
-  .form-input {
-    padding: 10px 12px;
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
+  /* Moved to consolidated .form-input section */
 }
 
 /* High contrast mode support for employee modal */
@@ -14007,13 +14038,7 @@ body.chatbox-view .chatbox-container {
     border-color: var(--text-primary);
   }
 
-  .form-input {
-    border-width: 2px;
-  }
-
-  .form-input:focus {
-    border-width: 3px;
-  }
+  /* Moved to consolidated .form-input section */
 
   .avatar-preview {
     border-width: 4px;

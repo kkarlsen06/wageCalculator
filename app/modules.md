@@ -1,27 +1,4 @@
-**High Priority - Core UI Components:**
-- [ ] total-card
-- [ ] next-shift-card  
-- [ ] next-payroll-card
-- [ ] modal
-- [ ] header
-- [ ] tab-bar
-- [ ] floating-action-bar
-- [ ] snap-container
-
-**Form & Input Components:**
-- [ ] form-group
-- [ ] form-control
-- [ ] form-input
-- [ ] form-actions
-- [ ] form-progress
-- [ ] form-sections
-- [ ] time-input
-- [ ] date-cell
-- [ ] date-selector-group
-- [ ] calendar-cell
-- [ ] switch-group
-- [ ] toggle-input
-- [ ] radio-option
+For the group of classes under this text, search for every css rule for each class, and remove cascading issues and reunite seperated rules to one rule in in the same file (which they should be anyway). Dont do any more classes than these.
 
 **Employee Management:**
 - [ ] employee-form
@@ -134,3 +111,27 @@
 
 - [ ] _(none yet)_
 
+**High Priority - Core UI Components:**
+- [ ] total-card
+- [ ] next-shift-card  
+- [ ] next-payroll-card
+- [ ] modal
+- [ ] header
+- [ ] tab-bar
+- [ ] floating-action-bar
+- [ ] snap-container
+
+**Form & Input Components:**
+- [ ] form-group
+- [ ] form-control
+- [ ] form-input
+- [ ] form-actions
+- [ ] form-progress
+- [ ] form-sections
+- [ ] time-input
+- [ ] date-cell
+- [ ] date-selector-group
+- [ ] calendar-cell
+- [ ] switch-group
+- [ ] toggle-input
+- [ ] radio-option
