@@ -2,6 +2,7 @@
 import '/src/runtime-config.js';
 import '/src/lib/net/apiBase.js'; // logs [api] base on boot
 import '/src/lib/error-handling.js';
+import '/src/styles/tw.css';
 
 // CSS is linked via kalkulator/index.html to avoid duplication
 
