@@ -23,9 +23,16 @@
     "smoke": "node scripts/smoke-spa.mjs",
     "test": "npm --workspace server run test",
     "test:auth": "npm --workspace server run test:auth",
-    "test:payroll": "npm --workspace server run test:payroll"
+    "test:payroll": "npm --workspace server run test:payroll",
+    "ios": "cd app && npm run build && cd .. && rm -rf ios/App/App/Assets.xcassets/AppIcon.appiconset ios/App/App/Assets.xcassets/Splash.imageset && npx @capacitor/assets generate --ios && npx cap sync ios && npx cap open ios"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
     "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "@capacitor/ios": "^7.4.3"
   }
 }
