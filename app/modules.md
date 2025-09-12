@@ -6,12 +6,10 @@
 
 ## Agent State (Update on Each Run)
 ```
-DiscoveryComplete: false
-LastRun: [UPDATE_WITH_ISO_DATETIME]
-CurrentModule: [CURRENT_MODULE_BEING_WORKED_ON]
+DiscoveryComplete: true
+LastRun: 2025-09-12T12:30:00Z
+CurrentModule: total-card
 ```
-
-**Important**: When `DiscoveryComplete` becomes `true`, delete the entire "Discovery Commands" section below and update this state.
 
 ---
 
@@ -79,57 +77,142 @@ Ensure exact visual parity. If visuals differ, fix in the module CSS, never in g
 
 ---
 
-## Discovery Commands (Run Once, Then Delete This Section)
-
-**Goal**: Analyze codebase to identify all components that need migration, then update the "Modules Left" list.
-
-### Command 1: Find HTML/JS Class Usage
-```bash
-grep -Rho --include='*.{html,js,jsx,ts,tsx}' 'class[^=]*="[^"]*"' app/src app/index.html | \
-sed -E 's/.*class[^=]*="([^"]*)".*/\1/' | tr ' ' '\n' | sed 's/[",]//g' | \
-sort | uniq -c | sort -nr | head -n 200
-```
-
-### Command 2: Find classList.add() Usage
-```bash
-grep -Rho --include='*.{js,jsx,ts,tsx}' 'classList\.add\([^)]*\)' app/src | \
-sed -E 's/.*add\(([^)]*)\).*/\1/' | tr ', ' '\n' | sed -E "s/[\"'\`]//g" | \
-sort | uniq -c | sort -nr | head -n 200
-```
-
-### Analysis Instructions
-1. Run both commands above
-2. From results, identify component-like classes (cards, modals, buttons, forms, etc.)
-3. Ignore utility classes (flex, mt-*, container, content, etc.)
-4. Update "Modules Left" list below in alphabetical order
-5. Set `DiscoveryComplete: true` in Agent State
-6. **Delete this entire "Discovery Commands" section**
-
----
-
 ## Migration Progress Tracking
 
 ### Modules Left (Update After Each Migration)
 
-**Note**: This list is seeded from current codebase analysis. Update after running Discovery Commands.
+**Note**: Final comprehensive analysis completed on 2025-09-12 with triple-check verification. Components ordered by priority/complexity.
 
-- [ ] button-primary
-- [ ] button-secondary  
-- [ ] dashboard-section
-- [ ] employee-actions-menu
-- [ ] employee-card
-- [ ] employee-carousel
-- [ ] employee-modal
-- [ ] footer
-- [ ] form-field
-- [ ] header
-- [ ] modal
-- [ ] skeleton-block
-- [ ] stats-view
-- [ ] tabs
-- [ ] toast
+**High Priority - Core UI Components:**
 - [ ] total-card
-- [ ] total-skeleton
+- [ ] next-shift-card  
+- [ ] next-payroll-card
+- [ ] modal
+- [ ] header
+- [ ] tab-bar
+- [ ] floating-action-bar
+- [ ] snap-container
+
+**Form & Input Components:**
+- [ ] form-group
+- [ ] form-control
+- [ ] form-input
+- [ ] form-actions
+- [ ] form-progress
+- [ ] form-sections
+- [ ] time-input
+- [ ] date-cell
+- [ ] date-selector-group
+- [ ] calendar-cell
+- [ ] switch-group
+- [ ] toggle-input
+- [ ] radio-option
+
+**Employee Management:**
+- [ ] employee-form
+- [ ] employee-modal-content
+- [ ] employee-carousel
+- [ ] employee-actions-menu
+- [ ] employee-filter-bar
+- [ ] employee-tile
+- [ ] employee-avatar
+- [ ] employees-container
+- [ ] employees-placeholder
+
+**Charts & Statistics:**
+- [ ] weekly-hours-chart-card
+- [ ] chart-visualization-card
+- [ ] chart-hours-section
+- [ ] chart-progress-bar
+- [ ] chart-cards-container
+- [ ] statistics-section
+
+**Settings & Configuration:**
+- [ ] settings-detail
+- [ ] settings-item
+- [ ] settings-section
+- [ ] settings-collapse-toggle
+- [ ] advanced-section
+- [ ] advanced-toggle
+- [ ] theme-selector
+- [ ] profile-dropdown
+- [ ] user-profile-container
+
+**Profile & Avatar Management:**
+- [ ] profile-picture-controls
+- [ ] profile-picture-current
+- [ ] profile-placeholder
+- [ ] avatar-upload
+- [ ] avatar-preview
+
+**Navigation & Layout:**
+- [ ] month-navigation
+- [ ] shift-calendar
+- [ ] calendar-display-toggle
+- [ ] dashboard-section
+- [ ] week-separator
+- [ ] calendar-employee-chips
+
+**Authentication & Onboarding:**
+- [ ] login-card
+- [ ] onboarding-container
+- [ ] onboarding-step
+- [ ] onboarding-progress
+- [ ] auth-center
+- [ ] legal-modal
+
+**Premium & Subscriptions:**
+- [ ] premium-feature-modal
+- [ ] plan-card
+- [ ] subscription-status-card
+- [ ] subscription-plans
+- [ ] upgrade-prompt-card
+
+**Chat & Communication:**
+- [ ] chatbox-container
+- [ ] chatbox-pill
+- [ ] chatbox-message
+- [ ] chatbox-input-container
+
+**Wage & Rate Components:**
+- [ ] wage-info-card
+- [ ] wage-type-options
+- [ ] rate-preview-card
+- [ ] rate-input-group
+- [ ] bonus-breakdown
+- [ ] bonus-details
+- [ ] tariff-card
+- [ ] tariff-grid
+
+**Menu & Dropdown Systems:**
+- [ ] menu-items
+- [ ] menu-header
+- [ ] menu-close-btn
+- [ ] dropdown-item
+- [ ] filter-chip
+
+**Progress & Step Components:**
+- [ ] progress-card
+- [ ] progress-step
+- [ ] progress-line
+- [ ] step-header
+
+**Loading & State Components:**
+- [ ] loading-spinner
+- [ ] loading-overlay
+- [ ] loading-skeleton
+- [ ] skeleton-block
+- [ ] profile-skeleton
+
+**Utility & UI Elements:**
+- [ ] confirmation-modal
+- [ ] info-card
+- [ ] info-box
+- [ ] toast
+- [ ] backdrop-blur
+- [ ] app-footer
+- [ ] empty-state
+- [ ] error-box
 
 **Instructions**: 
 - Keep list alphabetical
