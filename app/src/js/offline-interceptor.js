@@ -295,6 +295,10 @@ class OfflineFetchInterceptor {
             }
 
             console.log(`[OfflineInterceptor] Queue processing complete: ${processedCount} processed, ${failedCount} failed`);
+        } catch (error) {
+            console.error('[OfflineInterceptor] Failed to process offline queue:', error);
+        }
+    }
 
     async processQueuedItem(item) {
         try {
