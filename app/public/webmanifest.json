@@ -1,7 +1,7 @@
 {
   "name": "Lønnskalkulator",
   "short_name": "Min Lønn",
-  "start_url": "/index.html",
+  "start_url": "https://kalkulator.kkarlsen.dev",
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#4ac8ff",
@@ -57,6 +57,13 @@
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Edit shift details"
+    },
+    {
+      "src": "/screenshots/sc_dashboard_wide.PNG",
+      "sizes": "1179x2556",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard overview (desktop)"
     }
   ],
   "shortcuts": [
@@ -75,5 +82,17 @@
     }
   ],
   "protocol_handlers": [],
-  "display_override": ["window-controls-overlay", "minimal-ui"]
+  "display_override": ["window-controls-overlay", "minimal-ui"],
+  "categories": ["finance"],
+  "prefer_related_applications": false,
+  "scope": "https://kalkulator.kkarlsen.dev",
+  "scope_extensions": [
+    {"origin": "*.kkarlsen.com"}
+  ],
+  "lang": "nb",
+  "dir": "ltr",
+  "launch_handler": {
+    "client_mode": ["focus-existing", "navigate-existing", "auto"]
+  },
+  "handle_links": "preferred"
 }
