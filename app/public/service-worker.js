@@ -198,16 +198,25 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return; // only cache GETs
 
-  // Ensure offline SPA navigation: try network, fall back to cached app shell
+  // Ensure offline SPA navigation: cache-first with background update for freshness
   if (request.mode === 'navigate') {
     event.respondWith(
       (async () => {
-        try {
-          return await fetch(request);
-        } catch (_) {
-          const cachedShell = await caches.match('/index.html');
-          return cachedShell || Response.error();
+        const cache = await caches.open(STATIC_CACHE);
+        // 1) Try exact page from cache (SPA deep links may have been cached by runtime section)
+        const cachedPage = await caches.match(request);
+        if (cachedPage) return cachedPage;
+        // 2) Fallback to app shell (pre-cached /index.html)
+        const cachedShell = await caches.match('/index.html');
+        if (cachedShell) {
+          // Kick off a background update for freshness (non-blocking)
+          fetch(request).then((res) => {
+            if (res && res.ok) cache.put(request, res.clone());
+          }).catch(() => {});
+          return cachedShell;
         }
+        // 3) As a last resort, hit the network
+        return fetch(request);
       })()
     );
     return;
