@@ -87,9 +87,9 @@
   "prefer_related_applications": false,
   "scope": "https://kalkulator.kkarlsen.dev",
   "scope_extensions": [
-    {"origin": "www.kkarlsen.com"},
-    {"origin": "id.kkarlsen.dev"},
-    {"origin": "server.kkarlsen.dev"}
+    {"origin": "https://www.kkarlsen.com"},
+    {"origin": "https://id.kkarlsen.dev"},
+    {"origin": "https://server.kkarlsen.dev"}
   ],
   "lang": "nb",
   "dir": "ltr",
