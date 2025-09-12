@@ -2040,20 +2040,6 @@ body.skeleton-active .month-nav-btn {
     margin-top: 0; /* Spacing handled by dashboard gap system */
   }
 
-  /* AGGRESSIVE STAT CARD HEIGHT REDUCTION FOR SMALL PHONES */
-  /* Reduce total-card dimensions significantly to fit small viewports */
-  .total-card {
-    padding: 14px 16px; /* Reduced from 30px to 14px vertical, 16px horizontal */
-    border-radius: 40px; /* Slightly smaller radius */
-    margin-bottom: 0;
-    /* Natural height based on content - removed fixed height for better spacing */
-    /* Consistent spacing system for mobile - proportional to screen size */
-    --spacing-base: 6px;
-    --spacing-label: calc(var(--spacing-base) * 1.67); /* 10px */
-    --spacing-amount: calc(var(--spacing-base) * 1.67); /* 10px */
-    --spacing-secondary: calc(var(--spacing-base) * 1); /* 6px */
-  }
-
   /* Keep total amount readable on small screens */
   .total-amount {
     font-size: 3rem !important; /* 48px - maintain readability */
@@ -2195,18 +2181,6 @@ body.skeleton-active .month-nav-btn {
 /* EXTRA SMALL MOBILE DEVICES - Even more aggressive height reduction */
 /* For very small phones like iPhone SE, older Android phones */
 @media (max-width: 360px) {
-  /* STAT CARD STYLING */
-  .total-card {
-    padding: 12px 14px; /* Even more reduced padding */
-    border-radius: 40px; /* Smaller radius */
-    /* Natural height based on content - removed fixed height for better spacing */
-    /* Consistent spacing system for very small mobile - proportional to screen size */
-    --spacing-base: 5px;
-    --spacing-label: calc(var(--spacing-base) * 1.6); /* 8px */
-    --spacing-amount: calc(var(--spacing-base) * 1.6); /* 8px */
-    --spacing-secondary: calc(var(--spacing-base) * 1); /* 5px */
-  }
-
   /* Maintain readable total amount on very small screens */
   .total-amount {
     font-size: 2.75rem !important; /* 44px - still readable */
@@ -2333,18 +2307,6 @@ body.skeleton-active .month-nav-btn {
 
 /* SMALL MOBILE LANDSCAPE - Aggressive height reduction for rotated phones */
 @media (max-width: 667px) and (orientation: landscape) and (max-height: 430px) {
-  /* Landscape phones need even more aggressive space optimization */
-  .total-card {
-    padding: 10px 12px; /* Ultra-minimal padding for landscape */
-    border-radius: 40px;
-    /* Natural height based on content - removed fixed height for better spacing */
-    /* Consistent spacing system for landscape mobile - proportional to screen size */
-    --spacing-base: 4px;
-    --spacing-label: calc(var(--spacing-base) * 1.5); /* 6px */
-    --spacing-amount: calc(var(--spacing-base) * 1.5); /* 6px */
-    --spacing-secondary: calc(var(--spacing-base) * 1); /* 4px */
-  }
-
   .total-amount {
     font-size: 2.5rem !important; /* 40px - readable even in landscape */
     line-height: 1;
@@ -2461,8 +2423,6 @@ body.skeleton-active .month-nav-btn {
   }
 }
 
-/* Override for small landscape devices - UPDATED: Always show dashboard navigation across all views */
-/* Small phones in landscape mode don't have enough effective space */
 @media (orientation: landscape) and (max-height: 399px) {
   .dashboard-month-nav {
     display: flex !important; /* Always show dashboard navigation across all views */
@@ -5420,6 +5380,49 @@ input:checked + .slider:before {
 @keyframes shimmer-once {
   0% { left: -100%; }
   100% { left: 100%; }
+}
+
+/* ===== .total-card Media Query Consolidation ===== */
+/* Mobile screens - reduce padding and spacing */
+@media (max-width: 768px) {
+  .total-card {
+    padding: 14px 16px; /* Reduced from 30px to 14px vertical, 16px horizontal */
+    /* margin-bottom: 0 already set in base rule */
+    /* Natural height based on content - removed fixed height for better spacing */
+    /* Consistent spacing system for mobile - proportional to screen size */
+    --spacing-base: 6px;
+    --spacing-label: calc(var(--spacing-base) * 1.67); /* 10px */
+    --spacing-amount: calc(var(--spacing-base) * 1.67); /* 10px */
+    --spacing-secondary: calc(var(--spacing-base) * 1); /* 6px */
+  }
+}
+
+/* Extra small mobile devices - even more aggressive reduction */
+@media (max-width: 360px) {
+  .total-card {
+    padding: 12px 14px; /* Even more reduced padding */
+    /* border-radius already set in base rule */
+    /* Natural height based on content - removed fixed height for better spacing */
+    /* Consistent spacing system for very small mobile - proportional to screen size */
+    --spacing-base: 5px;
+    --spacing-label: calc(var(--spacing-base) * 1.6); /* 8px */
+    --spacing-amount: calc(var(--spacing-base) * 1.6); /* 8px */
+    --spacing-secondary: calc(var(--spacing-base) * 1); /* 5px */
+  }
+}
+
+/* Small mobile landscape - ultra-aggressive reduction for rotated phones */
+@media (max-width: 667px) and (orientation: landscape) and (max-height: 430px) {
+  .total-card {
+    padding: 10px 12px; /* Ultra-minimal padding for landscape */
+    /* border-radius already set in base rule */
+    /* Natural height based on content - removed fixed height for better spacing */
+    /* Consistent spacing system for landscape mobile - proportional to screen size */
+    --spacing-base: 4px;
+    --spacing-label: calc(var(--spacing-base) * 1.5); /* 6px */
+    --spacing-amount: calc(var(--spacing-base) * 1.5); /* 6px */
+    --spacing-secondary: calc(var(--spacing-base) * 1); /* 4px */
+  }
 }
 
 /* Calendar shimmer animations - text-based shimmer without layout changes */
@@ -8660,6 +8663,66 @@ body.chatbox-view .dashboard-content {
   height: 18px;
 }
 
+/* ===== .floating-action-bar Media Query Consolidation ===== */
+/* Mobile screens - adjust padding and sizing */
+@media (max-width: 480px) {
+  .floating-action-bar {
+    width: min(85%, 500px); /* Slightly wider on mobile */
+    max-width: calc(100% - 24px); /* Ensure padding from edges */
+    /* iOS 26 support - position above system navbar on mobile */
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .floating-action-bar .view-toggle {
+    gap: 3px;
+  }
+
+  .floating-action-bar .view-toggle .tab-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .floating-action-bar .add-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .floating-action-bar .add-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Extra small screens - even more aggressive optimization */
+@media (max-width: 360px) {
+  .floating-action-bar {
+    width: min(90%, 400px); /* Even wider on very small screens */
+    max-width: calc(100% - 20px); /* Minimal padding from edges */
+    /* iOS 26 support - position above system navbar on extra small screens */
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .floating-action-bar .view-toggle .tab-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .floating-action-bar .add-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .floating-action-bar .add-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 /* Month Navigation in Floating Action Bar */
 .month-navigation-nav {
   display: flex;
@@ -8714,14 +8777,7 @@ body.chatbox-view .dashboard-content {
 
 /* Responsive adjustments - iOS 26 compatible */
 @media (max-width: 480px) {
-  .floating-action-bar {
-    width: min(85%, 500px); /* Slightly wider on mobile */
-    max-width: calc(100% - 24px); /* Ensure padding from edges */
-    /* iOS 26 support - position above system navbar on mobile */
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    padding: 10px 12px;
-    gap: 8px;
-  }
+  /* Moved to main .floating-action-bar section for consolidation */
 
   /* Further optimize month navigation for smaller mobile screens */
   .month-nav-btn {
@@ -8741,24 +8797,7 @@ body.chatbox-view .dashboard-content {
     font-weight: var(--font-weight-medium); /* Reduce weight slightly for better balance */
   }
 
-  .floating-action-bar .view-toggle {
-    gap: 3px;
-  }
-
-  .floating-action-bar .view-toggle .tab-btn {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-
-  .floating-action-bar .add-btn {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-
-  .floating-action-bar .add-btn svg {
-    width: 16px;
-    height: 16px;
-  }
+  /* Moved to main .floating-action-bar section for consolidation */
 
   /* Month navigation responsive adjustments */
   .month-navigation-nav {
@@ -8789,30 +8828,7 @@ body.chatbox-view .dashboard-content {
 
 /* Extra small screens - iOS 26 compatible */
 @media (max-width: 360px) {
-  .floating-action-bar {
-    width: min(90%, 400px); /* Even wider on very small screens */
-    max-width: calc(100% - 20px); /* Minimal padding from edges */
-    /* iOS 26 support - position above system navbar on extra small screens */
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    gap: 6px;
-    padding: 8px 10px;
-  }
-
-  .floating-action-bar .view-toggle .tab-btn {
-    padding: 5px 10px;
-    font-size: 12px;
-  }
-
-  .floating-action-bar .add-btn {
-    padding: 5px 10px;
-    font-size: 12px;
-    gap: 6px;
-  }
-
-  .floating-action-bar .add-btn svg {
-    width: 14px;
-    height: 14px;
-  }
+  /* Moved to main .floating-action-bar section for consolidation */
 
   /* Month navigation for extra small screens */
   .month-navigation-nav {
