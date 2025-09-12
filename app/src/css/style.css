@@ -1,3 +1,5 @@
+body { padding-bottom: env(safe-area-inset-bottom); }
+
 /* Progress card - hele kortet er progressbaren */
 .progress-card {
   background: var(--bg-card);
