@@ -1297,6 +1297,7 @@ body {
   border-bottom: 1px solid var(--border); /* More transparent border */
   border-radius: 32px;
   margin: 0; /* Remove margins - spacing handled by parent gap */
+  margin-top: env(safe-area-inset-top, auto);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
   overflow: visible;
