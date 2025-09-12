@@ -1,7 +1,3 @@
-.snap-container {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
 /* Progress card - hele kortet er progressbaren */
 .progress-card {
   background: var(--bg-card);
@@ -266,7 +262,7 @@ html, body {
   margin: 0 !important;
   padding: 0 !important;
   overflow-x: hidden !important;
-  min-height: 100dvh;
+  min-height: 100vh;
 }
 
 #app, #spa-root, .snap-container {
@@ -278,8 +274,6 @@ html, body {
 /* Simple fix: Remove all safe area constraints and use full viewport */
 .snap-container {
   height: 100vh !important;
-  height: 100dvh !important;
-  padding: 0 !important;
 }
 
 html {
@@ -1944,12 +1938,6 @@ img, video, iframe, embed, object {
   margin: 0 !important;
 }
 
-/* Simple fix: Remove all safe area constraints and use full viewport */
-.snap-container {
-  height: 100vh !important;
-  height: 100dvh !important;
-  padding: 0 !important;
-}
 
 html {
   overflow: hidden; /* Completely prevent all scrolling */
@@ -9736,8 +9724,7 @@ input:checked + .slider:before {
 /* Container for sections - hidden scrollbar but scrolling works - iOS 26 compatible */
 .snap-container {
   /* iOS 26 support - use full viewport height including behind system navbar */
-  height: var(--app-height, 100vh);
-  height: var(--app-height, 100dvh);
+  height: 100vh;
   overflow-y: auto;
   position: relative;
   /* Hide scrollbar but keep functionality */
@@ -17248,12 +17235,6 @@ body.chatbox-view .chatbox-container {
     transition: all 0.3s ease;
   }
 
-  /* Prevent content jumping during keyboard transitions */
-  body.keyboard-visible .snap-container {
-    height: 100vh;
-    overflow: hidden;
-  }
-
   /* Optimize expanded chatbox for keyboard interaction */
   body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
     /* Fixed height to prevent expansion when keyboard appears */
@@ -18237,14 +18218,6 @@ body.chatbox-view .chatbox-container {
   background: var(--bg-primary, #121212) !important;
 }
 
-/* Remove any bottom safe area padding that might cause white space */
-.snap-container {
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
-  margin-bottom: 0 !important;
-  padding-bottom: 0 !important;
-}
-
 /* Fix week separator line length - make it narrower with symmetrical feathered ends */
 #shiftList > div::after {
   left: 110px !important;
@@ -18255,8 +18228,4 @@ body.chatbox-view .chatbox-container {
     var(--border) 80%, 
     transparent 100%
   ) !important;
-}
-
-.snap-container {
-  padding-bottom: env(safe-area-inset-bottom) !important;
 }
