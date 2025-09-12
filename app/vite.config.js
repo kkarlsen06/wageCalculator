@@ -1,10 +1,15 @@
-// app/vite.config.js
-import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import purgeCss from "vite-plugin-purgecss";
 
 export default defineConfig({
-  plugins: [tailwindcss()],
+  plugins: [purgeCss({
+    content: [
+      "./index.html",
+      "./src/**/*.{js,ts,jsx,tsx,vue,html}"
+    ],
+    safelist: [/^is-/, /^has-/, /^toast-/, /^modal-/, /^swiper-/] // tweak as needed
+  })],
   root: '.',
   base: '/',
   server: {
