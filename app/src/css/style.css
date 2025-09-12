@@ -262,6 +262,7 @@ html, body {
   margin: 0 !important;
   padding: 0 !important;
   overflow-x: hidden !important;
+  min-height: 100dvh;
 }
 
 #app, #spa-root, .snap-container {
@@ -1931,15 +1932,6 @@ img, video, iframe, embed, object {
 *, *::before, *::after {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-}
-
-/* Fix for mobile webapp white bar issue - ensure full width */
-html, body {
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow-x: hidden !important;
 }
 
 #app, #spa-root, .snap-container {
@@ -18233,14 +18225,6 @@ body.chatbox-view .chatbox-container {
   #spa-root {
     padding-top: env(safe-area-inset-top, 0);
   }
-}
-
-/* Fix white bar at bottom - ensure content extends to screen edge */
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  height: 100% !important;
-  background: var(--bg-primary, #121212) !important;
 }
 
 #app, #spa-root {
