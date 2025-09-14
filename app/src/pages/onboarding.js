@@ -21,7 +21,6 @@ export function renderOnboarding() {
       <div class="form-group">
         <label class="form-label">Fornavn</label>
         <input type="text" class="form-control" id="firstName" placeholder="F.eks. Ola" maxlength="50" required>
-        <div class="form-error" id="firstNameError">Vennligst fyll inn fornavnet ditt</div>
         <div class="form-hint">Dette vises i velkomstmeldinger og rapporter</div>
       </div>
       <div class="form-group">
@@ -72,7 +71,6 @@ export function renderOnboarding() {
       <div class="form-group hidden" id="customWageSection">
         <label class="form-label">Timelønn (kr)</label>
         <input type="number" class="form-control" id="customWageInput" placeholder="200.00" step="0.01" min="50" max="1000" required>
-        <div class="form-error" id="customWageError">Vennligst fyll inn en gyldig timelønn (50-1000 kr)</div>
         <div class="form-hint">Grunnlønn per time før tillegg</div>
         <div class="advanced-section" id="supplementsSection">
           <div class="form-group">
@@ -260,7 +258,10 @@ export async function afterMountOnboarding() {
       }
       if (user.user_metadata?.first_name) {
         const el = document.getElementById('firstName');
-        if (el) el.value = user.user_metadata.first_name;
+        if (el) {
+          el.value = user.user_metadata.first_name;
+          el.classList.remove('error');
+        }
       }
       if (settings?.profile_picture_url || user.user_metadata?.avatar_url) {
         setProfilePicture(settings?.profile_picture_url || user.user_metadata.avatar_url);
@@ -276,7 +277,13 @@ export async function afterMountOnboarding() {
           selectWageType('custom');
           if (settings.custom_wage) {
             const inp = document.getElementById('customWageInput');
-            if (inp) inp.value = settings.custom_wage;
+            if (inp) {
+              inp.value = settings.custom_wage;
+              const n = parseLocaleNumber(inp.value);
+              if (Number.isFinite(n) && n >= 50 && n <= 1000) {
+                inp.classList.remove('error');
+              }
+            }
           }
           if (settings.custom_bonuses) {
             prefillCustomBonuses(settings.custom_bonuses);
@@ -328,6 +335,14 @@ export async function afterMountOnboarding() {
     }
   }
 
+  // Small helper: parse numbers robustly (handles commas and spaces)
+  function parseLocaleNumber(raw) {
+    if (raw == null) return NaN;
+    const s = String(raw).trim().replace(/\s+/g, '').replace(',', '.');
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
   function prefillCustomBonuses(customBonuses) {
     if (!customBonuses || typeof customBonuses !== 'object') return;
     ['weekday', 'saturday', 'sunday'].forEach(type => {
@@ -350,6 +365,26 @@ export async function afterMountOnboarding() {
         });
       }
     });
+  }
+
+  function collectCustomBonuses() {
+    const out = { weekday: [], saturday: [], sunday: [] };
+    ['weekday', 'saturday', 'sunday'].forEach(type => {
+      const container = document.getElementById(`${type}BonusSlots`);
+      if (!container) return;
+      const slots = container.querySelectorAll('.bonus-slot');
+      slots.forEach(slot => {
+        const timeInputs = slot.querySelectorAll('input[type="time"]');
+        const rateInput = slot.querySelector('input[type="number"]');
+        const from = timeInputs?.[0]?.value;
+        const to = timeInputs?.[1]?.value;
+        const rate = parseLocaleNumber(rateInput?.value);
+        if (from && to && Number.isFinite(rate) && rate >= 0 && rate <= 500) {
+          out[type].push({ from, to, rate });
+        }
+      });
+    });
+    return out;
   }
 
   function updateProgress() {
@@ -426,17 +461,20 @@ export async function afterMountOnboarding() {
             // Allow progression; saveCurrentStepData will pick up the value
             break;
           }
-          showFieldError('firstName', 'firstNameError');
-          return false;
+          // Do not show any error; allow progression without a name
+          break;
         }
         break; }
       case 2: {
         const selectedWageType = document.querySelector('.wage-option.selected');
         if (!selectedWageType) { alert('Vennligst velg en lønnstype'); return false; }
         if (selectedWageType.dataset.value === 'custom') {
-          const customWage = document.getElementById('customWageInput').value;
-          if (!customWage || parseFloat(customWage) < 50 || parseFloat(customWage) > 1000) {
-            showFieldError('customWageInput', 'customWageError');
+          const customWageRaw = document.getElementById('customWageInput').value;
+          const customWage = parseLocaleNumber(customWageRaw);
+          // If invalid, focus the field but do not show any error message
+          if (!Number.isFinite(customWage) || customWage < 50 || customWage > 1000) {
+            const field = document.getElementById('customWageInput');
+            field?.focus();
             return false;
           }
         }
@@ -445,11 +483,9 @@ export async function afterMountOnboarding() {
     return true;
   }
 
-  function showFieldError(fieldId, errorId) {
+  function showFieldError(fieldId, _errorId) {
+    // De-emphasized: we no longer display inline error messages for first name or custom wage
     const field = document.getElementById(fieldId);
-    const error = document.getElementById(errorId);
-    if (field) field.classList.add('error');
-    if (error) error.classList.add('show');
     if (field) field.focus();
   }
 
@@ -467,7 +503,7 @@ export async function afterMountOnboarding() {
           onboardingData.custom_bonuses = { weekday: [], saturday: [], sunday: [] };
         } else {
           onboardingData.use_preset = false;
-          onboardingData.custom_wage = parseFloat(document.getElementById('customWageInput').value);
+          onboardingData.custom_wage = parseLocaleNumber(document.getElementById('customWageInput').value);
           onboardingData.current_wage_level = null;
           onboardingData.custom_bonuses = collectCustomBonuses();
         }
@@ -551,9 +587,61 @@ export async function afterMountOnboarding() {
     if (opt) opt.classList.add('selected');
     const virke = document.getElementById('virkeWageSection');
     const custom = document.getElementById('customWageSection');
-    if (type === 'virke') { if (virke) virke.classList.remove('hidden'); if (custom) custom.classList.add('hidden'); }
-    else { if (virke) virke.classList.add('hidden'); if (custom) custom.classList.remove('hidden'); }
+    if (type === 'virke') {
+      if (virke) { virke.classList.remove('hidden'); virke.style.display = 'block'; }
+      if (custom) { custom.classList.add('hidden'); custom.style.display = 'none'; }
+      // Clear any custom wage error highlight when switching away
+      const inp = document.getElementById('customWageInput');
+      inp?.classList.remove('error');
+    } else {
+      if (virke) { virke.classList.add('hidden'); virke.style.display = 'none'; }
+      if (custom) {
+        custom.classList.remove('hidden');
+        custom.style.display = 'block';
+        // Auto-focus the wage field for convenience
+        const inp = document.getElementById('customWageInput');
+        if (inp) {
+          inp.focus();
+          // If value already valid, clear error display
+          const n = parseLocaleNumber(inp.value);
+          if (Number.isFinite(n) && n >= 50 && n <= 1000) {
+            inp.classList.remove('error');
+          }
+        }
+      }
+    }
   };
+
+  // Live-validate custom wage and improve UX
+  const customWageInput = document.getElementById('customWageInput');
+  if (customWageInput) {
+    const clearErrorState = () => { customWageInput.classList.remove('error'); };
+    customWageInput.addEventListener('focus', () => { selectWageType('custom'); clearErrorState(); });
+    customWageInput.addEventListener('input', clearErrorState);
+    customWageInput.addEventListener('change', clearErrorState);
+    customWageInput.addEventListener('blur', clearErrorState);
+    customWageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        nextStep();
+      }
+    });
+  }
+
+  // Live-validate first name and allow Enter to continue
+  const firstNameInput = document.getElementById('firstName');
+  if (firstNameInput) {
+    const clearErrorState = () => { firstNameInput.classList.remove('error'); };
+    firstNameInput.addEventListener('input', clearErrorState);
+    firstNameInput.addEventListener('change', clearErrorState);
+    firstNameInput.addEventListener('blur', clearErrorState);
+    firstNameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        nextStep();
+      }
+    });
+  }
 
   document.getElementById('profilePicture')?.addEventListener('change', async (e) => {
     const file = e.target.files && e.target.files[0];
