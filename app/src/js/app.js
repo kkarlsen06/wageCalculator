@@ -1232,11 +1232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const modal = event.target.closest('.modal');
       if (modal && event.target === modal) {
         const modalId = modal.id;
-        if (modalId === 'addShiftModal') {
-          app.closeAddShiftModal();
-        } else if (modalId === 'editShiftModal') {
-          app.closeEditShift();
-        } else if (modalId === 'settingsModal') {
+        if (modalId === 'settingsModal') {
           app.closeSettings();
         }
         return;
@@ -1255,19 +1251,9 @@ document.addEventListener('DOMContentLoaded', async () => {
      // Handle ESC key to close modals
      document.addEventListener('keydown', (event) => {
        if (event.key === 'Escape') {
-         // Check which modal is open and close it
-         const modalActions = {
-           'addShiftModal': () => app.closeAddShiftModal(),
-           'editShiftModal': () => app.closeEditShift(),
-           'settingsModal': () => app.closeSettings()
-         };
-
-         for (const [modalId, closeAction] of Object.entries(modalActions)) {
-           const modal = document.getElementById(modalId);
-           if (modal && modal.style.display === 'block') {
-             closeAction();
-             break;
-           }
+         const settingsModal = document.getElementById('settingsModal');
+         if (settingsModal && settingsModal.style.display === 'block') {
+           app.closeSettings();
          }
        }
      });

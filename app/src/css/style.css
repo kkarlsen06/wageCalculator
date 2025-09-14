@@ -2795,6 +2795,44 @@ input[type="time"].form-control[value=""]:focus {
   50% { border-color: var(--accent); }
 }
 
+/* Conflict flash animation for overlapping shift dates */
+.conflict-flash {
+  animation: conflict-flash 0.6s ease-in-out 3;
+}
+
+@keyframes conflict-flash {
+  0%, 100% { 
+    background-color: transparent;
+    border-color: var(--border);
+  }
+  50% { 
+    background-color: rgba(255, 165, 0, 0.3);
+    border-color: #ff8c00;
+    box-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+  }
+}
+
+/* Constant orange styling for conflicting dates */
+.date-cell.has-conflict {
+  background-color: rgba(255, 165, 0, 0.25) !important;
+  border-color: #ff8c00 !important;
+  box-shadow: 0 0 6px rgba(255, 140, 0, 0.3);
+  color: #b8610a;
+  font-weight: 600;
+}
+
+.date-cell.has-conflict .date-cell-content {
+  color: #b8610a;
+}
+
+/* Disabled button styling */
+.btn-disabled {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-tertiary) !important;
+  border-color: var(--border) !important;
+  cursor: not-allowed !important;
+}
+
 /* Direct time input styling */
 .time-input {
   text-align: center;
@@ -2832,8 +2870,6 @@ input[type="time"].form-control[value=""]:focus {
 }
 
 /* Make week-number header transparent but keep in layout - higher specificity to override .week-number.header background */
-#addShiftModal .date-grid .week-number.header,
-#editShiftModal .date-grid .week-number.header,
 .date-grid .week-number.header {
   background: transparent !important;
   background-color: transparent !important;
@@ -3152,44 +3188,7 @@ input[type="time"].form-control[value=""]:focus {
            max(10px, env(safe-area-inset-left, 0px));
 }
 
-/* Special positioning for add shift modal to account for navigation header */
-#addShiftModal.active {
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 20px !important;
-  display: flex !important;
-}
-
-/* Mobile override for add shift modal positioning */
-@media (max-width: 768px) {
-  #addShiftModal.active {
-    padding: max(10px, env(safe-area-inset-top, 0px))
-             max(10px, env(safe-area-inset-right, 0px))
-             10px
-             max(10px, env(safe-area-inset-left, 0px)) !important;
-    align-items: center !important;
-    justify-content: center !important;
-    display: flex !important;
-  }
-}
-
-/* Desktop - center add shift modal within content viewport */
-@media (min-width: 769px) {
-  #addShiftModal.active {
-    justify-content: center !important;
-    align-items: center !important;
-    padding: 20px !important;
-    display: flex !important;
-  }
-
-  #addShiftModal .modal-content {
-    margin: 0 auto;
-    position: relative;
-    max-width: 600px !important;
-    width: min(90vw, 600px) !important; /* Constrain to content width */
-    height: auto !important; /* Ensure height is not forced to 100vh */
-  }
-}
+/* Removed legacy add shift modal positioning */
 
 .modal-content {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
@@ -3230,59 +3229,7 @@ input[type="time"].form-control[value=""]:focus {
   }
 }
 
-/* ADD SHIFT MODAL OVERRIDES - Must come after general modal rules */
-/* Force add shift modal to be centered and fit content naturally */
-#addShiftModal .modal-content {
-  width: min(90vw, 600px) !important;
-  margin: 20px auto 0 auto !important;
-  /* Constrain height to viewport to ensure scrollability */
-  max-height: calc(100dvh - 40px) !important;
-}
-
-#addShiftModal .modal-body {
-  /* Allow natural content sizing */
-  max-height: none !important;
-}
-
-/* Remove fixed footer styling - buttons are now inline */
-
-@media (min-width: 769px) {
-  #addShiftModal .modal-content {
-    height: auto !important;
-    width: min(90vw, 600px) !important;
-    max-width: 600px !important;
-    margin: 0 auto !important;
-    /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100dvh - 40px) !important;
-  }
-}
-
-@media (max-width: 768px) {
-  #addShiftModal .modal-content {
-    height: auto !important;
-    width: min(95vw, 500px) !important;
-    margin: 0 auto !important;
-    /* Constrain height to viewport - use dvh for better mobile support */
-    max-height: calc(100dvh - 40px) !important;
-    /* Rounded corners for centered modal */
-    border-radius: 20px !important;
-    position: relative !important;
-    top: auto !important;
-    bottom: auto !important;
-    left: auto !important;
-    right: auto !important;
-    /* Ensure modal doesn't extend beyond viewport */
-    overflow: hidden !important;
-  }
-  
-  #addShiftModal .modal-body {
-    /* Allow internal scrolling with proper viewport calculation */
-    max-height: calc(100dvh - 140px) !important; /* Account for buttons and padding */
-    overflow-y: auto !important;
-    padding: 16px 20px !important;
-    -webkit-overflow-scrolling: touch;
-  }
-}
+/* Removed legacy add shift modal sizing overrides */
 
 /* Center settings modal on screen */
 #settingsModal.active {
@@ -5352,6 +5299,8 @@ input:checked + .slider:before {
     --spacing-label: calc(var(--spacing-base) * 1.67); /* 10px */
     --spacing-amount: calc(var(--spacing-base) * 1.67); /* 10px */
     --spacing-secondary: calc(var(--spacing-base) * 1); /* 6px */
+    /* Ensure loaded card matches skeleton height on mobile */
+    min-height: 216px;
   }
 }
 
@@ -7636,41 +7585,19 @@ input:checked + .slider:before {
   margin-bottom: 16px;
 }
 
-/* Add Shift Modal Specific Styles */
-#addShiftModal .modal-content {
-  max-width: 600px !important;
-  position: relative;
-  overflow: visible !important; /* Allow internal body to handle scrolling */
-  height: auto !important; /* Override general modal height */
-  max-height: calc(100vh - 40px) !important; /* Keep within viewport with margin */
-  margin-top: 0; /* Remove fixed margin */
-  margin-bottom: 0;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-#addShiftModal .date-grid,
+/* Add Shift Route Specific Styles */
 #shiftAddPage .date-grid {
   margin-bottom: 8px;
 }
 
 /* In modals and routes, prefer fixed-height date cells to avoid fractional aspect-ratio rounding jitter */
-#addShiftModal .date-grid .date-cell,
-#editShiftModal .date-grid .date-cell,
 #shiftAddPage .date-grid .date-cell,
 #shiftEditPage .date-grid .date-cell {
   aspect-ratio: auto !important;
   height: clamp(44px, 6.5vw, 56px) !important;
 }
 
-/* Standard modal body padding for add shift modal */
-#addShiftModal .modal-body {
-  padding: 20px !important;
-  overflow-y: auto !important; /* Force scrolling on modal body only when needed */
-  flex: 1 !important; /* Allow body to grow */
-  /* Reserve space for the scrollbar to prevent width-driven layout shifts */
-  scrollbar-gutter: stable both-edges;
-}
+/* Removed legacy add shift modal body padding */
 
 /* Add shift modal close button in form actions */
 .form-actions .modal-close-bottom,
@@ -7723,11 +7650,7 @@ input:checked + .slider:before {
   gap: 8px;
 }
 
-/* Make the add shift button narrower */
-#addShiftModal .modal-fixed-footer .btn-primary {
-  max-width: 160px;
-  white-space: nowrap;
-}
+/* Removed legacy add shift modal footer button sizing */
 
 /* Fixed footer for modals */
 .modal-fixed-footer {
@@ -7792,22 +7715,21 @@ input:checked + .slider:before {
   }
 }
 
-/* Standard mobile padding for add shift modal */
-@media (max-width: 480px) {
-  #addShiftModal .modal-body {
-    padding: 20px !important;
-  }
-}
+/* Removed legacy mobile padding for add shift modal */
 
 .selected-dates-info {
   text-align: center;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
-  padding: 8px 12px;
+  padding: 10px 14px;
   margin-bottom: 12px;
   background: var(--accent3-alpha);
   border-radius: 16px;
   border: 1px solid var(--accent3);
+  min-height: 36px; /* Stabilize height to avoid layout shifts */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .selected-dates-info span {
@@ -7815,173 +7737,57 @@ input:checked + .slider:before {
   color: var(--accent3);
 }
 
-/* Edit Shift Modal Specific Styles */
-/* Apply the same styling overrides as Add Shift Modal for consistency */
-#editShiftModal .modal-content {
-  height: auto !important;
-  width: min(90vw, 600px) !important;
-  max-width: 600px !important;
-  margin: 0 auto !important;
-  overflow: visible !important;
-  display: flex !important;
-  flex-direction: column !important;
-  /* Constrain height to viewport to ensure scrollability */
-  max-height: calc(100dvh - 40px) !important;
+/* When the chip sits in the add-shift header, remove bottom margin */
+#shiftAddPage .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-#editShiftModal .modal-body {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  padding: 20px !important;
-  /* Reserve space for the scrollbar to prevent width-driven layout shifts */
-  scrollbar-gutter: stable both-edges;
-  /* Allow natural content sizing */
-  max-height: none !important;
+#shiftAddPage .page-header h2 {
+  margin: 0;
 }
+
+#shiftAddPage .page-header .selected-dates-info {
+  margin-bottom: 0;
+  margin-left: auto; /* ensure right alignment */
+}
+
+/* Conflict state for selected dates counter */
+.selected-dates-info.conflict-alert {
+  background: rgba(255, 165, 0, 0.15);
+  border-color: var(--warning);
+  color: var(--warning);
+  cursor: pointer;
+  font-size: 15px; /* Slightly larger for alert emphasis */
+}
+
+.selected-dates-info.conflict-alert span {
+  color: var(--warning);
+}
+
+.selected-dates-info .down-arrow {
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+/* Removed legacy edit shift modal specific styles */
 
 /* Remove fixed footer styling - buttons are now inline */
 
-#editShiftModal .date-grid,
 #shiftEditPage .date-grid {
   margin-bottom: 20px;
 }
 
-/* EDIT SHIFT MODAL OVERRIDES - Must come after general modal rules */
-/* Force edit shift modal to be centered and fit content naturally */
-@media (min-width: 769px) {
-  #editShiftModal .modal-content {
-    height: auto !important;
-    width: min(90vw, 600px) !important;
-    max-width: 600px !important;
-    margin: 0 auto !important;
-    overflow: visible !important;
-    display: flex !important;
-    flex-direction: column !important;
-    /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100dvh - 40px) !important;
-  }
-}
+/* Removed legacy edit shift modal desktop overrides */
 
-@media (max-width: 768px) {
-  #editShiftModal .modal-content {
-    height: auto !important;
-    width: 100vw !important;
-    margin: 0 !important;
-    /* Constrain height to viewport to ensure scrollability and safe areas */
-    max-height: calc(100dvh - 20px) !important;
-    overflow: visible !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-}
+/* Removed legacy edit shift modal positioning */
 
-/* Ensure edit shift modal displays centered like add shift modal */
-#editShiftModal.active {
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 20px !important;
-  display: flex !important;
-}
+/* Removed legacy full screen overrides for add/edit modals on mobile */
 
-/* Mobile override for edit shift modal positioning */
-@media (max-width: 768px) {
-  #editShiftModal.active {
-    padding-top: 0 !important;
-    align-items: center !important;
-    justify-content: center !important;
-    display: flex !important;
-  }
-}
-
-/* Desktop - center edit shift modal within content viewport */
-@media (min-width: 769px) {
-  #editShiftModal.active {
-    justify-content: center !important;
-    align-items: center !important;
-    padding-top: 0 !important;
-    display: flex !important;
-  }
-}
-
-/* Full screen modals on mobile, constrained on desktop */
-@media (max-width: 768px) {
-  #addShiftModal .modal-content,
-  #editShiftModal .modal-content {
-    width: 100vw;
-    max-width: none;
-    border-radius: 24px;
-    margin: 0;
-    position: relative; /* Ensure relative positioning for absolute close button */
-  }
-
-  #addShiftModal .modal-content {
-    height: auto !important; /* Force auto height, override general modal styles */
-    margin: 0 !important;
-    overflow: visible !important; /* Allow internal scrolling */
-    display: flex !important;
-    flex-direction: column !important;
-    /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100vh - 20px) !important;
-  }
-
-  #addShiftModal .modal-body {
-    padding: 20px !important;
-    overflow-y: auto !important;
-    flex: 1 !important; /* Allow natural growth */
-  }
-
-  #editShiftModal .modal-content {
-    height: auto !important; /* Force auto height, override general modal styles */
-    margin: 0 !important;
-    overflow: visible !important; /* Allow internal scrolling */
-    display: flex !important;
-    flex-direction: column !important;
-    /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100vh - 20px) !important;
-  }
-
-  #editShiftModal .modal-body {
-    padding: 20px !important;
-    overflow-y: auto !important;
-    flex: 1 !important; /* Allow natural growth */
-  }
-}
-
-@media (min-width: 769px) {
-  #addShiftModal .modal-content,
-  #editShiftModal .modal-content {
-    max-width: 600px;
-    width: 90vw;
-    height: auto;
-    margin-top: 8vh; /* Reduced to work with base margin-top: 20px */
-  }
-
-  #addShiftModal .modal-content {
-    display: flex !important;
-    flex-direction: column !important;
-    /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100vh - 40px) !important;
-  }
-
-  #addShiftModal .modal-body {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    padding: 20px !important;
-  }
-
-  #editShiftModal .modal-content {
-    display: flex !important;
-    flex-direction: column !important;
-    /* Constrain height to viewport to ensure scrollability */
-    max-height: calc(100vh - 40px) !important;
-  }
-
-  #editShiftModal .modal-body {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    padding-bottom: 80px !important;
-  }
-}
+/* Removed legacy desktop overrides for add/edit modals */
 
 /* Make modal buttons more accessible on mobile */
 @media (max-width: 480px) {
@@ -16767,3 +16573,29 @@ body.chatbox-view .chatbox-container {
     transparent 100%
   ) !important;
 }
+/* Conflict details panel (kept minimal and below the fold) */
+.conflict-details {
+  margin-top: var(--space-5);
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 14px; /* Match general UI sizing */
+  line-height: 1.4;
+  /* Natural height; no internal scrolling */
+  scroll-margin-top: 12px;
+}
+
+/* Ensure conflicts are never visible in the initial viewport */
+.conflict-details.below-fold {
+  margin-top: 100vh; /* push below the fold regardless of hero height */
+}
+.conflict-details h4 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  color: var(--warning);
+}
+.conflict-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.conflict-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warning); flex: 0 0 6px; }
+.conflict-item .meta { color: var(--text-tertiary); }

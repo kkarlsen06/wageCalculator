@@ -281,6 +281,7 @@ export const app = {
     selectedDate: null,
     userShifts: [],
     formState: {}, // Store form state to preserve across page restarts
+    conflictListenerElements: [], // Track elements with conflict listeners
     initialAnimationComplete: false, // Track if initial progress bar animation is complete
     // Drill-down state
     drillDownMode: false, // Track if we're in drill-down view
@@ -576,6 +577,15 @@ export const app = {
         const recurringStartMinute = document.getElementById('recurringStartMinute');
         const recurringEndMinute = document.getElementById('recurringEndMinute');
 
+        // If no time inputs/selects are present anywhere, skip
+        const noSimpleFields = !startHour && !endHour && !startMinute && !endMinute;
+        const noRecurringFields = !recurringStartHour && !recurringEndHour && !recurringStartMinute && !recurringEndMinute;
+        if (noSimpleFields && noRecurringFields) {
+            // Still set up listeners to clear any previous handlers
+            this.setupConflictCheckingListeners();
+            return;
+        }
+
         if (this.directTimeInput) {
             // Replace dropdowns with text inputs for direct time entry
             this.replaceTimeDropdownsWithInputs();
@@ -584,10 +594,10 @@ export const app = {
             this.ensureTimeDropdowns();
 
             // Populate simple shift time fields
-            startHour.innerHTML = '<option value="">Fra time</option>';
-            endHour.innerHTML = '<option value="">Til time</option>';
-            startMinute.innerHTML = '<option value="">Fra minutt</option>';
-            endMinute.innerHTML = '<option value="">Til minutt</option>';
+            if (startHour) startHour.innerHTML = '<option value="">Fra time</option>';
+            if (endHour) endHour.innerHTML = '<option value="">Til time</option>';
+            if (startMinute) startMinute.innerHTML = '<option value="">Fra minutt</option>';
+            if (endMinute) endMinute.innerHTML = '<option value="">Til minutt</option>';
 
             // Populate recurring shift time fields
             if (recurringStartHour) {
@@ -600,8 +610,8 @@ export const app = {
             // Allow all hours from 00 to 23
             for (let h = 0; h <= 23; h++) {
                 const hh = String(h).padStart(2,'0');
-                startHour.innerHTML += `<option value="${hh}">${hh}</option>`;
-                endHour.innerHTML += `<option value="${hh}">${hh}</option>`;
+                if (startHour) startHour.innerHTML += `<option value="${hh}">${hh}</option>`;
+                if (endHour) endHour.innerHTML += `<option value="${hh}">${hh}</option>`;
 
                 if (recurringStartHour) {
                     recurringStartHour.innerHTML += `<option value="${hh}">${hh}</option>`;
@@ -615,8 +625,8 @@ export const app = {
                 for (let m = 0; m < 60; m++) {
                     const mm = String(m).padStart(2, '0');
                     const sel = m === 0 ? ' selected' : '';
-                    startMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
-                    endMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
+                    if (startMinute) startMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
+                    if (endMinute) endMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
 
                     if (recurringStartMinute) {
                         recurringStartMinute.innerHTML += `<option value="${mm}"${sel}>${mm}</option>`;
@@ -627,8 +637,8 @@ export const app = {
                 // 15-minute intervals (default)
                 ['00','15','30','45'].forEach((m, idx) => {
                     const sel = idx===0? ' selected':'';
-                    startMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
-                    endMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
+                    if (startMinute) startMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
+                    if (endMinute) endMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
 
                     if (recurringStartMinute) {
                         recurringStartMinute.innerHTML += `<option value="${m}"${sel}>${m}</option>`;
@@ -637,6 +647,54 @@ export const app = {
                 });
             }
         }
+
+        // Add event listeners for real-time conflict checking
+        this.setupConflictCheckingListeners();
+    },
+
+    // Setup event listeners for conflict checking
+    setupConflictCheckingListeners() {
+        const timeInputIds = ['startHour', 'startMinute', 'endHour', 'endMinute'];
+
+        // Create a bound handler to avoid function recreation
+        if (!this.boundConflictCheckHandler) {
+            this.boundConflictCheckHandler = () => {
+                if (this.conflictCheckTimeout) {
+                    clearTimeout(this.conflictCheckTimeout);
+                }
+                this.conflictCheckTimeout = setTimeout(() => {
+                    this.checkShiftConflicts();
+                }, 100);
+            };
+        }
+
+        // Detach previous listeners, if any
+        if (Array.isArray(this.conflictListenerElements) && this.conflictListenerElements.length) {
+            try {
+                this.conflictListenerElements.forEach(el => {
+                    if (el && el.removeEventListener) {
+                        el.removeEventListener('change', this.boundConflictCheckHandler);
+                        el.removeEventListener('input', this.boundConflictCheckHandler);
+                    }
+                });
+            } catch (_) { /* noop */ }
+        }
+        this.conflictListenerElements = [];
+
+        // Attach listeners to current time inputs
+        timeInputIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            // Use 'change' for selects and 'input' for text inputs (direct time input)
+            if (el.tagName === 'SELECT') {
+                el.addEventListener('change', this.boundConflictCheckHandler);
+            } else {
+                el.addEventListener('input', this.boundConflictCheckHandler);
+                el.addEventListener('change', this.boundConflictCheckHandler);
+            }
+            this.conflictListenerElements.push(el);
+        });
     },
 
     replaceTimeDropdownsWithInputs() {
@@ -888,8 +946,8 @@ export const app = {
         }
 
         // Create/update the pill only in employees view
-        const modal = document.getElementById('addShiftModal');
-        if (!modal) return;
+        const form = document.getElementById('shiftForm');
+        if (!form) return;
         let pill = existingPill;
         if (!pill) {
             pill = document.createElement('div');
@@ -904,7 +962,6 @@ export const app = {
                     <span class="name"></span>
                   </div>
                 </div>`;
-            const form = modal.querySelector('#shiftForm');
             form?.insertBefore(pill, form.firstChild?.nextSibling?.nextSibling || form.firstChild);
         }
 
@@ -977,75 +1034,13 @@ export const app = {
         }
     },
 
-    openAddShiftModal(targetMonth = null, targetYear = null) {
-        // Navigate to add shift route instead of opening modal
+    openAddShiftModal() {
+        // Always navigate to the route (legacy modal removed)
         if (window.navigateToRoute) {
-            try {
-                window.navigateToRoute('/shift-add');
-                return;
-            } catch (error) {
-                console.error('Route navigation failed, falling back to modal:', error);
-                // Continue to modal fallback
-            }
-        }
-        
-        // Fallback to modal if route navigation fails or is unavailable
-        // Close any existing expanded views, dropdowns, and modals first
-        this.closeShiftDetails();
-        this.closeSettings(false); // Don't save settings when closing as cleanup
-        this.closeProfile();
-        this.closeProfileDropdown();
-
-        // Hide floating action bar when modal opens to prevent z-index conflicts
-        const floatingBar = document.querySelector('.floating-action-bar');
-        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
-        if (floatingBar) {
-            floatingBar.style.display = 'none';
-        }
-        if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = 'none';
-        }
-
-        // Populate form elements if they're empty
-        const startHourElement = document.getElementById('startHour');
-        if (startHourElement && startHourElement.tagName === 'SELECT' && !startHourElement.options.length) {
-            this.populateTimeSelects();
-        } else if (!startHourElement) {
-            this.populateTimeSelects();
-        }
-        if (!document.getElementById('dateGrid').childElementCount) {
-            this.populateDateGrid(targetMonth, targetYear);
-        } else if (targetMonth !== null || targetYear !== null) {
-            // If we have any target parameters, repopulate the grid
-            this.populateDateGrid(targetMonth, targetYear);
+            window.navigateToRoute('/shift-add');
         } else {
-            // If no target parameters, always repopulate to show current month
-            this.populateDateGrid(targetMonth, targetYear);
+            console.warn('navigateToRoute not available; add shift modal removed');
         }
-
-        // Show the modal
-        const modal = document.getElementById('addShiftModal');
-        modal.style.display = 'flex';
-        modal.classList.add('active');
-
-        // Clear any previously selected dates
-        this.selectedDates = [];
-        const dateButtons = document.querySelectorAll('#dateGrid .date-cell');
-        dateButtons.forEach(btn => btn.classList.remove('selected'));
-
-        // Update the selected dates info
-        this.updateSelectedDatesInfo();
-
-        // Reset form
-        document.getElementById('shiftForm').reset();
-        // Default to simple tab
-        this.switchAddShiftTab('simple');
-
-        // Populate employee selectors
-        this.populateEmployeeSelectors();
-
-        // Update assignment UI (pill vs selector) based on context
-        this.updateEmployeeAssignmentUIInModal();
     },
 
     // Update the selected dates info display
@@ -1066,50 +1061,58 @@ export const app = {
         }
     },
 
-    // Switch between simple and recurring add shift tabs
-    switchAddShiftTab(tab) {
-        const modal = document.getElementById('addShiftModal');
-        const btns = modal.querySelectorAll('.tab-btn');
+    // Toggle selected-dates counter into conflict alert mode and bind scroll
+    updateSelectedDatesConflictIndicator(hasConflicts) {
+        const infoElement = document.getElementById('selectedDatesInfo');
+        const textElement = document.getElementById('selectedDatesText');
+        if (!infoElement || !textElement) return;
 
-        // Update button active states
-        btns.forEach((btn, index) => {
-            const isSimpleTab = index === 0; // First button is "Enkel"
-            const shouldBeActive = (tab === 'simple' && isSimpleTab) || (tab === 'recurring' && !isSimpleTab);
-            btn.classList.toggle('active', shouldBeActive);
-        });
+        if (hasConflicts) {
+            // Ensure visible and styled as alert
+            infoElement.style.display = 'block';
+            infoElement.classList.add('conflict-alert');
+            // Use down arrow to suggest scrolling
+            textElement.innerHTML = 'Konflikter! <span class="down-arrow">▼</span>';
+            infoElement.setAttribute('role', 'button');
+            infoElement.tabIndex = 0;
 
-        // Update content visibility
-        const simple = document.getElementById('simpleFields');
-        const recurring = document.getElementById('recurringFields');
-        if (tab === 'simple') {
-            simple.classList.add('active');
-            recurring.classList.remove('active');
+            // Bind scroll handler once
+            if (!infoElement.dataset.conflictScrollBound) {
+                const scrollToConflicts = (e) => {
+                    // Activate only when conflicts are shown
+                    const panel = document.getElementById('conflictDetails');
+                    if (panel && panel.style.display !== 'none') {
+                        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Optional visual nudge
+                        panel.classList.remove('conflict-flash');
+                        void panel.offsetWidth; // reflow to restart animation
+                        panel.classList.add('conflict-flash');
+                    }
+                };
+                infoElement.addEventListener('click', scrollToConflicts);
+                infoElement.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        scrollToConflicts(e);
+                    }
+                });
+                infoElement.dataset.conflictScrollBound = '1';
+            }
         } else {
-            simple.classList.remove('active');
-            recurring.classList.add('active');
+            // Revert to normal state and standard text
+            infoElement.classList.remove('conflict-alert');
+            infoElement.removeAttribute('role');
+            infoElement.tabIndex = -1;
+            this.updateSelectedDatesInfo();
         }
-
-        // Show/hide employee selectors based on current view
-        this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
-
-        // Reflect employee context in the modal (pill vs selectors)
-        this.updateEmployeeAssignmentUIInModal?.();
-
     },
 
-    closeAddShiftModal() {
-        const modal = document.getElementById('addShiftModal');
-        modal.style.display = 'none';
-        modal.classList.remove('active');
+    // Legacy switchAddShiftTab removed; route provides its own controller
 
-        // Restore floating action bar visibility when modal closes
-        const floatingBar = document.querySelector('.floating-action-bar');
-        const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
-        if (floatingBar) {
-            floatingBar.style.display = '';
-        }
-        if (floatingBarBackdrop) {
-            floatingBarBackdrop.style.display = '';
+    closeAddShiftModal() {
+        // Route-first close (legacy modal removed)
+        if (window.navigateToRoute) {
+            window.navigateToRoute('/');
         }
     },
     async addShift() {
@@ -1379,16 +1382,62 @@ export const app = {
                 return;
             }
 
+            // Final guard: prevent adding overlapping shifts
+            const conflicts = this.computeConflictingDates({
+                startTime: `${startHour}:${startMinute}`,
+                endTime: `${endHour}:${endMinute}`,
+                employeeId
+            });
+            if (conflicts.length > 0) {
+                // Highlight conflicting dates and block submission
+                this.updateConflictVisuals(conflicts);
+                this.renderConflictDetails(conflicts, { startTime: `${startHour}:${startMinute}`, endTime: `${endHour}:${endMinute}`, employeeId });
+                const conflictCount = conflicts.length;
+                const dateText = conflictCount === 1 ? 'dato overlapper' : 'datoer overlapper';
+                this.updateAddButtonState(false, `${conflictCount} ${dateText}`);
+                if (window.ErrorHelper) {
+                    window.ErrorHelper.showError(`${conflictCount} ${dateText}. Juster tidene.`);
+                }
+                return;
+            }
+            // No conflicts: make sure details panel is cleared
+            this.renderConflictDetails([], { startTime: '', endTime: '', employeeId });
+
+            // Disable the add button to prevent multiple submissions
+            const modalAddButton = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+            let originalButtonText = '';
+            if (modalAddButton) {
+                originalButtonText = modalAddButton.textContent;
+                modalAddButton.disabled = true;
+                modalAddButton.textContent = 'Legger til...';
+                modalAddButton.style.opacity = '0.7';
+                modalAddButton.style.cursor = 'not-allowed';
+            }
+
             const { data: claims } = await window.supa.auth.getClaims();
             const isAuthed = !!claims;
             if (!isAuthed) {
                 console.error('addShift: Authentication error');
                 alert('Feil ved autentisering');
+                // Re-enable the add button
+                if (modalAddButton) {
+                    modalAddButton.disabled = false;
+                    modalAddButton.textContent = originalButtonText || 'Legg til vakt';
+                    modalAddButton.style.opacity = '';
+                    modalAddButton.style.cursor = '';
+                }
                 return;
             }
             const userId = await getUserId();
             if (!userId) {
                 console.warn("[auth] Missing userId, skipping query");
+                // Re-enable the add button
+                if (modalAddButton) {
+                    modalAddButton.disabled = false;
+                    modalAddButton.textContent = originalButtonText || 'Legg til vakt';
+                    modalAddButton.style.opacity = '';
+                    modalAddButton.style.cursor = '';
+                }
                 return;
             }
             console.debug("[auth] using userId:", userId);
@@ -1405,6 +1454,7 @@ export const app = {
                     endTime: `${endHour}:${endMinute}`,
                     type
                 };
+
 
                 // Note: Removed date validation since the modal can now display different months
                 // The selected dates from the modal's date grid are already correct
@@ -1487,6 +1537,8 @@ export const app = {
                     newShift.id = saved.id;
                     // Add to userShifts array only for regular shifts
                     this.userShifts.push(newShift);
+                    // Update this.shifts immediately so overlap detection works for subsequent shifts
+                    this.shifts = [...this.userShifts];
                     createdShifts.push(newShift);
                     createdCount++;
                 }
@@ -1521,6 +1573,14 @@ export const app = {
                 window.ErrorHelper.showSuccess(msg, { duration: 3500 });
             }
 
+            // Re-enable the add button
+            if (modalAddButton) {
+                modalAddButton.disabled = false;
+                modalAddButton.textContent = originalButtonText || 'Legg til vakt';
+                modalAddButton.style.opacity = '';
+                modalAddButton.style.cursor = '';
+            }
+
             // Show success animation instead of alert
             if (createdShifts.length > 0) {
                 const mainAddButton = document.querySelector('.add-btn');
@@ -1538,6 +1598,253 @@ export const app = {
         } catch (e) {
             console.error('addShift: Critical error:', e);
             alert(`En uventet feil oppstod: ${e.message}`);
+            
+            // Re-enable the add button in case of error
+            if (modalAddButton) {
+                modalAddButton.disabled = false;
+                modalAddButton.textContent = originalButtonText || 'Legg til vakt';
+                modalAddButton.style.opacity = '';
+                modalAddButton.style.cursor = '';
+            }
+        }
+    },
+
+    // Real-time conflict detection for shift add form
+    checkShiftConflicts() {
+        if (!this.selectedDates || this.selectedDates.length === 0) {
+            // Clear any previous visuals/details
+            this.updateConflictVisuals([]);
+            this.renderConflictDetails([], { startTime: '', endTime: '', employeeId: this.selectedEmployeeId || null });
+            this.updateAddButtonState(false, 'Ingen datoer valgt');
+            this.updateSelectedDatesConflictIndicator(false);
+            return;
+        }
+
+        // Get current time values from form
+        const startHour = document.getElementById('startHour')?.value;
+        const startMinute = document.getElementById('startMinute')?.value || '00';
+        const endHour = document.getElementById('endHour')?.value;
+        const endMinute = document.getElementById('endMinute')?.value || '00';
+
+        // Check if time fields are filled
+        if (!startHour || !endHour) {
+            // Clear visuals when times are incomplete
+            this.updateConflictVisuals([]);
+            this.renderConflictDetails([], { startTime: '', endTime: '', employeeId: this.selectedEmployeeId || null });
+            this.updateAddButtonState(false, 'Velg start- og sluttid');
+            this.updateSelectedDatesConflictIndicator(false);
+            return;
+        }
+
+        const employeeId = this.selectedEmployeeId || null;
+        const conflictingDates = this.computeConflictingDates({
+            startTime: `${startHour}:${startMinute}`,
+            endTime: `${endHour}:${endMinute}`,
+            employeeId
+        });
+
+        // Update visual state and details
+        this.updateConflictVisuals(conflictingDates);
+        this.renderConflictDetails(conflictingDates, { startTime: `${startHour}:${startMinute}`, endTime: `${endHour}:${endMinute}`, employeeId });
+        // Update counter indicator state
+        this.updateSelectedDatesConflictIndicator(conflictingDates.length > 0);
+        
+        // Update button state
+        if (conflictingDates.length > 0) {
+            const conflictCount = conflictingDates.length;
+            const dateText = conflictCount === 1 ? 'dato overlapper' : 'datoer overlapper';
+            this.updateAddButtonState(false, `${conflictCount} ${dateText}`);
+        } else {
+            this.updateAddButtonState(true, 'Legg til vakt');
+        }
+    },
+
+    // Compute conflicting dates for the current selection using robust overlap logic
+    computeConflictingDates({ startTime, endTime, employeeId = null }) {
+        const conflicts = [];
+        if (!this.selectedDates || this.selectedDates.length === 0) return conflicts;
+
+        // Limit comparison set based on context: personal vs specific employee
+        const relevantShifts = this.shifts.filter(s => {
+            if (employeeId) return s.employee_id === employeeId;
+            return !s.employee_id; // personal shifts only
+        });
+
+        for (const selectedDate of this.selectedDates) {
+            const tempShift = {
+                id: 'temp-' + Math.random(),
+                date: new Date(selectedDate),
+                startTime,
+                endTime,
+                type: selectedDate.getDay() === 0 ? 2 : (selectedDate.getDay() === 6 ? 1 : 0)
+            };
+
+            // Check overlap against all existing shifts using shiftsOverlap (handles midnight crossing)
+            const hasConflict = relevantShifts.some(existingShift => this.shiftsOverlap(tempShift, existingShift));
+            if (hasConflict) {
+                conflicts.push(selectedDate);
+            }
+        }
+        return conflicts;
+    },
+
+    // Update conflict visuals on calendar
+    updateConflictVisuals(conflictingDates) {
+        // Remove all existing conflict styling
+        document.querySelectorAll('.date-cell').forEach(cell => {
+            cell.classList.remove('has-conflict');
+        });
+
+        // Add conflict styling to conflicting dates
+        conflictingDates.forEach(conflictDate => {
+            const dateString = conflictDate.toISOString().split('T')[0];
+            const dateCell = document.querySelector(`[data-date="${dateString}"]`);
+            if (dateCell) {
+                dateCell.classList.add('has-conflict');
+            }
+        });
+    },
+
+    // Render conflict details in a panel placed low in the layout
+    renderConflictDetails(conflictingDates, { startTime, endTime, employeeId }) {
+        // Find or create the panel in either route or modal context
+        let panel = document.getElementById('conflictDetails');
+        if (!panel) {
+            // Inject into route page
+            const parent = document.getElementById('shiftAddPage');
+            if (parent) {
+                panel = document.createElement('div');
+                panel.id = 'conflictDetails';
+                panel.className = 'conflict-details';
+                panel.style.display = 'none';
+                // Place AFTER floating nav so actions remain visible and hero unaffected
+                const actionEl = parent.querySelector('.shift-add-floating-nav') || parent.querySelector('.modal-actions');
+                if (actionEl && actionEl.parentElement) {
+                    if (actionEl.nextSibling) {
+                        actionEl.parentElement.insertBefore(panel, actionEl.nextSibling);
+                    } else {
+                        actionEl.parentElement.appendChild(panel);
+                    }
+                } else {
+                    parent.appendChild(panel);
+                }
+            }
+        }
+
+        if (!panel) return;
+
+        if (!conflictingDates || conflictingDates.length === 0) {
+            panel.style.display = 'none';
+            panel.style.visibility = '';
+            panel.style.marginTop = '';
+            panel.innerHTML = '';
+            return;
+        }
+
+        // Build content lazily and keep it compact
+        const relevantShifts = this.shifts.filter(s => {
+            if (employeeId) return s.employee_id === employeeId;
+            return !s.employee_id;
+        });
+
+        const parts = [];
+        parts.push('<h4>Konflikter</h4>');
+        for (const dt of conflictingDates) {
+            const temp = { id: 'tmp', date: new Date(dt), startTime, endTime };
+            const overlaps = relevantShifts.filter(s => this.shiftsOverlap(temp, s));
+            const dateLabel = dt.toLocaleDateString('no-NO', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+            if (overlaps.length === 0) continue;
+            parts.push(`<div class="conflict-item"><span class="dot"></span><div><div><strong>${dateLabel}</strong></div>`);
+            overlaps.forEach(s => {
+                const who = s.employee?.name ? ` <span class="meta">(${s.employee.name})</span>` : '';
+                parts.push(`<div>${s.startTime}–${s.endTime}${who}</div>`);
+            });
+            parts.push('</div></div>');
+        }
+
+        panel.innerHTML = parts.join('');
+        // Temporarily hide to avoid any flicker within the hero before positioning
+        panel.style.visibility = 'hidden';
+        panel.style.display = 'block';
+        // Position just below the viewport without affecting hero
+        try {
+            // Reset any previous inline margin to get an accurate measurement
+            panel.style.marginTop = '';
+            requestAnimationFrame(() => {
+                const rect = panel.getBoundingClientRect();
+                const viewportH = window.innerHeight || document.documentElement.clientHeight;
+                // Keep the panel just out of view with a safe buffer
+                const buffer = 32;
+                const desiredTop = viewportH + buffer;
+                const extra = Math.max(0, desiredTop - rect.top);
+                // Apply extra spacing (fallback base spacing 16px)
+                panel.style.marginTop = `${extra + 16}px`;
+                panel.style.visibility = 'visible';
+            });
+        } catch (_) { panel.style.visibility = 'visible'; }
+    },
+
+    // Update add button state based on conflicts
+    updateAddButtonState(enabled, text) {
+        // Prefer modal button if present, otherwise the route button
+        const modalBtn = document.querySelector('.btn-primary[onclick="app.addShift()"]');
+        const routeBtn = document.querySelector('.floating-nav-btn.back-btn[onclick="addShiftFromRoute()"]');
+        const btn = modalBtn || routeBtn;
+
+        if (!btn) return;
+
+        // Keep the text up to date (e.g., "x datoer overlapper")
+        btn.textContent = text;
+
+        // Determine if this is the route context and the disabled state is due to conflicts
+        const isConflictDisabled = !enabled && !!routeBtn && btn === routeBtn && /overlapper/i.test(text || '');
+
+        if (isConflictDisabled) {
+            // Conflict mode (route only): make the button orange and clickable to scroll to conflicts
+            btn.disabled = false;
+            btn.classList.remove('btn-disabled');
+            // Apply conflict styling class; CSS will make it orange to match date cells
+            btn.classList.add('conflict');
+            btn.style.opacity = '';
+            btn.style.cursor = 'pointer';
+
+            // Replace click action to scroll to the conflict details panel
+            btn.onclick = (e) => {
+                e.preventDefault();
+                const panel = document.getElementById('conflictDetails');
+                if (panel) {
+                    // Ensure the panel is visible before scrolling
+                    if (panel.style.display === 'none') panel.style.display = 'block';
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Nudge with a brief flash
+                    panel.classList.remove('conflict-flash');
+                    void panel.offsetWidth; // reflow to restart animation
+                    panel.classList.add('conflict-flash');
+                }
+            };
+            btn.title = 'Gå til konflikter';
+            btn.setAttribute('aria-label', `${text}. Trykk for å se konfliktene.`);
+            return;
+        }
+
+        // Normal behavior (modal or route without conflicts)
+        btn.classList.remove('conflict');
+        btn.removeAttribute('aria-label');
+        btn.title = '';
+
+        btn.disabled = !enabled;
+        btn.style.opacity = enabled ? '' : '0.6';
+        btn.style.cursor = enabled ? '' : 'not-allowed';
+
+        if (!enabled) {
+            btn.classList.add('btn-disabled');
+        } else {
+            btn.classList.remove('btn-disabled');
+        }
+
+        // Restore add action in route when enabled; clear when disabled
+        if (btn === routeBtn) {
+            btn.onclick = enabled ? () => { try { addShiftFromRoute(); } catch (_) {} } : null;
         }
     },
 
@@ -1886,6 +2193,10 @@ export const app = {
             cellDate.setDate(startDate.getDate()+i);
             const cell = document.createElement('div');
             cell.className='date-cell';
+            
+            // Add data-date attribute for overlap detection
+            const dateString = cellDate.toISOString().split('T')[0];
+            cell.setAttribute('data-date', dateString);
 
             // Create cell content wrapper
             const cellContent = document.createElement('div');
@@ -1942,6 +2253,11 @@ export const app = {
 
                     this.updateSelectedDatesInfo(); // Update the info display
                     this.saveFormState(); // Save form state when date selection changes
+                    
+                    // Check for conflicts in real-time when dates change
+                    if (this.checkShiftConflicts) {
+                        this.checkShiftConflicts();
+                    }
                 });
             }
             dateGrid.appendChild(cell);
@@ -8975,6 +9291,21 @@ export const app = {
         return Math.max(0, end - start);
     },
 
+    // Local date helpers to avoid timezone-equality pitfalls
+    localDateKey(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    },
+    isSameLocalDate(a, b) {
+        return this.localDateKey(a) === this.localDateKey(b);
+    },
+    isNextLocalDate(a, b) {
+        const next = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 1);
+        return this.localDateKey(next) === this.localDateKey(b);
+    },
+
     // Check if two shifts have overlapping time periods
     shiftsOverlap(shift1, shift2) {
         // Convert dates to compare
@@ -8995,16 +9326,13 @@ export const app = {
             end2Minutes += 24 * 60;
         }
 
-        // Check for same day overlap
-        if (date1.getTime() === date2.getTime()) {
+        // Check for same local-day overlap (avoid timezone mismatches)
+        if (this.isSameLocalDate(date1, date2)) {
             return this.calculateOverlap(start1Minutes, end1Minutes, start2Minutes, end2Minutes) > 0;
         }
 
         // Check for consecutive day overlap (shift1 on day N, shift2 on day N+1)
-        const nextDay = new Date(date1);
-        nextDay.setDate(nextDay.getDate() + 1);
-
-        if (nextDay.getTime() === date2.getTime()) {
+        if (this.isNextLocalDate(date1, date2)) {
             // If shift1 crosses midnight, check if it overlaps with shift2 start
             if (end1Minutes > 24 * 60) {
                 const shift1NextDayEnd = end1Minutes - 24 * 60;
@@ -9013,10 +9341,7 @@ export const app = {
         }
 
         // Check for consecutive day overlap (shift2 on day N, shift1 on day N+1)
-        const nextDay2 = new Date(date2);
-        nextDay2.setDate(nextDay2.getDate() + 1);
-
-        if (nextDay2.getTime() === date1.getTime()) {
+        if (this.isNextLocalDate(date2, date1)) {
             // If shift2 crosses midnight, check if it overlaps with shift1 start
             if (end2Minutes > 24 * 60) {
                 const shift2NextDayEnd = end2Minutes - 24 * 60;
@@ -9913,7 +10238,7 @@ export const app = {
         }
     },
 
-    // Edit shift functionality - now navigates to unified route
+    // Edit shift functionality - navigates to unified route
     editShift(shiftId) {
         // Find the shift to edit
         const shift = this.shifts.find(s => s.id === shiftId);
@@ -9930,218 +10255,7 @@ export const app = {
         if (window.navigateToRoute) {
             window.navigateToRoute(`/shift-edit?shiftId=${shiftId}`);
         } else {
-            // Fallback to traditional modal approach if navigation not available
-            console.warn('Route navigation not available, falling back to modal');
-            this.editingShift = shift;
-            this.toggleEmployeeSelectorsVisibility(this.currentView === 'employees');
-            setTimeout(() => {
-                this.openEditModal(shift);
-            }, 200);
-        }
-    },
-
-    // Separate method to open edit modal for better organization
-    openEditModal(shift) {
-        const editModal = document.getElementById('editShiftModal');
-        if (editModal) {
-            editModal.style.display = 'flex';
-            editModal.classList.add('active');
-
-            // Populate the edit form with current shift data
-            this.populateEditForm(shift);
-
-            // Reflect employee context in edit modal (pill vs selectors) when in employees view
-            this.updateEmployeeAssignmentUIInEditModal?.(shift);
-
-            // Hide header
-            const header = document.querySelector('.header');
-            if (header) {
-                header.classList.add('hidden');
-            }
-
-            // Hide floating action bar when modal opens to prevent z-index conflicts
-            const floatingBar = document.querySelector('.floating-action-bar');
-            const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
-            if (floatingBar) {
-                floatingBar.style.display = 'none';
-            }
-            if (floatingBarBackdrop) {
-                floatingBarBackdrop.style.display = 'none';
-            }
-
-            // Add backdrop click handler
-            const backdrop = editModal.querySelector('.modal-backdrop');
-            if (backdrop) {
-                backdrop.onclick = () => this.closeEditShift();
-            }
-
-            // Add keyboard support
-            const keydownHandler = (e) => {
-                if (e.key === 'Escape') {
-                    this.closeEditShift();
-                }
-            };
-            document.addEventListener('keydown', keydownHandler);
-            editModal.dataset.keydownHandler = 'attached';
-        }
-    },
-
-    closeEditShift() {
-        const editModal = document.getElementById('editShiftModal');
-        if (editModal) {
-            editModal.style.display = 'none';
-            editModal.classList.remove('active');
-
-            // Show header again
-            const header = document.querySelector('.header');
-            if (header) {
-                header.classList.remove('hidden');
-            }
-
-            // Remove keyboard listener
-            if (editModal.dataset.keydownHandler) {
-                document.removeEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        this.closeEditShift();
-                    }
-                });
-                delete editModal.dataset.keydownHandler;
-            }
-
-            // Restore floating action bar visibility when modal closes
-            const floatingBar = document.querySelector('.floating-action-bar');
-            const floatingBarBackdrop = document.querySelector('.floating-action-bar-backdrop');
-            if (floatingBar) {
-                floatingBar.style.display = '';
-            }
-            if (floatingBarBackdrop) {
-                floatingBarBackdrop.style.display = '';
-            }
-
-            // Clear editing state
-            this.editingShift = null;
-            this.editSelectedDate = null;
-
-            // Clear form
-            document.getElementById('editShiftForm').reset();
-
-            // Remove selected state from date grid
-            document.querySelectorAll('#editDateGrid .date-cell').forEach(cell => {
-                cell.classList.remove('selected');
-            });
-        }
-    },
-
-    populateEditForm(shift) {
-        // Populate time selects first
-        this.populateEditTimeSelects();
-
-        // Populate date grid
-        this.populateEditDateGrid();
-
-        // Set the selected date
-        this.editSelectedDate = new Date(shift.date);
-
-        // Set time values
-        const [startHour, startMinute] = shift.startTime.split(':');
-        const [endHour, endMinute] = shift.endTime.split(':');
-
-        document.getElementById('editStartHour').value = startHour;
-        document.getElementById('editStartMinute').value = startMinute || '00';
-        document.getElementById('editEndHour').value = endHour;
-        document.getElementById('editEndMinute').value = endMinute || '00';
-
-        // Populate employee selectors and set current employee
-        this.populateEmployeeSelectors();
-        const editEmployeeSelect = document.getElementById('editEmployeeSelect');
-        if (editEmployeeSelect && shift.employee_id) {
-            editEmployeeSelect.value = shift.employee_id;
-        }
-
-        // Highlight the selected date in the grid
-        setTimeout(() => {
-            const dateDay = shift.date.getDate();
-            const dateCell = document.querySelector(`#editDateGrid .date-cell[data-day="${dateDay}"]`);
-            if (dateCell) {
-                dateCell.classList.add('selected');
-            }
-        }, 100);
-    },
-
-    // Show selected employee pill in edit modal (employees view) and hide dropdown
-    updateEmployeeAssignmentUIInEditModal(shift) {
-        try {
-            const modal = document.getElementById('editShiftModal');
-            if (!modal) return;
-
-            const form = modal.querySelector('#editShiftForm');
-            if (!form) return;
-
-            // Remove any existing pill
-            const existing = document.getElementById('editSelectedEmployeePill');
-            if (existing) existing.remove();
-
-            // Check if in employees view
-            const inEmployees = this.currentView === 'employees';
-            const editSelect = modal.querySelector('#editEmployeeSelect');
-            const group = editSelect?.closest('.form-group') || editSelect?.parentElement;
-
-            // Never show selects; assignment is driven by carousel selection (same as add shift modal)
-            if (group) group.style.display = 'none';
-
-            if (inEmployees) {
-                // In employees view: show pill
-                // Derive which employee to show: selectedEmployeeId takes precedence, else from the shift
-                const employeeId = this.selectedEmployeeId || shift?.employee_id || null;
-                const employee = employeeId ? (this.employees.find(e => e.id === employeeId) || null) : null;
-
-                // If we have an employee, render the pill
-                if (employee) {
-                const pill = document.createElement('div');
-                pill.id = 'editSelectedEmployeePill';
-                pill.className = 'selected-employee-pill';
-                pill.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:9999px;background:var(--bg-secondary);border:1px solid var(--border-color);margin:8px 0;';
-                const colorDot = document.createElement('span');
-                colorDot.style.cssText = `width:10px;height:10px;border-radius:9999px;background:${this.getEmployeeDisplayColor?.(employee) || employee.display_color || '#999'};display:inline-block;`;
-                const label = document.createElement('span');
-                label.textContent = employee.name;
-                label.style.fontWeight = '600';
-                pill.appendChild(colorDot);
-                pill.appendChild(label);
-
-                // Insert pill at top of the form, after the heading (before date selector)
-                form.insertBefore(pill, form.firstChild);
-
-                // Ensure the select reflects the same employee internally (for any fallback logic)
-                if (editSelect) {
-                    editSelect.value = employee.id;
-                }
-
-                // Make the pill clickable to open Edit Employee modal
-                if (!pill.dataset.boundEdit) {
-                    pill.style.cursor = 'pointer';
-                    pill.setAttribute('role', 'button');
-                    pill.setAttribute('tabindex', '0');
-                    pill.title = 'Rediger ansatt';
-                    pill.addEventListener('click', (e) => {
-                        try {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        } catch (_) {}
-                        this.showEditEmployeeModal(employee);
-                    });
-                    pill.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            this.showEditEmployeeModal(employee);
-                        }
-                    });
-                    pill.dataset.boundEdit = '1';
-                }
-                }
-            }
-        } catch (e) {
-            console.warn('updateEmployeeAssignmentUIInEditModal error:', e);
+            console.warn('navigateToRoute not available; edit shift modal removed');
         }
     },
 
@@ -12086,7 +12200,7 @@ export const app = {
         }
     },
 
-    // New function to open add shift modal with pre-selected date
+    // New function to navigate to add shift route with pre-selected date
     openAddShiftModalWithDate(date) {
         // Navigate to add shift route and store date for pre-selection
         if (window.navigateToRoute) {
@@ -12102,51 +12216,13 @@ export const app = {
                 window.navigateToRoute('/shift-add');
                 return;
             } catch (error) {
-                console.error('Route navigation with date failed, falling back to modal:', error);
+                console.error('Route navigation with date failed:', error);
                 // Clear potentially corrupted session data
                 sessionStorage.removeItem('preSelectedShiftDate');
                 sessionStorage.removeItem('preSelectedShiftDate_expiry');
-                // Continue to modal fallback
             }
         }
-        
-        // Fallback to modal behavior
-        if (!date) {
-            this.openAddShiftModal();
-            return;
-        }
-
-        const targetDate = new Date(date);
-        const targetMonth = targetDate.getMonth() + 1;
-        const targetYear = targetDate.getFullYear();
-
-        // Open the modal with the target month/year (no global state modification)
-        this.openAddShiftModal(targetMonth, targetYear);
-
-        // Pre-select the specific date
-        this.selectedDates = [new Date(targetDate)];
-
-        // Select the date in the UI after the modal is populated
-        // Use a small delay to ensure the DOM is updated
-        setTimeout(() => {
-            const dateButtons = document.querySelectorAll('#dateGrid .date-cell');
-            dateButtons.forEach(btn => {
-                btn.classList.remove('selected');
-                // Check if this button represents our target date
-                const cellContent = btn.querySelector('.date-cell-content');
-                if (cellContent) {
-                    const dayNumber = parseInt(cellContent.textContent);
-                    // More robust check: ensure we're in the correct month and not on a disabled cell
-                    if (dayNumber === targetDate.getDate() &&
-                        !btn.classList.contains('disabled')) {
-                        btn.classList.add('selected');
-                    }
-                }
-            });
-
-            // Update the selected dates info
-            this.updateSelectedDatesInfo();
-        }, 10); // Reduced timeout since we no longer need to restore global state
+        console.warn('navigateToRoute not available; legacy add shift modal removed');
     },
 
     // ===== EMPLOYEE MANAGEMENT METHODS =====

@@ -6,6 +6,9 @@ function getAddShiftView() {
   <div id="shiftAddPage" class="settings-page">
     <div class="page-header" style="margin-bottom: var(--space-4);">
       <h2>Legg til vakt</h2>
+      <div class="selected-dates-info" id="selectedDatesInfo" style="display: none; margin-bottom: 0;">
+        <span id="selectedDatesText"></span>
+      </div>
     </div>
     
     <form id="shiftForm">
@@ -118,10 +121,6 @@ function getAddShiftView() {
       </div>
     </form>
     
-    <div class="selected-dates-info" id="selectedDatesInfo" style="display: none;">
-      <span id="selectedDatesText"></span>
-    </div>
-    
     <div class="shift-add-floating-nav">
       <button type="button" class="floating-nav-btn back-btn" onclick="addShiftFromRoute()">
         <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -131,14 +130,16 @@ function getAddShiftView() {
         </svg>
         Legg til vakt
       </button>
-      <button type="button" class="floating-nav-btn btn btn-secondary" data-spa data-href="/">
-        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button type="button" class="floating-nav-btn btn btn-secondary" data-spa data-href="/" aria-label="Lukk" title="Lukk">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
-        Lukk
       </button>
     </div>
+
+    <!-- Conflict details panel (hidden by default). Rendered below actions and below the fold. -->
+    <div id="conflictDetails" class="conflict-details" style="display: none;"></div>
   </div>`;
 }
 
@@ -348,6 +349,13 @@ export function afterMountAddShift() {
     
     // Set default tab to simple
     switchAddShiftTab('simple');
+
+    // Initialize conflict checking
+    setTimeout(() => {
+      if (window.app && window.app.checkShiftConflicts) {
+        window.app.checkShiftConflicts();
+      }
+    }, 100);
   }
 
   // Make functions globally available with cleanup tracking

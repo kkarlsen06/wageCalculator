@@ -410,6 +410,19 @@ html.ios-pwa #shiftAddPage .tab-content {
   text-transform: uppercase;
 }
 
+/* Conflict state for add button: match orange conflict styling from date cells */
+.floating-nav-btn.back-btn.conflict {
+  background: #ff8c00; /* match date-cell border color */
+  border: 1px solid #ff8c00;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(255, 140, 0, 0.35);
+}
+.floating-nav-btn.back-btn.conflict:hover,
+.floating-nav-btn.back-btn.conflict:focus {
+  background: #e67c00;
+  border-color: #e67c00;
+}
+
 .floating-nav-btn.btn.btn-secondary {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
@@ -457,14 +470,25 @@ html.ios-pwa #shiftAddPage .tab-content {
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  width: min(70%, 480px);
-  max-width: calc(100% - 32px);
+  /* Widen container to comfortably fit two buttons */
+  width: min(92%, 640px);
+  max-width: calc(100% - 20px);
   /* Force the element to be positioned relative to the viewport, not the parent */
   margin: 0 !important;
   float: none !important;
   clear: none !important;
   /* Ensure it's positioned relative to the initial containing block (viewport) */
   inset: auto;
+}
+
+/* Mobile refinements: give a bit more width and reduce side margins */
+@media (max-width: 480px) {
+  .shift-add-floating-nav {
+    width: min(94%, 640px);
+    max-width: calc(100% - 16px);
+    gap: 10px;
+    padding: 12px 14px;
+  }
 }
 
 /* Ensure select dropdowns in shiftAdd page appear above the floating action bar */
