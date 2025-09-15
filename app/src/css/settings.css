@@ -153,7 +153,7 @@ html.ios-pwa #shiftAddPage .tab-content {
   justify-content: space-between;
   text-decoration: none;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 16px;
   padding: 14px 14px;
   color: var(--text-primary);
@@ -180,7 +180,7 @@ html.ios-pwa #shiftAddPage .tab-content {
 .settings-item .item-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0px;
 }
 
 .settings-item .item-title {
@@ -907,4 +907,78 @@ html.ios-pwa #shiftAddPage .tab-content {
   margin-top: 0 !important; /* override generic + animation margins */
   border-top: 1px solid var(--border);
   padding-top: 12px;
+}
+
+/* Enhanced styling for account name and email inputs */
+#accountName,
+#accountEmail {
+  position: relative;
+  background: linear-gradient(135deg, var(--bg-card-elevated) 0%, var(--bg-card) 100%);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 16px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  min-height: 56px;
+}
+
+#accountName:hover,
+#accountEmail:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, var(--bg-card-elevated) 100%);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+#accountName:focus,
+#accountEmail:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, var(--bg-card-elevated) 100%);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.12),
+    0 0 0 4px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+#accountName::placeholder,
+#accountEmail::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* Disabled state for email field */
+#accountEmail:disabled {
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+#accountEmail:disabled:hover {
+  transform: none;
+  border-color: var(--border);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Enhanced form labels for account inputs */
+label[for="accountName"],
+label[for="accountEmail"] {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: block;
+  letter-spacing: 0.025em;
 }

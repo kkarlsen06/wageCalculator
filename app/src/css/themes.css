@@ -81,7 +81,7 @@ html.theme-dark {
   --text-muted: #808080;
 
   /* Border colors */
-  --border: #ffffff00;
+  --border: rgba(255, 255, 255, 0.1);
   --border-light: #3a3a3f00;
   --border-color: var(--border);
   --border-profile: #181c23;
@@ -168,7 +168,7 @@ html.theme-light {
   --text-muted: #9CA3AF;
 
   /* Border colors */
-  --border: #e5e7eb18;
+  --border: rgba(229, 231, 235, 0.3);
   --border-light: #d1d5db1e;
   --border-color: var(--border);
   --border-profile: #d1d5db;

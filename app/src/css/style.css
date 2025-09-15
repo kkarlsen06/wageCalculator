@@ -4557,7 +4557,7 @@ input:checked + .slider:before {
   font-weight: 400;
   color: var(--text-tertiary);
   opacity: 0.8;
-  margin-top: 4px; /* Tight spacing - directly related to input above */
+  margin-top: 2px; /* Very tight spacing - directly related to input above */
   line-height: 1.4;
 }
 
@@ -9420,7 +9420,7 @@ input[type="file"].form-control:focus {
 }
 
 .switch-group .form-hint {
-  margin-top: 4px; /* Tight spacing - directly related to switch text */
+  margin-top: 4px; /* Normal spacing within switch-group */
   margin-bottom: 0;
 }
 
@@ -16388,15 +16388,15 @@ body.chatbox-view .chatbox-container {
 .setting-card {
   background: var(--bg-card-elevated);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: var(--space-2);
+  border-radius: var(--border-radius);
+  padding: var(--space-3);
 }
 
 /* Nested cards can reuse the same overlay tone for consistency */
 /* (No extra lighten to keep hierarchy: page < section (mid) < card (light)) */
 
-.setting-card.is-compact { padding: var(--space-2); }
-.setting-card.is-standard { padding: var(--space-3); }
+.setting-card.is-compact { padding: var(--space-3); }
+.setting-card.is-standard { padding: var(--space-4); }
 .setting-card.is-long { padding: var(--space-4); }
 
 .setting-header { font-weight: 600; margin-bottom: var(--space-1); color: var(--text-primary); }

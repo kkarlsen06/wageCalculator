@@ -253,13 +253,15 @@ function getWageDetail() {
               <div class="setting-header">Bruk Virke-tariff</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="usePresetToggle" class="switch-text">Virke-tariff</label>
+                  <div style="flex: 1;">
+                    <label for="usePresetToggle" class="switch-text">Virke-tariff</label>
+                    <div class="form-hint">Bytt mellom tariff og egendefinert lønn.</div>
+                  </div>
                   <label class="switch">
                     <input id="usePresetToggle" aria-label="Virke-tariff" type="checkbox" onchange="app.togglePreset && app.togglePreset()" />
                     <span class="slider"></span>
                   </label>
                 </div>
-                <div class="form-hint">Bytt mellom tariff og egendefinert lønn.</div>
               </div>
             </div>
 
@@ -348,13 +350,15 @@ function getWageAdvancedDetail() {
               <div class="setting-header">Aktiver pausetrekk</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="pauseDeductionEnabledToggle" class="switch-text">Pausetrekk</label>
+                  <div style="flex: 1;">
+                    <label for="pauseDeductionEnabledToggle" class="switch-text">Pausetrekk</label>
+                    <div class="form-hint">Skjul/vis avanserte pausetrekk-innstillinger.</div>
+                  </div>
                   <label class="switch">
                     <input id="pauseDeductionEnabledToggle" aria-label="Pausetrekk" type="checkbox" />
                     <span class="slider"></span>
                   </label>
                 </div>
-                <div class="form-hint">Skjul/vis avanserte pausetrekk-innstillinger.</div>
               </div>
             </div>
 
@@ -425,13 +429,15 @@ function getWageAdvancedDetail() {
               <div class="setting-header">Skattetrekk</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="taxDeductionToggle" class="switch-text">Skattetrekk</label>
+                  <div style="flex: 1;">
+                    <label for="taxDeductionToggle" class="switch-text">Skattetrekk</label>
+                    <div class="form-hint">Vis netto beløp ved å trekke skatt.</div>
+                  </div>
                   <label class="switch">
                     <input id="taxDeductionToggle" aria-label="Skattetrekk" type="checkbox" onchange="app.toggleTaxDeduction && app.toggleTaxDeduction(this.checked)" />
                     <span class="slider"></span>
                   </label>
                 </div>
-                <div class="form-hint">Vis netto beløp ved å trekke skatt.</div>
               </div>
             </div>
 
@@ -551,13 +557,15 @@ function getInterfaceDetail() {
               </div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="defaultShiftsViewToggle" class="switch-text">Åpne kalender som standard</label>
+                  <div style="flex: 1;">
+                    <label for="defaultShiftsViewToggle" class="switch-text">Åpne kalender som standard</label>
+                    <div class="form-hint">Når aktivert, åpnes kalenderen i stedet for liste.</div>
+                  </div>
                   <label class="switch">
                     <input id="defaultShiftsViewToggle" aria-label="Åpne kalender som standard" type="checkbox" />
                     <span class="slider"></span>
                   </label>
                 </div>
-                <div class="form-hint">Når aktivert, åpnes kalenderen i stedet for liste.</div>
               </div>
             </div>
           </div>
@@ -580,13 +588,15 @@ function getInterfaceDetail() {
               </div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="showEmployeeTabToggle" class="switch-text">Vis «Ansatte»-fanen</label>
+                  <div style="flex: 1;">
+                    <label for="showEmployeeTabToggle" class="switch-text">Vis «Ansatte»-fanen</label>
+                    <div class="form-hint">Krever Enterprise. Viser fanen «Ansatte» i bunnmenyen.</div>
+                  </div>
                   <label class="switch">
                     <input id="showEmployeeTabToggle" aria-label="Vis «Ansatte»-fanen" type="checkbox" />
                     <span class="slider"></span>
                   </label>
                 </div>
-                <div class="form-hint">Krever Enterprise. Viser fanen «Ansatte» i bunnmenyen.</div>
               </div>
             </div>
 
@@ -611,13 +621,15 @@ function getInterfaceDetail() {
               <div class="setting-header">Direkte tidsinput</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="directTimeInputToggle" class="switch-text">Skriv tid direkte</label>
+                  <div style="flex: 1;">
+                    <label for="directTimeInputToggle" class="switch-text">Skriv tid direkte</label>
+                    <div class="form-hint">Raskere registrering uten nedtrekksmenyer.</div>
+                  </div>
                   <label class="switch">
                     <input id="directTimeInputToggle" aria-label="Skriv tid direkte" type="checkbox" />
                     <span class="slider"></span>
                   </label>
                 </div>
-                <div class="form-hint">Raskere registrering uten nedtrekksmenyer.</div>
               </div>
             </div>
 
@@ -626,13 +638,15 @@ function getInterfaceDetail() {
               <div class="setting-header">Minuttintervall</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="fullMinuteRangeToggle" class="switch-text">Vis alle minutter</label>
+                  <div style="flex: 1;">
+                    <label for="fullMinuteRangeToggle" class="switch-text">Vis alle minutter</label>
+                    <div class="form-hint">Vis hvert minutt i stedet for 15-minutters intervaller.</div>
+                  </div>
                   <label class="switch">
                     <input id="fullMinuteRangeToggle" aria-label="Vis alle minutter" type="checkbox" />
                     <span class="slider"></span>
                   </label>
                 </div>
-                <div class="form-hint">Vis hvert minutt i stedet for 15-minutters intervaller.</div>
               </div>
             </div>
 
@@ -641,13 +655,15 @@ function getInterfaceDetail() {
               <div class="setting-header">Valutavisning</div>
               <div class="setting-body">
                 <div class="switch-group">
-                  <label for="currencyFormatToggle" class="switch-text">Bruk «NOK» i stedet for «kr»</label>
+                  <div style="flex: 1;">
+                    <label for="currencyFormatToggle" class="switch-text">Bruk «NOK» i stedet for «kr»</label>
+                    <div class="form-hint">Mer formell visning i rapporter og eksport.</div>
+                  </div>
                   <label class="switch">
                     <input id="currencyFormatToggle" aria-label="Bruk «NOK» i stedet for «kr»" type="checkbox" />
                     <span class="slider"></span>
                   </label>
                 </div>
-                <div class="form-hint">Mer formell visning i rapporter og eksport.</div>
               </div>
             </div>
           </div>
