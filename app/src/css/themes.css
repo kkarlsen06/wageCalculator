@@ -43,6 +43,67 @@
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
   --border-radius: 40px;
   --border-radius-large: 40px;
+
+  /* Corner radius scale (8px rhythm) */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-3xl: 40px;
+  --radius-pill: 999px;
+
+  /* Surface tokens */
+  --surface-card: var(--bg-card);
+  --surface-card-elevated: var(--bg-card-elevated);
+  --surface-card-muted: var(--bg-card-secondary);
+  --surface-card-subtle: var(--bg-card-subtle);
+  --surface-card-hover: rgba(74, 200, 255, 0.08);
+  --surface-card-press: rgba(74, 200, 255, 0.05);
+  --surface-card-active: var(--gradient-secondary);
+
+  /* Border tokens */
+  --card-border: 1px solid var(--border);
+  --card-border-strong: 1px solid rgba(74, 200, 255, 0.35);
+  --card-border-focus: 1px solid rgba(74, 200, 255, 0.55);
+
+  /* Shadow tokens */
+  --shadow-card-base: 0 12px 32px rgba(8, 12, 20, 0.45);
+  --shadow-card-hover-base: 0 18px 44px rgba(8, 12, 20, 0.55);
+  --shadow-card-strong-base: 0 22px 52px rgba(8, 12, 20, 0.6);
+  --shadow-card-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-card-inset-bottom: inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+  --shadow-card-inset-left: inset 1px 0 0 rgba(255, 255, 255, 0.04);
+  --shadow-card-inset-right: inset -1px 0 0 rgba(0, 0, 0, 0.08);
+  --shadow-card: var(--shadow-card-base),
+    var(--shadow-card-inset-top),
+    var(--shadow-card-inset-bottom),
+    var(--shadow-card-inset-left),
+    var(--shadow-card-inset-right);
+  --shadow-card-hover: var(--shadow-card-hover-base),
+    var(--shadow-card-inset-top),
+    var(--shadow-card-inset-bottom),
+    var(--shadow-card-inset-left),
+    var(--shadow-card-inset-right);
+  --shadow-card-strong: var(--shadow-card-strong-base),
+    var(--shadow-card-inset-top),
+    var(--shadow-card-inset-bottom),
+    var(--shadow-card-inset-left),
+    var(--shadow-card-inset-right);
+
+  /* Focus rings */
+  --focus-ring: 0 0 0 1px rgba(74, 200, 255, 0.45);
+  --focus-ring-strong: 0 0 0 2px rgba(74, 200, 255, 0.3);
+
+  /* Button tokens */
+  --button-primary-bg: var(--primary);
+  --button-primary-bg-hover: var(--primary-light);
+  --button-primary-bg-active: var(--primary-dark);
+  --button-primary-text: #f8fbff;
+  --button-secondary-bg: transparent;
+  --button-secondary-text: var(--text-secondary);
+  --button-secondary-hover: var(--surface-card-hover);
 }
 
 /* Dark Theme (default) */
@@ -209,10 +270,34 @@ html.theme-light {
   /* Light theme profile border */
   --border-profile: #e2e8f0;
 
+  /* Light theme surface interactions */
+  --surface-card-hover: rgba(37, 99, 235, 0.12);
+  --surface-card-press: rgba(37, 99, 235, 0.18);
+
+  /* Light theme border emphasis */
+  --card-border-strong: 1px solid rgba(37, 99, 235, 0.25);
+  --card-border-focus: 1px solid rgba(37, 99, 235, 0.4);
+
+  /* Light theme shadows */
+  --shadow-card-base: 0 8px 22px rgba(15, 23, 42, 0.14);
+  --shadow-card-hover-base: 0 14px 32px rgba(15, 23, 42, 0.18);
+  --shadow-card-strong-base: 0 18px 42px rgba(15, 23, 42, 0.22);
+  --shadow-card-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --shadow-card-inset-bottom: inset 0 -1px 0 rgba(15, 23, 42, 0.08);
+  --shadow-card-inset-left: inset 1px 0 0 rgba(255, 255, 255, 0.7);
+  --shadow-card-inset-right: inset -1px 0 0 rgba(15, 23, 42, 0.06);
+
+  /* Light theme focus styling */
+  --focus-ring: 0 0 0 1px rgba(37, 99, 235, 0.45);
+  --focus-ring-strong: 0 0 0 2px rgba(37, 99, 235, 0.25);
+
+  /* Light theme button text */
+  --button-primary-text: #f8fafc;
+
   /* Skeleton loading colors - Light theme */
   --skeleton-base: rgba(0, 0, 0, 0.08);
   --skeleton-shimmer: rgba(0, 0, 0, 0.18);
-  --skeleton-gradient: linear-gradient(90deg, 
+  --skeleton-gradient: linear-gradient(90deg,
     rgba(0, 0, 0, 0.08), 
     rgba(0, 0, 0, 0.18), 
     rgba(0, 0, 0, 0.08));
