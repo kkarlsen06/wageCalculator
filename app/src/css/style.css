@@ -130,34 +130,43 @@ body:not(.dashboard-cards-loaded) .total-card {
 
 /* Progress card - hele kortet er progressbaren */
 .progress-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 24px;
+  background: var(--dashboard-card-background, var(--surface-card));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-xl);
   padding: 0;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  border: 1px solid var(--border);
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border: var(--dashboard-card-border, var(--card-border));
+  box-shadow: var(--dashboard-card-shadow, var(--shadow-card));
   position: relative;
   overflow: hidden;
   height: 60px;
   display: flex;
   align-items: center;
   cursor: pointer;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   opacity: 0.9;
 }
 
 .progress-card:hover {
-  background-color: rgba(255, 255, 255, 0.02);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: var(--dashboard-card-hover-background, var(--surface-card-hover));
+  border: var(--dashboard-card-hover-border, var(--card-border-strong));
   transform: translateY(-1px);
-  box-shadow:
-    0 6px 20px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: var(--dashboard-card-hover-shadow, var(--shadow-card-hover));
+}
+
+.progress-card:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  background: var(--dashboard-card-focus-background, var(--surface-card-hover));
+  border: var(--dashboard-card-focus-border, var(--card-border-focus));
+  box-shadow: var(--dashboard-card-focus-shadow, var(--shadow-card-hover), var(--focus-ring));
+  transform: translateY(-1px);
 }
 
 /* Removed shimmer animation from progress card to avoid conflicts with progress bar animation */
@@ -166,7 +175,7 @@ body:not(.dashboard-cards-loaded) .total-card {
 .progress-fill {
   height: 100%;
   background: var(--gradient-secondary);
-  border-radius: 24px 0 0 24px;
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -641,21 +650,17 @@ button {
 }
 
 /* Performance optimizations for animations */
-* {
-  /* Optimize animations for better performance */
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -webkit-perspective: 1000;
-  perspective: 1000;
-}
-
-/* Elements that will be animated should declare will-change */
 .progress-fill,
 .modal-content,
 .shift-item,
 .calendar-cell,
 .btn,
 .tab-btn {
+  /* Optimize animations for better performance */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
   will-change: transform, opacity;
 }
 
@@ -1281,10 +1286,11 @@ body {
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 12px 16px; /* Standard header padding */
-  border-bottom: 1px solid var(--border); /* More transparent border */
+  border: var(--header-border, 1px solid transparent);
+  border-bottom: var(--header-border-bottom, 1px solid var(--border)); /* More transparent border */
   border-radius: 32px;
   margin-top: env(safe-area-inset-top, 0);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--header-shadow, 0 4px 20px rgba(0, 0, 0, 0.15));
   transition: transform 0.4s var(--ease-default), opacity 0.3s var(--ease-default);
   overflow: visible;
   min-height: 64px; /* Fixed minimum height to prevent layout shift */
@@ -1695,10 +1701,10 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
 }
 
 .user-profile-btn {
-  background: var(--border-profile);
-  border: 1px solid var(--border);
+  background: var(--user-profile-btn-background, var(--border-profile));
+  border: var(--user-profile-btn-border, 1px solid var(--border));
   border-radius: 24px; /* Pill-like appearance to complement circular profile icon */
-  color: var(--text-primary);
+  color: var(--user-profile-btn-color, var(--text-primary));
   padding: 8px 12px;
   display: flex;
   align-items: center;
@@ -1707,16 +1713,27 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium); /* 500 - Medium emphasis for secondary actions */
   cursor: pointer;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   min-width: auto;
   max-width: fit-content;
   min-height: 44px; /* Larger height to accommodate bigger icon */
 }
 
 .user-profile-btn:hover {
-  background-color: rgba(255, 255, 255, 0.03);
-  border-color: rgba(99, 102, 241, 0.4);
-  color: rgba(255, 255, 255, 0.9);
+  background-color: var(--user-profile-btn-hover-background, rgba(255, 255, 255, 0.03));
+  border: var(--user-profile-btn-hover-border, 1px solid rgba(99, 102, 241, 0.4));
+  color: var(--user-profile-btn-hover-color, rgba(255, 255, 255, 0.9));
+}
+
+.user-profile-btn:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
 }
 
 .user-nickname {
@@ -2536,19 +2553,22 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
   justify-content: center;
   padding: 0;
   font-size: var(--text-lg); /* Increased from text-base for better visibility */
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   width: 48px; /* Increased from 40px for better touch target */
   height: 48px; /* Increased from 40px for better touch target */
   /* Subtle 3D Bevel Effect - consistent with other card elements */
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.06), /* Subtle depth shadow */
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Subtle top inner highlight */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
-    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
-    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    inset 1px 0 0 rgba(255, 255, 255, 0.025),
+    inset -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .month-nav-btn:hover {
@@ -2573,6 +2593,18 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
     inset 0 -1px 0 rgba(255, 255, 255, 0.03), /* Inverted bottom highlight for pressed effect */
     inset 1px 0 0 rgba(0, 0, 0, 0.04), /* Inverted left shadow for pressed effect */
     inset -1px 0 0 rgba(255, 255, 255, 0.02); /* Inverted right highlight for pressed effect */
+}
+
+.month-nav-btn:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 3px;
+  border-color: transparent;
+  box-shadow: var(--focus-ring),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    inset 1px 0 0 rgba(255, 255, 255, 0.025),
+    inset -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .month-display {
@@ -2712,15 +2744,13 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
   font-size: var(--text-base); /* Prevents zoom on iOS */
   /* Subtle 3D Bevel Effect - consistent with other interactive elements */
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.04), /* Very subtle depth shadow */
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 1px 3px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 rgba(0, 0, 0, 0.08), /* Subtle inward top shadow for input appearance */
     inset 0 -1px 0 rgba(255, 255, 255, 0.03), /* Subtle inward bottom highlight */
     inset 1px 0 0 rgba(0, 0, 0, 0.04), /* Subtle inward left shadow */
     inset -1px 0 0 rgba(255, 255, 255, 0.02); /* Subtle inward right highlight */
   width: 100%;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
   /* Optimized transitions - only animate specific properties */
   transition: border-color var(--speed-normal) var(--ease-default),
               box-shadow var(--speed-normal) var(--ease-default),
@@ -2742,23 +2772,19 @@ select.form-control {
   background-color: rgba(255, 255, 255, 0.02);
 }
 
-.form-control:focus {
-  outline: none;
-  border-color: rgba(99, 102, 241, 0.6);
+.form-control:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  border-color: var(--card-border-focus-color, rgba(99, 102, 241, 0.6));
   background-color: rgba(255, 255, 255, 0.03);
   /* Enhanced 3D Bevel Effect on focus - slightly more prominent for interactivity feedback */
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.08), /* Enhanced depth shadow */
-    0 0 0 3px rgba(99, 102, 241, 0.1), /* Focus ring */
+    var(--focus-ring),
     inset 0 1px 0 rgba(0, 0, 0, 0.1), /* Enhanced inward top shadow */
     inset 0 -1px 0 rgba(255, 255, 255, 0.05), /* Enhanced inward bottom highlight */
     inset 1px 0 0 rgba(0, 0, 0, 0.06), /* Enhanced inward left shadow */
     inset -1px 0 0 rgba(255, 255, 255, 0.03); /* Enhanced inward right highlight */
-}
-
-.form-control:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
 }
 
 /* Time Input Enhancements */
@@ -2785,8 +2811,8 @@ input[type="time"].form-control[value=""] {
 }
 
 /* Add subtle animation to draw attention to empty time fields */
-input[type="time"].form-control:invalid:focus,
-input[type="time"].form-control[value=""]:focus {
+input[type="time"].form-control:invalid:focus-visible,
+input[type="time"].form-control[value=""]:focus-visible {
   animation: subtle-pulse 2s ease-in-out infinite;
 }
 
@@ -2846,7 +2872,7 @@ input[type="time"].form-control[value=""]:focus {
   letter-spacing: normal;
 }
 
-.time-input:focus {
+.time-input:focus-visible {
   text-align: center;
 }
 
@@ -2856,7 +2882,7 @@ input[type="time"].form-control[value=""]:focus {
   background-color: rgba(255, 184, 107, 0.05);
 }
 
-.time-input:invalid:focus {
+.time-input:invalid:focus-visible {
   border-color: rgba(255, 107, 129, 0.6);
   background-color: rgba(255, 107, 129, 0.05);
 }
@@ -3201,19 +3227,17 @@ input[type="time"].form-control[value=""]:focus {
   /* Avoid fixed 100vh which breaks in iOS PWAs; allow internal sections to define height */
   height: auto;
   /* Subtle 3D Bevel Effect - consistent with other card elements */
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.12), /* Enhanced depth shadow for modals */
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Subtle top inner highlight */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
-    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
-    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
   position: relative;
   border: 1px solid var(--border);
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    0 8px 32px rgba(0, 0, 0, 0.12), /* Enhanced depth shadow for modals */
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Subtle top inner highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
+    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
+    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
   animation: gradientSlide 0.5s ease;
 }
 
@@ -5224,26 +5248,29 @@ input:checked + .slider:before {
 
 /* Overview Section Adjustments */
 .total-card {
-  /* iOS-style translucent background matching header */
-  background: var(--bg-card); /* Semi-transparent background to allow content to show through */
+  /* Elevated dashboard hero card */
+  background: var(--total-card-background, var(--surface-card-elevated));
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 40px;
+  border-radius: var(--radius-3xl);
   text-align: center;
   /* spacing now handled by parent gap */
   margin-bottom: 0;
-  border: var(--border-profile); /* Remove border/outline */
-  /* Subtle 3D Bevel Effect - refined raised appearance with reduced intensity */
+  border: var(--total-card-border, var(--card-border));
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: all var(--speed-normal) var(--ease-default);
-  /* Natural height based on content - removed fixed height for better spacing */
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 30px;
+  box-shadow: var(--total-card-shadow, var(--shadow-card));
   /* Consistent spacing system using CSS custom properties */
   --spacing-base: 8px;
   --spacing-label: calc(var(--spacing-base) * 2); /* 16px */
@@ -5252,15 +5279,19 @@ input:checked + .slider:before {
 }
 
 .total-card:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+  background: var(--total-card-hover-background, var(--surface-card-hover));
+  border: var(--total-card-hover-border, var(--card-border-strong));
   transform: translateY(-2px);
-  /* Subtle 3D Bevel Effect on hover - refined appearance with reduced intensity */
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.18), /* Enhanced depth shadow */
-    inset 0 2px 0 rgba(255, 255, 255, 0.07), /* Reduced top inner highlight (was 0.13) */
-    inset 0 -2px 0 rgba(0, 0, 0, 0.12), /* Reduced bottom inner shadow (was 0.23) */
-    inset 2px 0 0 rgba(255, 255, 255, 0.04), /* Reduced left inner highlight (was 0.08) */
-    inset -2px 0 0 rgba(0, 0, 0, 0.07); /* Reduced right inner shadow (was 0.13) */
+  box-shadow: var(--total-card-hover-shadow, var(--shadow-card-hover));
+}
+
+.total-card:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  background: var(--total-card-focus-background, var(--surface-card-hover));
+  border: var(--total-card-focus-border, var(--card-border-focus));
+  box-shadow: var(--total-card-focus-shadow, var(--shadow-card-hover), var(--focus-ring));
+  transform: translateY(-2px);
 }
 
 .total-card::before {
@@ -5863,9 +5894,10 @@ input:checked + .slider:before {
 
 /* Hover effect for clickable payroll item */
 .next-payroll-card .payroll-item:hover {
-  background: var(--bg-hover); /* Slightly more opaque on hover */
+  background: var(--surface-card-hover);
+  border: var(--card-border-strong);
   transform: translateY(-1px); /* Subtle lift effect */
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-card-hover);
 }
 
 .next-shift-content {
@@ -5888,21 +5920,19 @@ input:checked + .slider:before {
 
 /* Style the shift-item when it's inside the next-shift-card */
 .next-shift-card .shift-item {
-  background: var(--bg-card); /* Same as next payroll card - semi-transparent background */
+  background: var(--dashboard-card-background, var(--surface-card));
   backdrop-filter: blur(20px) saturate(180%); /* Same as next payroll card - enhanced blur with saturation */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 40px; /* Fully rounded edges */
+  border-radius: var(--radius-3xl);
   padding: 18px 24px;
   margin: 0;
-  border: none;
-  /* Subtle 3D Bevel Effect - consistent with payroll card, reduced intensity */
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.15), /* Same depth shadow as payroll card */
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Reduced top inner highlight (was 0.1) */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Reduced bottom inner shadow (was 0.2) */
-    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Reduced left inner highlight (was 0.05) */
-    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Reduced right inner shadow (was 0.1) */
-  transition: all var(--speed-normal) var(--ease-default);
+  border: var(--dashboard-card-border, var(--card-border));
+  box-shadow: var(--dashboard-card-shadow, var(--shadow-card));
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   min-height: 80px;
   position: relative;
   overflow: hidden; /* Add overflow hidden to contain the badge */
@@ -5910,21 +5940,19 @@ input:checked + .slider:before {
 
 /* Style the payroll-item when it's inside the next-payroll-card */
 .next-payroll-card .payroll-item {
-  background: var(--bg-card); /* Same as header - semi-transparent background */
+  background: var(--dashboard-card-background, var(--surface-card));
   backdrop-filter: blur(20px) saturate(180%); /* Same as header - enhanced blur with saturation */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: none; /* Remove border/outline */
-  border-radius: 40px; /* Fully rounded edges */
+  border: var(--dashboard-card-border, var(--card-border));
+  border-radius: var(--radius-3xl);
   padding: 18px;
   margin: 0;
-  /* Subtle 3D Bevel Effect - refined raised appearance matching total card, reduced intensity */
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.15), /* Existing depth shadow */
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), /* Reduced top inner highlight (was 0.1) */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Reduced bottom inner shadow (was 0.2) */
-    inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Reduced left inner highlight (was 0.05) */
-    inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Reduced right inner shadow (was 0.1) */
-  transition: all var(--speed-normal) var(--ease-default);
+  box-shadow: var(--dashboard-card-shadow, var(--shadow-card));
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   min-height: 80px;
   position: relative;
   overflow: hidden; /* Add overflow hidden to contain the badge */
@@ -5935,14 +5963,19 @@ input:checked + .slider:before {
 
 /* Active next shift - when it's today or tomorrow */
 .next-shift-card .shift-item.active {
-  background: var(--gradient-secondary);
-  /* Subtle 3D Bevel Effect for active state - reduced intensity */
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.08), /* Existing depth shadow */
-    inset 0 2px 0 rgba(255, 255, 255, 0.07), /* Reduced top inner highlight (was 0.13) */
-    inset 0 -2px 0 rgba(0, 0, 0, 0.12), /* Reduced bottom inner shadow (was 0.23) */
-    inset 2px 0 0 rgba(255, 255, 255, 0.04), /* Reduced left inner highlight (was 0.08) */
-    inset -2px 0 0 rgba(0, 0, 0, 0.07); /* Reduced right inner shadow (was 0.13) */
+  background: var(--dashboard-card-active-background, var(--surface-card-active));
+  border: var(--dashboard-card-active-border, var(--card-border-strong));
+  box-shadow: var(--dashboard-card-active-shadow, var(--shadow-card-strong));
+}
+
+.next-shift-card .shift-item:focus-visible,
+.next-payroll-card .payroll-item:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  background: var(--dashboard-card-focus-background, var(--surface-card-hover));
+  border: var(--dashboard-card-focus-border, var(--card-border-focus));
+  transform: translateY(-1px);
+  box-shadow: var(--dashboard-card-focus-shadow, var(--shadow-card-hover), var(--focus-ring));
 }
 
 
@@ -5989,7 +6022,7 @@ input:checked + .slider:before {
 
   .next-shift-card .shift-item {
     padding: 16px 20px;
-    border-radius: 40px; /* Fully rounded edges */
+    border-radius: var(--radius-3xl); /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -6005,7 +6038,7 @@ input:checked + .slider:before {
 
   .next-payroll-card .payroll-item {
     padding: 16px;
-    border-radius: 40px; /* Fully rounded edges */
+    border-radius: var(--radius-3xl); /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -6031,7 +6064,7 @@ input:checked + .slider:before {
 
   .next-shift-card .shift-item {
     padding: 14px 18px;
-    border-radius: 40px; /* Fully rounded edges */
+    border-radius: var(--radius-3xl); /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -6047,7 +6080,7 @@ input:checked + .slider:before {
 
   .next-payroll-card .payroll-item {
     padding: 14px;
-    border-radius: 40px; /* Fully rounded edges */
+    border-radius: var(--radius-3xl); /* Fully rounded edges */
     min-height: 80px;
   }
 
@@ -8319,11 +8352,11 @@ body.chatbox-view .dashboard-content {
   left: 0;
   right: 0;
   margin: 0 auto;
-  background: var(--bg-card);
+  background: var(--surface-card-elevated);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
-  border-radius: 24px;
+  border: var(--floating-action-bar-border, var(--card-border));
+  border-radius: var(--radius-xl);
   padding: 12px 16px;
   display: flex;
   align-items: center;
@@ -8333,10 +8366,8 @@ body.chatbox-view .dashboard-content {
   z-index: 10000;
   width: min(70%, 600px); /* Responsive width with max limit */
   max-width: calc(100% - 32px); /* Ensure padding from viewport edges */
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  transition: opacity 0.3s ease-out;
+  box-shadow: var(--floating-action-bar-shadow, var(--shadow-card));
+  transition: opacity 0.3s ease-out, box-shadow var(--speed-normal) var(--ease-default);
   box-sizing: border-box;
 }
 
@@ -8402,7 +8433,7 @@ body.chatbox-view .dashboard-content {
 .floating-action-bar .view-toggle .tab-btn {
   padding: 8px 16px;
   font-size: 14px;
-  border-radius: 24px;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
   flex: 1 1 auto; /* Allow buttons to grow/shrink equally */
   min-width: 0; /* Allow shrinking below content width */
@@ -8411,32 +8442,51 @@ body.chatbox-view .dashboard-content {
 
 /* Ensure active state maintains rounded corners */
 .floating-action-bar .view-toggle .tab-btn.active {
-  border-radius: 24px;
+  border-radius: var(--radius-pill);
 }
 
 /* Add button in floating bar */
 .floating-action-bar .add-btn {
-  background: var(--accent);
-  border: none;
-  border-radius: 16px;
+  background: var(--button-primary-bg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
   padding: 8px 16px;
-  color: white;
+  color: var(--button-primary-text);
   cursor: pointer;
   font-size: 14px;
   font-weight: var(--font-weight-semibold); /* 600 - Strong emphasis for primary actions */
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default);
   flex: 0 0 auto; /* Don't grow/shrink */
   white-space: nowrap;
   letter-spacing: 0.025em; /* Positive tracking for action buttons */
   text-transform: uppercase; /* Modern action button styling */
+  box-shadow: var(--shadow-card-base);
 }
 
 .floating-action-bar .add-btn:hover {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(99, 102, 241, 0.4);
+  background: var(--button-primary-bg-hover);
+  border-color: transparent;
+  color: var(--button-primary-text);
+  box-shadow: var(--shadow-card-hover-base);
+  transform: translateY(-1px);
+}
+
+.floating-action-bar .add-btn:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  background: var(--button-primary-bg-active);
+  border-color: transparent;
+  box-shadow: var(--shadow-card-hover-base), var(--focus-ring-strong);
+  color: var(--button-primary-text);
+  transform: translateY(-1px);
 }
 
 .floating-action-bar .add-btn svg {
@@ -9356,9 +9406,12 @@ input[type="file"].form-control:hover {
   background-color: rgba(255, 255, 255, 0.02);
 }
 
-input[type="file"].form-control:focus {
-  border-color: rgba(99, 102, 241, 0.4);
+input[type="file"].form-control:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  border-color: var(--card-border-focus-color, rgba(99, 102, 241, 0.4));
   background-color: rgba(255, 255, 255, 0.03);
+  box-shadow: var(--focus-ring);
 }
 
 /* Import button - subtle styling */
@@ -11342,15 +11395,19 @@ input[type="file"].form-control:focus {
 /* Tab bar styling as independent pill-shaped element */
 .tab-bar {
   /* Pill-shaped background with glassmorphism effect */
-  background: var(--bg-card);
+  background: var(--surface-card);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--border);
-  border-radius: 40px; /* Pill shape with proportional rounded corners */
+  border: var(--tab-bar-border, var(--card-border));
+  border-radius: var(--radius-3xl); /* Pill shape with proportional rounded corners */
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    opacity var(--speed-normal) var(--ease-default);
   /* Subtle shadow for depth without stacking effect */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--tab-bar-shadow, var(--shadow-card));
 
   /* Layout and spacing */
   display: flex;
@@ -11373,12 +11430,17 @@ input[type="file"].form-control:focus {
   justify-content: center;
   gap: 6px;
   padding: 6px 10px; /* Reduced padding for pill proportions */
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--text-secondary);
-  border-radius: 40px; /* Match the tab-bar pill shape */
+  border-radius: var(--radius-pill); /* Match the tab-bar pill shape */
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   font-size: 14px;
   font-weight: var(--font-weight-medium);
   position: relative;
@@ -11388,24 +11450,39 @@ input[type="file"].form-control:focus {
 
 /* Tab button hover state */
 .tab-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-card-hover);
+  border: var(--card-border);
   color: var(--text-primary);
   transform: translateY(-1px);
 }
 
+.tab-btn:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+
+.tab-btn:focus-visible:not(.active) {
+  background: var(--dashboard-card-focus-background, var(--surface-card-hover));
+  border: var(--dashboard-card-focus-border, var(--card-border-focus));
+  color: var(--text-primary);
+  box-shadow: var(--dashboard-card-focus-shadow, var(--focus-ring));
+}
+
 /* Active tab button styling */
 .tab-btn.active {
-  background: var(--gradient-total-card);
+  background: var(--tab-btn-active-background, var(--surface-card-active));
+  border: var(--tab-btn-active-border, var(--card-border-strong));
   color: var(--text-primary);
-  box-shadow:
-    0 2px 8px rgba(22, 47, 58, 0.3),
-    inset 0 1px 0 rgba(19, 38, 47, 0.5),
-    inset 0 -1px 0 rgba(16, 21, 29, 0.8);
+  box-shadow: var(--tab-btn-active-shadow, var(--shadow-card-strong));
 }
 
 /* Ensure active buttons inside the tab bar do not gain borders from generic tab styles */
 .tab-bar .tab-btn.active {
-  border: none;
+  border: var(--tab-btn-active-border, var(--card-border-strong));
+}
+
+.tab-btn.active:focus-visible {
+  box-shadow: var(--tab-btn-active-shadow, var(--shadow-card-strong)), var(--focus-ring);
 }
 
 /* Tab icon badge - similar to ChatGPT icon badge */
@@ -12260,20 +12337,25 @@ body.chatbox-view .chatbox-container {
   padding: 16px;
   font-size: var(--text-base);
   color: var(--text-primary);
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default);
   width: 100%;
   box-sizing: border-box;
 }
 
-.employee-form .form-input:focus {
+.employee-form .form-input:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
   border-color: var(--primary);
-  box-shadow: 
+  box-shadow:
     0 0 0 3px rgba(74, 200, 255, 0.1),
     0 4px 12px rgba(0, 0, 0, 0.15);
-  outline: none;
 }
 
-.employee-form .form-input:hover:not(:focus) {
+.employee-form .form-input:hover:not(:focus-visible) {
   border-color: rgba(74, 200, 255, 0.3);
   background: rgba(255, 255, 255, 0.02);
 }
@@ -12531,7 +12613,12 @@ body.chatbox-view .chatbox-container {
   background: var(--bg-tertiary);
   border: 2px solid transparent;
   cursor: pointer;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   position: relative;
   min-width: 80px;
   touch-action: manipulation;
@@ -12546,10 +12633,11 @@ body.chatbox-view .chatbox-container {
   transform: translateY(-2px);
 }
 
-.employee-tile:focus {
-  outline: none;
+.employee-tile:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 3px;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  box-shadow: var(--focus-ring);
 }
 
 .employee-tile.active {
@@ -12569,7 +12657,7 @@ body.chatbox-view .chatbox-container {
 }
 
 .employee-tile:hover .employee-actions-btn,
-.employee-tile:focus .employee-actions-btn {
+.employee-tile:focus-visible .employee-actions-btn {
   opacity: 1;
   transform: scale(1);
 }
@@ -12584,7 +12672,7 @@ body.chatbox-view .chatbox-container {
     min-height: 44px;
   }
 
-  .employee-tile:focus {
+  .employee-tile:focus-visible {
     transform: scale(1.05);
     z-index: 2;
   }
@@ -13098,7 +13186,11 @@ body.chatbox-view .chatbox-container {
   font-size: var(--text-base);
   color: var(--text-primary);
   cursor: pointer;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default);
 }
 
 .date-select:hover {
@@ -13106,10 +13198,11 @@ body.chatbox-view .chatbox-container {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.date-select:focus {
+.date-select:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(74, 200, 255, 0.1);
-  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 /* Global Corner Radius Consistency */
@@ -13433,14 +13526,19 @@ body.chatbox-view .chatbox-container {
   background: var(--bg-card-elevated);
   color: var(--text-primary);
   font-size: 14px;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default);
   box-sizing: border-box;
 }
 
-.form-input:focus {
-  outline: none;
+.form-input:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  box-shadow: var(--focus-ring);
   background: var(--bg-secondary);
 }
 
@@ -13499,7 +13597,7 @@ body.chatbox-view .chatbox-container {
     border-width: 2px;
   }
 
-  .form-input:focus {
+  .form-input:focus-visible {
     border-width: 3px;
   }
 }
@@ -13603,8 +13701,8 @@ body.chatbox-view .chatbox-container {
   text-decoration: none;
 }
 
-.link-button:focus {
-  outline: 2px solid var(--accent);
+.link-button:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -14276,7 +14374,12 @@ body.chatbox-view .chatbox-container {
   border: none;
   color: var(--text-primary);
   cursor: pointer;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   text-align: left;
 }
 
@@ -14285,11 +14388,12 @@ body.chatbox-view .chatbox-container {
   color: var(--text-primary);
 }
 
-.menu-item:focus {
-  outline: none;
+.menu-item:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
   background: rgba(99, 102, 241, 0.1);
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  box-shadow: var(--focus-ring);
 }
 
 .menu-item.destructive {
@@ -14446,7 +14550,7 @@ body.chatbox-view .chatbox-container {
     border-bottom-width: 2px;
   }
 
-  .menu-item:focus {
+  .menu-item:focus-visible {
     border: 2px solid var(--accent);
   }
 
@@ -15203,9 +15307,11 @@ body.chatbox-view .chatbox-container {
   font-family: inherit;
 }
 
-.chatbox-input:focus {
-  outline: none;
+.chatbox-input:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
   border-color: var(--primary);
+  box-shadow: var(--focus-ring);
 }
 
 .chatbox-input::placeholder {
@@ -15418,10 +15524,11 @@ body.chatbox-view .chatbox-container {
   }
 
   /* Improve input focus behavior */
-  .chatbox-input:focus {
-    outline: none;
+  .chatbox-input:focus-visible {
+    outline: var(--focus-outline-width) solid var(--focus-outline-color);
+    outline-offset: 2px;
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    box-shadow: var(--focus-ring);
   }
 
   /* Ensure text container maintains consistent layout */
@@ -15626,13 +15733,13 @@ body.chatbox-view .chatbox-container {
   }
 
   /* Enhanced input field behavior for mobile keyboard */
-  body.keyboard-visible .chatbox-input:focus {
+  body.keyboard-visible .chatbox-input:focus-visible {
     /* Ensure input stays visible above keyboard */
     position: relative;
     z-index: 1002;
     background: var(--bg-primary);
     border: 2px solid var(--primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--focus-ring), 0 4px 20px rgba(0, 0, 0, 0.1);
   }
 
   /* Enable smooth scroll for better user experience during keyboard positioning */
@@ -15821,8 +15928,8 @@ body.chatbox-view .chatbox-container {
   transform: translateY(-1px);
 }
 
-.filter-chip:focus {
-  outline: 2px solid var(--primary);
+.filter-chip:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
   outline-offset: 2px;
 }
 

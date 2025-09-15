@@ -418,7 +418,7 @@ html.ios-pwa #shiftAddPage .tab-content {
   box-shadow: 0 0 6px rgba(255, 140, 0, 0.35);
 }
 .floating-nav-btn.back-btn.conflict:hover,
-.floating-nav-btn.back-btn.conflict:focus {
+.floating-nav-btn.back-btn.conflict:focus-visible {
   background: #e67c00;
   border-color: #e67c00;
 }
@@ -937,14 +937,15 @@ html.ios-pwa #shiftAddPage .tab-content {
   transform: translateY(-1px);
 }
 
-#accountName:focus,
-#accountEmail:focus {
-  outline: none;
+#accountName:focus-visible,
+#accountEmail:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
   border-color: var(--accent);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, var(--bg-card-elevated) 100%);
   box-shadow:
     0 6px 20px rgba(0, 0, 0, 0.12),
-    0 0 0 4px rgba(99, 102, 241, 0.15),
+    var(--focus-ring),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
 }

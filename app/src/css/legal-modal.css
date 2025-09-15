@@ -144,8 +144,8 @@ body {
     color: var(--text-primary, #111827);
 }
 
-.legal-modal-close:focus {
-    outline: 2px solid var(--accent, #3b82f6);
+.legal-modal-close:focus-visible {
+    outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color, var(--accent, #3b82f6));
     outline-offset: 2px;
 }
 
@@ -179,8 +179,8 @@ body {
     background: var(--bg-primary, #ffffff);
 }
 
-.legal-tab:focus {
-    outline: 2px solid var(--accent, #3b82f6);
+.legal-tab:focus-visible {
+    outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color, var(--accent, #3b82f6));
     outline-offset: -2px;
 }
 
