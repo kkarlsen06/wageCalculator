@@ -144,9 +144,10 @@ body {
     color: var(--text-primary, #111827);
 }
 
-.legal-modal-close:focus {
-    outline: 2px solid var(--accent, #3b82f6);
+.legal-modal-close:focus-visible {
+    outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color, rgba(74, 200, 255, 0.9));
     outline-offset: 2px;
+    box-shadow: var(--focus-ring, 0 0 0 1px rgba(74, 200, 255, 0.45));
 }
 
 .legal-modal-tabs {
@@ -179,9 +180,10 @@ body {
     background: var(--bg-primary, #ffffff);
 }
 
-.legal-tab:focus {
-    outline: 2px solid var(--accent, #3b82f6);
+.legal-tab:focus-visible {
+    outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color, rgba(74, 200, 255, 0.9));
     outline-offset: -2px;
+    box-shadow: var(--focus-ring, 0 0 0 1px rgba(74, 200, 255, 0.45));
 }
 
 .legal-modal-content {
