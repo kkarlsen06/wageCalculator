@@ -41,8 +41,8 @@
   --speed-slow: 0.5s;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --border-radius: 40px;
-  --border-radius-large: 40px;
+  --border-radius: var(--radius-3xl);
+  --border-radius-large: var(--radius-3xl);
 
   /* Corner radius scale (8px rhythm) */
   --radius-xs: 4px;
@@ -62,11 +62,18 @@
   --surface-card-hover: rgba(74, 200, 255, 0.08);
   --surface-card-press: rgba(74, 200, 255, 0.05);
   --surface-card-active: var(--gradient-secondary);
+  --surface-card-disabled: color-mix(in oklab, var(--bg-card), transparent 30%);
 
   /* Border tokens */
-  --card-border: 1px solid var(--border);
-  --card-border-strong: 1px solid rgba(74, 200, 255, 0.35);
-  --card-border-focus: 1px solid rgba(74, 200, 255, 0.55);
+  --card-border-width: 1px;
+  --card-border-style: solid;
+  --card-border-color: var(--border);
+  --card-border: var(--card-border-width) var(--card-border-style) var(--card-border-color);
+  --card-border-strong-color: rgba(74, 200, 255, 0.35);
+  --card-border-focus-color: rgba(74, 200, 255, 0.55);
+  --card-border-strong: var(--card-border-width) var(--card-border-style) var(--card-border-strong-color);
+  --card-border-focus: var(--card-border-width) var(--card-border-style) var(--card-border-focus-color);
+  --card-border-width-strong: 2px;
 
   /* Shadow tokens */
   --shadow-card-base: 0 12px 32px rgba(8, 12, 20, 0.45);
@@ -91,10 +98,13 @@
     var(--shadow-card-inset-bottom),
     var(--shadow-card-inset-left),
     var(--shadow-card-inset-right);
+  --shadow-card-lite: 0 8px 16px rgba(0, 0, 0, 0.25);
 
   /* Focus rings */
   --focus-ring: 0 0 0 1px rgba(74, 200, 255, 0.45);
   --focus-ring-strong: 0 0 0 2px rgba(74, 200, 255, 0.3);
+  --focus-outline-color: rgba(74, 200, 255, 0.9);
+  --focus-outline-width: 2px;
 
   /* Button tokens */
   --button-primary-bg: var(--primary);
@@ -104,6 +114,9 @@
   --button-secondary-bg: transparent;
   --button-secondary-text: var(--text-secondary);
   --button-secondary-hover: var(--surface-card-hover);
+  --button-primary-bg-disabled: color-mix(in oklab, var(--primary), white 50%);
+  --button-primary-text-disabled: color-mix(in oklab, var(--button-primary-text), transparent 40%);
+  --button-secondary-text-disabled: color-mix(in oklab, var(--text-secondary), transparent 40%);
 }
 
 /* Dark Theme (default) */
@@ -131,7 +144,6 @@ html.theme-dark {
   --bg-card-elevated: rgba(24, 27, 34, 1.0);
 
   /* Additional card variants for proper hierarchy */
-  --bg-card-elevated: rgba(24, 27, 34, 1.0);
   --bg-card-secondary: rgba(20, 23, 28, 0.9);
   --bg-card-subtle: rgba(16, 18, 22, 0.8);
 
@@ -275,14 +287,14 @@ html.theme-light {
   --surface-card-press: rgba(37, 99, 235, 0.18);
 
   /* Light theme border emphasis */
-  --card-border-strong: 1px solid rgba(37, 99, 235, 0.25);
-  --card-border-focus: 1px solid rgba(37, 99, 235, 0.4);
+  --card-border-strong-color: rgba(37, 99, 235, 0.25);
+  --card-border-focus-color: rgba(37, 99, 235, 0.4);
 
   /* Light theme shadows */
   --shadow-card-base: 0 8px 22px rgba(15, 23, 42, 0.14);
   --shadow-card-hover-base: 0 14px 32px rgba(15, 23, 42, 0.18);
   --shadow-card-strong-base: 0 18px 42px rgba(15, 23, 42, 0.22);
-  --shadow-card-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --shadow-card-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.65);
   --shadow-card-inset-bottom: inset 0 -1px 0 rgba(15, 23, 42, 0.08);
   --shadow-card-inset-left: inset 1px 0 0 rgba(255, 255, 255, 0.7);
   --shadow-card-inset-right: inset -1px 0 0 rgba(15, 23, 42, 0.06);
@@ -305,91 +317,91 @@ html.theme-light {
 
 /* Light theme specific: Apply custom gradient to total-card only */
 html.theme-light .total-card {
-  background: var(--gradient-total-card) !important;
-  box-shadow: none !important;
-  border: 2px solid var(--border-profile) !important;
+  background: var(--gradient-total-card);
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
 }
 
 html.theme-light .total-card:hover {
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 /* Light theme specific: Better contrast for active tab buttons */
 html.theme-light .tab-btn.active {
-  box-shadow: none !important;
-  border: 2px solid var(--border-profile) !important;
-  background: var(--bg-card-elevated) !important;
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+  background: var(--bg-card-elevated);
 }
 
 /* Light theme specific: Better contrast for profile button */
 html.theme-light .user-profile-btn {
-  background: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-  color: var(--text-primary) !important;
+  background: #f8fafc;
+  border: var(--card-border-width) var(--card-border-style) #e2e8f0;
+  color: var(--text-primary);
 }
 
 html.theme-light .user-profile-btn:hover {
-  background: #f1f5f9 !important;
-  border-color: #3B82F6 !important;
-  color: var(--text-primary) !important;
+  background: #f1f5f9;
+  border-color: #3B82F6;
+  color: var(--text-primary);
 }
 
 /* Light theme specific: Remove box shadows and add thicker borders for dashboard elements */
 html.theme-light .header {
-  box-shadow: none !important;
-  border: 2px solid var(--border-profile) !important;
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
 }
 
 html.theme-light .tab-bar {
-  box-shadow: none !important;
-  border: 2px solid var(--border-profile) !important;
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
 }
 
 html.theme-light .floating-action-bar {
-  box-shadow: none !important;
-  border: 2px solid var(--border-profile) !important;
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
 }
 
 html.theme-light .next-shift-card .shift-item.active {
-  box-shadow: none !important;
-  border: 2px solid var(--border-profile) !important;
+  box-shadow: none;
 }
 
 html.theme-light .next-shift-card .shift-item {
-  border: 2px solid var(--border-profile) !important;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
 }
 
 html.theme-light .progress-card {
-  box-shadow: none !important;
-  border: 2px solid var(--border-profile) !important;
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
 }
 
 html.theme-light .progress-card:hover {
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 html.theme-light .next-payroll-card .payroll-item {
-  box-shadow: none !important;
-  border: 2px solid var(--border-profile) !important;
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
 }
 
 
 /* Settings modal card hierarchy for light theme */
 html.theme-light #settingsModal .modal-content {
-  background: var(--bg-card-elevated) !important;
+  background: var(--bg-card-elevated);
 }
 
 html.theme-light #settingsModal .settings-section,
 html.theme-light #settingsModal .form-group {
-  background: var(--bg-card-secondary) !important;
-  border: 1px solid var(--border-light);
+  background: var(--bg-card-secondary);
+  border: var(--card-border);
+  border-color: var(--border-light);
   border-radius: 12px;
   padding: 16px;
 }
 
 html.theme-light #settingsModal .settings-subsection {
-  background: var(--bg-card-subtle) !important;
-  border: 1px solid var(--border);
+  background: var(--bg-card-subtle);
+  border: var(--card-border);
   border-radius: 8px;
   padding: 12px;
 }
@@ -410,6 +422,12 @@ html.theme-switching *,
 html.theme-switching *::before,
 html.theme-switching *::after {
   transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+  }
 }
 
 /* Update color scheme for different themes */
@@ -459,7 +477,12 @@ html.theme-dark {
   padding: var(--space-2);
   border: 2px solid transparent;
   border-radius: var(--border-radius);
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
 }
 
 .theme-option:hover {
@@ -488,19 +511,25 @@ html.theme-dark {
   border: 2px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition:
+    background-color var(--speed-normal) var(--ease-default),
+    border-color var(--speed-normal) var(--ease-default),
+    box-shadow var(--speed-normal) var(--ease-default),
+    transform var(--speed-normal) var(--ease-default);
   display: flex;
   flex-direction: column;
 }
 
 .theme-preview-header {
   height: 12px;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition: background-color var(--speed-normal) var(--ease-default),
+              opacity var(--speed-normal) var(--ease-default);
 }
 
 .theme-preview-content {
   flex: 1;
-  transition: all var(--speed-normal) var(--ease-default);
+  transition: background-color var(--speed-normal) var(--ease-default),
+              opacity var(--speed-normal) var(--ease-default);
 }
 
 /* Light theme preview */
@@ -544,7 +573,8 @@ html.theme-dark {
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
   color: var(--text-secondary);
-  transition: all var(--speed-normal) var(--ease-default);
+  transition: color var(--speed-normal) var(--ease-default),
+              font-weight var(--speed-normal) var(--ease-default);
   text-align: center;
 }
 
