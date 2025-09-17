@@ -55,7 +55,16 @@ export const routes = [
         if (abonnementPortal) abonnementPortal.remove();
         const addShiftPortal = document.getElementById('shift-add-floating-portal');
         if (addShiftPortal) addShiftPortal.remove();
-        
+
+        // Restore original navbar if it was modified
+        if (window._originalNavbarHTML) {
+          const bottomNav = document.querySelector('.bottom-nav');
+          if (bottomNav) {
+            bottomNav.innerHTML = window._originalNavbarHTML;
+          }
+          window._originalNavbarHTML = null;
+        }
+
         // Clean up shift add route globals
         if (window._shiftAddRouteCleanup) {
           window._shiftAddRouteCleanup.forEach(cleanup => {
@@ -63,7 +72,7 @@ export const routes = [
           });
           window._shiftAddRouteCleanup = [];
         }
-        
+
         // Clean up shift edit route globals
         if (window._shiftEditRouteCleanup) {
           window._shiftEditRouteCleanup.forEach(cleanup => {

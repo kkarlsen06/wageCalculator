@@ -33,11 +33,6 @@ export function renderShifts() {
             </div>
           </div>
 
-          <!-- View Toggle Tabs -->
-          <div class="tab-nav view-toggle shifts-view-toggle">
-            <button class="tab-btn active" onclick="app.switchShiftView('list')">Liste</button>
-            <button class="tab-btn" onclick="app.switchShiftView('calendar')">Kalender</button>
-          </div>
 
           <!-- Shift List -->
           <div class="shift-list" id="shiftList">
