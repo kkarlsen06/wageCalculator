@@ -142,6 +142,16 @@ export async function render() {
     } catch (_) {}
   }
 
+  // Hide bottom navigation for specific routes that need full screen
+  const bottomNav = document.querySelector('.bottom-nav');
+  if (bottomNav) {
+    if (match.path === '/shift-add') {
+      bottomNav.style.display = 'none';
+    } else {
+      bottomNav.style.display = '';
+    }
+  }
+
   // Tag body/html during onboarding for scoped CSS
   try {
     const isOnboarding = match.path === '/onboarding';
