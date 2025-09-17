@@ -4393,7 +4393,12 @@ export const app = {
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
-        document.getElementById('currentMonth').textContent = `${monthName} ${this.currentYear}`;
+
+        // Update currentMonth element if it exists (on shifts page)
+        const currentMonthEl = document.getElementById('currentMonth');
+        if (currentMonthEl) {
+            currentMonthEl.textContent = `${monthName} ${this.currentYear}`;
+        }
 
         // Update the dashboard month navigation display
         const currentMonthDashboard = document.getElementById('currentMonthDashboard');

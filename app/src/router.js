@@ -9,6 +9,7 @@ import { renderSettings, afterMountSettings } from './pages/settings.js';
 import renderAbonnementPage, { afterMountAbonnement } from './pages/abonnement.js';
 import { renderAddShift, afterMountAddShift } from './pages/shiftAdd.js';
 import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
+import { renderShifts, afterMountShifts } from './pages/shifts.js';
 import { mountAll } from './js/icons.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
@@ -83,6 +84,7 @@ export const routes = [
   { path: '/login', render: renderLogin, afterMount: afterMountLogin },
   { path: '/onboarding', render: renderOnboarding, afterMount: afterMountOnboarding },
   { path: '/abonnement', render: renderAbonnementPage, afterMount: afterMountAbonnement },
+  { path: '/shifts', render: renderShifts, afterMount: afterMountShifts },
   { path: '/shift-add', render: renderAddShift, afterMount: afterMountAddShift },
   { path: '/shift-edit', render: renderShiftEdit, afterMount: afterMountShiftEdit },
   { path: '/settings', render: renderSettings, afterMount: afterMountSettings },
