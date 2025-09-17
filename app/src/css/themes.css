@@ -200,12 +200,12 @@ html.theme-dark {
   --gradient-total-card: linear-gradient(135deg, #0f2234 0%, #0c1b2d 40%, #0b1626 70%, #09111f 100%);
 
   /* Skeleton loading colors - Dark theme */
-  --skeleton-base: rgba(255, 255, 255, 0.14);
-  --skeleton-shimmer: rgba(255, 255, 255, 0.32);
-  --skeleton-gradient: linear-gradient(90deg, 
-    rgba(255, 255, 255, 0.14), 
-    rgba(255, 255, 255, 0.32), 
-    rgba(255, 255, 255, 0.14));
+  --skeleton-base: rgba(74, 200, 255, 0.14);
+  --skeleton-shimmer: rgba(74, 200, 255, 0.32);
+  --skeleton-gradient: linear-gradient(90deg,
+    rgba(74, 200, 255, 0.14),
+    rgba(74, 200, 255, 0.32),
+    rgba(74, 200, 255, 0.14));
 }
 
 /* Dark theme specific: Apply custom gradient to total-card only */
