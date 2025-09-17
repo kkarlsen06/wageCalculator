@@ -70,9 +70,6 @@ function getHomeView() {
       </li>
     </ul>
     </div>
-    <div class="settings-bottom-bar">
-      <button type="button" class="btn btn-secondary" data-spa data-href="/">Lukk</button>
-    </div>
   </div>`;
 }
 
@@ -871,8 +868,7 @@ export function afterMountSettings() {
         <span>Tilbake</span>
       `;
     } else {
-      btn.setAttribute('data-href', '/');
-      btn.textContent = 'Lukk';
+      btn.style.display = 'none';
     }
     portal.appendChild(btn);
 

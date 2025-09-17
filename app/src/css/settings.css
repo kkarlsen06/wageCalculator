@@ -213,6 +213,18 @@ html.ios-pwa #shiftAddPage .tab-content {
 
 .settings-detail {
   background: transparent;
+  /* Prevent double scrollbar on shifts route by disabling overflow on this container */
+  overflow: visible;
+  /* Ensure no height constraints that would force nested scrolling */
+  height: auto;
+  max-height: none;
+}
+
+/* Specifically for shifts route - ensure app-container doesn't create its own scroll area */
+.settings-detail .app-container {
+  overflow: visible;
+  height: auto;
+  max-height: none;
 }
 
 .detail-title {

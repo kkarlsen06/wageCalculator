@@ -532,8 +532,7 @@ function setupFloatingNavigation() {
     btn.className = 'floating-nav-btn btn btn-secondary';
     btn.setAttribute('data-spa', '');
     btn.style.pointerEvents = 'auto';
-    btn.setAttribute('data-href', '/');
-    btn.textContent = 'Lukk';
+    btn.style.display = 'none';
     portal.appendChild(btn);
 
     // Hard-bind navigation for the floating bar buttons to avoid any bubbling/portal edge cases

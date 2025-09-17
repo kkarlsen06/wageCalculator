@@ -16612,10 +16612,6 @@ body.chatbox-view .chatbox-container {
   color: white;
 }
 
-.nav-item.nav-add-small:hover .nav-icon {
-  transform: scale(1.05);
-  background: var(--accent-hover, var(--accent));
-}
 
 .floating-month-picker .month-navigation {
   display: flex;
@@ -16703,19 +16699,14 @@ body.chatbox-view .chatbox-container {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
   padding: 8px 12px;
   border-radius: 12px;
   min-width: 60px;
   text-decoration: none;
 }
 
-.nav-item:hover {
-  color: var(--accent);
-  background: var(--bg-hover);
-}
 
-.nav-item.active {
+.nav-item.active .nav-icon svg {
   color: var(--accent);
 }
 
@@ -16761,10 +16752,6 @@ body.chatbox-view .chatbox-container {
   color: white;
 }
 
-.nav-item.nav-add:hover .nav-icon-add {
-  transform: scale(1.05);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
-}
 
 /* Mobile responsiveness - hide labels on small screens */
 @media (max-width: 480px) {
