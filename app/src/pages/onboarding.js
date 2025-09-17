@@ -2,6 +2,27 @@
 // Load onboarding styles only when this route is used
 import '/src/css/onboarding.css';
 import { mountAll } from '../js/icons.js';
+import { normalizeUb } from '/src/lib/ubNormalize.js';
+
+const UB_TYPE_TO_DAYS = {
+  weekday: [1, 2, 3, 4, 5],
+  saturday: [6],
+  sunday: [7]
+};
+
+function ubSegmentsForType(rules, type) {
+  const isoDays = UB_TYPE_TO_DAYS[type] || [];
+  if (!Array.isArray(rules) || isoDays.length === 0) return [];
+  const daySet = new Set(isoDays);
+  return rules
+    .filter(rule => Array.isArray(rule?.days) && rule.days.some(day => daySet.has(day)))
+    .map(rule => {
+      const segment = { from: rule.from, to: rule.to };
+      if (rule.percent != null) segment.percent = Number(rule.percent);
+      if (rule.rate != null) segment.rate = Number(rule.rate);
+      return segment;
+    });
+}
 
 export function renderOnboarding() {
   return `
@@ -342,20 +363,23 @@ export async function afterMountOnboarding() {
 
   function prefillCustomBonuses(customBonuses) {
     if (!customBonuses || typeof customBonuses !== 'object') return;
+    const normalized = normalizeUb(customBonuses);
+    const data = normalized.data && typeof normalized.data === 'object' ? normalized.data : { rules: [] };
+    const rules = Array.isArray(data.rules) ? data.rules : [];
     ['weekday', 'saturday', 'sunday'].forEach(type => {
-      const bonuses = customBonuses[type];
-      if (Array.isArray(bonuses) && bonuses.length > 0) {
-        bonuses.forEach(bonus => {
-          if (bonus.from && bonus.to && bonus.rate) {
+      const segments = ubSegmentsForType(rules, type);
+      if (segments.length > 0) {
+        segments.forEach(segment => {
+          if (segment.from && segment.to) {
             addBonusSlot(type);
             const container = document.getElementById(`${type}BonusSlots`);
-            const lastSlot = container.lastElementChild;
+            const lastSlot = container?.lastElementChild;
             if (lastSlot) {
               const inputs = lastSlot.querySelectorAll('input');
               if (inputs.length >= 3) {
-                inputs[0].value = bonus.from;
-                inputs[1].value = bonus.to;
-                inputs[2].value = bonus.rate;
+                inputs[0].value = segment.from;
+                inputs[1].value = segment.to;
+                inputs[2].value = segment.rate != null ? segment.rate : '';
               }
             }
           }
@@ -365,7 +389,7 @@ export async function afterMountOnboarding() {
   }
 
   function collectCustomBonuses() {
-    const out = { weekday: [], saturday: [], sunday: [] };
+    const rules = [];
     ['weekday', 'saturday', 'sunday'].forEach(type => {
       const container = document.getElementById(`${type}BonusSlots`);
       if (!container) return;
@@ -377,11 +401,11 @@ export async function afterMountOnboarding() {
         const to = timeInputs?.[1]?.value;
         const rate = parseLocaleNumber(rateInput?.value);
         if (from && to && Number.isFinite(rate) && rate >= 0 && rate <= 500) {
-          out[type].push({ from, to, rate });
+          rules.push({ days: UB_TYPE_TO_DAYS[type], from, to, rate });
         }
       });
     });
-    return out;
+    return { rules };
   }
 
   function updateProgress() {
@@ -497,7 +521,7 @@ export async function afterMountOnboarding() {
           onboardingData.use_preset = true;
           onboardingData.current_wage_level = parseInt(document.getElementById('wageSelect').value);
           onboardingData.custom_wage = null;
-          onboardingData.custom_bonuses = { weekday: [], saturday: [], sunday: [] };
+          onboardingData.custom_bonuses = { rules: [] };
         } else {
           onboardingData.use_preset = false;
           onboardingData.custom_wage = parseLocaleNumber(document.getElementById('customWageInput').value);
@@ -548,7 +572,7 @@ export async function afterMountOnboarding() {
         tax_percentage: onboardingData.tax_percentage,
         payroll_day: onboardingData.payroll_day,
         profile_picture_url: onboardingData.profile_picture_url,
-        custom_bonuses: onboardingData.custom_bonuses || { weekday: [], saturday: [], sunday: [] }
+        custom_bonuses: onboardingData.custom_bonuses || { rules: [] }
       };
       Object.keys(settingsData).forEach(key => {
         if (settingsData[key] === null || settingsData[key] === undefined || settingsData[key] === '') {

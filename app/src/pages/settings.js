@@ -1007,213 +1007,31 @@ export function afterMountSettings() {
       // Ensure collapsible handlers present for future sections reuse
       window.app.setupCollapsibleEventListeners?.();
     } else if (section === 'wage-advanced' && window.app) {
-      // Initialize Tillegg UI: render rows, wire add/edit/remove, validation and auto-save
+      window.app.populateCustomBonusSlots?.();
 
-      const timeToMinutes = (t) => {
-        if (!t || typeof t !== 'string') return null;
-        const m = t.match(/^(\d{1,2}):(\d{2})$/);
-        if (!m) return null;
-        const hh = parseInt(m[1], 10), mm = parseInt(m[2], 10);
-        if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
-        return hh * 60 + mm;
-      };
+      const supplementsCard = document.querySelector('[aria-labelledby="advanced-supplements-title"] .setting-card');
+      if (supplementsCard) {
+        supplementsCard.style.opacity = '0.6';
+        supplementsCard.classList.add('supplements-disabled');
+      }
 
-      const hasOverlap = (list) => {
-        // list: [{from:'HH:MM', to:'HH:MM'}]
-        const ranges = list
-          .map((x, idx) => ({ idx, a: timeToMinutes(x.from), b: timeToMinutes(x.to) }))
-          .filter(r => r.a !== null && r.b !== null && r.a < r.b);
-        ranges.sort((r1, r2) => r1.a - r2.a);
-        for (let i = 1; i < ranges.length; i++) {
-          if (ranges[i].a < ranges[i-1].b) return true;
-        }
-        return false;
-      };
+      const noticeId = 'customBonusMigrationNotice';
+      let notice = document.getElementById(noticeId);
+      if (!notice) {
+        notice = document.createElement('div');
+        notice.id = noticeId;
+        notice.className = 'supplement-disabled-notice';
+        notice.textContent = 'Custom bonus editing is temporarily disabled during migration.';
+        const target = supplementsCard?.querySelector('.setting-body') || supplementsCard;
+        target?.insertAdjacentElement('afterbegin', notice);
+      }
 
-      const formatRowText = (slot) => `${slot.from || '--:--'}–${slot.to || '--:--'} • ${typeof slot.rate === 'number' ? slot.rate.toFixed(2) : (slot.rate || '0')} kr/t`;
-
-      const renderGroup = (type) => {
-        const container = document.getElementById(`${type}BonusSlots`);
-        if (!container) return;
-        const saved = (window.app.customBonuses && window.app.customBonuses[type]) || [];
-        container.innerHTML = '';
-        saved.forEach((slot, index) => {
-          const row = document.createElement('div');
-          row.className = 'supplement-row';
-          row.setAttribute('data-type', type);
-          row.setAttribute('data-index', String(index));
-          row.innerHTML = `
-            <div class="supplement-meta">${formatRowText(slot)}</div>
-            <div class="supplement-actions">
-              <button type="button" class="btn btn-secondary" data-action="edit">Rediger</button>
-              <button type="button" class="btn btn-danger" data-action="remove">Fjern</button>
-            </div>
-          `;
-          container.appendChild(row);
-        });
-      };
-
-      const renderAll = () => {
-        ['weekday','saturday','sunday'].forEach(renderGroup);
-      };
-
-      const tryPersist = async (type, indexOrNull, slot, editorEl) => {
-        // Inline validation: complete, non-overlap, positive rate
-        const fromMin = timeToMinutes(slot.from);
-        const toMin = timeToMinutes(slot.to);
-        const rateOk = typeof slot.rate === 'number' && !Number.isNaN(slot.rate) && slot.rate > 0;
-        const timeOk = fromMin !== null && toMin !== null && fromMin < toMin;
-        let errorMsg = '';
-        if (!timeOk) errorMsg = 'Ugyldig tidsrom';
-        else if (!rateOk) errorMsg = 'Ugyldig sats';
-        if (timeOk && rateOk) {
-          const current = (window.app.customBonuses && window.app.customBonuses[type]) || [];
-          const next = current.slice();
-          if (indexOrNull === null) next.push({ from: slot.from, to: slot.to, rate: slot.rate });
-          else next[indexOrNull] = { from: slot.from, to: slot.to, rate: slot.rate };
-          if (hasOverlap(next)) errorMsg = 'Tidsrom overlapper';
-          else errorMsg = '';
-          if (!errorMsg) {
-            const ok = await window.app.upsertBonusSlot?.(type, indexOrNull, { from: slot.from, to: slot.to, rate: slot.rate });
-            if (ok) {
-              // Re-render list and restore scroll
-              const y = window.scrollY;
-              renderGroup(type);
-              window.scrollTo(0, y);
-              return true;
-            } else {
-              errorMsg = 'Kunne ikke lagre';
-            }
-          }
-        }
-        // Show/hide inline error on editor
-        if (editorEl) {
-          let err = editorEl.querySelector('.inline-error');
-          if (!err) { err = document.createElement('div'); err.className = 'inline-error'; editorEl.appendChild(err); }
-          err.textContent = errorMsg || '';
-          editorEl.classList.toggle('has-error', !!errorMsg);
-        }
-        return false;
-      };
-
-      const attachEditorListeners = (slotEl, type, indexOrNull) => {
-        if (!slotEl) return;
-        const inputs = slotEl.querySelectorAll('input');
-        const readSlot = () => {
-          const [fromEl, toEl, rateEl] = inputs;
-          return {
-            from: fromEl?.value || '',
-            to: toEl?.value || '',
-            rate: parseFloat(rateEl?.value || '0')
-          };
-        };
-        const onChange = async () => {
-          // format time inputs via app helper
-          inputs.forEach(inp => { if (inp.type === 'time') window.app.formatTimeInput?.(inp); });
-          const slot = readSlot();
-          // Only attempt save when all fields present
-          if (!slot.from || !slot.to || !slot.rate) return;
-          // Clear any pending global debounce to avoid double saves
-          try { if (window.app.autoSaveTimeout) { clearTimeout(window.app.autoSaveTimeout); window.app.autoSaveTimeout = null; } } catch(_){}
-          await tryPersist(type, indexOrNull, slot, slotEl);
-        };
-        inputs.forEach(inp => {
-          inp.addEventListener('change', onChange);
-          inp.addEventListener('input', () => {
-            // live validate but do not persist until complete
-            const slot = readSlot();
-            const fromMin = timeToMinutes(slot.from);
-            const toMin = timeToMinutes(slot.to);
-            let errorMsg = '';
-            if (slot.from && slot.to && (fromMin === null || toMin === null || fromMin >= toMin)) errorMsg = 'Ugyldig tidsrom';
-            if (slot.from && slot.to && !errorMsg) {
-              const curr = (window.app.customBonuses && window.app.customBonuses[type]) || [];
-              const next = curr.slice();
-              if (indexOrNull === null) next.push({ from: slot.from, to: slot.to, rate: slot.rate || 0 });
-              else next[indexOrNull] = { from: slot.from, to: slot.to, rate: slot.rate || 0 };
-              if (hasOverlap(next)) errorMsg = 'Tidsrom overlapper';
-            }
-            let err = slotEl.querySelector('.inline-error');
-            if (!err) { err = document.createElement('div'); err.className = 'inline-error'; slotEl.appendChild(err); }
-            err.textContent = errorMsg || '';
-            slotEl.classList.toggle('has-error', !!errorMsg);
-          });
-        });
-        const removeBtn = slotEl.querySelector('.remove-bonus');
-        if (removeBtn) {
-          removeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!confirm('Er du sikker på at du vil fjerne dette tillegget?')) return;
-            slotEl.remove();
-          });
-        }
-      };
-
-      const openEditorForExisting = (type, index) => {
-        const container = document.getElementById(`${type}BonusSlots`);
-        if (!container) return;
-        const saved = (window.app.customBonuses && window.app.customBonuses[type]) || [];
-        const slot = saved[index];
-        if (!slot) return;
-        // Remove the view row and insert an editor
-        const y = window.scrollY;
-        const row = container.querySelector(`.supplement-row[data-index="${index}"]`);
-        if (row) row.remove();
-        window.app.addBonusSlot?.(type);
-        const editor = container.querySelector('.bonus-slot:last-of-type');
-        if (editor) {
-          // Prefill values
-          const inputs = editor.querySelectorAll('input');
-          if (inputs[0]) inputs[0].value = slot.from;
-          if (inputs[1]) inputs[1].value = slot.to;
-          if (inputs[2]) inputs[2].value = String(slot.rate);
-          attachEditorListeners(editor, type, index);
-        }
-        window.scrollTo(0, y);
-      };
-
-      const handleAdd = (type) => {
-        const y = window.scrollY;
-        window.app.addBonusSlot?.(type);
-        const container = document.getElementById(`${type}BonusSlots`);
-        const editor = container && container.querySelector('.bonus-slot:last-of-type');
-        if (editor) attachEditorListeners(editor, type, null);
-        window.scrollTo(0, y);
-      };
-
-      // Wire add buttons
-      document.getElementById('addWeekdaySupplementBtn')?.addEventListener('click', () => handleAdd('weekday'));
-      document.getElementById('addSaturdaySupplementBtn')?.addEventListener('click', () => handleAdd('saturday'));
-      document.getElementById('addSundaySupplementBtn')?.addEventListener('click', () => handleAdd('sunday'));
-
-      // Delegate edit/remove for rows
-      ['weekday','saturday','sunday'].forEach((type) => {
-        const container = document.getElementById(`${type}BonusSlots`);
-        if (!container) return;
-        container.addEventListener('click', async (e) => {
-          const btn = e.target && e.target.closest && e.target.closest('button');
-          if (!btn) return;
-          const action = btn.getAttribute('data-action');
-          const row = btn.closest('.supplement-row');
-          const idx = row ? parseInt(row.getAttribute('data-index') || '-1', 10) : -1;
-          if (action === 'edit' && idx >= 0) {
-            openEditorForExisting(type, idx);
-          } else if (action === 'remove' && idx >= 0) {
-            if (!confirm('Fjern dette tillegget?')) return;
-            const curr = (window.app.customBonuses && window.app.customBonuses[type]) || [];
-            curr.splice(idx, 1);
-            window.app.customBonuses[type] = curr;
-            try { await window.app.saveSettingsToSupabase?.(); } catch(_) {}
-            try { window.app.saveToLocalStorage?.(); } catch(_) {}
-            const y = window.scrollY;
-            renderGroup(type);
-            window.scrollTo(0, y);
-          }
-        });
+      const disableTargets = document.querySelectorAll('.supplement-group button, .supplement-group input');
+      disableTargets.forEach(el => {
+        el.setAttribute('disabled', 'true');
+        el.classList.add('is-disabled');
+        el.setAttribute('aria-disabled', 'true');
       });
-
-      // Initial render for Tillegg
-      renderAll();
 
       // Initialize Pausetrekk UI state and validations
       try {

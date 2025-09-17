@@ -1,6 +1,7 @@
 import { getUserId } from "/src/lib/auth/getUserId.js";
 import { fetchOnce } from "/src/lib/net/fetchOnce.js";
 import { hasEnterpriseSubscription } from './subscriptionUtils.js';
+import { normalizeUb } from '/src/lib/ubNormalize.js';
 
 
 
@@ -220,6 +221,56 @@ function updateProgressLabelStyling(label, percent) {
     });
 }
 
+const UB_TYPE_TO_DAYS = {
+    weekday: [1, 2, 3, 4, 5],
+    saturday: [6],
+    sunday: [7]
+};
+
+const SHIFT_TYPE_TO_DAYS = {
+    0: UB_TYPE_TO_DAYS.weekday,
+    1: UB_TYPE_TO_DAYS.saturday,
+    2: UB_TYPE_TO_DAYS.sunday
+};
+
+function ubSegmentsForDays(rules, isoDays) {
+    if (!Array.isArray(rules) || !Array.isArray(isoDays) || isoDays.length === 0) return [];
+    const daySet = new Set(isoDays);
+    return rules
+        .filter(rule => Array.isArray(rule?.days) && rule.days.some(day => daySet.has(day)))
+        .map(rule => {
+            const segment = { from: rule.from, to: rule.to };
+            if (rule.percent != null) segment.percent = Number(rule.percent);
+            if (rule.rate != null) segment.rate = Number(rule.rate);
+            return segment;
+        })
+        .filter(rule => typeof rule.from === 'string' && typeof rule.to === 'string');
+}
+
+function ubSegmentsForType(rules, type) {
+    const isoDays = UB_TYPE_TO_DAYS[type] || [];
+    return ubSegmentsForDays(rules, isoDays);
+}
+
+function ubSegmentsForShiftType(rules, shiftType) {
+    const isoDays = SHIFT_TYPE_TO_DAYS[shiftType] || [];
+    return ubSegmentsForDays(rules, isoDays);
+}
+
+function ubRuleHourlyValue(rule, baseWageRate) {
+    if (!rule) return 0;
+    if (rule.rate != null) {
+        const rate = Number(rule.rate);
+        return Number.isNaN(rate) ? 0 : rate;
+    }
+    if (rule.percent != null) {
+        const pct = Number(rule.percent);
+        if (Number.isNaN(pct)) return 0;
+        return baseWageRate * (pct / 100);
+    }
+    return 0;
+}
+
 // Legg til i app-objektet for enkel tilgang fra innstillinger
 if (typeof window !== 'undefined') {
     window.updateProgressBar = updateProgressBar;
@@ -248,17 +299,13 @@ export const app = {
     // Organization settings cache
     orgSettings: { break_policy: 'fixed_0_5_over_5_5h' },
     PRESET_BONUSES: {
-        weekday: [
-            { from: "18:00", to: "21:00", rate: 22 },
-            { from: "21:00", to: "23:59", rate: 45 }
-        ],
-        saturday: [
-            { from: "13:00", to: "15:00", rate: 45 },
-            { from: "15:00", to: "18:00", rate: 55 },
-            { from: "18:00", to: "23:59", rate: 110 }
-        ],
-        sunday: [
-            { from: "00:00", to: "23:59", rate: 115 }
+        rules: [
+            { days: [1, 2, 3, 4, 5], from: "18:00", to: "21:00", rate: 22 },
+            { days: [1, 2, 3, 4, 5], from: "21:00", to: "23:59", rate: 45 },
+            { days: [6], from: "13:00", to: "15:00", rate: 45 },
+            { days: [6], from: "15:00", to: "18:00", rate: 55 },
+            { days: [6], from: "18:00", to: "23:59", rate: 110 },
+            { days: [7], from: "00:00", to: "23:59", rate: 115 }
         ]
     },
     // State
@@ -268,9 +315,10 @@ export const app = {
     currentWageLevel: 1,
     usePreset: true,
     customWage: 200,
-    customBonuses: {}, // Reset to empty - will be loaded from database
+    customBonuses: { rules: [] }, // Reset to empty - will be loaded from database
     // Track current high-level view for modal behavior (dashboard|stats|chatgpt|employees)
     currentView: 'dashboard',
+    customBonusEditingLocked: true,
 
     pauseDeduction: true,
     fullMinuteRange: false, // Setting for using 0-59 minutes instead of 00,15,30,45
@@ -2402,13 +2450,29 @@ export const app = {
 
                 this.currentWageLevel = settings.wage_level || settings.current_wage_level || 1;
 
-                // Ensure customBonuses has proper structure
-                const loadedBonuses = settings.custom_bonuses || {};
-                this.customBonuses = {
-                    weekday: loadedBonuses.weekday || [],
-                    saturday: loadedBonuses.saturday || [],
-                    sunday: loadedBonuses.sunday || []
-                };
+                const normalizedBonuses = normalizeUb(settings.custom_bonuses);
+                if (normalizedBonuses.migrated) {
+                    try {
+                        const column = settings?.id ? 'id' : 'user_id';
+                        const value = settings?.id ?? settings?.user_id;
+                        if (value) {
+                            await window.supa
+                                .from('user_settings')
+                                .update({ custom_bonuses: normalizedBonuses.data })
+                                .eq(column, value);
+                            console.info('UB migrated ->', value);
+                        }
+                    } catch (error) {
+                        console.warn('Failed to persist migrated UB bonuses', error);
+                    }
+                }
+                const normalizedData = normalizedBonuses.data && typeof normalizedBonuses.data === 'object'
+                    ? {
+                        ...normalizedBonuses.data,
+                        rules: Array.isArray(normalizedBonuses.data.rules) ? normalizedBonuses.data.rules : []
+                    }
+                    : { rules: [] };
+                this.customBonuses = normalizedData;
                 // Always set to current month on page load
                 this.currentMonth = new Date().getMonth() + 1;
                 // Load selected year, default to current year if not set
@@ -2467,11 +2531,7 @@ export const app = {
         this.usePreset = true;
         this.customWage = 200;
         this.currentWageLevel = 1;
-        this.customBonuses = {
-            weekday: [],
-            saturday: [],
-            sunday: []
-        };
+        this.customBonuses = { rules: [] };
         this.taxDeductionEnabled = false;
         this.taxPercentage = 0.0;
         this.payrollDay = 15; // Default payroll day (15th of each month)
@@ -2497,14 +2557,10 @@ export const app = {
     // Helper function to test custom bonuses
     setTestCustomBonuses() {
         this.customBonuses = {
-            weekday: [
-                { from: "18:00", to: "22:00", rate: 25 }
-            ],
-            saturday: [
-                { from: "13:00", to: "18:00", rate: 50 }
-            ],
-            sunday: [
-                { from: "00:00", to: "23:59", rate: 100 }
+            rules: [
+                { days: [1, 2, 3, 4, 5], from: "18:00", to: "22:00", rate: 25 },
+                { days: [6], from: "13:00", to: "18:00", rate: 50 },
+                { days: [7], from: "00:00", to: "23:59", rate: 100 }
             ]
         };
         this.populateCustomBonusSlots();
@@ -2823,7 +2879,17 @@ export const app = {
                 this.usePreset = data.usePreset !== false;
                 this.customWage = data.customWage || 200;
                 this.currentWageLevel = data.currentWageLevel || 1;
-                this.customBonuses = data.customBonuses || {};
+                const localNormalized = normalizeUb(data.customBonuses);
+                if (localNormalized.migrated) {
+                    const updated = JSON.stringify({ ...data, customBonuses: localNormalized.data });
+                    localStorage.setItem('lønnsberegnerSettings', updated);
+                }
+                this.customBonuses = localNormalized.data && typeof localNormalized.data === 'object'
+                    ? {
+                        ...localNormalized.data,
+                        rules: Array.isArray(localNormalized.data.rules) ? localNormalized.data.rules : []
+                    }
+                    : { rules: [] };
                 this.currentMonth = new Date().getMonth() + 1; // Always default to current month
                 this.pauseDeduction = data.pauseDeduction !== false; // Legacy setting
                 // Load new break deduction settings from localStorage
@@ -3234,6 +3300,7 @@ export const app = {
 
     populateCustomBonusSlots() {
         const types = ['weekday', 'saturday', 'sunday'];
+        const rules = Array.isArray(this.customBonuses?.rules) ? this.customBonuses.rules : [];
 
         types.forEach(type => {
             const container = document.getElementById(`${type}BonusSlots`);
@@ -3243,134 +3310,37 @@ export const app = {
             }
 
             container.innerHTML = '';
-            const bonuses = (this.customBonuses && this.customBonuses[type]) || [];
+            const segments = ubSegmentsForType(rules, type);
 
-            bonuses.forEach(bonus => {
-                const slot = document.createElement('div');
-                slot.className = 'bonus-slot';
-                slot.innerHTML = `
-                    <div class="bonus-slot-display">
-                        <div class="bonus-time-range">
-                            <span class="bonus-time-text">${bonus.from} - ${bonus.to}</span>
-                        </div>
-                        <div class="bonus-rate-display">
-                            <span class="bonus-rate-text">${bonus.rate} kr/t</span>
-                        </div>
-                    </div>
-                    <div class="bonus-slot-inputs" style="display: none;">
-                        <input type="time" class="form-control" value="${bonus.from}">
-                        <input type="time" class="form-control" value="${bonus.to}">
-                        <input type="number" class="form-control" placeholder="kr/t" value="${bonus.rate}">
-                    </div>
-                    <div class="bonus-slot-buttons">
-                        <button class="btn btn-sm btn-secondary edit-bonus" title="Rediger dette tillegget">Rediger</button>
-                        <button class="btn btn-sm btn-danger remove-bonus" title="Fjern dette tillegget">Fjern</button>
-                        <button class="btn btn-sm btn-primary save-bonus" title="Lagre endringer" style="display: none;">Lagre</button>
-                        <button class="btn btn-sm btn-secondary cancel-bonus" title="Avbryt endringer" style="display: none;">Avbryt</button>
-                    </div>
+            if (!segments.length) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'supplement-placeholder';
+                placeholder.textContent = 'Ingen tilpassede tillegg';
+                container.appendChild(placeholder);
+                return;
+            }
+
+            segments.forEach(segment => {
+                const row = document.createElement('div');
+                row.className = 'supplement-row is-readonly';
+                const value = segment.rate != null
+                    ? `${Number(segment.rate).toLocaleString('no-NO')} kr/t`
+                    : `${Number(segment.percent).toLocaleString('no-NO')} %`;
+                row.innerHTML = `
+                    <div class="supplement-meta">${segment.from || '--:--'}–${segment.to || '--:--'} • ${value}</div>
                 `;
-
-                // Add event listeners for the new button-based interface
-                const editBtn = slot.querySelector('.edit-bonus');
-                const saveBtn = slot.querySelector('.save-bonus');
-                const cancelBtn = slot.querySelector('.cancel-bonus');
-                const removeBtn = slot.querySelector('.remove-bonus');
-                const displayDiv = slot.querySelector('.bonus-slot-display');
-                const inputsDiv = slot.querySelector('.bonus-slot-inputs');
-                const inputs = slot.querySelectorAll('input');
-                
-                // Store original values for cancel functionality
-                let originalValues = {
-                    from: bonus.from,
-                    to: bonus.to,
-                    rate: bonus.rate
-                };
-
-                // Edit button - switch to edit mode
-                editBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    displayDiv.style.display = 'none';
-                    inputsDiv.style.display = 'block';
-                    editBtn.style.display = 'none';
-                    removeBtn.style.display = 'none';
-                    saveBtn.style.display = 'inline-block';
-                    cancelBtn.style.display = 'inline-block';
-                });
-
-                // Save button - save changes and switch back to display mode
-                saveBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const timeInputs = inputsDiv.querySelectorAll('input[type="time"]');
-                    const rateInput = inputsDiv.querySelector('input[type="number"]');
-                    
-                    // Format time inputs
-                    timeInputs.forEach(input => this.formatTimeInput(input));
-                    
-                    // Update display
-                    const timeText = slot.querySelector('.bonus-time-text');
-                    const rateText = slot.querySelector('.bonus-rate-text');
-                    timeText.textContent = `${timeInputs[0].value} - ${timeInputs[1].value}`;
-                    rateText.textContent = `${rateInput.value} kr/t`;
-                    
-                    // Update original values
-                    originalValues = {
-                        from: timeInputs[0].value,
-                        to: timeInputs[1].value,
-                        rate: rateInput.value
-                    };
-                    
-                    // Switch back to display mode
-                    displayDiv.style.display = 'block';
-                    inputsDiv.style.display = 'none';
-                    editBtn.style.display = 'inline-block';
-                    removeBtn.style.display = 'inline-block';
-                    saveBtn.style.display = 'none';
-                    cancelBtn.style.display = 'none';
-                    
-                    // Save to database
-                    this.autoSaveCustomBonuses();
-                });
-
-                // Cancel button - revert changes and switch back to display mode
-                cancelBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const timeInputs = inputsDiv.querySelectorAll('input[type="time"]');
-                    const rateInput = inputsDiv.querySelector('input[type="number"]');
-                    
-                    // Revert to original values
-                    timeInputs[0].value = originalValues.from;
-                    timeInputs[1].value = originalValues.to;
-                    rateInput.value = originalValues.rate;
-                    
-                    // Switch back to display mode
-                    displayDiv.style.display = 'block';
-                    inputsDiv.style.display = 'none';
-                    editBtn.style.display = 'inline-block';
-                    removeBtn.style.display = 'inline-block';
-                    saveBtn.style.display = 'none';
-                    cancelBtn.style.display = 'none';
-                });
-
-                // Remove button - remove the bonus slot
-                removeBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.removeBonusSlot(removeBtn);
-                });
-
-                // Add time formatting for inputs
-                inputs.forEach(input => {
-                    if (input.type === 'time') {
-                        input.addEventListener('blur', () => {
-                            this.formatTimeInput(input);
-                        });
-                    }
-                });
-
-                container.appendChild(slot);
+                container.appendChild(row);
             });
         });
     },
+    isCustomBonusEditingLocked() {
+        return this.customBonusEditingLocked === true;
+    },
     addBonusSlot(type) {
+        if (this.isCustomBonusEditingLocked()) {
+            console.info('[bonus] Custom bonus editing is disabled during migration');
+            return;
+        }
         const container = document.getElementById(`${type}BonusSlots`);
         if (!container) {
             console.error(`Container ${type}BonusSlots not found`);
@@ -3428,6 +3398,10 @@ export const app = {
 
     },
     removeBonusSlot(button) {
+        if (this.isCustomBonusEditingLocked()) {
+            console.info('[bonus] Custom bonus editing is disabled during migration');
+            return;
+        }
         // Ask confirmation before removing a supplement slot
         if (!confirm('Er du sikker på at du vil fjerne dette tillegget?')) return;
         const el = button.closest('.bonus-slot');
@@ -3440,6 +3414,10 @@ export const app = {
 
     // Insert or update a single bonus slot and persist
     async upsertBonusSlot(type, indexOrNull, slot) {
+        if (this.isCustomBonusEditingLocked()) {
+            console.info('[bonus] Custom bonus editing is disabled during migration');
+            return false;
+        }
         try {
             const timeToMinutes = (t) => {
                 if (!t || typeof t !== 'string') return null;
@@ -3504,6 +3482,7 @@ export const app = {
 
     // Auto-save custom bonuses with debouncing to avoid too many saves
     autoSaveCustomBonuses() {
+        if (this.isCustomBonusEditingLocked()) return;
         if (!this.usePreset) {
             // Clear existing timeout to prevent memory leaks
             if (this.autoSaveTimeout) {
@@ -4202,17 +4181,9 @@ export const app = {
         return this.getCurrentWageRate();
     },
     getCurrentBonuses() {
-        if (this.usePreset) {
-            return this.PRESET_BONUSES;
-        } else {
-            // Ensure customBonuses has the expected structure
-            const bonuses = this.customBonuses || {};
-            return {
-                weekday: bonuses.weekday || [],
-                saturday: bonuses.saturday || [],
-                sunday: bonuses.sunday || []
-            };
-        }
+        const source = this.usePreset ? this.PRESET_BONUSES : (this.customBonuses || { rules: [] });
+        const rules = Array.isArray(source.rules) ? source.rules : [];
+        return { rules };
     },
     // Master refresh function for global UI updates after /chat responses
     refreshUI(shifts, showLoading = false) {
@@ -6296,15 +6267,14 @@ export const app = {
             !!shift?.employee
         );
         const bonuses = isEmployeeShift ? this.PRESET_BONUSES : this.getCurrentBonuses();
-        const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-        const bonusSegments = bonuses[bonusType] || [];
+        const bonusSegments = ubSegmentsForShiftType(bonuses.rules, shift.type);
 
         // Calculate base earnings so far
         const baseEarned = hoursWorked * wageRate;
 
         // Calculate bonus earnings so far - include seconds for real-time updates
         const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        const bonusEarned = this.calculateBonusWithSeconds(shift.startTime, currentTimeStr, bonusSegments);
+        const bonusEarned = this.calculateBonusWithSeconds(shift.startTime, currentTimeStr, bonusSegments, wageRate);
 
         return {
             totalHours: hoursWorked,
@@ -7395,8 +7365,7 @@ export const app = {
         let bonusBreakdownHtml = '';
         if (calc.bonus > 0) {
             const bonuses = this.getCurrentBonuses();
-            const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-            const bonusSegments = bonuses[bonusType] || [];
+            const bonusSegments = ubSegmentsForShiftType(bonuses.rules, shift.type);
             
             // Calculate the same adjusted end time as in calculateShift for consistency
             const startMinutes = this.timeToMinutes(shift.startTime);
@@ -7415,7 +7384,7 @@ export const app = {
                 adjustedEndTime = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
             }
             
-            const bonusBreakdown = this.calculateBonusBreakdown(shift.startTime, adjustedEndTime, bonusSegments);
+            const bonusBreakdown = this.calculateBonusBreakdown(shift.startTime, adjustedEndTime, bonusSegments, shiftWageRate);
             
             if (bonusBreakdown.breakdown.length > 0) {
                 bonusBreakdownHtml = `
@@ -8635,8 +8604,7 @@ export const app = {
             }
 
             baseWage = paidHours * wageRate;
-            const bonusType = shift.type === 0 ? 'weekday' : (shift.type === 1 ? 'saturday' : 'sunday');
-            const bonusSegments = bonuses[bonusType] || [];
+            const bonusSegments = ubSegmentsForShiftType(bonuses.rules, shift.type);
 
             // Recreate the end time after any pause deduction or midnight handling
             // so we can reuse the same format when calculating bonuses
@@ -8646,7 +8614,8 @@ export const app = {
             bonus = this.calculateBonus(
                 shift.startTime,
                 endTimeStr,
-                bonusSegments
+                bonusSegments,
+                wageRate
             );
 
             // Debug logging for traditional calculations
@@ -8775,18 +8744,18 @@ export const app = {
     // Calculate wage periods for break deduction analysis with cross-midnight and weekday/weekend handling
     calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMinutes) {
         const periods = [];
+        const rules = Array.isArray(bonuses?.rules) ? bonuses.rules : [];
 
-        const dayToBonusKey = (dow) => (dow === 0 ? 'sunday' : (dow === 6 ? 'saturday' : 'weekday'));
+        const dayToIsoDay = (dow) => (dow === 0 ? 7 : dow);
 
-        // Build periods inside [dayStart, dayEnd] for a given day's bonus key
-        const buildDay = (dayStart, dayEnd, bonusKey) => {
+        const buildDay = (dayStart, dayEnd, isoDay) => {
             if (dayEnd <= dayStart) return;
-            const applicable = bonuses[bonusKey] || [];
+            const applicable = ubSegmentsForDays(rules, [isoDay]);
             let segments = [{ start: dayStart, end: dayEnd, bonuses: [] }];
             for (const b of applicable) {
                 const s = this.timeToMinutes(b.from);
                 let e = this.timeToMinutes(b.to);
-                if (e <= s) e += 24 * 60; // wrap
+                if (e <= s) e += 24 * 60;
                 const os = Math.max(dayStart, s);
                 const oe = Math.min(dayEnd, e);
                 if (oe <= os) continue;
@@ -8804,7 +8773,7 @@ export const app = {
             for (const seg of segments) {
                 const h = (seg.end - seg.start) / 60;
                 if (h <= 0) continue;
-                const bonusRate = seg.bonuses.reduce((sum, x) => sum + x.rate, 0);
+                const bonusRate = seg.bonuses.reduce((sum, x) => sum + ubRuleHourlyValue(x, baseWageRate), 0);
                 periods.push({
                     startMinutes: seg.start,
                     endMinutes: seg.end,
@@ -8813,22 +8782,22 @@ export const app = {
                     bonusRate,
                     totalRate: baseWageRate + bonusRate,
                     type: bonusRate > 0 ? 'bonus' : 'base',
-                    bonuses: seg.bonuses
+                    bonuses: seg.bonuses.map(slot => ({ ...slot }))
                 });
             }
         };
 
-        // Determine day-of-week from shift.date when available; otherwise use type fallback
         const startDow = (shift?.date instanceof Date)
             ? shift.date.getDay()
             : (shift?.type === 2 ? 0 : (shift?.type === 1 ? 6 : 1));
+        const startIso = dayToIsoDay(startDow);
 
         const firstEnd = Math.min(endMinutes, 24 * 60);
-        buildDay(startMinutes, firstEnd, dayToBonusKey(startDow));
+        buildDay(startMinutes, firstEnd, startIso);
 
         if (endMinutes > 24 * 60) {
             const nextDow = (startDow + 1) % 7;
-            buildDay(0, endMinutes - 24 * 60, dayToBonusKey(nextDow));
+            buildDay(0, endMinutes - 24 * 60, dayToIsoDay(nextDow));
         }
 
         return periods;
@@ -9201,7 +9170,7 @@ export const app = {
         return hours * 3600 + minutes * 60 + seconds;
     },
 
-    calculateBonus(startTime, endTime, bonusSegments) {
+    calculateBonus(startTime, endTime, bonusSegments, baseWageRate = 0) {
         let totalBonus = 0;
         const startMinutes = this.timeToMinutes(startTime);
         let endMinutes = this.timeToMinutes(endTime);
@@ -9217,13 +9186,13 @@ export const app = {
                 segEnd += 24 * 60;
             }
             const overlap = this.calculateOverlap(startMinutes, endMinutes, segStart, segEnd);
-            totalBonus += (overlap / 60) * segment.rate;
+            totalBonus += (overlap / 60) * ubRuleHourlyValue(segment, baseWageRate);
         }
         return totalBonus;
     },
 
     // Calculate detailed bonus breakdown for display in shift details
-    calculateBonusBreakdown(startTime, endTime, bonusSegments) {
+    calculateBonusBreakdown(startTime, endTime, bonusSegments, baseWageRate = 0) {
         const startMinutes = this.timeToMinutes(startTime);
         let endMinutes = this.timeToMinutes(endTime);
         
@@ -9245,16 +9214,17 @@ export const app = {
             const overlap = this.calculateOverlap(startMinutes, endMinutes, segStart, segEnd);
             if (overlap > 0) {
                 const hours = overlap / 60;
-                const amount = hours * segment.rate;
+                const rate = ubRuleHourlyValue(segment, baseWageRate);
+                const amount = hours * rate;
                 totalBonus += amount;
-                
+
                 // Format the time period display
                 const displayFrom = segment.from;
                 const displayTo = segment.to === '23:59' ? '24:00' : segment.to;
-                
+
                 breakdown.push({
                     period: `${displayFrom} - ${displayTo}`,
-                    rate: segment.rate,
+                    rate,
                     hours: hours,
                     amount: amount
                 });
@@ -9268,7 +9238,7 @@ export const app = {
     },
 
     // New function for second-precise bonus calculations
-    calculateBonusWithSeconds(startTime, endTime, bonusSegments) {
+    calculateBonusWithSeconds(startTime, endTime, bonusSegments, baseWageRate = 0) {
         let totalBonus = 0;
         const startSeconds = this.timeToSeconds(startTime);
         let endSeconds = this.timeToSeconds(endTime);
@@ -9285,7 +9255,7 @@ export const app = {
                 segEnd += 24 * 3600; // Add 24 hours in seconds
             }
             const overlap = this.calculateOverlap(startSeconds, endSeconds, segStart, segEnd);
-            totalBonus += (overlap / 3600) * segment.rate; // Convert seconds to hours
+            totalBonus += (overlap / 3600) * ubRuleHourlyValue(segment, baseWageRate); // Convert seconds to hours
         }
         return totalBonus;
     },
@@ -9974,6 +9944,9 @@ export const app = {
 
     // Capture custom bonuses from UI form elements
     captureCustomBonusesFromUI() {
+        if (this.isCustomBonusEditingLocked()) {
+            return { rules: [] };
+        }
         const capturedBonuses = {};
         const types = ['weekday', 'saturday', 'sunday'];
 
@@ -10006,6 +9979,10 @@ export const app = {
     },
 
     async saveCustomBonuses() {
+        if (this.isCustomBonusEditingLocked()) {
+            console.info('[bonus] Custom bonus editing is disabled during migration');
+            return;
+        }
 
         // Use the new improved capture system
         const capturedBonuses = this.captureCustomBonusesFromUI();
@@ -10053,6 +10030,9 @@ export const app = {
 
     // Silent version of saveCustomBonuses for auto-save (no alerts or status messages)
     async saveCustomBonusesSilent() {
+        if (this.isCustomBonusEditingLocked()) {
+            return;
+        }
         try {
 
             // Use the new improved capture system
