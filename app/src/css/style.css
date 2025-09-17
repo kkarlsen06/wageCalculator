@@ -16551,6 +16551,126 @@ body.chatbox-view .chatbox-container {
 .conflict-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warning); flex: 0 0 6px; }
 .conflict-item .meta { color: var(--text-tertiary); }
 
+/* Floating Month Picker for Shifts Route */
+.floating-month-picker {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  min-width: 200px;
+  max-width: 300px;
+  height: 50px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: none; /* Hidden by default, shown only on shifts route */
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  z-index: 90;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+}
+
+/* Show floating month picker only on shifts route */
+.spa-route .floating-month-picker {
+  display: flex;
+}
+
+/* Add bottom padding to shifts route content to clear floating elements */
+.spa-route .settings-detail {
+  padding-bottom: 200px; /* Space for navbar (100px) + month picker (70px) + extra spacing (30px) */
+}
+
+/* Ensure shifts content can scroll properly */
+.spa-route .settings-detail .app-container {
+  min-height: calc(100vh - 200px);
+}
+
+/* Override nav-add styling for small version in contextual navbar */
+.nav-item.nav-add-small {
+  margin-top: 0 !important; /* Remove the elevated position */
+}
+
+.nav-item.nav-add-small .nav-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.nav-item.nav-add-small .nav-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.nav-item.nav-add-small:hover .nav-icon {
+  transform: scale(1.05);
+  background: var(--accent-hover, var(--accent));
+}
+
+.floating-month-picker .month-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 300;
+}
+
+.floating-month-picker .month-nav-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.floating-month-picker .month-nav-btn:hover {
+  color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.floating-month-picker .month-display {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 16px;
+  min-width: 100px;
+  text-align: center;
+}
+
+.floating-month-picker .icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+/* Mobile responsiveness for floating month picker */
+@media (max-width: 480px) {
+  .floating-month-picker {
+    width: calc(100% - 40px);
+    max-width: calc(100% - 40px);
+    bottom: 100px;
+  }
+
+  /* Adjust bottom padding for mobile */
+  .spa-route .settings-detail {
+    padding-bottom: 180px; /* Smaller spacing for mobile */
+  }
+}
+
 /* Bottom Navigation Bar */
 .bottom-nav {
   position: fixed;

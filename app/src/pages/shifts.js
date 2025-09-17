@@ -7,22 +7,6 @@ export function renderShifts() {
   return /* html */`
     <div class="settings-detail">
       <div class="app-container">
-          <!-- Month Navigation with arrow buttons -->
-          <div class="month-navigation-container">
-            <div class="month-navigation">
-              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-              </button>
-              <span class="month-display" id="currentMonth">Mai 2025</span>
-              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="9 6 15 12 9 18"></polyline>
-                </svg>
-              </button>
-            </div>
-          </div>
 
           <!-- Employee Filter Bar -->
           <div class="employee-filter-bar" id="employeeFilterBar" style="display: none;">
@@ -62,6 +46,23 @@ export function renderShifts() {
           </div>
         </div>
 
+      </div>
+
+      <!-- Floating Month Picker -->
+      <div class="floating-month-picker">
+        <div class="month-navigation">
+          <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <span class="month-display" id="currentMonth">Mai 2025</span>
+          <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 6 15 12 9 18"></polyline>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -126,8 +127,8 @@ function updateNavbarForShifts() {
       <span class="nav-label">Tilbake</span>
     </button>
 
-    <button class="nav-item nav-add" data-spa data-href="/shift-add">
-      <div class="nav-icon-add">
+    <button class="nav-item nav-add nav-add-small" data-spa data-href="/shift-add">
+      <div class="nav-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="16"></line>
