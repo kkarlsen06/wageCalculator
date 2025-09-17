@@ -2,6 +2,7 @@
 // Converted from SubscriptionModal to follow the same pattern as settings
 
 import { getUserId } from '/src/lib/auth/getUserId.js';
+import { mountAll } from '../js/icons.js';
 
 function getAbonnementView() {
   return `
@@ -485,6 +486,8 @@ class AbonnementController {
 let abonnementController = null;
 
 export async function afterMountAbonnement() {
+  mountAll();
+
   try {
     // Create controller instance and initialize
     abonnementController = new AbonnementController();

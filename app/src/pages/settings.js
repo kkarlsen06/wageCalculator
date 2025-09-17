@@ -1,5 +1,7 @@
 // Redesigned Settings route with home list + detail subpages and slide animations
 
+import { mountAll } from '../js/icons.js';
+
 function getHomeView() {
   return `
   <div class="settings-home">
@@ -9,78 +11,61 @@ function getHomeView() {
       <li>
         <div class="settings-item" data-spa data-href="/settings/account">
           <div class="item-main">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
+            <span class="icon item-icon" data-icon="user" aria-hidden="true"></span>
             <div class="item-text">
               <span class="item-title">Konto</span>
               <span class="item-sub">Profil, sikkerhet og tilgang</span>
             </div>
           </div>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span class="icon chevron" data-icon="chevron-right"></span>
         </div>
       </li>
       <li>
         <div class="settings-item" data-spa data-href="/settings/wage">
           <div class="item-main">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="12" y1="1" x2="12" y2="23"></line>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </svg>
+            <span class="icon item-icon" data-icon="dollar-sign" aria-hidden="true"></span>
             <div class="item-text">
               <span class="item-title">Lønn</span>
               <span class="item-sub">Grunnlønn og utbetaling</span>
             </div>
           </div>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span class="icon chevron" data-icon="chevron-right"></span>
         </div>
       </li>
       <li>
         <div class="settings-item" data-spa data-href="/settings/wage-advanced">
           <div class="item-main">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
+            <span class="icon item-icon" data-icon="settings" aria-hidden="true"></span>
             <div class="item-text">
               <span class="item-title">Avansert lønn</span>
               <span class="item-sub">Tillegg, pauser og skatt</span>
             </div>
           </div>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span class="icon chevron" data-icon="chevron-right"></span>
         </div>
       </li>
       <li>
         <div class="settings-item" data-spa data-href="/settings/interface">
           <div class="item-main">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
+            <span class="icon item-icon" data-icon="monitor" aria-hidden="true"></span>
             <div class="item-text">
               <span class="item-title">Utseende</span>
               <span class="item-sub">Tema, visninger og bedriftsfunksjoner</span>
             </div>
           </div>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span class="icon chevron" data-icon="chevron-right"></span>
         </div>
       </li>
       <li>
         <div class="settings-item" data-spa data-href="/settings/data">
           <div class="item-main">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 3h18v18H3z"></path>
-              <path d="M3 9h18"></path>
-              <path d="M9 21V9"></path>
-            </svg>
+            <span class="icon item-icon" data-icon="database" aria-hidden="true"></span>
             <div class="item-text">
               <span class="item-title">Data</span>
               <span class="item-sub">Eksport, import og sikkerhetskopi</span>
             </div>
           </div>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <span class="icon chevron" data-icon="chevron-right"></span>
         </div>
       </li>
     </ul>
@@ -816,6 +801,8 @@ export function renderSettings() {
 }
 
 export function afterMountSettings() {
+  mountAll();
+
   const path = typeof location !== 'undefined' ? location.pathname : '/settings';
   const section = path.split('/')[2] || '';
   const params = new URLSearchParams(location.search || '');

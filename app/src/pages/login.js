@@ -1,6 +1,7 @@
 // Login page: renders markup from former app/login.html and wires existing auth logic
 // Include legal modal styles only for login route
 import '/src/css/legal-modal.css';
+import { mountAll } from '../js/icons.js';
 
 export function renderLogin() {
   // Compute marketing home based on environment (dev vs prod)
@@ -20,10 +21,7 @@ export function renderLogin() {
   <div class="pb-80">
     <div class="absolute-top-left">
       <a href="${marketingUrl}" class="btn btn-secondary back-link" aria-label="Tilbake til hovedside">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="m12 19-7-7 7-7"/>
-          <path d="M19 12H5"/>
-        </svg>
+        <span class="icon" data-icon="arrow-left" aria-hidden="true"></span>
         Tilbake til hovedside
       </a>
     </div>
@@ -138,6 +136,8 @@ export function renderLogin() {
 }
 
 export async function afterMountLogin() {
+  mountAll();
+
   // Ensure body is visible for login page UX parity
   try { document.body.style.visibility = 'visible'; } catch (_) {}
 

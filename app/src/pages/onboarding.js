@@ -1,6 +1,7 @@
 // Onboarding page: renders markup from former app/onboarding.html and wires logic
 // Load onboarding styles only when this route is used
 import '/src/css/onboarding.css';
+import { mountAll } from '../js/icons.js';
 
 export function renderOnboarding() {
   return `
@@ -10,10 +11,7 @@ export function renderOnboarding() {
     <div class="onboarding-step active" id="step1">
       <div class="step-header">
         <div class="welcome-icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
+          <span class="icon" data-icon="user"></span>
         </div>
         <h1 class="step-title">Velkommen!</h1>
         <p class="step-subtitle">La oss sette opp din personlige lønnskalkulator. Det tar bare noen få minutter.</p>
@@ -28,10 +26,7 @@ export function renderOnboarding() {
         <div class="profile-upload">
           <div class="profile-preview" id="profilePreview">
             <div class="profile-placeholder" id="profilePlaceholder">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
+              <span class="icon" data-icon="user"></span>
             </div>
           </div>
           <input type="file" id="profilePicture" accept="image/*" style="display: none;">
@@ -208,16 +203,18 @@ export function renderOnboarding() {
 
     <div class="onboarding-nav">
       <button type="button" class="btn btn-secondary" id="backBtn" onclick="previousStep()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span class="icon" data-icon="chevron-left"></span>
         Tilbake
       </button>
       <a href="#" class="skip-link" id="skipLink" onclick="skipStep()">Hopp over</a>
-      <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">Neste <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></button>
+      <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">Neste <span class="icon" data-icon="chevron-down"></span></button>
     </div>
   </div>`;
 }
 
 export async function afterMountOnboarding() {
+  mountAll();
+
   const supabase = window.supa;
   if (!supabase) {
     console.error('Supabase client not available');

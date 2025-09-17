@@ -9,6 +9,7 @@ import { renderSettings, afterMountSettings } from './pages/settings.js';
 import renderAbonnementPage, { afterMountAbonnement } from './pages/abonnement.js';
 import { renderAddShift, afterMountAddShift } from './pages/shiftAdd.js';
 import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
+import { mountAll } from './js/icons.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
 function normalizePath(pathname) {
@@ -34,6 +35,8 @@ export const routes = [
     path: '/',
     render: () => '',
     afterMount: () => {
+      mountAll();
+
       // Show main app and hide SPA outlet
       const { appEl, spaEl } = getOutlets();
       if (spaEl) spaEl.style.display = 'none';
