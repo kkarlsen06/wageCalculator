@@ -106,41 +106,58 @@
                       </div>
                   </div>
 
-                  <!-- Tab Bar Navigation - positioned above all content -->
+                  <!-- Tab Bar Navigation with Month Picker - positioned above all content -->
                   <div class="tab-bar-container">
-                      <div class="tab-bar">
-                          <button class="tab-btn active" id="tabOversikt" data-view="dashboard" aria-label="Bytt til oversiktsvisning">
-                              <div class="tab-icon-badge">
-                                  <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                      <rect x="3" y="3" width="7" height="7"></rect>
-                                      <rect x="14" y="3" width="7" height="7"></rect>
-                                      <rect x="14" y="14" width="7" height="7"></rect>
-                                      <rect x="3" y="14" width="7" height="7"></rect>
+                      <div class="tab-bar-with-month">
+                          <div class="tab-bar">
+                              <button class="tab-btn active" id="tabOversikt" data-view="dashboard" aria-label="Bytt til oversiktsvisning">
+                                  <div class="tab-icon-badge">
+                                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <rect x="3" y="3" width="7" height="7"></rect>
+                                          <rect x="14" y="3" width="7" height="7"></rect>
+                                          <rect x="14" y="14" width="7" height="7"></rect>
+                                          <rect x="3" y="14" width="7" height="7"></rect>
+                                      </svg>
+                                  </div>
+                                  <span class="tab-text">Oversikt</span>
+                              </button>
+                              <button class="tab-btn" id="tabStatistikk" data-view="stats" aria-label="Bytt til statistikkvisning">
+                                  <div class="tab-icon-badge">
+                                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <line x1="18" y1="20" x2="18" y2="10"></line>
+                                          <line x1="12" y1="20" x2="12" y2="4"></line>
+                                          <line x1="6" y1="20" x2="6" y2="14"></line>
+                                      </svg>
+                                  </div>
+                                  <span class="tab-text">Statistikk</span>
+                              </button>
+                              <button class="tab-btn" id="tabAnsatte" data-view="employees" aria-label="Bytt til ansattvisning" style="display: none;">
+                                  <div class="tab-icon-badge">
+                                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                          <circle cx="9" cy="7" r="4"></circle>
+                                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                      </svg>
+                                  </div>
+                                  <span class="tab-text">Ansatte</span>
+                              </button>
+                          </div>
+
+                          <!-- Month Navigation - now positioned alongside tab bar -->
+                          <div class="month-navigation dashboard-month-nav-inline">
+                              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                      <polyline points="15 18 9 12 15 6"></polyline>
                                   </svg>
-                              </div>
-                              <span class="tab-text">Oversikt</span>
-                          </button>
-                          <button class="tab-btn" id="tabStatistikk" data-view="stats" aria-label="Bytt til statistikkvisning">
-                              <div class="tab-icon-badge">
-                                  <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                      <line x1="18" y1="20" x2="18" y2="10"></line>
-                                      <line x1="12" y1="20" x2="12" y2="4"></line>
-                                      <line x1="6" y1="20" x2="6" y2="14"></line>
+                              </button>
+                              <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
+                              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                      <polyline points="9 6 15 12 9 18"></polyline>
                                   </svg>
-                              </div>
-                              <span class="tab-text">Statistikk</span>
-                          </button>
-                          <button class="tab-btn" id="tabAnsatte" data-view="employees" aria-label="Bytt til ansattvisning" style="display: none;">
-                              <div class="tab-icon-badge">
-                                  <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                      <circle cx="9" cy="7" r="4"></circle>
-                                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                  </svg>
-                              </div>
-                              <span class="tab-text">Ansatte</span>
-                          </button>
+                              </button>
+                          </div>
                       </div>
                       <!-- Skeleton placeholder for tab bar while loading -->
                       <div class="tab-bar-skeleton" aria-hidden="true">
@@ -190,24 +207,6 @@
                       </div>
 
 
-                      <!-- Month Navigation - positioned directly underneath tab bar -->
-                      <!-- This navigation stays in dashboard section across all screen sizes -->
-                      <div class="month-navigation-container dashboard-month-nav">
-                          <div class="month-navigation">
-                              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
-                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                      <polyline points="15 18 9 12 15 6"></polyline>
-                                  </svg>
-                              </button>
-                              <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
-                              <!-- Month picker skeleton removed - will be hidden during loading -->
-                              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
-                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                      <polyline points="9 6 15 12 9 18"></polyline>
-                                  </svg>
-                              </button>
-                          </div>
-                      </div>
 
 
 

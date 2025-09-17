@@ -2507,8 +2507,171 @@ body.skeleton-active .month-nav-btn {
     width: 40px;
     height: 40px;
   }
+}
 
-  .dashboard-month-nav .month-nav-btn .icon-sm {
+/* Inline month navigation styling to match tab bar height */
+.dashboard-month-nav-inline {
+  background: var(--surface-card);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: var(--card-border);
+  border-radius: var(--radius-3xl); /* Match tab bar pill shape */
+  padding: 4px 12px; /* Match tab bar padding but wider for month content */
+  min-height: 48px; /* Match tab bar height exactly */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all var(--speed-normal) var(--ease-default);
+  box-shadow: var(--shadow-card);
+  flex: 1; /* Take up remaining space - be the widest component */
+  max-width: none; /* Remove width limit - let it grow */
+  min-width: 200px; /* Ensure good minimum size for touch */
+}
+
+.dashboard-month-nav-inline:hover {
+  background: var(--surface-card-hover);
+  border: var(--card-border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.dashboard-month-nav-inline .month-display {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  flex: 1; /* Take up available space in month picker */
+  text-align: center;
+  font-size: 14px; /* Match tab bar text size */
+  white-space: nowrap;
+  min-width: 80px;
+  padding: 8px 4px; /* Add padding for larger touch area */
+}
+
+.dashboard-month-nav-inline .month-nav-btn {
+  width: 40px; /* Increased for better touch targets */
+  height: 40px; /* Increased for better touch targets */
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  color: var(--text-secondary);
+  min-width: 44px; /* Minimum touch target size */
+  flex-shrink: 0; /* Don't shrink these buttons */
+}
+
+.dashboard-month-nav-inline .month-nav-btn:hover {
+  background: var(--surface-card-hover);
+  border: var(--card-border);
+  color: var(--text-primary);
+}
+
+.dashboard-month-nav-inline .month-nav-btn .icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+/* Hide month picker during skeleton loading */
+body.skeleton-active .dashboard-month-nav-inline {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Adjust tab-bar-with-month container during skeleton loading */
+body.skeleton-active .tab-bar-with-month {
+  justify-content: center; /* Center the tab bar when month picker is hidden */
+}
+
+/* Responsive adjustments for the inline month navigation */
+@media (max-width: 768px) {
+  .tab-bar-with-month {
+    flex-direction: row; /* Keep on one line */
+    gap: 8px; /* Smaller gap for mobile */
+    align-items: center;
+  }
+
+  .tab-bar {
+    flex: 0 0 auto; /* Don't grow, use minimal space */
+    max-width: none; /* Remove width limit on mobile */
+  }
+
+  .dashboard-month-nav-inline {
+    flex: 1; /* Take remaining space */
+    min-width: 0; /* Allow shrinking if needed */
+    max-width: none; /* Remove width limit on mobile */
+  }
+
+  /* Hide tab text on mobile, show only icons */
+  .tab-btn .tab-text {
+    display: none;
+  }
+
+  .tab-btn {
+    padding: 8px; /* Reduce padding since no text */
+    min-width: 44px; /* Maintain touch target */
+    gap: 0; /* No gap needed without text */
+  }
+
+  .dashboard-month-nav-inline .month-display {
+    min-width: 70px; /* Smaller since tab bar is more compact */
+    font-size: 14px; /* Keep larger text for readability */
+    padding: 10px 8px; /* Increased padding */
+  }
+
+  .dashboard-month-nav-inline .month-nav-btn {
+    width: 44px; /* Maintain minimum touch target */
+    height: 44px; /* Maintain minimum touch target */
+    min-width: 44px;
+  }
+
+  .dashboard-month-nav-inline .month-nav-btn .icon-sm {
+    width: 18px; /* Larger icons for mobile */
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-bar-with-month {
+    gap: 6px; /* Smaller gap for very small screens */
+  }
+
+  .tab-bar {
+    min-height: 50px; /* Slightly larger for small screens */
+  }
+
+  .tab-btn {
+    min-height: 44px; /* Ensure minimum touch target */
+    padding: 10px; /* Square padding since no text */
+    min-width: 44px; /* Square touch target */
+  }
+
+  /* Ensure tab text stays hidden on very small screens too */
+  .tab-btn .tab-text {
+    display: none;
+  }
+
+  .dashboard-month-nav-inline {
+    padding: 4px 10px; /* Horizontal padding */
+    min-height: 50px; /* Match tab bar height */
+    min-width: 0; /* Allow full flexibility */
+  }
+
+  .dashboard-month-nav-inline .month-display {
+    min-width: 60px; /* Compact but readable */
+    font-size: 13px; /* Readable size */
+    padding: 12px 4px; /* Compact padding */
+  }
+
+  .dashboard-month-nav-inline .month-nav-btn {
+    width: 40px; /* Slightly smaller on very small screens */
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .dashboard-month-nav-inline .month-nav-btn .icon-sm {
     width: 16px;
     height: 16px;
   }
@@ -11361,6 +11524,15 @@ input[type="file"].form-control:focus-visible {
   padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
 }
 
+/* Container for tab bar and month picker on same line */
+.tab-bar-with-month {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: flex-start; /* Align left, let month picker grow */
+  width: 100%;
+}
+
 /* Tab bar styling as independent pill-shaped element */
 .tab-bar {
   /* Pill-shaped background with glassmorphism effect */
@@ -11377,10 +11549,12 @@ input[type="file"].form-control:focus-visible {
   /* Layout and spacing */
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; /* Center the buttons within the narrower tab bar */
   padding: 4px; /* Minimal padding to show pill container curves */
   gap: 2px;
   min-height: 48px; /* Reduced height for authentic pill appearance */
+  flex: 0 0 auto; /* Don't grow or shrink - use natural width */
+  max-width: 40%; /* Limit tab bar to 40% - make it narrower */
 }
 
 .tab-bar::after {
@@ -11394,7 +11568,7 @@ input[type="file"].form-control:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 6px 10px; /* Reduced padding for pill proportions */
+  padding: 8px 12px; /* Increased padding for better touch targets */
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-secondary);
@@ -11405,7 +11579,8 @@ input[type="file"].form-control:focus-visible {
   font-weight: var(--font-weight-medium);
   position: relative;
   overflow: hidden;
-  min-height: 32px; /* Reduced height for pill design */
+  min-height: 40px; /* Increased height for better touch targets */
+  min-width: 44px; /* Minimum touch target size */
 }
 
 /* Tab button hover state */
