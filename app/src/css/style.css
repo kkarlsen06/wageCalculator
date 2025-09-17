@@ -1980,7 +1980,7 @@ body.skeleton-active .month-nav-btn {
   }
 
   .dashboard-month-nav .month-navigation {
-    border-radius: 12px;
+    border-radius: var(--radius-pill);
     padding: 8px 12px; /* Smaller padding for small screens */
   }
 
@@ -2426,19 +2426,19 @@ body.skeleton-active .month-nav-btn {
 }
 
 .dashboard-month-nav .month-navigation {
-  border-radius: 16px;
-  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
+  border-radius: var(--radius-pill);
+  padding: 12px 20px; /* Match floating month picker padding */
   transition: all 0.3s ease;
-  background: transparent; /* Remove background box */
-  backdrop-filter: none; /* Remove backdrop filter */
-  -webkit-backdrop-filter: none; /* Remove webkit backdrop filter */
-  border: none;
-  box-shadow: none; /* Remove all shadows */
+  background: var(--bg-surface); /* Match floating month picker background */
+  backdrop-filter: blur(10px); /* Match floating month picker backdrop filter */
+  -webkit-backdrop-filter: blur(10px); /* Match floating month picker webkit backdrop filter */
+  border: 1px solid var(--border); /* Match floating month picker border */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); /* Match floating month picker shadow */
 }
 
 .dashboard-month-nav .month-navigation:hover {
   transform: translateY(-1px);
-  box-shadow: none; /* Remove hover shadows */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover to match floating style */
 }
 
 /* Ensure month display text is properly styled in dashboard */
@@ -2461,7 +2461,7 @@ body.skeleton-active .month-nav-btn {
   }
 
   .dashboard-month-nav .month-navigation {
-    border-radius: 16px;
+    border-radius: var(--radius-pill);
     padding: 10px 16px;
   }
 
@@ -2491,7 +2491,7 @@ body.skeleton-active .month-nav-btn {
 
   .dashboard-month-nav .month-navigation {
     padding: 8px 14px;
-    border-radius: 12px;
+    border-radius: var(--radius-pill);
   }
 }
 
