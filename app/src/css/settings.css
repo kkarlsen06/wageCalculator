@@ -564,6 +564,30 @@ html.ios-pwa #shiftAddPage .tab-content {
 /* Basic utilities for route to avoid inline styles */
 .hidden { display: none; }
 .row-inline { display: flex; align-items: center; gap: var(--space-1); }
+.import-controls {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.import-controls .btn {
+  flex: 0 0 auto;
+}
+.import-controls .btn.import-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.import-controls .btn:disabled {
+  cursor: not-allowed;
+}
+@media (max-width: 560px) {
+  .import-controls {
+    justify-content: center;
+  }
+  .import-controls .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 .btn-icon-inline { display: inline-flex; align-items: center; gap: var(--space-1); }
 .mr-8 { margin-right: 8px; }
 .ml-8 { margin-left: 8px; }

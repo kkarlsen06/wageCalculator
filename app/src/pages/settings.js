@@ -767,8 +767,9 @@ function getDataDetail() {
               <div class="setting-header">Importer data</div>
               <div class="setting-body">
                 <label for="importFileData">Velg fil</label>
-                <div class="row-inline" style="display:flex; gap:8px; align-items:center;">
-                  <input id="importFileData" type="file" accept=".csv,.json" />
+                <div class="row-inline import-controls">
+                  <button id="importFileTrigger" type="button" class="btn btn-secondary import-trigger">Velg fil</button>
+                  <input id="importFileData" type="file" accept=".csv,.json" class="sr-only" />
                   <button id="importUploadBtn" type="button" class="btn btn-secondary" onclick="app.importDataFromDataTab && app.importDataFromDataTab()" disabled>Last opp</button>
                 </div>
                 <div class="form-hint">Støtter CSV og JSON. Maks 10 MB.</div>
@@ -1595,11 +1596,27 @@ export function afterMountSettings() {
         (function setupImportUI(){
           const fileInput = document.getElementById('importFileData');
           const uploadBtn = document.getElementById('importUploadBtn');
+          const triggerBtn = document.getElementById('importFileTrigger');
           const statusEl = document.getElementById('importStatus');
           const progress = document.getElementById('importProgress');
           const fill = document.getElementById('importProgressFill');
           const resultEl = document.getElementById('importResult');
           if (!fileInput || !uploadBtn) return;
+
+          const updateTriggerText = (file) => {
+            if (!triggerBtn) return;
+            triggerBtn.textContent = file ? 'Velg annen fil' : 'Velg fil';
+          };
+
+          if (triggerBtn && !triggerBtn._importBound) {
+            triggerBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              fileInput.click();
+            });
+            triggerBtn._importBound = true;
+          }
+
+          updateTriggerText(fileInput.files?.[0] || null);
 
           const MAX_MB = 10;
           const resetState = () => {
@@ -1607,6 +1624,8 @@ export function afterMountSettings() {
             if (resultEl) resultEl.textContent = '';
             if (progress) progress.style.display = 'none';
             if (fill) fill.style.width = '0%';
+            uploadBtn.disabled = true;
+            if (!fileInput.files?.length) updateTriggerText(null);
           };
 
           const formatSize = (bytes) => {
@@ -1623,9 +1642,12 @@ export function afterMountSettings() {
             return { ok: true };
           };
 
+          resetState();
+
           fileInput.addEventListener('change', () => {
             resetState();
             const file = fileInput.files?.[0];
+            updateTriggerText(file);
             const v = validateFile(file);
             uploadBtn.disabled = !v.ok;
             if (statusEl) statusEl.textContent = v.ok
@@ -1643,6 +1665,7 @@ export function afterMountSettings() {
                 return;
               }
               // Start visual progress
+              uploadBtn.disabled = true;
               if (progress) progress.style.display = '';
               if (fill) fill.style.width = '15%';
               if (statusEl) statusEl.textContent = 'Leser fil…';
@@ -1657,6 +1680,7 @@ export function afterMountSettings() {
                 } catch (e) {
                   if (statusEl) statusEl.textContent = 'Feil ved oppstart av import.';
                   if (fill) fill.style.width = '0%';
+                  uploadBtn.disabled = false;
                   return;
                 }
 
@@ -1670,6 +1694,7 @@ export function afterMountSettings() {
                   setTimeout(() => {
                     if (progress) progress.style.display = 'none';
                     if (resultEl) resultEl.textContent = 'Hvis alt gikk bra, vises importerte vakter nå i appen.';
+                    uploadBtn.disabled = !fileInput.files?.length;
                   }, 400);
                 }, 900);
               }, 50);
