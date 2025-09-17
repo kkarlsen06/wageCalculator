@@ -8009,7 +8009,7 @@ body.chatbox-view .dashboard-section .app-container {
   flex-direction: column;
   justify-content: flex-start;
   padding-top: 0; /* Remove top padding - spacing handled by parent gap */
-  padding-bottom: 20px;
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); /* Space for bottom navigation + safe area */
   gap: 20px;
   position: relative;
   /* Ensure the content can fill the full height */
@@ -16674,7 +16674,7 @@ body.chatbox-view .chatbox-container {
 /* Bottom Navigation Bar */
 .bottom-nav {
   position: fixed;
-  bottom: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 40px);
@@ -16780,7 +16780,7 @@ body.chatbox-view .chatbox-container {
     height: 70px;
     padding: 0 8px;
     width: calc(100% - 20px);
-    bottom: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   }
 
   .nav-item.nav-add {

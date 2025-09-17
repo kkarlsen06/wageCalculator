@@ -10,6 +10,7 @@ import renderAbonnementPage, { afterMountAbonnement } from './pages/abonnement.j
 import { renderAddShift, afterMountAddShift } from './pages/shiftAdd.js';
 import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
 import { renderShifts, afterMountShifts } from './pages/shifts.js';
+import { renderLonnAI, afterMountLonnAI } from './pages/lonnAI.js';
 import { mountAll } from './js/icons.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
@@ -96,6 +97,7 @@ export const routes = [
   { path: '/shifts', render: renderShifts, afterMount: afterMountShifts },
   { path: '/shift-add', render: renderAddShift, afterMount: afterMountAddShift },
   { path: '/shift-edit', render: renderShiftEdit, afterMount: afterMountShiftEdit },
+  { path: '/lonnai', render: renderLonnAI, afterMount: afterMountLonnAI },
   { path: '/settings', render: renderSettings, afterMount: afterMountSettings },
   // Account settings detail (primary path)
   { path: '/settings/account', render: renderSettings, afterMount: afterMountSettings },
@@ -145,7 +147,7 @@ export async function render() {
   // Hide bottom navigation for specific routes that need full screen
   const bottomNav = document.querySelector('.bottom-nav');
   if (bottomNav) {
-    if (match.path === '/shift-add') {
+    if (match.path === '/shift-add' || match.path === '/login') {
       bottomNav.style.display = 'none';
     } else {
       bottomNav.style.display = '';

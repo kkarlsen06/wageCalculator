@@ -401,7 +401,7 @@ html.ios-pwa #shiftAddPage .tab-content {
 /* Single floating nav button (no background container) */
 .floating-nav-btn {
   position: fixed !important;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+  bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   z-index: 10000 !important;
