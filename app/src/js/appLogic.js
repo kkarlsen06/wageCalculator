@@ -7213,7 +7213,7 @@ export const app = {
 
     switchShiftView(view) {
         this.shiftView = view;
-        const btns = document.querySelectorAll('.view-toggle .tab-btn');
+        const btns = document.querySelectorAll('.nav-toggle');
         btns.forEach((btn, idx) => {
             const isList = idx === 0;
             const active = (view === 'list' && isList) || (view === 'calendar' && !isList);

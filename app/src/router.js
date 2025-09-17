@@ -46,6 +46,18 @@ export const routes = [
         // Ensure app is visible even if prior CSS had !important rules
         try { appEl.style.setProperty('display', 'block', 'important'); } catch (_) { appEl.style.display = 'block'; }
       }
+
+      // Ensure proper scroll position for dashboard when navigating from other routes
+      if (window.spaNavigationInProgress) {
+        // Allow natural scroll position during SPA navigation
+        setTimeout(() => {
+          // Only scroll to top if we're at the very bottom or way down
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          if (scrollTop > window.innerHeight) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }, 50);
+      }
       
       // Clean up any floating elements, portals, and route-specific globals
       try {
@@ -111,14 +123,49 @@ export const routes = [
 ];
 
 export function navigate(path) {
+  // Mark that we're doing SPA navigation to prevent aggressive scroll restoration
+  window.spaNavigationInProgress = true;
   history.pushState({}, '', path);
   render();
+  // Clear the flag after a brief delay
+  setTimeout(() => {
+    window.spaNavigationInProgress = false;
+  }, 100);
+}
+
+function updateBottomNavActiveState(currentPath) {
+  try {
+    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+    navItems.forEach(item => {
+      const href = item.getAttribute('data-href');
+      const isActive = href === currentPath ||
+                      (href === '/' && currentPath === '/') ||
+                      (href === '/shifts' && currentPath === '/shifts') ||
+                      (href === '/abonnement' && currentPath === '/abonnement') ||
+                      (href === '/settings' && currentPath.startsWith('/settings'));
+
+      item.classList.toggle('active', isActive);
+    });
+  } catch (e) {
+    console.warn('Error updating nav active state:', e);
+  }
 }
 
 export async function render() {
   const { appEl, spaEl } = getOutlets();
   const path = normalizePath(location.pathname);
   const match = routes.find(r => r.path === path) || routes[0];
+
+  // Clean up floating elements for any route transition
+  try {
+    document.querySelectorAll('.floating-settings-bar, .floating-settings-backdrop, .floating-nav-btn').forEach(el => el.remove());
+    const settingsPortal = document.getElementById('settings-floating-portal');
+    if (settingsPortal) settingsPortal.remove();
+    const abonnementPortal = document.getElementById('abonnement-floating-portal');
+    if (abonnementPortal) abonnementPortal.remove();
+    const addShiftPortal = document.getElementById('shift-add-floating-portal');
+    if (addShiftPortal) addShiftPortal.remove();
+  } catch (_) {}
 
   // Toggle containers: show SPA for non-root routes
   if (match.path === '/') {
@@ -154,6 +201,10 @@ export async function render() {
     }
   }
 
+  // Update bottom navigation active state
+  updateBottomNavActiveState(path);
+
+
   // Tag body/html during onboarding for scoped CSS
   try {
     const isOnboarding = match.path === '/onboarding';
@@ -169,7 +220,15 @@ export async function render() {
 }
 
 // History/back support
-window.addEventListener('popstate', render);
+window.addEventListener('popstate', () => {
+  // Mark that we're doing SPA navigation to prevent aggressive scroll restoration
+  window.spaNavigationInProgress = true;
+  render();
+  // Clear the flag after a brief delay
+  setTimeout(() => {
+    window.spaNavigationInProgress = false;
+  }, 100);
+});
 
 // Intercept SPA-marked links
 document.addEventListener('click', (e) => {
@@ -204,4 +263,11 @@ document.addEventListener('click', (e) => {
 if (typeof window !== 'undefined') {
   window.__navigate = navigate;
   window.navigateToRoute = navigate;
+
+  // Update navigation active state on initial load
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      updateBottomNavActiveState(normalizePath(location.pathname));
+    }, 100);
+  });
 }

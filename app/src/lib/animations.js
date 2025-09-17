@@ -29,28 +29,31 @@ function throttle(func, limit) {
 
 // Immediate scroll prevention - run first
 (function() {
-    // Prevent browser scroll restoration
-    if ('scrollRestoration' in history) {
-        history.scrollRestoration = 'manual';
+    // Only apply on actual page loads, not SPA navigation
+    if (!window.spaNavigationInProgress) {
+        // Prevent browser scroll restoration
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+
+        // Single scroll to top function
+        const scrollToTop = () => {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        };
+
+        // Clear any hash from URL that might cause scrolling
+        if (window.location.hash && window.location.hash !== '#') {
+            history.replaceState(null, null, window.location.pathname + window.location.search);
+        }
+
+        // Force scroll to top immediately only on fresh page load
+        scrollToTop();
+
+        // Single delayed scroll to top to handle any deferred scrolling
+        setTimeout(scrollToTop, 50);
     }
-    
-    // Single scroll to top function
-    const scrollToTop = () => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    };
-    
-    // Clear any hash from URL that might cause scrolling
-    if (window.location.hash && window.location.hash !== '#') {
-        history.replaceState(null, null, window.location.pathname + window.location.search);
-    }
-    
-    // Force scroll to top immediately
-    scrollToTop();
-    
-    // Single delayed scroll to top to handle any deferred scrolling
-    setTimeout(scrollToTop, 50);
 })();
 
 // Ensure page starts at top on beforeunload
@@ -65,8 +68,10 @@ setTimeout(() => {
 }, 500);
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Single scroll to top on DOM ready
-    window.scrollTo(0, 0);
+    // Only scroll to top on fresh page loads, not during SPA navigation
+    if (!window.spaNavigationInProgress) {
+        window.scrollTo(0, 0);
+    }
 
     // Initialize animations with proper sequencing to prevent stuttering
     initAnimationsSequentially();

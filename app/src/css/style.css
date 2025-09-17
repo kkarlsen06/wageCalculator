@@ -16551,38 +16551,21 @@ body.chatbox-view .chatbox-container {
 .conflict-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warning); flex: 0 0 6px; }
 .conflict-item .meta { color: var(--text-tertiary); }
 
-/* Floating Month Picker for Shifts Route */
-.floating-month-picker {
-  position: fixed;
-  bottom: 120px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: auto;
-  min-width: 200px;
-  max-width: 300px;
-  height: 50px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: none; /* Hidden by default, shown only on shifts route */
-  align-items: center;
-  justify-content: center;
-  padding: 0 20px;
-  z-index: 90;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  margin: 0 auto;
+/* Month Picker Header for Shifts Route */
+.month-picker-header {
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
-/* Show floating month picker only on shifts route */
-.spa-route .floating-month-picker {
-  display: flex;
-}
-
-/* Add bottom padding to shifts route content to clear floating elements */
+/* Add bottom padding to shifts route content to clear navbar */
 .spa-route .settings-detail {
-  padding-bottom: 200px; /* Space for navbar (100px) + month picker (70px) + extra spacing (30px) */
+  padding-bottom: 120px; /* Space for navbar (100px) + extra spacing (20px) */
 }
 
 /* Ensure shifts content can scroll properly */
@@ -16613,14 +16596,16 @@ body.chatbox-view .chatbox-container {
 }
 
 
-.floating-month-picker .month-navigation {
+.month-picker-header .month-navigation {
   display: flex;
   align-items: center;
-  gap: 12px;
-  z-index: 300;
+  justify-content: center;
+  gap: 16px;
+  max-width: 300px;
+  margin: 0 auto;
 }
 
-.floating-month-picker .month-nav-btn {
+.month-picker-header .month-nav-btn {
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -16635,12 +16620,12 @@ body.chatbox-view .chatbox-container {
   height: 32px;
 }
 
-.floating-month-picker .month-nav-btn:hover {
+.month-picker-header .month-nav-btn:hover {
   color: var(--accent);
   background: var(--bg-hover);
 }
 
-.floating-month-picker .month-display {
+.month-picker-header .month-display {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 16px;
@@ -16648,22 +16633,16 @@ body.chatbox-view .chatbox-container {
   text-align: center;
 }
 
-.floating-month-picker .icon-sm {
+.month-picker-header .icon-sm {
   width: 16px;
   height: 16px;
 }
 
-/* Mobile responsiveness for floating month picker */
+/* Mobile responsiveness */
 @media (max-width: 480px) {
-  .floating-month-picker {
-    width: calc(100% - 40px);
-    max-width: calc(100% - 40px);
-    bottom: 100px;
-  }
-
   /* Adjust bottom padding for mobile */
   .spa-route .settings-detail {
-    padding-bottom: 180px; /* Smaller spacing for mobile */
+    padding-bottom: 100px; /* Smaller spacing for mobile */
   }
 }
 
@@ -16706,7 +16685,22 @@ body.chatbox-view .chatbox-container {
 }
 
 
+/* Active nav item styling with theme blue (exclude shifts route) */
 .nav-item.active .nav-icon svg {
+  color: var(--primary);
+}
+
+.nav-item.active .nav-label {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Exception: shifts route uses original accent color instead of theme blue */
+.nav-item.active[data-href="/shifts"] .nav-icon svg {
+  color: var(--accent);
+}
+
+.nav-item.active[data-href="/shifts"] .nav-label {
   color: var(--accent);
 }
 

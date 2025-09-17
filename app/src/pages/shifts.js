@@ -8,6 +8,23 @@ export function renderShifts() {
     <div class="settings-detail">
       <div class="app-container">
 
+          <!-- Month Picker at top of scrollable section -->
+          <div class="month-picker-header">
+            <div class="month-navigation">
+              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <span class="month-display" id="currentMonth">Mai 2025</span>
+              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="9 6 15 12 9 18"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+
           <!-- Employee Filter Bar -->
           <div class="employee-filter-bar" id="employeeFilterBar" style="display: none;">
             <div class="filter-scroll-container">
@@ -46,23 +63,6 @@ export function renderShifts() {
           </div>
         </div>
 
-      </div>
-
-      <!-- Floating Month Picker -->
-      <div class="floating-month-picker">
-        <div class="month-navigation">
-          <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
-            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-          <span class="month-display" id="currentMonth">Mai 2025</span>
-          <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
-            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="9 6 15 12 9 18"></polyline>
-            </svg>
-          </button>
-        </div>
       </div>
     </div>
   `;

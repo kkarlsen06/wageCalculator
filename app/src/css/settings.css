@@ -225,6 +225,8 @@ html.ios-pwa #shiftAddPage .tab-content {
   overflow: visible;
   height: auto;
   max-height: none;
+  /* Add bottom padding with safe area inset for browser URL bar */
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
 }
 
 .detail-title {
@@ -414,8 +416,7 @@ html.ios-pwa #shiftAddPage .tab-content {
 .floating-nav-btn {
   position: fixed !important;
   bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
+  left: 20px !important;
   z-index: 10000 !important;
 }
 
