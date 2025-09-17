@@ -213,20 +213,24 @@ html.ios-pwa #shiftAddPage .tab-content {
 
 .settings-detail {
   background: transparent;
-  /* Prevent double scrollbar on shifts route by disabling overflow on this container */
   overflow: visible;
-  /* Ensure no height constraints that would force nested scrolling */
   height: auto;
   max-height: none;
+  padding: var(--space-4);
+  padding-top: calc(var(--space-4) + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); /* Space for navbar + safe area */
+  min-height: 100vh;
+  /* Isolate scroll behavior for this route */
+  overscroll-behavior: contain;
+  scroll-behavior: auto;
 }
 
-/* Specifically for shifts route - ensure app-container doesn't create its own scroll area */
 .settings-detail .app-container {
   overflow: visible;
   height: auto;
   max-height: none;
-  /* Add bottom padding with safe area inset for browser URL bar */
-  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  padding: 0; /* Remove padding since parent handles it */
+  max-width: none;
 }
 
 .detail-title {

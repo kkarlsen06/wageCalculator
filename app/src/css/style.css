@@ -13,6 +13,13 @@ html, body {
   min-height: 100vh;
 }
 
+/* Dashboard mode - prevent any scrolling without affecting positioning */
+html:not(.spa-route),
+body:not(.spa-route) {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
 /* Allow scrolling for SPA routes (login, onboarding, settings, etc.) */
 html.spa-route,
 body.spa-route {
@@ -35,6 +42,14 @@ body.spa-route {
   width: 100% !important;
   pointer-events: none !important;
   overflow: hidden !important;
+  /* Reset all internal scroll positions when hidden */
+  scroll-behavior: auto !important;
+}
+
+/* Reset scroll positions for hidden containers */
+#app[style*="display: none"] * {
+  scroll-behavior: auto !important;
+  overscroll-behavior: none !important;
 }
 
 /* (Consolidated below) Mobile skeleton sizing rules moved to a single section */
@@ -7929,10 +7944,19 @@ input:checked + .slider:before {
   padding-top: env(safe-area-inset-top, 0);
   margin-bottom: 0;
   height: 100dvh;
-  overflow: hidden;
-  position: relative;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   /* Remove all safe area padding - let content flow naturally */
   padding: 0;
+  /* Ensure this container cannot be scrolled programmatically */
+  scroll-behavior: auto !important;
+  /* Completely isolate from window scroll */
+  transform: translateZ(0) !important;
 }
 
 
@@ -7945,6 +7969,9 @@ input:checked + .slider:before {
   position: relative;
   /* Allow content to extend behind iOS system navbar */
   /* Our custom navbar will float above using z-index */
+  /* Prevent any scrolling within sections */
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
 }
 
 /* iOS 26 specific adjustments - content extends behind system navbar */
@@ -16569,36 +16596,23 @@ body.chatbox-view .chatbox-container {
 .conflict-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warning); flex: 0 0 6px; }
 .conflict-item .meta { color: var(--text-tertiary); }
 
-/* Month Picker Header for Shifts Route */
-.month-picker-header {
-  width: 100%;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-primary);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 60;
+/* Simple shifts page layout */
+.shifts-page {
+  padding: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); /* Space for navbar + safe area */
+  min-height: 100vh;
+  /* Isolate scroll behavior for this route */
+  overscroll-behavior: contain;
+  scroll-behavior: auto;
 }
 
-/* Shifts content container - scrollable area below fixed month picker */
-.shifts-content-container {
-  margin-top: 64px; /* Height of month picker header */
-  height: calc(100vh - 64px - 120px); /* Subtract month picker height and bottom nav space */
-  overflow-y: auto;
-  padding-bottom: 20px; /* Extra spacing at bottom */
+.shifts-page .app-container {
+  padding: var(--space-4) var(--space-4);
+  max-width: none;
 }
 
-/* Add bottom padding to non-shifts SPA route content to clear navbar */
-.spa-route .settings-detail:not(:has(.shifts-content-container)) {
-  padding-bottom: 120px; /* Space for navbar (100px) + extra spacing (20px) */
-}
-
-/* Ensure non-shifts content can scroll properly */
-.spa-route .settings-detail:not(:has(.shifts-content-container)) .app-container {
-  min-height: calc(100vh - 200px);
-}
+/* Settings detail pages already handle their own padding in settings.css */
 
 /* Override nav-add styling for small version in contextual navbar */
 .nav-item.nav-add-small {
@@ -16623,16 +16637,25 @@ body.chatbox-view .chatbox-container {
 }
 
 
-.month-picker-header .month-navigation {
+/* Month navigation in shifts page - uses existing styles from dashboard */
+.shifts-page .month-navigation-container {
+  margin-bottom: var(--space-4);
+}
+
+.shifts-page .month-navigation {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
   max-width: 300px;
   margin: 0 auto;
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
 }
 
-.month-picker-header .month-nav-btn {
+.shifts-page .month-nav-btn {
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -16647,12 +16670,12 @@ body.chatbox-view .chatbox-container {
   height: 32px;
 }
 
-.month-picker-header .month-nav-btn:hover {
+.shifts-page .month-nav-btn:hover {
   color: var(--accent);
   background: var(--bg-hover);
 }
 
-.month-picker-header .month-display {
+.shifts-page .month-display {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 16px;
@@ -16660,16 +16683,19 @@ body.chatbox-view .chatbox-container {
   text-align: center;
 }
 
-.month-picker-header .icon-sm {
+.shifts-page .icon-sm {
   width: 16px;
   height: 16px;
 }
 
-/* Mobile responsiveness */
+/* Mobile responsiveness for shifts page */
 @media (max-width: 480px) {
-  /* Adjust bottom padding for mobile */
-  .spa-route .settings-detail {
-    padding-bottom: 100px; /* Smaller spacing for mobile */
+  .shifts-page .app-container {
+    padding: var(--space-3);
+  }
+
+  .shifts-page .month-navigation {
+    padding: var(--space-2);
   }
 }
 

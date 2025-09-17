@@ -163,12 +163,35 @@ export async function render() {
 
   // Toggle containers: show SPA for non-root routes
   if (match.path === '/') {
-    // Restore dashboard scroll position if it was stored
-    if (window.dashboardScrollPosition !== undefined) {
-      setTimeout(() => {
-        window.scrollTo(0, window.dashboardScrollPosition);
-      }, 50);
+    // Dashboard should always be at scroll position 0 since it's scroll-locked
+    // Reset immediately, not in timeout
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    // Also reset any internal scroll positions in the snap container
+    const snapContainer = document.querySelector('.snap-container');
+    if (snapContainer) {
+      snapContainer.scrollTop = 0;
+      snapContainer.scrollLeft = 0;
     }
+    // Reset scroll for all snap sections
+    const snapSections = document.querySelectorAll('.snap-section');
+    snapSections.forEach(section => {
+      section.scrollTop = 0;
+      section.scrollLeft = 0;
+    });
+
+    // Force reset again after elements are visible
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      if (snapContainer) {
+        snapContainer.scrollTop = 0;
+        snapContainer.scrollLeft = 0;
+      }
+    }, 10);
 
     if (spaEl) spaEl.style.display = 'none';
     if (appEl) {
@@ -187,11 +210,28 @@ export async function render() {
       document.body.classList.remove('spa-route');
     } catch (_) {}
     try { if (spaEl) spaEl.innerHTML = ''; } catch (_) {}
+
+    // Install scroll prevention listener for dashboard
+    const preventDashboardScroll = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    // Remove any existing listener first
+    window.removeEventListener('scroll', window._dashboardScrollPreventer);
+
+    // Add new listener that prevents any scroll on dashboard
+    window._dashboardScrollPreventer = preventDashboardScroll;
+    window.addEventListener('scroll', preventDashboardScroll, { passive: false });
   } else {
-    // Store current dashboard scroll position before hiding it
-    if (window.dashboardScrollPosition === undefined || match.path !== window.lastSpaRoute) {
-      window.dashboardScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+    // Remove dashboard scroll preventer when leaving dashboard
+    if (window._dashboardScrollPreventer) {
+      window.removeEventListener('scroll', window._dashboardScrollPreventer);
+      window._dashboardScrollPreventer = null;
     }
+
+    // Dashboard is scroll-locked, so no need to store scroll position
     window.lastSpaRoute = match.path;
 
     if (appEl) {
