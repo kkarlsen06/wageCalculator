@@ -7,10 +7,10 @@ function getAbonnementView() {
   return `
   <div id="abonnementPage" class="settings-page">
     <div class="detail-title">
-      <h1>Abonnementsadministrasjon</h1>
-      <p class="detail-subtitle">Administrer ditt profesjonelle abonnement</p>
+      <h1>Abonnement</h1>
+      <p class="detail-subtitle">Administrer ditt abonnement og tilgang til funksjoner</p>
     </div>
-    
+
     <!-- Loading state -->
     <div class="modal-loading" id="abonnementLoading" style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
       <div class="loading-spinner" style="animation: spin 1s linear infinite;">
@@ -19,58 +19,47 @@ function getAbonnementView() {
         </svg>
       </div>
     </div>
-    
+
     <style>
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
     </style>
-    
+
     <!-- Main content - hidden initially -->
     <div class="settings-section" id="abonnementContent" style="display: none;">
-      <h3>Abonnementsstatus</h3>
-      <div class="subscription-status-card">
-        <div class="status-header">
-          <svg class="status-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M9 12l2 2 4-4"></path>
-          </svg>
-          <div id="subscriptionStatus" class="status-text"></div>
+      <div class="subscription-status">
+        <div class="status-indicator">
+          <span class="status-icon">✓</span>
+          <h2 id="subscriptionStatus" class="status-title">Din nåværende plan</h2>
         </div>
-        <div class="status-details">
-          <div id="subscriptionPeriod" class="period-info"></div>
-          <div id="subscriptionPlan" class="plan-info"></div>
+        <div class="status-info">
+          <p id="subscriptionPeriod" class="period-info"></p>
+          <p id="subscriptionPlan" class="plan-name"></p>
         </div>
-        <div id="subscriptionThanks" class="appreciation-message" style="display:none;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
-          </svg>
-          <span>Takk for ditt verdsatte partnerskap</span>
-        </div>
-        <div id="earlyUserAppreciation" class="early-user-message" style="display:none;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
-          </svg>
-          <div class="early-user-content">
-            <h4>Du var her helt fra starten, tusen takk! &lt;3</h4>
-            <p>Nyt professional-goder helt gratis. PS. Du kan fortsatt abonnere for å støtte oss.</p>
-          </div>
-        </div>
-        <div id="earlyUserSubscribedThanks" class="early-user-subscribed" style="display:none;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 21s-6.716-4.09-9.193-8.09C.806 10.11 2.292 6 6.07 6c2.097 0 3.34 1.317 3.93 2.26C10.59 7.317 11.833 6 13.93 6c3.777 0 5.263 4.11 3.263 6.91C18.716 16.91 12 21 12 21z"></path>
-          </svg>
-          <div class="early-user-subscribed-content">
-            <h4>Wow! Du var her fra starten, og støtter oss via abonnement i tillegg?! Legende! &lt;3</h4>
-            <p>Dette betyr alt for utviklingen av produktet. Tusen takk!</p>
-          </div>
-        </div>
+      </div>
+
+      <div id="appreciationMessage" class="appreciation-message" style="display: none;">
+        <h3 id="appreciationTitle" class="appreciation-title"></h3>
+        <p id="appreciationText" class="appreciation-text"></p>
+      </div>
+
+      <div class="action-buttons" id="subscriptionActions" style="display: none;">
+        <button type="button" class="btn-upgrade btn-secondary" id="upgradeProBtn" style="display: none;">
+          Oppgrader til Professional
+        </button>
+        <button type="button" class="btn-upgrade btn-primary" id="upgradeMaxBtn" style="display: none;">
+          Oppgrader til Enterprise
+        </button>
+        <button type="button" class="btn-manage" id="manageSubBtn" style="display: none;">
+          Administrer abonnement
+        </button>
       </div>
     </div>
 
-    <!-- Subscription Plans Section -->
-    <div class="settings-section" id="subscriptionPlans" style="display:none;">
+    <!-- Plans Overview -->
+    <div class="settings-section" id="subscriptionPlans" style="display: none;">
       <h3>Tilgjengelige planer</h3>
       <div class="plans-grid">
         <div class="plan-card free-plan">
@@ -85,7 +74,7 @@ function getAbonnementView() {
             <span class="feature feature-limitation">Kun én måned med vakter om gangen</span>
           </div>
         </div>
-        
+
         <div class="plan-card pro-plan">
           <div class="plan-header">
             <h5>Professional</h5>
@@ -98,7 +87,7 @@ function getAbonnementView() {
             <span class="feature">Prioritert støtte</span>
           </div>
         </div>
-        
+
         <div class="plan-card max-plan">
           <div class="plan-header">
             <h5>Enterprise</h5>
@@ -113,31 +102,6 @@ function getAbonnementView() {
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Action Buttons Section -->
-    <div class="settings-section" id="actionButtons" style="display: none;">
-      <div class="setting-actions">
-        <button type="button" class="btn btn-secondary" id="upgradeProBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-          </svg>
-          Oppgrader til Professional
-        </button>
-        <button type="button" class="btn btn-primary" id="upgradeMaxBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-          </svg>
-          Oppgrader til Enterprise
-        </button>
-      </div>
-    </div>
-
-    <!-- Standalone manage subscription button -->
-    <div style="margin-top: 2rem; display: none;" id="manageSubBtnContainer">
-      <button type="button" class="btn btn-outline" id="manageSubBtn" style="display: block; margin: 0 auto;">
-        Administrer abonnement
-      </button>
     </div>
 
   </div>
@@ -162,13 +126,12 @@ class AbonnementController {
     this.proBtn = null;
     this.maxBtn = null;
     this.manageBtn = null;
-    this.thanksEl = null;
     this.plansEl = null;
-    this.earlyUserEl = null;
-    this.earlyUserSubscribedEl = null;
     this.statusIcon = null;
-    this.actionButtonsEl = null;
-    this.manageSubBtnContainer = null;
+    this.actionButtons = null;
+    this.appreciationMessage = null;
+    this.appreciationTitle = null;
+    this.appreciationText = null;
     this._loadingStartTime = null;
   }
 
@@ -182,13 +145,12 @@ class AbonnementController {
     this.proBtn = document.getElementById('upgradeProBtn');
     this.maxBtn = document.getElementById('upgradeMaxBtn');
     this.manageBtn = document.getElementById('manageSubBtn');
-    this.thanksEl = document.getElementById('subscriptionThanks');
     this.plansEl = document.getElementById('subscriptionPlans');
-    this.earlyUserEl = document.getElementById('earlyUserAppreciation');
-    this.earlyUserSubscribedEl = document.getElementById('earlyUserSubscribedThanks');
     this.statusIcon = document.querySelector('.status-icon');
-    this.actionButtonsEl = document.getElementById('actionButtons');
-    this.manageSubBtnContainer = document.getElementById('manageSubBtnContainer');
+    this.actionButtons = document.getElementById('subscriptionActions');
+    this.appreciationMessage = document.getElementById('appreciationMessage');
+    this.appreciationTitle = document.getElementById('appreciationTitle');
+    this.appreciationText = document.getElementById('appreciationText');
 
     // Set loading start time
     this._loadingStartTime = Date.now();
@@ -268,68 +230,89 @@ class AbonnementController {
     if (!this._loadingStartTime) {
       this._loadingStartTime = Date.now();
     }
-    
+
     const elapsed = Date.now() - this._loadingStartTime;
     const remainingDelay = Math.max(0, minDelay - elapsed);
-    
+
     if (remainingDelay > 0) {
       await new Promise(resolve => setTimeout(resolve, remainingDelay));
     }
-    
-    // Hide loading and show content with smooth transition
+
+    // Hide loading and show content
     if (this.loadingEl) {
       this.loadingEl.style.display = 'none';
     }
     if (this.contentEl) {
       this.contentEl.style.display = 'block';
     }
-    if (this.actionButtonsEl) {
-      this.actionButtonsEl.style.display = 'block';
+    if (this.actionButtons) {
+      this.actionButtons.style.display = 'flex';
     }
-    // The manage button is standalone and controlled separately by updateButtons method
   }
 
   async updateFromGlobalState() {
     await this.showContent();
-    
+
     const row = window.SubscriptionState || null;
     const beforePaywall = this.beforePaywall;
-    
+
     console.log('[abonnement] updateFromGlobalState:', { row, beforePaywall, currentTier: this.currentTier });
-    
+
+    // Determine current plan and status
+    const { planName, statusText, periodText, isActive, tier, shouldShowAppreciation, appreciationData } = this.processSubscriptionData(row, beforePaywall);
+
+    // Update main status
+    if (this.statusEl) this.statusEl.textContent = statusText;
+    if (this.periodEl) this.periodEl.textContent = periodText;
+    if (this.planEl) this.planEl.textContent = planName || '';
+
+    // Update visual indicators
+    if (this.statusIcon) {
+      this.statusIcon.style.background = isActive ? 'var(--success)' : 'var(--text-secondary)';
+      this.statusIcon.textContent = isActive ? '✓' : '!';
+    }
+
+    // Handle appreciation message
+    this.updateAppreciationMessage(shouldShowAppreciation, appreciationData);
+
+    // Show/hide plans section
+    if (this.plansEl) {
+      this.plansEl.style.display = (isActive && tier !== 'free') ? 'none' : 'block';
+    }
+
+    // Update action buttons
+    this.updateButtons(isActive, tier);
+
+    // Store current state
+    this.currentTier = tier;
+    this.isActive = isActive;
+  }
+
+  processSubscriptionData(row, beforePaywall) {
     if (!row) {
       if (beforePaywall) {
-        // Early user with no subscription
-        if (this.statusEl) this.statusEl.textContent = 'Early User - Pro-fordeler gratis';
-        if (this.periodEl) this.periodEl.textContent = '';
-        if (this.planEl) this.planEl.textContent = '';
-        
-        this.hideAllMessages();
-        if (this.earlyUserEl) this.earlyUserEl.style.display = 'flex';
-        
-        if (this.plansEl) this.plansEl.style.display = 'none';
-        if (this.manageBtn) this.manageBtn.style.display = 'none';
-        if (this.proBtn) this.proBtn.style.display = '';
-        if (this.maxBtn) this.maxBtn.style.display = '';
-        if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
-        this.currentTier = 'free';
-        this.isActive = true;
-        return;
+        return {
+          planName: 'Professional (gratis)',
+          statusText: 'Early User',
+          periodText: 'Du har tilgang til Professional-funksjoner helt gratis',
+          isActive: true,
+          tier: 'free',
+          shouldShowAppreciation: true,
+          appreciationData: {
+            title: 'Takk for at du var med fra starten!',
+            text: 'Du har permanent tilgang til Professional-funksjoner. Du kan fortsatt abonnere for å støtte utviklingen.'
+          }
+        };
       }
-      
-      // Regular free user
-      if (this.statusEl) this.statusEl.textContent = 'Gratis plan';
-      if (this.periodEl) this.periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';
-      if (this.planEl) this.planEl.textContent = 'Se abonnementene nedenfor. Abonner for tilgang til flere funksjoner!';
-      this.hideAllMessages();
-      if (this.plansEl) this.plansEl.style.display = 'block';
-      if (this.manageBtn) this.manageBtn.style.display = 'none';
-      if (this.proBtn) this.proBtn.style.display = '';
-      if (this.maxBtn) this.maxBtn.style.display = '';
-      if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
-      this.currentTier = 'free';
-      this.isActive = true;
-      return;
+      return {
+        planName: 'Gratis',
+        statusText: 'Gratis plan',
+        periodText: 'Lagre vakter i én måned om gangen',
+        isActive: true,
+        tier: 'free',
+        shouldShowAppreciation: false,
+        appreciationData: null
+      };
     }
 
     const status = row.status || 'ukjent';
@@ -340,70 +323,77 @@ class AbonnementController {
     const tier = String(row.tier || '').toLowerCase();
     const plan = tier === 'max' ? 'Enterprise' : (tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null);
 
-    this.currentTier = tier || null;
-    this.isActive = isActive;
+    let appreciationData = null;
+    let shouldShowAppreciation = false;
 
-    if (this.statusEl) this.statusEl.textContent = `${status.charAt(0).toUpperCase()}${status.slice(1)}${plan ? ` - ${plan}` : ''}`;
-    if (this.periodEl) this.periodEl.textContent = formatted ? `Neste fornyelse: ${formatted}` : '';
-    if (this.planEl) this.planEl.textContent = plan ? `Takk for abonnementet!` : '';
-    
-    // Handle special messages
-    const showEarlyUserSubscribedMessage = beforePaywall && isActive;
-    const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
-    
-    this.hideAllMessages();
-    if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
-      this.earlyUserSubscribedEl.style.display = 'flex';
-    } else if (showRegularThanks && this.thanksEl) {
-      this.thanksEl.style.display = 'flex';
+    if (isActive && plan) {
+      shouldShowAppreciation = true;
+      if (beforePaywall) {
+        appreciationData = {
+          title: 'Du støtter oss i tillegg til å være early user! Legende! ❤️',
+          text: 'Dette betyr alt for utviklingen av produktet. Tusen takk!'
+        };
+      } else {
+        appreciationData = {
+          title: 'Takk for ditt verdifulle partnerskap!',
+          text: 'Din støtte gjør det mulig for oss å fortsette å forbedre produktet.'
+        };
+      }
     }
 
-    if (this.plansEl) this.plansEl.style.display = isActive && tier !== 'free' ? 'none' : 'block';
-    if (this.statusIcon) this.statusIcon.style.color = isActive ? 'var(--success)' : 'var(--text-secondary)';
+    const statusMap = {
+      'active': 'Aktiv',
+      'canceled': 'Kansellert',
+      'past_due': 'Forfalt',
+      'unpaid': 'Ubetalt',
+      'incomplete': 'Ufullstendig'
+    };
 
-    // Update buttons based on tier and status
-    this.updateButtons(isActive, tier);
+    return {
+      planName: plan || 'Ukjent plan',
+      statusText: statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1),
+      periodText: formatted ? `Neste fornyelse: ${formatted}` : '',
+      isActive,
+      tier,
+      shouldShowAppreciation,
+      appreciationData
+    };
   }
 
-  hideAllMessages() {
-    if (this.thanksEl) this.thanksEl.style.display = 'none';
-    if (this.earlyUserSubscribedEl) this.earlyUserSubscribedEl.style.display = 'none';
-    if (this.earlyUserEl) this.earlyUserEl.style.display = 'none';
+  updateAppreciationMessage(shouldShow, data) {
+    if (!this.appreciationMessage) return;
+
+    if (shouldShow && data) {
+      this.appreciationMessage.style.display = 'flex';
+      if (this.appreciationTitle) this.appreciationTitle.textContent = data.title;
+      if (this.appreciationText) this.appreciationText.textContent = data.text;
+    } else {
+      this.appreciationMessage.style.display = 'none';
+    }
   }
 
   updateButtons(isActive, tier) {
-    if (!isActive) {
-      if (this.manageSubBtnContainer) this.manageSubBtnContainer.style.display = 'none';
-      if (this.actionButtonsEl) this.actionButtonsEl.style.display = 'block';
-      if (this.proBtn) this.proBtn.style.display = '';
-      if (this.maxBtn) this.maxBtn.style.display = '';
-    } else if (tier === 'free') {
-      if (this.manageSubBtnContainer) this.manageSubBtnContainer.style.display = 'none';
-      if (this.actionButtonsEl) this.actionButtonsEl.style.display = 'block';
-      if (this.proBtn) this.proBtn.style.display = '';
-      if (this.maxBtn) this.maxBtn.style.display = '';
+    // Reset all buttons to hidden
+    if (this.proBtn) this.proBtn.style.display = 'none';
+    if (this.maxBtn) this.maxBtn.style.display = 'none';
+    if (this.manageBtn) this.manageBtn.style.display = 'none';
+
+    if (!isActive || tier === 'free') {
+      // Show upgrade options for free users (including early users)
+      if (this.proBtn) this.proBtn.style.display = 'inline-block';
+      if (this.maxBtn) this.maxBtn.style.display = 'inline-block';
     } else if (tier === 'pro') {
-      if (this.manageSubBtnContainer) this.manageSubBtnContainer.style.display = 'block';
-      if (this.actionButtonsEl) this.actionButtonsEl.style.display = 'block';
-      if (this.proBtn) this.proBtn.style.display = 'none';
-      if (this.maxBtn) this.maxBtn.style.display = '';
+      // Pro users can upgrade to max or manage subscription
+      if (this.maxBtn) this.maxBtn.style.display = 'inline-block';
+      if (this.manageBtn) this.manageBtn.style.display = 'inline-block';
     } else if (tier === 'max') {
-      if (this.manageSubBtnContainer) this.manageSubBtnContainer.style.display = 'block';
-      if (this.actionButtonsEl) this.actionButtonsEl.style.display = 'none';
-      if (this.proBtn) this.proBtn.style.display = 'none';
-      if (this.maxBtn) this.maxBtn.style.display = 'none';
-    } else {
-      if (this.manageSubBtnContainer) this.manageSubBtnContainer.style.display = 'block';
-      if (this.actionButtonsEl) this.actionButtonsEl.style.display = 'none';
-      if (this.proBtn) this.proBtn.style.display = 'none';
-      if (this.maxBtn) this.maxBtn.style.display = 'none';
+      // Max users can only manage their subscription
+      if (this.manageBtn) this.manageBtn.style.display = 'inline-block';
     }
   }
 
   async loadSubscription() {
     try {
-      if (this.periodEl) this.periodEl.textContent = '';
-
       if (!window.supa || !window.supa.auth) {
         await this.showContent();
         if (this.statusEl) this.statusEl.textContent = 'Kunne ikke hente abonnementsinformasjon.';
@@ -433,7 +423,7 @@ class AbonnementController {
       const { data, error } = subscriptionResult;
       const beforePaywall = profileResult.data?.before_paywall === true;
       this.beforePaywall = beforePaywall;
-      
+
       console.log('[abonnement] loadSubscription profile data:', beforePaywall, profileResult.data);
       console.log('[abonnement] loadSubscription subscription data:', data, error, Array.isArray(data) && data.length ? data[0] : null);
 
@@ -445,78 +435,37 @@ class AbonnementController {
       }
 
       const row = Array.isArray(data) && data.length ? data[0] : null;
-      
-      if (!row) {
-        await this.showContent();
-        
-        if (beforePaywall) {
-          // Early user with no subscription
-          if (this.statusEl) this.statusEl.textContent = 'Early User - Pro-fordeler gratis';
-          if (this.periodEl) this.periodEl.textContent = '';
-          if (this.planEl) this.planEl.textContent = '';
-          
-          this.hideAllMessages();
-          if (this.earlyUserEl) this.earlyUserEl.style.display = 'flex';
-          
-          if (this.plansEl) this.plansEl.style.display = 'none';
-          if (this.manageBtn) this.manageBtn.style.display = 'none';
-          if (this.proBtn) this.proBtn.style.display = '';
-          if (this.maxBtn) this.maxBtn.style.display = '';
-          if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
-          return;
-        }
-        
-        // Regular free user
-        if (this.statusEl) this.statusEl.textContent = 'Gratis plan';
-        if (this.periodEl) this.periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';
-        if (this.planEl) this.planEl.textContent = 'Se abonnementene nedenfor. Abonner for tilgang til flere funksjoner!';
-        this.hideAllMessages();
-        if (this.plansEl) this.plansEl.style.display = 'block';
-        if (this.manageBtn) this.manageBtn.style.display = 'none';
-        if (this.proBtn) this.proBtn.style.display = '';
-        if (this.maxBtn) this.maxBtn.style.display = '';
-        if (this.statusIcon) this.statusIcon.style.color = 'var(--success)';
-        return;
-      }
-
-      const status = row.status || 'ukjent';
-      const endRaw = row.current_period_end;
-      const dateObj = typeof endRaw === 'number'
-        ? new Date(endRaw * 1000)
-        : (endRaw ? new Date(endRaw) : null);
-      const formatted = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('no-NO') : null;
-
-      const isActive = !!row.is_active || (row.status === 'active');
-      const tier = String(row.tier || '').toLowerCase();
-      const plan = tier === 'max' ? 'Enterprise' : (tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null);
 
       await this.showContent();
-      
-      this.currentTier = tier || null;
-      
-      console.log('[abonnement] loadSubscription values:', { beforePaywall, isActive, tier, plan });
 
-      // Update UI
-      if (this.statusEl) this.statusEl.textContent = `${status.charAt(0).toUpperCase()}${status.slice(1)}${plan ? ` - ${plan}` : ''}`;
-      if (this.periodEl) this.periodEl.textContent = formatted ? `Neste fornyelse: ${formatted}` : '';
-      if (this.planEl) this.planEl.textContent = plan ? `Takk for abonnementet!` : '';
+      // Process subscription data and update UI using the new streamlined method
+      const { planName, statusText, periodText, isActive, tier, shouldShowAppreciation, appreciationData } = this.processSubscriptionData(row, beforePaywall);
 
-      // Handle special messages
-      const showEarlyUserSubscribedMessage = beforePaywall && isActive;
-      const showRegularThanks = !beforePaywall && isActive && tier !== 'free';
-      
-      this.hideAllMessages();
-      if (showEarlyUserSubscribedMessage && this.earlyUserSubscribedEl) {
-        this.earlyUserSubscribedEl.style.display = 'flex';
-      } else if (showRegularThanks && this.thanksEl) {
-        this.thanksEl.style.display = 'flex';
+      // Update UI elements
+      if (this.statusEl) this.statusEl.textContent = statusText;
+      if (this.periodEl) this.periodEl.textContent = periodText;
+      if (this.planEl) this.planEl.textContent = planName || '';
+
+      // Update visual indicators
+      if (this.statusIcon) {
+        this.statusIcon.style.background = isActive ? 'var(--success)' : 'var(--text-secondary)';
+        this.statusIcon.textContent = isActive ? '✓' : '!';
       }
 
-      if (this.plansEl) this.plansEl.style.display = isActive && tier !== 'free' ? 'none' : 'block';
-      if (this.statusIcon) this.statusIcon.style.color = isActive ? 'var(--success)' : 'var(--text-secondary)';
+      // Handle appreciation message
+      this.updateAppreciationMessage(shouldShowAppreciation, appreciationData);
 
-      // Update buttons
+      // Show/hide plans section
+      if (this.plansEl) {
+        this.plansEl.style.display = (isActive && tier !== 'free') ? 'none' : 'block';
+      }
+
+      // Update action buttons
       this.updateButtons(isActive, tier);
+
+      // Store current state
+      this.currentTier = tier;
+      this.isActive = isActive;
 
     } catch (e) {
       console.error('[abonnement] exception:', e);

@@ -741,79 +741,132 @@ html.ios-pwa #shiftAddPage .tab-content {
 }
 
 /* Abonnement-specific components */
-.subscription-status-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.subscription-status {
+  text-align: center;
+  padding: 32px 24px;
+  margin-bottom: 24px;
 }
 
-.status-header {
+.status-indicator {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
+  margin-bottom: 16px;
 }
 
 .status-icon {
-  color: var(--success);
-  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--success);
+  color: white;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: bold;
 }
 
-.status-text {
+.status-title {
+  margin: 0;
+  font-size: 24px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.status-details {
+.status-info {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-left: 32px; /* Align with status text */
 }
 
-.period-info, .plan-info {
+.period-info, .plan-name {
+  margin: 0;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-.appreciation-message, 
-.early-user-message, 
-.early-user-subscribed {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
+.appreciation-message {
+  text-align: center;
+  padding: 24px;
   background: var(--bg-success);
   border: 1px solid var(--border-success);
-  border-radius: 12px;
-  margin-top: 16px;
-}
-
-.early-user-message svg,
-.early-user-subscribed svg,
-.appreciation-message svg {
-  color: var(--success);
-  flex-shrink: 0;
-}
-
-.early-user-content,
-.early-user-subscribed-content {
+  border-radius: 16px;
+  margin-bottom: 32px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
 }
 
-.early-user-content h4,
-.early-user-subscribed-content h4 {
+.appreciation-title {
   margin: 0;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
+  line-height: 1.4;
+  text-align: center;
 }
 
-.early-user-content p,
-.early-user-subscribed-content p {
+.appreciation-text {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.btn-upgrade, .btn-manage {
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  min-height: 56px;
+}
+
+.btn-upgrade.btn-secondary {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-upgrade.btn-secondary:hover {
+  background: var(--surface-secondary-hover);
+  border-color: var(--border-strong);
+}
+
+.btn-upgrade.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-upgrade.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-manage {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-manage:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 
 .plans-grid {
@@ -909,14 +962,32 @@ html.ios-pwa #shiftAddPage .tab-content {
   font-size: 14px;
 }
 
-/* Responsive design for plans */
+/* Responsive design for abonnement page */
 @media (min-width: 768px) {
   .plans-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
   }
-  
+
+  .action-buttons {
+    flex-direction: row;
+    max-width: 600px;
+  }
+
+  .btn-upgrade, .btn-manage {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .status-title {
+    font-size: 28px;
+  }
+
+  .subscription-status {
+    padding: 48px 24px;
+  }
+
   #abonnementPage {
     max-width: 800px;
   }
