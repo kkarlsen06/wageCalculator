@@ -66,8 +66,8 @@
   --surface-card-elevated: var(--bg-card-elevated);
   --surface-card-muted: var(--bg-card-secondary);
   --surface-card-subtle: var(--bg-card-subtle);
-  --surface-card-hover: rgba(74, 200, 255, 0.08);
-  --surface-card-press: rgba(74, 200, 255, 0.05);
+  --surface-card-hover: rgba(74, 200, 255, 0.16);
+  --surface-card-press: rgba(74, 200, 255, 0.24);
   --surface-card-active: var(--gradient-secondary);
   --surface-card-disabled: color-mix(in oklab, var(--bg-card), transparent 30%);
 
@@ -76,8 +76,8 @@
   --card-border-style: solid;
   --card-border-color: var(--border);
   --card-border: var(--card-border-width) var(--card-border-style) var(--card-border-color);
-  --card-border-strong-color: rgba(74, 200, 255, 0.35);
-  --card-border-focus-color: rgba(74, 200, 255, 0.55);
+  --card-border-strong-color: rgba(74, 200, 255, 0.5);
+  --card-border-focus-color: rgba(74, 200, 255, 0.65);
   --card-border-strong: var(--card-border-width) var(--card-border-style) var(--card-border-strong-color);
   --card-border-focus: var(--card-border-width) var(--card-border-style) var(--card-border-focus-color);
   --card-border-width-strong: 2px;
@@ -117,13 +117,13 @@
   --button-primary-bg: var(--primary);
   --button-primary-bg-hover: var(--primary-light);
   --button-primary-bg-active: var(--primary-dark);
-  --button-primary-text: #f8fbff;
+  --button-primary-text: #062032;
   --button-secondary-bg: transparent;
   --button-secondary-text: var(--text-secondary);
   --button-secondary-hover: var(--surface-card-hover);
-  --button-primary-bg-disabled: color-mix(in oklab, var(--primary), white 50%);
-  --button-primary-text-disabled: color-mix(in oklab, var(--button-primary-text), transparent 40%);
-  --button-secondary-text-disabled: color-mix(in oklab, var(--text-secondary), transparent 40%);
+  --button-primary-bg-disabled: color-mix(in oklab, var(--primary), #0b1926 45%);
+  --button-primary-text-disabled: color-mix(in oklab, var(--button-primary-text), transparent 20%);
+  --button-secondary-text-disabled: color-mix(in oklab, var(--text-secondary), transparent 25%);
 }
 
 /* Dark Theme (default) */
@@ -143,38 +143,38 @@ html.theme-dark {
   --info: #3ABEF6;
 
   /* Background colors */
-  --bg-primary: #0e1014;
-  --bg-secondary: rgba(26, 26, 26, 0.95);
-  --bg-tertiary: rgba(30, 30, 30, 0.92);
-  --bg-card: rgba(19, 21, 26, 255);
-  --bg-hover: rgba(42, 42, 42, 0.9);
-  --bg-card-elevated: rgba(24, 27, 34, 1.0);
+  --bg-primary: #05070b;
+  --bg-secondary: rgba(9, 13, 22, 0.96);
+  --bg-tertiary: rgba(12, 17, 28, 0.92);
+  --bg-card: #111827;
+  --bg-hover: rgba(30, 41, 59, 0.9);
+  --bg-card-elevated: #182335;
 
   /* Additional card variants for proper hierarchy */
-  --bg-card-secondary: rgba(20, 23, 28, 0.9);
-  --bg-card-subtle: rgba(16, 18, 22, 0.8);
+  --bg-card-secondary: rgba(17, 24, 39, 0.92);
+  --bg-card-subtle: rgba(10, 16, 28, 0.85);
 
   /* Text colors */
-  --text-primary: #FFFFFF;
-  --text-secondary: #C0C0C0;
-  --text-tertiary: #909090;
-  --text-muted: #808080;
+  --text-primary: #F8FBFF;
+  --text-secondary: #DCE7F7;
+  --text-tertiary: #AFC4DB;
+  --text-muted: #8FA2BA;
 
   /* Border colors */
-  --border: rgba(255, 255, 255, 0.1);
-  --border-light: #3a3a3f00;
+  --border: rgba(148, 182, 255, 0.28);
+  --border-light: rgba(74, 200, 255, 0.18);
   --border-color: var(--border);
-  --border-profile: #181c23;
+  --border-profile: #1b2a3f;
 
   /* Legacy support - map old colors to new system */
   --accent2: var(--primary);
   --accent3: var(--secondary);
   --accent4: var(--info);
-  --accent-light: rgba(58, 190, 246, 0.1);
-  --accent-alpha: rgba(58, 190, 246, 0.15);
-  --accent2-alpha: rgba(58, 190, 246, 0.15);
-  --accent3-alpha: rgba(0, 212, 255, 0.15);
-  --accent4-alpha: rgba(58, 190, 246, 0.15);
+  --accent-light: rgba(74, 200, 255, 0.18);
+  --accent-alpha: rgba(74, 200, 255, 0.3);
+  --accent2-alpha: rgba(74, 200, 255, 0.3);
+  --accent3-alpha: rgba(0, 212, 255, 0.28);
+  --accent4-alpha: rgba(74, 200, 255, 0.28);
   --danger: var(--error);
 
   /* Current date highlighting color */
@@ -192,20 +192,20 @@ html.theme-dark {
     var(--accent3-alpha) 50%,
     var(--accent2-alpha) 100%);
   --gradient-progress-bg: linear-gradient(135deg,
-    rgba(0, 245, 255, 0.08) 0%,
-    rgba(0, 212, 255, 0.08) 50%,
-    rgba(58, 190, 246, 0.08) 100%);
+    rgba(0, 245, 255, 0.14) 0%,
+    rgba(0, 212, 255, 0.14) 50%,
+    rgba(74, 200, 255, 0.14) 100%);
   --gradient-bg: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 25%, var(--bg-tertiary) 50%, var(--bg-card) 75%, var(--bg-secondary) 100%);
-  --gradient-neon: linear-gradient(135deg, #3ABEF6 0%, #00D4FF 100%);
-  --gradient-total-card: linear-gradient(135deg, #162f3a 0%, #13262f 25%, #13232b 50%, #121c25 75%, #10151d 100%);
+  --gradient-neon: linear-gradient(135deg, #4AC8FF 0%, #00D4FF 100%);
+  --gradient-total-card: linear-gradient(135deg, #0f2234 0%, #0c1b2d 40%, #0b1626 70%, #09111f 100%);
 
   /* Skeleton loading colors - Dark theme */
-  --skeleton-base: rgba(255, 255, 255, 0.06);
-  --skeleton-shimmer: rgba(255, 255, 255, 0.16);
+  --skeleton-base: rgba(255, 255, 255, 0.14);
+  --skeleton-shimmer: rgba(255, 255, 255, 0.32);
   --skeleton-gradient: linear-gradient(90deg, 
-    rgba(255, 255, 255, 0.06), 
-    rgba(255, 255, 255, 0.16), 
-    rgba(255, 255, 255, 0.06));
+    rgba(255, 255, 255, 0.14), 
+    rgba(255, 255, 255, 0.32), 
+    rgba(255, 255, 255, 0.14));
 }
 
 /* Dark theme specific: Apply custom gradient to total-card only */
