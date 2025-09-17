@@ -800,7 +800,7 @@ html {
     width: 4px;
     height: 8px;
     background: var(--text-secondary);
-    border-radius: 2px;
+    border-radius: 4px;
     position: absolute;
     top: 8px;
     left: 50%;

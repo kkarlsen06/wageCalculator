@@ -829,7 +829,7 @@ body:not(.skeleton-active) #app.animations-complete .skeleton {
 }
 .skeleton-line {
   height: 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -866,7 +866,7 @@ body:not(.skeleton-active) #app.animations-complete .skeleton {
 .next-shift-card .skeleton.skeleton-shift .skeleton-line:nth-child(1),
 .next-payroll-card .skeleton.skeleton-payroll .skeleton-line:nth-child(1) {
   height: 22px; /* ~ line-height of 18px text */
-  border-radius: 11px;
+  border-radius: 12px;
 }
 .next-shift-card .skeleton.skeleton-shift .skeleton-line + .skeleton-line,
 .next-payroll-card .skeleton.skeleton-payroll .skeleton-line + .skeleton-line {
@@ -875,7 +875,7 @@ body:not(.skeleton-active) #app.animations-complete .skeleton {
 .next-shift-card .skeleton.skeleton-shift .skeleton-line:nth-child(2),
 .next-payroll-card .skeleton.skeleton-payroll .skeleton-line:nth-child(2) {
   height: 18px; /* ~ line-height of small detail line */
-  border-radius: 9px;
+  border-radius: 8px;
 }
 
 @media (max-width: 480px) {
@@ -1054,7 +1054,7 @@ body.skeleton-active .tab-bar {
 .profile-skeleton .skeleton-line {
   width: 96px;
   height: 14px;
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -1138,7 +1138,7 @@ body.skeleton-active .total-card .total-label {
 .total-card .total-skeleton .skeleton-line:nth-child(1) {
   height: 22px; /* ~ line-height of 14px label text */
   width: 140px;
-  border-radius: 6px;
+  border-radius: 8px;
   margin-bottom: 24px; /* label->amount spacing (16) + amount top (8) */
 }
 /* Line 2: Main amount replacement (big, centered) */
@@ -1152,7 +1152,7 @@ body.skeleton-active .total-card .total-label {
 .total-card .total-skeleton .skeleton-line:nth-child(3) {
   height: 29px; /* ~ line-height of 18px secondary text */
   width: min(45%, 300px);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 /* Ensure skeleton is completely hidden when not active */
@@ -2482,7 +2482,7 @@ body:not(.skeleton-active) #app.animations-complete .skeleton {
 }
 .skeleton-line {
   height: 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -2626,7 +2626,7 @@ body.skeleton-active .tab-bar {
 .profile-skeleton .skeleton-line {
   width: 96px;
   height: 14px;
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--skeleton-gradient);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.1s ease-in-out infinite;
@@ -2689,7 +2689,7 @@ body.skeleton-active .total-card .total-label {
 .total-card .total-skeleton .skeleton-line:nth-child(1) {
   height: 22px; /* ~ line-height of 14px label text */
   width: 140px;
-  border-radius: 6px;
+  border-radius: 8px;
   margin-bottom: 24px; /* label->amount spacing (16) + amount top (8) */
 }
 /* Line 2: Main amount replacement (big, centered) */
@@ -2703,7 +2703,7 @@ body.skeleton-active .total-card .total-label {
 .total-card .total-skeleton .skeleton-line:nth-child(3) {
   height: 29px; /* ~ line-height of 18px secondary text */
   width: min(45%, 300px);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 /* Ensure skeleton is completely hidden when not active */
@@ -3625,7 +3625,7 @@ body.skeleton-active .month-nav-btn {
   /* AGGRESSIVE WEEKLY HOURS CHART HEIGHT REDUCTION */
   .weekly-hours-chart-card {
     padding: 10px; /* Reduced from 14px */
-    border-radius: 18px; /* Slightly smaller radius */
+    border-radius: 16px; /* Slightly smaller radius */
     min-height: 180px; /* Significantly reduced from 220px */
   }
 
@@ -3635,7 +3635,7 @@ body.skeleton-active .month-nav-btn {
 
   .chart-visualization-card {
     padding: 8px; /* Reduced padding */
-    border-radius: 10px; /* Smaller radius */
+    border-radius: 8px; /* Smaller radius */
   }
 
   .chart-hours-section {
@@ -3646,7 +3646,7 @@ body.skeleton-active .month-nav-btn {
   .chart-hours-value-card,
   .chart-shifts-count-card {
     padding: 8px; /* Reduced padding */
-    border-radius: 10px; /* Smaller radius */
+    border-radius: 8px; /* Smaller radius */
   }
 
   /* Reduce chart text sizes */
@@ -3740,7 +3740,7 @@ body.skeleton-active .month-nav-btn {
   /* NEXT SHIFT CARD */
   .next-shift-card .shift-item {
     padding: 10px 14px;
-    border-radius: 18px;
+    border-radius: 16px;
     min-height: 60px;
   }
 
@@ -3899,7 +3899,7 @@ body.skeleton-active .month-nav-btn {
   /* Landscape weekly hours chart */
   .weekly-hours-chart-card {
     padding: 6px;
-    border-radius: 14px;
+    border-radius: 16px;
     min-height: 140px;
   }
 
@@ -3909,7 +3909,7 @@ body.skeleton-active .month-nav-btn {
 
   .chart-visualization-card {
     padding: 5px;
-    border-radius: 6px;
+    border-radius: 8px;
   }
 
   .chart-hours-section {
@@ -3920,7 +3920,7 @@ body.skeleton-active .month-nav-btn {
   .chart-hours-value-card,
   .chart-shifts-count-card {
     padding: 5px;
-    border-radius: 6px;
+    border-radius: 8px;
   }
 
   .hours-value-number,
@@ -4016,7 +4016,7 @@ body.skeleton-active .month-nav-btn {
   }
 
   .dashboard-month-nav .month-navigation {
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 10px 16px;
   }
 
@@ -4256,7 +4256,7 @@ body.force-dashboard-nav .shift-section .month-navigation-container {
   height: 1px;
   background: var(--border);
   margin: 0 8px;
-  border-radius: 1px;
+  border-radius: 0px;
 }
 
 /* Time colon separator between hour and minute */
@@ -4843,7 +4843,7 @@ input[type="time"].form-control[value=""]:focus {
     /* Constrain height to viewport - use dvh for better mobile support */
     max-height: calc(100dvh - 40px) !important;
     /* Rounded corners for centered modal */
-    border-radius: 20px !important;
+    border-radius: 24px !important;
     position: relative !important;
     top: auto !important;
     bottom: auto !important;
@@ -5193,12 +5193,12 @@ input[type="time"].form-control[value=""]:focus {
 
 #subscriptionModal .modal-content::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 #subscriptionModal .modal-content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  border-radius: 4px;
   transition: background 0.2s ease;
 }
 
@@ -5212,12 +5212,12 @@ input[type="time"].form-control[value=""]:focus {
 
 #subscriptionModal .modal-body::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 #subscriptionModal .modal-body::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  border-radius: 4px;
   transition: background 0.2s ease;
 }
 
@@ -5426,7 +5426,7 @@ input[type="time"].form-control[value=""]:focus {
   padding: 8px 12px;
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.2);
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: var(--text-xs);
   color: rgba(245, 158, 11, 0.9);
   font-weight: 500;
@@ -5686,7 +5686,7 @@ input[type="time"].form-control[value=""]:focus {
   padding: 24px 32px 32px 32px;
   border-top: 1px solid var(--border);
   background: var(--bg-tertiary);
-  border-radius: 0 0 20px 20px;
+  border-radius: 0 0 24px 24px;
 }
 
 .premium-feature-content .modal-footer-buttons {
@@ -5702,7 +5702,7 @@ input[type="time"].form-control[value=""]:focus {
   justify-content: center;
   gap: 8px;
   padding: 14px 20px;
-  border-radius: 14px;
+  border-radius: 16px;
   font-weight: 600;
   font-size: 14px;
   transition: all 0.2s ease;
@@ -8182,7 +8182,7 @@ input:checked + .slider:before {
   background: var(--accent3);
   color: white;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 500;
   font-size: 13px;
 }
@@ -8687,7 +8687,7 @@ input:checked + .slider:before {
   width: 100%;
   height: 6px;
   background: var(--bg-secondary);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--border);
 }
@@ -8695,7 +8695,7 @@ input:checked + .slider:before {
 .profile-picture-progress .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent), var(--accent3));
-  border-radius: 3px;
+  border-radius: 4px;
   transition: width 0.3s ease;
   width: 0%;
 }
@@ -8873,7 +8873,7 @@ input:checked + .slider:before {
 .zoom-slider {
   flex: 1;
   height: 6px;
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--bg-tertiary);
   outline: none;
   border: none;
@@ -9133,7 +9133,7 @@ input:checked + .slider:before {
     var(--bg-tertiary) 100%
   );
   height: 6px;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .zoom-slider::-moz-range-track {
@@ -9143,7 +9143,7 @@ input:checked + .slider:before {
     var(--bg-tertiary) 100%
   );
   height: 6px;
-  border-radius: 3px;
+  border-radius: 4px;
   border: none;
 }
 
@@ -9907,7 +9907,7 @@ body.chatbox-view .dashboard-content {
   width: 45%;
   height: 3px;
   background: linear-gradient(90deg, transparent, var(--border) 5%, var(--text-secondary) 50%, var(--border) 90%, transparent);
-  border-radius: 2px;
+  border-radius: 4px;
   opacity: 0.8;
 }
 
@@ -9933,7 +9933,7 @@ body.chatbox-view .dashboard-content {
   width: 60px;
   height: 60px;
   background: var(--gradient-primary);
-  border-radius: 14px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11523,7 +11523,7 @@ input[type="file"].form-control:focus {
   background: var(--bg-card); /* Semi-transparent background to allow content to show through */
   backdrop-filter: blur(20px) saturate(180%); /* Enhanced blur with saturation for iOS-like effect */
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   padding: 16px;
   border: 1px solid var(--border); /* More transparent border matching header */
   /* spacing now handled by parent gap */
@@ -12123,7 +12123,7 @@ input[type="file"].form-control:focus {
     font-size: 11px;
     height: 42px;
     margin-top: 8px;
-    border-radius: 10px;
+    border-radius: 8px;
     width: 75px; /* Match chart-hours-section width */
   }
 
@@ -12149,7 +12149,7 @@ input[type="file"].form-control:focus {
     font-size: 12px;
     height: 42px;
     margin-top: 8px;
-    border-radius: 10px;
+    border-radius: 8px;
     width: 80px; /* Match chart-hours-section width */
   }
 
@@ -12380,7 +12380,7 @@ input[type="file"].form-control:focus {
   .chart-bar {
     min-width: 24px;
     max-width: 80px; /* Smaller max-width for mobile */
-    border-radius: 6px 6px 0 0;
+    border-radius: 8px 8px 0 0;
   }
 
   .chart-bar.has-data {
@@ -12413,7 +12413,7 @@ input[type="file"].form-control:focus {
     font-size: 12px;
     padding: 10px 12px;
     min-width: 120px;
-    border-radius: 10px;
+    border-radius: 8px;
     transform: translateY(-10px) scale(0.95);
   }
 
@@ -12448,7 +12448,7 @@ input[type="file"].form-control:focus {
 
   .chart-visualization-card {
     padding: 8px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .chart-hours-section {
@@ -12459,7 +12459,7 @@ input[type="file"].form-control:focus {
   .chart-hours-value-card,
   .chart-shifts-count-card {
     padding: 8px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .hours-value-number {
@@ -12557,7 +12557,7 @@ input[type="file"].form-control:focus {
 
   .chart-visualization-card {
     padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
-    border-radius: 14px;
+    border-radius: 16px;
   }
 
   .chart-hours-section {
@@ -12568,7 +12568,7 @@ input[type="file"].form-control:focus {
   .chart-hours-value-card,
   .chart-shifts-count-card {
     padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); /* Match dashboard content padding pattern */
-    border-radius: 14px;
+    border-radius: 16px;
   }
 
   .hours-value-number {
@@ -12605,15 +12605,15 @@ input[type="file"].form-control:focus {
   .chart-progress-bar {
     height: 50px;
     margin-top: 18px;
-    border-radius: 14px;
+    border-radius: 16px;
   }
 
   .chart-progress-fill {
-    border-radius: 14px 0 0 14px;
+    border-radius: 16px 0 0 16px;
   }
 
   .chart-progress-fill.full {
-    border-radius: 14px;
+    border-radius: 16px;
   }
 }
 
@@ -12621,7 +12621,7 @@ input[type="file"].form-control:focus {
 @media (min-width: 768px) {
   .weekly-hours-chart-card {
     padding: 20px;
-    border-radius: 28px;
+    border-radius: 24px;
     min-height: 310px;
   }
 
@@ -12631,7 +12631,7 @@ input[type="file"].form-control:focus {
 
   .chart-visualization-card {
     padding: 16px;
-    border-radius: 18px;
+    border-radius: 16px;
   }
 
   .chart-hours-section {
@@ -12642,7 +12642,7 @@ input[type="file"].form-control:focus {
   .chart-hours-value-card,
   .chart-shifts-count-card {
     padding: 16px;
-    border-radius: 18px;
+    border-radius: 16px;
   }
 
   .hours-value-number {
@@ -12676,7 +12676,7 @@ input[type="file"].form-control:focus {
   .chart-bar {
     min-width: 36px;
     max-width: 140px; /* Larger max-width for desktop */
-    border-radius: 10px 10px 0 0;
+    border-radius: 8px 8px 0 0;
   }
 
   .chart-bar.has-data {
@@ -12719,7 +12719,7 @@ input[type="file"].form-control:focus {
 
   .chart-visualization-card {
     padding: 8px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .chart-hours-section {
@@ -12730,7 +12730,7 @@ input[type="file"].form-control:focus {
   .chart-hours-value-card,
   .chart-shifts-count-card {
     padding: 8px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .hours-value-number {
@@ -12776,15 +12776,15 @@ input[type="file"].form-control:focus {
   .chart-progress-bar {
     height: 40px;
     margin-top: 12px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .chart-progress-fill {
-    border-radius: 10px 0 0 10px;
+    border-radius: 8px 0 0 8px;
   }
 
   .chart-progress-fill.full {
-    border-radius: 10px;
+    border-radius: 8px;
   }
 }
 
@@ -13023,15 +13023,15 @@ input[type="file"].form-control:focus {
   .chart-progress-bar {
     height: 42px;
     margin-top: 8px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .chart-progress-fill {
-    border-radius: 10px 0 0 10px;
+    border-radius: 8px 0 0 8px;
   }
 
   .chart-progress-fill.full {
-    border-radius: 10px;
+    border-radius: 8px;
   }
 }
 
@@ -13218,7 +13218,7 @@ input[type="file"].form-control:focus {
   .tab-icon-badge {
     width: 20px;
     height: 20px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .tab-icon {
@@ -13279,7 +13279,7 @@ input[type="file"].form-control:focus {
   .tab-icon-badge {
     width: 18px;
     height: 18px;
-    border-radius: 9px;
+    border-radius: 8px;
   }
 
   .tab-icon {
@@ -13366,7 +13366,7 @@ input[type="file"].form-control:focus {
 
 @media (min-width: 768px) {
   .statistics-section #currentUserWorkSummary .employee-work-summary {
-    border-radius: 28px;
+    border-radius: 24px;
   }
 }
 
@@ -14125,7 +14125,7 @@ body.chatbox-view .chatbox-container {
 .step-number {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--bg-tertiary);
   border: 2px solid var(--border);
   display: flex;
@@ -14293,7 +14293,7 @@ body.chatbox-view .chatbox-container {
 .required-badge,
 .optional-badge {
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
@@ -14532,7 +14532,7 @@ body.chatbox-view .chatbox-container {
 .employee-wrapper,
 [class*="employee-"][class*="container"],
 [class*="employee-"][class*="section"] {
-  border-radius: var(--border-radius-large, 20px) !important;
+  border-radius: var(--border-radius-large, 24px) !important;
 }
 
 /* ===== IMPROVED EMPLOYEE MODAL STYLES ===== */
@@ -15180,7 +15180,7 @@ body.chatbox-view .chatbox-container {
 .link-button:focus {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 /* Disabled button styles */
@@ -15218,18 +15218,18 @@ body.chatbox-view .chatbox-container {
 .color-input::-webkit-color-swatch-wrapper {
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .color-input::-webkit-color-swatch {
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .color-input::-moz-color-swatch {
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .color-presets {
@@ -15242,7 +15242,7 @@ body.chatbox-view .chatbox-container {
 .color-preset {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 2px solid transparent;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
@@ -16321,7 +16321,7 @@ body.chatbox-view .chatbox-container {
   border: none;
   padding: 4px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
@@ -16399,7 +16399,7 @@ body.chatbox-view .chatbox-container {
 
 .chatbox-log::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .chatbox-log::-webkit-scrollbar-thumb:hover {
@@ -16598,7 +16598,7 @@ body.chatbox-view .chatbox-container {
   background: rgba(0, 0, 0, 0.15);
   color: var(--accent3);
   padding: 3px 6px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
   font-size: 0.85em;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -16914,12 +16914,12 @@ body.chatbox-view .chatbox-container {
 /* Responsive border radius for chatbox icon badge */
 @media (max-width: 480px) {
   .chatbox-icon-badge {
-    border-radius: 20px 0 0 20px; /* Rounded left corners, flat right edge */
+    border-radius: 24px 0 0 24px; /* Rounded left corners, flat right edge */
   }
 
   .chatbox-pill.expanded .chatbox-icon-badge {
     width: 44px; /* Slightly smaller extension on mobile */
-    border-radius: 20px 0 0 0; /* Only top-left rounded, flat right and bottom edges */
+    border-radius: 24px 0 0 0; /* Only top-left rounded, flat right and bottom edges */
   }
 }
 
@@ -17462,7 +17462,7 @@ body.chatbox-view .chatbox-container {
   align-items: center;
   gap: 4px;
   padding: 2px 6px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: var(--font-weight-medium);
   color: white;
@@ -17829,7 +17829,7 @@ body.chatbox-view .chatbox-container {
   font-weight: 500;
   width: 100%;
   text-align: left;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
@@ -17985,11 +17985,12 @@ body.chatbox-view .chatbox-container {
 /* ===== Settings Section + Cards (minimal) ===== */
 .hidden { display: none !important; }
 .settings-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
+  background: var(--surface-card);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
   padding: var(--space-2);
   margin-bottom: var(--space-2);
+  box-shadow: var(--shadow-card);
 }
 
 @media (min-width: 600px) {
@@ -18003,10 +18004,11 @@ body.chatbox-view .chatbox-container {
 }
 
 .setting-card {
-  background: var(--bg-card-elevated);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: var(--surface-card-muted);
+  border: var(--card-border);
+  border-radius: var(--radius-panel);
   padding: var(--space-2);
+  box-shadow: var(--shadow-card-lite);
 }
 
 /* Nested cards can reuse the same overlay tone for consistency */

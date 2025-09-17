@@ -1078,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Surface a non-blocking inline notice if init failed
       const warn = document.createElement('div');
       warn.className = 'nonblocking-warning';
-      warn.style.cssText = 'margin:12px 16px;padding:10px;border-radius:8px;background:#332e00;color:#ffd666;font-size:14px;';
+      warn.style.cssText = 'margin:12px 16px;padding:10px;border-radius:var(--radius-panel);background:#332e00;color:#ffd666;font-size:14px;box-shadow:var(--shadow-card-lite);';
       warn.textContent = 'Noe gikk galt under innlasting. Viser tilgjengelig data – prøv å oppdatere siden.';
       appEl.prepend(warn);
     }

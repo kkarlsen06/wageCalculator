@@ -152,11 +152,14 @@ html.ios-pwa #shiftAddPage .tab-content {
   align-items: center;
   justify-content: space-between;
   text-decoration: none;
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  border-radius: 16px;
+  background: var(--surface-card);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
   padding: 14px 14px;
   color: var(--text-primary);
+  box-shadow: var(--shadow-card);
   transition: transform var(--speed-fast) var(--ease-default), border-color .2s ease, background .2s ease;
 }
 
@@ -173,8 +176,19 @@ html.ios-pwa #shiftAddPage .tab-content {
 }
 
 .settings-item:hover {
-  transform: translateY(-1px);
-  border-color: rgba(99,102,241,0.35);
+  transform: translateY(-2px);
+  background: var(--surface-card-hover);
+  border: var(--card-border-strong);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.settings-item:focus-visible {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color, rgba(74, 200, 255, 0.9));
+  outline-offset: 2px;
+  background: var(--surface-card-hover);
+  border: var(--card-border-focus);
+  box-shadow: var(--shadow-card-hover), var(--focus-ring);
+  transform: translateY(-2px);
 }
 
 .settings-item .item-text {
@@ -208,10 +222,12 @@ html.ios-pwa #shiftAddPage .tab-content {
 }
 
 .detail-body {
-  background: transparent;
-  border: none;
-  border-radius: 0;
+  background: var(--surface-card);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
   padding: var(--space-3);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 
 .settings-bottom-bar {
@@ -259,7 +275,7 @@ html.ios-pwa #shiftAddPage .tab-content {
   transform: translateX(-50%) !important;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   padding: 14px 18px; /* a bit taller for easier taps */
   display: flex !important;
   align-items: center;
@@ -290,7 +306,7 @@ html.ios-pwa #shiftAddPage .tab-content {
 .floating-settings-bar .back-btn {
   background: var(--accent);
   border: none;
-  border-radius: 16px;
+  border-radius: var(--radius-panel);
   padding: 12px 16px; /* taller button */
   min-height: 44px;   /* minimum touch height */
   color: white;
@@ -310,7 +326,7 @@ html.ios-pwa #shiftAddPage .tab-content {
   /* Match container sizing with back button to reduce bar height */
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-panel);
   padding: 12px 16px; /* taller button */
   min-height: 44px;   /* minimum touch height */
   color: var(--text-primary);
@@ -394,7 +410,7 @@ html.ios-pwa #shiftAddPage .tab-content {
 .floating-nav-btn.back-btn {
   background: var(--accent);
   border: none;
-  border-radius: 40px;
+  border-radius: var(--radius-card);
   padding: 12px 16px;
   min-height: 44px;
   color: white;
@@ -432,7 +448,7 @@ html.ios-pwa #shiftAddPage .tab-content {
 .floating-nav-btn.btn.btn-secondary {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: 40px;
+  border-radius: var(--radius-card);
   padding: 12px 16px;
   min-height: 44px;
   color: var(--text-primary);
@@ -471,7 +487,7 @@ html.ios-pwa #shiftAddPage .tab-content {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border);
-  border-radius: 40px;
+  border-radius: var(--radius-card);
   padding: 14px 18px;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.15),
@@ -580,10 +596,11 @@ html.ios-pwa #shiftAddPage .tab-content {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: var(--surface-card-muted);
+  border: var(--card-border);
+  border-radius: var(--radius-panel);
   padding: var(--space-2);
+  box-shadow: var(--shadow-card-lite);
 }
 .supplement-meta { color: var(--text-primary); font-size: 14px; }
 .supplement-actions { 
@@ -620,7 +637,7 @@ html.ios-pwa #shiftAddPage .tab-content {
 /* Ensure default hidden even if global styles set avatar-preview img to display:block */
 .avatar-preview img.avatar-image { display: none; }
 .avatar-upload-controls { margin-top: 8px; }
-.upload-progress { display: none; width: 100%; max-width: 260px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.upload-progress { display: none; width: 100%; max-width: 260px; border: 1px solid var(--border); border-radius: var(--radius-control); overflow: hidden; }
 .upload-progress-fill { height: 8px; width: 0%; background: var(--accent); }
 .upload-progress-text { font-size: 12px; padding: 6px 8px; color: var(--text-secondary); }
 
@@ -921,7 +938,7 @@ html.ios-pwa #shiftAddPage .tab-content {
   position: relative;
   background: linear-gradient(135deg, var(--bg-card-elevated) 0%, var(--bg-card) 100%);
   border: 2px solid var(--border);
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 16px 20px;
   font-size: 16px;
   font-weight: 500;

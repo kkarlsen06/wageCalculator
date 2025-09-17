@@ -957,7 +957,7 @@ export const app = {
             pill.innerHTML = `
                 <div class="form-group">
                   <label>Ansatt</label>
-                  <div class="selected-employee-pill" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface)">
+                  <div class="selected-employee-pill" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:var(--card-border);border-radius:var(--radius-panel);background:var(--surface-card);box-shadow:var(--shadow-card-lite)">
                     <span class="color-dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#888"></span>
                     <span class="name"></span>
                   </div>
@@ -3532,14 +3532,14 @@ export const app = {
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: var(--bg-primary);
-                border: 1px solid var(--border);
-                border-radius: 8px;
+                background: var(--surface-card);
+                border: var(--card-border);
+                border-radius: var(--radius-panel);
                 padding: 12px 16px;
                 font-size: 14px;
                 font-weight: 500;
                 z-index: 10000;
-                box-shadow: 0 4px 12px var(--shadow-blue);
+                box-shadow: var(--shadow-card);
                 transition: all 0.3s var(--ease-default);
                 opacity: 0;
                 transform: translateX(100%);
@@ -12683,9 +12683,10 @@ export const app = {
             padding: 12px 20px;
             background: ${type === 'success' ? '#10b981' : '#3b82f6'};
             color: white;
-            border-radius: 8px;
+            border-radius: var(--radius-panel);
             z-index: 10000;
             animation: slideIn 0.3s ease-out;
+            box-shadow: var(--shadow-card-lite);
         `;
 
         document.body.appendChild(notification);

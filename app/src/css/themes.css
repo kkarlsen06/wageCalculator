@@ -44,6 +44,13 @@
   --border-radius: var(--radius-3xl);
   --border-radius-large: var(--radius-3xl);
 
+  /* Radius roles for consistent surfaces */
+  --radius-hero: var(--radius-3xl);
+  --radius-card: var(--radius-2xl);
+  --radius-panel: var(--radius-xl);
+  --radius-component: var(--radius-lg);
+  --radius-control: var(--radius-sm);
+
   /* Corner radius scale (8px rhythm) */
   --radius-xs: 4px;
   --radius-sm: 8px;
