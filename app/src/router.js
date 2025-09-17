@@ -47,16 +47,10 @@ export const routes = [
         try { appEl.style.setProperty('display', 'block', 'important'); } catch (_) { appEl.style.display = 'block'; }
       }
 
-      // Ensure proper scroll position for dashboard when navigating from other routes
-      if (window.spaNavigationInProgress) {
-        // Allow natural scroll position during SPA navigation
-        setTimeout(() => {
-          // Only scroll to top if we're at the very bottom or way down
-          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-          if (scrollTop > window.innerHeight) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }
-        }, 50);
+      // Clear stored scroll position when manually navigating to dashboard
+      // (but preserve it when using back/forward navigation)
+      if (!window.spaNavigationInProgress) {
+        window.dashboardScrollPosition = undefined;
       }
       
       // Clean up any floating elements, portals, and route-specific globals
@@ -169,8 +163,20 @@ export async function render() {
 
   // Toggle containers: show SPA for non-root routes
   if (match.path === '/') {
+    // Restore dashboard scroll position if it was stored
+    if (window.dashboardScrollPosition !== undefined) {
+      setTimeout(() => {
+        window.scrollTo(0, window.dashboardScrollPosition);
+      }, 50);
+    }
+
     if (spaEl) spaEl.style.display = 'none';
-    if (appEl) appEl.style.setProperty('display', 'block', 'important');
+    if (appEl) {
+      appEl.style.setProperty('display', 'block', 'important');
+      // Restore scrollability for dashboard
+      appEl.style.removeProperty('pointer-events');
+      appEl.style.removeProperty('position');
+    }
     // Clean up auth-mode and any lingering auth markup to avoid layout offsets
     try {
       document.documentElement.classList.remove('auth-mode');
@@ -182,8 +188,23 @@ export async function render() {
     } catch (_) {}
     try { if (spaEl) spaEl.innerHTML = ''; } catch (_) {}
   } else {
-    if (appEl) appEl.style.setProperty('display', 'none', 'important');
-    if (spaEl) spaEl.style.display = 'block';
+    // Store current dashboard scroll position before hiding it
+    if (window.dashboardScrollPosition === undefined || match.path !== window.lastSpaRoute) {
+      window.dashboardScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+    }
+    window.lastSpaRoute = match.path;
+
+    if (appEl) {
+      appEl.style.setProperty('display', 'none', 'important');
+      // Prevent any interaction with the hidden dashboard
+      appEl.style.setProperty('pointer-events', 'none', 'important');
+      appEl.style.setProperty('position', 'fixed', 'important');
+    }
+    if (spaEl) {
+      spaEl.style.display = 'block';
+      // Reset scroll to top for SPA routes
+      window.scrollTo(0, 0);
+    }
     // Mark as SPA route to relax global overflow constraints
     try {
       document.documentElement.classList.add('spa-route');
@@ -201,10 +222,6 @@ export async function render() {
     }
   }
 
-  // Update bottom navigation active state
-  updateBottomNavActiveState(path);
-
-
   // Tag body/html during onboarding for scoped CSS
   try {
     const isOnboarding = match.path === '/onboarding';
@@ -217,6 +234,9 @@ export async function render() {
     spaEl.innerHTML = await match.render();
   }
   match.afterMount && match.afterMount();
+
+  // Update bottom navigation active state AFTER afterMount to ensure navbar is properly restored
+  updateBottomNavActiveState(path);
 }
 
 // History/back support

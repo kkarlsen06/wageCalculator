@@ -19,6 +19,24 @@ body.spa-route {
   overflow: auto !important;
 }
 
+/* Ensure SPA root takes full screen and has its own scroll context */
+#spa-root {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  z-index: 50;
+}
+
+/* When main app is hidden during SPA navigation, prevent any scrolling */
+#app[style*="display: none"] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
 /* (Consolidated below) Mobile skeleton sizing rules moved to a single section */
 
 /* Align next-card shimmers with real content insets (beyond badge) */
@@ -16554,22 +16572,31 @@ body.chatbox-view .chatbox-container {
 /* Month Picker Header for Shifts Route */
 .month-picker-header {
   width: 100%;
-  margin-bottom: 20px;
-  padding: 12px 0;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-primary);
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 50;
+  left: 0;
+  right: 0;
+  z-index: 60;
 }
 
-/* Add bottom padding to shifts route content to clear navbar */
-.spa-route .settings-detail {
+/* Shifts content container - scrollable area below fixed month picker */
+.shifts-content-container {
+  margin-top: 64px; /* Height of month picker header */
+  height: calc(100vh - 64px - 120px); /* Subtract month picker height and bottom nav space */
+  overflow-y: auto;
+  padding-bottom: 20px; /* Extra spacing at bottom */
+}
+
+/* Add bottom padding to non-shifts SPA route content to clear navbar */
+.spa-route .settings-detail:not(:has(.shifts-content-container)) {
   padding-bottom: 120px; /* Space for navbar (100px) + extra spacing (20px) */
 }
 
-/* Ensure shifts content can scroll properly */
-.spa-route .settings-detail .app-container {
+/* Ensure non-shifts content can scroll properly */
+.spa-route .settings-detail:not(:has(.shifts-content-container)) .app-container {
   min-height: calc(100vh - 200px);
 }
 
