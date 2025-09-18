@@ -1,6 +1,8 @@
 // Redesigned Settings route with home list + detail subpages and slide animations
 
 import { mountAll } from '../js/icons.js';
+import { ENABLE_CUSTOM_BONUS_EDITOR } from '../flags.js';
+import { mountCustomBonusEditor } from '../components/bonuses/editor.js';
 
 function getHomeView() {
   return `
@@ -316,6 +318,43 @@ function getWageDetail() {
 }
 
 function getWageAdvancedDetail() {
+  const customBonusCard = ENABLE_CUSTOM_BONUS_EDITOR
+    ? `
+            <div class="setting-card is-long">
+              <div class="setting-body">
+                <div id="customBonusEditorRoot" aria-live="polite"></div>
+              </div>
+            </div>`
+    : `
+            <div class="setting-card is-long">
+              <div class="setting-body">
+                <!-- Ukedag group -->
+                <div class="supplement-group" data-type="weekday">
+                  <div class="group-title">Ukedag</div>
+                  <div id="weekdayBonusSlots" class="supplement-list" aria-live="polite"></div>
+                  <div class="setting-actions">
+                    <button id="addWeekdaySupplementBtn" type="button" class="btn btn-secondary">Legg til</button>
+                  </div>
+                </div>
+                <!-- Lørdag group -->
+                <div class="supplement-group" data-type="saturday">
+                  <div class="group-title">Lørdag</div>
+                  <div id="saturdayBonusSlots" class="supplement-list" aria-live="polite"></div>
+                  <div class="setting-actions">
+                    <button id="addSaturdaySupplementBtn" type="button" class="btn btn-secondary">Legg til</button>
+                  </div>
+                </div>
+                <!-- Søndag group -->
+                <div class="supplement-group" data-type="sunday">
+                  <div class="group-title">Søndag</div>
+                  <div id="sundayBonusSlots" class="supplement-list" aria-live="polite"></div>
+                  <div class="setting-actions">
+                    <button id="addSundaySupplementBtn" type="button" class="btn btn-secondary">Legg til</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+
   return `
   <div class="settings-detail">
     <div class="settings-content">
@@ -443,34 +482,7 @@ function getWageAdvancedDetail() {
             <p class="section-description">Flere tillegg per dag er tillatt, men tidsrom kan ikke overlappe.</p>
           </header>
           <div class="settings-section-body">
-            <div class="setting-card is-long">
-              <div class="setting-body">
-                <!-- Ukedag group -->
-                <div class="supplement-group" data-type="weekday">
-                  <div class="group-title">Ukedag</div>
-                  <div id="weekdayBonusSlots" class="supplement-list" aria-live="polite"></div>
-                  <div class="setting-actions">
-                    <button id="addWeekdaySupplementBtn" type="button" class="btn btn-secondary">Legg til</button>
-                  </div>
-                </div>
-                <!-- Lørdag group -->
-                <div class="supplement-group" data-type="saturday">
-                  <div class="group-title">Lørdag</div>
-                  <div id="saturdayBonusSlots" class="supplement-list" aria-live="polite"></div>
-                  <div class="setting-actions">
-                    <button id="addSaturdaySupplementBtn" type="button" class="btn btn-secondary">Legg til</button>
-                  </div>
-                </div>
-                <!-- Søndag group -->
-                <div class="supplement-group" data-type="sunday">
-                  <div class="group-title">Søndag</div>
-                  <div id="sundayBonusSlots" class="supplement-list" aria-live="polite"></div>
-                  <div class="setting-actions">
-                    <button id="addSundaySupplementBtn" type="button" class="btn btn-secondary">Legg til</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+${customBonusCard}
           </div>
         </section>
     </div>
@@ -1007,31 +1019,40 @@ export function afterMountSettings() {
       // Ensure collapsible handlers present for future sections reuse
       window.app.setupCollapsibleEventListeners?.();
     } else if (section === 'wage-advanced' && window.app) {
-      window.app.populateCustomBonusSlots?.();
+      if (ENABLE_CUSTOM_BONUS_EDITOR) {
+        const editorRoot = document.getElementById('customBonusEditorRoot');
+        if (editorRoot) {
+          mountCustomBonusEditor(editorRoot).catch((err) => {
+            console.warn('[settings-route] custom bonus editor init failed', err);
+          });
+        }
+      } else {
+        window.app.populateCustomBonusSlots?.();
 
-      const supplementsCard = document.querySelector('[aria-labelledby="advanced-supplements-title"] .setting-card');
-      if (supplementsCard) {
-        supplementsCard.style.opacity = '0.6';
-        supplementsCard.classList.add('supplements-disabled');
+        const supplementsCard = document.querySelector('[aria-labelledby="advanced-supplements-title"] .setting-card');
+        if (supplementsCard) {
+          supplementsCard.style.opacity = '0.6';
+          supplementsCard.classList.add('supplements-disabled');
+        }
+
+        const noticeId = 'customBonusMigrationNotice';
+        let notice = document.getElementById(noticeId);
+        if (!notice) {
+          notice = document.createElement('div');
+          notice.id = noticeId;
+          notice.className = 'supplement-disabled-notice';
+          notice.textContent = 'Custom bonus editing is temporarily disabled during migration.';
+          const target = supplementsCard?.querySelector('.setting-body') || supplementsCard;
+          target?.insertAdjacentElement('afterbegin', notice);
+        }
+
+        const disableTargets = document.querySelectorAll('.supplement-group button, .supplement-group input');
+        disableTargets.forEach(el => {
+          el.setAttribute('disabled', 'true');
+          el.classList.add('is-disabled');
+          el.setAttribute('aria-disabled', 'true');
+        });
       }
-
-      const noticeId = 'customBonusMigrationNotice';
-      let notice = document.getElementById(noticeId);
-      if (!notice) {
-        notice = document.createElement('div');
-        notice.id = noticeId;
-        notice.className = 'supplement-disabled-notice';
-        notice.textContent = 'Custom bonus editing is temporarily disabled during migration.';
-        const target = supplementsCard?.querySelector('.setting-body') || supplementsCard;
-        target?.insertAdjacentElement('afterbegin', notice);
-      }
-
-      const disableTargets = document.querySelectorAll('.supplement-group button, .supplement-group input');
-      disableTargets.forEach(el => {
-        el.setAttribute('disabled', 'true');
-        el.classList.add('is-disabled');
-        el.setAttribute('aria-disabled', 'true');
-      });
 
       // Initialize Pausetrekk UI state and validations
       try {
