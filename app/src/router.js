@@ -105,6 +105,7 @@ export const routes = [
   { path: '/ansatte', render: renderAnsatte, afterMount: afterMountAnsatte },
   { path: '/shifts', render: renderShifts, afterMount: afterMountShifts },
   { path: '/shift-add', render: renderAddShift, afterMount: afterMountAddShift },
+  { path: '/shiftAdd', render: renderAddShift, afterMount: afterMountAddShift },
   { path: '/shift-edit', render: renderShiftEdit, afterMount: afterMountShiftEdit },
   { path: '/lonnai', render: renderLonnAI, afterMount: afterMountLonnAI },
   { path: '/settings', render: renderSettings, afterMount: afterMountSettings },
@@ -298,7 +299,7 @@ export async function render() {
   // Hide bottom navigation for specific routes that need full screen
   const bottomNav = document.querySelector('.bottom-nav');
   if (bottomNav) {
-    if (match.path === '/shift-add' || match.path === '/login') {
+    if (match.path === '/shift-add' || match.path === '/shiftAdd' || match.path === '/login') {
       bottomNav.style.display = 'none';
     } else {
       bottomNav.style.display = '';

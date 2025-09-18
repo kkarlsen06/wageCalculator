@@ -218,7 +218,7 @@ function updateNavbarForShifts() {
       <span class="nav-label">Tilbake</span>
     </button>
 
-    <button class="nav-item nav-add nav-add-small" data-spa data-href="/shift-add">
+    <button class="nav-item nav-add nav-add-small" data-spa data-href="/shiftAdd">
       <div class="nav-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
