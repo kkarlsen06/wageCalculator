@@ -10163,12 +10163,6 @@ export const app = {
                 result.errors.push('Ugyldig tidsverdi i et tilleggsintervall.');
                 continue;
             }
-            if (to <= from) {
-                result.valid = false;
-                result.errors.push('Sluttid må være etter starttid for alle tillegg.');
-                continue;
-            }
-
             const hasRate = rule.rate != null && !Number.isNaN(Number(rule.rate));
             const hasPercent = rule.percent != null && !Number.isNaN(Number(rule.percent));
             if (!hasRate && !hasPercent) {
@@ -10187,9 +10181,31 @@ export const app = {
                 continue;
             }
 
+            const crossesMidnight = to <= from;
             for (const day of days) {
-                if (!intervalsByDay.has(day)) intervalsByDay.set(day, []);
-                intervalsByDay.get(day).push({ start: from, end: to });
+                const numericDay = Number(day);
+                const hasNumericDay = Number.isFinite(numericDay);
+                const normalizedDay = hasNumericDay
+                    ? ((Math.trunc(numericDay) % 7) + 7) % 7
+                    : day;
+
+                if (!intervalsByDay.has(normalizedDay)) {
+                    intervalsByDay.set(normalizedDay, []);
+                }
+
+                if (crossesMidnight) {
+                    intervalsByDay.get(normalizedDay).push({ start: from, end: 1440 });
+
+                    const nextDayKey = hasNumericDay
+                        ? (normalizedDay + 1) % 7
+                        : `${day}_next`;
+                    if (!intervalsByDay.has(nextDayKey)) {
+                        intervalsByDay.set(nextDayKey, []);
+                    }
+                    intervalsByDay.get(nextDayKey).push({ start: 0, end: to });
+                } else {
+                    intervalsByDay.get(normalizedDay).push({ start: from, end: to });
+                }
             }
         }
 
