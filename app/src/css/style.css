@@ -3382,6 +3382,16 @@ input[type="time"].form-control[value=""]:focus-visible {
 }
 
 /* Modal */
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
+body.modal-open {
+  overscroll-behavior: contain;
+}
+
 .modal {
   display: none;
   position: fixed;
@@ -3390,7 +3400,8 @@ input[type="time"].form-control[value=""]:focus-visible {
   top: 0;
   width: 100%;
   height: 100%;
-  overflow: auto;
+  min-height: 100dvh;
+  overflow: hidden;
   background-color: rgba(0,0,0,0.6);
 }
 
@@ -3426,7 +3437,9 @@ input[type="time"].form-control[value=""]:focus-visible {
     inset 0 -1px 0 rgba(0, 0, 0, 0.1), /* Subtle bottom inner shadow */
     inset 1px 0 0 rgba(255, 255, 255, 0.025), /* Subtle left inner highlight */
     inset -1px 0 0 rgba(0, 0, 0, 0.05); /* Subtle right inner shadow */
+  max-height: calc(100dvh - 2rem);
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
   position: relative;
   border: 1px solid var(--border);
@@ -3439,7 +3452,7 @@ input[type="time"].form-control[value=""]:focus-visible {
     width: 90vw;
     height: auto;
     /* On desktop, cap modal height within viewport, accounting for safe areas where present */
-    max-height: 90vh;
+    max-height: min(90vh, calc(100dvh - 2rem));
     margin: 0;
     border-radius: 24px;
   }
@@ -3463,8 +3476,8 @@ input[type="time"].form-control[value=""]:focus-visible {
   z-index: 1300;
   max-width: 520px;
   width: 92vw;
-  height: 80vh; /* tighter height */
-  max-height: 640px; /* slightly reduced */
+  height: min(80vh, calc(100dvh - 3rem)); /* tighter height */
+  max-height: min(640px, calc(100dvh - 3rem)); /* slightly reduced */
   min-height: 420px;
   overflow: hidden;
   border-radius: 40px; /* slightly tighter radius */
@@ -3474,8 +3487,8 @@ input[type="time"].form-control[value=""]:focus-visible {
 @media (max-width: 600px) {
   #settingsModal .modal-content {
     width: 95vw;
-    height: 90vh;
-    max-height: 650px;
+    height: min(90vh, calc(100dvh - 2rem));
+    max-height: min(650px, calc(100dvh - 2rem));
     min-height: 450px;
     border-radius: 24px;
   }
@@ -5259,7 +5272,7 @@ input:checked + .slider:before {
   align-items: stretch;
   margin: 0;
   /* Ensure card doesn't exceed viewport height and is always accessible */
-  max-height: calc(100vh - 80px);
+  max-height: calc(100dvh - 80px);
   overflow-y: auto;
   /* Ensure minimum spacing from viewport edges */
   min-height: fit-content;
@@ -5269,7 +5282,7 @@ input:checked + .slider:before {
 @media (max-height: 600px) {
   .login-card {
     padding: 24px 20px 20px 20px;
-    max-height: calc(100vh - 20px);
+    max-height: calc(100dvh - 20px);
   }
 
   .login-card h2 {
@@ -5613,7 +5626,7 @@ input:checked + .slider:before {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   background: rgba(13, 17, 23, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);

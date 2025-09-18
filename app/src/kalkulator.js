@@ -49,6 +49,10 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
     import('/src/js/offline-debug-utils.js');
 }
 
+if (import.meta?.env?.DEV) {
+  import('/src/dev/modalScrollAudit.ts');
+}
+
 // If app.js uses ESM default export or side effects, ensure DOMContentLoaded init remains intact.
 // Expose inline handlers compatibility by attaching window.app if the module exported it.
 // window.app is attached by /js/app.js when it initializes

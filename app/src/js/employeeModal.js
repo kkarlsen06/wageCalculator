@@ -4,6 +4,8 @@
  * Following PLACEHOLDER_EMPLOYEES_V1 ruleset
  */
 
+import { lockScroll, unlockScroll } from './utils/scrollLock.js';
+
 export class EmployeeModal {
     constructor(app) {
         this.app = app;
@@ -135,7 +137,7 @@ export class EmployeeModal {
 
         if (this.modal) {
             this.modal.classList.remove('active');
-            document.body.classList.remove('modal-open');
+            unlockScroll();
             setTimeout(() => {
                 if (this.modal && this.modal.parentNode) {
                     this.modal.remove();
@@ -168,7 +170,7 @@ export class EmployeeModal {
         // Trigger animation
         setTimeout(() => {
             this.modal.classList.add('active');
-            document.body.classList.add('modal-open');
+            lockScroll();
         }, 10);
     }
 
@@ -1733,14 +1735,14 @@ export class EmployeeModal {
             `;
             
             document.body.appendChild(modal);
-            document.body.classList.add('modal-open');
+            lockScroll();
 
             const futureOnlyBtn = modal.querySelector('#futureOnlyBtn');
             const retroactiveBtn = modal.querySelector('#retroactiveBtn');
             
             const closeModal = (retroactive) => {
                 modal.classList.remove('active');
-                document.body.classList.remove('modal-open');
+                unlockScroll();
                 setTimeout(() => {
                     modal.remove();
                     resolve(retroactive);

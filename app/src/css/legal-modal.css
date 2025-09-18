@@ -31,7 +31,6 @@ body {
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
-    height: 100vh !important;
     height: 100dvh !important;
     z-index: 10000 !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -41,6 +40,7 @@ body {
     justify-content: center !important;
     pointer-events: none !important; /* do not block clicks when hidden */
     visibility: hidden !important;
+    overflow: hidden;
 }
 
 .legal-modal-overlay {
@@ -59,7 +59,7 @@ body {
     position: relative;
     width: 90%;
     max-width: 800px;
-    max-height: 90vh;
+    max-height: min(90vh, calc(100dvh - 2rem));
     background: var(--bg-primary, #ffffff);
     border-radius: var(--border-radius, 40px);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -71,6 +71,8 @@ body {
     flex-shrink: 0;
     /* Ensure modal is above overlay */
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes modalSlideIn {
@@ -187,8 +189,11 @@ body {
 }
 
 .legal-modal-content {
-    max-height: 60vh;
-    overflow: hidden;
+    flex: 1;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .legal-tab-content {
@@ -201,8 +206,6 @@ body {
 }
 
 .legal-content-scroll {
-    max-height: 50vh;
-    overflow-y: auto;
     padding-right: 16px;
 }
 
@@ -312,7 +315,7 @@ body {
 @media (max-width: 768px) {
     .legal-modal-container {
         width: 95%;
-        max-height: 95vh;
+        max-height: min(95vh, calc(100dvh - 1.5rem));
         /* Ensure modal is properly positioned on mobile after scroll */
         margin: 20px;
     }
@@ -339,7 +342,7 @@ body {
     }
     
     .legal-content-scroll {
-        max-height: 40vh;
+        max-height: none;
     }
     
     .legal-modal-footer {
@@ -356,7 +359,7 @@ body {
 @media (max-width: 480px) {
     .legal-modal-container {
         width: 98%;
-        max-height: 98vh;
+        max-height: min(98vh, calc(100dvh - 1rem));
     }
     
     .legal-modal-header {
@@ -368,7 +371,7 @@ body {
     }
     
     .legal-content-scroll {
-        max-height: 35vh;
+        max-height: none;
     }
 }
 

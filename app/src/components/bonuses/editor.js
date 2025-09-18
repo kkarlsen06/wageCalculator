@@ -5,6 +5,7 @@ import { normalizeUb } from '../../lib/ubNormalize.js';
 import { DAYS, normalizeDays } from './days.js';
 import { createDayPill } from './day-pill.js';
 import { formatDayPills, sortRules, mutuallyExclusive } from './utils.js';
+import { lockScroll, unlockScroll } from '../../js/utils/scrollLock.js';
 
 function timeStringToMinutes(value) {
   if (typeof value !== 'string') return null;
@@ -700,7 +701,7 @@ class CustomBonusEditor {
     modal.appendChild(footer);
     backdrop.appendChild(modal);
     document.body.appendChild(backdrop);
-    document.body.classList.add('modal-open');
+    lockScroll();
     this.modal = backdrop;
 
     const updateDayUI = () => {
@@ -910,7 +911,7 @@ class CustomBonusEditor {
       this.modal.remove();
       this.modal = null;
     }
-    document.body.classList.remove('modal-open');
+    unlockScroll();
   }
 }
 

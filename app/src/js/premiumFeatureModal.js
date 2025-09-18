@@ -1,6 +1,7 @@
 import { deleteShiftsOutsideMonth } from './subscriptionValidator.js';
 import { ConfirmationDialog } from './confirmationDialog.js';
 import { getUserId } from '/src/lib/auth/getUserId.js';
+import { lockScroll, unlockScroll } from './utils/scrollLock.js';
 
 export class PremiumFeatureModal {
   constructor() {
@@ -122,7 +123,7 @@ export class PremiumFeatureModal {
     // Show modal with smooth animation
     requestAnimationFrame(() => {
       modal.classList.add('active');
-      document.body.classList.add('modal-open');
+      lockScroll();
     });
   }
 
@@ -344,14 +345,14 @@ export class PremiumFeatureModal {
     const closeBtn = modal.querySelector('.modal-close-btn');
     closeBtn?.addEventListener('click', () => {
       modal.classList.remove('active');
-      document.body.classList.remove('modal-open');
+      unlockScroll();
       modal.style.display = 'none';
       modal.remove();
     });
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         modal.classList.remove('active');
-        document.body.classList.remove('modal-open');
+        unlockScroll();
         modal.style.display = 'none';
         modal.remove();
       }
@@ -394,7 +395,7 @@ export class PremiumFeatureModal {
     // Show modal
     modal.style.display = 'flex';
     modal.classList.add('active');
-    document.body.classList.add('modal-open');
+    lockScroll();
 
     // Load subscription data
     try {
@@ -508,7 +509,7 @@ export class PremiumFeatureModal {
     if (!this.modal) return;
 
     this.modal.classList.remove('active');
-    document.body.classList.remove('modal-open');
+    unlockScroll();
 
     // Remove event listeners
     document.removeEventListener('keydown', this.handleKeyDown);

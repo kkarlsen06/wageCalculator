@@ -3,6 +3,8 @@
  * Handles display of Privacy Policy and Terms & Conditions
  */
 
+import { lockScroll, unlockScroll } from './utils/scrollLock.js';
+
 class LegalModal {
     constructor() {
         this.modal = null;
@@ -234,7 +236,7 @@ class LegalModal {
         setTimeout(() => {
             this.modal.classList.add('active');
             this.isOpen = true;
-            document.body.style.overflow = 'hidden';
+            lockScroll();
             console.log('Modal opened with active class');
             
             // Focus management
@@ -247,7 +249,7 @@ class LegalModal {
     close() {
         this.modal.classList.remove('active');
         this.isOpen = false;
-        document.body.style.overflow = '';
+        unlockScroll();
         
         // Remove landing page class when closing
         this.modal.classList.remove('landing-page');
@@ -329,7 +331,7 @@ class LegalModal {
     showModalAfterScroll() {
         this.modal.classList.add('active');
         this.isOpen = true;
-        document.body.style.overflow = 'hidden';
+        lockScroll();
         
         // Focus management with slight delay for better UX
         setTimeout(() => {

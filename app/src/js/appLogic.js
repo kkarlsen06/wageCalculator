@@ -2,6 +2,7 @@ import { getUserId } from "/src/lib/auth/getUserId.js";
 import { fetchOnce } from "/src/lib/net/fetchOnce.js";
 import { hasEnterpriseSubscription } from './subscriptionUtils.js';
 import { normalizeUb } from '/src/lib/ubNormalize.js';
+import { lockScroll, unlockScroll } from './utils/scrollLock.js';
 
 
 
@@ -3567,7 +3568,9 @@ export const app = {
             this.updateSettingsUI();
             this.switchSettingsTabSync('wage');
             setTimeout(() => { this.updateTaxDeductionUI(); }, 50);
+            const wasHidden = modal.style.display === 'none' || modal.style.display === '';
             modal.style.display = 'flex';
+            if (wasHidden) lockScroll();
             this.setupCollapsibleEventListeners();
             if (!this.usePreset) { setTimeout(() => { this.populateCustomBonusSlots(); }, 100); }
         }
@@ -3588,7 +3591,9 @@ export const app = {
             this.updateSettingsUI();
             this.switchSettingsTabSync('wage');
             setTimeout(() => { this.updateTaxDeductionUI(); }, 50);
+            const wasHidden = modal.style.display === 'none' || modal.style.display === '';
             modal.style.display = 'flex';
+            if (wasHidden) lockScroll();
             if (!this.usePreset) { setTimeout(() => { this.populateCustomBonusSlots(); }, 100); }
             setTimeout(() => {
                 const payrollDayInput = document.getElementById('payrollDayInput');
@@ -3616,6 +3621,9 @@ export const app = {
 
         if (modal) {
             modal.style.display = 'none';
+            if (wasModalOpen) {
+                unlockScroll();
+            }
         }
 
         // Restore floating action bar visibility when modal closes
@@ -3949,7 +3957,7 @@ export const app = {
             // Show the modal
             modal.style.display = 'flex';
             modal.classList.add('active');
-            document.body.classList.add('modal-open');
+            lockScroll();
 
             // Add keyboard support
             const keydownHandler = (e) => {
@@ -3982,7 +3990,7 @@ export const app = {
             try { this.updateProfile(); } catch (_) {}
             modal.style.display = 'none';
             modal.classList.remove('active');
-            document.body.classList.remove('modal-open');
+            unlockScroll();
 
             // Remove event listeners
             if (modal.keydownHandler) {
@@ -7358,7 +7366,7 @@ export const app = {
             left: 50%;
             transform: translate(-50%, -50%) scale(0.8);
             width: min(95vw, 500px);
-            max-height: 85vh;
+            max-height: min(85vh, calc(100dvh - 4rem));
             background: var(--bg-primary);
             border-radius: 24px;
             box-shadow: 0 20px 60px var(--shadow-blue);
@@ -7665,6 +7673,7 @@ export const app = {
         modal.appendChild(fixedFooter);
 
         document.body.appendChild(modal);
+        lockScroll();
         requestAnimationFrame(() => {
             modal.style.opacity = '1';
             modal.style.transform = 'translate(-50%, -50%) scale(1)';
@@ -7716,6 +7725,8 @@ export const app = {
                 setTimeout(() => { if (backdrop.parentNode) backdrop.remove(); }, 350);
             }, 100);
         }
+
+        unlockScroll();
     },
 
 
@@ -8154,7 +8165,7 @@ export const app = {
             // Show modal
             modal.style.display = 'flex';
             modal.classList.add('active');
-            document.body.classList.add('modal-open');
+            lockScroll();
 
             // Init cropper
             await new Promise(resolve => setTimeout(resolve, 10));
@@ -8310,14 +8321,10 @@ export const app = {
             try { this.cropper.destroy(); } catch (_) {}
             this.cropper = null;
         }
-        if (!keepModalHidden && modal) {
+        if (modal) {
             modal.classList.remove('active');
             modal.style.display = 'none';
-            document.body.classList.remove('modal-open');
-        } else if (modal) {
-            modal.classList.remove('active');
-            modal.style.display = 'none';
-            document.body.classList.remove('modal-open');
+            unlockScroll();
         }
         if (this._cropObjectUrl) {
             URL.revokeObjectURL(this._cropObjectUrl);
@@ -12925,7 +12932,7 @@ export const app = {
 
         // Use active class for proper flexbox centering
         modal.classList.add('active');
-        document.body.classList.add('modal-open');
+        lockScroll();
     },
 
     /**
@@ -12935,7 +12942,7 @@ export const app = {
         const modal = document.getElementById('csvExportModal');
         if (modal) {
             modal.classList.remove('active');
-            document.body.classList.remove('modal-open');
+            unlockScroll();
         }
     },
 
