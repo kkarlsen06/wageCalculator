@@ -122,6 +122,7 @@ export class PremiumFeatureModal {
     // Show modal with smooth animation
     requestAnimationFrame(() => {
       modal.classList.add('active');
+      document.body.classList.add('modal-open');
     });
   }
 
@@ -343,12 +344,14 @@ export class PremiumFeatureModal {
     const closeBtn = modal.querySelector('.modal-close-btn');
     closeBtn?.addEventListener('click', () => {
       modal.classList.remove('active');
+      document.body.classList.remove('modal-open');
       modal.style.display = 'none';
       modal.remove();
     });
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         modal.classList.remove('active');
+        document.body.classList.remove('modal-open');
         modal.style.display = 'none';
         modal.remove();
       }
@@ -391,6 +394,7 @@ export class PremiumFeatureModal {
     // Show modal
     modal.style.display = 'flex';
     modal.classList.add('active');
+    document.body.classList.add('modal-open');
 
     // Load subscription data
     try {
@@ -504,7 +508,8 @@ export class PremiumFeatureModal {
     if (!this.modal) return;
 
     this.modal.classList.remove('active');
-    
+    document.body.classList.remove('modal-open');
+
     // Remove event listeners
     document.removeEventListener('keydown', this.handleKeyDown);
     

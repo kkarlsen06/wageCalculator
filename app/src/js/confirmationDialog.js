@@ -53,6 +53,7 @@ export class ConfirmationDialog {
         
         if (this.modal) {
             this.modal.classList.remove('active');
+            document.body.classList.remove('modal-open');
             setTimeout(() => {
                 if (this.modal && this.modal.parentNode) {
                     this.modal.remove();
@@ -94,6 +95,7 @@ export class ConfirmationDialog {
         // Trigger animation
         setTimeout(() => {
             this.modal.classList.add('active');
+            document.body.classList.add('modal-open');
         }, 10);
     }
 

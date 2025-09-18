@@ -38,6 +38,12 @@ export function renderAnsatte() {
 }
 
 export function afterMountAnsatte() {
+  // Prevent horizontal scrolling
+  document.body.style.overflowX = 'hidden';
+  document.body.style.maxWidth = '100vw';
+  document.documentElement.style.overflowX = 'hidden';
+  document.documentElement.style.maxWidth = '100vw';
+
   // Initialize the employees view using existing appLogic functionality
   try {
     // Ensure the app is available and has enterprise subscription
@@ -87,11 +93,50 @@ async function initializeEmployeesRoute() {
       // Initialize the employees view using existing appLogic
       await window.app.showEmployeesView();
 
-      // Hide the loading placeholder once employees view is loaded
-      const placeholder = document.getElementById('ansatteLoadingPlaceholder');
-      if (placeholder) {
-        placeholder.style.display = 'none';
-      }
+      // Wait a moment for employees to load, then auto-select first employee if none selected
+      setTimeout(async () => {
+        try {
+          if (window.app.employees && window.app.employees.length > 0) {
+            // If no employee is currently selected, select the first one
+            if (!window.app.selectedEmployeeId) {
+              const firstEmployee = window.app.employees[0];
+              if (firstEmployee && firstEmployee.id) {
+                console.log('[ansatte-route] Auto-selecting first employee:', firstEmployee.name);
+
+                // Use the app's employee selection method if available
+                if (window.app.selectEmployee) {
+                  await window.app.selectEmployee(firstEmployee.id);
+                } else {
+                  // Fallback: manually set selected employee
+                  window.app.selectedEmployeeId = firstEmployee.id;
+                  localStorage.setItem('selectedEmployeeId', firstEmployee.id);
+
+                  // Trigger display updates
+                  if (window.app.updateDisplay) {
+                    window.app.updateDisplay();
+                  }
+                  if (window.app.renderEmployeeWorkSummary) {
+                    window.app.renderEmployeeWorkSummary();
+                  }
+                }
+              }
+            }
+          }
+
+          // Hide the loading placeholder once employees view is fully loaded
+          const placeholder = document.getElementById('ansatteLoadingPlaceholder');
+          if (placeholder) {
+            placeholder.style.display = 'none';
+          }
+        } catch (autoSelectError) {
+          console.warn('[ansatte-route] Failed to auto-select employee:', autoSelectError);
+          // Still hide placeholder even if auto-select fails
+          const placeholder = document.getElementById('ansatteLoadingPlaceholder');
+          if (placeholder) {
+            placeholder.style.display = 'none';
+          }
+        }
+      }, 500); // Give employees time to load
 
       // Ensure body has the correct class for styling
       document.body.classList.add('employees-view');

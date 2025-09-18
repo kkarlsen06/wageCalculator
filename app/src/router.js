@@ -212,6 +212,15 @@ export async function render() {
       document.documentElement.classList.remove('spa-route');
       document.body.classList.remove('spa-route');
     } catch (_) {}
+
+    // Clean up ansatte route overflow prevention
+    try {
+      document.body.style.removeProperty('overflow-x');
+      document.body.style.removeProperty('max-width');
+      document.documentElement.style.removeProperty('overflow-x');
+      document.documentElement.style.removeProperty('max-width');
+    } catch (_) {}
+
     try { if (spaEl) spaEl.innerHTML = ''; } catch (_) {}
 
     // Install scroll prevention listener for dashboard

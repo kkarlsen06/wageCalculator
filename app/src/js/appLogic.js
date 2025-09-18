@@ -3925,6 +3925,7 @@ export const app = {
             // Show the modal
             modal.style.display = 'flex';
             modal.classList.add('active');
+            document.body.classList.add('modal-open');
 
             // Add keyboard support
             const keydownHandler = (e) => {
@@ -3957,6 +3958,7 @@ export const app = {
             try { this.updateProfile(); } catch (_) {}
             modal.style.display = 'none';
             modal.classList.remove('active');
+            document.body.classList.remove('modal-open');
 
             // Remove event listeners
             if (modal.keydownHandler) {
@@ -8070,6 +8072,7 @@ export const app = {
             // Show modal
             modal.style.display = 'flex';
             modal.classList.add('active');
+            document.body.classList.add('modal-open');
 
             // Init cropper
             await new Promise(resolve => setTimeout(resolve, 10));
@@ -8228,9 +8231,11 @@ export const app = {
         if (!keepModalHidden && modal) {
             modal.classList.remove('active');
             modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
         } else if (modal) {
             modal.classList.remove('active');
             modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
         }
         if (this._cropObjectUrl) {
             URL.revokeObjectURL(this._cropObjectUrl);
@@ -12838,6 +12843,7 @@ export const app = {
 
         // Use active class for proper flexbox centering
         modal.classList.add('active');
+        document.body.classList.add('modal-open');
     },
 
     /**
@@ -12847,6 +12853,7 @@ export const app = {
         const modal = document.getElementById('csvExportModal');
         if (modal) {
             modal.classList.remove('active');
+            document.body.classList.remove('modal-open');
         }
     },
 
