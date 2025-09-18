@@ -227,12 +227,6 @@ const UB_TYPE_TO_DAYS = {
     sunday: [7]
 };
 
-const SHIFT_TYPE_TO_DAYS = {
-    0: UB_TYPE_TO_DAYS.weekday,
-    1: UB_TYPE_TO_DAYS.saturday,
-    2: UB_TYPE_TO_DAYS.sunday
-};
-
 function ubSegmentsForDays(rules, isoDays) {
     if (!Array.isArray(rules) || !Array.isArray(isoDays) || isoDays.length === 0) return [];
     const daySet = new Set(isoDays);
@@ -249,11 +243,6 @@ function ubSegmentsForDays(rules, isoDays) {
 
 function ubSegmentsForType(rules, type) {
     const isoDays = UB_TYPE_TO_DAYS[type] || [];
-    return ubSegmentsForDays(rules, isoDays);
-}
-
-function ubSegmentsForShiftType(rules, shiftType) {
-    const isoDays = SHIFT_TYPE_TO_DAYS[shiftType] || [];
     return ubSegmentsForDays(rules, isoDays);
 }
 
@@ -3419,35 +3408,36 @@ export const app = {
             return false;
         }
         try {
-            const timeToMinutes = (t) => {
-                if (!t || typeof t !== 'string') return null;
-                const m = t.match(/^(\d{1,2}):(\d{2})$/);
-                if (!m) return null;
-                const hh = parseInt(m[1], 10), mm = parseInt(m[2], 10);
-                if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
-                return hh * 60 + mm;
+            const normalizedFrom = this.normalizeTimeInputValue(slot?.from);
+            const normalizedTo = this.normalizeTimeInputValue(slot?.to);
+            const rateValue = typeof slot?.rate === 'number' ? slot.rate : Number.parseFloat(slot?.rate);
+            const rateOk = Number.isFinite(rateValue) && rateValue > 0;
+            if (!normalizedFrom || !normalizedTo || !rateOk) return false;
+
+            const legacy = this.convertUnifiedBonusesToLegacy(this.customBonuses || { rules: [] });
+            const list = Array.isArray(legacy[type]) ? [...legacy[type]] : [];
+            const updatedEntry = { from: normalizedFrom, to: normalizedTo, rate: rateValue };
+            if (indexOrNull === null) {
+                list.push(updatedEntry);
+            } else {
+                list[indexOrNull] = updatedEntry;
+            }
+            legacy[type] = list;
+
+            const unified = this.convertLegacyBonusesToUnified(legacy);
+            const validation = this.validateUnifiedBonusRules(unified.rules);
+            if (!validation.valid) {
+                console.warn('upsertBonusSlot validation failed:', validation.errors);
+                return false;
+            }
+
+            this.customBonuses = {
+                rules: unified.rules.map(rule => ({
+                    ...rule,
+                    days: Array.isArray(rule.days) ? [...rule.days] : []
+                }))
             };
-            const fromMin = timeToMinutes(slot?.from);
-            const toMin = timeToMinutes(slot?.to);
-            const rateOk = typeof slot?.rate === 'number' && !Number.isNaN(slot.rate) && slot.rate > 0;
-            if (fromMin === null || toMin === null || !(fromMin < toMin) || !rateOk) return false;
 
-            const next = { weekday: [], saturday: [], sunday: [], ...(this.customBonuses || {}) };
-            const list = Array.isArray(next[type]) ? next[type].slice() : [];
-            if (indexOrNull === null) list.push({ from: slot.from, to: slot.to, rate: slot.rate });
-            else list[indexOrNull] = { from: slot.from, to: slot.to, rate: slot.rate };
-
-            // Overlap validation within this group
-            const ranges = list
-              .map(x => ({ a: timeToMinutes(x.from), b: timeToMinutes(x.to) }))
-              .filter(r => r.a !== null && r.b !== null && r.a < r.b)
-              .sort((r1, r2) => r1.a - r2.a);
-            let overlaps = false;
-            for (let i = 1; i < ranges.length; i++) { if (ranges[i].a < ranges[i-1].b) { overlaps = true; break; } }
-            if (overlaps) return false;
-
-            next[type] = list;
-            this.customBonuses = next;
             await this.saveSettingsToSupabase();
             this.saveToLocalStorage?.();
             return true;
@@ -6267,7 +6257,7 @@ export const app = {
             !!shift?.employee
         );
         const bonuses = isEmployeeShift ? this.PRESET_BONUSES : this.getCurrentBonuses();
-        const bonusSegments = ubSegmentsForShiftType(bonuses.rules, shift.type);
+        const bonusSegments = this.buildBonusSegmentsForShift(shift, bonuses);
 
         // Calculate base earnings so far
         const baseEarned = hoursWorked * wageRate;
@@ -7365,7 +7355,7 @@ export const app = {
         let bonusBreakdownHtml = '';
         if (calc.bonus > 0) {
             const bonuses = this.getCurrentBonuses();
-            const bonusSegments = ubSegmentsForShiftType(bonuses.rules, shift.type);
+            const bonusSegments = this.buildBonusSegmentsForShift(shift, bonuses);
             
             // Calculate the same adjusted end time as in calculateShift for consistency
             const startMinutes = this.timeToMinutes(shift.startTime);
@@ -9179,23 +9169,108 @@ export const app = {
         return hours * 3600 + minutes * 60 + seconds;
     },
 
+    buildBonusSegmentsForShift(shift, bonuses, startMinutesOverride, endMinutesOverride) {
+        if (!shift) return [];
+        const rules = Array.isArray(bonuses?.rules) ? bonuses.rules : [];
+        if (!rules.length) return [];
+
+        if (typeof shift.startTime !== 'string' || typeof shift.endTime !== 'string') {
+            return [];
+        }
+
+        const MINUTES_PER_DAY = 24 * 60;
+        let startMinutes = Number.isFinite(startMinutesOverride)
+            ? startMinutesOverride
+            : this.timeToMinutes(shift.startTime);
+        let endMinutes = Number.isFinite(endMinutesOverride)
+            ? endMinutesOverride
+            : this.timeToMinutes(shift.endTime);
+
+        if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes)) {
+            return [];
+        }
+
+        if (endMinutes <= startMinutes) {
+            endMinutes += MINUTES_PER_DAY;
+        }
+
+        let startDow = null;
+        if (shift?.date instanceof Date) {
+            startDow = shift.date.getDay();
+        } else if (shift?.date) {
+            const parsed = new Date(shift.date);
+            if (!Number.isNaN(parsed.getTime())) {
+                startDow = parsed.getDay();
+            }
+        }
+
+        if (startDow == null) {
+            if (shift?.type === 2) startDow = 0;
+            else if (shift?.type === 1) startDow = 6;
+            else startDow = 1;
+        }
+
+        const dayToIso = dow => (dow === 0 ? 7 : dow);
+        const segments = [];
+        const baseOffset = Math.floor(startMinutes / MINUTES_PER_DAY);
+        const lastOffset = Math.floor((endMinutes - 1) / MINUTES_PER_DAY);
+
+        for (let rawOffset = baseOffset; rawOffset <= lastOffset; rawOffset++) {
+            const normalizedOffset = rawOffset - baseOffset;
+            const dayStart = rawOffset * MINUTES_PER_DAY;
+            const dayEnd = dayStart + MINUTES_PER_DAY;
+            const overlapStart = Math.max(startMinutes, dayStart);
+            const overlapEnd = Math.min(endMinutes, dayEnd);
+            if (overlapEnd <= overlapStart) continue;
+
+            const isoDay = dayToIso(((startDow + normalizedOffset) % 7 + 7) % 7);
+            const daySegments = ubSegmentsForDays(rules, [isoDay]);
+            if (!daySegments.length) continue;
+            const sorted = [...daySegments].sort((a, b) => this.timeToMinutes(a.from) - this.timeToMinutes(b.from));
+            for (const segment of sorted) {
+                segments.push({ ...segment, dayOffset: normalizedOffset });
+            }
+        }
+
+        const toAbsoluteStart = (segment) => {
+            const offset = Number.isFinite(segment?.dayOffset) ? segment.dayOffset : 0;
+            const base = this.timeToMinutes(segment.from);
+            if (!Number.isFinite(base)) return offset * MINUTES_PER_DAY;
+            return base + offset * MINUTES_PER_DAY;
+        };
+
+        segments.sort((a, b) => toAbsoluteStart(a) - toAbsoluteStart(b));
+        return segments;
+    },
+
     calculateBonus(startTime, endTime, bonusSegments, baseWageRate = 0) {
-        let totalBonus = 0;
         const startMinutes = this.timeToMinutes(startTime);
         let endMinutes = this.timeToMinutes(endTime);
+        if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes)) {
+            return 0;
+        }
+
+        const MINUTES_PER_DAY = 24 * 60;
         // Bonus calculations also need to handle shifts that continue past
         // midnight. Adjust the end time similar to calculateShift.
         if (endMinutes <= startMinutes) {
-            endMinutes += 24 * 60;
+            endMinutes += MINUTES_PER_DAY;
         }
+        let totalBonus = 0;
         for (const segment of bonusSegments) {
-            const segStart = this.timeToMinutes(segment.from);
-            let segEnd = this.timeToMinutes(segment.to);
+            const offset = Number.isFinite(segment?.dayOffset) ? segment.dayOffset : 0;
+            const segStartBase = this.timeToMinutes(segment.from);
+            const segEndBase = this.timeToMinutes(segment.to);
+            if (!Number.isFinite(segStartBase) || !Number.isFinite(segEndBase)) continue;
+            let segStart = segStartBase + offset * MINUTES_PER_DAY;
+            let segEnd = segEndBase + offset * MINUTES_PER_DAY;
             if (segEnd <= segStart) {
-                segEnd += 24 * 60;
+                segEnd += MINUTES_PER_DAY;
             }
             const overlap = this.calculateOverlap(startMinutes, endMinutes, segStart, segEnd);
-            totalBonus += (overlap / 60) * ubRuleHourlyValue(segment, baseWageRate);
+            if (overlap > 0) {
+                totalBonus += (overlap / 60) * ubRuleHourlyValue(segment, baseWageRate);
+            }
         }
         return totalBonus;
     },
@@ -9204,22 +9279,29 @@ export const app = {
     calculateBonusBreakdown(startTime, endTime, bonusSegments, baseWageRate = 0) {
         const startMinutes = this.timeToMinutes(startTime);
         let endMinutes = this.timeToMinutes(endTime);
-        
+        if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes)) {
+            return { breakdown: [], total: 0 };
+        }
+
         // Handle shifts that cross midnight
         if (endMinutes <= startMinutes) {
             endMinutes += 24 * 60;
         }
-        
+
         const breakdown = [];
         let totalBonus = 0;
-        
+        const MINUTES_PER_DAY = 24 * 60;
+
         for (const segment of bonusSegments) {
-            const segStart = this.timeToMinutes(segment.from);
-            let segEnd = this.timeToMinutes(segment.to);
+            const offset = Number.isFinite(segment?.dayOffset) ? segment.dayOffset : 0;
+            const segStartBase = this.timeToMinutes(segment.from);
+            const segEndBase = this.timeToMinutes(segment.to);
+            if (!Number.isFinite(segStartBase) || !Number.isFinite(segEndBase)) continue;
+            let segStart = segStartBase + offset * MINUTES_PER_DAY;
+            let segEnd = segEndBase + offset * MINUTES_PER_DAY;
             if (segEnd <= segStart) {
-                segEnd += 24 * 60;
+                segEnd += MINUTES_PER_DAY;
             }
-            
             const overlap = this.calculateOverlap(startMinutes, endMinutes, segStart, segEnd);
             if (overlap > 0) {
                 const hours = overlap / 60;
@@ -9248,23 +9330,34 @@ export const app = {
 
     // New function for second-precise bonus calculations
     calculateBonusWithSeconds(startTime, endTime, bonusSegments, baseWageRate = 0) {
-        let totalBonus = 0;
         const startSeconds = this.timeToSeconds(startTime);
         let endSeconds = this.timeToSeconds(endTime);
+        if (!Number.isFinite(startSeconds) || !Number.isFinite(endSeconds)) {
+            return 0;
+        }
+
+        const SECONDS_PER_DAY = 24 * 3600;
 
         // Handle shifts that continue past midnight
         if (endSeconds <= startSeconds) {
-            endSeconds += 24 * 3600; // Add 24 hours in seconds
+            endSeconds += SECONDS_PER_DAY; // Add 24 hours in seconds
         }
 
+        let totalBonus = 0;
         for (const segment of bonusSegments) {
-            const segStart = this.timeToSeconds(segment.from);
-            let segEnd = this.timeToSeconds(segment.to);
+            const offset = Number.isFinite(segment?.dayOffset) ? segment.dayOffset : 0;
+            const segStartBase = this.timeToSeconds(segment.from);
+            const segEndBase = this.timeToSeconds(segment.to);
+            if (!Number.isFinite(segStartBase) || !Number.isFinite(segEndBase)) continue;
+            let segStart = segStartBase + offset * SECONDS_PER_DAY;
+            let segEnd = segEndBase + offset * SECONDS_PER_DAY;
             if (segEnd <= segStart) {
-                segEnd += 24 * 3600; // Add 24 hours in seconds
+                segEnd += SECONDS_PER_DAY; // Add 24 hours in seconds
             }
             const overlap = this.calculateOverlap(startSeconds, endSeconds, segStart, segEnd);
-            totalBonus += (overlap / 3600) * ubRuleHourlyValue(segment, baseWageRate); // Convert seconds to hours
+            if (overlap > 0) {
+                totalBonus += (overlap / 3600) * ubRuleHourlyValue(segment, baseWageRate); // Convert seconds to hours
+            }
         }
         return totalBonus;
     },
@@ -9951,40 +10044,212 @@ export const app = {
         this.saveToLocalStorage();
     },
 
+    normalizeTimeInputValue(value) {
+        if (typeof value !== 'string') return null;
+        let trimmed = value.trim();
+        if (!trimmed) return null;
+
+        if (/^\d{1,2}$/.test(trimmed)) {
+            trimmed = `${trimmed.padStart(2, '0')}:00`;
+        } else if (/^\d{1,2}:\d{1}$/.test(trimmed)) {
+            const [h, m] = trimmed.split(':');
+            trimmed = `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+        }
+
+        const parts = trimmed.split(':');
+        if (parts.length < 2) return null;
+        const hours = Number(parts[0]);
+        const minutes = Number(parts[1]);
+        if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
+        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    },
+
+    convertLegacyBonusesToUnified(legacyBonuses) {
+        const mappings = [
+            { key: 'weekday', days: UB_TYPE_TO_DAYS.weekday },
+            { key: 'saturday', days: UB_TYPE_TO_DAYS.saturday },
+            { key: 'sunday', days: UB_TYPE_TO_DAYS.sunday }
+        ];
+
+        const rules = [];
+        for (const { key, days } of mappings) {
+            const entries = Array.isArray(legacyBonuses?.[key]) ? legacyBonuses[key] : [];
+            for (const entry of entries) {
+                if (!entry) continue;
+                const from = this.normalizeTimeInputValue(entry.from);
+                const to = this.normalizeTimeInputValue(entry.to);
+                if (!from || !to) continue;
+
+                const rule = { days: [...days], from, to };
+                if (entry.rate != null && !Number.isNaN(Number(entry.rate))) {
+                    const rate = Number(entry.rate);
+                    if (rate <= 0) continue;
+                    rule.rate = rate;
+                } else if (entry.percent != null && !Number.isNaN(Number(entry.percent))) {
+                    const percent = Number(entry.percent);
+                    if (percent <= 0) continue;
+                    rule.percent = percent;
+                } else {
+                    continue;
+                }
+
+                rules.push(rule);
+            }
+        }
+
+        return { rules };
+    },
+
+    convertUnifiedBonusesToLegacy(unifiedBonuses) {
+        const legacy = { weekday: [], saturday: [], sunday: [] };
+        const rules = Array.isArray(unifiedBonuses?.rules) ? unifiedBonuses.rules : [];
+        const daySets = {
+            weekday: new Set(UB_TYPE_TO_DAYS.weekday),
+            saturday: new Set(UB_TYPE_TO_DAYS.saturday),
+            sunday: new Set(UB_TYPE_TO_DAYS.sunday)
+        };
+
+        for (const rule of rules) {
+            if (!rule) continue;
+            const ruleDays = Array.isArray(rule.days) ? rule.days : [];
+            const ruleDaySet = new Set(ruleDays);
+            const from = this.normalizeTimeInputValue(rule.from);
+            const to = this.normalizeTimeInputValue(rule.to);
+            if (!from || !to) continue;
+
+            for (const [type, set] of Object.entries(daySets)) {
+                if (set.size !== ruleDaySet.size) continue;
+                let matches = true;
+                for (const day of set) {
+                    if (!ruleDaySet.has(day)) {
+                        matches = false;
+                        break;
+                    }
+                }
+                if (!matches) continue;
+
+                const entry = { from, to };
+                if (rule.rate != null && !Number.isNaN(Number(rule.rate))) {
+                    entry.rate = Number(rule.rate);
+                }
+                if (rule.percent != null && !Number.isNaN(Number(rule.percent))) {
+                    entry.percent = Number(rule.percent);
+                }
+                legacy[type].push(entry);
+                break;
+            }
+        }
+
+        return legacy;
+    },
+
+    validateUnifiedBonusRules(rules) {
+        const result = { valid: true, errors: [] };
+        if (!Array.isArray(rules)) {
+            return result;
+        }
+
+        const intervalsByDay = new Map();
+        const seenOverlapDays = new Set();
+
+        for (const rule of rules) {
+            if (!rule) continue;
+            const days = Array.isArray(rule.days) ? rule.days : [];
+            const from = this.timeToMinutes(rule.from);
+            const to = this.timeToMinutes(rule.to);
+            if (!Number.isFinite(from) || !Number.isFinite(to)) {
+                result.valid = false;
+                result.errors.push('Ugyldig tidsverdi i et tilleggsintervall.');
+                continue;
+            }
+            if (to <= from) {
+                result.valid = false;
+                result.errors.push('Sluttid må være etter starttid for alle tillegg.');
+                continue;
+            }
+
+            const hasRate = rule.rate != null && !Number.isNaN(Number(rule.rate));
+            const hasPercent = rule.percent != null && !Number.isNaN(Number(rule.percent));
+            if (!hasRate && !hasPercent) {
+                result.valid = false;
+                result.errors.push('Alle tillegg må ha en gyldig sats eller prosentverdi.');
+                continue;
+            }
+            if (hasRate && Number(rule.rate) <= 0) {
+                result.valid = false;
+                result.errors.push('Tilleggssatsen må være større enn 0.');
+                continue;
+            }
+            if (hasPercent && Number(rule.percent) <= 0) {
+                result.valid = false;
+                result.errors.push('Tilleggsprosenten må være større enn 0.');
+                continue;
+            }
+
+            for (const day of days) {
+                if (!intervalsByDay.has(day)) intervalsByDay.set(day, []);
+                intervalsByDay.get(day).push({ start: from, end: to });
+            }
+        }
+
+        for (const [day, intervals] of intervalsByDay.entries()) {
+            intervals.sort((a, b) => a.start - b.start);
+            for (let i = 1; i < intervals.length; i++) {
+                if (intervals[i].start < intervals[i - 1].end) {
+                    result.valid = false;
+                    if (!seenOverlapDays.has(day)) {
+                        const dayName = this.WEEKDAYS[day % 7] || `dag ${day}`;
+                        result.errors.push(`Tilleggsintervaller overlapper for ${dayName}.`);
+                        seenOverlapDays.add(day);
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (result.errors.length > 0) {
+            result.errors = Array.from(new Set(result.errors));
+        }
+
+        return result;
+    },
+
     // Capture custom bonuses from UI form elements
     captureCustomBonusesFromUI() {
         if (this.isCustomBonusEditingLocked()) {
-            return { rules: [] };
+            const existingRules = Array.isArray(this.customBonuses?.rules) ? this.customBonuses.rules : [];
+            const cloned = existingRules.map(rule => ({
+                ...rule,
+                days: Array.isArray(rule.days) ? [...rule.days] : []
+            }));
+            return { rules: cloned };
         }
-        const capturedBonuses = {};
+
+        const legacy = { weekday: [], saturday: [], sunday: [] };
         const types = ['weekday', 'saturday', 'sunday'];
 
         types.forEach(type => {
-            capturedBonuses[type] = [];
             const container = document.getElementById(`${type}BonusSlots`);
+            if (!container) return;
 
-            if (container) {
-                const slots = container.querySelectorAll('.bonus-slot');
+            const slots = container.querySelectorAll('.bonus-slot');
+            slots.forEach(slot => {
+                const inputs = slot.querySelectorAll('input');
+                if (inputs.length < 3) return;
 
-                slots.forEach((slot, index) => {
-                    const inputs = slot.querySelectorAll('input');
-                    if (inputs.length >= 3) {
-                        const from = inputs[0].value;
-                        const to = inputs[1].value;
-                        const rate = inputs[2].value;
+                const from = this.normalizeTimeInputValue(inputs[0].value);
+                const to = this.normalizeTimeInputValue(inputs[1].value);
+                const rateValue = inputs[2].value;
+                const rate = Number.parseFloat(rateValue);
 
-                        // Capture all slots, even if partially filled (validation happens later)
-                        capturedBonuses[type].push({
-                            from: from,
-                            to: to,
-                            rate: parseFloat(rate) || 0
-                        });
-                    }
-                });
-            }
+                if (!from || !to || Number.isNaN(rate) || rate <= 0) return;
+
+                legacy[type].push({ from, to, rate });
+            });
         });
 
-        return capturedBonuses;
+        return this.convertLegacyBonusesToUnified(legacy);
     },
 
     async saveCustomBonuses() {
@@ -9993,42 +10258,32 @@ export const app = {
             return;
         }
 
-        // Use the new improved capture system
-        const capturedBonuses = this.captureCustomBonusesFromUI();
+        const captured = this.captureCustomBonusesFromUI();
+        const rules = Array.isArray(captured?.rules) ? captured.rules : [];
+        const validation = this.validateUnifiedBonusRules(rules);
 
-        // Apply stricter validation only for the final save
-        const validatedBonuses = {};
-        ['weekday', 'saturday', 'sunday'].forEach(type => {
-            validatedBonuses[type] = [];
+        if (!validation.valid) {
+            const fallbackMessage = 'Tilleggene kan ikke lagres fordi de overlapper eller er ugyldige.';
+            const message = validation.errors.length ? validation.errors.join('\n') : fallbackMessage;
+            this.showSaveStatus('Kunne ikke lagre tillegg');
+            alert(message);
+            return;
+        }
 
-            if (capturedBonuses[type]) {
-                capturedBonuses[type].forEach(bonus => {
-                    if (bonus.from && bonus.to && bonus.rate && !isNaN(bonus.rate) && bonus.rate > 0) {
-                        validatedBonuses[type].push({
-                            from: bonus.from,
-                            to: bonus.to,
-                            rate: parseFloat(bonus.rate)
-                        });
-                    }
-                });
-            }
-        });
+        const normalizedRules = rules.map(rule => ({
+            ...rule,
+            days: Array.isArray(rule.days) ? [...rule.days] : []
+        }));
+        this.customBonuses = { rules: normalizedRules };
 
-        // Update with validated bonuses
-        this.customBonuses = validatedBonuses;
-
-        // Show save status to user
         this.showSaveStatus('Lagrer tillegg...');
 
         try {
-            // Save immediately to ensure we capture the latest data
             this.updateDisplay();
             await this.saveSettingsToSupabase();
-            this.saveToLocalStorage(); // Also save to localStorage as backup
+            this.saveToLocalStorage();
 
             this.showSaveStatus('Tillegg lagret ✓');
-
-            // Show confirmation
             alert('Tillegg lagret!');
         } catch (error) {
             console.error('Error saving custom bonuses:', error);
@@ -10043,36 +10298,23 @@ export const app = {
             return;
         }
         try {
+            const captured = this.captureCustomBonusesFromUI();
+            const rules = Array.isArray(captured?.rules) ? captured.rules : [];
+            const validation = this.validateUnifiedBonusRules(rules);
+            if (!validation.valid) {
+                console.warn('Custom bonus validation failed:', validation.errors);
+                return;
+            }
 
-            // Use the new improved capture system
-            const capturedBonuses = this.captureCustomBonusesFromUI();
+            const normalizedRules = rules.map(rule => ({
+                ...rule,
+                days: Array.isArray(rule.days) ? [...rule.days] : []
+            }));
+            this.customBonuses = { rules: normalizedRules };
 
-            // Apply validation for final save
-            const validatedBonuses = {};
-            ['weekday', 'saturday', 'sunday'].forEach(type => {
-                validatedBonuses[type] = [];
-
-                if (capturedBonuses[type]) {
-                    capturedBonuses[type].forEach(bonus => {
-                        if (bonus.from && bonus.to && bonus.rate && !isNaN(bonus.rate) && bonus.rate > 0) {
-                            validatedBonuses[type].push({
-                                from: bonus.from,
-                                to: bonus.to,
-                                rate: parseFloat(bonus.rate)
-                            });
-                        }
-                    });
-                }
-            });
-
-            // Update with validated bonuses
-            this.customBonuses = validatedBonuses;
-
-            // Save to both Supabase and localStorage without user feedback
             this.updateDisplay();
             await this.saveSettingsToSupabase();
             this.saveToLocalStorage();
-
         } catch (error) {
             console.error('Error in saveCustomBonusesSilent:', error);
         }
