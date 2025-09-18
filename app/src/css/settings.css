@@ -144,7 +144,7 @@ html.ios-pwa #shiftAddPage .tab-content {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .settings-item {

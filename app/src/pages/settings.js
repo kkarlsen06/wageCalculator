@@ -42,7 +42,7 @@ function getHomeView() {
       </div>
     </div>
 
-    <ul class="settings-list" role="list">
+    <ul class="settings-list" role="list" style="margin-top: var(--space-4);">
       <li>
         <div class="settings-item" data-spa data-href="/settings/account">
           <div class="item-main">
@@ -105,7 +105,7 @@ function getHomeView() {
       </li>
     </ul>
 
-    <hr style="border: none; border-top: 1px solid var(--border); margin: var(--space-3) 0;">
+    <hr style="border: none; border-top: 1px solid var(--border); margin: var(--space-4) 0;">
 
     <ul class="settings-list" role="list">
       <li>
