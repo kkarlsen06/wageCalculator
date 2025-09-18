@@ -16829,6 +16829,8 @@ body.chatbox-view .chatbox-container {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -16836,23 +16838,6 @@ body.chatbox-view .chatbox-container {
   z-index: 100;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   margin: 0 auto;
-  isolation: isolate;
-  contain: paint;
-  --glass-opacity: 1;
-}
-
-.bottom-nav::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: rgba(20,24,30, calc(0.6 * var(--glass-opacity)));
-  -webkit-backdrop-filter: blur(16px) saturate(120%);
-  backdrop-filter: blur(16px) saturate(120%);
-  opacity: 1;
-  will-change: transform, opacity, backdrop-filter;
-  transform: translateZ(0);
-  pointer-events: none;
 }
 
 .nav-item {
@@ -16996,7 +16981,10 @@ body:not(.view-shifts) .nav-add-small { visibility: hidden; pointer-events: none
   contain: layout paint;
   isolation: isolate;
 }
-/* Don't contain bottom-nav so FAB can extend outside - moved to main .bottom-nav rule */
+/* Don't contain bottom-nav so FAB can extend outside */
+.bottom-nav {
+  isolation: isolate;
+}
 
 /* 4) While a transition runs, silence all competing transitions/animations */
 .vt-active .bottom-nav,
@@ -17007,29 +16995,12 @@ body:not(.view-shifts) .nav-add-small { visibility: hidden; pointer-events: none
   animation: none !important;
 }
 
-.vt-active .bottom-nav::before {
-  transition: none !important;
-  animation: none !important;
-}
-
-.vt-prewarm .bottom-nav::before {
-  will-change: transform, opacity, backdrop-filter;
-  transform: translateZ(0);
-}
-
 /* 5) Lock a few metrics to avoid micro reflows - preserve existing dimensions */
 html, body, .snap-container { scrollbar-gutter: stable both-edges; }
 
-/* iOS/Safari robustness - neutralize competing transforms/filters during VT */
+/* Optional: if any ancestor of the FAB has transform/filter, Safari/iOS may stutter.
+   Temporarily neutralize it during the transition by toggling .app-has-transform on that node. */
 .vt-active .app-has-transform { transform: none !important; filter: none !important; }
-
-/* Additional iOS/Safari compatibility - ensure smooth compositing */
-@supports (-webkit-backdrop-filter: blur(1px)) {
-  .bottom-nav::before {
-    /* Enhanced will-change for WebKit */
-    will-change: transform, opacity, -webkit-backdrop-filter, backdrop-filter;
-  }
-}
 
 /* If you need to hide the FAB in a given view, don't remove it from DOM */
 .fab-plus.is-hidden {
