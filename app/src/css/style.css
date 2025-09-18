@@ -16807,22 +16807,6 @@ body.chatbox-view .chatbox-container {
 }
 
 
-/* Tab bar and month navigation in shifts page - use compact dashboard styling */
-.shifts-page .tab-bar-container {
-  /* Override any bulky spacing - use same compact style as dashboard */
-  margin: 0;
-  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
-}
-
-.shifts-page .tab-bar-with-month {
-  /* Ensure compact layout like dashboard */
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  justify-content: flex-start;
-  width: 100%;
-}
-
 .shifts-page .icon-sm {
   width: 16px;
   height: 16px;
@@ -16927,6 +16911,7 @@ body.chatbox-view .chatbox-container {
   height: 32px;
   color: white;
 }
+
 
 
 /* Mobile responsiveness - hide labels on small screens */
