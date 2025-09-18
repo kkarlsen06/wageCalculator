@@ -13,6 +13,7 @@ import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
 import { renderShifts, afterMountShifts } from './pages/shifts.js';
 import { renderLonnAI, afterMountLonnAI } from './pages/lonnAI.js';
 import { mountAll } from './js/icons.js';
+import { flipOnce } from './js/flipFallback.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
 function normalizePath(pathname) {
@@ -121,12 +122,25 @@ export const routes = [
 export function navigate(path) {
   // Mark that we're doing SPA navigation to prevent aggressive scroll restoration
   window.spaNavigationInProgress = true;
-  history.pushState({}, '', path);
-  render();
-  // Clear the flag after a brief delay
-  setTimeout(() => {
-    window.spaNavigationInProgress = false;
-  }, 100);
+
+  const nav = () => {
+    history.pushState({}, '', path);
+    render();
+    // Clear the flag after a brief delay
+    setTimeout(() => {
+      window.spaNavigationInProgress = false;
+    }, 100);
+  };
+
+  // Use View Transitions API if available, otherwise fall back to FLIP animation
+  if ('startViewTransition' in document) {
+    document.startViewTransition(nav);
+  } else {
+    // Firefox FLIP fallback: snapshot the FAB, navigate, then play FLIP animation
+    const play = flipOnce('.nav-item.nav-add, .nav-item.nav-add-small');
+    nav();
+    requestAnimationFrame(play);
+  }
 }
 
 function updateBottomNavActiveState(currentPath) {

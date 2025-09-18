@@ -16947,6 +16947,31 @@ body.chatbox-view .chatbox-container {
   }
 }
 
+/* View Transitions API - Shared element for FAB button morph */
+.nav-item.nav-add,
+.nav-item.nav-add-small {
+  view-transition-name: fab-plus;
+}
+
+/* Optional tuning of the morph animation */
+::view-transition-group(fab-plus) {
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(.22,1,.36,1); /* fast-out, slow-in */
+}
+
+/* If you need to hide the FAB in a given view, don't remove it from DOM */
+.fab-plus.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Accessibility: reduce motion for users with motion sensitivity */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation-duration: 1ms;
+  }
+}
+
 /* Add padding to body to prevent content from being hidden behind nav */
 #app {
   padding-bottom: 120px; /* Nav height + bottom margin + some extra space */
