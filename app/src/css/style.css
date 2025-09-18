@@ -8102,13 +8102,14 @@ input:checked + .slider:before {
   flex-shrink: 0;
 }
 
-/* Container for sections - no longer scrollable since shifts have their own route */
+/* Container for sections - enable scrolling for dashboard and statistics */
 .snap-container {
   padding-top: env(safe-area-inset-top, 0);
   margin-bottom: 0;
   height: 100dvh;
-  overflow: hidden !important;
-  overscroll-behavior: none !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -8116,25 +8117,21 @@ input:checked + .slider:before {
   bottom: 0 !important;
   /* Remove all safe area padding - let content flow naturally */
   padding: 0;
-  /* Ensure this container cannot be scrolled programmatically */
-  scroll-behavior: auto !important;
-  /* Completely isolate from window scroll */
-  transform: translateZ(0) !important;
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
 }
 
 
 /* Individual sections - iOS 26 compatible */
 .snap-section {
-  /* iOS 26 support - use full viewport height, content extends behind system navbar */
-  height: var(--app-height, 100dvh);
+  /* Allow sections to grow beyond viewport height if needed */
+  min-height: var(--app-height, 100dvh);
+  height: auto;
   display: flex;
   flex-direction: column;
   position: relative;
   /* Allow content to extend behind iOS system navbar */
   /* Our custom navbar will float above using z-index */
-  /* Prevent any scrolling within sections */
-  overflow: hidden !important;
-  overscroll-behavior: none !important;
 }
 
 /* iOS 26 specific adjustments - content extends behind system navbar */
@@ -8198,8 +8195,8 @@ body.chatbox-view .snap-section.dashboard-section {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  height: 100%; /* Ensure it doesn't grow beyond container */
+  overflow: visible;
+  height: auto; /* Allow natural height growth */
   min-height: 0; /* Allow flex children to shrink */
 }
 
@@ -8220,9 +8217,9 @@ body.chatbox-view .dashboard-section .app-container {
   padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); /* Space for bottom navigation + safe area */
   gap: 20px;
   position: relative;
-  /* Ensure the content can fill the full height */
+  /* Allow content to grow naturally */
   min-height: 0;
-  height: 100%;
+  height: auto;
 }
 
 /* In chatbox-view, allow dashboard-content to have natural height */
@@ -8254,8 +8251,8 @@ body.chatbox-view .dashboard-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  height: 100%;
+  overflow: visible;
+  height: auto;
   min-height: 0;
 }
 
@@ -8263,13 +8260,13 @@ body.chatbox-view .dashboard-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding-top: 20px;
-  padding-bottom: 20px;
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); /* Space for bottom navigation + safe area */
   gap: 20px;
   position: relative;
   min-height: 0;
-  height: 100%;
+  height: auto;
 }
 
 /* Shift section styling */
