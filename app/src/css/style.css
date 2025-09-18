@@ -17018,3 +17018,81 @@ body.chatbox-view .chatbox-container {
     padding-bottom: 100px; /* Smaller nav height + bottom margin + some extra space */
   }
 }
+
+/* Ansatte Page Styles */
+.ansatte-page {
+  min-height: 100vh;
+  padding: 0;
+}
+
+.ansatte-content {
+  padding: var(--space-4) var(--space-3);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ansatte-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.ansatte-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-4) 0;
+}
+
+/* Hide the tab placeholder in ansatte route */
+.ansatte-tab-placeholder {
+  display: none !important;
+}
+
+/* Style the month navigation in ansatte route */
+.ansatte-page .month-navigation {
+  margin-bottom: var(--space-4);
+}
+
+/* Ensure employees container shows properly in ansatte route */
+.ansatte-page .employees-container {
+  margin-top: 0;
+}
+
+.employees-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.skeleton-container {
+  width: 100%;
+  max-width: 600px;
+}
+
+.skeleton-block {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  animation: skeleton-pulse 1.5s infinite;
+}
+
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.error-container {
+  text-align: center;
+  padding: var(--space-6);
+}
+
+.error-container p {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}

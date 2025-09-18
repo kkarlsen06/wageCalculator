@@ -7,6 +7,7 @@ import { renderLogin, afterMountLogin } from './pages/login.js';
 import { renderOnboarding, afterMountOnboarding } from './pages/onboarding.js';
 import { renderSettings, afterMountSettings } from './pages/settings.js';
 import renderAbonnementPage, { afterMountAbonnement } from './pages/abonnement.js';
+import { renderAnsatte, afterMountAnsatte } from './pages/ansatte.js';
 import { renderAddShift, afterMountAddShift } from './pages/shiftAdd.js';
 import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
 import { renderShifts, afterMountShifts } from './pages/shifts.js';
@@ -100,6 +101,7 @@ export const routes = [
   { path: '/login', render: renderLogin, afterMount: afterMountLogin },
   { path: '/onboarding', render: renderOnboarding, afterMount: afterMountOnboarding },
   { path: '/abonnement', render: renderAbonnementPage, afterMount: afterMountAbonnement },
+  { path: '/ansatte', render: renderAnsatte, afterMount: afterMountAnsatte },
   { path: '/shifts', render: renderShifts, afterMount: afterMountShifts },
   { path: '/shift-add', render: renderAddShift, afterMount: afterMountAddShift },
   { path: '/shift-edit', render: renderShiftEdit, afterMount: afterMountShiftEdit },
@@ -136,6 +138,7 @@ function updateBottomNavActiveState(currentPath) {
                       (href === '/' && currentPath === '/') ||
                       (href === '/shifts' && currentPath === '/shifts') ||
                       (href === '/abonnement' && currentPath === '/abonnement') ||
+                      (href === '/ansatte' && currentPath === '/ansatte') ||
                       (href === '/settings' && currentPath.startsWith('/settings'));
 
       item.classList.toggle('active', isActive);

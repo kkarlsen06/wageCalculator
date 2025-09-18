@@ -131,17 +131,6 @@
                                   </div>
                                   <span class="tab-text">Statistikk</span>
                               </button>
-                              <button class="tab-btn" id="tabAnsatte" data-view="employees" aria-label="Bytt til ansattvisning" style="display: none;">
-                                  <div class="tab-icon-badge">
-                                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                          <circle cx="9" cy="7" r="4"></circle>
-                                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                      </svg>
-                                  </div>
-                                  <span class="tab-text">Ansatte</span>
-                              </button>
                           </div>
 
                           <!-- Month Navigation - now positioned alongside tab bar -->
@@ -1077,13 +1066,25 @@
             </div>
         </button>
 
-        <button class="nav-item" data-spa data-href="/abonnement">
+        <button class="nav-item" id="navAbonnement" data-spa data-href="/abonnement">
             <div class="nav-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 6L9 17l-5-5"></path>
                 </svg>
             </div>
             <span class="nav-label">Abo.</span>
+        </button>
+
+        <button class="nav-item" id="navAnsatte" data-spa data-href="/ansatte" style="display: none;">
+            <div class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <span class="nav-label">Ansatte</span>
         </button>
 
         <button class="nav-item" data-spa data-href="/settings">

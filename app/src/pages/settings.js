@@ -28,7 +28,7 @@ function getHomeView() {
             <span class="icon item-icon" data-icon="dollar-sign" aria-hidden="true"></span>
             <div class="item-text">
               <span class="item-title">Lønn</span>
-              <span class="item-sub">Grunnlønn og utbetaling</span>
+              <span class="item-sub">Grunnlønn, tillegg og utbetaling</span>
             </div>
           </div>
           <span class="icon chevron" data-icon="chevron-right"></span>
@@ -40,7 +40,7 @@ function getHomeView() {
             <span class="icon item-icon" data-icon="settings" aria-hidden="true"></span>
             <div class="item-text">
               <span class="item-title">Avansert lønn</span>
-              <span class="item-sub">Tillegg, pauser og skatt</span>
+              <span class="item-sub">Pauser og skatt</span>
             </div>
           </div>
           <span class="icon chevron" data-icon="chevron-right"></span>
@@ -65,6 +65,23 @@ function getHomeView() {
             <div class="item-text">
               <span class="item-title">Data</span>
               <span class="item-sub">Eksport, import og sikkerhetskopi</span>
+            </div>
+          </div>
+          <span class="icon chevron" data-icon="chevron-right"></span>
+        </div>
+      </li>
+    </ul>
+
+    <hr style="border: none; border-top: 1px solid var(--border); margin: var(--space-3) 0;">
+
+    <ul class="settings-list" role="list">
+      <li>
+        <div class="settings-item" data-spa data-href="/abonnement">
+          <div class="item-main">
+            <span class="icon item-icon" data-icon="credit-card" aria-hidden="true"></span>
+            <div class="item-text">
+              <span class="item-title">Abonnement</span>
+              <span class="item-sub">Administrer abonnement og fakturering</span>
             </div>
           </div>
           <span class="icon chevron" data-icon="chevron-right"></span>
@@ -232,19 +249,19 @@ function getWageDetail() {
             <p class="section-description">Virke-tariff eller egendefinert</p>
           </header>
           <div class="settings-section-body">
-            <!-- Card: Bruk Virke-tariff (toggle) -->
-            <div class="setting-card is-compact">
-              <div class="setting-header">Bruk Virke-tariff</div>
+            <!-- Card: Velg lønnsmodell (button selection) -->
+            <div class="setting-card is-standard">
+              <div class="setting-header">Velg lønnsmodell</div>
               <div class="setting-body">
-                <div class="switch-group">
-                  <div style="flex: 1;">
-                    <label for="usePresetToggle" class="switch-text">Virke-tariff</label>
-                    <div class="form-hint">Bytt mellom tariff og egendefinert lønn.</div>
+                <div class="wage-type-options">
+                  <div class="wage-option" data-value="virke" id="virkeOption">
+                    <div class="wage-option-title">Virke-tariff</div>
+                    <div class="wage-option-subtitle">Lønnstrinn basert på tariffavtalen</div>
                   </div>
-                  <label class="switch">
-                    <input id="usePresetToggle" aria-label="Virke-tariff" type="checkbox" onchange="app.togglePreset && app.togglePreset()" />
-                    <span class="slider"></span>
-                  </label>
+                  <div class="wage-option" data-value="custom" id="customOption">
+                    <div class="wage-option-title">Egen lønn</div>
+                    <div class="wage-option-subtitle">Egendefinert timelønn</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -268,13 +285,49 @@ function getWageDetail() {
             </div>
 
             <!-- Card: Egendefinert lønn (custom) -->
-            <div id="customWageSection" class="setting-card is-standard" style="display:none;">
+            <div id="customWageSection" class="setting-card is-standard">
               <div class="setting-header">Egendefinert lønn</div>
               <div class="setting-body">
                 <label for="customWageInput">Sats (kr/time)</label>
                 <input id="customWageInput" type="number" inputmode="decimal" step="0.01" min="0" placeholder="200"
                        onchange="app.updateCustomWage && app.updateCustomWage(this.value)" />
                 <div id="customWageError" class="form-hint" style="display:none; color: var(--danger);">Ugyldig beløp. Skriv inn et tall over 0.</div>
+              </div>
+            </div>
+
+            <!-- Card: Tillegg (supplements) - only show when Virke-tariff is OFF -->
+            <div id="supplementsSection" class="setting-card is-long">
+              <div class="setting-header">
+                <span>Tillegg</span>
+                <p class="section-description" style="margin: var(--space-1) 0 0 0; font-size: var(--text-sm); color: var(--text-secondary);">Flere tillegg per dag er tillatt, men tidsrom kan ikke overlappe.</p>
+              </div>
+              <div class="setting-body">
+                <div id="supplementsContent">${ENABLE_CUSTOM_BONUS_EDITOR ? `<div id="customBonusEditorRoot" aria-live="polite"></div>` : `
+                <!-- Ukedag group -->
+                <div class="supplement-group" data-type="weekday">
+                  <div class="group-title">Ukedag</div>
+                  <div id="weekdayBonusSlots" class="supplement-list" aria-live="polite"></div>
+                  <div class="setting-actions">
+                    <button id="addWeekdaySupplementBtn" type="button" class="btn btn-secondary">Legg til</button>
+                  </div>
+                </div>
+                <!-- Lørdag group -->
+                <div class="supplement-group" data-type="saturday">
+                  <div class="group-title">Lørdag</div>
+                  <div id="saturdayBonusSlots" class="supplement-list" aria-live="polite"></div>
+                  <div class="setting-actions">
+                    <button id="addSaturdaySupplementBtn" type="button" class="btn btn-secondary">Legg til</button>
+                  </div>
+                </div>
+                <!-- Søndag group -->
+                <div class="supplement-group" data-type="sunday">
+                  <div class="group-title">Søndag</div>
+                  <div id="sundayBonusSlots" class="supplement-list" aria-live="polite"></div>
+                  <div class="setting-actions">
+                    <button id="addSundaySupplementBtn" type="button" class="btn btn-secondary">Legg til</button>
+                  </div>
+                </div>`}
+                </div>
               </div>
             </div>
           </div>
@@ -475,16 +528,6 @@ function getWageAdvancedDetail() {
           </div>
         </section>
 
-        <!-- Section Box: Tillegg -->
-        <section class="settings-section" aria-labelledby="advanced-supplements-title">
-          <header class="settings-section-header">
-            <h3 id="advanced-supplements-title">Tillegg</h3>
-            <p class="section-description">Flere tillegg per dag er tillatt, men tidsrom kan ikke overlappe.</p>
-          </header>
-          <div class="settings-section-body">
-${customBonusCard}
-          </div>
-        </section>
     </div>
     <div class="settings-bottom-bar">
       <button type="button" class="btn btn-secondary" data-spa data-href="/settings?from=detail">Tilbake</button>
@@ -1018,41 +1061,94 @@ export function afterMountSettings() {
       }
       // Ensure collapsible handlers present for future sections reuse
       window.app.setupCollapsibleEventListeners?.();
-    } else if (section === 'wage-advanced' && window.app) {
-      if (ENABLE_CUSTOM_BONUS_EDITOR) {
-        const editorRoot = document.getElementById('customBonusEditorRoot');
+
+      // Handle wage type selection and visibility
+      const supplementsSection = document.getElementById('supplementsSection');
+      const presetWageSection = document.getElementById('presetWageSection');
+      const customWageSection = document.getElementById('customWageSection');
+      const virkeOption = document.getElementById('virkeOption');
+      const customOption = document.getElementById('customOption');
+
+      let selectedWageType = 'virke'; // default
+
+      const updateWageTypeUI = () => {
+        // Update button selection styles
+        if (virkeOption) {
+          virkeOption.classList.toggle('selected', selectedWageType === 'virke');
+        }
+        if (customOption) {
+          customOption.classList.toggle('selected', selectedWageType === 'custom');
+        }
+
+        // Update section visibility
+        if (presetWageSection) {
+          presetWageSection.style.display = selectedWageType === 'virke' ? 'block' : 'none';
+        }
+        if (customWageSection) {
+          customWageSection.style.display = selectedWageType === 'custom' ? 'block' : 'none';
+        }
+        if (supplementsSection) {
+          // Show supplements only when using custom wage (not Virke-tariff)
+          supplementsSection.style.display = selectedWageType === 'custom' ? 'block' : 'none';
+        }
+
+      };
+
+      const selectWageType = (type) => {
+        selectedWageType = type;
+        updateWageTypeUI();
+
+        // Update app state directly instead of calling togglePreset to avoid UI update conflicts
+        if (window.app) {
+          const shouldUsePreset = (type === 'virke');
+          window.app.usePreset = shouldUsePreset;
+
+          // Save settings without triggering full UI refresh
+          try {
+            window.app.saveSettingsToSupabase?.();
+            window.app.saveToLocalStorage?.();
+          } catch (error) {
+            console.warn('Failed to save wage type setting:', error);
+          }
+
+          // Only update the wage-related UI, not the entire display
+          try {
+            window.app.updateSettingsUI?.();
+          } catch (error) {
+            console.warn('Failed to update settings UI:', error);
+          }
+        }
+      };
+
+      // Initialize based on current app state
+      if (window.app && window.app.usePreset !== undefined) {
+        selectedWageType = window.app.usePreset ? 'virke' : 'custom';
+      }
+
+      // Add click listeners to wage options
+      if (virkeOption) {
+        virkeOption.addEventListener('click', () => selectWageType('virke'));
+      }
+      if (customOption) {
+        customOption.addEventListener('click', () => selectWageType('custom'));
+      }
+
+      // Initial UI update
+      updateWageTypeUI();
+
+      // Initialize supplements functionality when visible and not using new editor
+      if (supplementsSection && !ENABLE_CUSTOM_BONUS_EDITOR) {
+        window.app.populateCustomBonusSlots?.();
+      } else if (supplementsSection && ENABLE_CUSTOM_BONUS_EDITOR) {
+        // Initialize custom bonus editor in wage section
+        const editorRoot = supplementsSection.querySelector('#customBonusEditorRoot');
         if (editorRoot) {
           mountCustomBonusEditor(editorRoot).catch((err) => {
-            console.warn('[settings-route] custom bonus editor init failed', err);
+            console.warn('[settings-route] custom bonus editor init failed in wage section', err);
           });
         }
-      } else {
-        window.app.populateCustomBonusSlots?.();
-
-        const supplementsCard = document.querySelector('[aria-labelledby="advanced-supplements-title"] .setting-card');
-        if (supplementsCard) {
-          supplementsCard.style.opacity = '0.6';
-          supplementsCard.classList.add('supplements-disabled');
-        }
-
-        const noticeId = 'customBonusMigrationNotice';
-        let notice = document.getElementById(noticeId);
-        if (!notice) {
-          notice = document.createElement('div');
-          notice.id = noticeId;
-          notice.className = 'supplement-disabled-notice';
-          notice.textContent = 'Custom bonus editing is temporarily disabled during migration.';
-          const target = supplementsCard?.querySelector('.setting-body') || supplementsCard;
-          target?.insertAdjacentElement('afterbegin', notice);
-        }
-
-        const disableTargets = document.querySelectorAll('.supplement-group button, .supplement-group input');
-        disableTargets.forEach(el => {
-          el.setAttribute('disabled', 'true');
-          el.classList.add('is-disabled');
-          el.setAttribute('aria-disabled', 'true');
-        });
       }
+    } else if (section === 'wage-advanced' && window.app) {
 
       // Initialize Pausetrekk UI state and validations
       try {

@@ -188,9 +188,10 @@ function switchAddShiftTab(tab) {
     }
   });
   
-  // Temporarily set current view to employees to ensure proper UI behavior
+  // Check if we're on the ansatte route to ensure proper UI behavior
+  const onAnsatteRoute = typeof location !== 'undefined' && location.pathname === '/ansatte';
   const originalView = window.app && window.app.currentView;
-  if (window.app) window.app.currentView = 'employees';
+  if (window.app && onAnsatteRoute) window.app.currentView = 'employees';
   
   // Reflect employee context in the form (pill vs selectors)
   if (window.app && window.app.updateEmployeeAssignmentUIInModal) {
@@ -335,9 +336,10 @@ export function afterMountAddShift() {
       }
     });
     
-    // Temporarily set current view to employees to ensure proper UI behavior
+    // Check if we're on the ansatte route to ensure proper UI behavior
+    const onAnsatteRoute = typeof location !== 'undefined' && location.pathname === '/ansatte';
     const originalView = window.app.currentView;
-    window.app.currentView = 'employees';
+    if (onAnsatteRoute) window.app.currentView = 'employees';
     
     // Update employee assignment UI to show pills instead of dropdowns
     if (window.app.updateEmployeeAssignmentUIInModal) {

@@ -216,7 +216,6 @@ html.ios-pwa #shiftAddPage .tab-content {
   overflow: visible;
   height: auto;
   max-height: none;
-  padding: var(--space-4);
   padding-top: calc(var(--space-4) + env(safe-area-inset-top, 0px));
   padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); /* Space for navbar + safe area */
   min-height: 100vh;
@@ -1118,4 +1117,70 @@ label[for="accountEmail"] {
   margin-bottom: 8px;
   display: block;
   letter-spacing: 0.025em;
+}
+
+/* Wage type selection buttons (similar to onboarding) */
+.wage-type-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.wage-option {
+  padding: var(--space-4);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-component);
+  background: var(--surface-card-elevated);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  box-shadow: var(--shadow-card);
+}
+
+.wage-option:hover {
+  border-color: var(--primary);
+  background: var(--surface-card-hover);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.wage-option.selected {
+  border-color: var(--primary);
+  background: var(--surface-card-hover);
+  box-shadow: var(--shadow-card-hover), 0 0 0 1px var(--primary);
+}
+
+.wage-option:focus-visible {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+
+.wage-option:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-card);
+}
+
+.wage-option-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+  font-size: var(--text-base);
+}
+
+.wage-option-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* Mobile responsive adjustments for wage options */
+@media (max-width: 480px) {
+  .wage-type-options {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .wage-option {
+    padding: var(--space-3);
+  }
 }

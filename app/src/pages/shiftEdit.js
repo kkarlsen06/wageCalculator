@@ -100,10 +100,10 @@ async function handleEmployeeDropdownVisibility() {
   }
 
   const hasEnterprise = await window.hasEnterpriseSubscription();
-  const inEmployeesView = window.app && window.app.currentView === 'employees';
-  
-  // Hide employee dropdowns for normal users or when not in employees view
-  if (!hasEnterprise || !inEmployeesView) {
+  const onAnsatteRoute = typeof location !== 'undefined' && location.pathname === '/ansatte';
+
+  // Hide employee dropdowns for normal users or when not on ansatte route
+  if (!hasEnterprise || !onAnsatteRoute) {
     hideEmployeeDropdowns();
   } else {
     showEmployeeDropdowns();

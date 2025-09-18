@@ -5441,6 +5441,10 @@ export const app = {
         });
 
         const shiftList = document.getElementById('shiftList');
+        if (!shiftList) {
+            return;
+        }
+
         const monthShifts = this.shifts.filter(shift =>
             shift.date.getMonth() === this.currentMonth - 1 &&
             shift.date.getFullYear() === this.currentYear
@@ -10912,7 +10916,7 @@ export const app = {
 
     switchToView(view) {
         // Guard against accidental calls from non-view buttons
-        const validViews = new Set(['dashboard', 'stats', 'chatgpt', 'employees']);
+        const validViews = new Set(['dashboard', 'stats', 'chatgpt']);
         if (!validViews.has(view)) {
             console.warn('switchToView: ignoring invalid view', view);
             return;
@@ -10951,12 +10955,6 @@ export const app = {
                 break;
             case 'chatgpt':
                 this.showChatGPTView();
-                break;
-            case 'employees':
-                // Handle async call for employees view
-                this.showEmployeesView().catch(error => {
-                    console.error('Error showing employees view:', error);
-                });
                 break;
         }
     },
@@ -11500,17 +11498,32 @@ export const app = {
     },
 
     async updateTabBarVisibility() {
-        const ansatteTab = document.getElementById('tabAnsatte');
-        if (!ansatteTab) return;
+        try {
+            const hasEnterprise = await hasEnterpriseSubscription();
+            await this.updateNavBarVisibility(hasEnterprise);
+        } catch (error) {
+            console.error('Failed to update navbar visibility:', error);
+            // Fallback to show abonnement button
+            await this.updateNavBarVisibility(false);
+        }
+    },
 
-        const hasEnterprise = await hasEnterpriseSubscription();
-        const shouldShow = hasEnterprise && (this.showEmployeeTab !== false);
-        // Only show the Ansatte tab for Enterprise (max) subscribers who opt-in
-        ansatteTab.style.display = shouldShow ? 'flex' : 'none';
+    async updateNavBarVisibility(hasEnterprise) {
+        const navAbonnement = document.getElementById('navAbonnement');
+        const navAnsatte = document.getElementById('navAnsatte');
 
-        // If user is on employees view without visibility, redirect to dashboard
-        if (!shouldShow && this.currentView === 'employees') {
-            this.switchToView('dashboard');
+        if (!navAbonnement || !navAnsatte) return;
+
+        const shouldShowEmployees = hasEnterprise && (this.showEmployeeTab !== false);
+
+        if (shouldShowEmployees) {
+            // Show ansatte button, hide abonnement button
+            navAbonnement.style.display = 'none';
+            navAnsatte.style.display = 'flex';
+        } else {
+            // Show abonnement button, hide ansatte button
+            navAbonnement.style.display = 'flex';
+            navAnsatte.style.display = 'none';
         }
     },
 

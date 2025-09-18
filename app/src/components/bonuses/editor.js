@@ -597,8 +597,10 @@ class CustomBonusEditor {
 
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
-    deleteBtn.className = 'btn btn-danger';
+    deleteBtn.className = 'btn btn-secondary';
     deleteBtn.textContent = 'Slett';
+    deleteBtn.style.color = 'var(--error)';
+    deleteBtn.style.borderColor = 'var(--error)';
     deleteBtn.style.visibility = editing ? 'visible' : 'hidden';
     deleteBtn.disabled = !editing;
 
