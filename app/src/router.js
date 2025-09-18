@@ -132,18 +132,27 @@ export function navigate(path) {
     }, 100);
   };
 
+  // Pre-warm compositor layer
+  const navEl = document.querySelector('.bottom-nav');
+  if (navEl) {
+    navEl.classList.add('vt-prewarm');
+    void navEl.offsetWidth; // force reflow to realize the layer now
+  }
+
   // Use View Transitions API if available, otherwise fall back to FLIP animation
   if ('startViewTransition' in document) {
     document.documentElement.classList.add('vt-active');
     const vt = document.startViewTransition(nav);
     vt.finished.finally(() => {
       document.documentElement.classList.remove('vt-active');
+      navEl && navEl.classList.remove('vt-prewarm');
     });
   } else {
     // Firefox FLIP fallback: snapshot the FAB, navigate, then play FLIP animation
     const play = flipOnce('.nav-item.nav-add, .nav-item.nav-add-small');
     nav();
     requestAnimationFrame(play);
+    navEl && navEl.classList.remove('vt-prewarm');
   }
 }
 
