@@ -2751,38 +2751,46 @@ function calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMin
     let segments = [{ start: dayStart, end: dayEnd, bonuses: [] }];
     for (const bonus of applicable) {
       const bonusStart = timeToMinutes(bonus.from);
-      let bonusEnd = timeToMinutes(bonus.to);
-      if (bonusEnd <= bonusStart) {
-        bonusEnd += 24 * 60;
-      }
+      const rawEnd = timeToMinutes(bonus.to);
+      if (!Number.isFinite(bonusStart) || !Number.isFinite(rawEnd)) continue;
 
-      const overlapStart = Math.max(dayStart, bonusStart);
-      const overlapEnd = Math.min(dayEnd, bonusEnd);
+      const intervals = rawEnd <= bonusStart
+        ? [
+            [bonusStart, rawEnd + 24 * 60],
+            [bonusStart - 24 * 60, rawEnd]
+          ]
+        : [[bonusStart, rawEnd]];
 
-      if (overlapEnd > overlapStart) {
-        const newSegments = [];
-        for (const segment of segments) {
-          if (segment.end <= overlapStart || segment.start >= overlapEnd) {
-            newSegments.push(segment);
-          } else {
-            if (segment.start < overlapStart) {
-              newSegments.push({ start: segment.start, end: overlapStart, bonuses: [...segment.bonuses] });
-            }
-            const overlapSegmentStart = Math.max(segment.start, overlapStart);
-            const overlapSegmentEnd = Math.min(segment.end, overlapEnd);
-            if (overlapSegmentEnd > overlapSegmentStart) {
-              newSegments.push({
-                start: overlapSegmentStart,
-                end: overlapSegmentEnd,
-                bonuses: [...segment.bonuses, bonus]
-              });
-            }
-            if (segment.end > overlapEnd) {
-              newSegments.push({ start: overlapEnd, end: segment.end, bonuses: [...segment.bonuses] });
+      for (const [intervalStart, intervalEnd] of intervals) {
+        if (intervalEnd <= intervalStart) continue;
+        const overlapStart = Math.max(dayStart, intervalStart);
+        const overlapEnd = Math.min(dayEnd, intervalEnd);
+
+        if (overlapEnd > overlapStart) {
+          const newSegments = [];
+          for (const segment of segments) {
+            if (segment.end <= overlapStart || segment.start >= overlapEnd) {
+              newSegments.push(segment);
+            } else {
+              if (segment.start < overlapStart) {
+                newSegments.push({ start: segment.start, end: overlapStart, bonuses: [...segment.bonuses] });
+              }
+              const overlapSegmentStart = Math.max(segment.start, overlapStart);
+              const overlapSegmentEnd = Math.min(segment.end, overlapEnd);
+              if (overlapSegmentEnd > overlapSegmentStart) {
+                newSegments.push({
+                  start: overlapSegmentStart,
+                  end: overlapSegmentEnd,
+                  bonuses: [...segment.bonuses, bonus]
+                });
+              }
+              if (segment.end > overlapEnd) {
+                newSegments.push({ start: overlapEnd, end: segment.end, bonuses: [...segment.bonuses] });
+              }
             }
           }
+          segments = newSegments;
         }
-        segments = newSegments;
       }
     }
 
@@ -3156,13 +3164,8 @@ function calculateShiftEarnings(shift, userSettings) {
 
     baseWage = paidHours * wageRate;
 
-    const bonusSegments = ubSegmentsForShiftType(bonuses.rules, shift.shift_type);
-
-    // Calculate end time after adjustments
-    const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
-    const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
-
-    bonus = calculateBonus(shift.start_time, endTimeStr, bonusSegments, wageRate);
+    const periods = calculateWagePeriods(shift, wageRate, bonuses, startMinutes, adjustedEndMinutes);
+    bonus = periods.reduce((sum, period) => sum + period.durationHours * period.bonusRate, 0);
 
     // Debug logging for traditional calculations
     if (durationHours > 5.5) {

@@ -8604,19 +8604,8 @@ export const app = {
             }
 
             baseWage = paidHours * wageRate;
-            const bonusSegments = ubSegmentsForShiftType(bonuses.rules, shift.type);
-
-            // Recreate the end time after any pause deduction or midnight handling
-            // so we can reuse the same format when calculating bonuses
-            const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
-            const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
-
-            bonus = this.calculateBonus(
-                shift.startTime,
-                endTimeStr,
-                bonusSegments,
-                wageRate
-            );
+            const periods = this.calculateWagePeriods(shift, wageRate, bonuses, startMinutes, adjustedEndMinutes);
+            bonus = periods.reduce((sum, period) => sum + period.durationHours * period.bonusRate, 0);
 
             // Debug logging for traditional calculations
             if (durationHours > 5.5) {
@@ -8753,22 +8742,42 @@ export const app = {
             const applicable = ubSegmentsForDays(rules, [isoDay]);
             let segments = [{ start: dayStart, end: dayEnd, bonuses: [] }];
             for (const b of applicable) {
-                const s = this.timeToMinutes(b.from);
-                let e = this.timeToMinutes(b.to);
-                if (e <= s) e += 24 * 60;
-                const os = Math.max(dayStart, s);
-                const oe = Math.min(dayEnd, e);
-                if (oe <= os) continue;
-                const next = [];
-                for (const seg of segments) {
-                    if (seg.end <= os || seg.start >= oe) { next.push(seg); continue; }
-                    if (seg.start < os) next.push({ start: seg.start, end: os, bonuses: [...seg.bonuses] });
-                    const overlapStart = Math.max(seg.start, os);
-                    const overlapEnd = Math.min(seg.end, oe);
-                    if (overlapEnd > overlapStart) next.push({ start: overlapStart, end: overlapEnd, bonuses: [...seg.bonuses, b] });
-                    if (seg.end > oe) next.push({ start: oe, end: seg.end, bonuses: [...seg.bonuses] });
+                const bonusStart = this.timeToMinutes(b.from);
+                const rawEnd = this.timeToMinutes(b.to);
+                if (!Number.isFinite(bonusStart) || !Number.isFinite(rawEnd)) continue;
+
+                const intervals = rawEnd <= bonusStart
+                    ? [
+                        [bonusStart, rawEnd + 24 * 60],
+                        [bonusStart - 24 * 60, rawEnd]
+                    ]
+                    : [[bonusStart, rawEnd]];
+
+                for (const [intervalStart, intervalEnd] of intervals) {
+                    if (intervalEnd <= intervalStart) continue;
+                    const os = Math.max(dayStart, intervalStart);
+                    const oe = Math.min(dayEnd, intervalEnd);
+                    if (oe <= os) continue;
+                    const next = [];
+                    for (const seg of segments) {
+                        if (seg.end <= os || seg.start >= oe) {
+                            next.push(seg);
+                            continue;
+                        }
+                        if (seg.start < os) {
+                            next.push({ start: seg.start, end: os, bonuses: [...seg.bonuses] });
+                        }
+                        const overlapStart = Math.max(seg.start, os);
+                        const overlapEnd = Math.min(seg.end, oe);
+                        if (overlapEnd > overlapStart) {
+                            next.push({ start: overlapStart, end: overlapEnd, bonuses: [...seg.bonuses, b] });
+                        }
+                        if (seg.end > oe) {
+                            next.push({ start: oe, end: seg.end, bonuses: [...seg.bonuses] });
+                        }
+                    }
+                    segments = next;
                 }
-                segments = next;
             }
             for (const seg of segments) {
                 const h = (seg.end - seg.start) / 60;
