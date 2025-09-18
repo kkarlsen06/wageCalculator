@@ -3,7 +3,7 @@
   padding: var(--space-2);
   /* Space for fixed bottom bar (+ safe-area inset) */
   /* Increase bottom inset so content can scroll fully above the floating navbar/backdrop */
-  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
   /* Ensure page fills viewport so fixed footer anchors to screen */
   min-height: 100svh;
   margin: 0 auto;
@@ -13,10 +13,12 @@
 #shiftAddPage {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 100vh;
-  height: 100svh;
+  justify-content: flex-start;
+  min-height: 100vh;
+  min-height: 100svh;
   overflow-y: auto;
+  position: relative;
+  scroll-padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
   /* Ensure this container doesn't create a new containing block for fixed positioning */
   transform: none !important;
   filter: none !important;
@@ -46,16 +48,16 @@ body:has(#shiftAddPage) .app-container,
   flex-shrink: 0;
 }
 
-/* Push form content to bottom */
+/* Let the form stack naturally without forcing bottom alignment */
 #shiftAddPage #shiftForm {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 0 0 auto;
   position: relative;
 }
 
 #shiftAddPage .tab-content {
-  margin-top: auto;
+  margin-top: 0;
 }
 
 /* iOS PWA fix: avoid bottom-aligning the form so the floating action bar
@@ -73,7 +75,7 @@ html.ios-pwa #shiftAddPage .tab-content {
 /* Selected dates info - positioned in gap between form and floating nav */
 #shiftAddPage .selected-dates-info {
   position: absolute;
-  bottom: calc(90px + env(safe-area-inset-bottom, 0px) + 10px);
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
@@ -491,14 +493,14 @@ html.ios-pwa #shiftAddPage .tab-content {
 /* Add-shift floating navigation container - ensure it breaks out of containing blocks */
 .shift-add-floating-nav {
   position: fixed !important;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   display: flex !important;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  z-index: 9999 !important;
+  z-index: 11000 !important;
   background: var(--bg-card);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -703,7 +705,7 @@ html.ios-pwa #shiftAddPage .tab-content {
     max-width: 600px;
     margin: 0 auto;
     /* Add bottom padding to prevent content being covered by floating nav */
-    padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
     min-height: 100svh;
   }
 }

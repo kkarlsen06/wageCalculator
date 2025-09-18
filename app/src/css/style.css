@@ -1804,6 +1804,7 @@ body.keyboard-visible.chatbox-view .dashboard-chatbox-container .chatbox-pill {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
+  z-index: 10001; /* Ensure dropdown appears above bottom nav */
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -2952,6 +2953,8 @@ select.form-control {
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 40px;
+  position: relative;
+  z-index: 10001; /* Ensure dropdowns appear above bottom nav (z-index: 10000) */
 }
 
 .form-control:hover {
@@ -16786,27 +16789,6 @@ body.chatbox-view .chatbox-container {
 
 /* Settings detail pages already handle their own padding in settings.css */
 
-/* Override nav-add styling for small version in contextual navbar */
-.nav-item.nav-add-small {
-  margin-top: 0 !important; /* Remove the elevated position */
-}
-
-.nav-item.nav-add-small .nav-icon {
-  width: 48px;
-  height: 48px;
-  background: var(--accent);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.nav-item.nav-add-small .nav-icon svg {
-  width: 24px;
-  height: 24px;
-  color: white;
-}
 
 
 .shifts-page .icon-sm {
@@ -16972,8 +16954,7 @@ body.chatbox-view .chatbox-container {
 }
 
 /* View Transitions API - Shared element for FAB button morph */
-.nav-item.nav-add,
-.nav-item.nav-add-small {
+.nav-item.nav-add {
   view-transition-name: fab-plus;
 }
 
@@ -16988,12 +16969,8 @@ body.chatbox-view .chatbox-container {
 ::view-transition-group(root) { animation: none; }
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 
-/* 2) Exactly one visible element per state for the shared name */
+/* 2) Keep nav-add always visible since contextual navbar is removed */
 .is-hidden { visibility: hidden; pointer-events: none; }
-body.view-shifts .nav-add:not(.nav-add-small)        { visibility: hidden; pointer-events: none; }
-body.view-shifts .nav-add-small  { visibility: visible; }
-body:not(.view-shifts) .nav-add  { visibility: visible; }
-body:not(.view-shifts) .nav-add-small { visibility: hidden; pointer-events: none; }
 
 /* 3) Fence off containers so siblings don't get dragged into transitions */
 .context-nav {
@@ -17008,8 +16985,7 @@ body:not(.view-shifts) .nav-add-small { visibility: hidden; pointer-events: none
 /* 4) While a transition runs, silence all competing transitions/animations */
 .vt-active .bottom-nav,
 .vt-active .context-nav,
-.vt-active .nav-add,
-.vt-active .nav-add-small {
+.vt-active .nav-add {
   transition: none !important;
   animation: none !important;
 }

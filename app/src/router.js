@@ -65,14 +65,6 @@ export const routes = [
         const addShiftPortal = document.getElementById('shift-add-floating-portal');
         if (addShiftPortal) addShiftPortal.remove();
 
-        // Restore original navbar if it was modified
-        if (window._originalNavbarHTML) {
-          const bottomNav = document.querySelector('.bottom-nav');
-          if (bottomNav) {
-            bottomNav.innerHTML = window._originalNavbarHTML;
-          }
-          window._originalNavbarHTML = null;
-        }
 
         // Clean up shift add route globals
         if (window._shiftAddRouteCleanup) {
@@ -146,7 +138,7 @@ export function navigate(path) {
     });
   } else {
     // Firefox FLIP fallback: snapshot the FAB, navigate, then play FLIP animation
-    const play = flipOnce('.nav-item.nav-add, .nav-item.nav-add-small');
+    const play = flipOnce('.nav-item.nav-add');
     nav();
     requestAnimationFrame(play);
   }
@@ -154,8 +146,7 @@ export function navigate(path) {
 
 function updateBodyClassForRoute(currentPath) {
   try {
-    // Update body classes based on current route
-    document.body.classList.toggle('view-shifts', currentPath === '/shifts');
+    // Body classes for routes (view-shifts class removed since contextual navbar is removed)
   } catch (e) {
     console.warn('Error updating body class for route:', e);
   }
@@ -195,6 +186,7 @@ export async function render() {
     const addShiftPortal = document.getElementById('shift-add-floating-portal');
     if (addShiftPortal) addShiftPortal.remove();
   } catch (_) {}
+
 
   // Toggle containers: show SPA for non-root routes
   if (match.path === '/') {

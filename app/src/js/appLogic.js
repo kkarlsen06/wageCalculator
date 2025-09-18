@@ -7256,14 +7256,6 @@ export const app = {
     switchShiftView(view) {
         this.shiftView = view;
 
-        // Update navbar toggle buttons
-        const btns = document.querySelectorAll('.nav-toggle');
-        btns.forEach((btn, idx) => {
-            const isList = idx === 0;
-            const active = (view === 'list' && isList) || (view === 'calendar' && !isList);
-            btn.classList.toggle('active', active);
-        });
-
         // Update tab buttons in shifts route
         const tabButtons = document.querySelectorAll('.shifts-page .tab-btn');
         tabButtons.forEach(btn => {
