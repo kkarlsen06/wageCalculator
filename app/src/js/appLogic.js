@@ -2572,6 +2572,30 @@ export const app = {
             customWageInput.value = this.customWage;
         }
 
+        // Update wage model selection buttons (virke vs custom)
+        const virkeOption = document.getElementById('virkeOption');
+        const customOption = document.getElementById('customOption');
+        if (virkeOption && customOption) {
+            const selectedWageType = this.usePreset ? 'virke' : 'custom';
+            virkeOption.classList.toggle('selected', selectedWageType === 'virke');
+            customOption.classList.toggle('selected', selectedWageType === 'custom');
+
+            // Also update section visibility
+            const presetWageSection = document.getElementById('presetWageSection');
+            const customWageSection = document.getElementById('customWageSection');
+            const supplementsSection = document.getElementById('supplementsSection');
+
+            if (presetWageSection) {
+                presetWageSection.style.display = selectedWageType === 'virke' ? 'block' : 'none';
+            }
+            if (customWageSection) {
+                customWageSection.style.display = selectedWageType === 'custom' ? 'block' : 'none';
+            }
+            if (supplementsSection) {
+                supplementsSection.style.display = selectedWageType === 'custom' ? 'block' : 'none';
+            }
+        }
+
         // Update new break deduction settings UI
         const pauseDeductionEnabledToggle = document.getElementById('pauseDeductionEnabledToggle');
         if (pauseDeductionEnabledToggle) {
@@ -4097,7 +4121,7 @@ export const app = {
         }
     },
 
-    // Load user nickname for header display (profile pictures removed)
+    // Load user nickname and avatar for header display
     async loadUserNickname() {
         try {
             const { data: { user } } = await window.supa.auth.getUser();
@@ -4112,12 +4136,48 @@ export const app = {
                 nicknameElement.textContent = nickname;
             }
 
+            // Load avatar url: prefer server settings.profile_picture_url, fallback to user metadata
+            let avatarUrl = '';
+            try {
+                const { data: { session } } = await window.supa.auth.getSession();
+                const token = session?.access_token;
+                if (token) {
+                    const resp = await fetch(`${window.CONFIG.apiBase}/settings`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        avatarUrl = data.profile_picture_url || '';
+                    }
+                }
+                // Fallback to user_settings table if API fails
+                if (!avatarUrl) {
+                    const { data: row } = await window.supa
+                        .from('user_settings')
+                        .select('profile_picture_url')
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+                    avatarUrl = row?.profile_picture_url || '';
+                }
+            } catch (_) { /* ignore */ }
+            if (!avatarUrl) avatarUrl = user.user_metadata?.avatar_url || '';
+
+            // Update topbar avatar
+            const topbarImg = document.getElementById('userAvatarImg');
+            const profileIcon = document.querySelector('.profile-icon');
+            if (avatarUrl && topbarImg) {
+                topbarImg.src = avatarUrl;
+                topbarImg.style.display = 'block';
+                if (profileIcon) profileIcon.style.display = 'none';
+            } else if (topbarImg) {
+                topbarImg.style.display = 'none';
+                if (profileIcon) profileIcon.style.display = 'block';
+            }
+
             // Update chatbox placeholder with user name
             if (window.chatbox && window.chatbox.updatePlaceholder) {
                 window.chatbox.updatePlaceholder();
             }
-
-            // Top bar profile picture removed
 
         } catch (err) {
             console.error('Error loading user nickname:', err);
@@ -4130,7 +4190,11 @@ export const app = {
             if (window.chatbox && window.chatbox.updatePlaceholder) {
                 window.chatbox.updatePlaceholder();
             }
-            // No profile picture updates
+            // Hide avatar on error
+            const topbarImg = document.getElementById('userAvatarImg');
+            const profileIcon = document.querySelector('.profile-icon');
+            if (topbarImg) topbarImg.style.display = 'none';
+            if (profileIcon) profileIcon.style.display = 'block';
         }
     },
     saveToLocalStorage() {

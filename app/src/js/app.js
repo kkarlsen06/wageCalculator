@@ -1228,6 +1228,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
+      // Add supplement buttons
+      const addWeekdayBtn = event.target.closest('#addWeekdaySupplementBtn');
+      if (addWeekdayBtn) {
+        event.stopPropagation();
+        app.addBonusSlot('weekday');
+        return;
+      }
+
+      const addSaturdayBtn = event.target.closest('#addSaturdaySupplementBtn');
+      if (addSaturdayBtn) {
+        event.stopPropagation();
+        app.addBonusSlot('saturday');
+        return;
+      }
+
+      const addSundayBtn = event.target.closest('#addSundaySupplementBtn');
+      if (addSundayBtn) {
+        event.stopPropagation();
+        app.addBonusSlot('sunday');
+        return;
+      }
+
       // Modal close when clicking outside modal content
       const modal = event.target.closest('.modal');
       if (modal && event.target === modal) {

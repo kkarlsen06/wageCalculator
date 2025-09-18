@@ -7,21 +7,53 @@ export function renderShifts() {
   return /* html */`
     <div class="shifts-page">
       <div class="app-container">
-        <!-- Month Navigation -->
-        <div class="month-navigation-container">
-          <div class="month-navigation">
-            <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-            </button>
-            <span class="month-display" id="currentMonth">Mai 2025</span>
-            <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="9 6 15 12 9 18"></polyline>
-              </svg>
-            </button>
+        <div class="header">
+          <div class="header-top">
+            <div class="header-left">
+              <a href="https://www.kkarlsen.dev" class="header-logo-link">
+                <img src="/icons/kkarlsen_ikon_clean.png" class="header-logo" alt="kkarlsen logo">
+              </a>
+            </div>
+            <div class="header-right">
+              <div class="user-profile-container">
+                <button class="user-profile-btn" onclick="app.toggleProfileDropdown()" aria-label="Åpne brukerprofil">
+                  <span class="user-nickname" id="userNickname">Bruker</span>
+                  <img id="userAvatarImg" class="topbar-avatar" alt="Profilbilde" style="display:none;" />
+                  <svg class="icon-sm profile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </button>
+                <div class="profile-skeleton" aria-hidden="true">
+                  <div class="skeleton-avatar"></div>
+                  <div class="skeleton-line w-40"></div>
+                </div>
+                <div class="profile-dropdown" id="profileDropdown" style="display: none;">
+                  <div class="dropdown-item" data-spa data-href="/settings/account">
+                    <span>Profil</span>
+                  </div>
+                  <div class="dropdown-item logout-item" onclick="app.handleLogout()">
+                    <span>Logg ut</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <!-- Month Navigation -->
+        <div class="month-navigation dashboard-month-nav-inline">
+          <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
+          <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 6 15 12 9 18"></polyline>
+            </svg>
+          </button>
         </div>
 
         <!-- Employee Filter Bar -->
@@ -74,6 +106,11 @@ export function afterMountShifts() {
   // Wait for app to be ready then initialize shifts functionality
   const initShifts = () => {
     if (window.app) {
+      // Load profile information for header
+      if (window.app.loadUserNickname) {
+        window.app.loadUserNickname();
+      }
+
       // Update header with current month
       if (window.app.updateHeader) {
         window.app.updateHeader();

@@ -4,11 +4,39 @@ export function renderAnsatte() {
   return `
   <div id="ansattePage" class="ansatte-page app-container">
     <div class="ansatte-content">
-      <h1 class="ansatte-title">Ansatte</h1>
-      <p class="ansatte-subtitle">Administrer ansatte og se lønnssammendrag</p>
-
-      <!-- Tab bar container placeholder for existing employee logic compatibility -->
-      <div class="tab-bar-container ansatte-tab-placeholder" style="display: none;"></div>
+      <div class="header">
+        <div class="header-top">
+          <div class="header-left">
+            <a href="https://www.kkarlsen.dev" class="header-logo-link">
+              <img src="/icons/kkarlsen_ikon_clean.png" class="header-logo" alt="kkarlsen logo">
+            </a>
+          </div>
+          <div class="header-right">
+            <div class="user-profile-container">
+              <button class="user-profile-btn" onclick="app.toggleProfileDropdown()" aria-label="Åpne brukerprofil">
+                <span class="user-nickname" id="userNickname">Bruker</span>
+                <img id="userAvatarImg" class="topbar-avatar" alt="Profilbilde" style="display:none;" />
+                <svg class="icon-sm profile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </button>
+              <div class="profile-skeleton" aria-hidden="true">
+                <div class="skeleton-avatar"></div>
+                <div class="skeleton-line w-40"></div>
+              </div>
+              <div class="profile-dropdown" id="profileDropdown" style="display: none;">
+                <div class="dropdown-item" data-spa data-href="/settings/account">
+                  <span>Profil</span>
+                </div>
+                <div class="dropdown-item logout-item" onclick="app.handleLogout()">
+                  <span>Logg ut</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Month Navigation for employees view -->
       <div class="month-navigation dashboard-month-nav-inline">
@@ -24,6 +52,12 @@ export function renderAnsatte() {
           </svg>
         </button>
       </div>
+
+      <h1 class="ansatte-title">Ansatte</h1>
+      <p class="ansatte-subtitle">Administrer ansatte og se lønnssammendrag</p>
+
+      <!-- Tab bar container placeholder for existing employee logic compatibility -->
+      <div class="tab-bar-container ansatte-tab-placeholder" style="display: none;"></div>
 
       <!-- Loading placeholder -->
       <div class="employees-placeholder" id="ansatteLoadingPlaceholder">
@@ -89,6 +123,11 @@ async function initializeEmployeesRoute() {
     // Set the current view to employees so appLogic functions work correctly
     if (window.app) {
       window.app.currentView = 'employees';
+
+      // Load profile information for header
+      if (window.app.loadUserNickname) {
+        window.app.loadUserNickname();
+      }
 
       // Initialize the employees view using existing appLogic
       await window.app.showEmployeesView();

@@ -16782,11 +16782,6 @@ body.chatbox-view .chatbox-container {
   scroll-behavior: auto;
 }
 
-.shifts-page .app-container {
-  padding: var(--space-4) var(--space-4);
-  max-width: none;
-}
-
 /* Settings detail pages already handle their own padding in settings.css */
 
 /* Override nav-add styling for small version in contextual navbar */
@@ -16865,10 +16860,6 @@ body.chatbox-view .chatbox-container {
 
 /* Mobile responsiveness for shifts page */
 @media (max-width: 480px) {
-  .shifts-page .app-container {
-    padding: var(--space-3);
-  }
-
   .shifts-page .month-navigation {
     padding: var(--space-2);
   }
@@ -17187,7 +17178,26 @@ html:has(.ansatte-page) {
 /* Hide floating nav button when modal is active to prevent z-index conflicts */
 body:has(.modal.active) #settings-floating-portal,
 body:has(.modal.active) .floating-nav-btn,
+body:has(.modal.active) .back-btn,
+body:has(.ub-modal-backdrop) #settings-floating-portal,
+body:has(.ub-modal-backdrop) .floating-nav-btn,
+body:has(.ub-modal-backdrop) .back-btn,
 body.modal-open #settings-floating-portal,
-body.modal-open .floating-nav-btn {
+body.modal-open .floating-nav-btn,
+body.modal-open .back-btn {
   display: none !important;
+}
+
+/* More aggressive hiding for floating elements when any modal is present */
+.ub-modal-backdrop ~ #settings-floating-portal,
+.modal.active ~ #settings-floating-portal,
+body:has(.ub-modal-backdrop) #settings-floating-portal > *,
+body:has(.modal.active) #settings-floating-portal > *,
+body:has(.ub-modal-backdrop) .floating-nav-btn.back-btn,
+body:has(.modal.active) .floating-nav-btn.back-btn,
+body.modal-open .floating-nav-btn.back-btn {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }

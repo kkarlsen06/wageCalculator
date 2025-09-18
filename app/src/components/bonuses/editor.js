@@ -625,6 +625,7 @@ class CustomBonusEditor {
     modal.appendChild(footer);
     backdrop.appendChild(modal);
     document.body.appendChild(backdrop);
+    document.body.classList.add('modal-open');
     this.modal = backdrop;
 
     const updateDayUI = () => {
@@ -787,6 +788,7 @@ class CustomBonusEditor {
       this.modal.remove();
       this.modal = null;
     }
+    document.body.classList.remove('modal-open');
   }
 }
 
