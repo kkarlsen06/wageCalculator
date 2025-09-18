@@ -134,12 +134,25 @@ export function navigate(path) {
 
   // Use View Transitions API if available, otherwise fall back to FLIP animation
   if ('startViewTransition' in document) {
-    document.startViewTransition(nav);
+    document.documentElement.classList.add('vt-active');
+    const vt = document.startViewTransition(nav);
+    vt.finished.finally(() => {
+      document.documentElement.classList.remove('vt-active');
+    });
   } else {
     // Firefox FLIP fallback: snapshot the FAB, navigate, then play FLIP animation
     const play = flipOnce('.nav-item.nav-add, .nav-item.nav-add-small');
     nav();
     requestAnimationFrame(play);
+  }
+}
+
+function updateBodyClassForRoute(currentPath) {
+  try {
+    // Update body classes based on current route
+    document.body.classList.toggle('view-shifts', currentPath === '/shifts');
+  } catch (e) {
+    console.warn('Error updating body class for route:', e);
   }
 }
 
@@ -294,6 +307,9 @@ export async function render() {
     document.documentElement.classList.toggle('onboarding-route', isOnboarding);
     document.body.classList.toggle('onboarding-route', isOnboarding);
   } catch (_) {}
+
+  // Update body classes for current route (for View Transitions)
+  updateBodyClassForRoute(path);
 
   // Render into SPA outlet only for non-root routes
   if (spaEl && match.path !== '/') {

@@ -16959,6 +16959,44 @@ body.chatbox-view .chatbox-container {
   animation-timing-function: cubic-bezier(.22,1,.36,1); /* fast-out, slow-in */
 }
 
+/* === View Transitions: de-jitter ================================== */
+/* 1) Kill the full-page cross-fade that causes shimmer */
+::view-transition-group(root) { animation: none; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+
+/* 2) Exactly one visible element per state for the shared name */
+.is-hidden { visibility: hidden; pointer-events: none; }
+body.view-shifts .nav-add        { visibility: hidden; pointer-events: none; }
+body.view-shifts .nav-add-small  { visibility: visible; }
+body:not(.view-shifts) .nav-add  { visibility: visible; }
+body:not(.view-shifts) .nav-add-small { visibility: hidden; pointer-events: none; }
+
+/* 3) Fence off containers so siblings don't get dragged into transitions */
+.context-nav {
+  contain: layout paint;
+  isolation: isolate;
+}
+/* Don't contain bottom-nav so FAB can extend outside */
+.bottom-nav {
+  isolation: isolate;
+}
+
+/* 4) While a transition runs, silence all competing transitions/animations */
+.vt-active .bottom-nav,
+.vt-active .context-nav,
+.vt-active .nav-add,
+.vt-active .nav-add-small {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 5) Lock a few metrics to avoid micro reflows - preserve existing dimensions */
+html, body, .snap-container { scrollbar-gutter: stable both-edges; }
+
+/* Optional: if any ancestor of the FAB has transform/filter, Safari/iOS may stutter.
+   Temporarily neutralize it during the transition by toggling .app-has-transform on that node. */
+.vt-active .app-has-transform { transform: none !important; filter: none !important; }
+
 /* If you need to hide the FAB in a given view, don't remove it from DOM */
 .fab-plus.is-hidden {
   visibility: hidden;
