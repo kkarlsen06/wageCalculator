@@ -312,14 +312,14 @@ export async function render() {
     document.body.classList.toggle('onboarding-route', isOnboarding);
   } catch (_) {}
 
-  // Update body classes for current route (for View Transitions)
-  updateBodyClassForRoute(path);
-
   // Render into SPA outlet only for non-root routes
   if (spaEl && match.path !== '/') {
     spaEl.innerHTML = await match.render();
   }
   match.afterMount && match.afterMount();
+
+  // Update body classes for current route (for View Transitions)
+  updateBodyClassForRoute(path);
 
   // Update bottom navigation active state AFTER afterMount to ensure navbar is properly restored
   updateBottomNavActiveState(path);

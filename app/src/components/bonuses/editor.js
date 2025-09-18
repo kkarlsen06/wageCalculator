@@ -217,7 +217,18 @@ class CustomBonusEditor {
     times.className = 'ub-rule-times';
     const fromLabel = rule.from || '--:--';
     const toLabel = rule.to || '--:--';
-    times.textContent = `${fromLabel}–${toLabel}`;
+
+    // Check if this is a midnight-crossing bonus
+    const fromMinutes = timeStringToMinutes(rule.from);
+    const toMinutes = timeStringToMinutes(rule.to);
+    const crossesMidnight = fromMinutes !== null && toMinutes !== null && toMinutes <= fromMinutes;
+
+    if (crossesMidnight) {
+      times.textContent = `${fromLabel}–${toLabel} (krysser midnatt)`;
+      times.style.fontStyle = 'italic';
+    } else {
+      times.textContent = `${fromLabel}–${toLabel}`;
+    }
     meta.appendChild(times);
 
     const value = document.createElement('div');
@@ -349,9 +360,6 @@ class CustomBonusEditor {
     if (fromMinutes === toMinutes) {
       return { valid: false, error: 'Start- og sluttid kan ikke være like.' };
     }
-    if (toMinutes < fromMinutes) {
-      return { valid: false, error: 'Sluttid må være etter starttid.' };
-    }
 
     const type = candidate.valueType === 'percent' ? 'percent' : 'rate';
     if (type === 'rate') {
@@ -378,6 +386,9 @@ class CustomBonusEditor {
     const candidateEnd = timeStringToMinutes(candidate.to);
     if (candidateStart === null || candidateEnd === null) return false;
 
+    // Convert candidate to normalized intervals (handle midnight crossing)
+    const candidateIntervals = this.getTimeIntervals(candidateStart, candidateEnd);
+
     for (let index = 0; index < this.rules.length; index += 1) {
       if (index === ignoreIndex) continue;
       const existing = this.rules[index];
@@ -386,11 +397,34 @@ class CustomBonusEditor {
       const existingStart = timeStringToMinutes(existing.from);
       const existingEnd = timeStringToMinutes(existing.to);
       if (existingStart === null || existingEnd === null) continue;
-      if (rangesOverlap(candidateStart, candidateEnd, existingStart, existingEnd)) {
-        return true;
+
+      // Convert existing rule to normalized intervals
+      const existingIntervals = this.getTimeIntervals(existingStart, existingEnd);
+
+      // Check if any intervals overlap
+      for (const candidateInterval of candidateIntervals) {
+        for (const existingInterval of existingIntervals) {
+          if (rangesOverlap(candidateInterval.start, candidateInterval.end, existingInterval.start, existingInterval.end)) {
+            return true;
+          }
+        }
       }
     }
     return false;
+  }
+
+  // Helper function to convert time ranges to intervals, handling midnight crossing
+  getTimeIntervals(startMinutes, endMinutes) {
+    if (endMinutes <= startMinutes) {
+      // Midnight crossing: split into two intervals
+      return [
+        { start: startMinutes, end: 24 * 60 }, // From start to midnight
+        { start: 0, end: endMinutes }          // From midnight to end
+      ];
+    } else {
+      // Normal interval within same day
+      return [{ start: startMinutes, end: endMinutes }];
+    }
   }
 
   openModal(rule = null, index = -1) {
