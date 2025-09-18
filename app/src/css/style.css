@@ -16990,7 +16990,7 @@ body.chatbox-view .chatbox-container {
 
 /* 2) Exactly one visible element per state for the shared name */
 .is-hidden { visibility: hidden; pointer-events: none; }
-body.view-shifts .nav-add        { visibility: hidden; pointer-events: none; }
+body.view-shifts .nav-add:not(.nav-add-small)        { visibility: hidden; pointer-events: none; }
 body.view-shifts .nav-add-small  { visibility: visible; }
 body:not(.view-shifts) .nav-add  { visibility: visible; }
 body:not(.view-shifts) .nav-add-small { visibility: hidden; pointer-events: none; }
