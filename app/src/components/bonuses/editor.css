@@ -365,12 +365,20 @@ button.ub-day-all:focus-visible {
 
 @media (max-width: 480px) {
   .ub-modal-backdrop {
-    padding: var(--space-2);
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding-top: calc(var(--space-3) + env(safe-area-inset-top));
+    padding-right: var(--space-2);
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    padding-left: var(--space-2);
   }
 
   .ub-modal {
     max-width: 100%;
-    max-height: calc(100vh - var(--space-4));
+    max-height: calc(100vh - var(--space-3));
+    max-height: min(calc(100vh - var(--space-3)), calc(100dvh - var(--space-3)));
+    margin-bottom: env(safe-area-inset-bottom);
   }
 
   .ub-modal-header,
@@ -378,6 +386,16 @@ button.ub-day-all:focus-visible {
   .ub-modal-footer {
     padding-left: var(--space-2);
     padding-right: var(--space-2);
+  }
+
+  .ub-modal-header {
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  .ub-modal-body {
+    padding-bottom: var(--space-2);
   }
 
   .ub-rule-row {
@@ -403,17 +421,23 @@ button.ub-day-all:focus-visible {
   }
 
   .ub-modal-footer {
-    flex-direction: column-reverse;
-    align-items: stretch;
-    gap: var(--space-3);
+    padding-top: var(--space-2);
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    margin-top: var(--space-2);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
   }
 
   .ub-modal-footer .ub-actions-right {
-    flex-direction: column;
-    gap: var(--space-2);
+    flex-direction: row;
+    gap: var(--space-1);
+    width: auto;
   }
 
   .ub-modal-footer .btn {
-    width: 100%;
+    width: auto;
+    min-height: 44px;
   }
 }
