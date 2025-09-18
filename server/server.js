@@ -2331,16 +2331,90 @@ function getTariffRate(level) {
 }
 
 const PRESET_BONUSES = {
-  weekday: [
-    { from: '18:00', to: '06:00', rate: 15.5 }
-  ],
-  saturday: [
-    { from: '00:00', to: '24:00', rate: 15.5 }
-  ],
-  sunday: [
-    { from: '00:00', to: '24:00', rate: 31.0 }
+  rules: [
+    { days: [1, 2, 3, 4, 5], from: '18:00', to: '06:00', rate: 15.5 },
+    { days: [6], from: '00:00', to: '24:00', rate: 15.5 },
+    { days: [7], from: '00:00', to: '24:00', rate: 31.0 }
   ]
 };
+
+function normalizeUb(data) {
+  if (!data || typeof data !== 'object') return { data, migrated: false };
+  if (Array.isArray(data.rules)) return { data, migrated: false };
+
+  const map = [
+    ['weekday', [1, 2, 3, 4, 5]],
+    ['saturday', [6]],
+    ['sunday', [7]]
+  ];
+
+  const rules = [];
+  let touched = false;
+
+  for (const [key, days] of map) {
+    const arr = Array.isArray(data?.[key]) ? data[key] : [];
+    if (!arr.length) continue;
+    touched = true;
+    for (const x of arr) {
+      const rule = { days, from: x.from, to: x.to };
+      if (x.percent != null) rule.percent = Number(x.percent);
+      else if (x.rate != null) rule.rate = Number(x.rate);
+      else continue;
+      rules.push(rule);
+    }
+  }
+
+  if (!touched) return { data, migrated: false };
+
+  const next = { ...data, rules };
+  delete next.weekday; delete next.saturday; delete next.sunday;
+  return { data: next, migrated: true };
+}
+
+const UB_TYPE_TO_DAYS = {
+  weekday: [1, 2, 3, 4, 5],
+  saturday: [6],
+  sunday: [7]
+};
+
+const SHIFT_TYPE_TO_DAYS = {
+  0: UB_TYPE_TO_DAYS.weekday,
+  1: UB_TYPE_TO_DAYS.saturday,
+  2: UB_TYPE_TO_DAYS.sunday
+};
+
+function ubSegmentsForDays(rules, isoDays) {
+  if (!Array.isArray(rules) || !Array.isArray(isoDays) || isoDays.length === 0) return [];
+  const daySet = new Set(isoDays);
+  return rules
+    .filter(rule => Array.isArray(rule?.days) && rule.days.some(day => daySet.has(day)))
+    .map(rule => {
+      const segment = { from: rule.from, to: rule.to };
+      if (rule.percent != null) segment.percent = Number(rule.percent);
+      if (rule.rate != null) segment.rate = Number(rule.rate);
+      return segment;
+    })
+    .filter(rule => typeof rule.from === 'string' && typeof rule.to === 'string');
+}
+
+function ubSegmentsForShiftType(rules, shiftType) {
+  const isoDays = SHIFT_TYPE_TO_DAYS[shiftType] || [];
+  return ubSegmentsForDays(rules, isoDays);
+}
+
+function ubRuleHourlyValue(rule, baseWageRate) {
+  if (!rule) return 0;
+  if (rule.rate != null) {
+    const rate = Number(rule.rate);
+    return Number.isNaN(rate) ? 0 : rate;
+  }
+  if (rule.percent != null) {
+    const pct = Number(rule.percent);
+    if (Number.isNaN(pct)) return 0;
+    return baseWageRate * (pct / 100);
+  }
+  return 0;
+}
 
 function timeToMinutes(timeStr) {
   const [hours, minutes] = timeStr.split(':').map(Number);
@@ -2532,7 +2606,7 @@ function calculateOverlap(start1, end1, start2, end2) {
   return Math.max(0, overlapEnd - overlapStart);
 }
 
-function calculateBonus(startTime, endTime, bonusSegments) {
+function calculateBonus(startTime, endTime, bonusSegments, baseWageRate = 0) {
   let totalBonus = 0;
   const startMinutes = timeToMinutes(startTime);
   let endMinutes = timeToMinutes(endTime);
@@ -2549,7 +2623,7 @@ function calculateBonus(startTime, endTime, bonusSegments) {
       segEnd += 24 * 60;
     }
     const overlap = calculateOverlap(startMinutes, endMinutes, segStart, segEnd);
-    totalBonus += (overlap / 60) * segment.rate;
+    totalBonus += (overlap / 60) * ubRuleHourlyValue(segment, baseWageRate);
   }
   return totalBonus;
 }
@@ -2666,105 +2740,89 @@ function calculateLegalBreakDeduction(shift, userSettings, wageRate, bonuses) {
 // Calculate wage periods for break deduction analysis (non-overlapping periods)
 function calculateWagePeriods(shift, baseWageRate, bonuses, startMinutes, endMinutes) {
   const periods = [];
-  const dayOfWeek = new Date(shift.shift_date).getDay();
+  const rules = Array.isArray(bonuses?.rules) ? bonuses.rules : [];
+  const shiftDate = shift?.shift_date ? new Date(shift.shift_date) : null;
+  const startDow = shiftDate ? shiftDate.getDay() : (shift?.shift_type === 2 ? 0 : (shift?.shift_type === 1 ? 6 : 1));
+  const dayToIso = (dow) => (dow === 0 ? 7 : dow);
 
-  // Determine which bonus segments apply
-  let applicableBonuses = [];
-  if (dayOfWeek === 0) { // Sunday
-    applicableBonuses = bonuses.sunday || [];
-  } else if (dayOfWeek === 6) { // Saturday
-    applicableBonuses = bonuses.saturday || [];
-  } else { // Weekday
-    applicableBonuses = bonuses.weekday || [];
-  }
+  const buildDay = (dayStart, dayEnd, isoDay) => {
+    if (dayEnd <= dayStart) return;
+    const applicable = ubSegmentsForDays(rules, [isoDay]);
+    let segments = [{ start: dayStart, end: dayEnd, bonuses: [] }];
+    for (const bonus of applicable) {
+      const bonusStart = timeToMinutes(bonus.from);
+      const rawEnd = timeToMinutes(bonus.to);
+      if (!Number.isFinite(bonusStart) || !Number.isFinite(rawEnd)) continue;
 
-  // Create time segments with their applicable bonuses
-  const timeSegments = [];
+      const intervals = rawEnd <= bonusStart
+        ? [
+            [bonusStart, rawEnd + 24 * 60],
+            [bonusStart - 24 * 60, rawEnd]
+          ]
+        : [[bonusStart, rawEnd]];
 
-  // Start with the entire shift as base rate
-  timeSegments.push({
-    start: startMinutes,
-    end: endMinutes,
-    bonuses: []
-  });
+      for (const [intervalStart, intervalEnd] of intervals) {
+        if (intervalEnd <= intervalStart) continue;
+        const overlapStart = Math.max(dayStart, intervalStart);
+        const overlapEnd = Math.min(dayEnd, intervalEnd);
 
-  // Apply each bonus to overlapping segments
-  for (const bonus of applicableBonuses) {
-    const bonusStart = timeToMinutes(bonus.from);
-    let bonusEnd = timeToMinutes(bonus.to);
-    if (bonusEnd <= bonusStart) {
-      bonusEnd += 24 * 60;
-    }
-
-    const overlapStart = Math.max(startMinutes, bonusStart);
-    const overlapEnd = Math.min(endMinutes, bonusEnd);
-
-    if (overlapEnd > overlapStart) {
-      // Split existing segments to accommodate this bonus
-      const newSegments = [];
-
-      for (const segment of timeSegments) {
-        if (segment.end <= overlapStart || segment.start >= overlapEnd) {
-          // No overlap - keep segment as is
-          newSegments.push(segment);
-        } else {
-          // There's overlap - split the segment
-
-          // Part before bonus (if any)
-          if (segment.start < overlapStart) {
-            newSegments.push({
-              start: segment.start,
-              end: overlapStart,
-              bonuses: [...segment.bonuses]
-            });
+        if (overlapEnd > overlapStart) {
+          const newSegments = [];
+          for (const segment of segments) {
+            if (segment.end <= overlapStart || segment.start >= overlapEnd) {
+              newSegments.push(segment);
+            } else {
+              if (segment.start < overlapStart) {
+                newSegments.push({ start: segment.start, end: overlapStart, bonuses: [...segment.bonuses] });
+              }
+              const overlapSegmentStart = Math.max(segment.start, overlapStart);
+              const overlapSegmentEnd = Math.min(segment.end, overlapEnd);
+              if (overlapSegmentEnd > overlapSegmentStart) {
+                newSegments.push({
+                  start: overlapSegmentStart,
+                  end: overlapSegmentEnd,
+                  bonuses: [...segment.bonuses, bonus]
+                });
+              }
+              if (segment.end > overlapEnd) {
+                newSegments.push({ start: overlapEnd, end: segment.end, bonuses: [...segment.bonuses] });
+              }
+            }
           }
-
-          // Overlapping part with bonus added
-          const overlapSegmentStart = Math.max(segment.start, overlapStart);
-          const overlapSegmentEnd = Math.min(segment.end, overlapEnd);
-          if (overlapSegmentEnd > overlapSegmentStart) {
-            newSegments.push({
-              start: overlapSegmentStart,
-              end: overlapSegmentEnd,
-              bonuses: [...segment.bonuses, bonus]
-            });
-          }
-
-          // Part after bonus (if any)
-          if (segment.end > overlapEnd) {
-            newSegments.push({
-              start: overlapEnd,
-              end: segment.end,
-              bonuses: [...segment.bonuses]
-            });
-          }
+          segments = newSegments;
         }
       }
-
-      timeSegments.length = 0;
-      timeSegments.push(...newSegments);
     }
-  }
 
-  // Convert time segments to wage periods
-  for (const segment of timeSegments) {
-    const durationHours = (segment.end - segment.start) / 60;
-    const totalBonusRate = segment.bonuses.reduce((sum, bonus) => sum + bonus.rate, 0);
+    for (const segment of segments) {
+      const durationMinutes = segment.end - segment.start;
+      if (durationMinutes <= 0) continue;
+      const durationHours = durationMinutes / 60;
+      const bonusRate = segment.bonuses.reduce((sum, slot) => sum + ubRuleHourlyValue(slot, baseWageRate), 0);
+      periods.push({
+        startMinutes: segment.start,
+        endMinutes: segment.end,
+        durationHours,
+        wageRate: baseWageRate,
+        bonusRate,
+        totalRate: baseWageRate + bonusRate,
+        type: bonusRate > 0 ? 'bonus' : 'base',
+        bonuses: segment.bonuses.map(slot => ({ ...slot }))
+      });
+    }
+  };
 
-    periods.push({
-      startMinutes: segment.start,
-      endMinutes: segment.end,
-      durationHours: durationHours,
-      wageRate: baseWageRate,
-      bonusRate: totalBonusRate,
-      totalRate: baseWageRate + totalBonusRate,
-      type: totalBonusRate > 0 ? 'bonus' : 'base',
-      bonuses: segment.bonuses
-    });
+  const firstEnd = Math.min(endMinutes, 24 * 60);
+  buildDay(startMinutes, firstEnd, dayToIso(startDow));
+
+  if (endMinutes > 24 * 60) {
+    const nextDow = (startDow + 1) % 7;
+    buildDay(0, endMinutes - 24 * 60, dayToIso(nextDow));
   }
 
   return periods;
 }
+
 
 // Apply proportional break deduction across all wage periods
 function applyProportionalDeduction(wagePeriods, deductionHours, startMinutes, endMinutes) {
@@ -2906,6 +2964,31 @@ async function getUserSettings(user_id) {
   if (error && error.code !== 'PGRST116') {
     console.error('Error fetching user settings:', error);
     return null;
+  }
+
+  if (settings && 'custom_bonuses' in settings) {
+    const normalized = normalizeUb(settings.custom_bonuses);
+    if (normalized.migrated) {
+      try {
+        const column = settings?.id ? 'id' : 'user_id';
+        const value = settings?.id ?? user_id;
+        if (value) {
+          await supabase
+            .from('user_settings')
+            .update({ custom_bonuses: normalized.data })
+            .eq(column, value);
+          console.info('UB migrated ->', value);
+        }
+      } catch (migrationError) {
+        console.warn('Failed to persist migrated UB bonuses', migrationError);
+      }
+    }
+    settings.custom_bonuses = normalized.data && typeof normalized.data === 'object'
+      ? {
+          ...normalized.data,
+          rules: Array.isArray(normalized.data.rules) ? normalized.data.rules : []
+        }
+      : { rules: [] };
   }
 
   return settings;
@@ -3053,11 +3136,7 @@ function calculateShiftEarnings(shift, userSettings) {
     : (userSettings?.custom_wage || 200);
 
   // Get bonuses
-  const bonuses = usePreset ? PRESET_BONUSES : (userSettings?.custom_bonuses || {
-    weekday: [],
-    saturday: [],
-    sunday: []
-  });
+  const bonuses = usePreset ? PRESET_BONUSES : (userSettings?.custom_bonuses || { rules: [] });
 
   // Apply legal break deduction system
   const breakResult = calculateLegalBreakDeduction(shift, userSettings, wageRate, bonuses);
@@ -3085,14 +3164,8 @@ function calculateShiftEarnings(shift, userSettings) {
 
     baseWage = paidHours * wageRate;
 
-    const bonusType = shift.shift_type === 0 ? 'weekday' : (shift.shift_type === 1 ? 'saturday' : 'sunday');
-    const bonusSegments = bonuses[bonusType] || [];
-
-    // Calculate end time after adjustments
-    const endHour = Math.floor(adjustedEndMinutes / 60) % 24;
-    const endTimeStr = `${String(endHour).padStart(2,'0')}:${(adjustedEndMinutes % 60).toString().padStart(2,'0')}`;
-
-    bonus = calculateBonus(shift.start_time, endTimeStr, bonusSegments);
+    const periods = calculateWagePeriods(shift, wageRate, bonuses, startMinutes, adjustedEndMinutes);
+    bonus = periods.reduce((sum, period) => sum + period.durationHours * period.bonusRate, 0);
 
     // Debug logging for traditional calculations
     if (durationHours > 5.5) {
