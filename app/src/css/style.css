@@ -16823,26 +16823,9 @@ body.chatbox-view .chatbox-container {
   width: 100%;
 }
 
-/* Legacy month navigation container - hide when using new tab bar layout */
-.shifts-page .month-navigation-container {
-  display: none;
-}
-
-.shifts-page .month-navigation.dashboard-month-nav-inline .month-nav-btn:hover {
-  color: var(--accent);
-  background: var(--bg-hover);
-}
-
 .shifts-page .icon-sm {
   width: 16px;
   height: 16px;
-}
-
-/* Mobile responsiveness for shifts page */
-@media (max-width: 480px) {
-  .shifts-page .month-navigation {
-    padding: var(--space-2);
-  }
 }
 
 /* Bottom Navigation Bar */
@@ -17092,6 +17075,69 @@ body.chatbox-view .chatbox-container {
 body:has(.ansatte-page) {
   overflow-x: hidden;
   max-width: 100vw;
+}
+
+/* Employee shifts container styling */
+.employee-shifts-container {
+  margin-top: var(--space-6);
+  background: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  border: var(--card-border);
+}
+
+.employee-shifts-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.employee-shifts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Individual shift item styling */
+.employee-shift-item {
+  background: var(--surface-hover);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  border: 1px solid var(--surface-border);
+  transition: all 0.2s ease;
+}
+
+.employee-shift-item:hover {
+  background: var(--surface-card-hover);
+  border-color: var(--accent-light);
+  transform: translateY(-1px);
+}
+
+.employee-shift-date {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.employee-shift-time {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: var(--space-1);
+}
+
+.employee-shift-wage {
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.no-shifts-message {
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: var(--space-4);
+  margin: 0;
 }
 
 html:has(.ansatte-page) {

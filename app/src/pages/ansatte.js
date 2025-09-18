@@ -67,6 +67,14 @@ export function renderAnsatte() {
           <div class="skeleton-block" style="height: 120px;"></div>
         </div>
       </div>
+
+      <!-- Employee shift list container -->
+      <div class="employee-shifts-container" id="employeeShiftsContainer" style="display: none;">
+        <h3 class="employee-shifts-title">Vakter for <span id="selectedEmployeeName">valgt ansatt</span></h3>
+        <div class="employee-shifts-list" id="employeeShiftsList">
+          <!-- Shifts will be dynamically inserted here -->
+        </div>
+      </div>
     </div>
   </div>`;
 }
@@ -124,6 +132,10 @@ async function initializeEmployeesRoute() {
     if (window.app) {
       window.app.currentView = 'employees';
 
+      // Ensure we remove any other view classes and add employees-view
+      document.body.classList.remove('stats-view', 'chatbox-view');
+      document.body.classList.add('employees-view');
+
       // Load profile information for header
       if (window.app.loadUserNickname) {
         window.app.loadUserNickname();
@@ -167,6 +179,9 @@ async function initializeEmployeesRoute() {
           if (placeholder) {
             placeholder.style.display = 'none';
           }
+
+          // Show employee shifts if an employee is selected
+          displayEmployeeShifts();
         } catch (autoSelectError) {
           console.warn('[ansatte-route] Failed to auto-select employee:', autoSelectError);
           // Still hide placeholder even if auto-select fails
@@ -198,5 +213,150 @@ async function initializeEmployeesRoute() {
         </div>
       `;
     }
+  }
+}
+
+function displayEmployeeShifts() {
+  try {
+    const shiftsContainer = document.getElementById('employeeShiftsContainer');
+    const shiftsList = document.getElementById('employeeShiftsList');
+    const employeeNameSpan = document.getElementById('selectedEmployeeName');
+
+    if (!shiftsContainer || !shiftsList || !employeeNameSpan) {
+      console.warn('[ansatte-route] Shift display elements not found');
+      return;
+    }
+
+    // Check if we have a selected employee and shifts data
+    const selectedEmployeeId = window.app?.selectedEmployeeId;
+    const employees = window.app?.employees || [];
+    const allShifts = window.app?.shifts || [];
+
+    if (!selectedEmployeeId) {
+      shiftsContainer.style.display = 'none';
+      return;
+    }
+
+    // Find the selected employee
+    const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
+    if (!selectedEmployee) {
+      shiftsContainer.style.display = 'none';
+      return;
+    }
+
+    // Filter shifts for the selected employee in the current month
+    const currentDate = window.app?.currentDate || new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    const employeeShifts = allShifts.filter(shift => {
+      const shiftDate = new Date(shift.date);
+      return shift.employeeId === selectedEmployeeId &&
+             shiftDate.getMonth() === currentMonth &&
+             shiftDate.getFullYear() === currentYear;
+    });
+
+    // Update employee name
+    employeeNameSpan.textContent = selectedEmployee.name || 'Valgt ansatt';
+
+    // Clear existing shifts
+    shiftsList.innerHTML = '';
+
+    if (employeeShifts.length === 0) {
+      shiftsList.innerHTML = '<p class="no-shifts-message">Ingen vakter funnet for denne måneden.</p>';
+      shiftsContainer.style.display = 'block';
+      return;
+    }
+
+    // Sort shifts by date (newest first)
+    employeeShifts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Create shift items
+    employeeShifts.forEach(shift => {
+      const shiftItem = document.createElement('div');
+      shiftItem.className = 'employee-shift-item';
+
+      const shiftDate = new Date(shift.date);
+      const dateStr = shiftDate.toLocaleDateString('nb-NO', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const timeStr = `${shift.startTime} - ${shift.endTime}`;
+      const wageStr = shift.wage ? `${shift.wage} kr/t` : 'Timelønn ikke satt';
+
+      shiftItem.innerHTML = `
+        <div class="employee-shift-date">${dateStr}</div>
+        <div class="employee-shift-time">${timeStr}</div>
+        <div class="employee-shift-wage">${wageStr}</div>
+      `;
+
+      shiftsList.appendChild(shiftItem);
+    });
+
+    // Show the shifts container
+    shiftsContainer.style.display = 'block';
+
+  } catch (error) {
+    console.error('[ansatte-route] Error displaying employee shifts:', error);
+    const shiftsContainer = document.getElementById('employeeShiftsContainer');
+    if (shiftsContainer) {
+      shiftsContainer.style.display = 'none';
+    }
+  }
+}
+
+// Export the function so it can be called from appLogic when employee selection changes
+window.displayEmployeeShifts = displayEmployeeShifts;
+
+// Cleanup function to be called when leaving the ansatte route
+export function beforeUnmountAnsatte() {
+  try {
+    console.log('[ansatte-route] Cleaning up ansatte route');
+
+    // Reset view state
+    if (window.app) {
+      window.app.currentView = 'dashboard';
+    }
+
+    // Remove employees-view class and restore normal dashboard
+    document.body.classList.remove('employees-view');
+
+    // Reset overflow styles that were set for ansatte
+    document.body.style.overflowX = '';
+    document.body.style.maxWidth = '';
+    document.documentElement.style.overflowX = '';
+    document.documentElement.style.maxWidth = '';
+
+    // Show dashboard cards that were hidden in employees view
+    const totalCard = document.querySelector('.total-card');
+    const nextShiftCard = document.querySelector('.next-shift-card');
+    const nextPayrollCard = document.querySelector('.next-payroll-card');
+
+    if (totalCard) totalCard.style.display = '';
+    if (nextShiftCard) nextShiftCard.style.display = '';
+    if (nextPayrollCard) nextPayrollCard.style.display = '';
+
+    // Ensure we're showing user's own shifts, not employee shifts
+    if (window.app && window.app.resetToUserView) {
+      window.app.resetToUserView();
+    } else if (window.app) {
+      // Fallback: manually reset to user shifts
+      if (window.app.userShifts) {
+        window.app.shifts = [...window.app.userShifts];
+        window.app.selectedEmployeeId = null;
+        localStorage.removeItem('selectedEmployeeId');
+
+        if (window.app.updateDisplay) {
+          window.app.updateDisplay();
+        }
+      }
+    }
+
+    console.log('[ansatte-route] Cleanup completed');
+  } catch (error) {
+    console.error('[ansatte-route] Error during cleanup:', error);
   }
 }
