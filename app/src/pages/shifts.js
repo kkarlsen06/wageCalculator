@@ -41,19 +41,57 @@ export function renderShifts() {
           </div>
         </div>
 
-        <!-- Month Navigation -->
-        <div class="month-navigation dashboard-month-nav-inline">
-          <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
-            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-          <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
-          <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
-            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="9 6 15 12 9 18"></polyline>
-            </svg>
-          </button>
+        <!-- Tab Bar with Month Navigation -->
+        <div class="tab-bar-container">
+          <div class="tab-bar-with-month">
+            <div class="tab-bar">
+              <button class="tab-btn active" onclick="app.switchShiftView('list')" aria-label="Bytt til listevisning">
+                <div class="tab-icon-badge">
+                  <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                  </svg>
+                </div>
+                <span class="tab-text">Liste</span>
+              </button>
+              <button class="tab-btn" onclick="app.switchShiftView('calendar')" aria-label="Bytt til kalendervisning">
+                <div class="tab-icon-badge">
+                  <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </div>
+                <span class="tab-text">Kalender</span>
+              </button>
+            </div>
+
+            <!-- Month Navigation - positioned alongside tab bar -->
+            <div class="month-navigation dashboard-month-nav-inline">
+              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <span class="month-display" id="currentMonthShifts">Mai 2025</span>
+              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="9 6 15 12 9 18"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <!-- Skeleton placeholder for tab bar while loading -->
+          <div class="tab-bar-skeleton" aria-hidden="true">
+            <div class="skeleton-block"></div>
+            <div class="skeleton-block"></div>
+            <div class="skeleton-block"></div>
+          </div>
         </div>
 
         <!-- Employee Filter Bar -->
@@ -126,9 +164,12 @@ export function afterMountShifts() {
         window.app.updateDisplay();
       }
 
-      // Apply the user's preferred default shifts view and update navbar state
+      // Apply the user's preferred default shifts view and update tab/navbar state
       const defaultView = window.app.defaultShiftsView || 'list';
       window.app.switchShiftView(defaultView);
+
+      // Update tab button active states
+      updateShiftTabActiveState(defaultView);
 
       // Set up any shifts-specific event listeners or initialization
       if (window.app.initializeShiftsView) {
@@ -142,6 +183,19 @@ export function afterMountShifts() {
 
   // Start initialization
   initShifts();
+}
+
+function updateShiftTabActiveState(activeView) {
+  const tabButtons = document.querySelectorAll('.shifts-page .tab-btn');
+  tabButtons.forEach(btn => {
+    const isListView = btn.onclick && btn.onclick.toString().includes("'list'");
+    const isCalendarView = btn.onclick && btn.onclick.toString().includes("'calendar'");
+
+    const shouldBeActive = (activeView === 'list' && isListView) ||
+                          (activeView === 'calendar' && isCalendarView);
+
+    btn.classList.toggle('active', shouldBeActive);
+  });
 }
 
 function updateNavbarForShifts() {

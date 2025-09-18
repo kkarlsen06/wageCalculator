@@ -4433,6 +4433,18 @@ export const app = {
             currentMonthDashboard.textContent = `${monthName} ${this.currentYear}`;
         }
 
+        // Update the shifts page month navigation display
+        const currentMonthShifts = document.getElementById('currentMonthShifts');
+        if (currentMonthShifts) {
+            currentMonthShifts.textContent = `${monthName} ${this.currentYear}`;
+        }
+
+        // Update the ansatte page month navigation display
+        const currentMonthAnsatte = document.getElementById('currentMonthAnsatte');
+        if (currentMonthAnsatte) {
+            currentMonthAnsatte.textContent = `${monthName} ${this.currentYear}`;
+        }
+
         // Update the month navigation display in the floating action bar
         const monthNavDisplayNav = document.getElementById('monthNavDisplayNav');
         if (monthNavDisplayNav) {
@@ -7243,11 +7255,25 @@ export const app = {
 
     switchShiftView(view) {
         this.shiftView = view;
+
+        // Update navbar toggle buttons
         const btns = document.querySelectorAll('.nav-toggle');
         btns.forEach((btn, idx) => {
             const isList = idx === 0;
             const active = (view === 'list' && isList) || (view === 'calendar' && !isList);
             btn.classList.toggle('active', active);
+        });
+
+        // Update tab buttons in shifts route
+        const tabButtons = document.querySelectorAll('.shifts-page .tab-btn');
+        tabButtons.forEach(btn => {
+            const isListView = btn.onclick && btn.onclick.toString().includes("'list'");
+            const isCalendarView = btn.onclick && btn.onclick.toString().includes("'calendar'");
+
+            const shouldBeActive = (view === 'list' && isListView) ||
+                                  (view === 'calendar' && isCalendarView);
+
+            btn.classList.toggle('active', shouldBeActive);
         });
 
         const list = document.getElementById('shiftList');

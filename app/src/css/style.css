@@ -16807,50 +16807,30 @@ body.chatbox-view .chatbox-container {
 }
 
 
-/* Month navigation in shifts page - uses existing styles from dashboard */
-.shifts-page .month-navigation-container {
-  margin-bottom: var(--space-4);
+/* Tab bar and month navigation in shifts page - use compact dashboard styling */
+.shifts-page .tab-bar-container {
+  /* Override any bulky spacing - use same compact style as dashboard */
+  margin: 0;
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
 }
 
-.shifts-page .month-navigation {
+.shifts-page .tab-bar-with-month {
+  /* Ensure compact layout like dashboard */
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 16px;
-  max-width: 300px;
-  margin: 0 auto;
-  padding: var(--space-3);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
+  justify-content: flex-start;
+  width: 100%;
 }
 
-.shifts-page .month-nav-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 8px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
+/* Legacy month navigation container - hide when using new tab bar layout */
+.shifts-page .month-navigation-container {
+  display: none;
 }
 
-.shifts-page .month-nav-btn:hover {
+.shifts-page .month-navigation.dashboard-month-nav-inline .month-nav-btn:hover {
   color: var(--accent);
   background: var(--bg-hover);
-}
-
-.shifts-page .month-display {
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 16px;
-  min-width: 100px;
-  text-align: center;
 }
 
 .shifts-page .icon-sm {

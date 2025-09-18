@@ -42,7 +42,6 @@ function getHomeView() {
       </div>
     </div>
 
-    <h1 class="settings-title">Innstillinger</h1>
     <ul class="settings-list" role="list">
       <li>
         <div class="settings-item" data-spa data-href="/settings/account">
@@ -112,7 +111,7 @@ function getHomeView() {
       <li>
         <div class="settings-item" data-spa data-href="/abonnement">
           <div class="item-main">
-            <span class="icon item-icon" data-icon="credit-card" aria-hidden="true"></span>
+            <span class="icon item-icon" data-icon="check" aria-hidden="true"></span>
             <div class="item-text">
               <span class="item-title">Abonnement</span>
               <span class="item-sub">Administrer abonnement og fakturering</span>
