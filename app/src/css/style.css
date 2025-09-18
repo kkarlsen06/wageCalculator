@@ -16826,11 +16826,9 @@ body.chatbox-view .chatbox-container {
   width: calc(100% - 40px);
   max-width: 640px;
   height: 80px;
-  background: var(--bg-surface);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -16838,6 +16836,30 @@ body.chatbox-view .chatbox-container {
   z-index: 100;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   margin: 0 auto;
+  isolation: isolate;
+  --glass-alpha: 0.60;
+}
+
+/* Blur layer behind the content */
+.bottom-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(14,17,22, var(--glass-alpha));
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform, opacity, backdrop-filter;
+  transform: translateZ(0);
+  view-transition-name: none;
+}
+
+/* Ensure content lies above blur layer */
+.bottom-nav > * {
+  position: relative;
+  z-index: 1;
 }
 
 .nav-item {
@@ -16991,6 +17013,12 @@ body:not(.view-shifts) .nav-add-small { visibility: hidden; pointer-events: none
 .vt-active .context-nav,
 .vt-active .nav-add,
 .vt-active .nav-add-small {
+  transition: none !important;
+  animation: none !important;
+}
+
+.vt-active .bottom-nav,
+.vt-active .bottom-nav::before {
   transition: none !important;
   animation: none !important;
 }
@@ -17279,4 +17307,16 @@ body.modal-open .floating-nav-btn.back-btn {
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+/* 1px offscreen sentinel that keeps backdrop-filter "awake" in Safari/PWA */
+.backdrop-sentinel {
+  position: fixed;
+  top: -100vh;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
+  pointer-events: none;
 }

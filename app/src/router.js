@@ -134,6 +134,10 @@ export function navigate(path) {
 
   // Use View Transitions API if available, otherwise fall back to FLIP animation
   if ('startViewTransition' in document) {
+    // Prewarm compositor by forcing layout on bottom-nav
+    const navEl = document.querySelector('.bottom-nav');
+    if (navEl) { void navEl.offsetWidth; }
+
     document.documentElement.classList.add('vt-active');
     const vt = document.startViewTransition(nav);
     vt.finished.finally(() => {

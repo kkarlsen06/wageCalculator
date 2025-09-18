@@ -540,6 +540,13 @@ if (window.innerWidth <= 768) {
 
 // Initialize Supabase client
 document.addEventListener('DOMContentLoaded', async () => {
+  // Create backdrop-filter sentinel to prevent pop-in on Safari/PWA
+  if (!document.querySelector('.backdrop-sentinel')) {
+    const s = document.createElement('div');
+    s.className = 'backdrop-sentinel';
+    document.body.appendChild(s);
+  }
+
   // Enable global skeletons until profile + app data are ready
   document.body.classList.add('skeleton-active');
   // Only show the main app container early on the root route.
