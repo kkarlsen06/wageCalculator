@@ -16782,6 +16782,11 @@ body.chatbox-view .chatbox-container {
   scroll-behavior: auto;
 }
 
+/* Override header margin in shifts page to prevent double safe area inset */
+.shifts-page .header {
+  margin-top: 0;
+}
+
 /* Settings detail pages already handle their own padding in settings.css */
 
 /* Override nav-add styling for small version in contextual navbar */
