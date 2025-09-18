@@ -404,14 +404,7 @@ function getWageDetail() {
 }
 
 function getWageAdvancedDetail() {
-  const customBonusCard = ENABLE_CUSTOM_BONUS_EDITOR
-    ? `
-            <div class="setting-card is-long">
-              <div class="setting-body">
-                <div id="customBonusEditorRoot" aria-live="polite"></div>
-              </div>
-            </div>`
-    : `
+  return `
             <div class="setting-card is-long">
               <div class="setting-body">
                 <!-- Ukedag group -->
