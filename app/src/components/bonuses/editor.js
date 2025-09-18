@@ -374,20 +374,30 @@ class CustomBonusEditor {
       }
     }
 
-    if (this.hasOverlap({ days, from: candidate.from, to: candidate.to }, ignoreIndex)) {
-      return { valid: false, error: 'Tidsrommet overlapper med et eksisterende tillegg.' };
-    }
+    const overlapInfo = this.getOverlapInfo({ days, from: candidate.from, to: candidate.to }, ignoreIndex);
 
-    return { valid: true, error: '' };
+    return {
+      valid: true,
+      error: '',
+      warning: overlapInfo.hasOverlap ? 'Tidsrommet overlapper med eksisterende tillegg. Dette kan føre til dobbelberegning av tillegg.' : '',
+      overlappingRules: overlapInfo.overlappingRules
+    };
   }
 
   hasOverlap(candidate, ignoreIndex) {
+    return this.getOverlapInfo(candidate, ignoreIndex).hasOverlap;
+  }
+
+  getOverlapInfo(candidate, ignoreIndex) {
     const candidateStart = timeStringToMinutes(candidate.from);
     const candidateEnd = timeStringToMinutes(candidate.to);
-    if (candidateStart === null || candidateEnd === null) return false;
+    if (candidateStart === null || candidateEnd === null) {
+      return { hasOverlap: false, overlappingRules: [] };
+    }
 
     // Convert candidate to normalized intervals (handle midnight crossing)
     const candidateIntervals = this.getTimeIntervals(candidateStart, candidateEnd);
+    const overlappingRules = [];
 
     for (let index = 0; index < this.rules.length; index += 1) {
       if (index === ignoreIndex) continue;
@@ -402,15 +412,31 @@ class CustomBonusEditor {
       const existingIntervals = this.getTimeIntervals(existingStart, existingEnd);
 
       // Check if any intervals overlap
+      let hasRuleOverlap = false;
       for (const candidateInterval of candidateIntervals) {
         for (const existingInterval of existingIntervals) {
           if (rangesOverlap(candidateInterval.start, candidateInterval.end, existingInterval.start, existingInterval.end)) {
-            return true;
+            hasRuleOverlap = true;
+            break;
           }
         }
+        if (hasRuleOverlap) break;
+      }
+
+      if (hasRuleOverlap) {
+        overlappingRules.push({
+          index,
+          rule: existing,
+          timeRange: `${existing.from}–${existing.to}`,
+          days: existing.days
+        });
       }
     }
-    return false;
+
+    return {
+      hasOverlap: overlappingRules.length > 0,
+      overlappingRules
+    };
   }
 
   // Helper function to convert time ranges to intervals, handling midnight crossing
@@ -624,6 +650,21 @@ class CustomBonusEditor {
     errorEl.className = 'ub-form-error';
     body.appendChild(errorEl);
 
+    const warningEl = document.createElement('div');
+    warningEl.className = 'ub-form-warning';
+    warningEl.style.cssText = `
+      color: var(--warning, #ff8c00);
+      background: var(--warning-bg, rgba(255, 140, 0, 0.1));
+      border: 1px solid var(--warning, #ff8c00);
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 14px;
+      line-height: 1.4;
+      display: none;
+    `;
+    body.appendChild(warningEl);
+
     modal.appendChild(body);
 
     const footer = document.createElement('div');
@@ -698,7 +739,35 @@ class CustomBonusEditor {
     const updateValidation = () => {
       const candidate = getCandidate();
       const validation = this.validateRule(candidate, index);
+
+      // Handle errors
       errorEl.textContent = validation.error;
+      errorEl.style.display = validation.error ? 'block' : 'none';
+
+      // Handle warnings
+      if (validation.warning && validation.overlappingRules?.length > 0) {
+        const overlappingDetails = validation.overlappingRules.map(overlap => {
+          const sharedDays = overlap.days.filter(day => candidate.days.includes(day));
+          const dayNames = sharedDays.map(day => {
+            const dayName = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'][day - 1];
+            return dayName;
+          }).join(', ');
+          return `• ${overlap.timeRange} (${dayNames})`;
+        }).join('\n');
+
+        warningEl.innerHTML = `
+          <div style="font-weight: 600; margin-bottom: 8px;">⚠️ Advarsel: Overlappende tillegg</div>
+          <div style="margin-bottom: 8px;">${validation.warning}</div>
+          <div style="font-size: 13px;">
+            <strong>Overlapper med:</strong><br>
+            ${overlappingDetails.replace(/\n/g, '<br>')}
+          </div>
+        `;
+        warningEl.style.display = 'block';
+      } else {
+        warningEl.style.display = 'none';
+      }
+
       saveBtn.disabled = !validation.valid;
     };
 
@@ -726,6 +795,25 @@ class CustomBonusEditor {
         errorEl.textContent = validation.error;
         return;
       }
+
+      // If there are overlapping bonuses, require confirmation
+      if (validation.warning && validation.overlappingRules?.length > 0) {
+        const overlappingDetails = validation.overlappingRules.map(overlap => {
+          const sharedDays = overlap.days.filter(day => candidate.days.includes(day));
+          const dayNames = sharedDays.map(day => {
+            const dayName = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag'][day - 1];
+            return dayName;
+          }).join(', ');
+          return `• ${overlap.timeRange} (${dayNames})`;
+        }).join('\n');
+
+        const confirmMessage = `Dette tillegget overlapper med eksisterende tillegg:\n\n${overlappingDetails}\n\nOverlappende tillegg kan føre til dobbelberegning av lønnskomponenter. Er du sikker på at du vil fortsette?`;
+
+        if (!confirm(confirmMessage)) {
+          return;
+        }
+      }
+
       saveBtn.disabled = true;
       deleteBtn.disabled = true;
       cancelBtn.disabled = true;
