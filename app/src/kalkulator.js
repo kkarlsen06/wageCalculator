@@ -85,20 +85,30 @@ if (typeof window !== 'undefined') {
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New service worker available - could show update notification
-                console.log('New service worker available');
+                showUpdateUI(registration); // ask user before activating
               }
             });
           }
         });
+
+        function showUpdateUI(reg) {
+          // Minimal, dependency-free fallback. Replace with your toast later.
+          if (confirm('Ny versjon tilgjengelig. Last appen på nytt nå?')) {
+            reg.waiting?.postMessage('SKIP_WAITING');
+          }
+        }
         
         // Handle service worker updates
-        let refreshing = false;
+        let __swRefreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (!refreshing) {
-            refreshing = true;
-            window.location.reload();
+          if (__swRefreshing) return;
+          // Guard: first control after cold start / cleared storage should NOT reload
+          if (!sessionStorage.getItem('swReady')) {
+            sessionStorage.setItem('swReady', '1');
+            return;
           }
+          __swRefreshing = true;
+          window.location.reload();
         });
         
         console.log('Service worker registered successfully');

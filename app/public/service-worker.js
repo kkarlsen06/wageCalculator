@@ -165,10 +165,13 @@ self.addEventListener('install', (event) => {
         // Critical error - log but don't fail install
         console.warn('[sw] Precache setup failed:', e);
       }
-      // Activate new worker immediately
-      self.skipWaiting();
+      // Do not force takeover during install. We'll opt-in via message.
     })()
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
