@@ -322,7 +322,7 @@ function getWageDetail() {
               <div class="setting-header">Egendefinert lønn</div>
               <div class="setting-body">
                 <label for="customWageInput">Sats (kr/time)</label>
-                <input id="customWageInput" type="number" inputmode="decimal" step="0.01" min="0" placeholder="200"
+                <input id="customWageInput" class="form-input" type="number" inputmode="decimal" step="0.01" min="0" placeholder="200"
                        onchange="app.updateCustomWage && app.updateCustomWage(this.value)" />
                 <div id="customWageError" class="form-hint" style="display:none; color: var(--danger);">Ugyldig beløp. Skriv inn et tall over 0.</div>
               </div>
@@ -377,7 +377,7 @@ function getWageDetail() {
               <div class="setting-header">Månedsmål</div>
               <div class="setting-body">
                 <label for="monthlyGoalInput">Beløp (kr)</label>
-                <input id="monthlyGoalInput" type="number" inputmode="numeric" step="1" min="1" placeholder="20000" />
+                <input id="monthlyGoalInput" class="form-input" type="number" inputmode="numeric" step="1" min="1" placeholder="20000" />
                 <div id="monthlyGoalError" class="form-hint" style="display:none; color: var(--danger);">Skriv inn et beløp større enn 0.</div>
               </div>
               <div class="setting-actions">
@@ -390,7 +390,7 @@ function getWageDetail() {
               <div class="setting-header">Lønnsdato</div>
               <div class="setting-body">
                 <label for="payrollDayInput">Dag i måneden (1–31)</label>
-                <input id="payrollDayInput" type="number" inputmode="numeric" min="1" max="31" step="1" placeholder="15" onchange="app.updatePayrollDay && app.updatePayrollDay(this.value)" />
+                <input id="payrollDayInput" class="form-input" type="number" inputmode="numeric" min="1" max="31" step="1" placeholder="15" onchange="app.updatePayrollDay && app.updatePayrollDay(this.value)" />
                 <div id="payrollDayError" class="form-hint" style="display:none; color: var(--danger);">Ugyldig dato. Velg et tall mellom 1 og 31.</div>
               </div>
             </div>
@@ -511,12 +511,12 @@ function getWageAdvancedDetail() {
                 <div class="setting-body">
                   <div class="form-group">
                     <label for="pauseThresholdInput">Terskel (timer)</label>
-                    <input id="pauseThresholdInput" type="number" step="0.5" min="0" max="24" placeholder="5.5" />
+                    <input id="pauseThresholdInput" class="form-input" type="number" step="0.5" min="0" max="24" placeholder="5.5" />
                     <div id="pauseThresholdError" class="form-hint" style="display:none; color: var(--danger);">Velg mellom 0 og 24 timer.</div>
                   </div>
                   <div class="form-group">
                     <label for="pauseDeductionMinutesInput">Pausetrekk (minutter)</label>
-                    <input id="pauseDeductionMinutesInput" type="number" step="15" min="0" max="120" placeholder="30" />
+                    <input id="pauseDeductionMinutesInput" class="form-input" type="number" step="15" min="0" max="120" placeholder="30" />
                     <div id="pauseMinutesError" class="form-hint" style="display:none; color: var(--danger);">Velg mellom 0 og 120 minutter.</div>
                   </div>
                 </div>
@@ -553,7 +553,7 @@ function getWageAdvancedDetail() {
               <div class="setting-header">Skatteprosent</div>
               <div class="setting-body">
                 <label for="taxPercentageInput">Skattetrekk (%)</label>
-                <input id="taxPercentageInput" type="number" inputmode="decimal" min="0" max="100" step="0.5" placeholder="35"
+                <input id="taxPercentageInput" class="form-input" type="number" inputmode="decimal" min="0" max="100" step="0.5" placeholder="35"
                        onchange="app.updateTaxPercentage && app.updateTaxPercentage(this.value)" />
                 <div id="taxPercentageError" class="form-hint" style="display:none; color: var(--danger);">Velg mellom 0 og 100%.</div>
               </div>
