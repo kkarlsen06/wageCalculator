@@ -577,7 +577,6 @@ function getInterfaceDetail() {
                       </span>
                       <span class="theme-option-label">
                         <span class="theme-option-title">Lys</span>
-                        <span class="theme-option-description">Lyst grensesnitt og tydelig kontrast på dagtid.</span>
                       </span>
                     </span>
                   </label>
@@ -604,7 +603,6 @@ function getInterfaceDetail() {
                       </span>
                       <span class="theme-option-label">
                         <span class="theme-option-title">Mørk</span>
-                        <span class="theme-option-description">Rolig og mørk visning som sparer øynene sent på kvelden.</span>
                       </span>
                     </span>
                   </label>
@@ -630,8 +628,7 @@ function getInterfaceDetail() {
                         </span>
                       </span>
                       <span class="theme-option-label">
-                        <span class="theme-option-title">Automatisk</span>
-                        <span class="theme-option-description">Følger systemet og bytter mellom lyst og mørkt når du gjør det.</span>
+                        <span class="theme-option-title">System</span>
                       </span>
                     </span>
                   </label>
