@@ -288,6 +288,8 @@ export const app = {
     },
     // Organization settings cache
     orgSettings: { break_policy: 'fixed_0_5_over_5_5h' },
+    // Data loading state
+    isDataLoading: true,
     PRESET_BONUSES: {
         rules: [
             { days: [1, 2, 3, 4, 5], from: "18:00", to: "21:00", rate: 22 },
@@ -2511,9 +2513,14 @@ export const app = {
             }
             
             // Don't call updateDisplay here - it will be called with animation in init()
+
+            // Mark data loading as complete
+            this.isDataLoading = false;
         } catch (e) {
             console.error('Error in loadFromSupabase:', e);
             this.setDefaultSettings();
+            // Mark data loading as complete even on error
+            this.isDataLoading = false;
         }
     },
 
@@ -2525,6 +2532,7 @@ export const app = {
         this.taxDeductionEnabled = false;
         this.taxPercentage = 0.0;
         this.payrollDay = 15; // Default payroll day (15th of each month)
+        this.isDataLoading = false; // Mark data loading as complete when using defaults
         this.currentMonth = new Date().getMonth() + 1; // Default to current month
         this.currentYear = new Date().getFullYear(); // Default to current year
         this.pauseDeduction = false; // Legacy setting - kept for backward compatibility
@@ -2932,6 +2940,9 @@ export const app = {
             console.error('Error loading from localStorage:', e);
             this.setDefaultSettings();
         }
+
+        // Mark data loading as complete
+        this.isDataLoading = false;
         // Don't call updateDisplay here - it will be called with animation in init()
     },
 
@@ -5537,20 +5548,30 @@ export const app = {
         );
 
         if (monthShifts.length === 0) {
-            shiftList.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
+            // Show loading state while data is being loaded, otherwise show empty state
+            if (this.isDataLoading) {
+                shiftList.innerHTML = `
+                    <div class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh; text-align: center;">
+                        <div class="loading-spinner" style="width: 24px; height: 24px; border: 2px solid #e5e7eb; border-top: 2px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+                        <p>Laster vakter...</p>
                     </div>
-                    <p>Ingen vakter registrert ennå</p>
-                </div>
-            `;
+                `;
+            } else {
+                shiftList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                        </div>
+                        <p>Ingen vakter registrert ennå</p>
+                    </div>
+                `;
+            }
             return;
         }
 

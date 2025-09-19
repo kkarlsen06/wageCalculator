@@ -72,33 +72,6 @@ html.ios-pwa #shiftAddPage .tab-content {
   margin-top: 0;
 }
 
-/* Selected dates info - positioned in gap between form and floating nav */
-#shiftAddPage .selected-dates-info {
-  position: absolute;
-  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  padding: var(--space-1) var(--space-3);
-  color: var(--text-secondary);
-  font-size: 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 9999;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-
-/* Show selected dates info when it has content */
-#shiftAddPage .selected-dates-info:not(:empty) {
-  opacity: 1;
-  visibility: visible;
-}
-
 /* Abonnement page specific styling */
 #abonnementPage {
   max-width: 600px;

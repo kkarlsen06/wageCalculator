@@ -11,7 +11,7 @@ export function renderShifts() {
         <div class="tab-bar-container">
           <div class="tab-bar-with-month">
             <div class="tab-bar">
-              <button class="tab-btn active" onclick="app.switchShiftView('list')" aria-label="Bytt til listevisning">
+              <button class="tab-btn active" onclick="window.app?.switchShiftView?.('list')" aria-label="Bytt til listevisning">
                 <div class="tab-icon-badge">
                   <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="8" y1="6" x2="21" y2="6"></line>
@@ -24,7 +24,7 @@ export function renderShifts() {
                 </div>
                 <span class="tab-text">Liste</span>
               </button>
-              <button class="tab-btn" onclick="app.switchShiftView('calendar')" aria-label="Bytt til kalendervisning">
+              <button class="tab-btn" onclick="window.app?.switchShiftView?.('calendar')" aria-label="Bytt til kalendervisning">
                 <div class="tab-icon-badge">
                   <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -39,13 +39,13 @@ export function renderShifts() {
 
             <!-- Month Navigation - positioned alongside tab bar -->
             <div class="month-navigation dashboard-month-nav-inline">
-              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+              <button class="month-nav-btn" onclick="window.app?.navigateToPreviousMonth?.()" aria-label="Forrige måned">
                 <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
               <span class="month-display" id="currentMonthShifts">Mai 2025</span>
-              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+              <button class="month-nav-btn" onclick="window.app?.navigateToNextMonth?.()" aria-label="Neste måned">
                 <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="9 6 15 12 9 18"></polyline>
                 </svg>
@@ -92,8 +92,8 @@ export function renderShifts() {
           <!-- Calendar display toggle -->
           <div class="calendar-display-toggle" style="display:none;">
             <div class="calendar-toggle-nav">
-              <button class="calendar-toggle-btn active" onclick="app.switchCalendarDisplay('hours')">Varighet</button>
-              <button class="calendar-toggle-btn" onclick="app.switchCalendarDisplay('money')">Lønn</button>
+              <button class="calendar-toggle-btn active" onclick="window.app?.switchCalendarDisplay?.('hours')">Varighet</button>
+              <button class="calendar-toggle-btn" onclick="window.app?.switchCalendarDisplay?.('money')">Lønn</button>
             </div>
           </div>
         </div>
@@ -126,7 +126,13 @@ export function afterMountShifts() {
 
       // Apply the user's preferred default shifts view and update tab/navbar state
       const defaultView = window.app.defaultShiftsView || 'list';
-      window.app.switchShiftView(defaultView);
+      if (window.app.switchShiftView) {
+        window.app.switchShiftView(defaultView);
+      } else {
+        console.warn('[shifts] switchShiftView function not available yet, retrying...');
+        setTimeout(initShifts, 100);
+        return;
+      }
 
       // Update tab button active states
       updateShiftTabActiveState(defaultView);

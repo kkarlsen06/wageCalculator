@@ -16801,6 +16801,7 @@ body.chatbox-view .chatbox-container {
 
 .shifts-route {
   min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -16811,10 +16812,12 @@ body.chatbox-view .chatbox-container {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .shifts-scroll {
   flex: 1;
+  min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;

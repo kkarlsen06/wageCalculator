@@ -8,9 +8,6 @@ function getAddShiftView() {
   <div id="shiftAddPage" class="settings-page">
     <div class="page-header" style="margin-bottom: var(--space-4);">
       <h2>Legg til vakt</h2>
-      <div class="selected-dates-info" id="selectedDatesInfo" style="display: none; margin-bottom: 0;">
-        <span id="selectedDatesText"></span>
-      </div>
     </div>
     
     <form id="shiftForm">
@@ -124,11 +121,10 @@ function getAddShiftView() {
     </form>
     
     <div class="shift-add-floating-nav">
-      <button type="button" class="floating-nav-btn back-btn" onclick="addShiftFromRoute()">
-        <span class="icon icon-sm" data-icon="plus-circle"></span>
-        Legg til vakt
+      <button type="button" class="floating-nav-btn back-btn btn-disabled" onclick="addShiftFromRoute()" disabled>
+        Ingen datoer valgt
       </button>
-      <button type="button" class="floating-nav-btn btn btn-secondary" data-spa data-href="/" aria-label="Lukk" title="Lukk">
+      <button type="button" class="floating-nav-btn btn btn-secondary" data-spa onclick="history.back()" aria-label="Lukk" title="Lukk">
         <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -162,17 +158,6 @@ function switchAddShiftTab(tab) {
     } else {
       simpleFields.classList.remove('active');
       recurringFields.classList.add('active');
-    }
-  }
-
-  // Hide selected dates info when on recurring tab (it's only relevant for simple tab)
-  const selectedDatesInfo = document.getElementById('selectedDatesInfo');
-  if (selectedDatesInfo) {
-    if (tab === 'recurring') {
-      selectedDatesInfo.style.display = 'none';
-    } else {
-      // Show it only if there are selected dates
-      selectedDatesInfo.style.display = window.app && window.app.selectedDates && window.app.selectedDates.length > 0 ? 'block' : 'none';
     }
   }
 
@@ -276,6 +261,11 @@ export function afterMountAddShift() {
       sessionStorage.removeItem('preSelectedShiftDate_expiry');
     }
     
+    if (window.app.updateAddButtonState) {
+      const initialText = preSelectedDate ? 'Velg start- og sluttid' : 'Ingen datoer valgt';
+      window.app.updateAddButtonState(false, initialText);
+    }
+
     // Initialize the date grid and form elements with small delay to ensure DOM is ready
     setTimeout(() => {
       // Clear skeleton and populate the actual calendar
@@ -310,13 +300,6 @@ export function afterMountAddShift() {
         const dateCell = document.querySelector(`[data-date="${dateString}"]`);
         if (dateCell) {
           dateCell.classList.add('selected');
-        }
-        // Update selected dates info
-        const selectedDatesInfo = document.getElementById('selectedDatesInfo');
-        const selectedDatesText = document.getElementById('selectedDatesText');
-        if (selectedDatesInfo && selectedDatesText) {
-          selectedDatesText.textContent = '1 dato valgt';
-          selectedDatesInfo.style.display = 'block';
         }
       }, 100);
     }
