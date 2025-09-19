@@ -82,7 +82,17 @@ export function renderShifts() {
                   <polyline points="10 9 9 9 8 9"></polyline>
                 </svg>
               </div>
-              <p>Ingen vakter registrert ennå</p>
+              <h3 class="empty-state-title">Ingen vakter registrert ennå</h3>
+              <p class="empty-state-subtitle">Start med å legge til din første vakt!</p>
+              <div class="empty-state-cta">
+                <div class="cta-arrow">
+                  <svg class="cta-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14"></path>
+                    <path d="M19 12l-7 7-7-7"></path>
+                  </svg>
+                </div>
+                <span class="cta-text">Trykk på + knappen i menyen nedenfor</span>
+              </div>
             </div>
           </div>
 

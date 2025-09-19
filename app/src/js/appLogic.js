@@ -4306,6 +4306,9 @@ export const app = {
         this.updateShiftCalendar();
         this.populateDateGrid();
         this.startNextShiftTimer(); // Start the countdown timer
+
+        // Add/remove no-shifts class for add button animation
+        document.body.classList.toggle('no-shifts', this.shifts.length === 0);
         // Render employees tab specific content
         if (this.currentView === 'employees') {
             // Fetch employee shifts when changing months in employees view

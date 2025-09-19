@@ -19,13 +19,6 @@ export function renderLogin() {
   // Keep DOM semantics and classes identical
   return `
   <div class="pb-80">
-    <div class="absolute-top-left">
-      <a href="${marketingUrl}" class="btn btn-secondary back-link" aria-label="Tilbake til hovedside">
-        <span class="icon" data-icon="arrow-left" aria-hidden="true"></span>
-        Tilbake til hovedside
-      </a>
-    </div>
-
     <main id="main-content">
       <div id="auth-box" class="auth-center">
         <div class="login-card" aria-labelledby="login-heading">

@@ -3387,6 +3387,127 @@ input[type="time"].form-control[value=""]:focus-visible {
   opacity: 0.6;
 }
 
+/* Enhanced empty state styles */
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.empty-state-subtitle {
+  font-size: 14px;
+  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+}
+
+.empty-state-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cta-arrow {
+  animation: bounce-down-right 2s ease-in-out infinite;
+}
+
+.cta-arrow-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent-color);
+}
+
+.cta-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Dashboard empty state styles */
+.dashboard-empty-state {
+  background: var(--surface-card);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: var(--radius-card);
+  padding: 24px 20px;
+  margin: 0;
+  border: var(--card-border);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+  color: var(--text-secondary);
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard-empty-icon {
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.dashboard-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.dashboard-empty-subtitle {
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.dashboard-empty-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.dashboard-cta-arrow {
+  animation: bounce-down-right 2s ease-in-out infinite;
+}
+
+.dashboard-cta-arrow-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-color);
+}
+
+/* Animation for pointing arrows */
+@keyframes bounce-down-right {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(6px);
+  }
+  60% {
+    transform: translateY(3px);
+  }
+}
+
+/* Add button pulse animation when no shifts exist */
+.no-shifts .nav-item--primary {
+  animation: pulse-add-button 2s ease-in-out infinite;
+}
+
+@keyframes pulse-add-button {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(var(--accent-color-rgb), 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px rgba(var(--accent-color-rgb), 0);
+  }
+}
+
 /* Modal */
 html.modal-open,
 body.modal-open {

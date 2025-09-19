@@ -736,6 +736,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     let elapsed = 0;
 
     while (elapsed < maxWaitTime) {
+      // Early exit if app data loading is complete and there are no shifts
+      // This prevents unnecessary waiting when the "no shifts" state is already determined
+      if (window.app && window.app.isDataLoading === false && window.app.shifts && window.app.shifts.length === 0) {
+        console.log('No shifts detected and data loading complete, proceeding with skeleton removal immediately');
+        break;
+      }
+
       // Check if total card has been populated by appLogic (works even if value is 0 kr)
       const totalCard = document.querySelector('.total-card');
       const hasRealTotalData = totalCard && totalCard.dataset.populated === '1';
