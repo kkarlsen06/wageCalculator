@@ -3,7 +3,11 @@ import '/src/runtime-config.js';
 import '/src/lib/net/apiBase.js'; // logs [api] base on boot
 import '/src/lib/error-handling.js';
 
-// CSS is linked via kalkulator/index.html to avoid duplication
+// Import CSS files as modules for proper Vite handling
+import '/src/css/themes.css';
+import '/src/css/style.css';
+import '/src/css/chat.css';
+import '/src/css/settings.css';
 
 // Third-party CDN globals are left as-is in HTML (Supabase, jsPDF, Cropper, marked, DOMPurify)
 // Configure Markdown rendering so single newlines become <br> in chat

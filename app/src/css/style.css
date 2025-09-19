@@ -16788,7 +16788,7 @@ body.chatbox-view .chatbox-container {
 .shifts-page {
   padding: 0;
   padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); /* Space for navbar + safe area */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); /* Space for navbar + safe area */
   min-height: 100vh;
   /* Isolate scroll behavior for this route */
   overscroll-behavior: contain;
@@ -16809,234 +16809,183 @@ body.chatbox-view .chatbox-container {
   height: 16px;
 }
 
-/* Bottom Navigation Bar */
+/* Bottom Navigation */
 .bottom-nav {
   position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
-  width: calc(100% - 40px);
-  max-width: 640px;
-  height: 80px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  width: min(680px, calc(100% - 32px));
+  padding: 12px 16px;
+  background: color-mix(in oklab, var(--bg-card-elevated) 88%, transparent 12%);
+  border: 1px solid color-mix(in oklab, var(--border) 65%, transparent 35%);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 12px 32px rgba(8, 12, 20, 0.35);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  z-index: 100;
+}
+
+.bottom-nav__list {
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  padding: 0 16px;
-  z-index: 100;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  margin: 0 auto;
-  isolation: isolate;
-  --glass-alpha: 0.60;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
 }
 
-/* Blur layer behind the content */
-.bottom-nav::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: rgba(14,17,22, var(--glass-alpha));
-  -webkit-backdrop-filter: blur(16px) saturate(120%);
-  backdrop-filter: blur(16px) saturate(120%);
-  pointer-events: none;
-  z-index: 0;
-  will-change: transform, opacity, backdrop-filter;
-  transform: translateZ(0);
-  view-transition-name: none;
-}
-
-/* Ensure content lies above blur layer */
-.bottom-nav > * {
-  position: relative;
-  z-index: 1;
+.bottom-nav__item {
+  flex: 1;
+  display: flex;
 }
 
 .nav-item {
+  flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
+  padding: 12px;
+  border-radius: var(--radius-lg);
   color: var(--text-secondary);
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 12px;
-  min-width: 60px;
+  background: transparent;
   text-decoration: none;
+  transition: color var(--speed-fast) ease, background-color var(--speed-fast) ease, transform var(--speed-fast) ease;
 }
 
+.nav-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 40%, transparent 60%);
+}
 
-/* Active nav item styling with theme blue (exclude shifts route) */
-.nav-item.active .nav-icon svg {
+.nav-item:hover,
+.nav-item:focus-visible {
+  color: var(--text-primary);
+  background-color: color-mix(in oklab, var(--surface-card-hover) 60%, transparent 40%);
+}
+
+.nav-item.active {
   color: var(--primary);
+  background-color: color-mix(in oklab, var(--primary) 18%, transparent 82%);
+  transform: translateY(-2px);
+  border-radius: var(--radius-lg);
 }
 
-.nav-item.active .nav-label {
-  color: var(--primary);
-  font-weight: 600;
-}
-
-/* Exception: shifts route uses original accent color instead of theme blue */
-.nav-item.active[data-href="/shifts"] .nav-icon svg {
-  color: var(--accent);
-}
-
-.nav-item.active[data-href="/shifts"] .nav-label {
-  color: var(--accent);
+.nav-item__icon {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-icon {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 4px;
-}
-
-.nav-icon svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: opacity var(--speed-fast) ease;
+  filter: none;
 }
 
-.nav-label {
-  font-size: 12px;
-  font-weight: 500;
-  text-align: center;
+.nav-item--primary .nav-icon {
+  filter: invert(1) brightness(1.2);
 }
 
-/* Special styling for the add button */
-.nav-item.nav-add {
-  position: relative;
-  margin-top: -30px; /* Elevate the button to stick out more */
+html.theme-dark .nav-icon,
+html:not(.theme-light) .nav-icon {
+  filter: invert(1) brightness(1.2);
 }
 
-.nav-icon-add {
-  width: 72px;
-  height: 72px;
-  background: var(--accent);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-  transition: all 0.2s ease;
-  border: 3px solid var(--bg-surface); /* Add border to separate from nav bar */
+.nav-icon--stroke {
+  opacity: 1;
 }
 
-.nav-icon-add svg {
-  width: 32px;
-  height: 32px;
-  color: white;
+.nav-icon--filled {
+  opacity: 0;
 }
 
+.nav-item.active .nav-icon--filled {
+  opacity: 1;
+}
 
+.nav-item.active .nav-icon--stroke {
+  opacity: 0;
+}
 
-/* Mobile responsiveness - hide labels on small screens */
-@media (max-width: 480px) {
-  .nav-label {
-    display: none;
+.nav-item--primary {
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  border-radius: 999px;
+  flex: 0;
+  width: 56px;
+  height: 56px;
+}
+
+.nav-item--primary:hover,
+.nav-item--primary:focus-visible {
+  background: var(--button-primary-bg-hover);
+  color: var(--button-primary-text);
+}
+
+.nav-item--primary.active {
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+}
+
+@media (max-width: 600px) {
+  .bottom-nav {
+    width: calc(100% - 24px);
+    padding: 10px 12px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    border-radius: var(--radius-card);
   }
 
   .nav-item {
-    padding: 12px 8px;
+    padding: 10px;
+    border-radius: var(--radius-md);
   }
 
-  .bottom-nav {
-    height: 70px;
-    padding: 0 8px;
-    width: calc(100% - 20px);
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  .nav-item__icon {
+    width: 26px;
+    height: 26px;
   }
 
-  .nav-item.nav-add {
-    margin-top: -25px;
-  }
-
-  .nav-icon-add {
-    width: 64px;
-    height: 64px;
-    border: 2px solid var(--bg-surface);
-  }
-
-  .nav-icon-add svg {
-    width: 28px;
-    height: 28px;
+  .nav-item--primary {
+    width: 52px;
+    height: 52px;
   }
 }
 
-/* View Transitions API - Shared element for FAB button morph */
-.nav-item.nav-add {
-  view-transition-name: fab-plus;
-}
+@media (max-width: 420px) {
+  .nav-item {
+    padding: 8px;
+    border-radius: var(--radius-md);
+  }
 
-/* Optional tuning of the morph animation */
-::view-transition-group(fab-plus) {
-  animation-duration: 260ms;
-  animation-timing-function: cubic-bezier(.22,1,.36,1); /* fast-out, slow-in */
-}
+  .nav-item__icon {
+    width: 24px;
+    height: 24px;
+  }
 
-/* === View Transitions: de-jitter ================================== */
-/* 1) Kill the full-page cross-fade that causes shimmer */
-::view-transition-group(root) { animation: none; }
-::view-transition-old(root), ::view-transition-new(root) { animation: none; }
-
-/* 2) Keep nav-add always visible since contextual navbar is removed */
-.is-hidden { visibility: hidden; pointer-events: none; }
-
-/* 3) Fence off containers so siblings don't get dragged into transitions */
-.context-nav {
-  contain: layout paint;
-  isolation: isolate;
-}
-/* Don't contain bottom-nav so FAB can extend outside */
-.bottom-nav {
-  isolation: isolate;
-}
-
-/* 4) While a transition runs, silence all competing transitions/animations */
-.vt-active .bottom-nav,
-.vt-active .context-nav,
-.vt-active .nav-add {
-  transition: none !important;
-  animation: none !important;
-}
-
-.vt-active .bottom-nav,
-.vt-active .bottom-nav::before {
-  transition: none !important;
-  animation: none !important;
-}
-
-/* 5) Lock a few metrics to avoid micro reflows - preserve existing dimensions */
-html, body, .snap-container { scrollbar-gutter: stable both-edges; }
-
-/* Optional: if any ancestor of the FAB has transform/filter, Safari/iOS may stutter.
-   Temporarily neutralize it during the transition by toggling .app-has-transform on that node. */
-.vt-active .app-has-transform { transform: none !important; filter: none !important; }
-
-/* If you need to hide the FAB in a given view, don't remove it from DOM */
-.fab-plus.is-hidden {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-/* Accessibility: reduce motion for users with motion sensitivity */
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*) {
-    animation-duration: 1ms;
+  .nav-item--primary {
+    width: 48px;
+    height: 48px;
   }
 }
 
-/* Add padding to body to prevent content from being hidden behind nav */
+
 #app {
-  padding-bottom: 120px; /* Nav height + bottom margin + some extra space */
+  padding-bottom: 96px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   #app {
-    padding-bottom: 100px; /* Smaller nav height + bottom margin + some extra space */
+    padding-bottom: 84px;
   }
 }
 
@@ -17305,4 +17254,8 @@ body.modal-open .floating-nav-btn.back-btn {
   -webkit-backdrop-filter: blur(16px) saturate(120%);
   backdrop-filter: blur(16px) saturate(120%);
   pointer-events: none;
+}
+.nav-item--primary .nav-item__icon {
+  width: 32px;
+  height: 32px;
 }

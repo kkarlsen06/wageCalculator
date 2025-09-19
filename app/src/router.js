@@ -13,7 +13,6 @@ import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
 import { renderShifts, afterMountShifts } from './pages/shifts.js';
 import { renderLonnAI, afterMountLonnAI } from './pages/lonnAI.js';
 import { mountAll } from './js/icons.js';
-import { flipOnce } from './js/flipFallback.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
 function normalizePath(pathname) {
@@ -125,23 +124,7 @@ export function navigate(path) {
     }, 100);
   };
 
-  // Use View Transitions API if available, otherwise fall back to FLIP animation
-  if ('startViewTransition' in document) {
-    // Prewarm compositor by forcing layout on bottom-nav
-    const navEl = document.querySelector('.bottom-nav');
-    if (navEl) { void navEl.offsetWidth; }
-
-    document.documentElement.classList.add('vt-active');
-    const vt = document.startViewTransition(nav);
-    vt.finished.finally(() => {
-      document.documentElement.classList.remove('vt-active');
-    });
-  } else {
-    // Firefox FLIP fallback: snapshot the FAB, navigate, then play FLIP animation
-    const play = flipOnce('.nav-item.nav-add');
-    nav();
-    requestAnimationFrame(play);
-  }
+  nav();
 }
 
 function updateBodyClassForRoute(currentPath) {
@@ -155,16 +138,51 @@ function updateBodyClassForRoute(currentPath) {
 function updateBottomNavActiveState(currentPath) {
   try {
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+    if (!navItems.length) return;
+
+    const hasWindow = typeof window !== 'undefined' && typeof window.location !== 'undefined';
+    const currentLocation = hasWindow ? new URL(window.location.href) : null;
+    const computedPath = currentLocation ? normalizePath(currentLocation.pathname) : normalizePath(currentPath || '/');
+    const activePath = computedPath || '/';
+    const activeFullPath = currentLocation && currentLocation.search
+      ? `${activePath}${currentLocation.search}`
+      : activePath;
+
     navItems.forEach(item => {
       const href = item.getAttribute('data-href');
-      const isActive = href === currentPath ||
-                      (href === '/' && currentPath === '/') ||
-                      (href === '/shifts' && currentPath === '/shifts') ||
-                      (href === '/abonnement' && currentPath === '/abonnement') ||
-                      (href === '/ansatte' && currentPath === '/ansatte') ||
-                      (href === '/settings' && currentPath.startsWith('/settings'));
+      if (!href) {
+        item.classList.remove('active');
+        item.removeAttribute('aria-current');
+        return;
+      }
+
+      let isActive = false;
+
+      try {
+        const baseOrigin = currentLocation?.origin
+          ?? (hasWindow ? window.location.origin : 'http://localhost');
+        const navUrl = new URL(href, baseOrigin);
+        const navPath = normalizePath(navUrl.pathname);
+        const navFullPath = navUrl.search ? `${navPath}${navUrl.search}` : navPath;
+
+        if (navUrl.search) {
+          isActive = activeFullPath === navFullPath;
+        } else if (navPath === '/') {
+          isActive = activePath === '/';
+        } else {
+          isActive = activePath === navPath || activePath.startsWith(`${navPath}/`);
+        }
+      } catch (_) {
+        // Fallback to simple equality if URL parsing fails (e.g. relative without leading slash)
+        isActive = href === activePath || href === activeFullPath;
+      }
 
       item.classList.toggle('active', isActive);
+      if (isActive) {
+        item.setAttribute('aria-current', 'page');
+      } else {
+        item.removeAttribute('aria-current');
+      }
     });
   } catch (e) {
     console.warn('Error updating nav active state:', e);
@@ -311,7 +329,7 @@ export async function render() {
   }
   match.afterMount && match.afterMount();
 
-  // Update body classes for current route (for View Transitions)
+  // Update body classes for current route
   updateBodyClassForRoute(path);
 
   // Update bottom navigation active state AFTER afterMount to ensure navbar is properly restored

@@ -124,6 +124,19 @@ html.ios-pwa #shiftAddPage .tab-content {
   margin-bottom: 12px;
 }
 
+.settings-home-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.settings-subtitle {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
 /* Center the settings home actions vertically for easier thumb reach */
 .settings-home .settings-content {
   display: flex;

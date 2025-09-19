@@ -11603,8 +11603,10 @@ export const app = {
     },
 
     async updateNavBarVisibility(hasEnterprise) {
-        const navAbonnement = document.getElementById('navAbonnement');
-        const navAnsatte = document.getElementById('navAnsatte');
+        const navAbonnementLink = document.getElementById('navAbonnement');
+        const navAnsatteLink = document.getElementById('navAnsatte');
+        const navAbonnement = navAbonnementLink?.closest('[data-nav-item]') ?? navAbonnementLink;
+        const navAnsatte = navAnsatteLink?.closest('[data-nav-item]') ?? navAnsatteLink;
 
         if (!navAbonnement || !navAnsatte) return;
 

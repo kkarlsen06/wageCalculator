@@ -1,4 +1,5 @@
 // Ansatte route - enterprise employee management
+import logoIconUrl from '@/icons/kkarlsen_ikon_clean.png?url';
 
 export function renderAnsatte() {
   return `
@@ -8,7 +9,7 @@ export function renderAnsatte() {
         <div class="header-top">
           <div class="header-left">
             <a href="https://www.kkarlsen.dev" class="header-logo-link">
-              <img src="/icons/kkarlsen_ikon_clean.png" class="header-logo" alt="kkarlsen logo">
+              <img src="${logoIconUrl}" class="header-logo" alt="kkarlsen logo">
             </a>
           </div>
           <div class="header-right">

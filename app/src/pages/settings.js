@@ -8,41 +8,12 @@ function getHomeView() {
   return `
   <div class="settings-home">
     <div class="settings-content">
-    <div class="header">
-      <div class="header-top">
-        <div class="header-left">
-          <a href="https://www.kkarlsen.dev" class="header-logo-link">
-            <img src="/icons/kkarlsen_ikon_clean.png" class="header-logo" alt="kkarlsen logo">
-          </a>
-        </div>
-        <div class="header-right">
-          <div class="user-profile-container">
-            <button class="user-profile-btn" onclick="app.toggleProfileDropdown()" aria-label="Åpne brukerprofil">
-              <span class="user-nickname" id="userNickname">Bruker</span>
-              <img id="userAvatarImg" class="topbar-avatar" alt="Profilbilde" style="display:none;" />
-              <svg class="icon-sm profile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </button>
-            <div class="profile-skeleton" aria-hidden="true">
-              <div class="skeleton-avatar"></div>
-              <div class="skeleton-line w-40"></div>
-            </div>
-            <div class="profile-dropdown" id="profileDropdown" style="display: none;">
-              <div class="dropdown-item" data-spa data-href="/settings/account">
-                <span>Profil</span>
-              </div>
-              <div class="dropdown-item logout-item" onclick="app.handleLogout()">
-                <span>Logg ut</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="settings-home-header">
+      <h1 class="settings-title">Innstillinger</h1>
+      <p class="settings-subtitle">Administrer kontoen, lønnsoppsettet og hvordan appen oppfører seg.</p>
     </div>
 
-    <ul class="settings-list" role="list" style="margin-top: var(--space-4);">
+    <ul class="settings-list" role="list">
       <li>
         <div class="settings-item" data-spa data-href="/settings/account">
           <div class="item-main">
@@ -884,11 +855,6 @@ export function afterMountSettings() {
   const path = typeof location !== 'undefined' ? location.pathname : '/settings';
   const section = path.split('/')[2] || '';
   const params = new URLSearchParams(location.search || '');
-
-  // Load profile information for header (only for main settings page, not detailed pages)
-  if (!section && window.app && window.app.loadUserNickname) {
-    window.app.loadUserNickname();
-  }
 
   // Entrance animations - apply only to inner content wrapper
   try {

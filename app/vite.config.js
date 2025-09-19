@@ -1,6 +1,21 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
+// Plugin to fix CSS MIME type in development
+function fixCssMimeType() {
+  return {
+    name: 'fix-css-mime-type',
+    configureServer(server) {
+      server.middlewares.use('/src/css', (req, res, next) => {
+        if (req.url.endsWith('.css')) {
+          res.setHeader('Content-Type', 'text/css; charset=utf-8');
+        }
+        next();
+      });
+    }
+  };
+}
+
 // Load PurgeCSS only when available (e.g., local dev) and in production builds.
 // In some CI environments (e.g., Netlify workspaces) devDependencies may be omitted
 // from the root install, which would otherwise crash the config load.
@@ -18,7 +33,7 @@ async function maybeLoadPurgeCss(mode) {
 
 export default defineConfig(async ({ mode }) => {
   const purgeCss = await maybeLoadPurgeCss(mode);
-  const plugins = [];
+  const plugins = [fixCssMimeType()];
   if (purgeCss) {
     plugins.push(
       purgeCss({
@@ -35,6 +50,14 @@ export default defineConfig(async ({ mode }) => {
     plugins,
     root: '.',
     base: '/',
+    resolve: {
+      alias: {
+        '@': resolve('src')
+      }
+    },
+    css: {
+      devSourcemap: true
+    },
     server: {
       port: 5173,
       proxy: {
