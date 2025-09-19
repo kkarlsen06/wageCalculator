@@ -13,6 +13,12 @@ html, body {
   min-height: 100vh;
 }
 
+html.scroll-locked, body.scroll-locked {
+  overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
 /* Dashboard mode - prevent any scrolling without affecting positioning */
 html:not(.spa-route),
 body:not(.spa-route) {
@@ -16773,7 +16779,7 @@ body.chatbox-view .chatbox-container {
 
 /* Ensure conflicts are never visible in the initial viewport */
 .conflict-details.below-fold {
-  margin-top: 100vh; /* push below the fold regardless of hero height */
+  margin-top: 100dvh; /* push below the fold regardless of hero height */
 }
 .conflict-details h4 {
   margin: 0 0 8px 0;
@@ -16788,11 +16794,33 @@ body.chatbox-view .chatbox-container {
 .shifts-page {
   padding: 0;
   padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); /* Space for navbar + safe area */
-  min-height: 100vh;
-  /* Isolate scroll behavior for this route */
-  overscroll-behavior: contain;
+  padding-bottom: 0;
+  min-height: 100dvh;
   scroll-behavior: auto;
+}
+
+.shifts-route {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.shifts-route .app-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.shifts-scroll {
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: calc(var(--nav-h, 84px) + env(safe-area-inset-bottom));
+  scrollbar-gutter: stable both-edges;
 }
 
 /* Override header margin in shifts page to prevent double safe area inset */
@@ -16813,7 +16841,7 @@ body.chatbox-view .chatbox-container {
 .bottom-nav {
   position: fixed;
   left: 50%;
-  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  bottom: env(safe-area-inset-bottom, 0px);
   transform: translateX(-50%);
   width: min(680px, calc(100% - 32px));
   padding: 12px 16px;
@@ -16824,6 +16852,8 @@ body.chatbox-view .chatbox-container {
   backdrop-filter: blur(16px) saturate(120%);
   -webkit-backdrop-filter: blur(16px) saturate(120%);
   z-index: 100;
+  pointer-events: none;
+  touch-action: manipulation;
 }
 
 .bottom-nav__list {
@@ -16841,6 +16871,13 @@ body.chatbox-view .chatbox-container {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.bottom-nav .nav-item,
+.bottom-nav .fab,
+.bottom-nav [role="button"] {
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .nav-item {

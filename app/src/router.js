@@ -13,6 +13,7 @@ import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
 import { renderShifts, afterMountShifts } from './pages/shifts.js';
 import { renderLonnAI, afterMountLonnAI } from './pages/lonnAI.js';
 import { mountAll } from './js/icons.js';
+import { lockScroll, unlockScroll } from './js/utils/scrollLock.js';
 
 // Helper: normalize path so '/index.html' maps to '/'
 function normalizePath(pathname) {
@@ -193,6 +194,19 @@ export async function render() {
   const { appEl, spaEl } = getOutlets();
   const path = normalizePath(location.pathname);
   const match = routes.find(r => r.path === path) || routes[0];
+  const hasWindow = typeof window !== 'undefined';
+  const isShiftsRoute = match.path === '/shifts';
+  if (hasWindow) {
+    const wasShiftsScrollLocked = window.__shiftsScrollActive === true;
+
+    if (isShiftsRoute && !wasShiftsScrollLocked) {
+      lockScroll();
+    } else if (!isShiftsRoute && wasShiftsScrollLocked) {
+      unlockScroll();
+    }
+
+    window.__shiftsScrollActive = isShiftsRoute;
+  }
 
   // Clean up floating elements for any route transition
   try {
