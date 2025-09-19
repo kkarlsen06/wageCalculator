@@ -16839,6 +16839,8 @@ body.chatbox-view .chatbox-container {
 .bottom-nav__item {
   flex: 1;
   display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .nav-item {
@@ -16947,7 +16949,6 @@ html:not(.theme-light) .nav-icon {
 
   .nav-item {
     padding: 10px;
-    border-radius: var(--radius-md);
   }
 
   .nav-item__icon {
