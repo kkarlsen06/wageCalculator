@@ -12,6 +12,7 @@ class ThemeIntegration {
   constructor() {
     this.initialized = false;
     this.themeInputs = null;
+    this.themeOptionElements = [];
   }
 
   init() {
@@ -37,6 +38,8 @@ class ThemeIntegration {
       system: document.getElementById('themeSystem')
     };
 
+    this.themeOptionElements = Array.from(document.querySelectorAll('.theme-option[data-theme-option]'));
+
     // Set initial state based on current theme
     this.updateThemeUI(themeManager.getCurrentTheme());
 
@@ -46,6 +49,7 @@ class ThemeIntegration {
         input.addEventListener('change', (e) => {
           if (e.target.checked) {
             themeManager.setTheme(theme);
+            this.updateThemeOptionStates(theme);
           }
         });
       }
@@ -81,8 +85,20 @@ class ThemeIntegration {
       }
     });
 
+    this.updateThemeOptionStates(currentTheme);
+
     // Update system preview to reflect current system theme
     this.updateSystemPreview();
+  }
+
+  updateThemeOptionStates(currentTheme) {
+    if (!this.themeOptionElements || this.themeOptionElements.length === 0) return;
+
+    this.themeOptionElements.forEach((option) => {
+      const optionTheme = option.getAttribute('data-theme-option');
+      const isSelected = optionTheme === currentTheme;
+      option.classList.toggle('is-selected', isSelected);
+    });
   }
 
   updateSystemPreview() {

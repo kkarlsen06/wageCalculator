@@ -553,18 +553,87 @@ function getInterfaceDetail() {
                 <span>Tema</span>
               </div>
               <div class="setting-body">
-                <div class="row-inline" role="radiogroup" aria-label="Tema">
-                  <label for="themeLight" style="display:flex;align-items:center;gap:8px;">
-                    <input type="radio" id="themeLight" name="theme" value="light" />
-                    Lys
+                <div class="theme-picker" role="radiogroup" aria-label="Tema">
+                  <label class="theme-option" data-theme-option="light">
+                    <input type="radio" id="themeLight" name="theme" value="light" class="theme-input sr-only" />
+                    <span class="theme-option-surface">
+                      <span class="theme-option-selection" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </span>
+                      <span class="theme-preview theme-preview-light" aria-hidden="true">
+                        <span class="theme-preview-window">
+                          <span class="theme-preview-toolbar"></span>
+                          <span class="theme-preview-body">
+                            <span class="theme-preview-sidebar"></span>
+                            <span class="theme-preview-content">
+                              <span class="theme-preview-line"></span>
+                              <span class="theme-preview-line is-short"></span>
+                              <span class="theme-preview-pill"></span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                      <span class="theme-option-label">
+                        <span class="theme-option-title">Lys</span>
+                        <span class="theme-option-description">Lyst grensesnitt og tydelig kontrast på dagtid.</span>
+                      </span>
+                    </span>
                   </label>
-                  <label for="themeDark" style="display:flex;align-items:center;gap:8px;">
-                    <input type="radio" id="themeDark" name="theme" value="dark" />
-                    Mørk
+                  <label class="theme-option" data-theme-option="dark">
+                    <input type="radio" id="themeDark" name="theme" value="dark" class="theme-input sr-only" />
+                    <span class="theme-option-surface">
+                      <span class="theme-option-selection" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </span>
+                      <span class="theme-preview theme-preview-dark" aria-hidden="true">
+                        <span class="theme-preview-window">
+                          <span class="theme-preview-toolbar"></span>
+                          <span class="theme-preview-body">
+                            <span class="theme-preview-sidebar"></span>
+                            <span class="theme-preview-content">
+                              <span class="theme-preview-line"></span>
+                              <span class="theme-preview-line is-short"></span>
+                              <span class="theme-preview-pill"></span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                      <span class="theme-option-label">
+                        <span class="theme-option-title">Mørk</span>
+                        <span class="theme-option-description">Rolig og mørk visning som sparer øynene sent på kvelden.</span>
+                      </span>
+                    </span>
                   </label>
-                  <label for="themeSystem" style="display:flex;align-items:center;gap:8px;">
-                    <input type="radio" id="themeSystem" name="theme" value="system" />
-                    Automatisk
+                  <label class="theme-option" data-theme-option="system">
+                    <input type="radio" id="themeSystem" name="theme" value="system" class="theme-input sr-only" />
+                    <span class="theme-option-surface">
+                      <span class="theme-option-selection" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </span>
+                      <span class="theme-preview theme-preview-system" aria-hidden="true">
+                        <span class="theme-preview-window">
+                          <span class="theme-preview-toolbar"></span>
+                          <span class="theme-preview-body">
+                            <span class="theme-preview-sidebar"></span>
+                            <span class="theme-preview-content">
+                              <span class="theme-preview-line"></span>
+                              <span class="theme-preview-line is-short"></span>
+                              <span class="theme-preview-pill"></span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                      <span class="theme-option-label">
+                        <span class="theme-option-title">Automatisk</span>
+                        <span class="theme-option-description">Følger systemet og bytter mellom lyst og mørkt når du gjør det.</span>
+                      </span>
+                    </span>
                   </label>
                 </div>
                 <div class="form-hint">Endring lagres og brukes med en gang.</div>
