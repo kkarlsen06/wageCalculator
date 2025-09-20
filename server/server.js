@@ -742,14 +742,6 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
       body.set('customer', customerId);
     }
 
-    // Debug logging for production diagnosis
-    console.log('[/api/checkout] Creating session with metadata:', {
-      userId,
-      priceId,
-      metadata_user_id: userId,
-      metadata_supabase_uid: userId,
-      client_reference_id: userId
-    });
 
     // Optional, can be toggled later via env if needed
     // body.set('automatic_tax[enabled]', 'true');
@@ -834,14 +826,6 @@ app.post('/checkout', authenticateUser, async (req, res) => {
     body.set('subscription_data[metadata][user_id]', userId);
     body.set('subscription_data[metadata][supabase_uid]', userId);
 
-    // Debug logging for production diagnosis
-    console.log('[/checkout] Creating session with metadata:', {
-      userId,
-      priceId,
-      metadata_user_id: userId,
-      metadata_supabase_uid: userId,
-      client_reference_id: userId
-    });
 
     const resp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
@@ -1458,7 +1442,6 @@ app.post('/portal', authenticateUser, async (req, res) => {
 
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
 
-  console.log('[/api/stripe-webhook] Received webhook request');
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
@@ -1477,7 +1460,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
   let event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
-    console.log('[/api/stripe-webhook] Signature verified, event type:', event?.type);
   } catch (err) {
     console.warn('[/api/stripe-webhook] constructEvent failed:', err?.message || err);
     return res.status(400).send(`Webhook Error: ${err?.message || 'invalid signature'}`);
@@ -1487,7 +1469,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
   let verifiedEvent;
   try {
     verifiedEvent = await stripe.events.retrieve(event.id);
-    console.log('[/api/stripe-webhook] Event retrieved successfully, processing in background');
   } catch (err) {
     console.warn('[/api/stripe-webhook] events.retrieve failed:', err?.message || err);
     return res.status(400).send(`Event Retrieval Error: ${err?.message || 'failed to retrieve event'}`);
@@ -1507,13 +1488,9 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
       processedEventsCache.add(eventId);
 
       const type = verifiedEvent?.type || '';
-      console.log('[/api/stripe-webhook] Processing event type:', type);
-
       // Handle relevant events with UID prioritization
       if (['checkout.session.completed', 'customer.created', 'customer.updated',
            'customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(type)) {
-
-        console.log('[/api/stripe-webhook] Event type is supported, processing...');
         
         let uid = null;
         let customerId = null;
@@ -1524,12 +1501,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 
         if (type === 'checkout.session.completed') {
           const session = verifiedEvent?.data?.object || {};
-          console.log('[/api/stripe-webhook] Processing checkout.session.completed with session metadata:', {
-            metadata: session?.metadata,
-            client_reference_id: session?.client_reference_id,
-            customer: session?.customer,
-            subscription: session?.subscription
-          });
 
           // Priority 1: metadata.supabase_uid from session
           uid = session?.metadata?.supabase_uid || null;
@@ -1585,14 +1556,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 
         }
 
-        // Log final resolution
-        console.log('[/api/stripe-webhook] UID resolution result:', {
-          uid,
-          customerId,
-          subscriptionId,
-          status,
-          priceId
-        });
 
         // Refuse to process events without UID (security requirement)
         if (!uid) {
@@ -1628,6 +1591,14 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           try {
             if (status === 'active' || status === 'trialing') {
               // Create or update subscription record
+              const periodEndISO = periodEndUnix ? new Date(Number(periodEndUnix) * 1000).toISOString() : null;
+              console.log('[webhook] Upserting subscription:', {
+                periodEndUnix,
+                periodEndISO,
+                status,
+                priceId
+              });
+
               const { data, error } = await supabase
                 .from('subscriptions')
                 .upsert({
@@ -1635,11 +1606,11 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
                   stripe_customer_id: customerId,
                   stripe_subscription_id: subscriptionId,
                   status: status,
-                  current_period_end: periodEndUnix ? new Date(Number(periodEndUnix) * 1000).toISOString() : null,
+                  current_period_end: periodEndISO,
                   ...(priceId && { price_id: priceId })
-                }, { 
+                }, {
                   onConflict: 'user_id',
-                  ignoreDuplicates: false 
+                  ignoreDuplicates: false
                 });
                 
               if (error) {
