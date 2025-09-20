@@ -1444,6 +1444,8 @@ app.post('/portal', authenticateUser, async (req, res) => {
 
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
 
+  console.log('[/api/stripe-webhook] Received webhook request');
+
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
     console.error('[/api/stripe-webhook] Missing STRIPE_WEBHOOK_SECRET');
@@ -1461,6 +1463,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
   let event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+    console.log('[/api/stripe-webhook] Signature verified, event type:', event?.type);
   } catch (err) {
     console.warn('[/api/stripe-webhook] constructEvent failed:', err?.message || err);
     return res.status(400).send(`Webhook Error: ${err?.message || 'invalid signature'}`);
@@ -1470,6 +1473,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
   let verifiedEvent;
   try {
     verifiedEvent = await stripe.events.retrieve(event.id);
+    console.log('[/api/stripe-webhook] Event retrieved successfully, processing in background');
   } catch (err) {
     console.warn('[/api/stripe-webhook] events.retrieve failed:', err?.message || err);
     return res.status(400).send(`Event Retrieval Error: ${err?.message || 'failed to retrieve event'}`);
@@ -1489,10 +1493,13 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
       processedEventsCache.add(eventId);
 
       const type = verifiedEvent?.type || '';
+      console.log('[/api/stripe-webhook] Processing event type:', type);
 
       // Handle relevant events with UID prioritization
-      if (['checkout.session.completed', 'customer.created', 'customer.updated', 
+      if (['checkout.session.completed', 'customer.created', 'customer.updated',
            'customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(type)) {
+
+        console.log('[/api/stripe-webhook] Event type is supported, processing...');
         
         let uid = null;
         let customerId = null;
@@ -1503,6 +1510,13 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 
         if (type === 'checkout.session.completed') {
           const session = verifiedEvent?.data?.object || {};
+          console.log('[/api/stripe-webhook] Processing checkout.session.completed with session metadata:', {
+            metadata: session?.metadata,
+            client_reference_id: session?.client_reference_id,
+            customer: session?.customer,
+            subscription: session?.subscription
+          });
+
           // Priority 1: metadata.supabase_uid from session
           uid = session?.metadata?.supabase_uid || null;
           // Priority 2: client_reference_id (fallback)
@@ -1558,6 +1572,13 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
         }
 
         // Log final resolution
+        console.log('[/api/stripe-webhook] UID resolution result:', {
+          uid,
+          customerId,
+          subscriptionId,
+          status,
+          priceId
+        });
 
         // Refuse to process events without UID (security requirement)
         if (!uid) {
