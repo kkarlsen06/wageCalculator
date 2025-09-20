@@ -16866,14 +16866,6 @@ body.chatbox-view .chatbox-container {
 .date-grid.warning-shimmer .date-cell:nth-child(32)::after,
 .date-grid.warning-shimmer .date-cell:nth-child(40)::after { animation-delay: 0.36s; }
 
-/* iOS Safe Area Support - Only for route containers, not main app */
-@supports (padding: max(0px, env(safe-area-inset-top))) {
-  /* Only SPA routes that mount in #spa-root need safe area handling */
-  #spa-root {
-    padding-top: env(safe-area-inset-top, 0);
-  }
-}
-
 #app, #spa-root {
   min-height: 100vh !important;
   min-height: 100dvh !important;
@@ -16921,7 +16913,6 @@ body.chatbox-view .chatbox-container {
 /* Simple shifts page layout */
 .shifts-page {
   padding: 0;
-  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: 0;
   min-height: 100dvh;
   scroll-behavior: auto;
