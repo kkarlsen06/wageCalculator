@@ -1,6 +1,4 @@
 // ===== server.js =====
-console.log('[BOOT] Using server file:', import.meta.url);
-console.log('[BOOT] CWD:', process.cwd());
 
 import dotenv from 'dotenv';
 import 'dotenv/config';
@@ -15,8 +13,6 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 // Boot check for Stripe configuration
 if (!process.env.STRIPE_SECRET_KEY) {
   console.error("[boot] STRIPE_SECRET_KEY missing");
-} else {
-  console.log("[boot] Stripe configured");
 }
 
 
@@ -459,7 +455,6 @@ app.get('/metrics', (req, res) => {
 // - Maintains server-side mapping table
 app.post('/api/billing/start', async (req, res) => {
   try {
-    console.log("[/api/billing/start] begin");
 
     // Extract UID from Authorization header (server-side verification)
     const uid = await getUidFromAuthHeader(req.headers.authorization);
@@ -492,7 +487,6 @@ app.post('/api/billing/start', async (req, res) => {
     const userEmail = userData.user.email;
     const userName = userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || '';
 
-    console.log(`[billing] uid=${uid} customer=pending session=pending`);
 
     // Create or update Stripe customer with supabase_uid metadata
     let customerId = null;
@@ -505,7 +499,6 @@ app.post('/api/billing/start', async (req, res) => {
       
       if (existingData.data && existingData.data.length > 0) {
         customerId = existingData.data[0].id;
-        console.log(`[billing] Found existing customer: ${customerId}`);
         
         // Update customer to ensure metadata is current
         await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
@@ -543,7 +536,6 @@ app.post('/api/billing/start', async (req, res) => {
         
         const customerData = await createResp.json();
         customerId = customerData.id;
-        console.log(`[billing] Created new customer: ${customerId}`);
       }
     } catch (e) {
       console.error('[billing] Customer handling failed:', e);
@@ -564,7 +556,6 @@ app.post('/api/billing/start', async (req, res) => {
           });
           // Continue anyway - Stripe metadata is source of truth
         } else {
-          console.log('[billing] Mapping upsert ok:', data);
         }
       } catch (dbErr) {
         console.warn('[billing] Database mapping error:', dbErr?.message || dbErr);
@@ -601,7 +592,6 @@ app.post('/api/billing/start', async (req, res) => {
     }
 
     const sessionData = await sessionResp.json();
-    console.log(`[billing] uid=${uid} customer=${customerId} session=${sessionData.id}`);
     
     return res.json({ 
       url: sessionData.url,
@@ -622,7 +612,6 @@ app.post('/api/billing/start', async (req, res) => {
 // - Success/Cancel URLs redirect back to app with a `checkout` query flag
 app.post('/api/checkout', authenticateUser, async (req, res) => {
   try {
-    console.log("[/api/checkout] begin, hasStripe=", !!process.env.STRIPE_SECRET_KEY);
 
     if (isAiAgent(req)) {
       recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
@@ -659,7 +648,6 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
     // Hardcoded base URL for production (as requested)
     const success_url = `${APP_BASE_URL}/index.html?checkout=success`;
     const cancel_url = `${APP_BASE_URL}/index.html?checkout=cancel`;
-    console.log('[stripe urls]', { success_url, cancel_url, return_url: `${APP_BASE_URL}/index.html` });
 
 
 	    // Extract Supabase user ID from verified JWT for consistent metadata
@@ -728,7 +716,6 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
     }
 
     // Trace log to confirm we resolved/ensured a Customer with metadata
-    try { console.log("[/api/checkout] ensured customer", { customerId, userId, email: userEmail }); } catch (_) {}
 
     // Build form-encoded payload for Stripe API (REST)
     const body = new URLSearchParams();
@@ -765,7 +752,6 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
       return res.status(500).json({ error: 'Failed to create checkout session' });
     }
 
-	    console.log("[/api/checkout] attaching metadata", { userId, customerId });
 
 
     return res.json({ url: data.url });
@@ -778,7 +764,6 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
 // Back-compat route without /api prefix in case of different proxy setups
 app.post('/checkout', authenticateUser, async (req, res) => {
   try {
-    console.log("[/checkout] back-compat route hit");
 
     if (isAiAgent(req)) {
       recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
@@ -939,7 +924,6 @@ app.post('/api/portal', authenticateUser, async (req, res) => {
 
     // Hardcoded return URL for production (as requested)
     const return_url = `${APP_BASE_URL}/index.html`;
-    console.log('[stripe urls]', { return_url });
 
     // Create portal session via Stripe REST API
     const form = new URLSearchParams();
@@ -1055,7 +1039,6 @@ app.post('/api/stripe/create-portal-session', authenticateUser, async (req, res)
       return_url: returnUrl,
     });
 
-    try { console.log('[/api/stripe/create-portal-session] ok', { userId, customerId, returnUrl }); } catch (_) {}
 
     return res.json({ url: session?.url });
   } catch (e) {
@@ -1422,7 +1405,6 @@ app.post('/portal', authenticateUser, async (req, res) => {
 
     // Hardcoded return URL for production (as requested)
     const return_url = `${APP_BASE_URL}/index.html`;
-    console.log('[stripe urls]', { return_url });
 
     const form = new URLSearchParams();
     form.set('customer', customerId);
@@ -1444,7 +1426,6 @@ app.post('/portal', authenticateUser, async (req, res) => {
 // Using official Stripe SDK for webhook verification and event retrieval
 
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  console.log("[webhook] hit", req.headers['stripe-signature']);
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
@@ -1486,13 +1467,11 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
       const eventId = verifiedEvent?.id;
       const processedEventsCache = new Set(); // In production, use Redis or database
       if (processedEventsCache.has(eventId)) {
-        console.log(`[webhook] Skipping already processed event: ${eventId}`);
         return;
       }
       processedEventsCache.add(eventId);
 
       const type = verifiedEvent?.type || '';
-      console.log(`[webhook] type=${type} uid=pending customer=pending`);
 
       // Handle relevant events with UID prioritization
       if (['checkout.session.completed', 'customer.created', 'customer.updated', 
@@ -1515,7 +1494,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           }
           customerId = session?.customer || null;
           subscriptionId = session?.subscription || null;
-          console.log(`[webhook] checkout.session.completed - uid=${uid || 'null'} customer=${customerId || 'null'} subscription=${subscriptionId || 'null'}`);
         } else if (type.startsWith('customer.subscription.')) {
           const obj = verifiedEvent?.data?.object || {};
           subscriptionId = obj?.id || null;
@@ -1560,21 +1538,9 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
             }
           }
 
-          console.log('[webhook] customer.subscription.event - uid=%s customer=%s subscription=%s status=%s',
-            uid || 'null',
-            customerId || 'null',
-            subscriptionId || 'null',
-            status || 'null'
-          );
         }
 
         // Log final resolution
-        console.log('[webhook] %s - uid=%s customer=%s subscription=%s',
-            type,
-            uid || 'null',
-            customerId || 'null',
-            subscriptionId || 'null'
-          );
 
         // Refuse to process events without UID (security requirement)
         if (!uid) {
@@ -1598,7 +1564,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
             if (dbError) {
               console.warn(`[webhook] Database mapping upsert failed: ${dbError.message}`);
             } else {
-              console.log(`[webhook] Updated customer<->UID mapping: ${customerId} <-> ${uid}`);
             }
           } catch (dbErr) {
             console.warn('[webhook] Database mapping error:', dbErr.message);
@@ -1607,7 +1572,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 
         // Handle subscription-specific events
         if (type.startsWith('customer.subscription.') && subscriptionId && status) {
-          console.log(`[webhook] Processing subscription ${subscriptionId} with status ${status}`);
           
           try {
             if (status === 'active' || status === 'trialing') {
@@ -1629,7 +1593,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
               if (error) {
                 console.error(`[webhook] Subscription upsert failed: ${error.message}`);
               } else {
-                console.log(`[webhook] Updated subscription: ${subscriptionId} -> ${status}`);
               }
               } else if (status === 'canceled' || status === 'incomplete_expired') {
                   // Update subscription to canceled/expired
@@ -1644,7 +1607,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
               if (error) {
                 console.error(`[webhook] Subscription status update failed: ${error.message}`);
               } else {
-                console.log(`[webhook] Updated subscription status: ${subscriptionId} -> ${status}`);
               }
             }
           } catch (e) {
@@ -1653,7 +1615,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
         }
         
       } else {
-        console.log(`[webhook] Ignoring unsupported event type: ${type}`);
       }
 
     } catch (e) {
@@ -1755,7 +1716,6 @@ app.get('/admin/unlinked-customers', async (req, res) => {
       total_issues: issues.customers_without_uid.length + issues.subscriptions_without_uid.length + issues.customers_with_invalid_uid.length
     };
 
-    console.log('[health-check] Unlinked objects summary:', summary);
 
     return res.json({
       summary,
@@ -1804,11 +1764,6 @@ app.post('/admin/link-customer', authenticateUser, requireAdmin, async (req, res
         }
       });
       
-      console.log('[admin/link-customer] Updated Stripe customer:', { 
-        customerId: stripe_customer_id, 
-        userId: supabase_user_id,
-        email: customer.email 
-      });
 
       // 3. If there are existing subscriptions, update them in Supabase
       const subscriptions = await stripe.subscriptions.list({
@@ -2863,15 +2818,7 @@ function calculateShiftEarnings(shift, userSettings) {
 
     // Debug logging for traditional calculations
     if (durationHours > 5.5) {
-      console.log('Traditional calculation (server):', {
-        shiftId: shift.id,
-        method: breakResult.method,
-        originalHours: durationHours,
-        paidHours: paidHours,
-        baseWage: baseWage,
-        bonus: bonus,
-        total: baseWage + bonus
-      });
+      // Additional processing for longer shifts if needed
     }
   }
 
@@ -3368,7 +3315,6 @@ app.get('/settings', async (req, res) => {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
     const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
-    console.log(`[route] GET /settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     const userId = req?.auth?.userId || req?.user_id;
@@ -3429,7 +3375,6 @@ app.put('/settings', async (req, res) => {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
     const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
-    console.log(`[route] PUT /settings authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     if (isAiAgent(req)) {
@@ -3648,7 +3593,6 @@ app.post('/employees', async (req, res) => {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
     const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
-    console.log(`[route] POST /employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     if (isAiAgent(req)) {
@@ -3765,7 +3709,6 @@ app.put('/employees/:id', async (req, res) => {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
     const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
-    console.log(`[route] PUT /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     if (isAiAgent(req)) {
@@ -3888,7 +3831,6 @@ app.delete('/employees/:id', async (req, res) => {
     const authz = req.headers.authorization || '';
     const resolvedUserId = req?.auth?.userId || req?.user_id || null;
     const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
-    console.log(`[route] DELETE /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
   } catch (_) {}
   try {
     if (isAiAgent(req)) {

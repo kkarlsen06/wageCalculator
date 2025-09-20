@@ -26,7 +26,7 @@ class OfflineFetchInterceptor {
         this.setupOnlineListener();
         this.isRegistered = true;
         
-        console.log('[OfflineInterceptor] Initialized with SW registration:', !!swRegistration);
+        // console.log('[OfflineInterceptor] Initialized with SW registration:', !!swRegistration);
     }
 
     isShiftMutation(url, method) {
@@ -109,19 +109,19 @@ class OfflineFetchInterceptor {
                 headersNeeded
             );
 
-            console.log('[OfflineInterceptor] Queued request:', { url, method: options.method, queueId: queueResult.id });
+            // console.log('[OfflineInterceptor] Queued request:', { url, method: options.method, queueId: queueResult.id });
 
             // Register background sync if available
             if (this.swRegistration && 'sync' in this.swRegistration) {
                 try {
                     await this.swRegistration.sync.register('shift-sync');
-                    console.log('[OfflineInterceptor] Registered background sync');
+                    // console.log('[OfflineInterceptor] Registered background sync');
                 } catch (syncError) {
                     console.warn('[OfflineInterceptor] Failed to register sync:', syncError);
                     this.scheduleRetryFallback();
                 }
             } else {
-                console.log('[OfflineInterceptor] Background sync not available, using fallback');
+                // console.log('[OfflineInterceptor] Background sync not available, using fallback');
                 this.scheduleRetryFallback();
             }
 
@@ -155,7 +155,7 @@ class OfflineFetchInterceptor {
             // Fallback to alert if no other notification system
             window.alert('Lagret lokalt — synces når du er online');
         } else {
-            console.log('[OfflineInterceptor] Shift queued for sync when online');
+            // console.log('[OfflineInterceptor] Shift queued for sync when online');
         }
     }
 
@@ -165,7 +165,7 @@ class OfflineFetchInterceptor {
         const currentAttempts = this.retryAttempts.get(attemptKey) || 0;
         
         if (currentAttempts >= this.maxRetries) {
-            console.log('[OfflineInterceptor] Max retry attempts reached');
+            // console.log('[OfflineInterceptor] Max retry attempts reached');
             return;
         }
 
@@ -190,11 +190,11 @@ class OfflineFetchInterceptor {
             
             // Check if this is a shift mutation request
             if (self.isShiftMutation(url, method)) {
-                console.log('[OfflineInterceptor] Intercepting shift request:', { url, method });
+                // console.log('[OfflineInterceptor] Intercepting shift request:', { url, method });
                 
                 // Check if we're online first
                 if (!self.isOnline()) {
-                    console.log('[OfflineInterceptor] Offline detected, queuing request');
+                    // console.log('[OfflineInterceptor] Offline detected, queuing request');
                     return self.handleOfflineRequest(url, options);
                 }
                 
@@ -206,17 +206,17 @@ class OfflineFetchInterceptor {
                     if (!response.ok) {
                         // Network issues (no response) or server errors (5xx)
                         if (response.status === 0 || response.status >= 500) {
-                            console.log('[OfflineInterceptor] Server error detected, queuing request');
+                            // console.log('[OfflineInterceptor] Server error detected, queuing request');
                             return self.handleOfflineRequest(url, options);
                         }
                         // 408 Request Timeout, 429 Too Many Requests - queue and retry
                         if (response.status === 408 || response.status === 429) {
-                            console.log('[OfflineInterceptor] Timeout/rate limit detected, queuing request');
+                            // console.log('[OfflineInterceptor] Timeout/rate limit detected, queuing request');
                             return self.handleOfflineRequest(url, options);
                         }
                         // For 4xx client errors (except auth), don't queue - return the error
                         if (response.status >= 400 && response.status < 500 && response.status !== 401) {
-                            console.log('[OfflineInterceptor] Client error, not queuing:', response.status);
+                            // console.log('[OfflineInterceptor] Client error, not queuing:', response.status);
                             return response;
                         }
                     }
@@ -226,7 +226,7 @@ class OfflineFetchInterceptor {
                     // Network failure: TypeError, fetch abort, DNS failure, etc.
                     if (networkError.name === 'TypeError' || networkError.name === 'AbortError' || 
                         networkError.message.includes('fetch') || networkError.message.includes('network')) {
-                        console.log('[OfflineInterceptor] Network error caught, queuing request:', networkError.message);
+                        // console.log('[OfflineInterceptor] Network error caught, queuing request:', networkError.message);
                         return self.handleOfflineRequest(url, options);
                     }
                     // Re-throw non-network errors
@@ -241,7 +241,7 @@ class OfflineFetchInterceptor {
 
     setupOnlineListener() {
         window.addEventListener('online', () => {
-            console.log('[OfflineInterceptor] Device came online, processing queue');
+            // console.log('[OfflineInterceptor] Device came online, processing queue');
             this.processOfflineQueue();
             this.retryAttempts.clear(); // Reset retry attempts
         });
@@ -252,7 +252,7 @@ class OfflineFetchInterceptor {
             const queuedItems = await offlineQueue.getAllQueued();
             
             if (queuedItems.length === 0) {
-                console.log('[OfflineInterceptor] No queued items to process');
+                // console.log('[OfflineInterceptor] No queued items to process');
                 return;
             }
 
@@ -275,7 +275,7 @@ class OfflineFetchInterceptor {
                     
                     // If it's an auth error, stop processing
                     if (error.status === 401) {
-                        console.log('[OfflineInterceptor] Auth error, stopping queue processing');
+                        // console.log('[OfflineInterceptor] Auth error, stopping queue processing');
                         break;
                     }
                 }
@@ -319,7 +319,7 @@ class OfflineFetchInterceptor {
                 }
             }
 
-            console.log('[OfflineInterceptor] Sending queued request:', { method, url });
+            // console.log('[OfflineInterceptor] Sending queued request:', { method, url });
             
             const response = await this.originalFetch.call(window, url, {
                 method,
@@ -330,7 +330,7 @@ class OfflineFetchInterceptor {
             // Handle response
             if (response.ok || response.status === 409 || response.status === 422) { 
                 // 200-299 = success, 409 = conflict (duplicate), 422 = validation error but processed
-                console.log('[OfflineInterceptor] Queued request succeeded:', response.status);
+                // console.log('[OfflineInterceptor] Queued request succeeded:', response.status);
                 await offlineQueue.deleteFromQueue(item.id);
                 
                 // Notify app to refresh data if available
@@ -349,7 +349,7 @@ class OfflineFetchInterceptor {
                 
                 return true; // Success
             } else if (response.status === 401) {
-                console.log('[OfflineInterceptor] Auth required, stopping sync');
+                // console.log('[OfflineInterceptor] Auth required, stopping sync');
                 const error = new Error('Authentication required');
                 error.status = 401;
                 throw error;

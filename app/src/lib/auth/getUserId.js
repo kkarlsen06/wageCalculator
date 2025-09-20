@@ -9,11 +9,10 @@ export async function getUserId() {
     try {
       const { data: claims } = await supabase.auth.getClaims();
       const sub = claims && claims.sub;
-      if (sub) { cachedId = sub; console.debug("[auth] userId (claims):", cachedId); return cachedId; }
+      if (sub) { cachedId = sub; return cachedId; }
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) { console.warn("[auth] getUser() error:", error.message || error); return null; }
       cachedId = user && user.id ? user.id : null;
-      if (cachedId) console.debug("[auth] userId (user):", cachedId);
       return cachedId;
     } catch (e) { console.warn("[auth] getUserId error:", e && e.message ? e.message : e); return null; }
     finally { inflight = null; }

@@ -619,7 +619,6 @@ if ('performance' in window) {
     window.addEventListener('load', () => {
         const perfData = window.performance.timing;
         const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
-        console.log(`Page load time: ${pageLoadTime}ms`);
     });
 }
 

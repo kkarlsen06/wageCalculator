@@ -72,7 +72,6 @@ class ThemeIntegration {
       }
     });
 
-    console.log('Theme integration initialized');
   }
 
   updateThemeUI(currentTheme) {
@@ -122,7 +121,6 @@ class ThemeIntegration {
           
           // If skeleton loading just finished (had it, now doesn't)
           if (hadSkeleton && !hasSkeleton) {
-            console.log('Skeleton loading completed, reapplying theme...');
             // Reapply theme after skeleton loading completes
             setTimeout(() => {
               themeManager.applyTheme(themeManager.getCurrentTheme());
@@ -163,7 +161,6 @@ class ThemeIntegration {
     // Notify other parts of the application about theme change
     this.notifyApplicationThemeChange(themeInfo);
 
-    console.log(`Theme changed to: ${themeInfo.userTheme} (resolved: ${themeInfo.resolvedTheme})`);
   }
 
   updateThemeDependentElements(resolvedTheme) {

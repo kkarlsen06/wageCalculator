@@ -31,22 +31,4 @@ const { url: resolvedUrl, anonKey: resolvedAnonKey, source } = resolveSupabaseCo
 
 export const supabase = createClient(resolvedUrl, resolvedAnonKey);
 
-try {
-  const mask = (s) => {
-    if (!s) return '';
-    const str = String(s);
-    if (str.length <= 8) return str[0] + '…' + str[str.length - 1];
-    return str.slice(0, 4) + '…' + str.slice(-4);
-  };
-  const host = (() => {
-    try {
-      return new URL(resolvedUrl).host;
-    } catch (_) {
-      return resolvedUrl;
-    }
-  })();
-  console.log(
-    `[boot] supabase client source=${source} url=${host} key=${mask(resolvedAnonKey)}`
-  );
-} catch (_) {}
 

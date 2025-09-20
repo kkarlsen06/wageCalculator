@@ -48,7 +48,7 @@ function detectiOSPWA() {
 function setThemeColor() {
   // This function is now handled by the theme manager
   // setThemeColor is no longer needed as theme manager handles meta theme colors
-  console.log('Theme colors are now managed by the theme system');
+  // console.log('Theme colors are now managed by the theme system');
 }
 
 // Enhanced responsive month navigation handler - UPDATED: Always use dashboard navigation
@@ -298,12 +298,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: { session: quickSession } } = await supa.auth.getSession();
     if (quickSession) {
       session = quickSession;
-      console.log('Quick session check: Session found');
+      // console.log('Quick session check: Session found');
     } else {
-      console.log('Quick session check: No session yet; will retry before redirecting');
+      // console.log('Quick session check: No session yet; will retry before redirecting');
     }
   } catch (quickCheckError) {
-    console.log('Quick session check failed, proceeding with retry logic:', quickCheckError);
+    // console.log('Quick session check failed, proceeding with retry logic:', quickCheckError);
   }
 
   // Load and display profile information immediately after greeting
@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Check if the app has finished its initial setup
       // This includes waiting for the updateDisplay function to complete
       if (window.app && window.app.shifts && window.app.shifts.length >= 0) {
-        console.log('App is ready, proceeding with content check');
+        // console.log('App is ready, proceeding with content check');
         break;
       }
 
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Early exit if app data loading is complete and there are no shifts
       // This prevents unnecessary waiting when the "no shifts" state is already determined
       if (window.app && window.app.isDataLoading === false && window.app.shifts && window.app.shifts.length === 0) {
-        console.log('No shifts detected and data loading complete, proceeding with skeleton removal immediately');
+        // console.log('No shifts detected and data loading complete, proceeding with skeleton removal immediately');
         break;
       }
 
@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // If all content is ready, break out of the loop
       if (hasRealTotalData && hasRealShiftData && hasRealPayrollData && hasRealMonthData) {
-        console.log('All content is ready, proceeding with skeleton removal');
+        // console.log('All content is ready, proceeding with skeleton removal');
         break;
       }
 
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await new Promise(resolve => setTimeout(resolve, 200));
       } else {
         console.log(`App.html: No session after ${maxRetries} attempts, redirecting to login`);
-        console.log('[login] no session – redirecting to login page');
+        // console.log('[login] no session – redirecting to login page');
         if (window.__navigate) window.__navigate('/login'); else window.location.href = '/login';
         return;
       }
@@ -665,7 +665,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check if user has finished onboarding
   const isOnOnboarding = location.pathname === '/onboarding';
   if (!user.user_metadata?.finishedOnboarding && !isOnOnboarding) {
-    console.log('→ redirect to onboarding (finishedOnboarding=false)');
+    // console.log('→ redirect to onboarding (finishedOnboarding=false)');
     if (window.__navigate) window.__navigate('/onboarding'); else location.replace('/onboarding');
     return;
   }
@@ -680,7 +680,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     try {
       const { data: { session } } = await supa.auth.getSession();
-      console.log('[logout] session after signOut:', session ? 'still present' : 'null');
+      // console.log('[logout] session after signOut:', session ? 'still present' : 'null');
     } catch (_) {}
     try {
       // Clear app caches/state that might assume a session

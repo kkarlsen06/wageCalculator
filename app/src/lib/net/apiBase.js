@@ -16,8 +16,3 @@ export const API_BASE =
             ? 'http://localhost:3000' // dev
             : ''));
 
-// optional debug on app boot
-if (typeof window !== 'undefined') {
-  // eslint-disable-next-line no-console
-  console.log('[api] base =', API_BASE, 'prod=', PROD);
-}

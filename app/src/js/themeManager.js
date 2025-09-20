@@ -102,7 +102,6 @@ class ThemeManager {
 
         // Apply database theme if found (database takes precedence over local storage)
         if (databaseTheme && Object.values(THEMES).includes(databaseTheme)) {
-          console.log(`Loading theme from database: ${databaseTheme}`);
           this.currentTheme = databaseTheme;
           this.applyTheme(databaseTheme);
           // Update local storage to match database
@@ -137,7 +136,6 @@ class ThemeManager {
               body: JSON.stringify({ theme })
             });
             if (resp.ok) {
-              console.log(`Theme saved to database via API: ${theme}`);
               return;
             }
           }
@@ -155,8 +153,6 @@ class ThemeManager {
           
         if (error) {
           console.warn('Failed to save theme to database:', error);
-        } else {
-          console.log(`Theme saved to database: ${theme}`);
         }
       }
     } catch (error) {

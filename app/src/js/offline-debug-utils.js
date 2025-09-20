@@ -5,6 +5,12 @@
   - Network simulation helpers
 */
 
+// Disable debug logging in production
+const DEBUG_ENABLED = false;
+const debugLog = (...args) => DEBUG_ENABLED && debugLog(...args);
+const debugWarn = (...args) => DEBUG_ENABLED && debugWarn(...args);
+const debugError = (...args) => DEBUG_ENABLED && debugError(...args);
+
 class OfflineDebugUtils {
     constructor() {
         this.originalOnLine = navigator.onLine;
@@ -13,7 +19,7 @@ class OfflineDebugUtils {
 
     // Simulate offline mode
     async goOffline() {
-        console.log('[Debug] Simulating offline mode...');
+        debugLog('[Debug] Simulating offline mode...');
         this.networkOverride = false;
         Object.defineProperty(navigator, 'onLine', {
             writable: true,
@@ -24,7 +30,7 @@ class OfflineDebugUtils {
 
     // Restore online mode
     async goOnline() {
-        console.log('[Debug] Restoring online mode...');
+        debugLog('[Debug] Restoring online mode...');
         this.networkOverride = null;
         Object.defineProperty(navigator, 'onLine', {
             writable: true,
@@ -38,7 +44,7 @@ class OfflineDebugUtils {
         if (window.offlineQueue) {
             const count = await window.offlineQueue.getQueueCount();
             const items = await window.offlineQueue.getAllQueued();
-            console.log('[Debug] Queue Status:', {
+            debugLog('[Debug] Queue Status:', {
                 count,
                 items: items.map(item => ({
                     id: item.id,
@@ -50,7 +56,7 @@ class OfflineDebugUtils {
             });
             return { count, items };
         }
-        console.warn('[Debug] Offline queue not available');
+        debugWarn('[Debug] Offline queue not available');
         return null;
     }
 
@@ -58,19 +64,19 @@ class OfflineDebugUtils {
     async clearQueue() {
         if (window.offlineQueue) {
             await window.offlineQueue.clearQueue();
-            console.log('[Debug] Queue cleared');
+            debugLog('[Debug] Queue cleared');
         } else {
-            console.warn('[Debug] Offline queue not available');
+            debugWarn('[Debug] Offline queue not available');
         }
     }
 
     // Manually trigger sync
     async triggerSync() {
         if (window.offlineSyncManager) {
-            console.log('[Debug] Manually triggering sync...');
+            debugLog('[Debug] Manually triggering sync...');
             await window.offlineSyncManager.triggerSync();
         } else {
-            console.warn('[Debug] Offline sync manager not available');
+            debugWarn('[Debug] Offline sync manager not available');
         }
     }
 
@@ -82,7 +88,7 @@ class OfflineDebugUtils {
         }
 
         try {
-            console.log('[Debug] Creating test shift while offline...');
+            debugLog('[Debug] Creating test shift while offline...');
             
             const apiBase = window.CONFIG?.apiBase || '';
             const response = await fetch(`${apiBase}/shifts`, {
@@ -98,15 +104,15 @@ class OfflineDebugUtils {
                 })
             });
 
-            console.log('[Debug] Test shift response:', response.status, response.statusText);
+            debugLog('[Debug] Test shift response:', response.status, response.statusText);
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('[Debug] Test shift queued:', data);
+                debugLog('[Debug] Test shift queued:', data);
             }
 
         } catch (error) {
-            console.error('[Debug] Error creating test shift:', error);
+            debugError('[Debug] Error creating test shift:', error);
         } finally {
             if (!wasOffline) {
                 await this.goOnline();
@@ -118,7 +124,7 @@ class OfflineDebugUtils {
     async checkServiceWorker() {
         if ('serviceWorker' in navigator) {
             const registration = await navigator.serviceWorker.getRegistration();
-            console.log('[Debug] Service Worker Status:', {
+            debugLog('[Debug] Service Worker Status:', {
                 registered: !!registration,
                 active: !!registration?.active,
                 waiting: !!registration?.waiting,
@@ -129,7 +135,7 @@ class OfflineDebugUtils {
             });
             return registration;
         } else {
-            console.warn('[Debug] Service Worker not supported');
+            debugWarn('[Debug] Service Worker not supported');
             return null;
         }
     }
@@ -139,22 +145,22 @@ class OfflineDebugUtils {
         try {
             const databases = await indexedDB.databases();
             const wcOffline = databases.find(db => db.name === 'wc-offline');
-            console.log('[Debug] IndexedDB Status:', {
+            debugLog('[Debug] IndexedDB Status:', {
                 supported: true,
                 wcOfflineExists: !!wcOffline,
                 version: wcOffline?.version,
                 allDatabases: databases.map(db => ({ name: db.name, version: db.version }))
             });
         } catch (error) {
-            console.error('[Debug] Error checking IndexedDB:', error);
+            debugError('[Debug] Error checking IndexedDB:', error);
         }
     }
 
     // Run comprehensive offline test
     async runFullTest() {
-        console.log('[Debug] ==========================================');
-        console.log('[Debug] Running comprehensive offline sync test');
-        console.log('[Debug] ==========================================');
+        debugLog('[Debug] ==========================================');
+        debugLog('[Debug] Running comprehensive offline sync test');
+        debugLog('[Debug] ==========================================');
 
         // 1. Check initial state
         await this.checkServiceWorker();
@@ -162,12 +168,12 @@ class OfflineDebugUtils {
         await this.getQueueStatus();
 
         // 2. Test offline creation
-        console.log('[Debug] Step 1: Testing offline shift creation...');
+        debugLog('[Debug] Step 1: Testing offline shift creation...');
         await this.createTestShift();
         await this.getQueueStatus();
 
         // 3. Test sync
-        console.log('[Debug] Step 2: Testing sync...');
+        debugLog('[Debug] Step 2: Testing sync...');
         await this.goOnline();
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for online event
         await this.triggerSync();
@@ -176,29 +182,29 @@ class OfflineDebugUtils {
         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for sync to complete
         await this.getQueueStatus();
 
-        console.log('[Debug] ==========================================');
-        console.log('[Debug] Full test completed');
-        console.log('[Debug] ==========================================');
+        debugLog('[Debug] ==========================================');
+        debugLog('[Debug] Full test completed');
+        debugLog('[Debug] ==========================================');
     }
 
     // Monitor network events
     startNetworkMonitoring() {
         window.addEventListener('online', () => {
-            console.log('[Debug] Network: ONLINE event fired');
+            debugLog('[Debug] Network: ONLINE event fired');
         });
 
         window.addEventListener('offline', () => {
-            console.log('[Debug] Network: OFFLINE event fired');
+            debugLog('[Debug] Network: OFFLINE event fired');
         });
 
         // Monitor service worker messages
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', (event) => {
-                console.log('[Debug] SW Message:', event.data);
+                debugLog('[Debug] SW Message:', event.data);
             });
         }
 
-        console.log('[Debug] Network monitoring started');
+        debugLog('[Debug] Network monitoring started');
     }
 }
 
@@ -224,28 +230,6 @@ if (typeof window !== 'undefined') {
         checkDB: () => debugUtils.checkIndexedDB()
     };
 
-    console.log(`
-[Debug] Offline Debug Utils loaded!
-
-Quick commands:
-- debugOffline.goOffline()  // Simulate offline mode
-- debugOffline.goOnline()   // Restore online mode  
-- debugOffline.status()     // Check queue status
-- debugOffline.test()       // Create test shift offline
-- debugOffline.sync()       // Manually trigger sync
-- debugOffline.fullTest()   // Run comprehensive test
-- debugOffline.clear()      // Clear queue
-- debugOffline.checkSW()    // Check service worker
-- debugOffline.checkDB()    // Check IndexedDB
-
-Example workflow:
-1. debugOffline.goOffline()
-2. Create shifts in UI or via debugOffline.test()
-3. debugOffline.status() // See queued items
-4. debugOffline.goOnline()
-5. debugOffline.sync() // Process queue
-6. debugOffline.status() // Verify queue cleared
-    `);
 }
 
 export default debugUtils;

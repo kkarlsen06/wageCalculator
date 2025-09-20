@@ -11,7 +11,6 @@ export async function refreshSubscriptionState(userId) {
     return null;
   }
   try {
-    console.log('[sub] refresh start', { userId });
     const { data, error } = await supabase
       .from('subscription_tiers')
       .select('status, price_id, tier, is_active, current_period_end, updated_at')
@@ -33,7 +32,6 @@ export async function refreshSubscriptionState(userId) {
     };
 
     window.SubscriptionState = state;
-    console.log('[sub] refresh data', state);
     document.dispatchEvent(new CustomEvent('subscription:updated', { detail: state }));
     return state;
   } catch (e) {

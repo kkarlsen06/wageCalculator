@@ -216,7 +216,6 @@ class LegalModal {
     }
 
     open() {
-        console.log('open() called');
         
         // For login page, don't scroll to top
         const isLoginPage = window.location.pathname === '/login';
@@ -235,7 +234,6 @@ class LegalModal {
             this.modal.classList.add('active');
             this.isOpen = true;
             document.body.style.overflow = 'hidden';
-            console.log('Modal opened with active class');
             
             // Focus management
             setTimeout(() => {
@@ -273,11 +271,9 @@ class LegalModal {
 
     // Method to show without accept/decline buttons (for info display)
     showInfo() {
-        console.log('showInfo called');
         const footer = this.modal.querySelector('.legal-modal-footer');
         if (footer) {
             footer.style.display = 'none';
-            console.log('Footer hidden in showInfo');
         }
         this.open();
     }
@@ -293,13 +289,11 @@ class LegalModal {
 
     // Method specifically for landing page display with enhanced scroll behavior
     showFromLandingPage() {
-        console.log('showFromLandingPage called');
         
         // Hide the footer with accept/decline buttons for landing page
         const footer = this.modal.querySelector('.legal-modal-footer');
         if (footer) {
             footer.style.display = 'none';
-            console.log('Footer hidden');
         }
         
         // Add landing page class for enhanced animation

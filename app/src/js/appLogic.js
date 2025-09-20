@@ -576,7 +576,7 @@ export const app = {
         
         if (!hasEnterprise) {
             // Show upgrade message or modal
-            console.log('Enterprise subscription required for wage caregiver features');
+            // console.log('Enterprise subscription required for wage caregiver features');
         }
     },
 
@@ -1252,7 +1252,7 @@ export const app = {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
             }
-            console.debug("[auth] using userId:", userId);
+            // console.debug("[auth] using userId:", userId);
             let createdCount = 0;
             for (const d of dates) {
                 const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
@@ -1474,7 +1474,7 @@ export const app = {
                 }
                 return;
             }
-            console.debug("[auth] using userId:", userId);
+            // console.debug("[auth] using userId:", userId);
 
             // Process each selected date
             const createdShifts = [];
@@ -1949,7 +1949,7 @@ export const app = {
 
     // Drill-down state management functions
     enterDrillDownMode(weekNumber) {
-        console.log('Entering drill-down mode for week:', weekNumber);
+        // console.log('Entering drill-down mode for week:', weekNumber);
 
         // Comprehensive tooltip cleanup before entering drill-down mode
         this.clearAllTooltips();
@@ -1961,7 +1961,7 @@ export const app = {
     },
 
     exitDrillDownMode() {
-        console.log('Exiting drill-down mode');
+        // console.log('Exiting drill-down mode');
 
         // Comprehensive tooltip cleanup before exiting drill-down mode
         this.clearAllTooltips();
@@ -2390,7 +2390,7 @@ export const app = {
             console.warn("[auth] Missing userId, skipping query");
             return;
         }
-        console.debug("[auth] using userId:", userId);
+        // console.debug("[auth] using userId:", userId);
 
         try {
             // Fetch shifts with employee data
@@ -2752,7 +2752,7 @@ export const app = {
             console.warn("[auth] Missing userId, skipping query");
             return;
         }
-        console.debug("[auth] using userId:", userId);
+        // console.debug("[auth] using userId:", userId);
 
         try {
             // First, try to fetch existing settings to see what columns exist
@@ -2802,13 +2802,7 @@ export const app = {
 
 
 
-                // Debug logging for tax deduction save
-                console.log('Saving tax deduction settings:', {
-                    has_tax_enabled_column: 'tax_deduction_enabled' in existingSettings,
-                    has_tax_percentage_column: 'tax_percentage' in existingSettings,
-                    saving_enabled: this.taxDeductionEnabled,
-                    saving_percentage: this.taxPercentage
-                });
+                // Debug logging for tax deduction save removed
             } else {
                 // No existing settings - try to save with common field names
                 settingsData.use_preset = this.usePreset;
@@ -3170,7 +3164,7 @@ export const app = {
                 taxPercentageSection.style.display = 'none';
             }
         } else {
-            console.log('Tax percentage section element not found - modal may not be loaded yet');
+            // console.log('Tax percentage section element not found - modal may not be loaded yet');
         }
     },
 
@@ -3206,13 +3200,13 @@ export const app = {
 
         if (taxPercentageInput) {
             taxPercentageInput.value = this.taxPercentage;
-            console.log('Set input to:', this.taxPercentage);
+            // console.log('Set input to:', this.taxPercentage);
         }
 
         if (taxPercentageSection) {
             const shouldShow = this.taxDeductionEnabled;
             taxPercentageSection.style.display = shouldShow ? 'block' : 'none';
-            console.log('Set section visibility to:', shouldShow ? 'visible' : 'hidden');
+            // console.log('Set section visibility to:', shouldShow ? 'visible' : 'hidden');
         }
     },
 
@@ -3666,7 +3660,7 @@ export const app = {
         };
         
         root.addEventListener('click', this.handleCollapsibleToggle);
-        console.log('Collapsible event listeners set up');
+        // console.log('Collapsible event listeners set up');
     },
 
     // Toggle collapsible settings sections
@@ -3740,7 +3734,7 @@ export const app = {
             body.classList.add('stats-view');
 
             // Debug: Check if class was applied
-            console.log('Body classes after adding stats-view:', body.className);
+            // console.log('Body classes after adding stats-view:', body.className);
 
             // Manually hide dashboard cards as backup
             const totalCard = document.querySelector('.total-card');
@@ -3749,15 +3743,15 @@ export const app = {
 
             if (totalCard) {
                 totalCard.style.display = 'none';
-                console.log('Manually hid total card');
+                // console.log('Manually hid total card');
             }
             if (nextShiftCard) {
                 nextShiftCard.style.display = 'none';
-                console.log('Manually hid next shift card');
+                // console.log('Manually hid next shift card');
             }
             if (nextPayrollCard) {
                 nextPayrollCard.style.display = 'none';
-                console.log('Manually hid next payroll card');
+                // console.log('Manually hid next payroll card');
             }
 
             // Move the stats card to app-container if not already there
@@ -3788,7 +3782,7 @@ export const app = {
                 }
             }
 
-            console.log('Applied stats view - stats card replaces dashboard content');
+            // console.log('Applied stats view - stats card replaces dashboard content');
         } else {
             // Default view: move stats card back to statistics section
             body.classList.remove('stats-view');
@@ -3800,15 +3794,15 @@ export const app = {
 
             if (totalCard) {
                 totalCard.style.display = '';
-                console.log('Showed total card');
+                // console.log('Showed total card');
             }
             if (nextShiftCard) {
                 nextShiftCard.style.display = '';
-                console.log('Showed next shift card');
+                // console.log('Showed next shift card');
             }
             if (nextPayrollCard) {
                 nextPayrollCard.style.display = '';
-                console.log('Showed next payroll card');
+                // console.log('Showed next payroll card');
             }
 
             // Move the stats card back to statistics section if it's in dashboard
@@ -3824,7 +3818,7 @@ export const app = {
                 }
             }
 
-            console.log('Applied default view - stats card moved back to statistics section');
+            // console.log('Applied default view - stats card moved back to statistics section');
         }
     },
 
@@ -4243,7 +4237,7 @@ export const app = {
     },
     // Master refresh function for global UI updates after shift operations
     refreshUI(shifts, showLoading = false) {
-        console.log('Refreshing all UI components after shift changes');
+        // console.log('Refreshing all UI components after shift changes');
 
         if (showLoading) {
             // Show loading state briefly to indicate refresh
@@ -4265,7 +4259,7 @@ export const app = {
                 this.updateHeader();                // Update header
                 this.startNextShiftTimer();         // Restart countdown timer
 
-                console.log('UI refresh completed successfully');
+                // console.log('UI refresh completed successfully');
             } catch (error) {
                 console.error('Error during UI refresh:', error);
             } finally {
@@ -4411,7 +4405,7 @@ export const app = {
         // Update weekly chart which displays this data
         this.updateWeeklyHoursChart();
 
-        console.log('Week cards updated with data for', Object.keys(weeklyData).length, 'weeks');
+        // console.log('Week cards updated with data for', Object.keys(weeklyData).length, 'weeks');
     },
 
     // Enhanced payroll card update with proper period calculation
@@ -4419,7 +4413,7 @@ export const app = {
         // Use the existing updateNextPayrollCard function which handles the HTML structure correctly
         this.updateNextPayrollCard();
 
-        console.log('Payroll card updated via existing updateNextPayrollCard function');
+        // console.log('Payroll card updated via existing updateNextPayrollCard function');
     },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
@@ -5484,7 +5478,7 @@ export const app = {
                     clearTimeout(clickTimer);
                     clickCount = 0;
 
-                    console.log('Double-click detected on daily chart bar for day:', dayOfWeek);
+                    // console.log('Double-click detected on daily chart bar for day:', dayOfWeek);
 
                     // Hide any active tooltip first
                     hideTooltip();
@@ -5492,12 +5486,12 @@ export const app = {
                     // Get the shifts for this day and open details for the first shift
                     const dayShifts = dayData.shifts;
                     if (dayShifts && dayShifts.length > 0) {
-                        console.log('Opening shift details for shift ID:', dayShifts[0].id);
+                        // console.log('Opening shift details for shift ID:', dayShifts[0].id);
                         // If multiple shifts on the same day, show details for the first one
                         // In the future, this could be enhanced to show a selection dialog
                         this.showShiftDetails(dayShifts[0].id);
                     } else {
-                        console.log('No shifts found for this day');
+                        // console.log('No shifts found for this day');
                     }
                 }
             });
@@ -7040,13 +7034,13 @@ export const app = {
                             clearTimeout(cellClickTimer);
                             cellClickCount = 0;
 
-                            console.log('Double-click detected on calendar cell with shifts');
+                            // console.log('Double-click detected on calendar cell with shifts');
 
                             if (shiftsForDay.length > 0) {
-                                console.log('Opening shift details for shift ID:', shiftsForDay[0].id);
+                                // console.log('Opening shift details for shift ID:', shiftsForDay[0].id);
                                 this.showShiftDetails(shiftsForDay[0].id);
                             } else {
-                                console.log('No shifts found for this calendar cell');
+                                // console.log('No shifts found for this calendar cell');
                             }
                         }
                     };
@@ -7239,13 +7233,13 @@ export const app = {
                         clearTimeout(updateCellClickTimer);
                         updateCellClickCount = 0;
 
-                        console.log('Double-click detected on updated calendar cell with shifts');
+                        // console.log('Double-click detected on updated calendar cell with shifts');
 
                         if (shiftsToDisplay.length > 0) {
-                            console.log('Opening shift details for shift ID:', shiftsToDisplay[0].id);
+                            // console.log('Opening shift details for shift ID:', shiftsToDisplay[0].id);
                             this.showShiftDetails(shiftsToDisplay[0].id);
                         } else {
-                            console.log('No shifts found for this updated calendar cell');
+                            // console.log('No shifts found for this updated calendar cell');
                         }
                     }
                 };
@@ -8261,7 +8255,7 @@ export const app = {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
             }
-            console.debug("[auth] using userId:", userId);
+            // console.debug("[auth] using userId:", userId);
                 if (userId) {
                     const { error: updateError } = await window.supa
                         .from('user_settings')
@@ -8373,7 +8367,7 @@ export const app = {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
             }
-            console.debug("[auth] using userId:", userId);
+            // console.debug("[auth] using userId:", userId);
             if (!userId) throw new Error('Ingen bruker');
             if (window.supa.storage && window.supa.storage.from) {
                 const storage = window.supa.storage.from('profile-pictures');
@@ -8420,7 +8414,7 @@ export const app = {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
             }
-            console.debug("[auth] using userId:", userId);
+            // console.debug("[auth] using userId:", userId);
                 if (userId) {
                     await window.supa
                         .from('user_settings')
@@ -8694,17 +8688,7 @@ export const app = {
             const periods = this.calculateWagePeriods(shift, wageRate, bonuses, startMinutes, adjustedEndMinutes);
             bonus = periods.reduce((sum, period) => sum + period.durationHours * period.bonusRate, 0);
 
-            // Debug logging for traditional calculations
-            if (durationHours > 5.5) {
-                console.log('Traditional calculation (client):', {
-                    method: breakResult.method,
-                    originalHours: durationHours,
-                    paidHours: paidHours,
-                    baseWage: baseWage,
-                    bonus: bonus,
-                    total: baseWage + bonus
-                });
-            }
+            // Debug logging for traditional calculations removed
         }
 
         return {
@@ -8901,7 +8885,7 @@ export const app = {
 
     // Test function for break deduction methods
     testBreakDeductionMethods() {
-        console.log('Testing break deduction methods...');
+        // console.log('Testing break deduction methods...');
 
         // Create a test shift: 6 hours with bonus periods
         const testShift = {
@@ -8948,7 +8932,7 @@ export const app = {
         if (maxTotal > expectedMaxTotal) {
             console.error('❌ DOUBLING DETECTED! Max total:', maxTotal, 'Expected max:', expectedMaxTotal);
         } else {
-            console.log('✅ No doubling detected. Max total:', maxTotal, 'Expected max:', expectedMaxTotal);
+            // console.log('✅ No doubling detected. Max total:', maxTotal, 'Expected max:', expectedMaxTotal);
         }
 
         return results;
@@ -8959,7 +8943,7 @@ export const app = {
         const { data: claims } = await window.supa.auth.getClaims();
         const isAuthed = !!claims;
         if (!isAuthed) {
-            console.log('❌ Not logged in');
+            // console.log('❌ Not logged in');
             return;
         }
 
@@ -9542,7 +9526,7 @@ export const app = {
 
     // Test function for overlap detection (for development/debugging)
     testOverlapDetection() {
-        console.log('Testing overlap detection...');
+        // console.log('Testing overlap detection...');
 
         // Create test shifts
         const testShift1 = {
@@ -9578,20 +9562,20 @@ export const app = {
         };
 
         // Test same day overlap
-        console.log('Shift1 and Shift2 overlap (same day):', this.shiftsOverlap(testShift1, testShift2)); // Should be true
+        // console.log('Shift1 and Shift2 overlap (same day):', this.shiftsOverlap(testShift1, testShift2)); // Should be true
 
         // Test midnight crossing overlap
-        console.log('Shift3 and Shift4 overlap (midnight crossing):', this.shiftsOverlap(testShift3, testShift4)); // Should be true
+        // console.log('Shift3 and Shift4 overlap (midnight crossing):', this.shiftsOverlap(testShift3, testShift4)); // Should be true
 
         // Test no overlap
-        console.log('Shift1 and Shift4 overlap (no overlap):', this.shiftsOverlap(testShift1, testShift4)); // Should be false
+        // console.log('Shift1 and Shift4 overlap (no overlap):', this.shiftsOverlap(testShift1, testShift4)); // Should be false
 
-        console.log('Overlap detection test completed.');
+        // console.log('Overlap detection test completed.');
     },
 
     // Add test shifts for payroll card testing (for development/debugging)
     addTestPayrollShifts() {
-        console.log('Adding test payroll shifts...');
+        // console.log('Adding test payroll shifts...');
 
         const now = new Date();
         const currentMonth = now.getMonth(); // 0-based
@@ -9648,7 +9632,7 @@ export const app = {
 
     // Add test overlapping shifts for demonstration (for development/debugging)
     addTestOverlappingShifts() {
-        console.log('Adding test overlapping shifts...');
+        // console.log('Adding test overlapping shifts...');
 
         const today = new Date();
         const tomorrow = new Date(today);
@@ -9698,7 +9682,7 @@ export const app = {
         // Refresh UI to show the overlapping shifts with warning indicators
         this.refreshUI(this.shifts, true); // Show loading for user-initiated test action
 
-        console.log('Test overlapping shifts added. Check the shift list for warning indicators.');
+        // console.log('Test overlapping shifts added. Check the shift list for warning indicators.');
     },
     formatCurrency(amount) {
         const currencySuffix = this.currencyFormat ? ' NOK' : ' kr';
@@ -10499,7 +10483,7 @@ export const app = {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
             }
-            console.debug("[auth] using userId:", userId);
+            // console.debug("[auth] using userId:", userId);
             if (!userId) return;
 
             // Delete all shifts
@@ -10539,7 +10523,7 @@ export const app = {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
             }
-            console.debug("[auth] using userId:", userId);
+            // console.debug("[auth] using userId:", userId);
             if (!userId) return;
 
             // Delete all shifts
@@ -10927,7 +10911,7 @@ export const app = {
                 console.warn("[auth] Missing userId, skipping query");
                 return;
             }
-            console.debug("[auth] using userId:", userId);
+            // console.debug("[auth] using userId:", userId);
 
             const dayOfWeek = this.editSelectedDate.getDay();
             const type = dayOfWeek === 0 ? 2 : (dayOfWeek === 6 ? 1 : 0);
@@ -11068,7 +11052,7 @@ export const app = {
                 if (statisticsContent) {
                     // Move chart back to statistics section
                     statisticsContent.appendChild(weeklyHoursChart);
-                    console.log('Moved chart back to statistics section during cleanup');
+                    // console.log('Moved chart back to statistics section during cleanup');
                 }
             }
 
@@ -11138,7 +11122,7 @@ export const app = {
                 if (statisticsContent) {
                     // Move chart back to statistics section
                     statisticsContent.appendChild(weeklyHoursChart);
-                    console.log('Moved chart back to statistics section from dashboard view');
+                    // console.log('Moved chart back to statistics section from dashboard view');
                 }
             }
 
@@ -12561,7 +12545,7 @@ export const app = {
     onEmployeeSelectionChange() {
         // This method can be overridden or extended by components
         // that need to react to employee selection changes
-        console.log('Employee selection changed to:', this.selectedEmployeeId);
+        // console.log('Employee selection changed to:', this.selectedEmployeeId);
 
         // Update any UI components that depend on employee selection
         this.applyEmployeeFilter?.();
@@ -12645,7 +12629,7 @@ export const app = {
      * Handle employees loaded - override in components that need to react
      */
     onEmployeesLoaded() {
-        console.log('Employees loaded:', this.employees.length);
+        // console.log('Employees loaded:', this.employees.length);
 
         // Update employee carousel if it exists
         this.updateEmployeeCarousel?.();
@@ -12675,7 +12659,7 @@ export const app = {
     updateEmployeeModals() {
         // This method can be called when employee data changes
         // to update any open modals or forms
-        console.log('Updating employee modals with new data');
+        // console.log('Updating employee modals with new data');
     },
 
     /**

@@ -21,7 +21,6 @@ class OfflineSyncManager {
     async init() {
         if (this.isInitialized) return;
 
-        console.log('[OfflineSyncManager] Initializing...');
         
         try {
             // Register service worker
@@ -43,7 +42,6 @@ class OfflineSyncManager {
             this.setupFallbacks();
             
             this.isInitialized = true;
-            console.log('[OfflineSyncManager] Initialized successfully');
             
         } catch (error) {
             console.error('[OfflineSyncManager] Initialization failed:', error);
@@ -64,11 +62,9 @@ class OfflineSyncManager {
                 scope: '/'
             });
 
-            console.log('[OfflineSyncManager] Service Worker registered:', this.swRegistration.scope);
 
             // Handle updates
             this.swRegistration.addEventListener('updatefound', () => {
-                console.log('[OfflineSyncManager] Service Worker update found');
             });
 
             // Wait for SW to be ready
@@ -89,10 +85,6 @@ class OfflineSyncManager {
             this.swRegistration && 
             'periodicSync' in this.swRegistration;
 
-        console.log('[OfflineSyncManager] Background sync support:', {
-            backgroundSync: this.supportsBackgroundSync,
-            periodicBackgroundSync: this.supportsPeriodicBackgroundSync
-        });
     }
 
     setupMessageHandling() {
@@ -114,7 +106,6 @@ class OfflineSyncManager {
                     this.handleApiBaseRequest(event);
                     break;
                 default:
-                    console.log('[OfflineSyncManager] Unknown message type:', type);
             }
         });
     }
@@ -157,7 +148,6 @@ class OfflineSyncManager {
     }
 
     handleSyncComplete() {
-        console.log('[OfflineSyncManager] Sync completed, refreshing data');
         
         // Reload shifts in the app
         if (window.app && window.app.loadShifts) {
@@ -177,7 +167,6 @@ class OfflineSyncManager {
     }
 
     handleShiftsRefreshed() {
-        console.log('[OfflineSyncManager] Background refresh completed');
         
         // Reload shifts in the app
         if (window.app && window.app.loadShifts) {
@@ -187,7 +176,6 @@ class OfflineSyncManager {
 
     async setupPeriodicSync() {
         if (!this.supportsPeriodicBackgroundSync) {
-            console.log('[OfflineSyncManager] Periodic background sync not supported');
             return;
         }
 
@@ -199,9 +187,7 @@ class OfflineSyncManager {
                 await this.swRegistration.periodicSync.register('shifts-refresh', {
                     minInterval: 6 * 60 * 60 * 1000 // 6 hours
                 });
-                console.log('[OfflineSyncManager] Periodic sync registered for shifts-refresh');
             } else {
-                console.log('[OfflineSyncManager] Periodic sync permission not granted:', status.state);
             }
         } catch (error) {
             console.warn('[OfflineSyncManager] Failed to register periodic sync:', error);
@@ -209,18 +195,15 @@ class OfflineSyncManager {
     }
 
     setupFallbacks() {
-        console.log('[OfflineSyncManager] Setting up fallbacks');
         
         // Online event listener for manual queue processing
         window.addEventListener('online', () => {
-            console.log('[OfflineSyncManager] Device came online (fallback)');
             this.processFallbackQueue();
         });
 
         // Visibility change listener for when app becomes visible
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && navigator.onLine) {
-                console.log('[OfflineSyncManager] App became visible and online (fallback)');
                 this.processFallbackQueue();
             }
         });
@@ -228,7 +211,6 @@ class OfflineSyncManager {
         // Page load listener
         window.addEventListener('load', () => {
             if (navigator.onLine) {
-                console.log('[OfflineSyncManager] Page loaded and online (fallback)');
                 this.processFallbackQueue();
             }
         });
@@ -249,13 +231,11 @@ class OfflineSyncManager {
         if (this.supportsBackgroundSync) {
             try {
                 await this.swRegistration.sync.register('shift-sync');
-                console.log('[OfflineSyncManager] Manual sync triggered');
             } catch (error) {
                 console.error('[OfflineSyncManager] Failed to trigger manual sync:', error);
                 await this.processFallbackQueue();
             }
         } else {
-            console.log('[OfflineSyncManager] Using fallback for manual sync');
             await this.processFallbackQueue();
         }
     }
@@ -269,7 +249,6 @@ class OfflineSyncManager {
 
     // Utility method for manual testing
     async testOfflineMode() {
-        console.log('[OfflineSyncManager] Testing offline mode...');
         
         // Temporarily override navigator.onLine
         const originalOnLine = navigator.onLine;
@@ -292,7 +271,6 @@ class OfflineSyncManager {
                 })
             });
 
-            console.log('[OfflineSyncManager] Test request response:', response.status);
             
         } finally {
             // Restore original online status
