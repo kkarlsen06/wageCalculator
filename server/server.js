@@ -1514,8 +1514,15 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           const obj = verifiedEvent?.data?.object || {};
           subscriptionId = obj?.id || null;
           status = obj?.status || null;
-          periodEndUnix = obj?.current_period_end || null;
+          periodEndUnix = obj?.items?.data?.[0]?.current_period_end || null;
           priceId = obj?.items?.data?.[0]?.price?.id || null;
+
+          console.log('[webhook] Subscription object values:', {
+            id: obj?.id,
+            status: obj?.status,
+            current_period_end_from_item: obj?.items?.data?.[0]?.current_period_end,
+            items_count: obj?.items?.data?.length
+          });
 
           // Try to get the real customer id from the subscription payload
           // Stripe delivers either a string "cus_..." or an expanded object
@@ -1533,7 +1540,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
                 try { priceId = sub?.items?.data?.[0]?.price?.id || null; } catch (_) {}
               }
               if (!status) status = sub?.status || status || null;
-              if (!periodEndUnix) periodEndUnix = sub?.current_period_end || periodEndUnix || null;
+              if (!periodEndUnix) periodEndUnix = sub?.items?.data?.[0]?.current_period_end || periodEndUnix || null;
             } catch (e) {
               console.warn('[webhook] failed to retrieve subscription %s: %s', subscriptionId || 'null', e?.message || e);
             }
