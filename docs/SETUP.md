@@ -38,7 +38,6 @@ npm start
 - Create `server/.env` (or use your CI secrets) with at least:
   - `SUPABASE_URL`
   - `SUPABASE_SERVICE_ROLE_KEY`
-  - Optionally `OPENAI_API_KEY`
 
 3) Auth debug (dev only)
 When `NODE_ENV !== 'production'`, you can verify auth headers using:
@@ -51,6 +50,5 @@ curl -i http://localhost:3000/auth/debug -H "Authorization: Bearer <access_token
 
 - Netlify builds with `netlify.toml` and proxies `/api/*` to the Azure backend (prefix stripped upstream).
 - Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Netlify environment. Do not put server-only secrets in Netlify.
-
 
 

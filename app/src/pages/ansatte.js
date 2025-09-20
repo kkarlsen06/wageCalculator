@@ -134,7 +134,7 @@ async function initializeEmployeesRoute() {
       window.app.currentView = 'employees';
 
       // Ensure we remove any other view classes and add employees-view
-      document.body.classList.remove('stats-view', 'chatbox-view');
+      document.body.classList.remove('stats-view');
       document.body.classList.add('employees-view');
 
       // Load profile information for header

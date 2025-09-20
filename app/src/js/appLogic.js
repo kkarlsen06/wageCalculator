@@ -308,7 +308,7 @@ export const app = {
     usePreset: true,
     customWage: 200,
     customBonuses: { rules: [] }, // Reset to empty - will be loaded from database
-    // Track current high-level view for modal behavior (dashboard|stats|chatgpt|employees)
+    // Track current high-level view for modal behavior (dashboard|stats|employees)
     currentView: 'dashboard',
     customBonusEditingLocked: true,
 
@@ -492,17 +492,11 @@ export const app = {
         this.switchShiftView(this.shiftView);
 
         window.addEventListener('resize', () => {
-            // Skip stats updates in chatbox-view mode to prevent viewport instability
-            if (!document.body.classList.contains('chatbox-view')) {
-                this.updateStats(false);
-            }
+            this.updateStats(false);
         });
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', () => {
-                // Skip stats updates in chatbox-view mode to prevent viewport instability
-                if (!document.body.classList.contains('chatbox-view')) {
-                    this.updateStats(false);
-                }
+                this.updateStats(false);
             });
         }
 
@@ -4077,10 +4071,6 @@ export const app = {
         // Close dropdown first
         this.closeProfileDropdown();
 
-        // Clear chat log before logout
-        if (window.chatbox && window.chatbox.clear) {
-            window.chatbox.clear();
-        }
 
         // Call the global logout function
         if (typeof window.logout === 'function') {
@@ -4193,21 +4183,12 @@ export const app = {
                 if (profileIcon) profileIcon.style.display = 'block';
             }
 
-            // Update chatbox placeholder with user name
-            if (window.chatbox && window.chatbox.updatePlaceholder) {
-                window.chatbox.updatePlaceholder();
-            }
-
         } catch (err) {
             console.error('Error loading user nickname:', err);
             // Fallback to default
             const nicknameElement = document.getElementById('userNickname');
             if (nicknameElement) {
                 nicknameElement.textContent = 'Bruker';
-            }
-            // Update chatbox placeholder with fallback
-            if (window.chatbox && window.chatbox.updatePlaceholder) {
-                window.chatbox.updatePlaceholder();
             }
             // Hide avatar on error
             const topbarImg = document.getElementById('userAvatarImg');
@@ -4260,7 +4241,7 @@ export const app = {
         const rules = Array.isArray(source.rules) ? source.rules : [];
         return { rules };
     },
-    // Master refresh function for global UI updates after /chat responses
+    // Master refresh function for global UI updates after shift operations
     refreshUI(shifts, showLoading = false) {
         console.log('Refreshing all UI components after shift changes');
 
@@ -7890,9 +7871,6 @@ export const app = {
             if (nicknameElement && firstName.trim()) {
                 nicknameElement.textContent = firstName.trim();
             }
-            if (window.chatbox && window.chatbox.updatePlaceholder) {
-                window.chatbox.updatePlaceholder();
-            }
 
             // Also refresh from Supabase to ensure persistence across reloads
             this.loadUserNickname();
@@ -8009,9 +7987,6 @@ export const app = {
             const nicknameElement = document.getElementById('userNickname');
             if (nicknameElement && firstName.trim()) {
                 nicknameElement.textContent = firstName.trim();
-            }
-            if (window.chatbox && window.chatbox.updatePlaceholder) {
-                window.chatbox.updatePlaceholder();
             }
             this.loadUserNickname?.();
         } catch (e) {
@@ -10544,11 +10519,6 @@ export const app = {
             this.userShifts = [];
             this.updateDisplay();
 
-            // Clear chat log
-            if (window.chatbox && window.chatbox.clear) {
-                window.chatbox.clear();
-            }
-
             alert('Alle vakter er slettet');
 
         } catch (e) {
@@ -10598,11 +10568,6 @@ export const app = {
             this.setDefaultSettings();
             this.updateSettingsUI();
             this.updateDisplay();
-
-            // Clear chat log
-            if (window.chatbox && window.chatbox.clear) {
-                window.chatbox.clear();
-            }
 
             alert('Alle data er slettet');
 
@@ -11034,7 +10999,7 @@ export const app = {
 
     switchToView(view) {
         // Guard against accidental calls from non-view buttons
-        const validViews = new Set(['dashboard', 'stats', 'chatgpt']);
+        const validViews = new Set(['dashboard', 'stats']);
         if (!validViews.has(view)) {
             console.warn('switchToView: ignoring invalid view', view);
             return;
@@ -11071,9 +11036,6 @@ export const app = {
             case 'stats':
                 this.showStatsView();
                 break;
-            case 'chatgpt':
-                this.showChatGPTView();
-                break;
         }
     },
 
@@ -11081,7 +11043,7 @@ export const app = {
         const body = document.body;
 
         // Remove all view classes
-        body.classList.remove('stats-view', 'stats-settled', 'chatbox-view', 'employees-view');
+        body.classList.remove('stats-view', 'stats-settled', 'employees-view');
 
         // Clean up employee carousel performance resources
         if (this.employeeCarousel) {
@@ -11089,20 +11051,8 @@ export const app = {
         }
 
         // Hide all view-specific containers
-        const chatboxContainer = document.querySelector('.chatbox-container');
         const employeesContainer = document.querySelector('.employees-container');
         const dashboardStatsContainer = document.querySelector('.dashboard-stats-container');
-
-        if (chatboxContainer) {
-            chatboxContainer.style.display = 'none';
-            // Reset chatbox to collapsed state only if not switching to chatgpt view
-            const chatboxPill = document.getElementById('chatboxPill');
-            const expandedContent = document.getElementById('chatboxExpandedContent');
-            const chatboxClose = document.getElementById('chatboxClose');
-            if (chatboxPill) chatboxPill.classList.remove('expanded');
-            if (expandedContent) expandedContent.style.display = 'none';
-            if (chatboxClose) chatboxClose.style.display = 'none';
-        }
 
         if (employeesContainer) {
             employeesContainer.style.display = 'none';
@@ -11151,7 +11101,7 @@ export const app = {
         const body = document.body;
 
         // Remove all view classes
-        body.classList.remove('stats-view', 'stats-settled', 'chatbox-view', 'employees-view');
+        body.classList.remove('stats-view', 'stats-settled', 'employees-view');
 
         // Update current view state
         this.currentView = 'dashboard';
@@ -11169,7 +11119,6 @@ export const app = {
         const nextShiftCard = document.querySelector('.next-shift-card');
         const nextPayrollCard = document.querySelector('.next-payroll-card');
         const floatingActionBar = document.querySelector('.floating-action-bar');
-        const chatboxContainer = document.querySelector('.chatbox-container');
 
         if (totalCard) totalCard.style.display = '';
         if (nextShiftCard) nextShiftCard.style.display = '';
@@ -11177,15 +11126,6 @@ export const app = {
         // Ensure month navigation is always visible and properly styled
         this.ensureMonthPickerVisibility();
         if (floatingActionBar) floatingActionBar.style.display = 'flex';
-
-        // Hide chatbox container completely in dashboard view
-        if (chatboxContainer) {
-            chatboxContainer.style.display = 'none';
-            const chatboxPill = document.getElementById('chatboxPill');
-            const expandedContent = document.getElementById('chatboxExpandedContent');
-            if (chatboxPill) chatboxPill.classList.remove('expanded');
-            if (expandedContent) expandedContent.style.display = 'none';
-        }
 
         // Remove stats container from dashboard if it exists, but first move chart back
         const dashboardStatsContainer = document.querySelector('.dashboard-stats-container');
@@ -11267,7 +11207,7 @@ export const app = {
         const body = document.body;
 
         // Remove other view classes and add stats view
-        body.classList.remove('chatbox-view', 'employees-view');
+        body.classList.remove('employees-view');
         body.classList.add('stats-view');
 
         // Update current view state
@@ -11296,78 +11236,12 @@ export const app = {
         this.updateDisplay();
     },
 
-    showChatGPTView() {
-        const body = document.body;
-
-        // Remove other view classes and add chatbox view
-        body.classList.remove('stats-view', 'employees-view');
-        body.classList.add('chatbox-view');
-
-        // Update current view state
-        this.currentView = 'chatgpt';
-
-        // Clear employee selection when switching to chat
-        this.selectedEmployeeId = null;
-        localStorage.removeItem('selectedEmployeeId');
-
-        // Restore user's own shifts (not filtered by employee)
-        this.shifts = [...this.userShifts];
-
-        // Show the chatbox container
-        const chatboxContainer = document.querySelector('.chatbox-container');
-        if (chatboxContainer) {
-            chatboxContainer.style.display = 'block';
-        }
-
-        // Ensure month navigation remains visible in chatbox view
-        this.ensureMonthPickerVisibility();
-
-        // Immediately expand the chatbox to show chat log and input
-        this.expandChatboxForTabView();
-
-        // Dashboard cards are already hidden in switchToView() for smooth transitions
-
-        // Update the display with user's own data
-        this.updateDisplay();
-    },
-
-    expandChatboxForTabView() {
-        const chatboxPill = document.getElementById('chatboxPill');
-        const expandedContent = document.getElementById('chatboxExpandedContent');
-        const chatboxClose = document.getElementById('chatboxClose');
-        const chatboxLog = document.getElementById('chatboxLog');
-
-        if (chatboxPill && expandedContent) {
-            // Add expanded class to pill
-            chatboxPill.classList.add('expanded');
-
-            // Show expanded content (chat log and input)
-            expandedContent.style.display = 'block';
-
-            // Show close button
-            if (chatboxClose) {
-                chatboxClose.style.display = 'block';
-            }
-
-            // Keep chat log empty until the user sends a message
-
-            // Focus on the input field for immediate interaction
-            const chatboxInput = document.getElementById('chatboxInput');
-            if (chatboxInput) {
-                setTimeout(() => {
-                    chatboxInput.focus();
-                }, 100); // Small delay to ensure element is visible
-            }
-        }
-    },
-
-    // Removed: addChatGreetingMessage (no initial assistant message)
 
     async showEmployeesView() {
         const body = document.body;
 
         // Remove other view classes and add employees view
-        body.classList.remove('stats-view', 'chatbox-view');
+        body.classList.remove('stats-view');
         body.classList.add('employees-view');
 
         // Ensure month navigation remains visible in employees view
@@ -11647,23 +11521,6 @@ export const app = {
         }
     },
 
-    setupChatboxCloseOverride() {
-        const chatboxClose = document.getElementById('chatboxClose');
-        if (chatboxClose) {
-            // Remove existing event listeners by cloning the element
-            const newCloseButton = chatboxClose.cloneNode(true);
-            chatboxClose.parentNode.replaceChild(newCloseButton, chatboxClose);
-
-            // Add new event listener that switches to dashboard view
-            newCloseButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-
-                // Switch to dashboard view using tab bar
-                this.switchToView('dashboard');
-            });
-        }
-    },
 
     async toggleWageCaregiver() {
         // This toggle is now read-only and controlled by subscription
@@ -12276,9 +12133,6 @@ export const app = {
 
         // Tab bar event listeners
         this.setupTabBarEventListeners();
-
-        // Override chatbox close button for tab-based navigation
-        this.setupChatboxCloseOverride();
     },
 
     // Setup export period options and event listeners

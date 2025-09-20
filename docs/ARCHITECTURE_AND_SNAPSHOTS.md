@@ -20,7 +20,6 @@
   - Settings: `/settings` (current user), `/org-settings`
   - Employees: `/employees`
   - Shifts: `/shifts` (personal planner), `/employee-shifts` (authoritative)
-  - Chat assistant: `/chat` (SSE streaming supported)
   - Metrics: `/metrics`
   - Audit log: `/audit-log/recent`
 - Auth: `server/middleware/auth.js` and `server/lib/auth/verifySupabaseJwt.js` enforce and verify bearer tokens using JWKS
@@ -45,5 +44,4 @@ Prefix behavior:
 - Server derives:
   - `duration_hours`, `paid_hours`, `gross`
 - This yields immutable and auditable shift history independent of later tariff or wage changes
-
 

@@ -366,8 +366,7 @@ class LazyWebSocketClient {
         break;
         
       default:
-        // Handle legacy chat messages for backward compatibility
-        this._routeChannelMessage({ channel: 'chat', ...message });
+        this._log('Unhandled message type', message.type);
     }
   }
   
@@ -576,7 +575,7 @@ export const realtimeClient = new LazyWebSocketClient();
 
 /**
  * Hook-like function for subscribing to real-time channels
- * Usage: const unsubscribe = useRealtimeChannel('chat', {}, handleMessage);
+ * Usage: const unsubscribe = useRealtimeChannel('updates', {}, handleMessage);
  */
 export function useRealtimeChannel(channelKey, options = {}, onMessage = null) {
   return realtimeClient.subscribe(channelKey, options, onMessage);

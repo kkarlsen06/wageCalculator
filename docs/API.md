@@ -39,8 +39,6 @@ Full schema: see `docs/OPENAPI.yaml`.
 - `POST /api/checkout` — Create a Stripe Checkout session and return the hosted checkout URL (auth required; AI agents blocked)
 
 ### Chat Assistant
-- `POST /chat` supports both streaming (SSE) and non-streaming responses.
-- Requires `OPENAI_API_KEY` server-side.
 - Client example (streaming): see `app/js/app.js`.
 
 Tool naming consistency and outputs (assistant-side):

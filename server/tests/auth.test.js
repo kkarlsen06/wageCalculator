@@ -133,8 +133,7 @@ suite.test('Critical environment variables should be configured', () => {
   const requiredVars = [
     'SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
-    'STRIPE_SECRET_KEY',
-    'OPENAI_API_KEY'
+    'STRIPE_SECRET_KEY'
   ];
   
   for (const varName of requiredVars) {
@@ -178,20 +177,6 @@ suite.test('Stripe configuration should be valid', () => {
       'Production should use live Stripe key'
     );
   }
-});
-
-// Test 7: OpenAI configuration
-suite.test('OpenAI configuration should be valid', () => {
-  const openaiKey = process.env.OPENAI_API_KEY;
-  
-  suite.assert(
-    openaiKey.startsWith('sk-'),
-    'OpenAI key should start with sk-'
-  );
-  suite.assert(
-    openaiKey.length > 40,
-    'OpenAI key should have reasonable length'
-  );
 });
 
 // Run the test suite

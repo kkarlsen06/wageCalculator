@@ -24,7 +24,7 @@ Note: The marketing site and the app are deployed as separate sites/domains. The
 ## Tech Stack
 
 - Frontend: Vite apps in `marketing/` (landing) and `app/` (kalkulator). Vanilla JS + HTML/CSS.
-- Backend: Node.js 22+, Express, Supabase JS client, optional OpenAI.
+- Backend: Node.js 22+, Express, Supabase JS client.
 - Database: Supabase Postgres with RLS. See `docs/rls_policies.sql`.
 - Hosting: Netlify (marketing + app) and Azure Web App (API).
 
@@ -118,7 +118,6 @@ curl -i http://localhost:3000/auth/debug -H "Authorization: Bearer <access_token
 ### Backend (server/.env)
 - `SUPABASE_URL` — required (PostgREST URL)
 - `SUPABASE_SERVICE_ROLE_KEY` — required (service role; never expose to client)
-- `OPENAI_API_KEY` — optional (disables OpenAI features if missing)
 - `CORS_ORIGINS` — comma-separated allowlist; empty disables CORS
 - `JSON_BODY_LIMIT` — e.g. `1mb`
 - `FEATURE_EMPLOYEES` — default ON; set to `false` to hide employees feature in `/config`
@@ -189,3 +188,5 @@ ISC © 2025 Hjalmar Samuel Kristensen-Karlsen
 —
 
 Primary UI language is Norwegian. The codebase favors explicit, readable JavaScript and server-side validation for correctness and safety.
+
+Icons: https://tabler.io/icons

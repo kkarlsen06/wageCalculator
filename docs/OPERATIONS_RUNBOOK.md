@@ -23,13 +23,11 @@
 
 ### Common Incidents
 - Missing Supabase envs → DB features disabled (check logs for `[BOOT] SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not set`)
-- Missing `OPENAI_API_KEY` → Chat endpoints return 503 (by design)
 - CORS failures → set `CORS_ORIGINS` appropriately
   - For local dev: include `http://localhost:5173`
 
 ### Backups & Data
 - Data is in Supabase Postgres; use Supabase backups/export tooling
 - File uploads (avatars) stored in Supabase Storage (`profile-pictures` bucket)
-
 
 

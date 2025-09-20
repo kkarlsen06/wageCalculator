@@ -1,6 +1,5 @@
 // Loads application icons as raw SVG strings. Usage: mountIcon(el, 'home')
 import arrowLeftIcon from '@/icons/arrow-left.svg?raw';
-import chatIcon from '@/icons/chat.svg?raw';
 import checkIcon from '@/icons/check.svg?raw';
 import chevronLeftIcon from '@/icons/chevron-left.svg?raw';
 import chevronRightIcon from '@/icons/chevron-right.svg?raw';
@@ -25,7 +24,6 @@ import xIcon from '@/icons/x.svg?raw';
 
 const ICONS = {
   'arrow-left': arrowLeftIcon,
-  chat: chatIcon,
   check: checkIcon,
   'chevron-left': chevronLeftIcon,
   'chevron-right': chevronRightIcon,

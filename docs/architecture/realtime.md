@@ -21,7 +21,7 @@ The main WebSocket client that provides:
 
 1. **Connection Request**: First subscriber triggers lazy connection
 2. **Authentication**: JWT token passed via WebSocket subprotocol
-3. **Channel Subscription**: Components subscribe to specific channels (e.g., 'chat')
+3. **Channel Subscription**: Components subscribe to specific channels (e.g., 'live_feed')
 4. **Message Routing**: Incoming messages routed to appropriate channel handlers
 5. **Cleanup**: Last subscriber cleanup triggers disconnection (with 1s delay)
 
@@ -32,7 +32,7 @@ The main WebSocket client that provides:
 import { useRealtimeChannel } from '/src/realtime/client.js';
 
 // Subscribe to a channel
-const unsubscribe = useRealtimeChannel('chat', {}, (message) => {
+const unsubscribe = useRealtimeChannel('updates', {}, (message) => {
   console.log('Received:', message);
 });
 
@@ -44,7 +44,7 @@ unsubscribe();
 ```javascript
 import { realtimeClient } from '/src/realtime/client.js';
 
-realtimeClient.send('chat', {
+realtimeClient.send('updates', {
   type: 'user_message',
   content: 'Hello world'
 });
@@ -52,14 +52,8 @@ realtimeClient.send('chat', {
 
 ## Integration Points
 
-### Chat Feature
-- **Entry Point**: Chat expansion (`expandChatbox()`)
-- **Channel**: `'chat'`
-- **Cleanup**: Chat collapse (`collapseChatbox()`)
-- **Message Types**: `chat`, `progress`, `progress_summary`, `complete`
-
-### Future Features
-To add new real-time features:
+### Adding New Features
+To add real-time features:
 
 1. Subscribe to a channel when the feature becomes active
 2. Handle incoming messages for your feature

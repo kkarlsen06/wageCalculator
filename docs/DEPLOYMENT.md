@@ -17,7 +17,7 @@
   - Deploy `server/` directory to Web App `wageapp-prod`
 - App settings configured by the pipeline:
   - `NODE_ENV=production`
-  - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`
+  - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
   - `ENABLE_STATIC=false`, `STATIC_DIR='.'`
   - `SCM_DO_BUILD_DURING_DEPLOYMENT=true`
   - Runtime: `NODE|22-lts`
@@ -35,5 +35,4 @@ cd app && VITE_API_BASE=http://localhost:3000 npm run dev
 ```
 
 If you run the frontend against production while testing server locally, ensure your browser is calling the intended base (avoid mixed content/CORS).
-
 

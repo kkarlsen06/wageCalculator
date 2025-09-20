@@ -11,7 +11,6 @@ import { renderAnsatte, afterMountAnsatte } from './pages/ansatte.js';
 import { renderAddShift, afterMountAddShift } from './pages/shiftAdd.js';
 import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
 import { renderShifts, afterMountShifts } from './pages/shifts.js';
-import { renderLonnAI, afterMountLonnAI } from './pages/lonnAI.js';
 import { mountAll } from './js/icons.js';
 import { lockScroll, unlockScroll } from './js/utils/scrollLock.js';
 
@@ -99,7 +98,6 @@ export const routes = [
   { path: '/shift-add', render: renderAddShift, afterMount: afterMountAddShift },
   { path: '/shiftAdd', render: renderAddShift, afterMount: afterMountAddShift },
   { path: '/shift-edit', render: renderShiftEdit, afterMount: afterMountShiftEdit },
-  { path: '/lonnai', render: renderLonnAI, afterMount: afterMountLonnAI },
   { path: '/settings', render: renderSettings, afterMount: afterMountSettings },
   // Account settings detail (primary path)
   { path: '/settings/account', render: renderSettings, afterMount: afterMountSettings },

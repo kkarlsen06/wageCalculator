@@ -11,9 +11,6 @@
 - **STRIPE_SECRET_KEY** - Stripe secret key (must start with `sk_live_` for production)
 - **STRIPE_WEBHOOK_SECRET** - Stripe webhook endpoint secret (starts with `whsec_`)
 
-### 🤖 AI Integration
-- **OPENAI_API_KEY** - OpenAI API key for chat functionality (starts with `sk-`)
-
 ### 🌐 Application Configuration
 - **PUBLIC_APP_BASE_URL** - Public base URL for the application (e.g., `https://kkarlsen.dev`)
 - **NODE_ENV** - Set to `production` for production environment
@@ -34,7 +31,7 @@
 ### ✅ Verification Commands
 ```bash
 # Check that all required variables are set
-env | grep -E "(SUPABASE|STRIPE|OPENAI|PUBLIC_APP)" | sort
+env | grep -E "(SUPABASE|STRIPE|PUBLIC_APP)" | sort
 
 # Verify Stripe key is for production
 echo $STRIPE_SECRET_KEY | grep -E "^sk_live_" && echo "✅ Live Stripe key" || echo "❌ Test Stripe key detected!"
@@ -78,5 +75,4 @@ After deployment, verify these endpoints:
 If issues are detected in production:
 1. Check server logs for authentication failures
 2. Verify all environment variables are correctly set
-3. Test WebSocket connections are working
-4. Monitor Stripe webhook delivery success rates
+3. Monitor Stripe webhook delivery success rates

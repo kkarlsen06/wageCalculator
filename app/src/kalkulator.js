@@ -6,24 +6,7 @@ import '/src/lib/error-handling.js';
 // Import CSS files as modules for proper Vite handling
 import '/src/css/themes.css';
 import '/src/css/style.css';
-import '/src/css/chat.css';
 import '/src/css/settings.css';
-
-// Third-party CDN globals are left as-is in HTML (Supabase, jsPDF, Cropper, marked, DOMPurify)
-// Configure Markdown rendering so single newlines become <br> in chat
-if (typeof window !== 'undefined') {
-  try {
-    const mk = window.marked || (typeof marked !== 'undefined' ? marked : null);
-    if (mk && typeof mk.setOptions === 'function') {
-      mk.setOptions({
-        gfm: true,
-        breaks: true
-      });
-    }
-  } catch (_) {
-    // Non-fatal: chat will still render, just without single-line breaks
-  }
-}
 
 // Provide uuidv4 globally (previously defined inline in HTML)
 if (typeof window !== 'undefined' && !window.uuidv4) {

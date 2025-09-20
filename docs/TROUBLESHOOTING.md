@@ -13,8 +13,6 @@
 - Set `CORS_ORIGINS` on the backend to include the origin of your frontend (e.g., `http://localhost:5173`)
 
 ### 4) OpenAI features not working
-- Check logs for `[BOOT] OPENAI_API_KEY not set – OpenAI features disabled.`
-- Set `OPENAI_API_KEY` on the backend and restart
 
 ### 5) Avatar uploads fail
 - Ensure Supabase Storage bucket `profile-pictures` exists and the service role has permission
@@ -28,6 +26,5 @@
 - Netlify and Azure should forward `Authorization` unchanged
 - Verify via `/auth/debug` and adjust proxy rules if missing
 - If using an additional CDN/WAF, ensure it does not remove `Authorization` headers on 200/301 responses
-
 
 
