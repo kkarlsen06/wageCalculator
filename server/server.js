@@ -38,6 +38,9 @@ const APP_BASE_URL = process.env.PUBLIC_APP_BASE_URL || 'https://kalkulator.kkar
 // ---------- app & core middleware ----------
 const app = express();
 
+// Health check route for Render
+app.get('/health', (_req, res) => res.send('ok'));
+
 // Request logging with Morgan
 const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 app.use(morgan(logFormat));
@@ -51,6 +54,8 @@ const ALLOW_ORIGINS = [
   // Any subdomain (and bare) on your prod domains
   /^https:\/\/([a-z0-9-]+\.)?kkarlsen\.dev$/,
   /^https:\/\/([a-z0-9-]+\.)?kkarlsen\.art$/,
+  // Custom domain for server
+  'https://server.kkarlsen.dev',
 ];
 
  const corsOptions = {
@@ -4333,9 +4338,9 @@ const isRunDirectly = (() => {
 })();
 
 if (isRunDirectly) {
-  const PORT = process.env.PORT || 3000;
-  const server = app.listen(PORT, () => {
-    console.log(`✔ Server running → http://localhost:${PORT}`);
+  const PORT = process.env.PORT || 10000;
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✔ Server running → http://0.0.0.0:${PORT}`);
   });
 
   // Graceful shutdown to reduce dropped requests during restarts

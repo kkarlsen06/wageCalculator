@@ -1,7 +1,7 @@
 {
   "name": "wagecalculator-server",
   "version": "1.0.0",
-  "description": "Backend server for wageCalculator (Azure Web App)",
+  "description": "Backend server for wageCalculator (Render)",
   "main": "server.js",
   "type": "module",
   "engines": {
