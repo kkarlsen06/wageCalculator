@@ -1,6 +1,18 @@
 import { deleteShiftsOutsideMonth } from './subscriptionValidator.js';
 import { ConfirmationDialog } from './confirmationDialog.js';
 import { getUserId } from '/src/lib/auth/getUserId.js';
+
+// Helper function to map price_id to tier
+function priceIdToTier(priceId) {
+  switch (priceId) {
+    case 'price_1RzQ85Qiotkj8G58AO6st4fh':
+      return 'pro';
+    case 'price_1RzQC1Qiotkj8G58tYo4U5oO':
+      return 'max';
+    default:
+      return 'free';
+  }
+}
 import { lockScroll, unlockScroll } from './utils/scrollLock.js';
 
 export class PremiumFeatureModal {
@@ -402,9 +414,10 @@ export class PremiumFeatureModal {
       const userId = await getUserId();
       if (userId && window.supa) {
         const { data } = await window.supa
-          .from('subscription_tiers')
-          .select('status,tier,is_active,current_period_end')
-          .eq('user_id', userId);
+          .from('subscriptions')
+          .select('status,price_id,current_period_end')
+          .eq('user_id', userId)
+          .maybeSingle();
 
         const loadingEl = modal.querySelector('#modalLoading');
         const contentEl = modal.querySelector('#modalContent');
@@ -415,24 +428,24 @@ export class PremiumFeatureModal {
         if (contentEl) contentEl.style.display = 'block';
         if (footerEl) footerEl.style.display = 'block';
 
-        const row = Array.isArray(data) && data.length ? data[0] : null;
+        const row = data;
         const statusEl = modal.querySelector('#subscriptionStatus');
         const periodEl = modal.querySelector('#subscriptionPeriod');
         const planEl = modal.querySelector('#subscriptionPlan');
 
         if (row) {
           const status = row.status || 'ukjent';
-          const tier = String(row.tier || '').toLowerCase();
-          const plan = tier === 'max' ? 'Enterprise' : (tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null);
-          
+          const tier = priceIdToTier(row.price_id);
+          const plan = tier === 'max' ? 'Max' : (tier === 'pro' ? 'Professional' : 'Gratis');
+
           if (statusEl) statusEl.textContent = `${status.charAt(0).toUpperCase()}${status.slice(1)}${plan ? ` - ${plan}` : ''}`;
           if (periodEl && row.current_period_end) {
-            const date = new Date(typeof row.current_period_end === 'number' ? row.current_period_end * 1000 : row.current_period_end);
+            const date = new Date(row.current_period_end);
             if (!isNaN(date)) {
               periodEl.textContent = `Neste fornyelse: ${date.toLocaleDateString('no-NO')}`;
             }
           }
-          if (planEl) planEl.textContent = plan ? 'Takk for abonnementet!' : '';
+          if (planEl) planEl.textContent = plan !== 'Gratis' ? 'Takk for abonnementet!' : '';
         } else {
           if (statusEl) statusEl.textContent = 'Gratis plan';
           if (periodEl) periodEl.textContent = 'Du kan lagre vakter i én måned om gangen';

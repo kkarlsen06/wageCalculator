@@ -1085,6 +1085,201 @@ html.ios-pwa #shiftAddPage .tab-content {
   color: var(--text-primary);
 }
 
+/* Subscription Carousel */
+.subscription-carousel {
+  width: 100%;
+  position: relative;
+  margin: 24px 0;
+}
+
+.subscription-carousel-track {
+  display: flex;
+  gap: 16px;
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+
+  /* Smooth scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+
+  /* Optimize for touch interactions */
+  touch-action: pan-x;
+}
+
+.subscription-carousel-track::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.subscription-card {
+  flex: 0 0 280px;
+  scroll-snap-align: center;
+  background: var(--surface-card);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--speed-fast) var(--ease-default), border-color .2s ease, background .2s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+}
+
+.subscription-card[data-plan="pro"] {
+  border-color: var(--accent);
+}
+
+.subscription-card[data-plan="max"] {
+  border-color: var(--primary);
+}
+
+.subscription-card:hover {
+  transform: translateY(-2px);
+  background: var(--surface-card-hover);
+  border: var(--card-border-strong);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.carousel-disclaimer {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+/* Subscription card content */
+.subscription-card .plan-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.subscription-card .plan-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.subscription-card .plan-price {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.subscription-card .plan-content {
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.subscription-card .plan-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subscription-card .feature {
+  position: relative;
+  padding-left: 24px;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.subscription-card .feature::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.subscription-card .feature.feature-limitation::before {
+  content: "−";
+  color: var(--warning);
+}
+
+.subscription-card .plan-cta {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--radius-button, 8px);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.subscription-card .plan-cta:not(.current-plan) {
+  background: var(--primary);
+  color: white;
+}
+
+.subscription-card .plan-cta:not(.current-plan):hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.subscription-card .plan-cta.current-plan {
+  background: var(--surface-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  cursor: default;
+}
+
+.subscription-card .plan-cta.manage-plan {
+  background: var(--accent);
+  color: white;
+}
+
+.subscription-card .plan-cta.manage-plan:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.subscription-card .plan-cta.downgrade {
+  background: var(--surface-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.subscription-card .plan-cta.downgrade:hover {
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+}
+
+/* Appreciation message inside cards */
+.subscription-card .appreciation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-secondary);
+  border-radius: var(--radius-inner);
+  margin-bottom: 16px;
+}
+
+.subscription-card .appreciation-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.subscription-card .appreciation-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
 .plans-grid {
   display: flex;
   flex-direction: column;
@@ -1178,14 +1373,88 @@ html.ios-pwa #shiftAddPage .tab-content {
   font-size: 14px;
 }
 
+/* Carousel navigation arrows */
+.subscription-carousel .carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+}
+
+.subscription-carousel .carousel-arrow:hover {
+  background: var(--bg-tertiary);
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.subscription-carousel .carousel-arrow:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.subscription-carousel .carousel-arrow svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-primary);
+}
+
+.subscription-carousel .carousel-arrow-left {
+  left: 0;
+}
+
+.subscription-carousel .carousel-arrow-right {
+  right: 0;
+}
+
 /* Responsive design for abonnement page */
+@media (max-width: 767px) {
+  .subscription-card {
+    flex: 0 0 calc(100vw - 120px);
+    max-width: 320px;
+  }
+
+  .subscription-carousel-track {
+    padding: 0 60px;
+  }
+
+  .subscription-carousel .carousel-arrow {
+    width: 36px;
+    height: 36px;
+  }
+
+  .subscription-carousel .carousel-arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 @media (min-width: 768px) {
+  .subscription-card {
+    flex: 0 0 300px;
+  }
+
+  .subscription-carousel-track {
+    padding: 0 max(60px, env(safe-area-inset-left)) 0 max(60px, env(safe-area-inset-right));
+  }
+
   .plans-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
   }
+}
 
+@media (min-width: 768px) {
   .action-buttons {
     flex-direction: row;
     max-width: 600px;

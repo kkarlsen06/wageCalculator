@@ -4,12 +4,24 @@
 import { getUserId } from '/src/lib/auth/getUserId.js';
 import { mountAll } from '../js/icons.js';
 
+// Helper function to map price_id to tier
+function priceIdToTier(priceId) {
+  switch (priceId) {
+    case 'price_1RzQ85Qiotkj8G58AO6st4fh':
+      return 'pro';
+    case 'price_1RzQC1Qiotkj8G58tYo4U5oO':
+      return 'max';
+    default:
+      return 'free';
+  }
+}
+
 function getAbonnementView() {
   return `
   <div id="abonnementPage" class="settings-page">
     <div class="detail-title">
       <h1>Abonnement</h1>
-      <p class="detail-subtitle">Administrer ditt abonnement og tilgang til funksjoner</p>
+      <p class="detail-subtitle">Få det meste ut av appen</p>
     </div>
 
     <!-- Loading state -->
@@ -29,80 +41,79 @@ function getAbonnementView() {
     </style>
 
     <!-- Main content - hidden initially -->
-    <div class="settings-section" id="abonnementContent" style="display: none;">
-      <div class="subscription-status">
-        <div class="status-indicator">
-          <span class="status-icon">✓</span>
-          <h2 id="subscriptionStatus" class="status-title">Din nåværende plan</h2>
-        </div>
-        <div class="status-info">
-          <p id="subscriptionPeriod" class="period-info"></p>
-          <p id="subscriptionPlan" class="plan-name"></p>
-        </div>
-      </div>
+    <div id="abonnementContent" style="display: none;">
 
-      <div id="appreciationMessage" class="appreciation-message" style="display: none;">
-        <h3 id="appreciationTitle" class="appreciation-title"></h3>
-        <p id="appreciationText" class="appreciation-text"></p>
-      </div>
-
-      <div class="action-buttons" id="subscriptionActions" style="display: none;">
-        <button type="button" class="btn-upgrade btn-secondary" id="upgradeProBtn" style="display: none;">
-          Oppgrader til Professional
+      <!-- Subscription Carousel -->
+      <div class="subscription-carousel" role="tablist" aria-label="Velg abonnement">
+        <!-- Navigation arrows -->
+        <button class="carousel-arrow carousel-arrow-left" aria-label="Scroll venstre" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15,18 9,12 15,6"></polyline>
+          </svg>
         </button>
-        <button type="button" class="btn-upgrade btn-primary" id="upgradeMaxBtn" style="display: none;">
-          Oppgrader til Enterprise
-        </button>
-        <button type="button" class="btn-manage" id="manageSubBtn" style="display: none;">
-          Administrer abonnement
+
+        <div class="subscription-carousel-track" id="subscriptionCarouselTrack">
+          <!-- Free Plan -->
+          <div class="subscription-card" data-plan="free" role="tab" aria-label="Gratis plan">
+            <div class="plan-header">
+              <h3>Gratis</h3>
+              <div class="plan-price">Alltid gratis</div>
+            </div>
+            <div class="plan-content" id="freeContent">
+              <div class="plan-features">
+                <span class="feature">Lagre vakter i én måned</span>
+                <span class="feature">Grunnleggende rapporter</span>
+                <span class="feature">Enkel vaktplanlegging</span>
+                <span class="feature feature-limitation">Kun én måned med vakter om gangen</span>
+              </div>
+            </div>
+            <button type="button" class="plan-cta" id="freeCta">Valgt</button>
+          </div>
+
+          <!-- Pro Plan -->
+          <div class="subscription-card" data-plan="pro" role="tab" aria-label="Professional plan">
+            <div class="plan-header">
+              <h3>Professional</h3>
+              <div class="plan-price">44,90 kr/mnd</div>
+            </div>
+            <div class="plan-content" id="proContent">
+              <div class="plan-features">
+                <span class="feature">Ubegrenset vakter</span>
+                <span class="feature">Alle måneder tilgjengelig</span>
+                <span class="feature">Avanserte rapporter</span>
+                <span class="feature">Prioritert støtte</span>
+              </div>
+            </div>
+            <button type="button" class="plan-cta" id="proCta">Oppgrader</button>
+          </div>
+
+          <!-- Max Plan -->
+          <div class="subscription-card" data-plan="max" role="tab" aria-label="Max plan">
+            <div class="plan-header">
+              <h3>Max</h3>
+              <div class="plan-price">89,90 kr/mnd</div>
+            </div>
+            <div class="plan-content" id="maxContent">
+              <div class="plan-features">
+                <span class="feature">Alle Pro-funksjoner</span>
+                <span class="feature">Dedikert kundestøtte</span>
+                <span class="feature">Prioritert funksjonalitetsutvikling</span>
+                <span class="feature">Premium support</span>
+              </div>
+            </div>
+            <button type="button" class="plan-cta" id="maxCta">Oppgrader</button>
+          </div>
+        </div>
+
+        <button class="carousel-arrow carousel-arrow-right" aria-label="Scroll høyre" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9,18 15,12 9,6"></polyline>
+          </svg>
         </button>
       </div>
-    </div>
 
-    <!-- Plans Overview -->
-    <div class="settings-section" id="subscriptionPlans" style="display: none;">
-      <h3>Tilgjengelige planer</h3>
-      <div class="plans-grid">
-        <div class="plan-card free-plan">
-          <div class="plan-header">
-            <h5>Gratis</h5>
-            <div class="plan-price">Alltid gratis</div>
-          </div>
-          <div class="plan-features">
-            <span class="feature">Lagre vakter i én måned</span>
-            <span class="feature">Grunnleggende rapporter</span>
-            <span class="feature">Enkel vaktplanlegging</span>
-            <span class="feature feature-limitation">Kun én måned med vakter om gangen</span>
-          </div>
-        </div>
+      <p class="carousel-disclaimer">Avbryt når som helst</p>
 
-        <div class="plan-card pro-plan">
-          <div class="plan-header">
-            <h5>Professional</h5>
-            <div class="plan-price">Pro-nivå</div>
-          </div>
-          <div class="plan-features">
-            <span class="feature">Ubegrenset vakter</span>
-            <span class="feature">Alle måneder tilgjengelig</span>
-            <span class="feature">Avanserte rapporter</span>
-            <span class="feature">Prioritert støtte</span>
-          </div>
-        </div>
-
-        <div class="plan-card max-plan">
-          <div class="plan-header">
-            <h5>Enterprise</h5>
-            <div class="plan-price">For bedrifter</div>
-          </div>
-          <div class="plan-features">
-            <span class="feature">Alle Pro-funksjoner</span>
-            <span class="feature">Ansattadministrasjon</span>
-            <span class="feature">Lønnsberegning for ansatte</span>
-            <span class="feature">Avansert rapportering</span>
-            <span class="feature">Dedikert støtte</span>
-          </div>
-        </div>
-      </div>
     </div>
 
   </div>
@@ -121,18 +132,22 @@ class AbonnementController {
     this.beforePaywall = false;
     this.loadingEl = null;
     this.contentEl = null;
-    this.statusEl = null;
-    this.periodEl = null;
-    this.planEl = null;
-    this.proBtn = null;
-    this.maxBtn = null;
-    this.manageBtn = null;
-    this.plansEl = null;
-    this.statusIcon = null;
-    this.actionButtons = null;
-    this.appreciationMessage = null;
-    this.appreciationTitle = null;
-    this.appreciationText = null;
+
+    // Carousel elements
+    this.carouselTrack = null;
+    this.leftArrow = null;
+    this.rightArrow = null;
+
+    // CTA buttons
+    this.freeCta = null;
+    this.proCta = null;
+    this.maxCta = null;
+
+    // Content elements
+    this.freeContent = null;
+    this.proContent = null;
+    this.maxContent = null;
+
     this._loadingStartTime = null;
   }
 
@@ -140,18 +155,21 @@ class AbonnementController {
     // Cache DOM elements
     this.loadingEl = document.getElementById('abonnementLoading');
     this.contentEl = document.getElementById('abonnementContent');
-    this.statusEl = document.getElementById('subscriptionStatus');
-    this.periodEl = document.getElementById('subscriptionPeriod');
-    this.planEl = document.getElementById('subscriptionPlan');
-    this.proBtn = document.getElementById('upgradeProBtn');
-    this.maxBtn = document.getElementById('upgradeMaxBtn');
-    this.manageBtn = document.getElementById('manageSubBtn');
-    this.plansEl = document.getElementById('subscriptionPlans');
-    this.statusIcon = document.querySelector('.status-icon');
-    this.actionButtons = document.getElementById('subscriptionActions');
-    this.appreciationMessage = document.getElementById('appreciationMessage');
-    this.appreciationTitle = document.getElementById('appreciationTitle');
-    this.appreciationText = document.getElementById('appreciationText');
+
+    // Carousel elements
+    this.carouselTrack = document.getElementById('subscriptionCarouselTrack');
+    this.leftArrow = document.querySelector('.carousel-arrow-left');
+    this.rightArrow = document.querySelector('.carousel-arrow-right');
+
+    // CTA buttons
+    this.freeCta = document.getElementById('freeCta');
+    this.proCta = document.getElementById('proCta');
+    this.maxCta = document.getElementById('maxCta');
+
+    // Content elements
+    this.freeContent = document.getElementById('freeContent');
+    this.proContent = document.getElementById('proContent');
+    this.maxContent = document.getElementById('maxContent');
 
     // Set loading start time
     this._loadingStartTime = Date.now();
@@ -170,60 +188,115 @@ class AbonnementController {
   }
 
   attachEventListeners() {
-    // Pro upgrade button
-    this.proBtn?.addEventListener('click', async () => {
-      if (!window.startCheckout || !this.proBtn) return;
-      const btn = this.proBtn;
-      const wasDisabled = btn.disabled;
-      btn.disabled = true;
-      btn.setAttribute('aria-busy', 'true');
-      try {
-        await window.startCheckout('price_1RzQ85Qiotkj8G58AO6st4fh', { mode: 'subscription' });
-      } catch (_) {
-        // ErrorHelper in startCheckout already shows a toast
-      } finally {
-        btn.removeAttribute('aria-busy');
-        btn.disabled = wasDisabled;
-      }
+    // Carousel navigation
+    this.leftArrow?.addEventListener('click', () => {
+      this.carouselTrack?.scrollBy({ left: -320, behavior: 'smooth' });
     });
 
-    // Enterprise upgrade button
-    this.maxBtn?.addEventListener('click', async () => {
-      if (!this.maxBtn) return;
-      const btn = this.maxBtn;
-      const wasDisabled = btn.disabled;
-      btn.disabled = true;
-      btn.setAttribute('aria-busy', 'true');
-      try {
-        if (this.currentTier === 'pro' && window.startPortalUpgrade) {
+    this.rightArrow?.addEventListener('click', () => {
+      this.carouselTrack?.scrollBy({ left: 320, behavior: 'smooth' });
+    });
+
+    // CTA button event listeners
+    this.freeCta?.addEventListener('click', async () => {
+      await this.handleCtaClick('free');
+    });
+
+    this.proCta?.addEventListener('click', async () => {
+      await this.handleCtaClick('pro');
+    });
+
+    this.maxCta?.addEventListener('click', async () => {
+      await this.handleCtaClick('max');
+    });
+
+    // Update arrows on scroll
+    this.carouselTrack?.addEventListener('scroll', () => {
+      this.updateArrowVisibility();
+    });
+
+    // Add tap-to-focus functionality for cards
+    const cards = document.querySelectorAll('.subscription-card');
+    cards.forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Don't trigger if clicking the CTA button
+        if (e.target.closest('.plan-cta')) return;
+
+        const planType = card.getAttribute('data-plan');
+        this.centerPlan(planType);
+      });
+    });
+  }
+
+  async handleCtaClick(planType) {
+    const currentTier = this.currentTier || 'free';
+
+    // Don't process clicks on current plan (unless it's manage)
+    if (planType === currentTier && this.isActive) {
+      // Handle manage subscription
+      if (currentTier !== 'free') {
+        try {
+          if (window.startBillingPortal) {
+            await window.startBillingPortal({ redirect: true });
+          }
+        } catch (e) {
+          console.warn('[abonnement] manage subscription failed:', e);
+        }
+      }
+      return;
+    }
+
+    const button = planType === 'free' ? this.freeCta :
+                   planType === 'pro' ? this.proCta : this.maxCta;
+
+    if (!button) return;
+
+    const wasDisabled = button.disabled;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+
+    try {
+      if (planType === 'pro') {
+        // Upgrade to Pro
+        if (window.startCheckout) {
+          await window.startCheckout('price_1RzQ85Qiotkj8G58AO6st4fh', { mode: 'subscription' });
+        }
+      } else if (planType === 'max') {
+        // Upgrade to Max or manage if already Pro
+        if (currentTier === 'pro' && window.startPortalUpgrade) {
           await window.startPortalUpgrade({ redirect: true });
         } else if (window.startCheckout) {
           await window.startCheckout('price_1RzQC1Qiotkj8G58tYo4U5oO', { mode: 'subscription' });
         }
-      } catch (e) {
-        console.warn('[abonnement] portal upgrade failed, falling back to billing portal', e);
-        try {
-          if (this.currentTier === 'pro' && window.startBillingPortal) {
-            await window.startBillingPortal({ redirect: true });
-          }
-        } catch (_) { /* swallow */ }
-      } finally {
-        btn.removeAttribute('aria-busy');
-        btn.disabled = wasDisabled;
-      }
-    });
-
-    // Manage subscription button
-    this.manageBtn?.addEventListener('click', async () => {
-      try {
+      } else if (planType === 'free') {
+        // Downgrade to free - open billing portal
         if (window.startBillingPortal) {
-          this.manageBtn.classList.add('loading');
           await window.startBillingPortal({ redirect: true });
         }
-      } finally {
-        this.manageBtn.classList.remove('loading');
       }
-    });
+    } catch (e) {
+      console.warn('[abonnement] CTA action failed:', e);
+      // Try billing portal as fallback for downgrades
+      if ((planType === 'free' || (planType === 'max' && currentTier === 'pro')) && window.startBillingPortal) {
+        try {
+          await window.startBillingPortal({ redirect: true });
+        } catch (_) { /* swallow */ }
+      }
+    } finally {
+      button.removeAttribute('aria-busy');
+      button.disabled = wasDisabled;
+    }
+  }
+
+  updateArrowVisibility() {
+    if (!this.carouselTrack || !this.leftArrow || !this.rightArrow) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = this.carouselTrack;
+    const isAtStart = scrollLeft <= 0;
+    const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
+
+    this.leftArrow.style.display = isAtStart ? 'none' : 'flex';
+    this.rightArrow.style.display = isAtEnd ? 'none' : 'flex';
   }
 
   async showContent(minDelay = 350) {
@@ -246,9 +319,12 @@ class AbonnementController {
     if (this.contentEl) {
       this.contentEl.style.display = 'block';
     }
-    if (this.actionButtons) {
-      this.actionButtons.style.display = 'flex';
-    }
+
+    // Initialize carousel arrows
+    this.updateArrowVisibility();
+
+    // Center the user's current plan
+    this.centerCurrentPlan();
   }
 
   async updateFromGlobalState() {
@@ -262,31 +338,15 @@ class AbonnementController {
     // Determine current plan and status
     const { planName, statusText, periodText, isActive, tier, shouldShowAppreciation, appreciationData } = this.processSubscriptionData(row, beforePaywall);
 
-    // Update main status
-    if (this.statusEl) this.statusEl.textContent = statusText;
-    if (this.periodEl) this.periodEl.textContent = periodText;
-    if (this.planEl) this.planEl.textContent = planName || '';
-
-    // Update visual indicators
-    if (this.statusIcon) {
-      this.statusIcon.style.background = isActive ? 'var(--success)' : 'var(--text-secondary)';
-      this.statusIcon.textContent = isActive ? '✓' : '!';
-    }
-
-    // Handle appreciation message
-    this.updateAppreciationMessage(shouldShowAppreciation, appreciationData);
-
-    // Show/hide plans section
-    if (this.plansEl) {
-      this.plansEl.style.display = (isActive && tier !== 'free') ? 'none' : 'block';
-    }
-
-    // Update action buttons
-    this.updateButtons(isActive, tier);
+    // Update carousel cards and CTAs
+    this.updateCarouselCards(isActive, tier, shouldShowAppreciation, appreciationData);
 
     // Store current state
     this.currentTier = tier;
     this.isActive = isActive;
+
+    // Center current plan in carousel
+    this.centerCurrentPlan();
   }
 
   processSubscriptionData(row, beforePaywall) {
@@ -318,16 +378,16 @@ class AbonnementController {
 
     const status = row.status || 'ukjent';
     const endRaw = row.current_period_end;
-    const dateObj = typeof endRaw === 'number' ? new Date(endRaw * 1000) : (endRaw ? new Date(endRaw) : null);
+    const dateObj = endRaw ? new Date(endRaw) : null;
     const formatted = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('no-NO') : null;
-    const isActive = !!row.is_active || (row.status === 'active');
-    const tier = String(row.tier || '').toLowerCase();
-    const plan = tier === 'max' ? 'Enterprise' : (tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : null);
+    const isActive = (row.status === 'active');
+    const tier = priceIdToTier(row.price_id);
+    const plan = tier === 'max' ? 'Max' : (tier === 'pro' ? 'Professional' : 'Gratis');
 
     let appreciationData = null;
     let shouldShowAppreciation = false;
 
-    if (isActive && plan) {
+    if (isActive && tier !== 'free') {
       shouldShowAppreciation = true;
       if (beforePaywall) {
         appreciationData = {
@@ -351,7 +411,7 @@ class AbonnementController {
     };
 
     return {
-      planName: plan || 'Ukjent plan',
+      planName: plan,
       statusText: statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1),
       periodText: formatted ? `Neste fornyelse: ${formatted}` : '',
       isActive,
@@ -361,59 +421,154 @@ class AbonnementController {
     };
   }
 
-  updateAppreciationMessage(shouldShow, data) {
-    if (!this.appreciationMessage) return;
+  updateCarouselCards(isActive, tier, shouldShowAppreciation, appreciationData) {
+    const currentTier = tier || 'free';
 
-    if (shouldShow && data) {
-      this.appreciationMessage.style.display = 'flex';
-      if (this.appreciationTitle) this.appreciationTitle.textContent = data.title;
-      if (this.appreciationText) this.appreciationText.textContent = data.text;
+    // Update CTAs based on current subscription
+    this.updateCtaButtons(currentTier, isActive);
+
+    // Handle appreciation messages in cards
+    if (shouldShowAppreciation && appreciationData) {
+      this.showAppreciationInCard(currentTier, appreciationData);
     } else {
-      this.appreciationMessage.style.display = 'none';
+      this.hideAppreciationInCards();
     }
   }
 
-  updateButtons(isActive, tier) {
-    // Reset all buttons to hidden
-    if (this.proBtn) this.proBtn.style.display = 'none';
-    if (this.maxBtn) this.maxBtn.style.display = 'none';
-    if (this.manageBtn) this.manageBtn.style.display = 'none';
+  updateCtaButtons(currentTier, isActive) {
+    // Reset all buttons
+    const buttons = [
+      { button: this.freeCta, plan: 'free' },
+      { button: this.proCta, plan: 'pro' },
+      { button: this.maxCta, plan: 'max' }
+    ];
 
-    if (!isActive || tier === 'free') {
-      // Show upgrade options for free users (including early users)
-      if (this.proBtn) this.proBtn.style.display = 'inline-block';
-      if (this.maxBtn) this.maxBtn.style.display = 'inline-block';
-    } else if (tier === 'pro') {
-      // Pro users can upgrade to max or manage subscription
-      if (this.maxBtn) this.maxBtn.style.display = 'inline-block';
-      if (this.manageBtn) this.manageBtn.style.display = 'inline-block';
-    } else if (tier === 'max') {
-      // Max users can only manage their subscription
-      if (this.manageBtn) this.manageBtn.style.display = 'inline-block';
+    buttons.forEach(({ button, plan }) => {
+      if (!button) return;
+
+      // Reset classes
+      button.className = 'plan-cta';
+
+      if (plan === currentTier && isActive) {
+        // Current plan
+        if (plan === 'free') {
+          button.textContent = 'Valgt';
+          button.classList.add('current-plan');
+        } else {
+          button.textContent = 'Administrer';
+          button.classList.add('manage-plan');
+        }
+      } else if (plan === 'free' && currentTier !== 'free') {
+        // Downgrade to free
+        button.textContent = 'Nedgrader';
+        button.classList.add('downgrade');
+      } else if (plan === 'pro' && currentTier === 'max') {
+        // Downgrade from max to pro
+        button.textContent = 'Nedgrader';
+        button.classList.add('downgrade');
+      } else {
+        // Upgrade
+        button.textContent = 'Oppgrader';
+      }
+    });
+  }
+
+  showAppreciationInCard(currentTier, appreciationData) {
+    // Find the content element for the current tier
+    const contentEl = currentTier === 'free' ? this.freeContent :
+                      currentTier === 'pro' ? this.proContent :
+                      currentTier === 'max' ? this.maxContent : null;
+
+    if (!contentEl) return;
+
+    // Replace features with appreciation message
+    contentEl.innerHTML = `
+      <div class="appreciation-content">
+        <h4 class="appreciation-title">${appreciationData.title}</h4>
+        <p class="appreciation-text">${appreciationData.text}</p>
+      </div>
+    `;
+  }
+
+  hideAppreciationInCards() {
+    // Restore original feature lists (this should only be called if no subscription)
+    // In practice, this is handled by the initial page load
+  }
+
+  centerCurrentPlan() {
+    if (!this.carouselTrack) return;
+
+    const currentTier = this.currentTier || 'free';
+
+    // For free users, center Pro (index 1)
+    // For pro users, center Pro (index 1)
+    // For max users, center Max (index 2)
+    let targetIndex = currentTier === 'max' ? 2 : 1;
+
+    // If user is free, center pro plan for upgrade focus
+    if (!this.isActive || currentTier === 'free') {
+      targetIndex = 1; // Pro plan
     }
+
+    const cards = this.carouselTrack.querySelectorAll('.subscription-card');
+    if (cards.length === 0) return;
+
+    const cardWidth = cards[0].offsetWidth + 16; // Card width + gap
+    const scrollPosition = targetIndex * cardWidth - (this.carouselTrack.clientWidth / 2) + (cardWidth / 2);
+
+    this.carouselTrack.scrollTo({
+      left: Math.max(0, scrollPosition),
+      behavior: 'smooth'
+    });
+
+    // Update arrow visibility after scroll
+    setTimeout(() => this.updateArrowVisibility(), 300);
+  }
+
+  centerPlan(planType) {
+    if (!this.carouselTrack) return;
+
+    const planIndex = planType === 'free' ? 0 :
+                      planType === 'pro' ? 1 :
+                      planType === 'max' ? 2 : 1;
+
+    const cards = this.carouselTrack.querySelectorAll('.subscription-card');
+    if (cards.length === 0) return;
+
+    const cardWidth = cards[0].offsetWidth + 16; // Card width + gap
+    const scrollPosition = planIndex * cardWidth - (this.carouselTrack.clientWidth / 2) + (cardWidth / 2);
+
+    this.carouselTrack.scrollTo({
+      left: Math.max(0, scrollPosition),
+      behavior: 'smooth'
+    });
+
+    // Update arrow visibility after scroll
+    setTimeout(() => this.updateArrowVisibility(), 300);
   }
 
   async loadSubscription() {
     try {
       if (!window.supa || !window.supa.auth) {
         await this.showContent();
-        if (this.statusEl) this.statusEl.textContent = 'Kunne ikke hente abonnementsinformasjon.';
+        this.updateCarouselCards(true, 'free', false, null);
         return;
       }
 
       const userId = await getUserId();
       if (!userId) {
         await this.showContent();
-        if (this.statusEl) this.statusEl.textContent = 'Autentisering påkrevd.';
+        this.updateCarouselCards(true, 'free', false, null);
         return;
       }
 
-      // Fetch both subscription tier and user profile data
+      // Fetch both subscription and user profile data
       const [subscriptionResult, profileResult] = await Promise.all([
         window.supa
-          .from('subscription_tiers')
-          .select('status,price_id,tier,is_active,current_period_end,updated_at')
-          .eq('user_id', userId),
+          .from('subscriptions')
+          .select('status,price_id,current_period_end,created_at,updated_at,stripe_subscription_id')
+          .eq('user_id', userId)
+          .maybeSingle(),
         window.supa
           .from('profiles')
           .select('before_paywall')
@@ -431,48 +586,32 @@ class AbonnementController {
       if (error) {
         console.error('[abonnement] fetch error:', error);
         await this.showContent();
-        if (this.statusEl) this.statusEl.textContent = 'Systemfeil - kan ikke hente abonnementsinformasjon.';
+        this.updateCarouselCards(true, 'free', false, null);
         return;
       }
 
-      const row = Array.isArray(data) && data.length ? data[0] : null;
+      const row = data; // subscriptions.maybeSingle() returns single object or null
 
       await this.showContent();
 
       // Process subscription data and update UI using the new streamlined method
       const { planName, statusText, periodText, isActive, tier, shouldShowAppreciation, appreciationData } = this.processSubscriptionData(row, beforePaywall);
 
-      // Update UI elements
-      if (this.statusEl) this.statusEl.textContent = statusText;
-      if (this.periodEl) this.periodEl.textContent = periodText;
-      if (this.planEl) this.planEl.textContent = planName || '';
-
-      // Update visual indicators
-      if (this.statusIcon) {
-        this.statusIcon.style.background = isActive ? 'var(--success)' : 'var(--text-secondary)';
-        this.statusIcon.textContent = isActive ? '✓' : '!';
-      }
-
-      // Handle appreciation message
-      this.updateAppreciationMessage(shouldShowAppreciation, appreciationData);
-
-      // Show/hide plans section
-      if (this.plansEl) {
-        this.plansEl.style.display = (isActive && tier !== 'free') ? 'none' : 'block';
-      }
-
-      // Update action buttons
-      this.updateButtons(isActive, tier);
+      // Update carousel cards and CTAs
+      this.updateCarouselCards(isActive, tier, shouldShowAppreciation, appreciationData);
 
       // Store current state
       this.currentTier = tier;
       this.isActive = isActive;
 
+      // Center current plan in carousel
+      this.centerCurrentPlan();
+
     } catch (e) {
       console.error('[abonnement] exception:', e);
       await this.showContent();
-      if (this.statusEl) this.statusEl.textContent = 'Systemfeil - kan ikke hente abonnementsinformasjon.';
-      if (this.periodEl) this.periodEl.textContent = '';
+      // Show error state - default to free user experience
+      this.updateCarouselCards(true, 'free', false, null);
     }
   }
 

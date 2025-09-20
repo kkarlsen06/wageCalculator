@@ -732,6 +732,14 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
       body.set('customer', customerId);
     }
 
+    // Debug logging for production diagnosis
+    console.log('[/api/checkout] Creating session with metadata:', {
+      userId,
+      priceId,
+      metadata_user_id: userId,
+      metadata_supabase_uid: userId,
+      client_reference_id: userId
+    });
 
     // Optional, can be toggled later via env if needed
     // body.set('automatic_tax[enabled]', 'true');
@@ -811,6 +819,15 @@ app.post('/checkout', authenticateUser, async (req, res) => {
     body.set('metadata[supabase_uid]', userId);
     body.set('client_reference_id', userId);
     body.set('allow_promotion_codes', 'true');
+
+    // Debug logging for production diagnosis
+    console.log('[/checkout] Creating session with metadata:', {
+      userId,
+      priceId,
+      metadata_user_id: userId,
+      metadata_supabase_uid: userId,
+      client_reference_id: userId
+    });
 
     const resp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
@@ -3041,18 +3058,18 @@ async function validateShiftCreation(userId, shiftDate) {
     }
 
     const { data: subscription, error: subError } = await supabase
-      .from('subscription_tiers')
-      .select('status, is_active')
+      .from('subscriptions')
+      .select('status, price_id')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (subError && subError.code !== 'PGRST116') {
       console.warn('[paywall] Could not fetch subscription:', subError);
-      // If subscription_tiers table is not accessible, default to free tier rules
+      // If subscriptions table is not accessible, default to free tier rules
       console.warn('[paywall] Defaulting to free tier validation due to subscription query error');
     }
 
-    const isActiveSubscription = subscription?.is_active === true;
+    const isActiveSubscription = subscription?.status === 'active';
     const beforePaywall = userProfile?.before_paywall === true;
 
     // Rule 1: Active subscription = full access

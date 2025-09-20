@@ -26,8 +26,8 @@ export async function validateShiftCreation(shiftDate) {
     }
 
     const { data: subscription, error: subError } = await supabase
-      .from('subscription_tiers')
-      .select('status, is_active')
+      .from('subscriptions')
+      .select('status, price_id')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -36,7 +36,7 @@ export async function validateShiftCreation(shiftDate) {
       console.warn('[paywall] Defaulting to free tier validation due to subscription query error');
     }
 
-    const isActiveSubscription = subscription?.is_active === true;
+    const isActiveSubscription = subscription?.status === 'active';
     const beforePaywall = userProfile?.before_paywall === true;
 
     // Rule 1: Active subscription = full access
