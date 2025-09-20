@@ -17125,7 +17125,6 @@ html:not(.theme-light) .nav-icon {
 @media (max-width: 420px) {
   .nav-item {
     padding: 8px;
-    border-radius: var(--radius-md);
   }
 
   .nav-item__icon {
