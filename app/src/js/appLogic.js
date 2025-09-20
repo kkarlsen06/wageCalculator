@@ -358,14 +358,23 @@ export const app = {
     },
     async init() {
         // Load organization settings for manager
+        // Note: org-settings is Enterprise-only functionality, so we use default settings for individual users
         try {
-            const headers = await this.getAuthHeaders?.();
-            const data = await fetchOnce(`${window.CONFIG.apiBase}/org-settings`, { headers });
-            if (data && data.break_policy) {
-                this.orgSettings = { break_policy: data.break_policy };
+            // For individual users, we can optionally store org settings in user_settings table
+            // For now, we'll just use the default break policy
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (user?.id) {
+                const { data: row } = await window.supa
+                    .from('user_settings')
+                    .select('break_policy')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+                if (row?.break_policy) {
+                    this.orgSettings = { break_policy: row.break_policy };
+                }
             }
         } catch (_) {
-            // ignore
+            // ignore - use default settings
         }
         // Initialize selectedDates array for multiple date selection
         this.selectedDates = [];
@@ -542,24 +551,30 @@ export const app = {
             const sel = document.getElementById('breakPolicySelect');
             if (!sel) return;
             const break_policy = sel.value;
-            const headers = await this.getAuthHeaders();
-            const res = await fetch(`${window.CONFIG.apiBase}/org-settings`, {
-                method: 'PUT',
-                headers,
-                body: JSON.stringify({ break_policy })
-            });
-            if (res.ok) {
-                const json = await res.json();
-                this.orgSettings = { break_policy: json.break_policy };
-                if (window.showToast) window.showToast('Lagret', 'success');
-                await this.updateOrgSettingsUI();
-                // Re-render employees data so the breakdown reflects the new org policy
-                if (this.currentView === 'employees') {
-                    await this.fetchAndDisplayEmployeeShifts?.();
+
+            // Save to Supabase user_settings
+            const { data: { user } } = await window.supa.auth.getUser();
+            if (user?.id) {
+                const { error } = await window.supa
+                    .from('user_settings')
+                    .upsert({
+                        user_id: user.id,
+                        break_policy: break_policy,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
+
+                if (!error) {
+                    this.orgSettings = { break_policy: break_policy };
+                    if (window.showToast) window.showToast('Lagret', 'success');
+                    await this.updateOrgSettingsUI();
+                    // Re-render employees data so the breakdown reflects the new org policy
+                    if (this.currentView === 'employees') {
+                        await this.fetchAndDisplayEmployeeShifts?.();
+                    }
+                } else {
+                    console.error('Error saving break policy to Supabase:', error);
+                    throw new Error('Kunne ikke lagre');
                 }
-            } else {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || 'Kunne ikke lagre');
             }
         } catch (e) {
             console.error('saveOrgSettings error', e);
@@ -2486,6 +2501,11 @@ export const app = {
             this.taxPercentage = parseFloat(settings.tax_percentage) || 0.0;
             this.payrollDay = parseInt(settings.payroll_day) || 15;
 
+            // Load break policy for org settings
+            if (settings.break_policy) {
+                this.orgSettings = { break_policy: settings.break_policy };
+            }
+
 
 
             } else {
@@ -2800,7 +2820,10 @@ export const app = {
                 settingsData.pause_deduction_minutes = this.pauseDeductionMinutes;
                 settingsData.audit_break_calculations = this.auditBreakCalculations;
 
-
+                // Save break policy if it exists
+                if (this.orgSettings?.break_policy) {
+                    settingsData.break_policy = this.orgSettings.break_policy;
+                }
 
                 // Debug logging for tax deduction save removed
             } else {
@@ -2831,6 +2854,9 @@ export const app = {
                 settingsData.tax_deduction_enabled = this.taxDeductionEnabled;
                 settingsData.tax_percentage = this.taxPercentage;
                 settingsData.payroll_day = this.payrollDay;
+                if (this.orgSettings?.break_policy) {
+                    settingsData.break_policy = this.orgSettings.break_policy;
+                }
             }
 
             const { error } = await window.supa
@@ -2856,29 +2882,6 @@ export const app = {
             }
         } catch (e) {
             console.error('Error in saveSettingsToSupabase:', e);
-        }
-    },
-    async saveBreakSettingsToServer() {
-        try {
-            const { data: { session } } = await window.supa.auth.getSession();
-            const token = session?.access_token;
-            if (!token) return;
-            const payload = {
-                pause_deduction_enabled: this.pauseDeductionEnabled,
-                pause_deduction_method: this.pauseDeductionMethod,
-                pause_threshold_hours: this.pauseThresholdHours,
-                pause_deduction_minutes: this.pauseDeductionMinutes,
-            };
-            await fetch(`${window.CONFIG.apiBase}/settings`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            }).catch(() => {});
-        } catch (_) {
-            // Ignore; Supabase save remains the primary persistence path
         }
     },
     async loadFromLocalStorage() {
@@ -4139,29 +4142,15 @@ export const app = {
                 nicknameElement.textContent = nickname;
             }
 
-            // Load avatar url: prefer server settings.profile_picture_url, fallback to user metadata
+            // Load avatar url: read directly from user_settings via Supabase
             let avatarUrl = '';
             try {
-                const { data: { session } } = await window.supa.auth.getSession();
-                const token = session?.access_token;
-                if (token) {
-                    const resp = await fetch(`${window.CONFIG.apiBase}/settings`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        avatarUrl = data.profile_picture_url || '';
-                    }
-                }
-                // Fallback to user_settings table if API fails
-                if (!avatarUrl) {
-                    const { data: row } = await window.supa
-                        .from('user_settings')
-                        .select('profile_picture_url')
-                        .eq('user_id', user.id)
-                        .maybeSingle();
-                    avatarUrl = row?.profile_picture_url || '';
-                }
+                const { data: row } = await window.supa
+                    .from('user_settings')
+                    .select('profile_picture_url')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+                avatarUrl = row?.profile_picture_url || '';
             } catch (_) { /* ignore */ }
             if (!avatarUrl) avatarUrl = user.user_metadata?.avatar_url || '';
 
@@ -7770,28 +7759,13 @@ export const app = {
             // Load avatar url: prefer server settings.profile_picture_url, fallback to user metadata
             let avatarUrl = '';
             try {
-                const { data: { session } } = await window.supa.auth.getSession();
-                const token = session?.access_token;
-                if (token) {
-                    const resp = await fetch(`${window.CONFIG.apiBase}/settings`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (resp.ok) {
-                        const json = await resp.json();
-                        avatarUrl = json?.profile_picture_url || '';
-                    }
-                }
+                const { data: row } = await window.supa
+                    .from('user_settings')
+                    .select('profile_picture_url')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+                avatarUrl = row?.profile_picture_url || '';
             } catch (_) { /* ignore */ }
-            if (!avatarUrl) {
-                try {
-                    const { data: row } = await window.supa
-                        .from('user_settings')
-                        .select('profile_picture_url')
-                        .eq('user_id', user.id)
-                        .maybeSingle();
-                    avatarUrl = row?.profile_picture_url || '';
-                } catch (_) { /* ignore */ }
-            }
             if (!avatarUrl) avatarUrl = user.user_metadata?.avatar_url || '';
             const imgEl = document.getElementById('profileAvatarImage');
             const placeholder = document.getElementById('profileAvatarPlaceholder');
@@ -7913,32 +7887,19 @@ export const app = {
             if (nameField) nameField.value = user.user_metadata?.first_name || '';
             if (emailField) emailField.value = user.email || '';
 
-            // Load avatar url: prefer server settings.profile_picture_url, fallback to user settings/metadata
+            // Load avatar url: read directly from user_settings via Supabase
             let avatarUrl = '';
             try {
-                const { data: { session } } = await window.supa.auth.getSession();
-                const token = session?.access_token;
-                if (token) {
-                    const resp = await fetch(`${window.CONFIG.apiBase}/settings`, { headers: { Authorization: `Bearer ${token}` } });
-                    if (resp.ok) {
-                        const json = await resp.json();
-                        avatarUrl = json?.profile_picture_url || '';
-                    }
+                const userId = await getUserId();
+                if (userId) {
+                    const { data: row } = await window.supa
+                        .from('user_settings')
+                        .select('profile_picture_url')
+                        .eq('user_id', userId)
+                        .maybeSingle();
+                    avatarUrl = row?.profile_picture_url || '';
                 }
             } catch (_) { /* ignore */ }
-            if (!avatarUrl) {
-                try {
-                    const userId = await getUserId();
-                    if (userId) {
-                        const { data: row } = await window.supa
-                            .from('user_settings')
-                            .select('profile_picture_url')
-                            .eq('user_id', userId)
-                            .maybeSingle();
-                        avatarUrl = row?.profile_picture_url || '';
-                    }
-                } catch (_) { /* ignore */ }
-            }
             if (!avatarUrl) avatarUrl = user.user_metadata?.avatar_url || '';
 
             const imgEl = document.getElementById('accountAvatarImage');
@@ -8232,22 +8193,7 @@ export const app = {
             const url = await this.saveAvatarBlob(blob);
             this.updateProfilePictureProgress(90, 'Oppdaterer profil...');
 
-            // Save URL both in user_settings (server) and user metadata (fallback)
-            try {
-                const { data: { session } } = await window.supa.auth.getSession();
-                const token = session?.access_token;
-                if (token) {
-                    await fetch(`${window.CONFIG.apiBase}/settings`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ profile_picture_url: url })
-                    });
-                }
-            } catch (_) { /* ignore */ }
-            // Client-side fallback upsert into user_settings
+            // Save URL directly to user_settings via Supabase
             try {
                 const { data: claims } = await window.supa.auth.getClaims();
                 const userId = await getUserId();
@@ -8392,21 +8338,7 @@ export const app = {
 
     async removeProfileAvatar() {
         try {
-            try {
-                const { data: { session } } = await window.supa.auth.getSession();
-                const token = session?.access_token;
-                if (token) {
-                    await fetch(`${window.CONFIG.apiBase}/settings`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ profile_picture_url: null })
-                    });
-                }
-            } catch (_) { /* ignore */ }
-            // Client-side fallback clear
+            // Clear profile picture URL directly from Supabase
             try {
                 const { data: claims } = await window.supa.auth.getClaims();
                 const userId = await getUserId();
@@ -9120,7 +9052,6 @@ export const app = {
                 this.toggleBreakDeductionSections();
                 this.updateDisplay();
                 this.saveSettingsToSupabase();
-                this.saveBreakSettingsToServer?.();
             });
         } else {
             console.warn('pauseDeductionEnabledToggle element not found');
@@ -9134,7 +9065,6 @@ export const app = {
                 this.updateMethodExplanation();
                 this.updateDisplay();
                 this.saveSettingsToSupabase();
-                this.saveBreakSettingsToServer?.();
             });
         } else {
             console.warn('pauseDeductionMethodSelect element not found');
@@ -9153,7 +9083,6 @@ export const app = {
                 this.pauseThresholdHours = v;
                 this.updateDisplay();
                 this.saveSettingsToSupabase();
-                this.saveBreakSettingsToServer?.();
             });
         }
 
@@ -9170,7 +9099,6 @@ export const app = {
                 this.pauseDeductionMinutes = v;
                 this.updateDisplay();
                 this.saveSettingsToSupabase();
-                this.saveBreakSettingsToServer?.();
             });
         }
 

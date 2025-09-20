@@ -733,6 +733,11 @@ app.post('/api/checkout', authenticateUser, async (req, res) => {
     body.set('metadata[supabase_uid]', userId);
     body.set('client_reference_id', userId);
     body.set('allow_promotion_codes', 'true');
+
+    // CRITICAL: Add metadata to the subscription that will be created
+    body.set('subscription_data[metadata][user_id]', userId);
+    body.set('subscription_data[metadata][supabase_uid]', userId);
+
     if (customerId) {
       body.set('customer', customerId);
     }
@@ -824,6 +829,10 @@ app.post('/checkout', authenticateUser, async (req, res) => {
     body.set('metadata[supabase_uid]', userId);
     body.set('client_reference_id', userId);
     body.set('allow_promotion_codes', 'true');
+
+    // CRITICAL: Add metadata to the subscription that will be created
+    body.set('subscription_data[metadata][user_id]', userId);
+    body.set('subscription_data[metadata][supabase_uid]', userId);
 
     // Debug logging for production diagnosis
     console.log('[/checkout] Creating session with metadata:', {

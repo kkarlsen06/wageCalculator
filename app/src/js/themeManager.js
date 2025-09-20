@@ -74,31 +74,16 @@ class ThemeManager {
         const { data: { user } } = await window.supa.auth.getUser();
         if (!user?.id) return;
 
-        // Try to fetch theme from backend API first
+        // Read theme directly from user_settings via Supabase
         let databaseTheme = null;
         try {
-          const { data: { session } } = await window.supa.auth.getSession();
-          const token = session?.access_token;
-          if (token) {
-            const resp = await fetch(`${window.CONFIG.apiBase}/settings`, { 
-              headers: { Authorization: `Bearer ${token}` } 
-            });
-            if (resp.ok) {
-              const json = await resp.json();
-              databaseTheme = json?.theme;
-            }
-          }
-        } catch (_) { /* ignore API errors */ }
-
-        // Fallback: read directly from user_settings via Supabase
-        if (!databaseTheme) {
           const { data: row } = await window.supa
             .from('user_settings')
             .select('theme')
             .eq('user_id', user.id)
             .maybeSingle();
           databaseTheme = row?.theme;
-        }
+        } catch (_) { /* ignore errors */ }
 
         // Apply database theme if found (database takes precedence over local storage)
         if (databaseTheme && Object.values(THEMES).includes(databaseTheme)) {
@@ -122,26 +107,7 @@ class ThemeManager {
         const { data: { user } } = await window.supa.auth.getUser();
         if (!user?.id) return;
 
-        // Try to save via backend API first
-        try {
-          const { data: { session } } = await window.supa.auth.getSession();
-          const token = session?.access_token;
-          if (token) {
-            const resp = await fetch(`${window.CONFIG.apiBase}/settings`, { 
-              method: 'PATCH',
-              headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ theme })
-            });
-            if (resp.ok) {
-              return;
-            }
-          }
-        } catch (_) { /* ignore API errors, try direct DB */ }
-
-        // Fallback: save directly to user_settings via Supabase
+        // Save directly to user_settings via Supabase
         const { error } = await window.supa
           .from('user_settings')
           .upsert({ 

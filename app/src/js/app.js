@@ -328,32 +328,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
 
-      // Load avatar: prefer /settings.profile_picture_url, fallback to user metadata
+      // Load avatar: read directly from user_settings via Supabase
       let avatarUrl = '';
       try {
-        const { data: { session } } = await supa.auth.getSession();
-        const token = session?.access_token;
-        if (token) {
-          const resp = await fetch(`${window.CONFIG.apiBase}/settings`, { headers: { Authorization: `Bearer ${token}` } });
-          if (resp.ok) {
-            const json = await resp.json();
-            avatarUrl = json?.profile_picture_url || '';
-          }
-        }
-      } catch (_) { /* ignore */ }
-      // Fallback: read directly from user_settings via Supabase if backend not used
-      if (!avatarUrl) {
-        try {
-          const userId = user?.id;
-          if (!userId) return;
+        const userId = user?.id;
+        if (userId) {
           const { data: row } = await supa
             .from('user_settings')
             .select('profile_picture_url')
             .eq('user_id', userId)
             .maybeSingle();
           avatarUrl = row?.profile_picture_url || '';
-        } catch (_) { /* ignore */ }
-      }
+        }
+      } catch (_) { /* ignore */ }
       if (!avatarUrl) avatarUrl = user.user_metadata?.avatar_url || '';
       const topbarImg = document.getElementById('userAvatarImg');
       const profileIcon = document.querySelector('.profile-icon');
