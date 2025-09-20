@@ -124,7 +124,7 @@ function getAddShiftView() {
       <button type="button" class="floating-nav-btn back-btn btn-disabled" onclick="addShiftFromRoute()" disabled>
         Ingen datoer valgt
       </button>
-      <button type="button" class="floating-nav-btn btn btn-secondary" data-spa onclick="history.back()" aria-label="Lukk" title="Lukk">
+      <button type="button" class="floating-nav-btn btn btn-secondary" onclick="history.back()" aria-label="Lukk" title="Lukk">
         <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
