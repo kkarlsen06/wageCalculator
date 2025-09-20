@@ -16964,7 +16964,7 @@ body.chatbox-view .chatbox-container {
 .bottom-nav {
   position: fixed;
   left: 50%;
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  bottom: env(safe-area-inset-bottom, 0px);
   transform: translateX(-50%);
   width: min(680px, calc(100% - 32px));
   padding: 12px 16px;
@@ -17103,7 +17103,7 @@ html:not(.theme-light) .nav-icon {
   .bottom-nav {
     width: calc(100% - 24px);
     padding: 10px 12px;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    bottom: env(safe-area-inset-bottom, 0px);
     border-radius: var(--radius-card);
   }
 
