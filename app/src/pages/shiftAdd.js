@@ -124,7 +124,7 @@ function getAddShiftView() {
       <button type="button" class="floating-nav-btn back-btn btn-disabled" onclick="addShiftFromRoute()" disabled>
         Ingen datoer valgt
       </button>
-      <button type="button" class="floating-nav-btn btn btn-secondary" onclick="history.back()" aria-label="Lukk" title="Lukk">
+      <button type="button" class="floating-nav-btn btn btn-secondary" onclick="closeShiftAdd()" aria-label="Lukk" title="Lukk">
         <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -198,19 +198,20 @@ function addShiftFromRoute() {
     // Store original method for safe restoration
     const originalCloseAddShiftModal = window.app.closeAddShiftModal;
     
-    // Create a route-aware version that navigates back instead of hiding modal
+    // Create a route-aware version that navigates back to origin instead of hiding modal
     window.app.closeAddShiftModal = function() {
       try {
+        const returnRoute = window.shiftAddReturnRoute || '/';
         if (window.navigateToRoute) {
-          window.navigateToRoute('/');
+          window.navigateToRoute(returnRoute);
+          // Clean up the stored route
+          delete window.shiftAddReturnRoute;
         } else {
-          console.warn('Route navigation not available, using fallback');
           if (originalCloseAddShiftModal) {
             originalCloseAddShiftModal.call(window.app);
           }
         }
       } catch (error) {
-        console.error('Error during route navigation:', error);
         // Fallback to original behavior
         if (originalCloseAddShiftModal) {
           originalCloseAddShiftModal.call(window.app);
@@ -347,11 +348,35 @@ export function afterMountAddShift() {
   if (!window._shiftAddRouteCleanup) {
     window._shiftAddRouteCleanup = [];
   }
-  
+
   // Store original values for cleanup
   const originalSwitchTab = window.switchAddShiftTab;
   const originalAddShiftRoute = window.addShiftFromRoute;
-  
+  const originalCloseShiftAdd = window.closeShiftAdd;
+
+  // Define closeShiftAdd function
+  window.closeShiftAdd = function() {
+    // Prevent multiple executions
+    if (window.closeShiftAddInProgress) {
+      return;
+    }
+    window.closeShiftAddInProgress = true;
+
+    const returnRoute = window.shiftAddReturnRoute || '/';
+
+    if (window.navigateToRoute) {
+      window.navigateToRoute(returnRoute);
+    }
+
+    // Clean up the stored route
+    delete window.shiftAddReturnRoute;
+
+    // Reset the flag after navigation
+    setTimeout(() => {
+      delete window.closeShiftAddInProgress;
+    }, 500);
+  };
+
   window.switchAddShiftTab = switchAddShiftTab;
   window.addShiftFromRoute = addShiftFromRoute;
   
@@ -362,11 +387,17 @@ export function afterMountAddShift() {
     } else {
       delete window.switchAddShiftTab;
     }
-    
+
     if (originalAddShiftRoute) {
       window.addShiftFromRoute = originalAddShiftRoute;
     } else {
       delete window.addShiftFromRoute;
+    }
+
+    if (originalCloseShiftAdd) {
+      window.closeShiftAdd = originalCloseShiftAdd;
+    } else {
+      delete window.closeShiftAdd;
     }
   });
 }

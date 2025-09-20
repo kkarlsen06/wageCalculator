@@ -111,6 +111,13 @@ export const routes = [
 ];
 
 export function navigate(path) {
+  // Store return route BEFORE navigation, and don't store if already on shiftAdd
+  if ((path === '/shiftAdd' || path === '/shift-add') &&
+      location.pathname !== '/shiftAdd' &&
+      location.pathname !== '/shift-add') {
+    window.shiftAddReturnRoute = location.pathname + location.search;
+  }
+
   // Mark that we're doing SPA navigation to prevent aggressive scroll restoration
   window.spaNavigationInProgress = true;
 
