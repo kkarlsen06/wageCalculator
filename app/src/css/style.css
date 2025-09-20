@@ -16941,6 +16941,7 @@ body.chatbox-view .chatbox-container {
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  margin-top: 0; /* Override global margin-top to prevent double safe area */
 }
 
 .shifts-scroll {
