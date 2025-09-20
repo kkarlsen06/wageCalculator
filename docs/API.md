@@ -38,23 +38,7 @@ Full schema: see `docs/OPENAPI.yaml`.
 - `GET /reports/wages` — CSV export of employee wages (auth required, AI agents blocked)
 - `POST /api/checkout` — Create a Stripe Checkout session and return the hosted checkout URL (auth required; AI agents blocked)
 
-### Chat Assistant
-- Client example (streaming): see `app/js/app.js`.
-
-Tool naming consistency and outputs (assistant-side):
-- addShift: `shift_date`, `start_time`, `end_time` (YYYY-MM-DD, HH:mm)
-- addSeries: `from_date`, `to_date`, `days`, `start`, `end` (YYYY-MM-DD, HH:mm)
-- getShifts (date range): `from_date`, `to_date` → returns JSON `{ period, shifts: [...], summary: { totalShifts, totalHours, totalEarnings } }`
-- editShift updates: `new_shift_date`, `new_start_time`, `new_end_time`, `new_shift_type`
-
-Dates use `YYYY-MM-DD` and times use `HH:mm`.
-
-SSE event protocol (when `stream=true`):
-- `text_stream_start` — start of text streaming
-- `text_chunk` — incremental content chunks (`content` field)
-- `text_stream_end` — end of text streaming (final text accumulated on client)
-- `shifts_update` — optional; updated shifts array for UI refresh
-- `status`, `gpt_response`, `tool_calls_start`, `tool_call_start`, `tool_call_complete` — progress/status signals for UX
+<!-- Chat Assistant section removed -->
 
 ### Example: Create Employee (local backend)
 
