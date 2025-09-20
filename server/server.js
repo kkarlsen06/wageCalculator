@@ -3245,6 +3245,11 @@ function formatTimeHHmm(isoOrTzString) {
   }
 }
 
+function normalizeEmployeeName(name) {
+  if (typeof name !== 'string') return '';
+  return name.trim();
+}
+
 async function computeEmployeeSnapshot(managerId, employeeId) {
   // Resolve employee and ownership, then compute snapshots
   const { data: emp, error } = await supabase
@@ -3636,7 +3641,708 @@ app.get('/health/employees', (req, res) => {
   res.status(200).json({ ok: true, note: 'use /health for liveness, /health/deep for db ping' });
 });
 
-// Start server (kun når filen kjøres direkte)
+// ---------- Employee CRUD endpoints ----------
+
+app.post('/employees', async (req, res) => {
+  try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] POST /employees authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
+  } catch (_) {}
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employees', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+    const managerId = req?.auth?.userId || req?.user_id;
+    if (!managerId) return res.status(401).json({ error: 'Unauthorized' });
+    const { name, email, hourly_wage, tariff_level, birth_date, display_color } = req.body;
+
+    const normalizedName = typeof name === 'string' ? normalizeEmployeeName(name) : '';
+
+    // Validation: name is required
+    if (!normalizedName || typeof normalizedName !== 'string' || normalizedName.length === 0) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+
+    // Validation: hourly_wage must be >= 0 if provided
+    if (hourly_wage !== undefined && hourly_wage !== null) {
+      const wage = parseFloat(hourly_wage);
+      if (isNaN(wage) || wage < 0) {
+        return res.status(400).json({ error: 'Hourly wage must be a number >= 0' });
+      }
+    }
+
+    // Validation: tariff_level if provided
+    if (tariff_level !== undefined && tariff_level !== null) {
+      const allowed = [0, -2, -1, 1, 2, 3, 4, 5, 6];
+      const lvl = parseInt(tariff_level);
+      if (!allowed.includes(lvl)) {
+        return res.status(400).json({ error: 'Invalid tariff_level' });
+      }
+    }
+
+    // Validation: email format if provided
+    if (email && typeof email === 'string' && email.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+    }
+
+    // Validation: birth_date format if provided (YYYY-MM-DD)
+    if (birth_date && typeof birth_date === 'string' && birth_date.trim().length > 0) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(birth_date.trim())) {
+        return res.status(400).json({ error: 'Birth date must be in YYYY-MM-DD format' });
+      }
+    }
+
+    // Check for unique (manager_id, name) constraint
+    const { data: existingEmployee, error: checkError } = await supabase
+      .from('employees')
+      .select('id')
+      .eq('manager_id', managerId)
+      .eq('name', normalizedName)
+      .is('archived_at', null)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error checking existing employee:', checkError);
+      return res.status(500).json({ error: 'Failed to validate employee name' });
+    }
+
+    if (existingEmployee) {
+      return res.status(409).json({ error: 'An employee with this name already exists' });
+    }
+
+    // Prepare employee data
+    const lvlVal = (tariff_level !== undefined && tariff_level !== null) ? parseInt(tariff_level) : 0;
+    let wageVal = (hourly_wage !== undefined && hourly_wage !== null) ? parseFloat(hourly_wage) : null;
+    // If DB requires hourly_wage not null and using tariff, compute preset wage as fallback
+    if ((wageVal === null || Number.isNaN(wageVal)) && lvlVal !== 0) {
+      const preset = getTariffRate(lvlVal);
+      if (preset != null) wageVal = Number(preset);
+    }
+
+    const employeeData = {
+      manager_id: managerId,
+      name: normalizedName,
+      email: email && email.trim().length > 0 ? email.trim() : null,
+      hourly_wage: wageVal,
+      tariff_level: lvlVal,
+      birth_date: birth_date && birth_date.trim().length > 0 ? birth_date.trim() : null,
+      display_color: display_color && display_color.trim().length > 0 ? display_color.trim() : null
+    };
+
+    const { data: newEmployee, error: insertError } = await supabase
+      .from('employees')
+      .insert(employeeData)
+      .select('id, name, email, hourly_wage, tariff_level, birth_date, display_color, created_at, archived_at')
+      .single();
+
+    if (insertError) {
+      const msg = (insertError?.message || '').toString();
+      console.error('Error creating employee:', msg, insertError?.stack || '');
+      return res.status(500).json({ error: msg, code: insertError?.code || null, stack: insertError?.stack || null });
+    }
+
+    res.status(201).json({ employee: newEmployee });
+  } catch (e) {
+    console.error('POST /employees error:', e?.message || e, e?.stack || '');
+    res.status(500).json({ error: e?.message || String(e), stack: e?.stack || null });
+  }
+});
+
+/**
+ * PUT /employees/:id - Update an existing employee
+ * Body: { name?, email?, hourly_wage?, tariff_level?, birth_date?, display_color? }
+ */
+app.put('/employees/:id', async (req, res) => {
+  try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] PUT /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
+  } catch (_) {}
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employees', 'PUT', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+    const managerId = req?.auth?.userId || req?.user_id;
+    if (!managerId) return res.status(401).json({ error: 'Unauthorized' });
+    const employeeId = req.params.id;
+    const { name, email, hourly_wage, tariff_level, birth_date, display_color } = req.body;
+
+    const normalizedName = (name !== undefined) ? normalizeEmployeeName(name) : undefined;
+
+    // Verify the employee belongs to the current manager
+    const { data: existingEmployee, error: fetchError } = await supabase
+      .from('employees')
+      .select('id, name, manager_id, tariff_level')
+      .eq('id', employeeId)
+      .single();
+
+    if (fetchError || !existingEmployee || existingEmployee.manager_id !== managerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // Validation: name is required if provided
+    if (name !== undefined && (!normalizedName || normalizedName.length === 0)) {
+      return res.status(400).json({ error: 'Name cannot be empty' });
+    }
+
+    // Validation: hourly_wage must be >= 0 if provided
+    if (hourly_wage !== undefined && hourly_wage !== null) {
+      const wage = parseFloat(hourly_wage);
+      if (isNaN(wage) || wage < 0) {
+        return res.status(400).json({ error: 'Hourly wage must be a number >= 0' });
+      }
+    }
+
+    // Validation: tariff_level if provided
+    if (tariff_level !== undefined && tariff_level !== null) {
+      const allowed = [0, -2, -1, 1, 2, 3, 4, 5, 6];
+      const lvl = parseInt(tariff_level);
+      if (!allowed.includes(lvl)) {
+        return res.status(400).json({ error: 'Invalid tariff_level' });
+      }
+    }
+
+    // Validation: email format if provided
+    if (email !== undefined && email !== null && typeof email === 'string' && email.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+    }
+
+    // Validation: birth_date format if provided (YYYY-MM-DD)
+    if (birth_date !== undefined && birth_date !== null && typeof birth_date === 'string' && birth_date.trim().length > 0) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(birth_date.trim())) {
+        return res.status(400).json({ error: 'Birth date must be in YYYY-MM-DD format' });
+      }
+    }
+
+    // Check for unique (manager_id, name) constraint if name is being updated
+    if (normalizedName !== undefined && normalizedName !== existingEmployee.name) {
+      const { data: duplicateEmployee, error: checkError } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('manager_id', managerId)
+        .eq('name', normalizedName)
+        .neq('id', employeeId)
+        .is('archived_at', null)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error checking duplicate employee name:', checkError);
+        return res.status(500).json({ error: 'Failed to validate employee name' });
+      }
+
+      if (duplicateEmployee) {
+        return res.status(409).json({ error: 'An employee with this name already exists' });
+      }
+    }
+
+    // Prepare update data (only include fields that are provided)
+    const updateData = {};
+    if (normalizedName !== undefined) updateData.name = normalizedName;
+    if (email !== undefined) updateData.email = email && email.trim().length > 0 ? email.trim() : null;
+    if (hourly_wage !== undefined) updateData.hourly_wage = hourly_wage !== null ? parseFloat(hourly_wage) : null;
+    if (tariff_level !== undefined) updateData.tariff_level = tariff_level !== null ? parseInt(tariff_level) : 0;
+    if (birth_date !== undefined) updateData.birth_date = birth_date && birth_date.trim().length > 0 ? birth_date.trim() : null;
+    if (display_color !== undefined) updateData.display_color = display_color && display_color.trim().length > 0 ? display_color.trim() : null;
+
+    const { data: updatedEmployee, error: updateError } = await supabase
+      .from('employees')
+      .update(updateData)
+      .eq('id', employeeId)
+      .eq('manager_id', managerId)
+      .select('id, name, email, hourly_wage, tariff_level, birth_date, display_color, created_at, archived_at')
+      .single();
+
+    if (updateError) {
+      const msg = (updateError?.message || '').toString();
+      console.error('Error updating employee:', msg, updateError?.stack || '');
+      return res.status(500).json({ error: msg, code: updateError?.code || null, stack: updateError?.stack || null });
+    }
+
+    res.json({ employee: updatedEmployee });
+  } catch (e) {
+    console.error('PUT /employees/:id error:', e?.message || e, e?.stack || '');
+    res.status(500).json({ error: e?.message || String(e), stack: e?.stack || null });
+  }
+});
+
+/**
+ * DELETE /employees/:id - Soft delete an employee (set archived_at)
+ */
+app.delete('/employees/:id', async (req, res) => {
+  try {
+    const authz = req.headers.authorization || '';
+    const resolvedUserId = req?.auth?.userId || req?.user_id || null;
+    const bodyPreview = (() => { try { return JSON.stringify(req.body || {}); } catch (_) { return '[unserializable]'; }})();
+    console.log(`[route] DELETE /employees/:id authz=${authz ? 'yes' : 'no'} userId=${resolvedUserId || 'none'} body=${bodyPreview}`);
+  } catch (_) {}
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employees', 'DELETE', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+    const managerId = req?.auth?.userId || req?.user_id;
+    if (!managerId) return res.status(401).json({ error: 'Unauthorized' });
+    const employeeId = req.params.id;
+
+    // Verify the employee belongs to the current manager
+    const { data: existingEmployee, error: fetchError } = await supabase
+      .from('employees')
+      .select('id, manager_id, archived_at')
+      .eq('id', employeeId)
+      .single();
+
+    if (fetchError || !existingEmployee || existingEmployee.manager_id !== managerId) {
+      const msg = (fetchError?.message || '').toString();
+      if (fetchError) console.error('Error fetching employee for delete:', msg, fetchError?.stack || '');
+      return res.status(403).json({ error: 'Forbidden', code: fetchError?.code || null, stack: fetchError?.stack || null });
+    }
+
+    // Check if already archived
+    if (existingEmployee.archived_at) {
+      return res.status(409).json({ error: 'Employee is already archived' });
+    }
+
+    // Soft delete by setting archived_at timestamp
+    const { data: archivedEmployee, error: archiveError } = await supabase
+      .from('employees')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', employeeId)
+      .eq('manager_id', managerId)
+      .select('id, name, email, hourly_wage, tariff_level, birth_date, display_color, created_at, archived_at')
+      .single();
+
+    if (archiveError) {
+      console.error('Error archiving employee:', archiveError);
+      return res.status(500).json({ error: 'Failed to archive employee' });
+    }
+
+    res.json({ employee: archivedEmployee, message: 'Employee archived successfully' });
+  } catch (e) {
+    console.error('DELETE /employees/:id error:', e?.message || e, e?.stack || '');
+    res.status(500).json({ error: e?.message || String(e), stack: e?.stack || null });
+  }
+});
+
+// ---------- Employee Shifts CRUD endpoints ----------
+
+/**
+ * GET /employee-shifts
+ * Query: employee_id?, from?, to?, page?, limit?
+ */
+app.get('/employee-shifts', authenticateUser, async (req, res) => {
+  try {
+    const managerId = req.user_id;
+    const { employee_id, from, to } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
+
+    // If employee_id provided, ensure ownership
+    if (employee_id) {
+      const { data: emp, error } = await supabase
+        .from('employees')
+        .select('id, manager_id, archived_at')
+        .eq('id', employee_id)
+        .single();
+      if (error || !emp || emp.manager_id !== managerId || emp.archived_at !== null) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    }
+
+    let query = supabase
+      .from('employee_shifts')
+      .select('id, manager_id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at', { count: 'exact' })
+      .eq('manager_id', managerId)
+      .order('shift_date', { ascending: true })
+      .order('start_time', { ascending: true })
+      .range(offset, offset + limit - 1);
+
+    if (employee_id) query = query.eq('employee_id', employee_id);
+    if (from) query = query.gte('shift_date', from);
+    if (to) query = query.lte('shift_date', to);
+
+    const { data: rows, error, count } = await query;
+    if (error) {
+      console.error('GET /employee-shifts error:', error);
+      return res.status(500).json({ error: 'Failed to fetch employee shifts' });
+    }
+
+    // Load organization settings
+    const orgSettings = await getOrgSettings(managerId);
+
+    const shifts = (rows || []).map(r => {
+      const startHHmm = formatTimeHHmm(r.start_time);
+      const endHHmm = formatTimeHHmm(r.end_time);
+      const calc = calcEmployeeShift({
+        start_time: startHHmm,
+        end_time: endHHmm,
+        break_minutes: r.break_minutes || 0,
+        hourly_wage_snapshot: Number(r.hourly_wage_snapshot)
+      }, orgSettings);
+
+      return {
+        id: r.id,
+        employee_id: r.employee_id,
+        employee_name_snapshot: r.employee_name_snapshot,
+        tariff_level_snapshot: r.tariff_level_snapshot,
+        hourly_wage_snapshot: Number(r.hourly_wage_snapshot),
+        shift_date: r.shift_date,
+        start_time: startHHmm,
+        end_time: endHHmm,
+        break_minutes: r.break_minutes,
+        notes: r.notes,
+        created_at: r.created_at,
+        updated_at: r.updated_at,
+        break_policy_used: calc.breakPolicyUsed,
+        duration_hours: calc.durationHours,
+        paid_hours: calc.paidHours,
+        gross: calc.gross
+      };
+    });
+
+    return res.json({
+      shifts,
+      page,
+      limit,
+      total: count ?? shifts.length
+    });
+  } catch (e) {
+    console.error('GET /employee-shifts exception:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /employee-shifts
+ * Body: { employee_id, shift_date, start_time, end_time, break_minutes?, notes? }
+ */
+app.post('/employee-shifts', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employee-shifts', 'POST', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    const managerId = req.user_id;
+    const { employee_id, shift_date, start_time, end_time, break_minutes = 0, notes } = req.body || {};
+
+    // Required fields
+    if (!employee_id || !shift_date || !start_time || !end_time) {
+      return res.status(400).json({ error: 'Missing required fields: employee_id, shift_date, start_time, end_time' });
+    }
+
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
+      return res.status(400).json({ error: 'Invalid shift_date format. Use YYYY-MM-DD' });
+    }
+
+    // Validate time format
+    if (!/^\d{2}:\d{2}$/.test(start_time) || !/^\d{2}:\d{2}$/.test(end_time)) {
+      return res.status(400).json({ error: 'Invalid time format. Use HH:mm' });
+    }
+
+    // Validate break_minutes
+    const breakMins = parseInt(break_minutes) || 0;
+    if (breakMins < 0) {
+      return res.status(400).json({ error: 'Break minutes must be >= 0' });
+    }
+
+    // Ensure employee ownership
+    const { data: emp, error } = await supabase
+      .from('employees')
+      .select('id, manager_id, archived_at')
+      .eq('id', employee_id)
+      .single();
+
+    if (error || !emp || emp.manager_id !== managerId || emp.archived_at !== null) {
+      return res.status(403).json({ error: 'Forbidden or employee not found' });
+    }
+
+    // Check for duplicate shift (same employee, date, start, end)
+    const { data: existingShift, error: dupError } = await supabase
+      .from('employee_shifts')
+      .select('id')
+      .eq('manager_id', managerId)
+      .eq('employee_id', employee_id)
+      .eq('shift_date', shift_date)
+      .eq('start_time', hhmmToUtcIso(shift_date, start_time))
+      .eq('end_time', hhmmToUtcIso(shift_date, end_time))
+      .maybeSingle();
+
+    if (dupError) {
+      console.error('Error checking duplicate employee shift:', dupError);
+      return res.status(500).json({ error: 'Failed to validate shift data' });
+    }
+
+    if (existingShift) {
+      return res.status(409).json({ error: 'A shift with these details already exists' });
+    }
+
+    // Compute employee snapshot
+    const snapshot = await computeEmployeeSnapshot(managerId, employee_id);
+    if (!snapshot) {
+      return res.status(500).json({ error: 'Failed to compute employee snapshot' });
+    }
+
+    // Create employee shift
+    const { data: newShift, error: insertError } = await supabase
+      .from('employee_shifts')
+      .insert({
+        manager_id: managerId,
+        employee_id: employee_id,
+        employee_name_snapshot: snapshot.name,
+        tariff_level_snapshot: snapshot.tariff_level,
+        hourly_wage_snapshot: snapshot.hourly_wage,
+        shift_date: shift_date,
+        start_time: hhmmToUtcIso(shift_date, start_time),
+        end_time: hhmmToUtcIso(shift_date, end_time),
+        break_minutes: breakMins,
+        notes: notes?.trim() || null
+      })
+      .select('id, manager_id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at')
+      .single();
+
+    if (insertError) {
+      console.error('Error creating employee shift:', insertError);
+      return res.status(500).json({ error: 'Failed to create employee shift' });
+    }
+
+    // Load organization settings for calculations
+    const orgSettings = await getOrgSettings(managerId);
+    const startHHmm = formatTimeHHmm(newShift.start_time);
+    const endHHmm = formatTimeHHmm(newShift.end_time);
+    const calc = calcEmployeeShift({
+      start_time: startHHmm,
+      end_time: endHHmm,
+      break_minutes: newShift.break_minutes || 0,
+      hourly_wage_snapshot: Number(newShift.hourly_wage_snapshot)
+    }, orgSettings);
+
+    const responseShift = {
+      id: newShift.id,
+      employee_id: newShift.employee_id,
+      employee_name_snapshot: newShift.employee_name_snapshot,
+      tariff_level_snapshot: newShift.tariff_level_snapshot,
+      hourly_wage_snapshot: Number(newShift.hourly_wage_snapshot),
+      shift_date: newShift.shift_date,
+      start_time: startHHmm,
+      end_time: endHHmm,
+      break_minutes: newShift.break_minutes,
+      notes: newShift.notes,
+      created_at: newShift.created_at,
+      updated_at: newShift.updated_at,
+      break_policy_used: calc.breakPolicyUsed,
+      duration_hours: calc.durationHours,
+      paid_hours: calc.paidHours,
+      gross: calc.gross
+    };
+
+    return res.status(201).json({ shift: responseShift });
+  } catch (e) {
+    console.error('POST /employee-shifts exception:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /employee-shifts/:id
+ * Body: { shift_date?, start_time?, end_time?, break_minutes?, notes? }
+ */
+app.put('/employee-shifts/:id', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employee-shifts', 'PUT', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    const managerId = req.user_id;
+    const shiftId = req.params.id;
+    const { shift_date, start_time, end_time, break_minutes, notes } = req.body || {};
+
+    // Verify the shift belongs to the current manager
+    const { data: existingShift, error: fetchError } = await supabase
+      .from('employee_shifts')
+      .select('*')
+      .eq('id', shiftId)
+      .eq('manager_id', managerId)
+      .single();
+
+    if (fetchError || !existingShift) {
+      return res.status(404).json({ error: 'Employee shift not found' });
+    }
+
+    // Validate date format if provided
+    if (shift_date && !/^\d{4}-\d{2}-\d{2}$/.test(shift_date)) {
+      return res.status(400).json({ error: 'Invalid shift_date format. Use YYYY-MM-DD' });
+    }
+
+    // Validate time format if provided
+    if (start_time && !/^\d{2}:\d{2}$/.test(start_time)) {
+      return res.status(400).json({ error: 'Invalid start_time format. Use HH:mm' });
+    }
+    if (end_time && !/^\d{2}:\d{2}$/.test(end_time)) {
+      return res.status(400).json({ error: 'Invalid end_time format. Use HH:mm' });
+    }
+
+    // Validate break_minutes if provided
+    if (break_minutes !== undefined) {
+      const breakMins = parseInt(break_minutes);
+      if (isNaN(breakMins) || breakMins < 0) {
+        return res.status(400).json({ error: 'Break minutes must be >= 0' });
+      }
+    }
+
+    // Build update object
+    const updateData = {};
+    const finalDate = shift_date || existingShift.shift_date;
+
+    if (shift_date !== undefined) updateData.shift_date = shift_date;
+    if (start_time !== undefined) updateData.start_time = hhmmToUtcIso(finalDate, start_time);
+    if (end_time !== undefined) updateData.end_time = hhmmToUtcIso(finalDate, end_time);
+    if (break_minutes !== undefined) updateData.break_minutes = parseInt(break_minutes);
+    if (notes !== undefined) updateData.notes = notes?.trim() || null;
+
+    // Check for duplicate if key fields are changing
+    const finalStartTime = start_time || formatTimeHHmm(existingShift.start_time);
+    const finalEndTime = end_time || formatTimeHHmm(existingShift.end_time);
+
+    if (shift_date || start_time || end_time) {
+      const { data: duplicateShift, error: dupError } = await supabase
+        .from('employee_shifts')
+        .select('id')
+        .eq('manager_id', managerId)
+        .eq('employee_id', existingShift.employee_id)
+        .eq('shift_date', finalDate)
+        .eq('start_time', hhmmToUtcIso(finalDate, finalStartTime))
+        .eq('end_time', hhmmToUtcIso(finalDate, finalEndTime))
+        .neq('id', shiftId)
+        .maybeSingle();
+
+      if (dupError) {
+        console.error('Error checking duplicate employee shift:', dupError);
+        return res.status(500).json({ error: 'Failed to validate shift data' });
+      }
+
+      if (duplicateShift) {
+        return res.status(409).json({ error: 'A shift with these details already exists' });
+      }
+    }
+
+    // Update the shift
+    const { data: updatedShift, error: updateError } = await supabase
+      .from('employee_shifts')
+      .update(updateData)
+      .eq('id', shiftId)
+      .eq('manager_id', managerId)
+      .select('id, manager_id, employee_id, employee_name_snapshot, tariff_level_snapshot, hourly_wage_snapshot, shift_date, start_time, end_time, break_minutes, notes, created_at, updated_at')
+      .single();
+
+    if (updateError) {
+      console.error('Error updating employee shift:', updateError);
+      return res.status(500).json({ error: 'Failed to update employee shift' });
+    }
+
+    // Load organization settings for calculations
+    const orgSettings = await getOrgSettings(managerId);
+    const startHHmm = formatTimeHHmm(updatedShift.start_time);
+    const endHHmm = formatTimeHHmm(updatedShift.end_time);
+    const calc = calcEmployeeShift({
+      start_time: startHHmm,
+      end_time: endHHmm,
+      break_minutes: updatedShift.break_minutes || 0,
+      hourly_wage_snapshot: Number(updatedShift.hourly_wage_snapshot)
+    }, orgSettings);
+
+    const responseShift = {
+      id: updatedShift.id,
+      employee_id: updatedShift.employee_id,
+      employee_name_snapshot: updatedShift.employee_name_snapshot,
+      tariff_level_snapshot: updatedShift.tariff_level_snapshot,
+      hourly_wage_snapshot: Number(updatedShift.hourly_wage_snapshot),
+      shift_date: updatedShift.shift_date,
+      start_time: startHHmm,
+      end_time: endHHmm,
+      break_minutes: updatedShift.break_minutes,
+      notes: updatedShift.notes,
+      created_at: updatedShift.created_at,
+      updated_at: updatedShift.updated_at,
+      break_policy_used: calc.breakPolicyUsed,
+      duration_hours: calc.durationHours,
+      paid_hours: calc.paidHours,
+      gross: calc.gross
+    };
+
+    return res.json({ shift: responseShift });
+  } catch (e) {
+    console.error('PUT /employee-shifts/:id exception:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /employee-shifts/:id
+ */
+app.delete('/employee-shifts/:id', authenticateUser, async (req, res) => {
+  try {
+    if (isAiAgent(req)) {
+      recordAgentDeniedAttempt(req, 'agent_write_blocked_middleware', 403);
+      incrementAgentWriteDenied('/employee-shifts', 'DELETE', 'agent_write_blocked_middleware');
+      return res.status(403).json({ error: 'Agent writes are not allowed' });
+    }
+
+    const managerId = req.user_id;
+    const shiftId = req.params.id;
+
+    // Verify the shift belongs to the current manager
+    const { data: existingShift, error: fetchError } = await supabase
+      .from('employee_shifts')
+      .select('id, manager_id')
+      .eq('id', shiftId)
+      .eq('manager_id', managerId)
+      .single();
+
+    if (fetchError || !existingShift) {
+      return res.status(404).json({ error: 'Employee shift not found' });
+    }
+
+    // Delete the shift
+    const { error: deleteError } = await supabase
+      .from('employee_shifts')
+      .delete()
+      .eq('id', shiftId)
+      .eq('manager_id', managerId);
+
+    if (deleteError) {
+      console.error('Error deleting employee shift:', deleteError);
+      return res.status(500).json({ error: 'Failed to delete employee shift' });
+    }
+
+    return res.status(204).send();
+  } catch (e) {
+    console.error('DELETE /employee-shifts/:id exception:', e);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Start server (kun när filen kjöres direkte)
 const isRunDirectly = (() => {
   try {
     const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : '';
