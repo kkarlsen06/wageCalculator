@@ -103,53 +103,20 @@
                       </div>
                   </div>
 
-                  <!-- Tab Bar Navigation with Month Picker - positioned above all content -->
-                  <div class="tab-bar-container">
-                      <div class="tab-bar-with-month">
-                          <div class="tab-bar">
-                              <button class="tab-btn active" id="tabOversikt" data-view="dashboard" aria-label="Bytt til oversiktsvisning">
-                                  <div class="tab-icon-badge">
-                                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                          <rect x="3" y="3" width="7" height="7"></rect>
-                                          <rect x="14" y="3" width="7" height="7"></rect>
-                                          <rect x="14" y="14" width="7" height="7"></rect>
-                                          <rect x="3" y="14" width="7" height="7"></rect>
-                                      </svg>
-                                  </div>
-                                  <span class="tab-text">Oversikt</span>
-                              </button>
-                              <button class="tab-btn" id="tabStatistikk" data-view="stats" aria-label="Bytt til statistikkvisning">
-                                  <div class="tab-icon-badge">
-                                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                          <line x1="18" y1="20" x2="18" y2="10"></line>
-                                          <line x1="12" y1="20" x2="12" y2="4"></line>
-                                          <line x1="6" y1="20" x2="6" y2="14"></line>
-                                      </svg>
-                                  </div>
-                                  <span class="tab-text">Statistikk</span>
-                              </button>
-                          </div>
-
-                          <!-- Month Navigation - now positioned alongside tab bar -->
-                          <div class="month-navigation dashboard-month-nav-inline">
-                              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
-                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                      <polyline points="15 18 9 12 15 6"></polyline>
-                                  </svg>
-                              </button>
-                              <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
-                              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
-                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                      <polyline points="9 6 15 12 9 18"></polyline>
-                                  </svg>
-                              </button>
-                          </div>
-                      </div>
-                      <!-- Skeleton placeholder for tab bar while loading -->
-                      <div class="tab-bar-skeleton" aria-hidden="true">
-                          <div class="skeleton-block"></div>
-                          <div class="skeleton-block"></div>
-                          <div class="skeleton-block"></div>
+                  <!-- Month Picker - positioned 6px above nav bar -->
+                  <div class="tab-bar-container dashboard-month-container">
+                      <div class="month-navigation dashboard-month-nav-inline">
+                          <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                  <polyline points="15 18 9 12 15 6"></polyline>
+                              </svg>
+                          </button>
+                          <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
+                          <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                  <polyline points="9 6 15 12 9 18"></polyline>
+                              </svg>
+                          </button>
                       </div>
                   </div>
 
@@ -224,63 +191,6 @@
              </main>
           </section>
 
-          <!-- Statistics Section -->
-          <section class="snap-section statistics-section" role="complementary" aria-label="Statistikk">
-              <div class="app-container">
-                  <div class="statistics-content">
-                      <div class="weekly-hours-chart-card" id="weeklyHoursChart">
-                          <div class="chart-cards-container">
-                              <!-- Bar Chart Card -->
-                              <div class="chart-visualization-card">
-                                  <div class="chart-container">
-                                      <div class="chart-content">
-                                          <div class="chart-bars" id="chartBars">
-                                              <!-- Bars will be populated dynamically -->
-                                          </div>
-                                      </div>
-                                      <div class="chart-labels" id="chartLabels">
-                                          <!-- Week labels will be populated dynamically -->
-                                      </div>
-                                  </div>
-                                  <div class="chart-tooltip" id="chartTooltip">
-                                      <span id="tooltipContent"></span>
-                                  </div>
-                              </div>
-
-                              <!-- Hours Section - Two Stacked Cards -->
-                              <div class="chart-hours-section">
-                                  <!-- Total Hours Card -->
-                                  <div class="chart-hours-value-card">
-                                      <div class="hours-value-content">
-                                          <div class="hours-value-number" id="totalHours">0</div>
-                                          <div class="hours-value-label">timer</div>
-                                      </div>
-                                  </div>
-
-                                  <!-- Shift Count Card -->
-                                  <div class="chart-shifts-count-card">
-                                      <div class="shifts-count-content">
-                                          <div class="shifts-count-number" id="shiftCount">0</div>
-                                          <div class="shifts-count-label">vakter</div>
-                                      </div>
-                                  </div>
-
-                                  <!-- Custom tooltip for wage cards -->
-                                  <div class="wage-card-tooltip" id="wageCardTooltip">
-                                      <span id="wageTooltipContent"></span>
-                                  </div>
-                              </div>
-                          </div>
-
-                          <!-- Progress bar positioned below both cards -->
-                          <div class="chart-progress-bar" title="Månedlig mål fremdrift">
-                              <div class="chart-progress-fill loading" style="width: 0%"></div>
-                              <span class="chart-progress-label">0 % av 0 kr</span>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </section>
 
       </div> <!-- slutt på .snap-container -->
 
@@ -1082,10 +992,10 @@
         </li>
 
         <li class="bottom-nav__item" data-nav-item>
-          <a class="nav-item" id="navAbonnement" data-spa data-href="/abonnement" href="/abonnement" aria-label="Abonnement">
+          <a class="nav-item" id="navStatistikk" data-spa data-href="/statistikk" href="/statistikk" aria-label="Statistikk">
             <span class="nav-item__icon" aria-hidden="true">
-              <img class="nav-icon nav-icon--stroke" src="/src/icons/subs.svg" alt="" />
-              <img class="nav-icon nav-icon--filled" src="/src/icons/subs-filled.svg" alt="" />
+              <img class="nav-icon nav-icon--stroke" src="/src/icons/stats.svg" alt="" />
+              <img class="nav-icon nav-icon--filled" src="/src/icons/stats-filled.svg" alt="" />
             </span>
           </a>
         </li>

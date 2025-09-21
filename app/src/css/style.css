@@ -944,7 +944,6 @@ body:not(.skeleton-active) .skeleton {
 #app.animations-complete .app-container > *:not(.header) {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
   transition: none; /* No transitions - immediate appearance */
 }
 
@@ -2433,14 +2432,14 @@ body.skeleton-active .dashboard-month-nav-inline {
   visibility: hidden !important;
 }
 
-/* Adjust tab-bar-with-month container during skeleton loading */
-body.skeleton-active .tab-bar-with-month {
-  justify-content: center; /* Center the tab bar when month picker is hidden */
+/* Month picker container during skeleton loading */
+body.skeleton-active .month-picker-bar {
+  justify-content: center; /* Center the month picker when loading */
 }
 
-/* Responsive adjustments for the inline month navigation */
+/* Responsive adjustments for the month picker */
 @media (max-width: 768px) {
-  .tab-bar-with-month {
+  .month-picker-bar {
     flex-direction: row; /* Keep on one line */
     gap: 8px; /* Smaller gap for mobile */
     align-items: center;
@@ -2487,7 +2486,7 @@ body.skeleton-active .tab-bar-with-month {
 }
 
 @media (max-width: 480px) {
-  .tab-bar-with-month {
+  .month-picker-bar {
     gap: 6px; /* Smaller gap for very small screens */
   }
 
@@ -2514,7 +2513,7 @@ body.skeleton-active .tab-bar-with-month {
 
   .dashboard-month-nav-inline .month-display {
     min-width: 60px; /* Compact but readable */
-    font-size: 13px; /* Readable size */
+    font-size: 14px; /* Readable size */
     padding: 12px 4px; /* Compact padding */
   }
 
@@ -11439,13 +11438,89 @@ input[type="file"].form-control:focus-visible {
   padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
 }
 
-/* Container for tab bar and month picker on same line */
-.tab-bar-with-month {
+/* Container for month picker taking full width */
+.month-picker-container {
+  position: relative;
+  width: 100%;
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+}
+
+.month-picker-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  justify-content: flex-start; /* Align left, let month picker grow */
+  justify-content: center; /* Center the month picker */
   width: 100%;
+  position: relative;
+  z-index: 200;
+}
+
+/* Dashboard month picker - positioned 6px above nav bar, 2/3 width */
+.dashboard-month-container {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 16px) + 78px); /* 6px above nav bar (16px + 56px + 6px) */
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(450px, calc(100% - 32px)); /* ~2/3 of navbar width, max viewport minus padding */
+  z-index: 300;
+}
+
+/* Statistics page month picker - positioned 6px above nav bar, 2/3 width */
+.statistics-month-container {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 16px) + 78px); /* 6px above nav bar (16px + 56px + 6px) */
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(450px, calc(100% - 32px)); /* ~2/3 of navbar width, max viewport minus padding */
+  z-index: 300;
+}
+
+/* Shifts page tab bar container - positioned 6px above nav bar, full nav width */
+.shifts-page .tab-bar-container {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 16px) + 78px); /* 6px above nav bar (16px + 56px + 6px) */
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(680px, calc(100% - 32px)); /* Match nav bar width */
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+  z-index: 300;
+}
+
+/* Tab bar with month navigation layout - side by side */
+.tab-bar-with-month {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.tab-bar-with-month .tab-bar {
+  flex: 0 0 auto; /* Fixed width, don't grow */
+}
+
+.tab-bar-with-month .month-navigation {
+  flex: 1; /* Take remaining space */
+  min-width: 0; /* Allow shrinking if needed */
+}
+
+/* Statistics page styling - width constraints to match other pages */
+.statistics-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+  min-height: 100vh;
+  padding-bottom: calc(64px + var(--safe-area-inset-bottom) + 70px); /* Space for nav + month picker */
+}
+
+.statistics-header {
+  padding: var(--space-6) 0 var(--space-4) 0;
+  text-align: center;
+}
+
+.statistics-header .page-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0;
 }
 
 /* Tab bar styling as independent pill-shaped element */

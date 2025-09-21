@@ -11,6 +11,7 @@ import { renderAnsatte, afterMountAnsatte } from './pages/ansatte.js';
 import { renderAddShift, afterMountAddShift } from './pages/shiftAdd.js';
 import { renderShiftEdit, afterMountShiftEdit } from './pages/shiftEdit.js';
 import { renderShifts, afterMountShifts } from './pages/shifts.js';
+import { renderStatistikk, afterMountStatistikk } from './pages/statistikk.js';
 import { mountAll } from './js/icons.js';
 import { lockScroll, unlockScroll } from './js/utils/scrollLock.js';
 
@@ -95,6 +96,7 @@ export const routes = [
   { path: '/abonnement', render: renderAbonnementPage, afterMount: afterMountAbonnement },
   { path: '/ansatte', render: renderAnsatte, afterMount: afterMountAnsatte },
   { path: '/shifts', render: renderShifts, afterMount: afterMountShifts },
+  { path: '/statistikk', render: renderStatistikk, afterMount: afterMountStatistikk },
   { path: '/shift-add', render: renderAddShift, afterMount: afterMountAddShift },
   { path: '/shiftAdd', render: renderAddShift, afterMount: afterMountAddShift },
   { path: '/shift-edit', render: renderShiftEdit, afterMount: afterMountShiftEdit },

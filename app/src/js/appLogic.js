@@ -10896,60 +10896,7 @@ export const app = {
     },
 
 
-    // Tab bar functionality
-    setupTabBarEventListeners() {
-        // Only bind to top-level tab bar buttons that actually switch views
-        const tabButtons = document.querySelectorAll('.tab-bar .tab-btn[data-view]');
-        tabButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const view = button.getAttribute('data-view');
-                if (!view) return; // Safety: ignore buttons without a view
-                this.switchToView(view);
-            });
-        });
-    },
 
-    switchToView(view) {
-        // Guard against accidental calls from non-view buttons
-        const validViews = new Set(['dashboard', 'stats']);
-        if (!validViews.has(view)) {
-            console.warn('switchToView: ignoring invalid view', view);
-            return;
-        }
-        // Update active tab button
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        tabButtons.forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-view') === view);
-        });
-
-        // Immediately hide dashboard cards for non-dashboard views to prevent flash
-        if (view !== 'dashboard') {
-            const totalCard = document.querySelector('.total-card');
-            const nextShiftCard = document.querySelector('.next-shift-card');
-            const nextPayrollCard = document.querySelector('.next-payroll-card');
-            const monthNav = document.querySelector('.dashboard-month-nav');
-            const floatingActionBar = document.querySelector('.floating-action-bar');
-
-            if (totalCard) totalCard.style.display = 'none';
-            if (nextShiftCard) nextShiftCard.style.display = 'none';
-            if (nextPayrollCard) nextPayrollCard.style.display = 'none';
-            if (monthNav) monthNav.style.display = 'none';
-            if (floatingActionBar) floatingActionBar.style.display = 'none';
-        }
-
-        // Clean up all previous view states to prevent overlap
-        this.cleanupAllViews();
-
-        // Switch views immediately without delay for smooth transition
-        switch (view) {
-            case 'dashboard':
-                this.showDashboardView();
-                break;
-            case 'stats':
-                this.showStatsView();
-                break;
-        }
-    },
 
     cleanupAllViews() {
         const body = document.body;
@@ -10991,7 +10938,7 @@ export const app = {
         // Ensure month navigation is always visible after cleanup
         this.ensureMonthPickerVisibility();
 
-        // Note: Dashboard cards visibility is now handled in switchToView()
+        // Note: Dashboard cards visibility is now handled in the dashboard view
         // to prevent flash during transitions. No need to reset them here.
     },
 
@@ -11115,38 +11062,6 @@ export const app = {
         }
     },
 
-    showStatsView() {
-        const body = document.body;
-
-        // Remove other view classes and add stats view
-        body.classList.remove('employees-view');
-        body.classList.add('stats-view');
-
-        // Update current view state
-        this.currentView = 'stats';
-
-        // Clear employee selection when switching to stats
-        this.selectedEmployeeId = null;
-        localStorage.removeItem('selectedEmployeeId');
-
-        // Restore user's own shifts (not filtered by employee)
-        this.shifts = [...this.userShifts];
-
-        // Use existing stats view functionality
-        this.dashboardView = 'stats';
-        this.applyDashboardView();
-
-        // Ensure month picker is visible immediately after layout changes
-        this.ensureMonthPickerVisibility();
-
-        // Add stats-settled class after layout to show month picker without flash
-        requestAnimationFrame(() => {
-            document.body.classList.add('stats-settled');
-        });
-
-        // Update the display with user's own data
-        this.updateDisplay();
-    },
 
 
     async showEmployeesView() {
@@ -11205,7 +11120,8 @@ export const app = {
             } else if (this.showEmployeeTab === false) {
                 if (window.showToast) { window.showToast('Ansatte-fanen er deaktivert i innstillinger', 'info'); }
             }
-            this.switchToView('dashboard');
+            // Switch back to dashboard view by showing dashboard cards
+            this.showDashboardView();
         }
     },
 
@@ -12043,8 +11959,6 @@ export const app = {
             });
         }
 
-        // Tab bar event listeners
-        this.setupTabBarEventListeners();
     },
 
     // Setup export period options and event listeners
