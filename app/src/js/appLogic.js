@@ -4451,19 +4451,8 @@ export const app = {
             monthNavDisplayNav.textContent = `${monthName} ${this.currentYear}`;
         }
 
-        // Update the total card label to match selected month
-        const totalLabel = document.querySelector('.total-label');
-        if (totalLabel) {
-            // Check if current month is the actual current month
-            const now = new Date();
-            const isCurrentMonth = this.currentMonth === (now.getMonth() + 1) && this.currentYear === now.getFullYear();
-
-            if (isCurrentMonth) {
-                totalLabel.textContent = 'Brutto';
-            } else {
-                totalLabel.textContent = `Brutto (${monthName.toLowerCase()})`;
-            }
-        }
+        // Note: Total card label is now handled by updateStats() for consistent comparison display
+        // Removed hardcoded "Brutto" setting that was overriding month-over-month comparisons
 
         // Update current month label in export options if visible
         this.updateCurrentMonthLabel();
@@ -4557,12 +4546,14 @@ export const app = {
         // Calculate delta versus previous month for the total card label
         const deltaLabelEl = document.querySelector('.total-label');
         if (deltaLabelEl) {
+            const baseLabel = this.taxDeductionEnabled ? 'Netto' : 'Brutto';
             const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
             const prevYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
             const prevShifts = this.shifts.filter(s =>
                 s.date.getMonth() === prevMonth - 1 &&
                 s.date.getFullYear() === prevYear
             );
+
             let prevTotal = 0;
             prevShifts.forEach(s => { prevTotal += this.calculateShift(s).total; });
 
@@ -4575,12 +4566,13 @@ export const app = {
             if (prevDisplayTotal > 0) {
                 deltaPercent = ((displayAmount - prevDisplayTotal) / prevDisplayTotal) * 100;
             }
+
             if (Math.abs(deltaPercent) > 0.1) {
                 const arrow = deltaPercent >= 0 ? '▲' : '▼';
                 const prevMonthName = this.MONTHS[prevMonth - 1];
-                deltaLabelEl.textContent = `${arrow} ${Math.abs(deltaPercent).toFixed(1)}% vs. ${prevMonthName}`;
+                deltaLabelEl.textContent = `${baseLabel} ${arrow} ${Math.abs(deltaPercent).toFixed(1)}% vs. ${prevMonthName}`;
             } else {
-                deltaLabelEl.textContent = 'Denne måneden';
+                deltaLabelEl.textContent = baseLabel;
             }
         }
         // Oppdater fremdriftslinje for månedlig inntektsmål
