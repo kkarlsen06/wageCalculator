@@ -1,6 +1,8 @@
 /* Settings SPA page (home + details) */
 .settings-page {
   padding: var(--space-2);
+  /* Add safe area top padding for PWA/mobile */
+  padding-top: calc(var(--space-2) + env(safe-area-inset-top, 0px));
   /* Space for fixed bottom bar (+ safe-area inset) */
   /* Increase bottom inset so content can scroll fully above the floating navbar/backdrop */
   padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
@@ -76,6 +78,24 @@ html.ios-pwa #shiftAddPage .tab-content {
 #abonnementPage {
   max-width: 600px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 140px);
+  padding: 20px 0;
+}
+
+#abonnementPage .detail-title {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+#abonnementPage #abonnementContent {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 #abonnementPage .detail-title h1 {
@@ -1088,22 +1108,29 @@ html.ios-pwa #shiftAddPage .tab-content {
 /* Subscription Carousel */
 .subscription-carousel {
   width: 100%;
+  max-width: 100%;
   position: relative;
-  margin: 24px auto;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden; /* Prevent horizontal overflow */
+  padding-top: 20px; /* Prevent card clipping on hover/active states */
+  padding-bottom: 20px;
 }
 
 .subscription-carousel-track {
   display: flex;
   gap: 16px;
-  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+  width: 100%;
+  max-width: 100%;
+  padding: 12px max(16px, env(safe-area-inset-left)) 12px max(16px, env(safe-area-inset-right));
   overflow-x: auto;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
+  box-sizing: border-box;
 
   /* Smooth scrolling on iOS */
   -webkit-overflow-scrolling: touch;
@@ -1141,7 +1168,6 @@ html.ios-pwa #shiftAddPage .tab-content {
 }
 
 .subscription-card:hover {
-  transform: translateY(-2px);
   background: var(--surface-card-hover);
   border: var(--card-border-strong);
   box-shadow: var(--shadow-card-hover);
@@ -1227,7 +1253,6 @@ html.ios-pwa #shiftAddPage .tab-content {
 
 .subscription-card .plan-cta.upgrade:hover {
   background: var(--primary-hover);
-  transform: translateY(-1px);
 }
 
 .subscription-card .plan-cta.current-plan {
@@ -1244,7 +1269,6 @@ html.ios-pwa #shiftAddPage .tab-content {
 
 .subscription-card .plan-cta.manage-plan:hover {
   background: var(--accent-hover);
-  transform: translateY(-1px);
 }
 
 .subscription-card .plan-cta.downgrade {
@@ -1255,7 +1279,6 @@ html.ios-pwa #shiftAddPage .tab-content {
 
 .subscription-card .plan-cta.downgrade:hover {
   background: var(--surface-hover);
-  transform: translateY(-1px);
 }
 
 /* Appreciation message inside cards */
@@ -1422,12 +1445,13 @@ html.ios-pwa #shiftAddPage .tab-content {
 /* Responsive design for abonnement page */
 @media (max-width: 767px) {
   .subscription-card {
-    flex: 0 0 calc(100vw - 120px);
-    max-width: 320px;
+    flex: 0 0 280px;
+    max-width: 280px;
+    min-width: 280px;
   }
 
   .subscription-carousel-track {
-    padding: 0 60px;
+    padding: 0 max(60px, env(safe-area-inset-left)) 0 max(60px, env(safe-area-inset-right));
   }
 
   .subscription-carousel .carousel-arrow {
@@ -1443,7 +1467,8 @@ html.ios-pwa #shiftAddPage .tab-content {
 
 @media (min-width: 768px) {
   .subscription-card {
-    flex: 0 0 300px;
+    flex: 0 0 280px;
+    max-width: 280px;
   }
 
   .subscription-carousel-track {
