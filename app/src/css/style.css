@@ -16049,6 +16049,13 @@ body.employees-view .employees-container {
   padding-bottom: 0;
   min-height: 100dvh;
   scroll-behavior: auto;
+  --shifts-floating-controls-height: clamp(120px, 22vw, 152px);
+  --shifts-scroll-bottom-padding: calc(
+    var(--nav-h, 84px)
+    + var(--floating-over-nav-gap, clamp(12px, 2.5vw, 20px))
+    + var(--shifts-floating-controls-height, 140px)
+    + env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .shifts-route {
@@ -16075,7 +16082,8 @@ body.employees-view .employees-container {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  padding-bottom: calc(var(--nav-h, 84px) + env(safe-area-inset-bottom));
+  padding-bottom: var(--shifts-scroll-bottom-padding, calc(var(--nav-h, 84px) + env(safe-area-inset-bottom)));
+  scroll-padding-bottom: var(--shifts-scroll-bottom-padding, calc(var(--nav-h, 84px) + env(safe-area-inset-bottom)));
   scrollbar-gutter: stable both-edges;
 }
 
