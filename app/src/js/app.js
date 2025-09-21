@@ -45,6 +45,40 @@ function detectiOSPWA() {
   }
 }
 
+function updateFloatingNavOffsets() {
+  try {
+    const docEl = document?.documentElement;
+    if (!docEl) return;
+
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (!bottomNav) {
+      docEl.style.setProperty('--nav-h', '0px');
+      docEl.style.setProperty('--floating-over-nav-gap', '0px');
+      return;
+    }
+
+    const navStyles = window.getComputedStyle(bottomNav);
+    const isHidden = navStyles.display === 'none' || navStyles.visibility === 'hidden';
+
+    if (isHidden) {
+      docEl.style.setProperty('--nav-h', '0px');
+      docEl.style.setProperty('--floating-over-nav-gap', '0px');
+      return;
+    }
+
+    const navHeight = bottomNav.offsetHeight + (parseFloat(navStyles.marginBottom) || 0);
+    docEl.style.setProperty('--nav-h', `${Math.max(0, navHeight)}px`);
+    // Restore default responsive gap when nav is visible
+    docEl.style.removeProperty('--floating-over-nav-gap');
+  } catch (error) {
+    console.warn('Failed to update floating nav offsets:', error);
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.updateFloatingNavOffsets = updateFloatingNavOffsets;
+}
+
 function setThemeColor() {
   // This function is now handled by the theme manager
   // setThemeColor is no longer needed as theme manager handles meta theme colors
@@ -68,14 +102,17 @@ setAppHeight();
 setThemeColor();
 detectiOSPWA();
 handleResponsiveMonthNavigation(); // Initial call
+updateFloatingNavOffsets();
 window.addEventListener('resize', () => {
   setAppHeight();
   handleResponsiveMonthNavigation();
+  updateFloatingNavOffsets();
 });
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
     setAppHeight();
     handleResponsiveMonthNavigation();
+    updateFloatingNavOffsets();
   });
 }
 
@@ -84,6 +121,7 @@ window.addEventListener('orientationchange', () => {
   setTimeout(() => {
     setAppHeight();
     handleResponsiveMonthNavigation(); // Handle month navigation positioning after orientation change
+    updateFloatingNavOffsets();
   }, 100); // Delay to ensure orientation change is complete
 });
 
@@ -93,6 +131,7 @@ window.addEventListener('scroll', () => {
   clearTimeout(scrollTimeout);
   scrollTimeout = setTimeout(() => {
     setAppHeight();
+    updateFloatingNavOffsets();
   }, 50); // Debounced scroll handler
 });
 

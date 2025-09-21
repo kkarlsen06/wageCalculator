@@ -335,6 +335,14 @@ export async function render() {
     } else {
       bottomNav.style.display = '';
     }
+
+    if (typeof window !== 'undefined' && typeof window.updateFloatingNavOffsets === 'function') {
+      try {
+        window.updateFloatingNavOffsets();
+      } catch (error) {
+        console.warn('Failed to sync floating nav offsets after route change:', error);
+      }
+    }
   }
 
   // Tag body/html during onboarding for scoped CSS
