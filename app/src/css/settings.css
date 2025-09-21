@@ -1220,12 +1220,12 @@ html.ios-pwa #shiftAddPage .tab-content {
   margin-top: auto;
 }
 
-.subscription-card .plan-cta:not(.current-plan) {
+.subscription-card .plan-cta.upgrade {
   background: var(--primary);
   color: white;
 }
 
-.subscription-card .plan-cta:not(.current-plan):hover {
+.subscription-card .plan-cta.upgrade:hover {
   background: var(--primary-hover);
   transform: translateY(-1px);
 }

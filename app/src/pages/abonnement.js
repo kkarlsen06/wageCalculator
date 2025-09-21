@@ -480,6 +480,7 @@ class AbonnementController {
       } else {
         // Upgrade
         button.textContent = 'Oppgrader';
+        button.classList.add('upgrade');
       }
     });
   }
