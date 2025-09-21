@@ -235,6 +235,13 @@ class AbonnementController {
     if (planType === currentTier && this.isActive) {
       // Handle manage subscription
       if (currentTier !== 'free') {
+        // For grandfathered Pro users (no paid subscription), show appreciation
+        if (currentTier === 'pro' && this.beforePaywall && !window.SubscriptionState) {
+          // Could show a modal or message here, for now just return
+          console.log('[abonnement] Grandfathered Pro user clicked their plan - no action needed');
+          return;
+        }
+
         try {
           if (window.startBillingPortal) {
             await window.startBillingPortal({ redirect: true });
@@ -353,15 +360,15 @@ class AbonnementController {
     if (!row) {
       if (beforePaywall) {
         return {
-          planName: 'Professional (gratis)',
-          statusText: 'Early User',
-          periodText: 'Du har tilgang til Professional-funksjoner helt gratis',
+          planName: 'Professional',
+          statusText: 'Early Supporter - Lifetime Access',
+          periodText: 'Takk for at du var med fra starten!',
           isActive: true,
-          tier: 'free',
+          tier: 'pro',
           shouldShowAppreciation: true,
           appreciationData: {
-            title: 'Takk for at du var med fra starten!',
-            text: 'Du har permanent tilgang til Professional-funksjoner. Du kan fortsatt abonnere for å støtte utviklingen.'
+            title: 'Takk for at du var med fra starten! 🌟',
+            text: 'Du har permanent tilgang til alle Professional-funksjoner som takk for å være en tidlig bruker. Du kan fortsatt abonnere for å støtte utviklingen og få tilgang til Max-funksjoner.'
           }
         };
       }
@@ -392,7 +399,7 @@ class AbonnementController {
       if (beforePaywall) {
         appreciationData = {
           title: 'Du støtter oss i tillegg til å være early user! Legende! ❤️',
-          text: 'Dette betyr alt for utviklingen av produktet. Tusen takk!'
+          text: 'Som early supporter hadde du allerede permanent Professional-tilgang, men du velger å støtte oss i tillegg. Dette betyr alt for utviklingen av produktet. Tusen takk!'
         };
       } else {
         appreciationData = {
@@ -453,6 +460,10 @@ class AbonnementController {
         // Current plan
         if (plan === 'free') {
           button.textContent = 'Valgt';
+          button.classList.add('current-plan');
+        } else if (plan === 'pro' && this.beforePaywall && !window.SubscriptionState) {
+          // Grandfathered Pro user (no paid subscription)
+          button.textContent = 'Din Plan';
           button.classList.add('current-plan');
         } else {
           button.textContent = 'Administrer';

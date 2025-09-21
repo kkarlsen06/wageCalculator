@@ -1517,12 +1517,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           periodEndUnix = obj?.items?.data?.[0]?.current_period_end || null;
           priceId = obj?.items?.data?.[0]?.price?.id || null;
 
-          console.log('[webhook] Subscription object values:', {
-            id: obj?.id,
-            status: obj?.status,
-            current_period_end_from_item: obj?.items?.data?.[0]?.current_period_end,
-            items_count: obj?.items?.data?.length
-          });
 
           // Try to get the real customer id from the subscription payload
           // Stripe delivers either a string "cus_..." or an expanded object
@@ -1599,12 +1593,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
             if (status === 'active' || status === 'trialing') {
               // Create or update subscription record
               const periodEndISO = periodEndUnix ? new Date(Number(periodEndUnix) * 1000).toISOString() : null;
-              console.log('[webhook] Upserting subscription:', {
-                periodEndUnix,
-                periodEndISO,
-                status,
-                priceId
-              });
 
               const { data, error } = await supabase
                 .from('subscriptions')
