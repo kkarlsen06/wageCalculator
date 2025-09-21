@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (!el) return;
           el.style.visibility = 'visible';
           el.style.opacity = '1';
-          el.style.transform = 'none';
+          el.style.transform = '';
         };
         reveal(container.querySelector('.tab-bar-container'));
         reveal(container.querySelector('.content'));
