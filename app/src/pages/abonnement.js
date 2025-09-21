@@ -132,6 +132,7 @@ class AbonnementController {
     this.beforePaywall = false;
     this.loadingEl = null;
     this.contentEl = null;
+    this.initialLoadComplete = false;
 
     // Carousel elements
     this.carouselTrack = null;
@@ -335,6 +336,11 @@ class AbonnementController {
   }
 
   async updateFromGlobalState() {
+    // Skip if initial load hasn't completed yet to avoid race condition
+    if (!this.initialLoadComplete) {
+      return;
+    }
+
     await this.showContent();
 
     const row = window.SubscriptionState || null;
@@ -619,11 +625,16 @@ class AbonnementController {
       // Center current plan in carousel
       this.centerCurrentPlan();
 
+      // Mark initial load as complete
+      this.initialLoadComplete = true;
+
     } catch (e) {
       console.error('[abonnement] exception:', e);
       await this.showContent();
       // Show error state - default to free user experience
       this.updateCarouselCards(true, 'free', false, null);
+      // Mark initial load as complete even in error case
+      this.initialLoadComplete = true;
     }
   }
 
