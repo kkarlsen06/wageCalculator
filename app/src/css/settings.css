@@ -142,8 +142,8 @@ html.ios-pwa #shiftAddPage .tab-content {
 
 /* Vertically center only the settings list between title and bottom */
 .settings-home .settings-list {
-  margin-top: auto;
-  margin-bottom: auto;
+  margin-top: 6px;
+  margin-bottom: 6px;
 }
 
 .settings-list {

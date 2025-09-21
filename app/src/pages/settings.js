@@ -76,7 +76,7 @@ function getHomeView() {
       </li>
     </ul>
 
-    <hr style="border: none; border-top: 1px solid var(--border); margin: var(--space-4) 0;">
+    <hr style="border: none; border-top: 1px solid var(--border); margin: 6px 0;">
 
     <ul class="settings-list" role="list">
       <li>
