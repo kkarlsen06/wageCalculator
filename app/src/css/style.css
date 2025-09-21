@@ -11523,7 +11523,13 @@ input[type="file"].form-control:focus-visible {
 .statistics-page {
   max-width: 1120px;
   margin: 0 auto;
-  padding: clamp(24px, 6vw, 48px) clamp(16px, 5vw, 56px) calc(96px + var(--safe-area-inset-bottom));
+  padding-inline: clamp(16px, 5vw, 56px);
+  padding-top: clamp(96px, 14vw, 160px);
+  padding-bottom: calc(
+    var(--nav-h, 84px)
+    + clamp(120px, 18vw, 200px)
+    + env(safe-area-inset-bottom, 0px)
+  );
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -11976,8 +11982,13 @@ input[type="file"].form-control:focus-visible {
 
 @media (max-width: 768px) {
   .statistics-page {
-    padding: clamp(16px, 5vw, 24px);
-    padding-bottom: calc(96px + var(--safe-area-inset-bottom));
+    padding-inline: clamp(16px, 5vw, 24px);
+    padding-top: clamp(112px, 24vw, 176px);
+    padding-bottom: calc(
+      var(--nav-h, 84px)
+      + clamp(140px, 28vw, 220px)
+      + env(safe-area-inset-bottom, 0px)
+    );
   }
 
   .statistics-hero {
