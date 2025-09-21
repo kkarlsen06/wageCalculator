@@ -5,23 +5,6 @@ export function renderStatistikk() {
                 <h1 class="page-title">Statistikk</h1>
             </div>
 
-            <!-- Month Navigation - positioned 6px above nav bar -->
-            <div class="tab-bar-container statistics-month-container">
-                <div class="month-navigation dashboard-month-nav-inline">
-                    <button class="month-nav-btn" onclick="navigateStatisticsMonth('prev')" aria-label="Forrige måned">
-                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                    </button>
-                    <span class="month-display" id="currentMonthStatistics">Mai 2025</span>
-                    <button class="month-nav-btn" onclick="navigateStatisticsMonth('next')" aria-label="Neste måned">
-                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <polyline points="9 6 15 12 9 18"></polyline>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
             <div class="statistics-content">
                 <div class="weekly-hours-chart-card" id="weeklyHoursChart">
                     <div class="chart-cards-container">
