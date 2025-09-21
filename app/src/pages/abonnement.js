@@ -133,6 +133,7 @@ class AbonnementController {
     this.loadingEl = null;
     this.contentEl = null;
     this.initialLoadComplete = false;
+    this.initialLoadTime = null;
 
     // Carousel elements
     this.carouselTrack = null;
@@ -338,6 +339,13 @@ class AbonnementController {
   async updateFromGlobalState() {
     // Skip if initial load hasn't completed yet to avoid race condition
     if (!this.initialLoadComplete) {
+      return;
+    }
+
+    // Skip global updates for 2 seconds after initial load to prevent interference
+    // This prevents DOMContentLoaded subscription refreshes from overriding the correct state
+    if (this.initialLoadTime && (Date.now() - this.initialLoadTime) < 2000) {
+      console.log('[abonnement] updateFromGlobalState: skipping - too soon after initial load');
       return;
     }
 
@@ -627,6 +635,7 @@ class AbonnementController {
 
       // Mark initial load as complete
       this.initialLoadComplete = true;
+      this.initialLoadTime = Date.now();
 
     } catch (e) {
       console.error('[abonnement] exception:', e);
@@ -635,6 +644,7 @@ class AbonnementController {
       this.updateCarouselCards(true, 'free', false, null);
       // Mark initial load as complete even in error case
       this.initialLoadComplete = true;
+      this.initialLoadTime = Date.now();
     }
   }
 
