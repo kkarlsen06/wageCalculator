@@ -4404,6 +4404,20 @@ export const app = {
 
         // console.log('Payroll card updated via existing updateNextPayrollCard function');
     },
+    getCurrentMonthDisplay() {
+        const months = Array.isArray(this.MONTHS) ? this.MONTHS : [];
+        const monthIndex = (this.currentMonth || 1) - 1;
+        const baseName = months[monthIndex];
+
+        if (!baseName) {
+            return '--';
+        }
+
+        const capitalizedName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+        const year = Number.isFinite(this.currentYear) ? this.currentYear : new Date().getFullYear();
+
+        return `${capitalizedName} ${year}`;
+    },
     updateHeader() {
         const monthName = this.MONTHS[this.currentMonth - 1].charAt(0).toUpperCase() + this.MONTHS[this.currentMonth - 1].slice(1);
 

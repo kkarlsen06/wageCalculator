@@ -26,17 +26,17 @@ export function renderStatistikk() {
                             </svg>
                         </button>
                     </div>
-                    <div class="statistics-hero__pill">
+                    <button type="button" class="statistics-hero__pill" id="statisticsSummaryPill" aria-controls="statisticsOverviewSection">
                         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M3 17c3-6 9-10 18-10"></path>
                             <polyline points="19 5 21 7 19 9"></polyline>
                         </svg>
                         <span>Oppsummering</span>
-                    </div>
+                    </button>
                 </div>
             </header>
 
-            <section class="statistics-overview" aria-labelledby="statisticsOverviewHeading">
+            <section class="statistics-overview" id="statisticsOverviewSection" aria-labelledby="statisticsOverviewHeading">
                 <div class="section-heading">
                     <h2 id="statisticsOverviewHeading">Månedsoversikt</h2>
                     <p>Høydepunkter for <span id="overviewMonthName">denne måneden</span>.</p>
@@ -230,6 +230,8 @@ export function afterMountStatistikk() {
         // Initialize month display
         updateStatisticsMonthDisplay();
 
+        setupStatisticsSummaryNavigation();
+
         // Load and display statistics data
         loadStatisticsData();
 
@@ -273,8 +275,20 @@ function navigateStatisticsMonth(direction) {
 function updateStatisticsMonthDisplay() {
     if (typeof window !== 'undefined' && window.app) {
         const monthDisplay = document.getElementById('currentMonthStatistics');
-        if (monthDisplay && window.app.getCurrentMonthDisplay) {
-            monthDisplay.textContent = window.app.getCurrentMonthDisplay();
+        if (monthDisplay) {
+            const displayText = typeof window.app.getCurrentMonthDisplay === 'function'
+                ? window.app.getCurrentMonthDisplay()
+                : '';
+
+            if (displayText && displayText.trim().length > 0) {
+                monthDisplay.textContent = displayText;
+            } else {
+                const monthName = getDisplayMonthName();
+                const year = Number.isFinite(window.app.currentYear)
+                    ? window.app.currentYear
+                    : new Date().getFullYear();
+                monthDisplay.textContent = monthName ? `${monthName} ${year}` : '--';
+            }
         }
 
         updateMonthCopy();
@@ -347,6 +361,61 @@ function setupChartInteractions() {
 
         card.dataset.keyboardBound = 'true';
     });
+}
+
+function setupStatisticsSummaryNavigation() {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const summaryButton = document.getElementById('statisticsSummaryPill');
+    const overviewSection = document.getElementById('statisticsOverviewSection');
+
+    if (!summaryButton || !overviewSection || summaryButton.dataset.bound === 'true') {
+        return;
+    }
+
+    const focusOverviewHeading = () => {
+        const heading = document.getElementById('statisticsOverviewHeading');
+        if (!heading || typeof heading.focus !== 'function') {
+            return;
+        }
+
+        const hadTabIndex = heading.hasAttribute('tabindex');
+        if (!hadTabIndex) {
+            heading.setAttribute('tabindex', '-1');
+        }
+
+        heading.focus({ preventScroll: true });
+
+        if (!hadTabIndex) {
+            heading.addEventListener('blur', () => {
+                heading.removeAttribute('tabindex');
+            }, { once: true });
+        }
+    };
+
+    const handleClick = (event) => {
+        event.preventDefault();
+
+        const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        try {
+            overviewSection.scrollIntoView({
+                behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                block: 'start'
+            });
+        } catch (_) {
+            overviewSection.scrollIntoView();
+        }
+
+        window.requestAnimationFrame(() => {
+            focusOverviewHeading();
+        });
+    };
+
+    summaryButton.addEventListener('click', handleClick);
+    summaryButton.dataset.bound = 'true';
 }
 
 function attachStatisticsEnhancer() {
