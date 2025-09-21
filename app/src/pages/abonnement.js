@@ -19,11 +19,6 @@ function priceIdToTier(priceId) {
 function getAbonnementView() {
   return `
   <div id="abonnementPage" class="settings-page">
-    <div class="detail-title">
-      <h1>Abonnement</h1>
-      <p class="detail-subtitle">Få det meste ut av appen</p>
-    </div>
-
     <!-- Loading state -->
     <div class="modal-loading" id="abonnementLoading" style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
       <div class="loading-spinner" style="animation: spin 1s linear infinite;">
@@ -113,6 +108,11 @@ function getAbonnementView() {
       </div>
 
       <p class="carousel-disclaimer">Avbryt når som helst</p>
+
+      <div class="detail-title">
+        <h1>Abonnement</h1>
+        <p class="detail-subtitle">Få det meste ut av appen</p>
+      </div>
 
     </div>
 
