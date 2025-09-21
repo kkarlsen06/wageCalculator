@@ -11454,30 +11454,47 @@ input[type="file"].form-control:focus-visible {
   z-index: 200;
 }
 
-/* Dashboard month picker - positioned 6px above nav bar, 2/3 width */
+/* Shared spacing for floating controls that sit above the bottom navigation */
+:root {
+  --floating-over-nav-gap: clamp(12px, 2.5vw, 20px);
+}
+
+/* Dashboard month picker - positioned above nav bar with responsive gap */
 .dashboard-month-container {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 16px) + 78px); /* 6px above nav bar (16px + 56px + 6px) */
+  bottom: calc(
+    env(safe-area-inset-bottom, 16px)
+    + var(--nav-h, 84px)
+    + var(--floating-over-nav-gap, clamp(12px, 2.5vw, 20px))
+  );
   left: 50%;
   transform: translateX(-50%);
   width: min(450px, calc(100% - 32px)); /* ~2/3 of navbar width, max viewport minus padding */
   z-index: 300;
 }
 
-/* Statistics page month picker - positioned 6px above nav bar, 2/3 width */
+/* Statistics page month picker - positioned above nav bar with responsive gap */
 .statistics-month-container {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 16px) + 78px); /* 6px above nav bar (16px + 56px + 6px) */
+  bottom: calc(
+    env(safe-area-inset-bottom, 16px)
+    + var(--nav-h, 84px)
+    + var(--floating-over-nav-gap, clamp(12px, 2.5vw, 20px))
+  );
   left: 50%;
   transform: translateX(-50%);
   width: min(450px, calc(100% - 32px)); /* ~2/3 of navbar width, max viewport minus padding */
   z-index: 300;
 }
 
-/* Shifts page tab bar container - positioned 6px above nav bar, full nav width */
+/* Shifts page tab bar container - positioned above nav bar with responsive gap */
 .shifts-page .tab-bar-container {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 16px) + 78px); /* 6px above nav bar (16px + 56px + 6px) */
+  bottom: calc(
+    env(safe-area-inset-bottom, 16px)
+    + var(--nav-h, 84px)
+    + var(--floating-over-nav-gap, clamp(12px, 2.5vw, 20px))
+  );
   left: 50%;
   transform: translateX(-50%);
   width: min(680px, calc(100% - 32px)); /* Match nav bar width */
