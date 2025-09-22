@@ -9,6 +9,8 @@ export function renderShifts() {
       <div class="app-container">
         <!-- Tab Bar with Month Navigation -->
         <div class="tab-bar-container">
+          <!-- Glass morphism backdrop for floating controls -->
+          <div class="shifts-floating-backdrop"></div>
           <div class="tab-bar-with-month">
             <div class="tab-bar">
               <button class="tab-btn active" onclick="window.app?.switchShiftView?.('list')" aria-label="Bytt til listevisning">

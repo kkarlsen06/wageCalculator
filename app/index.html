@@ -103,22 +103,6 @@
                       </div>
                   </div>
 
-                  <!-- Month Picker - positioned 6px above nav bar -->
-                  <div class="tab-bar-container dashboard-month-container">
-                      <div class="month-navigation dashboard-month-nav-inline">
-                          <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                  <polyline points="15 18 9 12 15 6"></polyline>
-                              </svg>
-                          </button>
-                          <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
-                          <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
-                              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                  <polyline points="9 6 15 12 9 18"></polyline>
-                              </svg>
-                          </button>
-                      </div>
-                  </div>
 
                   <div class="content dashboard-content">
                       <div class="total-card">
@@ -177,6 +161,23 @@
                               </div>
                           </div>
                           <div class="next-payroll-empty" id="nextPayrollEmpty" style="display: none;">
+                          </div>
+                      </div>
+
+                      <!-- Month Picker - positioned under next payroll card -->
+                      <div class="tab-bar-container dashboard-month-container">
+                          <div class="month-navigation dashboard-month-nav-inline">
+                              <button class="month-nav-btn" onclick="app.navigateToPreviousMonth()" aria-label="Forrige måned">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                      <polyline points="15 18 9 12 15 6"></polyline>
+                                  </svg>
+                              </button>
+                              <span class="month-display" id="currentMonthDashboard">Mai 2025</span>
+                              <button class="month-nav-btn" onclick="app.navigateToNextMonth()" aria-label="Neste måned">
+                                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                      <polyline points="9 6 15 12 9 18"></polyline>
+                                  </svg>
+                              </button>
                           </div>
                       </div>
 
