@@ -1908,7 +1908,6 @@ body.skeleton-active .month-nav-btn {
 
   /* Keep total label readable */
   .total-label {
-    font-size: 12px !important; /* Readable label size */
     font-weight: var(--font-weight-semibold);
     letter-spacing: 0.025em;
     text-transform: uppercase;
@@ -2375,8 +2374,8 @@ body.skeleton-active .month-nav-btn {
   gap: 8px;
   transition: all var(--speed-normal) var(--ease-default);
   box-shadow: var(--shadow-card);
-  width: fit-content; /* Size to content instead of taking all space */
-  max-width: 300px; /* Set reasonable maximum width */
+  flex: 1; /* Take up remaining space - be the widest component */
+  max-width: none; /* Remove width limit - let it grow */
   min-width: 200px; /* Ensure good minimum size for touch */
 }
 
@@ -2409,8 +2408,8 @@ body.skeleton-active .month-nav-btn {
   justify-content: center;
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
-  color: var(--text-secondary);
-  min-width: 44px; /* Minimum touch target size */
+  color: var(--text-primary);
+  min-width: 56px; /* Match minimum size */
   flex-shrink: 0; /* Don't shrink these buttons */
 }
 
@@ -2418,6 +2417,14 @@ body.skeleton-active .month-nav-btn {
   background: var(--surface-card-hover);
   border: var(--card-border);
   color: var(--text-primary);
+}
+
+.dashboard-month-nav-inline .month-nav-btn:active {
+  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.1),
+    inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .dashboard-month-nav-inline .month-nav-btn .icon-sm {
@@ -2451,9 +2458,9 @@ body.skeleton-active .month-picker-bar {
   }
 
   .dashboard-month-nav-inline {
-    width: fit-content; /* Size to content on mobile too */
-    min-width: 180px; /* Smaller minimum for mobile */
-    max-width: 280px; /* Reasonable max for mobile */
+    flex: 1; /* Take remaining space */
+    min-width: 0; /* Allow shrinking if needed */
+    max-width: none; /* Remove width limit on mobile */
   }
 
   /* Hide tab text on mobile, show only icons */
@@ -2474,14 +2481,14 @@ body.skeleton-active .month-picker-bar {
   }
 
   .dashboard-month-nav-inline .month-nav-btn {
-    width: 44px; /* Maintain minimum touch target */
-    height: 44px; /* Maintain minimum touch target */
-    min-width: 44px;
+    width: 52px; /* Match navbar on mobile (600px) */
+    height: 52px; /* Match navbar on mobile (600px) */
+    min-width: 52px;
   }
 
   .dashboard-month-nav-inline .month-nav-btn .icon-sm {
-    width: 18px; /* Larger icons for mobile */
-    height: 18px;
+    width: 22px; /* Proportional icon for mobile */
+    height: 22px;
   }
 }
 
@@ -2518,14 +2525,14 @@ body.skeleton-active .month-picker-bar {
   }
 
   .dashboard-month-nav-inline .month-nav-btn {
-    width: 40px; /* Slightly smaller on very small screens */
-    height: 40px;
-    min-width: 40px;
+    width: 48px; /* Match navbar on very small screens (420px) */
+    height: 48px;
+    min-width: 48px;
   }
 
   .dashboard-month-nav-inline .month-nav-btn .icon-sm {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -11438,6 +11445,50 @@ input[type="file"].form-control:focus-visible {
   padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
 }
 
+
+/* Glass morphism backdrop for dashboard floating controls */
+.dashboard-floating-backdrop {
+  display: none; /* Hidden by default */
+  position: fixed;
+  bottom: env(safe-area-inset-bottom, 16px); /* Anchor to bottom like navbar */
+  left: 0;
+  right: 0;
+  width: 100vw; /* Full viewport width */
+  height: calc(
+    var(--nav-h, 84px)
+    + var(--floating-over-nav-gap, clamp(12px, 2.5vw, 20px))
+    + 60px /* Extra height for feather effect above month picker */
+  );
+  background: color-mix(in oklab, var(--bg-card-elevated) 85%, transparent 15%);
+  border: none; /* Remove border for full-width effect */
+  border-radius: 0; /* Remove border radius for full-width effect */
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  box-shadow: 0 8px 24px rgba(8, 12, 20, 0.25);
+  z-index: 50; /* Behind the month navigation (z-index 90) but above content */
+  /* Feathered top edge using CSS mask */
+  mask: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 25%,
+    rgba(0, 0, 0, 0.8) 45%,
+    rgba(0, 0, 0, 1) 65%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  -webkit-mask: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 25%,
+    rgba(0, 0, 0, 0.8) 45%,
+    rgba(0, 0, 0, 1) 65%,
+    rgba(0, 0, 0, 1) 100%
+  );
+}
+
+/* Show backdrop only on dashboard route */
+body[data-current-route="/"] .dashboard-floating-backdrop,
+body[data-current-route=""] .dashboard-floating-backdrop {
+  display: block;
+}
+
 /* Container for month picker taking full width */
 .month-picker-container {
   position: relative;
@@ -11459,13 +11510,6 @@ input[type="file"].form-control:focus-visible {
   --floating-over-nav-gap: clamp(12px, 2.5vw, 20px);
 }
 
-/* Dashboard month picker - positioned in normal document flow under payroll card */
-.dashboard-month-container {
-  position: relative;
-  margin: 16px auto 0 auto;
-  display: flex;
-  justify-content: center;
-}
 
 /* Statistics page month picker - positioned above nav bar with responsive gap */
 .statistics-month-container {
@@ -11484,16 +11528,43 @@ input[type="file"].form-control:focus-visible {
 /* Shifts page tab bar container - positioned above nav bar with responsive gap */
 .shifts-page .tab-bar-container {
   position: fixed;
-  bottom: calc(
-    env(safe-area-inset-bottom, 16px)
-    + var(--nav-h, 84px)
-    + var(--floating-over-nav-gap, clamp(12px, 2.5vw, 20px))
-  );
+  bottom: env(safe-area-inset-bottom, 16px); /* Extend all the way to bottom */
   left: 50%;
   transform: translateX(-50%);
   width: min(680px, calc(100% - 32px)); /* Match nav bar width */
   padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+  padding-bottom: calc(var(--nav-h, 84px) + var(--floating-over-nav-gap, clamp(12px, 2.5vw, 20px))); /* Add bottom padding for navbar space */
   z-index: 300;
+}
+
+/* Glass morphism backdrop for floating tab bar and month picker */
+.shifts-floating-backdrop {
+  position: absolute;
+  top: -40px; /* Extend above the controls for feather effect */
+  left: -16px; /* Match container padding */
+  right: -16px; /* Match container padding */
+  bottom: 0; /* Fill the entire container height */
+  background: color-mix(in oklab, var(--bg-card-elevated) 85%, transparent 15%);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent 40%);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  box-shadow: 0 8px 24px rgba(8, 12, 20, 0.25);
+  z-index: -1; /* Behind the tab bar and month picker */
+  /* Feathered top edge using CSS mask */
+  mask: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 25%,
+    rgba(0, 0, 0, 0.8) 45%,
+    rgba(0, 0, 0, 1) 65%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  -webkit-mask: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 25%,
+    rgba(0, 0, 0, 0.8) 45%,
+    rgba(0, 0, 0, 1) 65%,
+    rgba(0, 0, 0, 1) 100%
+  );
 }
 
 /* Tab bar with month navigation layout - side by side */
@@ -11501,6 +11572,7 @@ input[type="file"].form-control:focus-visible {
   display: flex;
   gap: 12px;
   align-items: center;
+  justify-content: space-between; /* Space between tab bar and month navigation */
   width: 100%;
 }
 
@@ -11509,7 +11581,7 @@ input[type="file"].form-control:focus-visible {
 }
 
 .tab-bar-with-month .month-navigation {
-  flex: 1; /* Take remaining space */
+  flex: 0 0 auto; /* Fixed width, don't grow or stretch */
   min-width: 0; /* Allow shrinking if needed */
 }
 
@@ -11630,30 +11702,49 @@ input[type="file"].form-control:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-pill);
-  border: 1px solid transparent;
-  background: rgba(74, 200, 255, 0.12);
+  width: 56px; /* Match navbar primary button size */
+  height: 56px; /* Match navbar primary button size */
+  border-radius: 50%; /* Perfect circle like navbar buttons */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   color: var(--text-primary);
   cursor: pointer;
   transition: all var(--speed-normal) var(--ease-default);
 }
 
 .month-nav-button svg {
-  width: 18px;
-  height: 18px;
+  width: 24px; /* Larger icons to match button size */
+  height: 24px; /* Larger icons to match button size */
 }
 
 .month-nav-button:hover {
-  background: rgba(74, 200, 255, 0.2);
-  border-color: rgba(74, 200, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 }
 
 .month-nav-button:focus-visible {
   outline: var(--focus-outline-width) solid var(--focus-outline-color);
   outline-offset: 3px;
-  background: rgba(74, 200, 255, 0.25);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.month-nav-button:active {
+  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.1),
+    inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .statistics-hero__pill {
