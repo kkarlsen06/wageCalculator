@@ -1,7 +1,7 @@
 {
   "name": "Lønnskalkulator",
   "short_name": "Min Lønn",
-  "start_url": "https://kalkulator.kkarlsen.dev",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#4ac8ff",
@@ -85,7 +85,7 @@
   "display_override": ["window-controls-overlay", "minimal-ui"],
   "categories": ["finance"],
   "prefer_related_applications": false,
-  "scope": "https://kalkulator.kkarlsen.dev",
+  "scope": "/",
   "scope_extensions": [
     {"type": "origin", "origin": "https://www.kkarlsen.com"},
     {"type": "origin", "origin": "https://id.kkarlsen.dev"},
