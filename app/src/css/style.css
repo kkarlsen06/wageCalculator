@@ -11587,7 +11587,7 @@ body[data-current-route=""] .dashboard-floating-backdrop {
 
 /* Statistics page styling */
 .statistics-page {
-  max-width: 1120px;
+  max-width: 640px;
   margin: 0 auto;
   padding-inline: clamp(16px, 5vw, 56px);
   padding-top: clamp(96px, 14vw, 160px);
@@ -11609,10 +11609,10 @@ body[data-current-route=""] .dashboard-floating-backdrop {
   background: linear-gradient(135deg, rgba(10, 24, 38, 0.95), rgba(12, 32, 52, 0.85));
   border: 1px solid rgba(74, 200, 255, 0.25);
   box-shadow: var(--shadow-card);
-  padding: clamp(24px, 5vw, 48px);
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: clamp(16px, 4vw, 32px);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .statistics-hero::before {
@@ -11674,13 +11674,14 @@ body[data-current-route=""] .dashboard-floating-backdrop {
 
 .statistics-hero__meta {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .statistics-month {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
@@ -11694,8 +11695,8 @@ body[data-current-route=""] .dashboard-floating-backdrop {
   font-size: var(--text-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  min-width: 150px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .month-nav-button {
@@ -12055,12 +12056,9 @@ body[data-current-route=""] .dashboard-floating-backdrop {
   box-shadow: var(--shadow-card);
 }
 
-@media (max-width: 960px) {
-  .statistics-hero {
-    grid-template-columns: 1fr;
-  }
-
+@media (max-width: 768px) {
   .statistics-hero__meta {
+    flex-direction: column;
     align-items: flex-start;
   }
 }

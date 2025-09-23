@@ -119,7 +119,12 @@ export function afterMountShifts() {
   mountAll();
 
   // Wait for app to be ready then initialize shifts functionality
+  let retryCount = 0;
+  const maxRetries = 50; // 5 seconds max wait time
+
   const initShifts = () => {
+    retryCount++;
+
     if (window.app) {
       // Update month displays across shift views
       if (window.app.updateHeader) {
@@ -141,7 +146,10 @@ export function afterMountShifts() {
       if (window.app.switchShiftView) {
         window.app.switchShiftView(defaultView);
       } else {
-        console.warn('[shifts] switchShiftView function not available yet, retrying...');
+        // Only warn after several attempts to avoid noise during normal page load
+        if (retryCount > 10) {
+          console.warn('[shifts] switchShiftView function not available yet, retrying...');
+        }
         setTimeout(initShifts, 100);
         return;
       }
@@ -155,6 +163,11 @@ export function afterMountShifts() {
       }
     } else {
       // If app isn't ready yet, wait a bit and try again
+      // Only warn after several attempts to avoid noise during normal page load
+      if (retryCount > maxRetries) {
+        console.warn('[shifts] App not available after maximum retries, aborting initialization');
+        return;
+      }
       setTimeout(initShifts, 100);
     }
   };
