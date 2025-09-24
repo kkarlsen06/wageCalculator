@@ -1,0 +1,575 @@
+/**
+ * Navigation Component Styles
+ * Tab bar, header, profile dropdown, and floating action bar
+ */
+
+/* ================
+   HEADER STYLES
+   ================ */
+
+.header {
+  background: var(--surface-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  position: relative;
+  z-index: 100;
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.headerLogoLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.headerLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ===================
+   USER PROFILE STYLES
+   =================== */
+
+.userProfileContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.userProfileBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface-card);
+  border: var(--card-border);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.userProfileBtn:hover {
+  background: var(--surface-card-hover);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.userNickname {
+  color: var(--text-primary);
+}
+
+.topbarAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profileIcon {
+  stroke: var(--text-secondary);
+  transition: all var(--speed-normal) var(--ease-default);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  padding: 6px;
+  width: 32px !important;
+  height: 32px !important;
+  flex-shrink: 0;
+}
+
+.userProfileBtn:hover .profileIcon,
+.userProfileBtn:hover .topbarAvatar {
+  stroke: rgba(99, 102, 241, 0.8);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: scale(1.05);
+}
+
+/* Profile Dropdown */
+.profileDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10001;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(16px);
+  min-width: 200px;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.profileDropdown.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dropdownItem {
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--speed-fast) var(--ease-default);
+  border-bottom: 1px solid var(--border);
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownItem:hover {
+  background: var(--surface-card-hover);
+  color: var(--primary);
+}
+
+/* Profile Skeleton */
+.profileSkeleton {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.skeletonAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--skeleton-gradient);
+  background-size: 200% 100%;
+  animation: shimmer 1.1s ease-in-out infinite;
+}
+
+.skeletonLine {
+  width: 96px;
+  height: 14px;
+  border-radius: 8px;
+  background: var(--skeleton-gradient);
+  background-size: 200% 100%;
+  animation: shimmer 1.1s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+/* ===============
+   TAB BAR STYLES
+   =============== */
+
+.tabBarContainer {
+  position: relative;
+  z-index: 50;
+  margin-bottom: var(--space-3);
+}
+
+.tabBar {
+  background: var(--surface-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-2);
+  display: flex;
+  gap: 8px;
+  position: relative;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none;
+}
+
+.tabBtn {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px 16px;
+  background: transparent;
+  border: var(--card-border);
+  border-radius: var(--radius-component);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  /* Optimize animations for better performance */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+.tabBtn:hover {
+  background: var(--surface-card-hover);
+  color: var(--text-primary);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.tabBtn.active {
+  background: var(--primary);
+  color: var(--button-primary-text);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(74, 200, 255, 0.3);
+}
+
+.tabBtn:focus-visible {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+
+.tabBtnIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Tab Bar Skeleton */
+.tabBarSkeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  padding: var(--space-2);
+  display: none;
+  gap: 8px;
+}
+
+.tabBtnSkeleton {
+  flex: 1;
+  height: 44px;
+  background: var(--skeleton-gradient);
+  background-size: 200% 100%;
+  border-radius: var(--radius-component);
+  animation: shimmer 1.1s ease-in-out infinite;
+}
+
+/* ==========================
+   FLOATING ACTION BAR STYLES
+   ========================== */
+
+.floatingActionBar {
+  position: fixed;
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: var(--surface-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--card-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card-strong);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.floatingActionBar:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.actionBtn {
+  background: var(--primary);
+  color: var(--button-primary-text);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 8px 16px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.actionBtn:hover {
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+.actionBtnIcon {
+  width: 14px;
+  height: 14px;
+}
+
+/* ========================
+   MONTH NAVIGATION STYLES
+   ======================== */
+
+.monthNavigationContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.monthNavBtn {
+  background: var(--surface-card);
+  border: var(--card-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-1);
+  cursor: pointer;
+  transition: all var(--speed-fast) var(--ease-default);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.monthNavBtn:hover {
+  background: var(--surface-card-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.monthNavBtn:focus-visible {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+
+.monthNavBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.monthDisplay {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  min-width: 140px;
+  text-align: center;
+}
+
+/* ==================
+   RESPONSIVE DESIGN
+   ================== */
+
+@media (max-width: 768px) {
+  .header {
+    padding: var(--space-2);
+  }
+
+  .headerTop {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .headerRight {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .tabBar {
+    padding: var(--space-1);
+    gap: 4px;
+  }
+
+  .tabBtn {
+    min-width: 80px;
+    padding: 10px 12px;
+    font-size: var(--text-xs);
+  }
+
+  .floatingActionBar {
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    padding: 10px 16px;
+  }
+
+  .actionBtn {
+    padding: 6px 12px;
+    font-size: var(--text-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .userProfileBtn {
+    padding: 6px 8px;
+    font-size: var(--text-xs);
+  }
+
+  .topbarAvatar,
+  .profileIcon {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .tabBtn {
+    min-width: 60px;
+    padding: 8px 10px;
+  }
+
+  .monthDisplay {
+    font-size: var(--text-base);
+    min-width: 120px;
+  }
+
+  .profileDropdown {
+    min-width: 180px;
+    right: -20px;
+  }
+}
+
+/* ====================
+   SKELETON STATES
+   ==================== */
+
+:global(body.skeleton-active) .profileSkeleton {
+  display: flex;
+  opacity: 1;
+  visibility: visible;
+}
+
+:global(body.skeleton-active) .userProfileBtn {
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+}
+
+:global(body.skeleton-active) .tabBarSkeleton {
+  display: flex;
+}
+
+:global(body.skeleton-active) .tabBar > .tabBtn {
+  opacity: 0;
+}
+
+:global(body.skeleton-active) .floatingActionBar {
+  display: none !important;
+}
+
+/* =======================
+   LIGHT THEME OVERRIDES
+   ======================= */
+
+:global(html.theme-light) .header {
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+}
+
+:global(html.theme-light) .tabBar {
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+}
+
+:global(html.theme-light) .floatingActionBar {
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+}
+
+:global(html.theme-light) .tabBtn.active {
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+  background: var(--bg-card-elevated);
+}
+
+:global(html.theme-light) .userProfileBtn {
+  background: #f8fafc;
+  border: var(--card-border-width) var(--card-border-style) #e2e8f0;
+  color: var(--text-primary);
+}
+
+:global(html.theme-light) .userProfileBtn:hover {
+  background: #f1f5f9;
+  border-color: #3B82F6;
+  color: var(--text-primary);
+}
+
+/* =========================
+   REDUCED MOTION SUPPORT
+   ========================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .tabBtn,
+  .userProfileBtn,
+  .monthNavBtn,
+  .actionBtn,
+  .floatingActionBar {
+    transition: none;
+  }
+
+  .tabBtn {
+    will-change: auto;
+  }
+}
+
+/* ==========================
+   HIGH CONTRAST MODE SUPPORT
+   ========================== */
+
+@media (prefers-contrast: high) {
+  .header,
+  .tabBar,
+  .floatingActionBar {
+    border-width: 2px;
+  }
+
+  .tabBtn,
+  .userProfileBtn,
+  .actionBtn {
+    border-width: 2px;
+  }
+
+  .tabBtn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+  }
+}

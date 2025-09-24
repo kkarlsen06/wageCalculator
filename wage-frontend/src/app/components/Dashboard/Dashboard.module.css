@@ -1,0 +1,503 @@
+/**
+ * Dashboard Component Styles
+ * Progress cards, shift cards, payroll cards, and dashboard layout
+ */
+
+/* ===================
+   DASHBOARD LAYOUT
+   =================== */
+
+.appContainer {
+  margin-top: env(safe-area-inset-top, auto);
+  margin-bottom: 0;
+  /* Convert to flexbox with consistent gap spacing */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+
+/* =====================
+   PROGRESS CARD STYLES
+   ===================== */
+
+.progressCard {
+  background: var(--surface-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-xl);
+  padding: 0;
+  margin-bottom: 0;
+  border: var(--card-border);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  min-height: 96px;
+  overflow: hidden;
+}
+
+.progressCard:hover {
+  background: var(--surface-card-hover);
+  border: var(--card-border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.progressCard:focus-visible {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color, rgba(74, 200, 255, 0.9));
+  outline-offset: 2px;
+  background: var(--surface-card-hover);
+  border: var(--card-border-focus);
+  box-shadow: var(--shadow-card-hover), var(--focus-ring);
+  transform: translateY(-1px);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--gradient-secondary);
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  width: 0%;
+  will-change: width;
+  /* Optimize animations for better performance */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+  transform: translate3d(0, 0, 0);
+}
+
+.progressFill.active {
+  background: var(--gradient-secondary);
+}
+
+.progressFill.loading {
+  width: 0% !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+.progressFill.full {
+  border-radius: var(--radius-card);
+}
+
+.progressFill.overachievement {
+  background: var(--gradient-neon);
+}
+
+.progressFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0,0,0,0.03) 100%
+  );
+}
+
+.progressFill.full::before {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.08) 50%,
+    transparent 100%
+  );
+}
+
+.progressFill.full::after {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(16,120,59,0.08) 100%
+  );
+}
+
+.progressLabel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-primary);
+  text-align: center;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.progressLabel.lowProgress {
+  color: var(--text-primary);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.progressLabel.mediumProgress {
+  color: var(--text-primary);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 8px rgba(0, 0, 0, 0.4),
+    0 0 16px rgba(255, 255, 255, 0.1);
+}
+
+.progressLabel.highProgress {
+  color: #FFFFFF;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.6),
+    0 0 10px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.progressLabel.overachievement {
+  color: #FFFFFF;
+  font-weight: var(--font-weight-bold);
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.7),
+    0 0 12px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(58, 190, 246, 0.3);
+  animation: subtleGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes subtleGlow {
+  0% {
+    filter: brightness(1);
+  }
+  100% {
+    filter: brightness(1.1);
+  }
+}
+
+/* ====================
+   NEXT SHIFT CARD
+   ==================== */
+
+.nextShiftCard {
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  border: var(--card-border);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3);
+  position: relative;
+  overflow: hidden;
+  min-height: 96px;
+}
+
+.nextShiftCard .skeleton {
+  padding: 18px 18px 18px 44px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.nextShiftCard .skeletonLine:nth-child(1) {
+  height: 22px;
+  border-radius: 12px;
+}
+
+.nextShiftCard .skeletonLine + .skeletonLine {
+  margin-top: 8px;
+}
+
+.nextShiftCard .skeletonLine:nth-child(2) {
+  height: 18px;
+  border-radius: 8px;
+}
+
+.shiftInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.shiftAmountWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-1);
+}
+
+.shiftItem {
+  background: var(--surface-card-elevated);
+  border-radius: var(--radius-component);
+  padding: var(--space-2);
+  border: var(--card-border);
+  transition: all var(--speed-normal) var(--ease-default);
+  cursor: pointer;
+}
+
+.shiftItem:hover {
+  background: var(--surface-card-hover);
+  transform: translateY(-1px);
+}
+
+.shiftItem.active {
+  border: var(--card-border-strong);
+  background: var(--surface-card-active);
+}
+
+/* ====================
+   NEXT PAYROLL CARD
+   ==================== */
+
+.nextPayrollCard {
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  border: var(--card-border);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3);
+  position: relative;
+  overflow: hidden;
+  min-height: 96px;
+}
+
+.nextPayrollCard .skeleton {
+  padding: 18px 18px 18px 44px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.nextPayrollCard .skeletonLine:nth-child(1) {
+  height: 22px;
+  border-radius: 12px;
+}
+
+.nextPayrollCard .skeletonLine + .skeletonLine {
+  margin-top: 8px;
+}
+
+.nextPayrollCard .skeletonLine:nth-child(2) {
+  height: 18px;
+  border-radius: 8px;
+}
+
+.payrollAmount {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.payrollItem {
+  background: var(--surface-card-elevated);
+  border-radius: var(--radius-component);
+  padding: var(--space-2);
+  border: var(--card-border);
+}
+
+/* =================
+   TOTAL CARD
+   ================= */
+
+.totalCard {
+  background: var(--gradient-total-card);
+  border-radius: var(--radius-card);
+  border: var(--card-border);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+  position: relative;
+  overflow: hidden;
+  min-height: 216px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.totalLabel {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+  font-weight: var(--font-weight-medium);
+}
+
+.totalAmount {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.totalSecondaryInfo {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-normal);
+}
+
+.totalSkeleton {
+  background: var(--skeleton-base);
+  border-radius: var(--radius-sm);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+/* =====================
+   DASHBOARD MONTH NAV
+   ===================== */
+
+.dashboardMonthNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.monthDisplay {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  min-width: 120px;
+  text-align: center;
+}
+
+.monthNavBtn {
+  background: var(--surface-card);
+  border: var(--card-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-1);
+  cursor: pointer;
+  transition: all var(--speed-fast) var(--ease-default);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.monthNavBtn:hover {
+  background: var(--surface-card-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.monthNavBtn:focus-visible {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+
+/* ==================
+   RESPONSIVE DESIGN
+   ================== */
+
+@media (max-width: 480px) {
+  .appContainer {
+    padding: var(--space-2);
+    gap: var(--space-2);
+  }
+
+  .nextShiftCard .skeleton,
+  .nextPayrollCard .skeleton {
+    padding: 16px 16px 16px 44px;
+  }
+
+  .totalCard {
+    padding: var(--space-3);
+    min-height: 180px;
+  }
+
+  .totalAmount {
+    font-size: var(--text-3xl);
+  }
+
+  .progressLabel {
+    font-size: var(--text-sm);
+  }
+}
+
+@media (max-width: 360px) {
+  .nextShiftCard .skeleton,
+  .nextPayrollCard .skeleton {
+    padding: 14px 14px 14px 42px;
+  }
+
+  .totalCard {
+    padding: var(--space-2);
+  }
+}
+
+/* =====================
+   SKELETON STATES
+   ===================== */
+
+.skeletonActive .nextPayrollCard {
+  display: none !important;
+}
+
+.skeletonActive .nextShiftCard,
+.skeletonActive .nextPayrollCard {
+  min-height: 96px;
+}
+
+.skeletonActive .totalCard {
+  min-height: 216px;
+}
+
+.skeletonActive .totalAmount,
+.skeletonActive .totalSecondaryInfo,
+.skeletonActive .totalLabel {
+  opacity: 0;
+}
+
+.skeletonActive .totalSkeleton {
+  display: block;
+}
+
+/* Hide month navigation during skeleton state */
+.skeletonActive .dashboardMonthNav {
+  display: none !important;
+}
+
+/* =====================
+   LIGHT THEME OVERRIDES
+   ===================== */
+
+.lightTheme .totalCard {
+  background: var(--gradient-total-card);
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+}
+
+.lightTheme .totalCard:hover {
+  box-shadow: none;
+}
+
+.lightTheme .nextShiftCard .shiftItem {
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+}
+
+.lightTheme .nextShiftCard .shiftItem.active {
+  box-shadow: none;
+}
+
+.lightTheme .nextPayrollCard .payrollItem {
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+}
+
+.lightTheme .progressCard {
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+}
+
+.lightTheme .progressCard:hover {
+  box-shadow: none;
+}

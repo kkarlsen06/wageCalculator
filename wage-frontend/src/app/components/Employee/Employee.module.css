@@ -1,0 +1,582 @@
+/**
+ * Employee Component Styles
+ * Employee carousel, tiles, avatars, and actions
+ */
+
+/* ============================
+   EMPLOYEE CAROUSEL CONTAINER
+   ============================ */
+
+.employeeCarousel {
+  width: 100%;
+  position: relative;
+  margin: 16px 0;
+}
+
+.employeeCarouselTrack {
+  display: flex;
+  gap: 12px;
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  scroll-snap-type: x mandatory;
+}
+
+.employeeCarouselTrack::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+
+/* Carousel Navigation Arrows */
+.carouselArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: all var(--speed-normal) var(--ease-default);
+  opacity: 0.8;
+}
+
+.carouselArrow:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: translateY(-50%) scale(1.1);
+  opacity: 1;
+}
+
+.carouselArrow:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.carouselArrow svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
+.carouselArrowLeft {
+  left: 8px;
+}
+
+.carouselArrowRight {
+  right: 8px;
+}
+
+/* =====================
+   EMPLOYEE TILE STYLES
+   ===================== */
+
+.employeeTile {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 16px;
+  background: var(--bg-tertiary);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  position: relative;
+  min-width: 80px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  scroll-snap-align: center;
+}
+
+.employeeTile:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+}
+
+.employeeTile:focus-visible {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color, rgba(74, 200, 255, 0.9));
+  outline-offset: 2px;
+  border-color: var(--accent);
+  box-shadow:
+    var(--focus-ring, 0 0 0 1px rgba(74, 200, 255, 0.45)),
+    0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.employeeTile.active {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.employeeTile.active .employeeAvatar {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.employeeTile.active .employeeName {
+  color: var(--accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.employeeTile:hover .employeeActionsBtn,
+.employeeTile:focus-visible .employeeActionsBtn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* =========================
+   EMPLOYEE AVATAR STYLES
+   ========================= */
+
+.employeeAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--employee-color, var(--bg-secondary));
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all var(--speed-normal) var(--ease-default);
+  position: relative;
+}
+
+.employeeAvatar.allAvatar {
+  background: var(--bg-secondary);
+}
+
+.employeeAvatar.addAvatar {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatarInitials {
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.employeeAvatar svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+}
+
+/* =======================
+   EMPLOYEE NAME & INFO
+   ======================= */
+
+.employeeName {
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--speed-normal) var(--ease-default);
+}
+
+/* ========================
+   EMPLOYEE ACTIONS BUTTON
+   ======================== */
+
+.employeeActionsBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all var(--speed-normal) var(--ease-default);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  z-index: 1;
+}
+
+.employeeActionsBtn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.employeeActionsBtn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.employeeActionsBtn:focus-visible {
+  outline: 2px solid var(--focus-outline-color);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+/* ======================
+   EMPLOYEES CONTAINER
+   ====================== */
+
+.employeesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+
+.employeesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.employeesHeader h2 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.employeesSummary {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.employeesContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ========================
+   EMPLOYEE WORK SUMMARY
+   ======================== */
+
+.employeeWorkSummary {
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  border: var(--card-border);
+}
+
+.employeeWorkSummaryTableWrapper {
+  overflow-x: auto;
+  margin-top: var(--space-2);
+}
+
+.employeeWorkSummaryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.employeeWorkSummaryTable th,
+.employeeWorkSummaryTable td {
+  padding: var(--space-1) var(--space-2);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.employeeWorkSummaryTable thead th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+.employeeWorkSummaryTable tbody td.colRate,
+.employeeWorkSummaryTable tbody td.colHours,
+.employeeWorkSummaryTable tbody td.colPay,
+.employeeWorkSummaryTable tfoot td:nth-child(3),
+.employeeWorkSummaryTable tfoot td:nth-child(4) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.employeeWorkSummaryTable tfoot td {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+/* ====================
+   EMPLOYEES PLACEHOLDER
+   ==================== */
+
+.employeesPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  border: var(--card-border);
+  min-height: 200px;
+}
+
+.employeesPlaceholder .placeholderIcon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--space-3);
+  opacity: 0.4;
+}
+
+.employeesPlaceholder .placeholderIcon svg {
+  width: 100%;
+  height: 100%;
+  stroke: var(--text-muted);
+}
+
+.employeesPlaceholder h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.employeesPlaceholder p {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+/* =======================
+   LOADING & ERROR STATES
+   ======================= */
+
+.employeeCarouselLoading {
+  display: flex;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.loadingSkeleton {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  background: var(--skeleton-gradient);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+/* ===================
+   RESPONSIVE DESIGN
+   =================== */
+
+@media (max-width: 768px) {
+  .employeeTile {
+    min-width: 70px;
+    padding: 10px 6px;
+    gap: 6px;
+    scroll-snap-align: center;
+    min-height: 44px;
+  }
+
+  .employeeTile:focus-visible {
+    transform: scale(1.05);
+    z-index: 2;
+  }
+
+  .employeeAvatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  .avatarInitials {
+    font-size: 14px;
+  }
+
+  .employeeAvatar svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .employeeName {
+    font-size: 11px;
+    max-width: 70px;
+  }
+
+  .employeeActionsBtn {
+    width: 18px;
+    height: 18px;
+    top: 2px;
+    right: 2px;
+    padding: 4px;
+    margin: -4px;
+  }
+
+  .employeeActionsBtn svg {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .employeeTile {
+    min-width: 60px;
+    padding: 8px 4px;
+    gap: 4px;
+    min-height: 40px;
+  }
+
+  .employeeAvatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .avatarInitials {
+    font-size: 12px;
+  }
+
+  .employeeAvatar svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .employeeName {
+    font-size: 10px;
+    max-width: 60px;
+  }
+
+  .employeesHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+}
+
+@media (max-width: 360px) {
+  .employeeCarouselTrack {
+    padding: 0 12px;
+  }
+
+  .employeeTile {
+    min-width: 56px;
+  }
+
+  .employeeAvatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .avatarInitials {
+    font-size: 11px;
+  }
+}
+
+/* ==========================
+   HIGH CONTRAST MODE SUPPORT
+   ========================== */
+
+@media (prefers-contrast: high) {
+  .employeeTile {
+    border-width: 3px;
+  }
+
+  .employeeTile.active {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.2);
+  }
+
+  .employeeAvatar {
+    border-width: 3px;
+  }
+}
+
+/* =========================
+   REDUCED MOTION SUPPORT
+   ========================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .employeeTile,
+  .employeeAvatar,
+  .employeeName,
+  .employeeActionsBtn,
+  .carouselArrow {
+    transition: none;
+  }
+
+  .employeeCarouselTrack {
+    scroll-behavior: auto;
+  }
+
+  .loadingSkeleton {
+    animation: none;
+  }
+}
+
+/* =====================
+   VIEW STATE MANAGEMENT
+   ===================== */
+
+/* Hide employees container in other views */
+:global(body:not(.employees-view)) .employeesContainer {
+  display: none;
+}
+
+/* Show employees container in employees view */
+:global(body.employees-view) .employeesContainer {
+  display: flex;
+}
+
+/* Adjust tab bar visibility in employees view */
+:global(body.employees-view) .tabBarContainer {
+  display: none;
+}
+
+/* Statistics section adjustments */
+.statisticsSection .employeeWorkSummary {
+  margin-top: var(--space-2);
+}
+
+.statisticsSection #currentUserWorkSummary .employeeWorkSummary {
+  background: var(--surface-card-elevated);
+}
+
+/* Employee view specific dashboard month nav */
+.employeesView .dashboardMonthNav {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  left: auto !important;
+  height: auto !important;
+  width: auto !important;
+}

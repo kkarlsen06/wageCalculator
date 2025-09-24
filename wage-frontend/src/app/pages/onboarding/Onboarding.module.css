@@ -1,0 +1,493 @@
+/**
+ * Onboarding Page Styles
+ * Welcome screens, setup flows, and guided tour elements
+ */
+
+/* ======================
+   ONBOARDING LAYOUT
+   ====================== */
+
+.onboardingContainer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--gradient-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.onboardingCard {
+  background: var(--surface-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: var(--card-border);
+  border-radius: var(--radius-hero);
+  box-shadow: var(--shadow-card-strong);
+  padding: var(--space-6);
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* ======================
+   ONBOARDING CONTENT
+   ====================== */
+
+.onboardingHeader {
+  margin-bottom: var(--space-4);
+}
+
+.onboardingLogo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--space-3);
+  border-radius: var(--radius-xl);
+  background: var(--gradient-neon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 32px rgba(74, 200, 255, 0.3);
+}
+
+.onboardingLogo svg {
+  width: 40px;
+  height: 40px;
+}
+
+.onboardingTitle {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+  line-height: 1.2;
+}
+
+.onboardingSubtitle {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+}
+
+.onboardingDescription {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+}
+
+/* =========================
+   ONBOARDING STEPS/WIZARD
+   ========================= */
+
+.onboardingSteps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.stepIndicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.stepIndicator.active {
+  background: var(--primary);
+  transform: scale(1.2);
+}
+
+.stepIndicator.completed {
+  background: var(--success);
+}
+
+.stepContent {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.stepIcon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-3);
+  background: var(--surface-card-elevated);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  border: 2px solid var(--border);
+}
+
+.stepIcon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.stepTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.stepDescription {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ========================
+   ONBOARDING ACTIONS
+   ======================== */
+
+.onboardingActions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+.onboardingBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-component);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  border: none;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.onboardingBtn.primary {
+  background: var(--primary);
+  color: var(--button-primary-text);
+  border: 1px solid var(--primary);
+}
+
+.onboardingBtn.primary:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(74, 200, 255, 0.3);
+}
+
+.onboardingBtn.secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.onboardingBtn.secondary:hover {
+  background: var(--surface-card-hover);
+  color: var(--text-primary);
+  border-color: var(--primary);
+}
+
+.onboardingBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btnIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* =========================
+   FEATURE SHOWCASE CARDS
+   ========================= */
+
+.featureShowcase {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.featureCard {
+  background: var(--surface-card-elevated);
+  border: var(--card-border);
+  border-radius: var(--radius-component);
+  padding: var(--space-3);
+  text-align: center;
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.featureCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--primary);
+}
+
+.featureIcon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-2);
+  background: var(--gradient-secondary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.featureIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.featureTitle {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.featureDescription {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* =======================
+   PROGRESS BAR
+   ======================= */
+
+.progressContainer {
+  margin: var(--space-4) 0;
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background: var(--surface-card-muted);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--gradient-neon);
+  transition: width var(--speed-slow) var(--ease-default);
+  border-radius: var(--radius-pill);
+}
+
+.progressText {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
+}
+
+/* =========================
+   BACKGROUND DECORATIONS
+   ========================= */
+
+.onboardingContainer::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 40%, rgba(74, 200, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(0, 212, 255, 0.08) 0%, transparent 50%);
+  animation: float 20s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(1deg);
+  }
+}
+
+/* ==================
+   RESPONSIVE DESIGN
+   ================== */
+
+@media (max-width: 768px) {
+  .onboardingContainer {
+    padding: var(--space-3);
+  }
+
+  .onboardingCard {
+    padding: var(--space-4);
+    max-width: 100%;
+  }
+
+  .onboardingTitle {
+    font-size: var(--text-2xl);
+  }
+
+  .onboardingSubtitle {
+    font-size: var(--text-base);
+  }
+
+  .featureShowcase {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .onboardingActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .onboardingBtn {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .onboardingCard {
+    padding: var(--space-3);
+  }
+
+  .onboardingLogo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .onboardingLogo svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .onboardingTitle {
+    font-size: var(--text-xl);
+  }
+
+  .stepContent {
+    min-height: 150px;
+  }
+
+  .stepIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .stepIcon svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* =========================
+   REDUCED MOTION SUPPORT
+   ========================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .onboardingContainer::before {
+    animation: none;
+  }
+
+  .stepIndicator,
+  .onboardingBtn,
+  .featureCard,
+  .progressFill {
+    transition: none;
+  }
+}
+
+/* ==========================
+   HIGH CONTRAST MODE SUPPORT
+   ========================== */
+
+@media (prefers-contrast: high) {
+  .onboardingCard,
+  .featureCard {
+    border-width: 2px;
+  }
+
+  .onboardingBtn {
+    border-width: 2px;
+  }
+
+  .stepIndicator.active {
+    border: 2px solid var(--text-primary);
+  }
+}
+
+/* =====================
+   ANIMATION UTILITIES
+   ===================== */
+
+.fadeIn {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.slideUp {
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =======================
+   LOADING STATES
+   ======================= */
+
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.loadingSpinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

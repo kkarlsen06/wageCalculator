@@ -1,0 +1,470 @@
+/**
+ * Settings Page Styles
+ * Settings cards, sections, and configuration forms
+ */
+
+/* =====================
+   SETTINGS LAYOUT
+   ===================== */
+
+.settingsContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.settingsHeader {
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+
+.settingsTitle {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.settingsSubtitle {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* =====================
+   SETTINGS SECTIONS
+   ===================== */
+
+.settingsSection {
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  border: var(--card-border);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.settingsSection:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionIcon {
+  width: 24px;
+  height: 24px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.sectionDescription {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.sectionContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ========================
+   SETTINGS CARDS & ITEMS
+   ======================== */
+
+.settingsCard {
+  background: var(--surface-card-elevated);
+  border-radius: var(--radius-component);
+  border: var(--card-border);
+  padding: var(--space-3);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.settingsCard:hover {
+  background: var(--surface-card-hover);
+}
+
+.settingsItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.settingsItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.settingsItemLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settingsItemTitle {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.settingsItemDescription {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.settingsItemControl {
+  flex-shrink: 0;
+  margin-left: var(--space-2);
+}
+
+/* ========================
+   THEME SELECTOR
+   ======================== */
+
+.themeSelector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-2);
+}
+
+.themeOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-component);
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  background: var(--surface-card);
+}
+
+.themeOption:hover {
+  border-color: var(--primary);
+  background: var(--surface-card-hover);
+}
+
+.themeOption.active {
+  border-color: var(--primary);
+  background: var(--surface-card-active);
+  box-shadow: 0 0 0 2px rgba(74, 200, 255, 0.2);
+}
+
+.themePreview {
+  width: 80px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.themePreview.light {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.themePreview.dark {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.themePreview.auto {
+  background: linear-gradient(90deg, #ffffff 0%, #ffffff 50%, #0f172a 50%, #0f172a 100%);
+}
+
+.themeName {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+/* ========================
+   PROFILE SETTINGS
+   ======================== */
+
+.profileSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.profilePictureContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.currentProfilePicture {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.currentProfilePicture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profilePlaceholderIcon {
+  width: 40px;
+  height: 40px;
+  stroke: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.profilePictureInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.profilePictureTitle {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.profilePictureDescription {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.profilePictureActions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+/* ========================
+   NOTIFICATION SETTINGS
+   ======================== */
+
+.notificationsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.notificationItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--surface-card-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.notificationContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notificationTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.notificationDescription {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* ========================
+   DANGER ZONE
+   ======================== */
+
+.dangerZone {
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-component);
+  padding: var(--space-3);
+}
+
+.dangerZone .sectionTitle {
+  color: var(--error);
+}
+
+.dangerZone .sectionDescription {
+  color: rgba(239, 68, 68, 0.8);
+}
+
+.dangerActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.dangerBtn {
+  background: var(--error);
+  color: white;
+  border: 1px solid var(--error);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--speed-normal) var(--ease-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.dangerBtn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* ==================
+   RESPONSIVE DESIGN
+   ================== */
+
+@media (max-width: 768px) {
+  .settingsContainer {
+    padding: var(--space-2);
+    gap: var(--space-3);
+  }
+
+  .settingsSection {
+    padding: var(--space-3);
+  }
+
+  .settingsItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .settingsItemControl {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .themeSelector {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profilePictureContainer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profilePictureActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .dangerActions {
+    margin-top: var(--space-2);
+  }
+}
+
+@media (max-width: 480px) {
+  .settingsTitle {
+    font-size: var(--text-2xl);
+  }
+
+  .settingsSubtitle {
+    font-size: var(--text-base);
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .themeSelector {
+    grid-template-columns: 1fr;
+  }
+
+  .notificationItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* =========================
+   REDUCED MOTION SUPPORT
+   ========================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .settingsSection,
+  .settingsCard,
+  .themeOption,
+  .dangerBtn {
+    transition: none;
+  }
+}
+
+/* ==========================
+   HIGH CONTRAST MODE SUPPORT
+   ========================== */
+
+@media (prefers-contrast: high) {
+  .settingsSection,
+  .settingsCard,
+  .themeOption {
+    border-width: 2px;
+  }
+
+  .themeOption.active {
+    border-width: 3px;
+  }
+
+  .dangerZone {
+    border-width: 2px;
+  }
+}
+
+/* =========================
+   LIGHT THEME OVERRIDES
+   ========================= */
+
+:global(html.theme-light) .settingsSection {
+  box-shadow: none;
+  border: var(--card-border-width-strong) var(--card-border-style) var(--border-profile);
+}
+
+:global(html.theme-light) .settingsSection:hover {
+  box-shadow: none;
+}
