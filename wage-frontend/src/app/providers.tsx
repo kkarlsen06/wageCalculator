@@ -1,10 +1,12 @@
 "use client";
 
 import type { PropsWithChildren, JSX } from "react";
-import { AuthProvider } from "@/components/providers";
+import { AuthProvider, ConfigProvider } from "@/components/providers";
 
 const AppProviders = ({ children }: PropsWithChildren): JSX.Element => (
-  <AuthProvider>{children}</AuthProvider>
+  <ConfigProvider>
+    <AuthProvider>{children}</AuthProvider>
+  </ConfigProvider>
 );
 
 export default AppProviders;

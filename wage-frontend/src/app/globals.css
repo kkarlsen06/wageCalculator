@@ -426,3 +426,109 @@ a {
   white-space: nowrap;
   border: 0;
 }
+/* ===================
+   APP LANDING SHELL
+   =================== */
+.app-landing {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6, 3rem) var(--space-3, 1.5rem);
+  background: var(--bg-primary);
+  transition: background var(--speed-normal) var(--ease-default);
+}
+
+.app-landing__surface {
+  width: min(100%, 640px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 1.5rem);
+  padding: clamp(2rem, 4vw, 3rem);
+  border-radius: var(--radius-card, 32px);
+  background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--surface-card), transparent 5%),
+      color-mix(in oklab, var(--surface-card-elevated, var(--surface-card)), transparent 20%)
+    );
+  box-shadow: var(--shadow-card, 0 12px 32px rgba(8, 12, 20, 0.45));
+  border: var(--card-border, 1px solid rgba(148, 182, 255, 0.28));
+}
+
+.app-landing__eyebrow {
+  font-size: var(--text-sm, 0.875rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.app-landing__title {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.app-landing__description {
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.7;
+}
+
+.app-landing__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 1rem);
+}
+
+.app-landing__nav-link {
+  flex: 1 0 160px;
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--radius-control, 8px);
+  background: color-mix(in oklab, var(--surface-card-hover), transparent 15%);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  transition: transform var(--speed-fast, 0.15s) var(--ease-default),
+    background var(--speed-fast, 0.15s) var(--ease-default);
+  border: 1px solid color-mix(in oklab, var(--border), transparent 35%);
+}
+
+.app-landing__nav-link:hover {
+  transform: translateY(-2px);
+  background: color-mix(in oklab, var(--surface-card-hover), transparent 0%);
+}
+
+.app-landing__nav-link:focus-visible {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color, rgba(74, 200, 255, 0.9));
+  outline-offset: 3px;
+}
+
+.app-landing__footnote {
+  margin: 0;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .app-landing__surface {
+    border-radius: var(--radius-panel, 24px);
+    padding: 2rem;
+    gap: var(--space-2, 1rem);
+  }
+
+  .app-landing__nav-link {
+    flex: 1 0 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-landing {
+    padding: var(--space-4, 2rem) var(--space-2, 1rem);
+  }
+
+  .app-landing__surface {
+    padding: 1.75rem;
+  }
+}

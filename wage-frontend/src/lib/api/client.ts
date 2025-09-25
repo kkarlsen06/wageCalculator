@@ -32,6 +32,7 @@ type ApiClientOptions = {
     | null
     | undefined
     | Promise<string | null | undefined>;
+  enableLogging?: boolean;
 };
 
 type ParsedBody<T> = {
@@ -103,12 +104,30 @@ const parseResponse = async <T>(response: Response): Promise<ParsedBody<T>> => {
 export class ApiClient {
   private requestInterceptors: RequestInterceptor[] = [];
   private responseInterceptors: ResponseInterceptor[] = [];
-  private readonly baseUrl: string;
+  private baseUrl: string;
   private readonly resolveAccessToken?: ApiClientOptions["getAccessToken"];
+  private loggingEnabled: boolean;
 
   constructor(options: ApiClientOptions) {
     this.baseUrl = options.baseUrl;
     this.resolveAccessToken = options.getAccessToken;
+    this.loggingEnabled = Boolean(options.enableLogging);
+  }
+
+  setBaseUrl(baseUrl: string) {
+    this.baseUrl = baseUrl;
+  }
+
+  getBaseUrl() {
+    return this.baseUrl;
+  }
+
+  setLoggingEnabled(enabled: boolean) {
+    this.loggingEnabled = enabled;
+  }
+
+  isLoggingEnabled() {
+    return this.loggingEnabled;
   }
 
   useRequest(interceptor: RequestInterceptor) {
@@ -220,8 +239,9 @@ const getAccessToken = async () =>
   useAuthStore.getState().session?.access_token ?? null;
 
 const defaultClient = new ApiClient({
-  baseUrl: appConfig.apiBaseUrl,
+  baseUrl: appConfig.apiBase,
   getAccessToken,
+  enableLogging: appConfig.debug,
 });
 
 defaultClient.useRequest(async (config) => {
@@ -242,7 +262,7 @@ defaultClient.useResponse(async (response) => {
     useAuthStore.getState().setStatus("unauthenticated");
   }
 
-  if (appConfig.features.enableVerboseLogging) {
+  if (defaultClient.isLoggingEnabled()) {
     console.info("[api] response", {
       status: response.status,
       ok: response.ok,

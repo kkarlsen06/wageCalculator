@@ -1,0 +1,373 @@
+[
+  {
+    "method": "OPTIONS",
+    "path": "/api/checkout",
+    "file": "server/server.js",
+    "line": 73,
+    "handler": "cors preflight",
+    "middlewares": [
+      "cors(corsOptions)"
+    ],
+    "authRequired": false
+  },
+  {
+    "method": "OPTIONS",
+    "path": "/api/portal",
+    "file": "server/server.js",
+    "line": 75,
+    "handler": "cors preflight",
+    "middlewares": [
+      "cors(corsOptions)"
+    ],
+    "authRequired": false
+  },
+  {
+    "method": "OPTIONS",
+    "path": "/api/portal/upgrade",
+    "file": "server/server.js",
+    "line": 77,
+    "handler": "cors preflight",
+    "middlewares": [
+      "cors(corsOptions)"
+    ],
+    "authRequired": false
+  },
+  {
+    "method": "OPTIONS",
+    "path": "/portal",
+    "file": "server/server.js",
+    "line": 79,
+    "handler": "cors preflight",
+    "middlewares": [
+      "cors(corsOptions)"
+    ],
+    "authRequired": false
+  },
+  {
+    "method": "OPTIONS",
+    "path": "/portal/upgrade",
+    "file": "server/server.js",
+    "line": 81,
+    "handler": "cors preflight",
+    "middlewares": [
+      "cors(corsOptions)"
+    ],
+    "authRequired": false
+  },
+  {
+    "method": "OPTIONS",
+    "path": "/api/stripe/create-portal-session",
+    "file": "server/server.js",
+    "line": 83,
+    "handler": "cors preflight",
+    "middlewares": [
+      "cors(corsOptions)"
+    ],
+    "authRequired": false
+  },
+  {
+    "method": "OPTIONS",
+    "path": "/stripe/create-portal-session",
+    "file": "server/server.js",
+    "line": 85,
+    "handler": "cors preflight",
+    "middlewares": [
+      "cors(corsOptions)"
+    ],
+    "authRequired": false
+  },
+  {
+    "method": "OPTIONS",
+    "path": "/checkout",
+    "file": "server/server.js",
+    "line": 90,
+    "handler": "cors preflight",
+    "middlewares": [
+      "cors(corsOptions)"
+    ],
+    "authRequired": false
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "server/server.js",
+    "line": 42,
+    "handler": "liveness handler",
+    "middlewares": [],
+    "authRequired": false
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "file": "server/server.js",
+    "line": 121,
+    "handler": "duplicate liveness handler",
+    "middlewares": [],
+    "authRequired": false,
+    "notes": "Second registration; previous handler at line 42 returns first."
+  },
+  {
+    "method": "GET",
+    "path": "/health/deep",
+    "file": "server/server.js",
+    "line": 130,
+    "handler": "deep health check",
+    "middlewares": [],
+    "authRequired": false
+  },
+  {
+    "method": "GET",
+    "path": "/",
+    "file": "server/server.js",
+    "line": 148,
+    "handler": "root status",
+    "middlewares": [],
+    "authRequired": false
+  },
+  {
+    "method": "GET",
+    "path": "/auth/debug",
+    "file": "server/server.js",
+    "line": 175,
+    "handler": "dev auth introspection",
+    "middlewares": [
+      "authMiddleware"
+    ],
+    "authRequired": true,
+    "notes": "Only registered when NODE_ENV !== 'production'."
+  },
+  {
+    "method": "GET",
+    "path": "/auth/session-echo",
+    "file": "server/server.js",
+    "line": 184,
+    "handler": "dev auth echo",
+    "middlewares": [],
+    "authRequired": false,
+    "notes": "Only registered when NODE_ENV !== 'production'."
+  },
+  {
+    "method": "GET",
+    "path": "/metrics",
+    "file": "server/server.js",
+    "line": 437,
+    "handler": "Prometheus metrics",
+    "middlewares": [],
+    "authRequired": false
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/start",
+    "file": "server/server.js",
+    "line": 461,
+    "handler": "secure billing start",
+    "middlewares": [
+      "express.json"
+    ],
+    "authRequired": "Supabase JWT via getUidFromAuthHeader"
+  },
+  {
+    "method": "POST",
+    "path": "/api/checkout",
+    "file": "server/server.js",
+    "line": 618,
+    "handler": "create Stripe checkout session",
+    "middlewares": [
+      "authenticateUser"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "POST",
+    "path": "/checkout",
+    "file": "server/server.js",
+    "line": 775,
+    "handler": "create Stripe checkout session (legacy path)",
+    "middlewares": [
+      "authenticateUser"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "POST",
+    "path": "/api/portal",
+    "file": "server/server.js",
+    "line": 855,
+    "handler": "create Stripe billing portal session",
+    "middlewares": [
+      "authenticateUser"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "POST",
+    "path": "/portal",
+    "file": "server/server.js",
+    "line": 1352,
+    "handler": "create Stripe billing portal session (legacy path)",
+    "middlewares": [
+      "authenticateUser"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "POST",
+    "path": "/api/stripe/create-portal-session",
+    "file": "server/server.js",
+    "line": 973,
+    "handler": "create Stripe billing portal session via SDK",
+    "middlewares": [
+      "authenticateUser"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "POST",
+    "path": "/stripe/create-portal-session",
+    "file": "server/server.js",
+    "line": 1066,
+    "handler": "create Stripe billing portal session via SDK (legacy path)",
+    "middlewares": [
+      "authenticateUser"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "POST",
+    "path": "/api/portal/upgrade",
+    "file": "server/server.js",
+    "line": 1134,
+    "handler": "open Stripe subscription upgrade flow",
+    "middlewares": [
+      "authenticateUser"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "POST",
+    "path": "/portal/upgrade",
+    "file": "server/server.js",
+    "line": 1277,
+    "handler": "open Stripe subscription upgrade flow (legacy path)",
+    "middlewares": [
+      "authenticateUser"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "POST",
+    "path": "/api/stripe-webhook",
+    "file": "server/server.js",
+    "line": 1443,
+    "handler": "Stripe webhook",
+    "middlewares": [
+      "express.raw"
+    ],
+    "authRequired": false
+  },
+  {
+    "method": "GET",
+    "path": "/admin/unlinked-customers",
+    "file": "server/server.js",
+    "line": 1646,
+    "handler": "manual Stripe metadata audit",
+    "middlewares": [],
+    "authRequired": "Supabase JWT via getUidFromAuthHeader",
+    "notes": "Requires DEV_BYPASS=true to proceed; intended for diagnostics."
+  },
+  {
+    "method": "POST",
+    "path": "/admin/link-customer",
+    "file": "server/server.js",
+    "line": 1756,
+    "handler": "link Stripe customer to Supabase user",
+    "middlewares": [
+      "authenticateUser",
+      "requireAdmin"
+    ],
+    "authRequired": "Supabase JWT with admin role"
+  },
+  {
+    "method": "GET",
+    "path": "/admin/unlinked-customers",
+    "file": "server/server.js",
+    "line": 1842,
+    "handler": "list unlinked Stripe customers",
+    "middlewares": [
+      "authenticateUser",
+      "requireAdmin"
+    ],
+    "authRequired": "Supabase JWT with admin role"
+  },
+  {
+    "method": "GET",
+    "path": "/audit-log/recent",
+    "file": "server/server.js",
+    "line": 1881,
+    "handler": "recent audit log",
+    "middlewares": [
+      "authenticateUser",
+      "requireAdmin"
+    ],
+    "authRequired": "Supabase JWT with admin role"
+  },
+  {
+    "method": "GET",
+    "path": "/config",
+    "file": "server/server.js",
+    "line": 3316,
+    "handler": "feature flag config",
+    "middlewares": [],
+    "authRequired": false
+  },
+  {
+    "method": "GET",
+    "path": "/settings",
+    "file": "server/server.js",
+    "line": 3331,
+    "handler": "fetch user settings",
+    "middlewares": [
+      "authMiddleware (app.use '/settings')"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "file": "server/server.js",
+    "line": 3391,
+    "handler": "update user settings",
+    "middlewares": [
+      "authMiddleware (app.use '/settings')",
+      "blockAgentWrites"
+    ],
+    "authRequired": "Supabase JWT"
+  },
+  {
+    "method": "GET",
+    "path": "/routes-debug",
+    "file": "server/server.js",
+    "line": 3546,
+    "handler": "enumerate express routes",
+    "middlewares": [],
+    "authRequired": false
+  },
+  {
+    "method": "GET",
+    "path": "/ping",
+    "file": "server/server.js",
+    "line": 3579,
+    "handler": "ping",
+    "middlewares": [],
+    "authRequired": false
+  },
+  {
+    "method": "GET",
+    "path": "/routes-debug2",
+    "file": "server/server.js",
+    "line": 3582,
+    "handler": "dump router stack",
+    "middlewares": [],
+    "authRequired": false
+  }
+]

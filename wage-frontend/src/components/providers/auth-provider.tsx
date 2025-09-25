@@ -11,7 +11,7 @@ import {
   type JSX,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { appConfig } from "@/lib/config";
+import { useRuntimeConfig } from "./config-provider";
 import { getBrowserSupabaseClient } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import type { AuthStatus, UserProfile } from "@/lib/stores/auth-store";
@@ -41,7 +41,10 @@ export const AuthProvider = ({ children }: PropsWithChildren): JSX.Element => {
   const setSessionInStore = useAuthStore((state) => state.setSession);
   const setStatus = useAuthStore((state) => state.setStatus);
   const setProfile = useAuthStore((state) => state.setProfile);
-  const shouldLog = appConfig.features.enableVerboseLogging;
+  const { config: runtimeConfig } = useRuntimeConfig();
+  const verboseFeature = runtimeConfig.features?.["enableVerboseLogging"] as boolean | undefined;
+  const verboseFlag = runtimeConfig.flags?.["enableVerboseLogging"] ?? undefined;
+  const shouldLog = Boolean(runtimeConfig.debug || verboseFlag || verboseFeature);
 
   const fetchProfile = useCallback(
     async (targetSession: Session | null): Promise<UserProfile | null> => {
