@@ -1,0 +1,25 @@
+{
+  "name": "@kkarlsen/frontend",
+  "private": true,
+  "type": "module",
+  "main": "next.config.mjs",
+  "scripts": {
+    "dev": "next dev -p 5173",
+    "build": "next build",
+    "start": "next start -p 5173",
+    "lint": "eslint .",
+    "add": "liftkit add"
+  },
+  "dependencies": {
+    "next": "14.x",
+    "react": "18.x",
+    "react-dom": "18.x"
+  },
+  "devDependencies": {
+    "@chainlift/liftkit": "^0.2.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.0.0"
+  }
+}
