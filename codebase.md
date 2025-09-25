@@ -19,13 +19,13 @@ Wage Calculator is a Node 22+ monorepo that powers a payroll-focused SPA, a mar
 
 ## Monorepo Layout
 
-| Workspace | Description | Notable Dependencies |
-| --- | --- | --- |
-| `server/` | Express 5 API serving JSON-only endpoints, subscription and billing integrations | `express`, `@supabase/supabase-js`, `stripe`, `jose`, `cors`, `morgan` |
-| `app/` | Primary SPA (“kalkulator”) built with Vite; focuses on subscription management and checkout | `vite`, `@supabase/supabase-js` |
-| `marketing/` | Static Vite marketing site with shared toast/legal modals | `vite` |
-| `packages/shared/` | Placeholder shared module (currently empty) | — |
-| `scripts/` | Utility scripts (`clean-dists.mjs`, `smoke-spa.mjs`, etc.) | Node stdlib |
+| Workspace          | Description                                                                                 | Notable Dependencies                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `server/`          | Express 5 API serving JSON-only endpoints, subscription and billing integrations            | `express`, `@supabase/supabase-js`, `stripe`, `jose`, `cors`, `morgan` |
+| `app/`             | Primary SPA (“kalkulator”) built with Vite; focuses on subscription management and checkout | `vite`, `@supabase/supabase-js`                                        |
+| `marketing/`       | Static Vite marketing site with shared toast/legal modals                                   | `vite`                                                                 |
+| `packages/shared/` | Placeholder shared module (currently empty)                                                 | —                                                                      |
+| `scripts/`         | Utility scripts (`clean-dists.mjs`, `smoke-spa.mjs`, etc.)                                  | Node stdlib                                                            |
 
 Dependency relationships are visualised in `_reports/graph.md` (see “Dependency Graph”). Root scripts (`package.json`) fan out to each workspace (`dev:*`, `build:*`, `preview:*`, `test:*`).
 
@@ -34,6 +34,7 @@ Dependency relationships are visualised in `_reports/graph.md` (see “Dependenc
 Complete machine-readable inventory lives in `_reports/routes.json`. Key groups:
 
 ### Public & Health
+
 - `GET /health` (`server/server.js:42`) and a duplicate at `server/server.js:121`; the first responds and shadows the second.
 - `GET /health/deep` probes Supabase with a 800 ms timeout (`server/server.js:130`).
 - `GET /` returns service metadata (`server/server.js:148`).
@@ -41,6 +42,7 @@ Complete machine-readable inventory lives in `_reports/routes.json`. Key groups:
 - `GET /config` publishes feature flags consumed by the client (`server/server.js:3316`).
 
 ### Authenticated Billing & Stripe
+
 - `POST /api/billing/start` verifies the Bearer token with `getUidFromAuthHeader` and provisions Stripe customers safely (`server/server.js:461`).
 - `POST /api/checkout` and legacy `/checkout` run `authenticateUser`, block `ai_agent` writers, and create sessions with metadata consistency (`server/server.js:618`, `server/server.js:775`).
 - Billing portal routes (`/api/portal`, `/portal`, `/api/stripe/create-portal-session`, `/stripe/create-portal-session`) share the same security posture (`server/server.js:855`, `973`, `1066`, `1352`).
@@ -48,17 +50,21 @@ Complete machine-readable inventory lives in `_reports/routes.json`. Key groups:
 - `POST /api/stripe-webhook` keeps a raw body, verifies signatures, and upserts Supabase subscription state (`server/server.js:1443`).
 
 ### Admin & Diagnostics
+
 - `POST /admin/link-customer`, `GET /admin/unlinked-customers`, and `GET /audit-log/recent` require JWT + `requireAdmin` (`server/server.js:1756`, `1842`, `1881`).
 - A legacy `/admin/unlinked-customers` (line `server/server.js:1646`) is gated by `DEV_BYPASS` and manual header verification.
 
 ### Developer Utilities
+
 - `/routes-debug`, `/routes-debug2`, and `/ping` support debugging (`server/server.js:3546`, `3582`, `3579`).
 - Dev-only auth probes `/auth/debug` and `/auth/session-echo` register when `NODE_ENV !== 'production'` (`server/server.js:175-191`).
 
 ### Client SPA Routes
+
 `app/src/router.js:37-109` defines SPA paths rendered client-side. Subscription-centric entries such as `/login`, `/onboarding`, `/abonnement`, and `/settings/*` continue to interact with Supabase and the Express API for billing workflows.
 
 ### Realtime & Streaming
+
 The SPA ships a lazy WebSocket client (`app/src/realtime/client.js`) expecting a JWT-subprotocol handshake, but the Express server currently exposes no WebSocket or SSE endpoints. This remains an open question for parity.
 
 ## Authentication & Authorization
@@ -69,6 +75,7 @@ The SPA ships a lazy WebSocket client (`app/src/realtime/client.js`) expecting a
 - Auth flow diagram in `_reports/graph.md` (“Auth & Session Flow”) captures login, token use, refresh fallback, and webhook processing.
 
 Client-side auth helpers:
+
 - `app/src/supabase-client.js:9-31` resolves Supabase config and instantiates the browser client.
 - `app/src/lib/auth/getUserId.js` caches user IDs via `supabase.auth.getClaims()` (`app/src/lib/auth/getUserId.js:1-17`).
 
@@ -92,6 +99,7 @@ Migration snippet enforcing cascading deletes is preserved (`_reports/schema.sql
 ## Configuration & Environment
 
 Complete environment inventory: `_reports/env.json`. Key points:
+
 - Critical secrets: `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
 - Operational flags: `FEATURE_EMPLOYEES`, `AGENT_BLOCK_READS`, `DEV_BYPASS`, `AUDIT_PAYLOAD_MAX_CHARS`, `JSON_BODY_LIMIT`.
 - Front-end Vite vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_API_BASE`, `VITE_API_STREAM_BASE`, `VITE_ENABLE_CUSTOM_BONUS_EDITOR`, `VITE_APP_URL`.
@@ -128,6 +136,7 @@ The SPA runtime bridges these vars into `window.CONFIG` (`app/src/runtime-config
 ## Rebuild in Next.js Plan
 
 ### Proposed `app/` Directory Structure
+
 ```
 app/
   layout.tsx
@@ -158,7 +167,7 @@ app/
     audit-log/recent/route.ts
     settings/route.ts
   middleware.ts               # Auth guard / agent blocking
-  lib/                         
+  lib/
     supabase-server.ts        # Supabase service-role client
     supabase-client.ts        # Browser client via createClient
     auth.ts                   # JWT verification utilities
@@ -168,17 +177,17 @@ app/
 
 ### Route Mapping
 
-| Current Express Route | Next.js Route Handler | Notes |
-| --- | --- | --- |
-| `POST /api/billing/start` (`server/server.js:461`) | `app/api/billing/start/route.ts` (POST) | Use `NextRequest` + service-role Supabase admin; preserve UID validation. |
-| `POST /api/checkout` & `/checkout` (`server/server.js:618`, `775`) | `app/api/checkout/route.ts` (POST) | Legacy path can redirect or share handler with rewrites. |
-| `POST /api/portal` & `/portal` (`server/server.js:855`, `1352`) | `app/api/portal/route.ts` (POST) | Handle both proxies; respond JSON. |
-| `POST /api/stripe/create-portal-session` & `/stripe/create-portal-session` (`server/server.js:973`, `1066`) | `app/api/stripe/create-portal-session/route.ts` | Share logic with portal route. |
-| `POST /api/portal/upgrade` & `/portal/upgrade` (`server/server.js:1134`, `1277`) | `app/api/portal/upgrade/route.ts` | Keep `no-active-subscription` semantics. |
-| `POST /api/stripe-webhook` (`server/server.js:1443`) | `app/api/stripe-webhook/route.ts` (POST) | Opt into `dynamic = 'force-dynamic'` and `body = 'raw'`. |
-| User settings (`server/server.js:3331-3527`) | `app/api/settings/route.ts` (GET/PUT) | Use `NextResponse.json`. |
-| Admin diagnostics (`server/server.js:1756-1877`) | `app/api/admin/...` | Protect via middleware verifying `role === 'admin'`. |
-| Metrics (`server/server.js:437`) | `app/api/metrics/route.ts` | Return `text/plain`. |
+| Current Express Route                                                                                       | Next.js Route Handler                           | Notes                                                                     |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
+| `POST /api/billing/start` (`server/server.js:461`)                                                          | `app/api/billing/start/route.ts` (POST)         | Use `NextRequest` + service-role Supabase admin; preserve UID validation. |
+| `POST /api/checkout` & `/checkout` (`server/server.js:618`, `775`)                                          | `app/api/checkout/route.ts` (POST)              | Legacy path can redirect or share handler with rewrites.                  |
+| `POST /api/portal` & `/portal` (`server/server.js:855`, `1352`)                                             | `app/api/portal/route.ts` (POST)                | Handle both proxies; respond JSON.                                        |
+| `POST /api/stripe/create-portal-session` & `/stripe/create-portal-session` (`server/server.js:973`, `1066`) | `app/api/stripe/create-portal-session/route.ts` | Share logic with portal route.                                            |
+| `POST /api/portal/upgrade` & `/portal/upgrade` (`server/server.js:1134`, `1277`)                            | `app/api/portal/upgrade/route.ts`               | Keep `no-active-subscription` semantics.                                  |
+| `POST /api/stripe-webhook` (`server/server.js:1443`)                                                        | `app/api/stripe-webhook/route.ts` (POST)        | Opt into `dynamic = 'force-dynamic'` and `body = 'raw'`.                  |
+| User settings (`server/server.js:3331-3527`)                                                                | `app/api/settings/route.ts` (GET/PUT)           | Use `NextResponse.json`.                                                  |
+| Admin diagnostics (`server/server.js:1756-1877`)                                                            | `app/api/admin/...`                             | Protect via middleware verifying `role === 'admin'`.                      |
+| Metrics (`server/server.js:437`)                                                                            | `app/api/metrics/route.ts`                      | Return `text/plain`.                                                      |
 
 Front-end SPA routes translate into Next.js route segments shown above. Stateful legacy DOM modules can migrate gradually into React server components or client components under `app/`.
 
@@ -205,20 +214,20 @@ Front-end SPA routes translate into Next.js route segments shown above. Stateful
 
 ### Phased Migration & Rollback
 
-1. **Prepare Shared Utilities**: Extract auth helpers (`verifySupabaseJWT`, `blockAgentWrites`) into reusable modules consumed by both Express and Next route handlers.
-2. **Lift Frontend**: Scaffold Next.js app directory, migrate static marketing pages, then port SPA routes to React components using existing logic incrementally.
-3. **Dual-Run API**: Introduce Next.js API route handlers behind `/next/api/*`, mirror responses, and gradually switch the SPA to the new endpoints via feature flags.
-4. **Switch Traffic**: Once parity confirmed, update client `API_BASE` to point at Next.js, and retire Express routes.
-5. **Decommission Express**: Remove legacy server once all consumers hit Next.js handlers.
+1.  **Prepare Shared Utilities**: Extract auth helpers (`verifySupabaseJWT`, `blockAgentWrites`) into reusable modules consumed by both Express and Next route handlers.
+2.  **Lift Frontend**: Scaffold Next.js app directory, migrate static marketing pages, then port SPA routes to React components using existing logic incrementally.
+3.  **Dual-Run API**: Introduce Next.js API route handlers behind `/next/api/*`, mirror responses, and gradually switch the SPA to the new endpoints via feature flags.
+4.  **Switch Traffic**: Once parity confirmed, update client `API_BASE` to point at Next.js, and retire Express routes.
+5.  **Decommission Express**: Remove legacy server once all consumers hit Next.js handlers.
 
 **Rollback Plan**: Maintain Express server alongside Next.js during migration. Environment flag can toggle which API base the SPA uses (`window.CONFIG.apiBase`). If Next.js handlers malfunction, point clients back to Express instantly. Keep Stripe webhook pointing at Express until the new handler is verified in staging.
 
 ### Risks & Unknowns
 
-1. **Realtime expectations**: SPA imports `app/src/realtime/client.js`, but no server websocket endpoint exists—confirm whether a separate service handles this before porting.
-2. **Supabase RLS parity**: Ensure inferred schema matches actual DB (see `_reports/schema.sql`). Any drift will break Next.js server actions relying on service-role keys.
-3. **Session propagation**: Decide whether to continue using Supabase’s client session cookies or adopt NextAuth/Auth Helpers for Next.js.
-4. **Stripe webhooks**: Next.js needs `bodyParser: false` equivalent; confirm hosting platform (e.g., Vercel) supports raw body streaming for Node runtime.
+1.  **Realtime expectations**: SPA imports `app/src/realtime/client.js`, but no server websocket endpoint exists—confirm whether a separate service handles this before porting.
+2.  **Supabase RLS parity**: Ensure inferred schema matches actual DB (see `_reports/schema.sql`). Any drift will break Next.js server actions relying on service-role keys.
+3.  **Session propagation**: Decide whether to continue using Supabase’s client session cookies or adopt NextAuth/Auth Helpers for Next.js.
+4.  **Stripe webhooks**: Next.js needs `bodyParser: false` equivalent; confirm hosting platform (e.g., Vercel) supports raw body streaming for Node runtime.
 
 ### Test Plan for Migration
 
