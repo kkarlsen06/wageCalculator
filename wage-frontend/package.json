@@ -24,6 +24,7 @@
   "devDependencies": {
     "@chainlift/liftkit": "^0.2.0",
     "@eslint/eslintrc": "^3",
+    "@types/react": "19.1.13",
     "eslint": "^9",
     "eslint-config-next": "15.5.4"
   }

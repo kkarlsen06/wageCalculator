@@ -31,15 +31,14 @@ export default function MaterialLayer({
   type,
   materialProps,
 }: LkMaterialLayerProps) {
-  /**If materialProps are provided, loop through the keys and pass each one as a data attribute to the component. */
-  let lkMatProps: LkMatProps;
-
-  if (materialProps) {
-    lkMatProps = useMemo(
-      () => propsToDataAttrs(materialProps, `${type}`),
-      [materialProps],
-    );
-  }
+  /** Pre-compute data attributes for the applied material */
+  const materialDataAttrs = useMemo<Record<string, string>>(
+    () => {
+      if (!materialProps) return {};
+      return propsToDataAttrs(materialProps, `${type ?? "material"}`);
+    },
+    [materialProps, type],
+  );
 
   /**Commented out, was likely used for debugging */
 
@@ -53,6 +52,7 @@ export default function MaterialLayer({
   return (
     <>
       <div
+        {...materialDataAttrs}
         data-lk-component="material-layer"
         data-lk-material-type={type}
         style={{ zIndex: zIndex }}

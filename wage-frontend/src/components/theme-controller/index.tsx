@@ -38,11 +38,9 @@ export default function ThemeController() {
   );
   useEffect(() => {
     updateTheme(palette);
-    const newPaletteArray = Object.keys(palette).map((key) => {
-      return { key, value: palette[key] };
-    });
+    const newPaletteArray = Object.keys(palette).map((key) => ({ key, value: palette[key] }));
     setPaletteArray(newPaletteArray);
-  }, [palette]);
+  }, [palette, updateTheme]);
 
   const handleColorChange = (key: LkColorGroup, newValue: string) => {
 

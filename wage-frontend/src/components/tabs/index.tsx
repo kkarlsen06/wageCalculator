@@ -22,12 +22,9 @@ export default function Tabs({ tabLinks, onActiveTabChange, scrollableContent, c
   };
 
   useEffect(() => {
-    if (onActiveTabChange) {
-      onActiveTabChange(activeTab);
-    } else {
-      return;
-    }
-  }, [activeTab]);
+    if (!onActiveTabChange) return;
+    onActiveTabChange(activeTab);
+  }, [activeTab, onActiveTabChange]);
 
   const dataAttrs = useMemo(() => propsToDataAttrs({ activeTab }, "tabs"), [activeTab]);
 

@@ -244,13 +244,9 @@ const [colorMode, setColorMode] = useState<"light" | "dark">("light");
     }
   }, [theme, colorMode]);
 
-  //run the initial theme generation on first load
+  /**TODO: Debundle scroll behavior overrides from the central theme context */
+  /**This is such a confusing place to put it. */
   useEffect(() => {
-    updateTheme(palette);
-
-    /**TODO: Debundle scroll behavior overrides from the central theme context */
-    /**This is such a confusing place to put it. */
-
     const disableScrollOnNumberInputs = (event: WheelEvent) => {
       const activeElement = document.activeElement as HTMLInputElement;
       if (activeElement?.type === "number") {
@@ -455,6 +451,12 @@ const [colorMode, setColorMode] = useState<"light" | "dark">("light");
       }
     });
   }, []);
+
+  // run the initial theme generation whenever palette changes
+  useEffect(() => {
+    updateTheme(palette);
+  }, [palette, updateTheme]);
+
 
   const updateThemeFromMaster = useCallback(
     async (hexCode: string, setPalette: React.Dispatch<React.SetStateAction<PaletteState>>) => {

@@ -38,28 +38,37 @@ This document outlines the step-by-step plan to rebuild the wage calculator fron
 
 ### Pre-Phase 2 Checklist
 
-- [ ] Replace the placeholder Supabase anon key in `.env.local` with a real value before running against Supabase.
-- [ ] Resolve the `react-hooks/rules-of-hooks` lint error in `src/components/material-layer/index.tsx` so `npm run lint` passes.
-- [ ] Decide on handling the remaining hook dependency warnings (fix or document) to keep lint output actionable.
+- [x] Replace the placeholder Supabase anon key in `.env.local` with a real value before running against Supabase.
+- [x] Resolve the `react-hooks/rules-of-hooks` lint error in `src/components/material-layer/index.tsx` so `npm run lint` passes.
+- [x] Decide on handling the remaining hook dependency warnings (fix or document) to keep lint output actionable (hook dependencies normalized and image wrapper documented).
 
 #### 1.1 Environment Configuration
 
 - [x] Create `.env.local` with Next.js environment variables
   ```
   NEXT_PUBLIC_SUPABASE_URL=https://id.kkarlsen.dev
-  NEXT_PUBLIC_SUPABASE_ANON_KEY=[obtain from Supabase]
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_z9EoG7GZZMS3RL4hmilh5A_xI0va5Nb
   NEXT_PUBLIC_API_URL=http://localhost:3001
   ```
 
-````
+```
+
+```
+
+`
+
 - [x] Configure environment variable validation
 - [x] Set up development vs production configs
 
 #### 1.2 Supabase Integration
+
 - [x] Install Supabase client libraries
-  ```bash
+
+```bash
 npm install @supabase/supabase-js @supabase/auth-helpers-nextjs
-````
+```
+
+`
 
 - [x] Create Supabase client configuration (`/lib/supabase`)
 - [x] Set up authentication helpers
@@ -87,25 +96,25 @@ npm install @supabase/supabase-js @supabase/auth-helpers-nextjs
 
 #### 2.1 Login Page
 
-- [ ] Create `/app/login/page.tsx`
-- [ ] Implement login form with existing Form components
-- [ ] Add Supabase email/password authentication
-- [ ] Handle login errors and validation
-- [ ] Add "Remember Me" functionality
+- [x] Create `/app/login/page.tsx`
+- [x] Implement login form with existing Form components
+- [x] Add Supabase email/password authentication
+- [x] Handle login errors and validation
+- [x] Add "Remember Me" functionality
 
 #### 2.2 Authentication Middleware
 
-- [ ] Create Next.js middleware for route protection
-- [ ] Implement session validation
-- [ ] Add automatic token refresh
-- [ ] Handle unauthorized access redirects
+- [x] Create Next.js middleware for route protection
+- [x] Implement session validation
+- [x] Add automatic token refresh
+- [x] Handle unauthorized access redirects
 
 #### 2.3 User Profile Management
 
-- [ ] Create user context with profile data
-- [ ] Implement logout functionality
-- [ ] Add profile data fetching
-- [ ] Create profile update endpoints
+- [x] Create user context with profile data (AuthProvider now exposes `profile` via context)
+- [x] Implement logout functionality
+- [x] Add profile data fetching
+- [x] Create profile update endpoints
 
 ### Phase 3: Core Pages Structure (Week 2)
 
@@ -422,6 +431,71 @@ npm install react-hook-form
 # PWA Support
 
 npm install next-pwa
+
+# Development
+
+npm install -D @testing-library/react @testing-library/jest-dom jest
+
+```
+
+## Success Metrics
+
+1. **Functional Parity:** All features from existing app work in Next.js
+2. **Performance:** Lighthouse score > 90 for all categories
+3. **Stability:** Zero critical bugs, < 1% error rate
+4. **User Experience:** Smooth transitions, responsive design
+5. **Code Quality:** 80%+ test coverage, clean architecture
+
+## Risk Mitigation
+
+### Potential Risks
+
+1. **Data Migration:** Ensure backward compatibility
+2. **Authentication:** Test Supabase integration thoroughly
+3. **Calculations:** Validate wage calculations against existing app
+4. **Performance:** Monitor bundle size and optimize
+
+### Mitigation Strategies
+
+- Incremental migration with feature flags
+- Parallel deployment for testing
+- Comprehensive testing at each phase
+- Regular user feedback collection
+
+## Timeline Summary
+
+- **Week 1:** Foundation & Authentication
+- **Week 2:** Core Pages & Navigation
+- **Week 3:** Shifts & Calculations
+- **Week 4:** Employees & Statistics
+- **Week 5:** Settings & PWA
+- **Week 6:** Testing & Deployment
+
+Total estimated time: 6 weeks for full migration
+
+## Next Immediate Steps
+
+1. **Set up environment variables** in `.env.local`
+2. **Install core dependencies** (Supabase, Zustand)
+3. **Create authentication flow** with login page
+4. **Build dashboard page** with existing components
+5. **Implement first API route** for shifts
+
+## Notes
+
+- Leverage existing CSS modules and components
+- Focus on stability over features
+- Test each phase thoroughly before moving forward
+- Keep existing app running in parallel during migration
+- Document all architectural decisions
+
+---
+
+_Last Updated: December 2024_
+_Migration Plan Version: 1.0_
+```
+
+next-pwa
 
 # Development
 

@@ -1,5 +1,4 @@
 "use client";
-import { useMemo } from "react";
 import { propsToDataAttrs } from "@/lib/utilities";
 import "@/components/grid/grid.css";
 import PlaceholderBlock from "@/components/placeholder-block";
@@ -34,9 +33,11 @@ export default function Grid({
   className,
   ...restProps
 }: LkGridProps) {
-  const lkGridAttrs = useMemo(
-    () => propsToDataAttrs({ autoResponsive, gap, ...restProps }, "grid"),
-    [autoResponsive, columns, gap]
+  const { style: inlineStyle, ...restWithoutStyle } = restProps;
+
+  const lkGridAttrs = propsToDataAttrs(
+    { autoResponsive, gap, ...restWithoutStyle },
+    "grid",
   );
 
   /**Render placeholder blocks for columns if no children are passed */
@@ -66,9 +67,9 @@ export default function Grid({
       <div
         data-lk-component="grid"
         {...lkGridAttrs}
-        {...restProps}
+        {...restWithoutStyle}
         className={className}
-        style={{ gridTemplateColumns: getColumnCount(), ...restProps.style }}
+        style={{ gridTemplateColumns: getColumnCount(), ...inlineStyle }}
       >
         {children || placeholderBlocks}
       </div>

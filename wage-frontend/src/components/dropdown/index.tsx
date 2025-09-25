@@ -58,7 +58,9 @@ export function DropdownMenu({ children, cardProps }: LkDropdownMenuProps) {
   const { open, setOpen, triggerRef, contentRef } = useContext(DropdownContext);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    if (!open) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         contentRef.current &&
         !contentRef.current.contains(e.target as Node) &&
@@ -67,11 +69,14 @@ export function DropdownMenu({ children, cardProps }: LkDropdownMenuProps) {
       ) {
         setOpen(false);
       }
-    }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
+    };
 
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [contentRef, open, setOpen, triggerRef]);
 
   if (!open || !triggerRef.current) return null;
 

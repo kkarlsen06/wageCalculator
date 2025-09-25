@@ -165,7 +165,9 @@ export function SelectMenu({ children, cardProps }: LkSelectMenuProps) {
   const { open, setOpen, triggerRef, contentRef } = useContext(SelectContext);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    if (!open) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         contentRef.current &&
         !contentRef.current.contains(e.target as Node) &&
@@ -174,11 +176,14 @@ export function SelectMenu({ children, cardProps }: LkSelectMenuProps) {
       ) {
         setOpen(false);
       }
-    }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
+    };
 
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [contentRef, open, setOpen, triggerRef]);
 
   // Handle keyboard navigation
   useEffect(() => {

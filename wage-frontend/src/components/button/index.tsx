@@ -60,6 +60,7 @@ export default function Button({
   opticIconShift = true,
   modifiers,
   stateLayerOverride,
+  type = "button",
   ...restProps
 }: LkButtonProps) {
   const lkButtonAttrs = useMemo(
@@ -85,10 +86,6 @@ export default function Button({
       baseButtonClasses = `bg-${color} color-${onColorToken}`;
       break;
   }
-  if (modifiers) {
-    baseButtonClasses += ` ${modifiers}`;
-  }
-
   /**Determine state layer props dynamically */
   function getLocalStateLayerProps() {
     if (stateLayerOverride) {
@@ -103,13 +100,17 @@ export default function Button({
 
   const localStateLayerProps: LkStateLayerProps = getLocalStateLayerProps();
 
+  const buttonClassName = [baseButtonClasses.trim(), modifiers]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <button
       {...lkButtonAttrs}
       {...restProps}
-      type="button"
+      type={type}
       data-lk-component="button"
-      className={`${baseButtonClasses} ${modifiers || ""}`}
+      className={buttonClassName}
     >
       <div data-lk-button-content-wrap="true">
         {startIcon && (

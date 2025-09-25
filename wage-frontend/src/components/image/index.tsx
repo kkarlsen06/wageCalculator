@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Material system wrapper needs native <img> for dynamic sizing */
 /**
  * A customizable image component with built-in aspect ratio, sizing, and styling options.
  * 
