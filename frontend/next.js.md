@@ -1,9 +1,10 @@
-- [ ] **1. Config and secrets**
+- [x] **1. Config and secrets**
 
 - Goal: A predictable way to read configuration in dev and prod.
 - Do: Create `frontend/.env.local` for local values. Create `frontend/.env.example` with placeholders. Use `NEXT_PUBLIC_` only for values safe in the browser.
 - Wire: `process.env.MY_SECRET` in route handlers only. `process.env.NEXT_PUBLIC_*` in client code.
 - Check: `console.log(process.env.NEXT_PUBLIC_* )` renders in the browser. Server secrets never appear in page source.
+
 - [ ] **2. Core data model**
 
 - Goal: Tables that match your app, with rules that block cross-user reads.

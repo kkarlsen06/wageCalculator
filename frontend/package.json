@@ -13,6 +13,8 @@
   "dependencies": {
     "@csstools/normalize.css": "^12.1.1",
     "@material/material-color-utilities": "^0.3.0",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.55.0",
     "lucide-react": "^0.544.0",
     "next": "14.x",
     "react": "18.x",
@@ -23,6 +25,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
     "eslint": "^9.0.0",
+    "supabase": "^2.45.5",
     "typescript": "^5.0.0"
   }
 }
