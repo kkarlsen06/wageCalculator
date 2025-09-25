@@ -1,0 +1,12 @@
+- **Identity & Access** — sign-in, sessions, roles, human/agent rules
+- **Plans & Billing** — tiers, start/upgrade/cancel, self-serve portal, DB sync
+- **Core Data Model** — users, shifts, pay rules, settings, audit logs, RLS
+- **Wage Engine** — hours, breaks, overtime, bonuses, deductions, monthly sums
+- **App UX** — dashboard, shifts CRUD, stats, onboarding, settings, offline edits + sync
+- **Marketing Site** — landing, pricing, legal, install prompts, shared branding
+- **Admin Surface** — link users↔customers, audit viewer, unlinked search, flags
+- **Config & Secrets** — single env source, safe client bridge, no secret leaks
+- **Observability** — health checks, structured logs, error boundaries, basic metrics, alerts
+- **Security Posture** — tight CORS, strict JWT, redaction, rate limits
+- **Tooling & Tests** — one-command dev/build, smoke tests, auth/billing unit tests, happy-path E2E
+- **Rollout & Recovery** — feature flags, rewrites, staged cutover, documented rollback
