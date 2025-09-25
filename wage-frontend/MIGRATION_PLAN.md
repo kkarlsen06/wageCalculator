@@ -3,6 +3,12 @@
 ## Executive Summary
 This document outlines the step-by-step plan to rebuild the wage calculator frontend from the ground up using Next.js, React, and the existing CSS architecture. The goal is to create a stable, maintainable application by methodically migrating functionality from the existing Vanilla JS application.
 
+## Status Snapshot
+- **Phase 1 – Foundation:** ✅ Complete – env validation, Supabase clients, global stores, and API layer scaffolding landed.
+- **Phase 2 – Authentication Flow:** ⏳ Not started – blocked by the pre-phase checklist below.
+- **Phase 3 – Core Pages:** ⏳ Not started.
+- **Phases 4–11:** ⏳ Not started.
+
 ## Current State Assessment
 
 ### ✅ Completed
@@ -25,38 +31,43 @@ This document outlines the step-by-step plan to rebuild the wage calculator fron
 ### Phase 1: Foundation (Week 1)
 **Goal:** Establish core infrastructure and authentication
 
+### Pre-Phase 2 Checklist
+- [ ] Replace the placeholder Supabase anon key in `.env.local` with a real value before running against Supabase.
+- [ ] Resolve the `react-hooks/rules-of-hooks` lint error in `src/components/material-layer/index.tsx` so `npm run lint` passes.
+- [ ] Decide on handling the remaining hook dependency warnings (fix or document) to keep lint output actionable.
+
 #### 1.1 Environment Configuration
-- [ ] Create `.env.local` with Next.js environment variables
+- [x] Create `.env.local` with Next.js environment variables
   ```
   NEXT_PUBLIC_SUPABASE_URL=https://id.kkarlsen.dev
   NEXT_PUBLIC_SUPABASE_ANON_KEY=[obtain from Supabase]
   NEXT_PUBLIC_API_URL=http://localhost:3001
   ```
-- [ ] Configure environment variable validation
-- [ ] Set up development vs production configs
+- [x] Configure environment variable validation
+- [x] Set up development vs production configs
 
 #### 1.2 Supabase Integration
-- [ ] Install Supabase client libraries
+- [x] Install Supabase client libraries
   ```bash
   npm install @supabase/supabase-js @supabase/auth-helpers-nextjs
   ```
-- [ ] Create Supabase client configuration (`/lib/supabase.ts`)
-- [ ] Set up authentication helpers
-- [ ] Create auth context provider
+- [x] Create Supabase client configuration (`/lib/supabase`)
+- [x] Set up authentication helpers
+- [x] Create auth context provider
 
 #### 1.3 State Management Setup
-- [ ] Install Zustand or React Context for state management
-- [ ] Create global stores:
+- [x] Install Zustand or React Context for state management
+- [x] Create global stores:
   - Auth store (user session, profile)
   - App store (theme, settings)
   - Data store (shifts, employees, calculations)
-- [ ] Set up persistence for offline support
+- [x] Set up persistence for offline support
 
 #### 1.4 API Layer Foundation
-- [ ] Create API utilities (`/lib/api.ts`)
-- [ ] Set up fetch wrappers with auth headers
-- [ ] Create error handling utilities
-- [ ] Implement request/response interceptors
+- [x] Create API utilities (`/lib/api`)
+- [x] Set up fetch wrappers with auth headers
+- [x] Create error handling utilities
+- [x] Implement request/response interceptors
 
 ### Phase 2: Authentication Flow (Week 1-2)
 **Goal:** Secure user authentication and session management
@@ -334,11 +345,10 @@ Total estimated time: 6 weeks for full migration
 
 ## Next Immediate Steps
 
-1. **Set up environment variables** in `.env.local`
-2. **Install core dependencies** (Supabase, Zustand)
-3. **Create authentication flow** with login page
-4. **Build dashboard page** with existing components
-5. **Implement first API route** for shifts
+1. Tackle the Pre-Phase 2 checklist (real Supabase key, lint fixes, hook dependency decisions).
+2. Kick off Phase 2 by implementing the `/app/login` route with Supabase email/password auth and error handling.
+3. Design the authentication middleware/session guard approach before expanding into additional authenticated pages.
+
 
 ## Notes
 
