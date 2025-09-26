@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["src/*"]
     },
+    "baseUrl": ".",
     "target": "ES2022",
     "module": "ESNext",
     "jsx": "preserve",

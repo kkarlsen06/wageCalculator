@@ -90,3 +90,69 @@ The SPA reimplements wage math to power interactive views, offline editing, and 
 - Adjust Supabase migrations or settings queries if new organisation-level configuration is introduced.
 - Revisit API docs (`docs/API.md`, `docs/DATABASE.md`, `docs/ARCHITECTURE_AND_SNAPSHOTS.md`) to keep derivation logic in sync.
 - Expand or modernise test coverage to validate new scenarios (e.g., policy-specific deductions, bonus edge cases, cross-midnight shifts).
+
+Presets:
+
+exportconstapp= {
+
+// Constants
+
+    PAUSE_THRESHOLD: 5.5,
+
+    PAUSE_DEDUCTION: 0.5,
+
+    MONTHS: ['januar', 'februar', 'mars', 'april', 'mai', 'juni',
+
+'juli', 'august', 'september', 'oktober', 'november', 'desember'],
+
+    WEEKDAYS: ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'],
+
+    PRESET_WAGE_RATES: {
+
+// Use negative numbers for young workers to avoid conflicts with regular levels 1-6
+
+'-1': 129.91, // under16
+
+'-2': 132.90, // under18
+
+1: 184.54,
+
+2: 185.38,
+
+3: 187.46,
+
+4: 193.05,
+
+5: 210.81,
+
+6: 256.14
+
+    },
+
+// Organization settings cache
+
+    orgSettings: { break_policy: 'fixed_0_5_over_5_5h' },
+
+// Data loading state
+
+    isDataLoading: true,
+
+    PRESET_BONUSES: {
+
+    rules: [
+
+    { days: [1, 2, 3, 4, 5], from: "18:00", to: "21:00", rate: 22 },
+
+    { days: [1, 2, 3, 4, 5], from: "21:00", to: "23:59", rate: 45 },
+
+    { days: [6], from: "13:00", to: "15:00", rate: 45 },
+
+    { days: [6], from: "15:00", to: "18:00", rate: 55 },
+
+    { days: [6], from: "18:00", to: "23:59", rate: 110 },
+
+    { days: [7], from: "00:00", to: "23:59", rate: 115 }
+
+    ]
+
+    },

@@ -1,9 +1,9 @@
 // frontend/app/shifts/page.tsx
-import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseServerReadonly } from "@/lib/supabase/server-readonly";
 import type { Database } from "@/lib/types/supabase";
 
 export default async function ShiftsPage() {
-  const supa = supabaseServer();
+  const supa = supabaseServerReadonly();
 
   const { data, error } = await supa
     .from<"user_shifts", Database["public"]["Tables"]["user_shifts"]["Row"]>("user_shifts")

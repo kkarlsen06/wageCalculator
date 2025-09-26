@@ -5,7 +5,7 @@
 - Wire: `process.env.MY_SECRET` in route handlers only. `process.env.NEXT_PUBLIC_*` in client code.
 - Check: `console.log(process.env.NEXT_PUBLIC_* )` renders in the browser. Server secrets never appear in page source.
 
-- [ ] **2. Core data model**
+- [x] **2. Core data model**
 
 - Goal: Tables that match your app, with rules that block cross-user reads.
 - Do: In Supabase, create `users`, `shifts`, `pay_rules`, `user_settings`, `audit_log`. Add primary keys, foreign keys, indexes.
@@ -13,11 +13,10 @@
 - Seed: Insert 1 test user and a few shifts.
 - Check: You can select only your rows when logged in. Queries are fast on indexed columns.
 
-3. [ ] **3. Identity and access**
+3. [x] **3. Identity and access**
 
 - Goal: Users can sign in and the app knows who they are.
 - Do: Add Supabase client in Next.js. Build simple pages: `/login`, `/logout`. Store session via Supabase helpers.
-- Roles: Add a `role` column in `users`. Default user. Optional admin.
 - Agent rules: If you plan bot access, store a claim like `ai_agent`.
 - Check: Refresh keeps you signed in. `cookies()` on the server exposes the session. Unauthed users get redirected to `/login`.
 
