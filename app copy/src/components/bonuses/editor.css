@@ -1,0 +1,447 @@
+.ub-editor-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ub-editor-root .ub-editor-loading {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.ub-rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ub-rule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  background: var(--surface-card);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  transition: all var(--speed-normal) var(--ease-default);
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+
+.ub-rule-row:hover,
+.ub-rule-row:focus-visible {
+  border: var(--card-border-strong);
+  box-shadow: var(--shadow-card-hover);
+  outline: none;
+  transform: translateY(-1px);
+  background: var(--surface-card-hover);
+}
+
+.ub-rule-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.ub-rule-days {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.ub-all-days-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.ub-rule-times {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.ub-rule-value {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.ub-empty-state {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-4);
+}
+
+.ub-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+}
+
+.ub-editor-actions .ub-add-btn {
+  position: relative;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.ub-editor-actions .ub-add-btn:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.ub-day-pill,
+.ub-day-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  border: var(--card-border);
+  background: var(--surface-card);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  transition: all var(--speed-normal) var(--ease-default);
+  box-shadow: var(--shadow-card);
+}
+
+.ub-day-pill.is-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: var(--shadow-card-hover);
+}
+
+button.ub-day-pill,
+button.ub-day-all {
+  cursor: pointer;
+}
+
+button.ub-day-pill:hover:not(.is-active),
+button.ub-day-all:hover:not(.is-active) {
+  background: var(--surface-card-hover);
+  border: var(--card-border-strong);
+  transform: translateY(-1px);
+}
+
+button.ub-day-pill:focus-visible,
+button.ub-day-all:focus-visible {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+
+.ub-day-all {
+  width: auto;
+  padding: 0 var(--space-2);
+  font-weight: var(--font-weight-medium);
+}
+
+.ub-day-all.is-active {
+  background: var(--surface-card-active);
+  color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.ub-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: var(--space-3);
+  overflow: hidden;
+}
+
+.ub-modal {
+  background: var(--surface-card);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-card-strong);
+  border: var(--card-border);
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--space-6));
+  overflow: hidden;
+  animation: modalSlideIn var(--speed-normal) var(--ease-default);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-4)) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ub-modal-header {
+  padding: var(--space-3) var(--space-3) 0 var(--space-3);
+  border-bottom: var(--card-border);
+  margin-bottom: var(--space-3);
+}
+
+.ub-modal-header h3 {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  padding-bottom: var(--space-2);
+}
+
+.ub-modal-body {
+  padding: 0 var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+  flex: 1;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ub-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ub-field > label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.ub-day-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.ub-day-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.ub-time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.ub-time-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ub-time-grid label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ub-time-grid input {
+  padding: var(--space-2);
+  border: var(--card-border);
+  border-radius: var(--radius-component);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.ub-time-grid input:focus {
+  outline: none;
+  border: var(--card-border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.ub-type-toggle {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-1);
+}
+
+.ub-type-toggle label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--speed-normal) var(--ease-default);
+}
+
+.ub-type-toggle label:has(input:checked) {
+  color: var(--text-primary);
+}
+
+.ub-type-toggle input[type="radio"] {
+  accent-color: var(--primary);
+}
+
+.ub-value-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  position: relative;
+}
+
+.ub-value-wrapper input {
+  flex: 1;
+  padding: var(--space-2);
+  border: var(--card-border);
+  border-radius: var(--radius-component);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  transition: all var(--speed-normal) var(--ease-default);
+}
+
+.ub-value-wrapper input:focus {
+  outline: none;
+  border: var(--card-border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.ub-value-suffix {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-sm);
+  padding-left: var(--space-1);
+}
+
+.ub-form-error {
+  color: var(--error, #dc2626);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  min-height: 1.2em;
+  padding-top: var(--space-1);
+}
+
+.ub-modal-footer {
+  padding: var(--space-3);
+  border-top: var(--card-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.ub-modal-footer .ub-actions-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ub-modal-footer .btn[style*="--error"]:hover {
+  background-color: var(--error);
+  color: white;
+  border-color: var(--error);
+}
+
+@media (max-width: 480px) {
+  .ub-modal-backdrop {
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding-top: calc(var(--space-3) + env(safe-area-inset-top));
+    padding-right: var(--space-2);
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    padding-left: var(--space-2);
+  }
+
+  .ub-modal {
+    max-width: 100%;
+    max-height: calc(100vh - var(--space-3));
+    max-height: min(calc(100vh - var(--space-3)), calc(100dvh - var(--space-3)));
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  .ub-modal-header,
+  .ub-modal-body,
+  .ub-modal-footer {
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
+  }
+
+  .ub-modal-header {
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  .ub-modal-body {
+    padding-bottom: var(--space-2);
+  }
+
+  .ub-rule-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .ub-rule-value {
+    align-self: flex-end;
+    margin-top: var(--space-1);
+  }
+
+  .ub-time-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .ub-type-toggle {
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: flex-start;
+  }
+
+  .ub-modal-footer {
+    padding-top: var(--space-2);
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    margin-top: var(--space-2);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .ub-modal-footer .ub-actions-right {
+    flex-direction: row;
+    gap: var(--space-1);
+    width: auto;
+  }
+
+  .ub-modal-footer .btn {
+    width: auto;
+    min-height: 44px;
+  }
+}
